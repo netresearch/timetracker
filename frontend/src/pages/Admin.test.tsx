@@ -544,4 +544,37 @@ describe('Admin list — row selection & bulk actions', () => {
     await waitFor(() => expect(postJson).toHaveBeenCalledWith('/customer/delete', { id: 1 }))
     unmount()
   })
+
+  it('on a partial bulk failure keeps the failed row selected and shows the error', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/getAllCustomers'
+        ? Promise.resolve([
+            { customer: { id: 1, name: 'ACME', active: true, global: false, teams: [] } },
+            { customer: { id: 2, name: 'Globex', active: true, global: false, teams: [] } },
+          ])
+        : Promise.resolve([]),
+    )
+    let calls = 0
+    postJson.mockImplementation((path: string) => {
+      if (path === '/customer/save') {
+        calls += 1
+
+        return calls === 1 ? Promise.resolve([]) : Promise.reject(new ApiError(500, 'boom'))
+      }
+
+      return Promise.resolve([])
+    })
+    const { getByRole, getByText, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('checkbox', { name: 'Select all rows' }))
+    fireEvent.click(getByRole('button', { name: 'Deactivate' }))
+
+    // ACME (1st) succeeded → deselected; Globex (2nd) failed → stays selected.
+    await waitFor(() => expect(getByRole('alert')).toBeInTheDocument())
+    expect(getByText('1 selected')).toBeInTheDocument()
+    expect(getByRole('checkbox', { name: 'Select Globex' })).toBeChecked()
+
+    unmount()
+  })
 })

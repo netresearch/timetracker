@@ -217,14 +217,22 @@ export function AdminCrudShell(props: {
   })
 
   const toggleRow = (rowId: number, on: boolean) => setSelected(rowId, on)
+  // Shallow-merge only the currently-visible rows so selections of rows hidden by
+  // the filter/another page are preserved (selection persists across filtering).
   function toggleAll(on: boolean) {
-    setSelected(reconcile(on ? Object.fromEntries(visibleRows().map((row) => [Number(row.id), true])) : {}))
+    const updates: Record<number, boolean> = {}
+    for (const row of visibleRows()) {
+      updates[Number(row.id)] = on
+    }
+    setSelected(updates)
   }
   function clearSelection() {
     setSelected(reconcile({}))
   }
 
-  // Run an async op over each selected row, then refresh once and clear.
+  // Run an async op over each selected row. Each row is deselected as it
+  // succeeds, so on a mid-way failure the failed + unprocessed rows stay selected
+  // (clear feedback); refresh always runs so the grid reflects partial success.
   async function runBulk(action: (row: Row) => Promise<void>, successMessage: () => string) {
     const targets = selectedRows()
     if (targets.length === 0 || bulkBusy()) {
@@ -235,13 +243,13 @@ export function AdminCrudShell(props: {
     try {
       for (const row of targets) {
         await action(row)
+        setSelected(Number(row.id), false)
       }
-      await refreshAfterMutation()
-      clearSelection()
       flashNotice(successMessage())
     } catch (caught) {
       setError(apiErrorMessage(caught, m.app_load_error()))
     } finally {
+      await refreshAfterMutation()
       setBulkBusy(false)
     }
   }
