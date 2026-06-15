@@ -107,6 +107,18 @@ export function handleShortcut(event: KeyboardEvent): void {
       return
     }
 
+    // The Admin sub-nav owns its own arrow/Home/End keys (it moves focus down to
+    // the search field itself). Bail out for those when the event ORIGINATED in
+    // the sub-nav — keyed on event.target (immutable), not document.activeElement
+    // (which the sub-nav already moved). This makes the partition independent of
+    // listener order / stopImmediatePropagation: the global handler can never
+    // re-handle the event after the sub-nav moved focus (e.g. bounce search→grid).
+    // Global shortcuts (Alt+N, ?, /) are NOT arrow keys, so they still fire here.
+    if (target !== null && target.closest('.admin-subnav') !== null
+      && /^(Arrow(Up|Down|Left|Right)|Home|End)$/.test(event.key)) {
+      return
+    }
+
     if (event.altKey && !event.ctrlKey && !event.metaKey && /^Digit[1-7]$/.test(event.code)) {
       const link = navLinks()[Number(event.code.slice(5)) - 1]
       if (link !== undefined) {
