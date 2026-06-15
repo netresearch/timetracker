@@ -36,19 +36,28 @@ function Layout(props: ParentProps) {
 
   onMount(() => {
     initHeaderDynamics(appConfig())
+    // Initial load / F5: land focus on the page region (only if the browser
+    // hasn't restored focus elsewhere) so keyboard navigation is available
+    // immediately — without it, focus sits on <body> and the arrow-key chain
+    // has no entry point until the user clicks or tabs. preventScroll keeps the
+    // viewport put; #main-content is a tabindex=-1 region (no visible ring).
+    if (document.activeElement === null || document.activeElement === document.body) {
+      mainRef?.focus({ preventScroll: true })
+    }
   })
 
   createEffect(() => {
     syncNav(location.pathname)
     // On client-side navigation (not the first paint) move focus to the page
     // region so keyboard/screen-reader users land on the new content instead
-    // of staying on the just-clicked nav link (WCAG 2.4.3).
+    // of staying on the just-clicked nav link (WCAG 2.4.3). From there ArrowUp
+    // re-enters the menubar (handled in header.ts), so the nav stays reachable.
     if (initialRoute) {
       initialRoute = false
 
       return
     }
-    mainRef?.focus()
+    mainRef?.focus({ preventScroll: true })
   })
 
   return (

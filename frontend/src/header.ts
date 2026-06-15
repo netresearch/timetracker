@@ -73,6 +73,18 @@ function navLinks(): HTMLAnchorElement[] {
   return Array.from(document.querySelectorAll<HTMLAnchorElement>('.app-header .main-nav a.main-nav-link'))
 }
 
+/**
+ * The menubar re-entry point: the active main-nav bar item, falling back to the
+ * first bar item and finally the "More" button. Only *visible* bar items
+ * (:not(.nav-menu-item)) qualify, so focus is never sent to a link folded into
+ * the closed overflow menu. Used wherever a page hands focus back up to the nav.
+ */
+export function activeNavLink(): HTMLElement | null {
+  return document.querySelector<HTMLElement>('.app-header .main-nav .main-nav-link[aria-current="page"]:not(.nav-menu-item)')
+    ?? document.querySelector<HTMLElement>('.app-header .main-nav .main-nav-link:not(.nav-menu-item)')
+    ?? document.querySelector<HTMLElement>('.app-header .main-nav .nav-more-btn')
+}
+
 let shortcutsWired = false
 
 /**
@@ -147,6 +159,46 @@ export function handleShortcut(event: KeyboardEvent): void {
     // field via ArrowDown or Escape (back to the table).
     const active = document.activeElement
 
+    // "More" overflow as a WAI-ARIA menu button: ArrowDown/ArrowUp on the button
+    // opens the disclosure and moves focus to the first/last item (rather than the
+    // bar item's usual "descend into page content"). Escape closes and returns to
+    // the button — handled framework-neutrally in header-behavior.html.twig.
+    if (active instanceof HTMLElement && active.matches('.nav-more-btn')
+      && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+      event.preventDefault()
+      if (active.getAttribute('aria-expanded') !== 'true') {
+        active.click() // the behavior script's click handler opens + unhides the menu
+      }
+      const items = Array.from(document.querySelectorAll<HTMLElement>('.nav-more-menu .main-nav-link'))
+      if (event.key === 'ArrowDown') {
+        items[0]?.focus()
+      } else {
+        items[items.length - 1]?.focus()
+      }
+
+      return
+    }
+
+    // Inside the open "More" menu: ArrowUp/Down (and Home/End) rove its items,
+    // wrapping around like a vertical menu. Left/Right stay native (no-op).
+    if (active instanceof HTMLElement && active.closest('.nav-more-menu') !== null
+      && /^(ArrowDown|ArrowUp|Home|End)$/.test(event.key)) {
+      event.preventDefault()
+      const items = Array.from(document.querySelectorAll<HTMLElement>('.nav-more-menu .main-nav-link'))
+      const j = items.indexOf(active)
+      if (event.key === 'ArrowDown') {
+        items[(j + 1) % items.length]?.focus()
+      } else if (event.key === 'ArrowUp') {
+        items[(j - 1 + items.length) % items.length]?.focus()
+      } else if (event.key === 'Home') {
+        items[0]?.focus()
+      } else {
+        items[items.length - 1]?.focus()
+      }
+
+      return
+    }
+
     // Main navigation behaves as a horizontal menubar: Left/Right/Home/End rove
     // between the visible bar items, ArrowDown drops into the page content
     // (sub-nav → search → grid → first focusable). Enter/Space still activates.
@@ -198,10 +250,28 @@ export function handleShortcut(event: KeyboardEvent): void {
       return
     }
 
+    // #main-content is where focus lands on initial load and on every route
+    // change — it acts as a keyboard PIVOT. ArrowUp re-enters the main-nav
+    // menubar so EVERY page can climb back to the nav (not just Admin via its
+    // sub-nav); without it, activating a nav item stranded focus on grid-less
+    // pages (Billing/Extras/Month/…). ArrowDown drops into the page's grid.
+    if (!inField && event.key === 'ArrowUp'
+      && active instanceof HTMLElement && active.id === 'main-content') {
+      const nav = activeNavLink()
+      if (nav !== null) {
+        event.preventDefault()
+        nav.focus()
+      }
+
+      return
+    }
+
+    // Drop focus into the page's data grid — from the #main-content landing spot
+    // (ArrowDown) or from the search field (ArrowDown/Escape, back to the table).
     // Only grids that advertise an arrow-exit (data-arrow-nav) are arrow-enter
     // targets — so entry and exit stay symmetric and we never drop focus into a
     // grid that can only be left with Tab (e.g. the read-only Auswertung table).
-    const onPage = !inField && /^Arrow(Up|Down|Left|Right)$/.test(event.key)
+    const onPage = !inField && event.key === 'ArrowDown'
       && active instanceof HTMLElement && active.id === 'main-content'
     const fromSearch = active instanceof HTMLInputElement && active.type === 'search'
       && (event.key === 'ArrowDown' || event.key === 'Escape')

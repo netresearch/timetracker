@@ -54,14 +54,18 @@ describe('handleShortcut', () => {
     }
   }
 
-  /** Mimic the priority-overflow script folding the last bar link into "More". */
-  function foldLastNavLink(): void {
-    const links = document.querySelectorAll<HTMLElement>('.main-nav-link')
-    const last = links[links.length - 1]!
-    last.classList.add('nav-menu-item')
-    document.querySelector('.nav-more-menu')!.appendChild(last)
+  /** Mimic the priority-overflow script folding the last `count` bar links into
+   *  the (open) "More" menu, in priority order, and marking the button expanded. */
+  function foldNavLinks(count = 1): void {
+    const links = Array.from(document.querySelectorAll<HTMLElement>('.main-nav-link'))
+    const menu = document.querySelector('.nav-more-menu')!
+    for (const link of links.slice(-count)) {
+      link.classList.add('nav-menu-item')
+      menu.appendChild(link) // preserves priority order (slice keeps DOM order)
+    }
     document.querySelector('.nav-more')!.removeAttribute('hidden')
-    document.querySelector('.nav-more-menu')!.removeAttribute('hidden')
+    menu.removeAttribute('hidden')
+    document.querySelector('.nav-more-btn')!.setAttribute('aria-expanded', 'true')
   }
 
   const press = (init: KeyboardEventInit) => handleShortcut(new KeyboardEvent('keydown', init))
@@ -100,11 +104,20 @@ describe('handleShortcut', () => {
     expect(document.activeElement).toBe(document.querySelector('input[type="search"]'))
   })
 
-  it('an arrow key enters the data grid when focus is still on the page', () => {
+  it('ArrowDown enters the data grid when focus is still on the page', () => {
     setup()
     document.getElementById('main-content')?.focus()
     press({ key: 'ArrowDown' })
     expect((document.activeElement as HTMLElement).tagName).toBe('TD')
+  })
+
+  it('ArrowUp from #main-content re-enters the main-nav menubar (every page)', () => {
+    setup()
+    const active = document.querySelector('a[data-nav="month"]') as HTMLAnchorElement
+    active.setAttribute('aria-current', 'page') // the route's active nav item
+    document.getElementById('main-content')?.focus()
+    press({ key: 'ArrowUp' })
+    expect(document.activeElement).toBe(active)
   })
 
   it('ArrowDown and Escape from the search field return to the table', () => {
@@ -181,7 +194,7 @@ describe('handleShortcut', () => {
 
   it('skips a folded nav item and includes "More" once it is shown', () => {
     setup()
-    foldLastNavLink() // Help folds into the now-visible "More" menu
+    foldNavLinks() // Help folds into the now-visible "More" menu
     const links = document.querySelectorAll<HTMLAnchorElement>('.main-nav-link')
     const more = document.querySelector('.nav-more-btn') as HTMLButtonElement
     links[0]!.focus()
@@ -191,13 +204,36 @@ describe('handleShortcut', () => {
     expect(document.activeElement).toBe(links[1])
   })
 
-  it('an arrow on a folded link inside the open "More" menu is a no-op', () => {
+  it('ArrowDown/ArrowUp on the "More" button moves focus into the menu', () => {
     setup()
-    foldLastNavLink()
-    const folded = document.querySelector('.nav-more-menu .main-nav-link') as HTMLAnchorElement
-    folded.focus()
-    press({ key: 'ArrowRight' }) // must NOT yank focus out to the first bar link
-    expect(document.activeElement).toBe(folded)
+    foldNavLinks(2) // Overview + Help fold into the menu
+    const items = document.querySelectorAll<HTMLAnchorElement>('.nav-more-menu .main-nav-link')
+    const more = document.querySelector('.nav-more-btn') as HTMLButtonElement
+    more.focus()
+    press({ key: 'ArrowDown' })
+    expect(document.activeElement).toBe(items[0]) // first menu item
+    more.focus()
+    press({ key: 'ArrowUp' })
+    expect(document.activeElement).toBe(items[items.length - 1]) // last menu item
+  })
+
+  it('arrows rove the open "More" menu items (wrapping), Left/Right stay native', () => {
+    setup()
+    foldNavLinks(2)
+    const items = document.querySelectorAll<HTMLAnchorElement>('.nav-more-menu .main-nav-link')
+    items[0]!.focus()
+    press({ key: 'ArrowDown' })
+    expect(document.activeElement).toBe(items[1])
+    press({ key: 'ArrowDown' }) // wraps to first
+    expect(document.activeElement).toBe(items[0])
+    press({ key: 'ArrowUp' }) // wraps to last
+    expect(document.activeElement).toBe(items[1])
+    press({ key: 'End' })
+    expect(document.activeElement).toBe(items[items.length - 1])
+    press({ key: 'Home' })
+    expect(document.activeElement).toBe(items[0])
+    press({ key: 'ArrowRight' }) // not roved by the menu; focus stays put
+    expect(document.activeElement).toBe(items[0])
   })
 
   it('stands down while a modal dialog is open', () => {

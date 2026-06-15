@@ -3,6 +3,7 @@ import { createSignal, For, Show } from 'solid-js'
 import { adminEntities } from '../admin/entities'
 import { useOptionSources } from '../admin/options'
 import { AdminCrudShell } from '../components/AdminCrudShell'
+import { activeNavLink } from '../header'
 import { m } from '../paraglide/messages.js'
 
 export default function Admin() {
@@ -34,16 +35,11 @@ export default function Admin() {
             event.stopImmediatePropagation()
             document.querySelector<HTMLElement>('.admin-filter')?.focus()
           } else if (event.key === 'ArrowUp') {
-            // Continue the chain upward to the active main navigation item — but
-            // only a *visible* bar item: when the active link has folded into the
-            // (closed) "More" menu (:not(.nav-menu-item) excludes it) fall back to
-            // the first bar link, then the "More" button, so ArrowUp never lands
-            // on a hidden element and dead-ends the chain.
+            // Continue the chain upward to the active main navigation item
+            // (activeNavLink skips links folded into the closed "More" menu, so
+            // ArrowUp never dead-ends on a hidden element).
             event.preventDefault()
-            const mainNav = document.querySelector<HTMLElement>('.app-header .main-nav .main-nav-link[aria-current="page"]:not(.nav-menu-item)')
-              ?? document.querySelector<HTMLElement>('.app-header .main-nav .main-nav-link:not(.nav-menu-item)')
-              ?? document.querySelector<HTMLElement>('.app-header .main-nav .nav-more-btn')
-            mainNav?.focus()
+            activeNavLink()?.focus()
           } else if (event.key === 'ArrowRight') {
             event.preventDefault()
             links[Math.min(links.length - 1, i + 1)]?.focus()
