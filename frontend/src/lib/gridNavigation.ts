@@ -11,8 +11,15 @@
 type Cell = HTMLTableCellElement
 
 const INTERACTIVE = 'button, a[href], input, select, textarea'
+const PAGE_ROWS = 10
 
-export function enableGridNavigation(table: HTMLTableElement): () => void {
+interface GridNavigationOptions {
+  /** Called when ArrowUp is pressed on the top (header) row, so the caller can
+   *  hand focus to whatever sits above the grid (e.g. a search field). */
+  onExitTop?: () => void
+}
+
+export function enableGridNavigation(table: HTMLTableElement, options: GridNavigationOptions = {}): () => void {
   table.setAttribute('role', 'grid')
 
   const rows = (): HTMLTableRowElement[] => Array.from(table.rows)
@@ -148,7 +155,18 @@ export function enableGridNavigation(table: HTMLTableElement): () => void {
         focusAt(r + 1, c)
         break
       case 'ArrowUp':
-        focusAt(r - 1, c)
+        // Off the top row, hand focus to whatever sits above the grid.
+        if (r === 0 && options.onExitTop) {
+          options.onExitTop()
+        } else {
+          focusAt(r - 1, c)
+        }
+        break
+      case 'PageDown':
+        focusAt(r + PAGE_ROWS, c)
+        break
+      case 'PageUp':
+        focusAt(r - PAGE_ROWS, c)
         break
       case 'Home':
         if (event.ctrlKey) {

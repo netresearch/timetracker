@@ -40,6 +40,7 @@ describe('handleShortcut', () => {
         <a class="main-nav-link" data-nav="help" href="/ui/help">Help</a>
       </nav></header>
       <main id="main-content" tabindex="-1">
+        <button type="button" data-keyboard-add>Add</button>
         <input type="search" class="admin-filter" />
         <table class="data-table" role="grid"><tbody><tr><td tabindex="0">Alpha</td></tr></tbody></table>
       </main>`
@@ -66,6 +67,15 @@ describe('handleShortcut', () => {
     const clicked = vi.fn()
     help.addEventListener('click', clicked)
     press({ key: '?' })
+    expect(clicked).toHaveBeenCalled()
+  })
+
+  it('Alt+A clicks the page add button', () => {
+    setup()
+    const add = document.querySelector('[data-keyboard-add]') as HTMLButtonElement
+    const clicked = vi.fn()
+    add.addEventListener('click', clicked)
+    press({ altKey: true, code: 'KeyA', key: 'a' })
     expect(clicked).toHaveBeenCalled()
   })
 

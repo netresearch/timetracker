@@ -242,7 +242,12 @@ export default function Auswertung() {
           <h3>{m.auswertung_last_entries()}</h3>
           <QueryBoundary query={entries}>
             <div class="table-scroll">
-              <table class="data-table" ref={(el) => onCleanup(enableGridNavigation(el))}>
+              <table
+                class="data-table"
+                ref={(el) => onCleanup(enableGridNavigation(el, {
+                  onExitTop: () => document.querySelector<HTMLElement>('.filter-bar input, .filter-bar select')?.focus(),
+                }))}
+              >
                 <thead>
                   <tr>
                     <th scope="col">{m.auswertung_date()}</th>

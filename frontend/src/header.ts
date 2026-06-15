@@ -97,6 +97,18 @@ export function handleShortcut(event: KeyboardEvent): void {
       return
     }
 
+    // Alt+A → add a new entry on pages that offer one (the Add button is tagged
+    // with data-keyboard-add), mirroring the ExtJS tracking grid's Alt+A.
+    if (event.altKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyA') {
+      const add = document.querySelector<HTMLElement>('#main-content [data-keyboard-add]')
+      if (add !== null) {
+        event.preventDefault()
+        add.click()
+      }
+
+      return
+    }
+
     if (event.key === '?' && !inField) {
       const help = document.querySelector<HTMLAnchorElement>('.app-header .main-nav a[data-nav="help"]')
       if (help !== null) {

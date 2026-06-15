@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { enableGridNavigation } from './gridNavigation'
 
@@ -57,6 +57,26 @@ describe('enableGridNavigation', () => {
 
     key(document.activeElement!, 'ArrowDown')
     expect((document.activeElement as HTMLElement).closest('tr')?.querySelector('td')?.textContent).toBe('Beta')
+  })
+
+  it('PageDown jumps down a page, clamped to the last row', () => {
+    const firstHeader = grid.table.querySelector('th') as HTMLElement
+    firstHeader.focus()
+    key(firstHeader, 'PageDown')
+    expect((document.activeElement as HTMLElement).closest('tr')?.querySelector('td')?.textContent).toBe('Beta')
+  })
+
+  it('calls onExitTop when ArrowUp leaves the top row', () => {
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><thead><tr><th>H</th></tr></thead><tbody><tr><td>A</td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const onExitTop = vi.fn()
+    const cleanup = enableGridNavigation(table, { onExitTop })
+    const th = table.querySelector('th') as HTMLElement
+    th.focus()
+    key(th, 'ArrowUp')
+    expect(onExitTop).toHaveBeenCalled()
+    cleanup()
   })
 
   it('clamps at the grid edges', () => {
