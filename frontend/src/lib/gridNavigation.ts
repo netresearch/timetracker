@@ -86,9 +86,14 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   function pageRows(): number {
     const sample = table.tBodies[0]?.rows[0]
     const rowHeight = sample?.getBoundingClientRect().height ?? 0
-    const visible = rowHeight > 0 ? Math.floor(viewportHeight() / rowHeight) - 1 : 0
+    // Unmeasurable row height (no rows / detached / jsdom) → sane default. Once
+    // measurable, page by the visible rows clamped to ≥1 — NOT `visible ||
+    // FALLBACK`, which would jump a near-empty viewport (visible 0) to 10 rows.
+    if (rowHeight <= 0) {
+      return FALLBACK_PAGE_ROWS
+    }
 
-    return Math.max(1, visible || FALLBACK_PAGE_ROWS)
+    return Math.max(1, Math.floor(viewportHeight() / rowHeight) - 1)
   }
 
   function position(cell: Cell): [number, number] | null {
