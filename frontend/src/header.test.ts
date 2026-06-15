@@ -120,16 +120,18 @@ describe('handleShortcut', () => {
     expect(document.activeElement).toBe(active)
   })
 
-  it('ArrowDown and Escape from the search field return to the table', () => {
+  it('ArrowDown from the search field enters the table (Escape does not)', () => {
     setup()
     const search = document.querySelector('input[type="search"]') as HTMLInputElement
     search.focus()
     press({ key: 'ArrowDown' })
     expect((document.activeElement as HTMLElement).tagName).toBe('TD')
 
+    // Escape is no longer a grid-entry key in the global handler — it clears/
+    // leaves the filter (AdminCrudShell). The global handler must leave it alone.
     search.focus()
     press({ key: 'Escape' })
-    expect((document.activeElement as HTMLElement).tagName).toBe('TD')
+    expect(document.activeElement).toBe(search)
   })
 
   it('does not arrow-enter a grid that lacks an arrow-exit (Tab-only)', () => {
@@ -273,5 +275,30 @@ describe('handleShortcut', () => {
     overview.addEventListener('click', nav)
     press({ altKey: true, code: 'Digit2', key: '2' }) // Alt+2 must not navigate
     expect(nav).not.toHaveBeenCalled()
+  })
+
+  // Integration: the global handler is on document; a real bubbling ArrowDown
+  // from the sub-nav must NOT bounce past the search into the grid — even with
+  // NO stopImmediatePropagation in the sub-nav handler (the partition must not
+  // depend on event-delegation order). Guards against a future on:keydown refactor.
+  it('does not bounce a sub-nav-sourced ArrowDown past the search into the grid', () => {
+    setup()
+    const content = document.getElementById('main-content')!
+    content.insertAdjacentHTML('afterbegin',
+      '<nav class="admin-subnav"><button class="admin-subnav-link" aria-current="page">Users</button></nav>')
+    const subnavBtn = document.querySelector('.admin-subnav-link') as HTMLButtonElement
+    const search = document.querySelector('input[type="search"]') as HTMLInputElement
+    // mimic Admin.tsx's ArrowDown — but deliberately WITHOUT stopImmediatePropagation
+    subnavBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); search.focus() }
+    })
+    document.addEventListener('keydown', handleShortcut)
+    try {
+      subnavBtn.focus()
+      subnavBtn.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+      expect(document.activeElement).toBe(search) // landed on search, not a grid TD
+    } finally {
+      document.removeEventListener('keydown', handleShortcut)
+    }
   })
 })

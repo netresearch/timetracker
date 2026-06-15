@@ -100,8 +100,8 @@ function GroupChart(props: { group: InterpretationGroup; title: string; filters:
   return (
     <QueryBoundary
       query={query}
-      error={<section class="effort-chart"><h3>{props.title}</h3><p role="alert">{m.app_load_error()}</p></section>}
-      loading={<section class="effort-chart"><h3>{props.title}</h3><p class="effort-empty">{m.app_loading()}</p></section>}
+      error={<section class="effort-chart"><h2>{props.title}</h2><p role="alert">{m.app_load_error()}</p></section>}
+      loading={<section class="effort-chart"><h2>{props.title}</h2><p class="effort-empty">{m.app_loading()}</p></section>}
     >
       <EffortChart title={props.title} rows={rows()} />
     </QueryBoundary>
@@ -153,7 +153,6 @@ export default function Auswertung() {
 
   return (
     <section class="auswertung">
-      <h2 class="visually-hidden">{m.auswertung_title()}</h2>
 
       <form
         class="filter-bar"
@@ -231,15 +230,15 @@ export default function Auswertung() {
           </For>
           <QueryBoundary
             query={timeSeries}
-            error={<section class="effort-chart"><h3>{m.auswertung_by_day()}</h3><p role="alert">{m.app_load_error()}</p></section>}
-            loading={<section class="effort-chart"><h3>{m.auswertung_by_day()}</h3><p class="effort-empty">{m.app_loading()}</p></section>}
+            error={<section class="effort-chart"><h2>{m.auswertung_by_day()}</h2><p role="alert">{m.app_load_error()}</p></section>}
+            loading={<section class="effort-chart"><h2>{m.auswertung_by_day()}</h2><p class="effort-empty">{m.app_loading()}</p></section>}
           >
             <EffortChart title={m.auswertung_by_day()} rows={timeRows()} />
           </QueryBoundary>
         </div>
 
         <section class="effort-chart">
-          <h3>{m.auswertung_last_entries()}</h3>
+          <h2>{m.auswertung_last_entries()}</h2>
           <QueryBoundary query={entries}>
             <div class="table-scroll">
               {/* Read-only grid: arrow-navigated internally, entered/left via

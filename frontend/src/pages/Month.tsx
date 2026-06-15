@@ -386,7 +386,6 @@ export default function Month() {
 
   return (
     <section class="month-report">
-      <h2 class="visually-hidden">{m.month_title()}</h2>
 
       <nav class="month-chips" aria-label={m.month_title()}>
         <span class="year-switch">
@@ -518,7 +517,7 @@ export default function Month() {
               </div>
 
               <aside class="summary-card">
-                <h3>{m.month_summary()} · <span class="summary-scope">{scopeTitle()}</span></h3>
+                <h2>{m.month_summary()} · <span class="summary-scope">{scopeTitle()}</span></h2>
                 <div class="summary-ring" style={{ '--pct': `${ringPercent()}%` }}>
                   <div>
                     <b class={(scope() === 'selection' ? sum().diff : sum().diffUntilToday) < 0 ? 'is-neg' : 'is-pos'}>

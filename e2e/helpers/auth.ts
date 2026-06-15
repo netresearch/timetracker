@@ -20,6 +20,12 @@ export async function login(
   username: string = TEST_USERS.developer.username,
   password: string = TEST_USERS.developer.password
 ): Promise<void> {
+  // Suppress the one-time first-run keyboard-shortcut hint: it is a position:fixed
+  // overlay shown once per fresh context, so in isolated e2e contexts it would
+  // appear on the first /ui load and could obscure a click target.
+  await page.addInitScript(() => {
+    window.localStorage.setItem('tt-kbd-hint-seen', '1');
+  });
   await page.goto('/login');
   await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
   await page.locator('input[name="_username"]').fill(username);
