@@ -1,6 +1,6 @@
 import { Dialog } from '@ark-ui/solid/dialog'
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
-import { createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
+import { createComputed, createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
 import { createStore, produce, reconcile } from 'solid-js/store'
 import { Portal } from 'solid-js/web'
 
@@ -16,6 +16,21 @@ type Row = Record<string, unknown>
 // Field types that get a compact in-cell editor; everything else (multiselect,
 // the locked relation columns) stays modal-only.
 const INLINE_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date', 'checkbox', 'select'])
+
+// Rows rendered per page. The list is fetched whole (a few hundred KB even for
+// ~1k rows) but rendering every row at once is the cost — paging keeps the DOM,
+// the gridNav ARIA sync and per-row work bounded.
+const PAGE_SIZE = 50
+
+// One CSV field: guard against formula injection (a leading =,+,-,@ is neutered
+// with a leading apostrophe) and quote/escape per RFC 4180.
+function csvCell(value: string): string {
+  // Trim before the formula check: Excel strips leading whitespace and would
+  // still run "   =cmd", so a non-trimmed test could be bypassed.
+  const safe = /^[=+\-@]/.test(value.trim()) ? `'${value}` : value
+
+  return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
+}
 
 /** Shared option resolution for both the modal FieldControl and the inline
  *  editor, so relation/static dropdowns stay identical in either surface. */
@@ -89,6 +104,10 @@ export function AdminCrudShell(props: {
   const [sort, setSort] = createSignal<{ key: string; dir: 'asc' | 'desc' } | null>(null)
   // Free-text filter: matches against the visible text of every column.
   const [filter, setFilter] = createSignal('')
+  // Entities with an `active` flag default to hiding inactive records.
+  const hasActiveField = (): boolean => props.descriptor.fields.some((field) => field.name === 'active')
+  const [hideInactive, setHideInactive] = createSignal(true)
+  const [page, setPage] = createSignal(0)
 
   const cellText = (row: Row, col: ColumnDef): string =>
     col.render ? col.render(row, props.options) : String(row[col.key] ?? '')
@@ -128,7 +147,10 @@ export function AdminCrudShell(props: {
   const visibleRows = createMemo<Row[]>(() => {
     const current = sort()
     const query = filter().trim().toLowerCase()
-    const matched = query === '' ? decorated() : decorated().filter((entry) => entry.haystack.includes(query))
+    let matched = query === '' ? decorated() : decorated().filter((entry) => entry.haystack.includes(query))
+    if (hasActiveField() && hideInactive()) {
+      matched = matched.filter((entry) => Boolean(entry.row.active))
+    }
     const sortCol = current && props.descriptor.columns.find((c) => c.key === current.key)
     if (!current || !sortCol) {
       return matched.map((entry) => entry.row)
@@ -140,6 +162,41 @@ export function AdminCrudShell(props: {
       .sort((a, b) => factor * a.key.localeCompare(b.key, undefined, { numeric: true }))
       .map((entry) => entry.row)
   })
+
+  // Client-side paging over the filtered/sorted rows. Reset to the first page
+  // whenever the result set changes (filter / sort / active toggle); the slice
+  // start is clamped so a shrunk result set can't strand us past the last page.
+  const pageCount = createMemo(() => Math.max(1, Math.ceil(visibleRows().length / PAGE_SIZE)))
+  // Reset to the first page whenever the result set changes (visibleRows already
+  // tracks filter/sort/active toggle + data refetches). createComputed runs in
+  // the reactive phase before render, so there's no flash of the old page.
+  createComputed(() => {
+    visibleRows()
+    setPage(0)
+  })
+  const pagedRows = createMemo<Row[]>(() => {
+    const start = Math.min(page(), pageCount() - 1) * PAGE_SIZE
+
+    return visibleRows().slice(start, start + PAGE_SIZE)
+  })
+
+  // Export the filtered/sorted rows (all pages) as the column values shown.
+  function exportCsv() {
+    const columns = props.descriptor.columns
+    const lines = [columns.map((col) => csvCell(col.label()))]
+    for (const row of visibleRows()) {
+      lines.push(columns.map((col) => csvCell(cellText(row, col))))
+    }
+    const csv = lines.map((cells) => cells.join(',')).join('\r\n')
+    // Prepend a BOM (explicit escape, not a literal char) so Excel reads UTF-8.
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${props.descriptor.key}.csv`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
 
   function openForm(row: Row | null) {
     setError('')
@@ -425,6 +482,15 @@ export function AdminCrudShell(props: {
             }
           }}
         />
+        <Show when={hasActiveField()}>
+          <label class="field-check admin-inactive-toggle">
+            <input type="checkbox" checked={!hideInactive()} onInput={(event) => setHideInactive(!event.currentTarget.checked)} />
+            <span>{m.admin_show_inactive()}</span>
+          </label>
+        </Show>
+        <button type="button" class="action-button" onClick={() => exportCsv()} disabled={visibleRows().length === 0}>
+          {m.admin_export_csv()}
+        </button>
       </div>
 
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
@@ -435,7 +501,7 @@ export function AdminCrudShell(props: {
             onFocusIn={onTableFocusIn}
             onFocusOut={onTableFocusOut}
             use:gridNav={{
-              items: visibleRows,
+              items: pagedRows,
               onExit: (dir) => { if (dir === 'up') searchEl?.focus() },
               onActivate,
               moveRef: (handle) => { moveHandle = handle },
@@ -461,7 +527,7 @@ export function AdminCrudShell(props: {
               </tr>
             </thead>
             <tbody>
-              <For each={visibleRows()}>
+              <For each={pagedRows()}>
                 {(row) => (
                   <tr aria-busy={savingRows[Number(row.id)] ? 'true' : undefined}>
                     <For each={props.descriptor.columns}>
@@ -524,6 +590,19 @@ export function AdminCrudShell(props: {
             </tbody>
           </table>
         </div>
+        <Show when={pageCount() > 1}>
+          <nav class="admin-pagination" aria-label={m.admin_pagination()}>
+            <button type="button" class="action-button" disabled={page() <= 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+              {m.admin_page_prev()}
+            </button>
+            <span class="admin-page-status" role="status" aria-live="polite">
+              {m.admin_page_status({ page: String(Math.min(page(), pageCount() - 1) + 1), pages: String(pageCount()), total: String(visibleRows().length) })}
+            </span>
+            <button type="button" class="action-button" disabled={page() >= pageCount() - 1} onClick={() => setPage((p) => Math.min(pageCount() - 1, p + 1))}>
+              {m.admin_page_next()}
+            </button>
+          </nav>
+        </Show>
         <Show when={filter().trim() !== '' && visibleRows().length === 0}>
           <p role="status" class="effort-empty admin-no-matches">{m.admin_no_matches()}</p>
         </Show>

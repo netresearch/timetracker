@@ -293,11 +293,17 @@ describe('Admin inline cell editing', () => {
     fireEvent.keyDown(editor, { key: 'Enter' })
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME2' })).toBeInTheDocument())
 
-    // Edit the "global" checkbox cell in the same row (— → toggle on).
+    // Edit the "global" checkbox cell in the same row (— → toggle on). Scope the
+    // query to the cell so it doesn't match the toolbar's "Show inactive" toggle.
     const globalCell = getByRole('gridcell', { name: '—' })
     globalCell.focus()
     fireEvent.keyDown(globalCell, { key: 'Enter' })
-    const check = (await screen.findByRole('checkbox')) as HTMLInputElement
+    const check = await waitFor(() => {
+      const el = globalCell.querySelector<HTMLInputElement>('input[type="checkbox"]')
+      if (!el) throw new Error('inline checkbox not mounted yet')
+
+      return el
+    })
     fireEvent.click(check)
     fireEvent.keyDown(check, { key: 'Enter' })
 
@@ -415,6 +421,73 @@ describe('Admin inline cell editing', () => {
     const modalName = (await screen.findByRole('textbox')) as HTMLInputElement
     await waitFor(() => expect(modalName).toHaveValue('ACME-DIRTY'))
     expect(postJson).not.toHaveBeenCalled()
+
+    unmount()
+  })
+})
+
+describe('Admin list — inactive filter, paging, CSV export', () => {
+  it('hides inactive records by default and reveals them via the toggle', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/getAllCustomers'
+        ? Promise.resolve([
+            { customer: { id: 1, name: 'ActiveCo', active: true, global: false, teams: [] } },
+            { customer: { id: 2, name: 'GoneCo', active: false, global: false, teams: [] } },
+          ])
+        : Promise.resolve([]),
+    )
+    const { getByRole, queryByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ActiveCo' })).toBeInTheDocument())
+
+    expect(queryByRole('gridcell', { name: 'GoneCo' })).not.toBeInTheDocument()
+    fireEvent.click(getByRole('checkbox', { name: 'Show inactive' }))
+    await waitFor(() => expect(getByRole('gridcell', { name: 'GoneCo' })).toBeInTheDocument())
+
+    unmount()
+  })
+
+  it('pages a long list and Next advances to the following page', async () => {
+    const many = Array.from({ length: 75 }, (_, i) => ({
+      customer: { id: i + 1, name: `C${String(i + 1).padStart(3, '0')}`, active: true, global: false, teams: [] },
+    }))
+    getJson.mockImplementation((path: string) => (path === '/getAllCustomers' ? Promise.resolve(many) : Promise.resolve([])))
+    const { getByRole, queryByRole, getAllByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'C001' })).toBeInTheDocument())
+
+    // First page renders only PAGE_SIZE (50) data rows + the header row.
+    expect(getAllByRole('row').length).toBe(51)
+    expect(queryByRole('gridcell', { name: 'C051' })).not.toBeInTheDocument()
+
+    fireEvent.click(getByRole('button', { name: 'Next' }))
+    await waitFor(() => expect(getByRole('gridcell', { name: 'C051' })).toBeInTheDocument())
+    expect(queryByRole('gridcell', { name: 'C001' })).not.toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('exports the rows as CSV and neutralizes formula injection', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/getAllCustomers'
+        ? Promise.resolve([{ customer: { id: 1, name: '=DANGER()', active: true, global: false, teams: [] } }])
+        : Promise.resolve([]),
+    )
+    let blob: Blob | undefined
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((b) => {
+      blob = b as Blob
+
+      return 'blob:x'
+    })
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: '=DANGER()' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Export CSV' }))
+    expect(click).toHaveBeenCalled()
+    const text = await blob!.text()
+    // Leading '=' is neutralized with an apostrophe so spreadsheets won't run it.
+    expect(text).toContain("'=DANGER()")
 
     unmount()
   })

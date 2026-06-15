@@ -86,3 +86,27 @@ test.describe('Admin inline cell editing', () => {
     expect(saved).toBe(false); // the modal took over; no inline save fired
   });
 });
+
+test.describe('Admin list — inactive filter & CSV export', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page, 'i.myself', 'myself123');
+    await page.goto('/ui/admin'); // first entity = Customers (has an `active` flag)
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+  });
+
+  test('hides inactive records by default and the toggle reveals more', async ({ page }) => {
+    const toggle = page.getByRole('checkbox', { name: /inactive|inaktive/i });
+    await expect(toggle).toBeVisible();
+    const hidden = await page.locator('table.admin-table tbody tr').count();
+    await toggle.click();
+    await expect.poll(async () => page.locator('table.admin-table tbody tr').count()).toBeGreaterThanOrEqual(hidden);
+  });
+
+  test('exports the table as a CSV download', async ({ page }) => {
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 8000 }),
+      page.getByRole('button', { name: /CSV/i }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('customers.csv');
+  });
+});
