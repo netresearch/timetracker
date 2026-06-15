@@ -83,6 +83,18 @@ describe('handleShortcut', () => {
     expect((document.activeElement as HTMLElement).tagName).toBe('TD')
   })
 
+  it('ArrowDown and Escape from the search field return to the table', () => {
+    setup()
+    const search = document.querySelector('input[type="search"]') as HTMLInputElement
+    search.focus()
+    press({ key: 'ArrowDown' })
+    expect((document.activeElement as HTMLElement).tagName).toBe('TD')
+
+    search.focus()
+    press({ key: 'Escape' })
+    expect((document.activeElement as HTMLElement).tagName).toBe('TD')
+  })
+
   it('does not hijack "/" while typing in a field', () => {
     setup()
     const search = document.querySelector('input[type="search"]') as HTMLInputElement

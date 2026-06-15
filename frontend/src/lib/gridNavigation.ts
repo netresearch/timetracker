@@ -101,11 +101,29 @@ export function enableGridNavigation(table: HTMLTableElement): () => void {
     }
 
     // Widget mode: focus is inside a cell control. Escape returns to the cell;
-    // everything else is left to the control (typing in a field, etc.).
+    // when a cell has several controls (e.g. Edit + Delete), Arrow/Tab move
+    // between them (they're out of the document tab order); everything else is
+    // left to the control (typing in a field, etc.).
     if (document.activeElement !== cell) {
       if (event.key === 'Escape') {
         event.preventDefault()
         setActive(cell)
+
+        return
+      }
+      const controls = Array.from(cell.querySelectorAll<HTMLElement>(INTERACTIVE))
+      const index = controls.indexOf(document.activeElement as HTMLElement)
+      const forward = event.key === 'ArrowRight' || (event.key === 'Tab' && !event.shiftKey)
+      const backward = event.key === 'ArrowLeft' || (event.key === 'Tab' && event.shiftKey)
+      if (index !== -1 && (forward || backward)) {
+        const next = index + (forward ? 1 : -1)
+        if (next >= 0 && next < controls.length) {
+          event.preventDefault()
+          controls[next]!.focus()
+        } else if (event.key === 'Tab') {
+          // At the cell's edge: drop back to the cell so Tab leaves the grid.
+          setActive(cell)
+        }
       }
 
       return

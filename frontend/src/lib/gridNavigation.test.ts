@@ -7,8 +7,8 @@ function buildGrid(): { table: HTMLTableElement; cleanup: () => void } {
     <table class="data-table">
       <thead><tr><th>Name</th><th>Actions</th></tr></thead>
       <tbody>
-        <tr><td>Alpha</td><td><button type="button">Edit</button></td></tr>
-        <tr><td>Beta</td><td><button type="button">Edit</button></td></tr>
+        <tr><td>Alpha</td><td><button type="button">Edit</button><button type="button">Delete</button></td></tr>
+        <tr><td>Beta</td><td><button type="button">Edit</button><button type="button">Delete</button></td></tr>
       </tbody>
     </table>`
   const table = document.querySelector('table') as HTMLTableElement
@@ -82,11 +82,19 @@ describe('enableGridNavigation', () => {
     expect(grid.table.querySelectorAll('tr.is-current-row').length).toBe(1)
   })
 
-  it('Enter moves focus into the cell control, Escape returns to the cell', () => {
+  it('Enter enters the cell, Arrow/Tab reach every control, Escape returns', () => {
     const actionsCell = grid.table.querySelectorAll('tbody td')[1] as HTMLElement
     actionsCell.focus()
     key(actionsCell, 'Enter')
-    expect(document.activeElement?.tagName).toBe('BUTTON')
+    expect(document.activeElement?.textContent).toBe('Edit')
+
+    // Both Edit and Delete must be reachable (the bug: Delete was unreachable).
+    key(document.activeElement!, 'ArrowRight')
+    expect(document.activeElement?.textContent).toBe('Delete')
+    key(document.activeElement!, 'ArrowLeft')
+    expect(document.activeElement?.textContent).toBe('Edit')
+    key(document.activeElement!, 'Tab')
+    expect(document.activeElement?.textContent).toBe('Delete')
 
     key(document.activeElement!, 'Escape')
     expect(document.activeElement).toBe(actionsCell)

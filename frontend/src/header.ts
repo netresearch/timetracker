@@ -118,19 +118,21 @@ export function handleShortcut(event: KeyboardEvent): void {
       return
     }
 
-    // Arrow keys while focus is still on the page (e.g. right after a route
-    // change, where the main region holds focus) enter the first data grid, so
-    // table keyboard navigation works without clicking a cell first.
-    if (!inField && /^Arrow(Up|Down|Left|Right)$/.test(event.key)) {
-      const active = document.activeElement
-      const onPage = active === document.body || (active instanceof HTMLElement && active.id === 'main-content')
-      if (onPage) {
-        const grid = document.querySelector<HTMLElement>('#main-content .data-table[role="grid"]')
-        const cell = grid?.querySelector<HTMLElement>('[tabindex="0"]') ?? grid?.querySelector<HTMLElement>('th, td')
-        if (cell) {
-          event.preventDefault()
-          cell.focus()
-        }
+    // Move focus into the first data grid so table keyboard navigation works
+    // without a mouse click: with an arrow key while focus is still on the page
+    // (e.g. right after a route change, where #main-content holds focus), and
+    // from the search field via ArrowDown or Escape (back to the table).
+    const active = document.activeElement
+    const onPage = !inField && /^Arrow(Up|Down|Left|Right)$/.test(event.key)
+      && (active === document.body || (active instanceof HTMLElement && active.id === 'main-content'))
+    const fromSearch = active instanceof HTMLInputElement && active.type === 'search'
+      && (event.key === 'ArrowDown' || event.key === 'Escape')
+    if (onPage || fromSearch) {
+      const grid = document.querySelector<HTMLElement>('#main-content .data-table[role="grid"]')
+      const cell = grid?.querySelector<HTMLElement>('[tabindex="0"]') ?? grid?.querySelector<HTMLElement>('th, td')
+      if (cell) {
+        event.preventDefault()
+        cell.focus()
       }
     }
   }
