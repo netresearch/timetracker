@@ -447,7 +447,7 @@ main {
   padding: 1.4rem;
 }
 
-.summary-card h3 {
+.summary-card h2 {
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 600;
@@ -721,7 +721,7 @@ main {
   padding: 1.2rem 1.6rem;
 }
 
-.help-section h3 {
+.help-section h2 {
   font-family: var(--font-display);
   font-size: 1.2rem;
   margin: 0 0 0.8rem;
@@ -859,7 +859,7 @@ kbd {
   padding: 1.2rem 1.4rem;
 }
 
-.effort-chart h3 {
+.effort-chart h2 {
   font-family: var(--font-display);
   font-size: 1.1rem;
   margin: 0 0 0.8rem;

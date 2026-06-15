@@ -15,7 +15,6 @@ export default function Admin() {
 
   return (
     <section class="admin-page">
-      <h2 class="visually-hidden">{m.admin_title()}</h2>
 
       {/* The entity switcher is part of the page's vertical keyboard chain
           (sub-nav ↔ search ↔ table): Left/Right/Home/End move between entities,

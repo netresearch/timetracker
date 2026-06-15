@@ -22,7 +22,7 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
 
   return (
     <section class="effort-chart">
-      <h3>{props.title}</h3>
+      <h2>{props.title}</h2>
       <Show
         when={props.rows.length > 0}
         fallback={<p class="effort-empty">{m.auswertung_no_data()}</p>}

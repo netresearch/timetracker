@@ -73,7 +73,6 @@ export default function Settings() {
 
   return (
     <section class="form-page">
-      <h2 class="visually-hidden">{m.settings_title()}</h2>
       <form class="stack-form" onSubmit={(event) => void onSubmit(event)}>
         <label class="field">
           <span>{m.settings_language()}</span>

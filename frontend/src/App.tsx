@@ -1,11 +1,12 @@
 import { Navigate, Route, Router, useLocation } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { createEffect, onMount, type Component, type ParentProps } from 'solid-js'
+import { createEffect, createMemo, onMount, type Component, type ParentProps } from 'solid-js'
 
 import { SessionExpiredError } from './api/client'
 import { appConfig, canBill, canBulkEnter, hasRole } from './config'
 import { initHeaderDynamics } from './header'
 import { syncNav } from './nav'
+import { m } from './paraglide/messages.js'
 import Admin from './pages/Admin'
 import Auswertung from './pages/Auswertung'
 import Billing from './pages/Billing'
@@ -26,13 +27,33 @@ const queryClient = new QueryClient({
 // The page chrome (header + main nav) is server-rendered by
 // templates/partials/header.html.twig, shared with the ExtJS shell;
 // this layout animates it, syncs the active nav item, and hosts the route.
+// Route segment → page title. Drives the single <h1>, the #main-content
+// accessible name, the screen-reader route announcement, and document.title —
+// one source so they never drift.
+const PAGE_TITLES: Record<string, () => string> = {
+  month: m.month_title,
+  auswertung: m.auswertung_title,
+  admin: m.admin_title,
+  extras: m.extras_title,
+  billing: m.billing_title,
+  settings: m.settings_title,
+  help: m.help_title,
+}
+
 function Layout(props: ParentProps) {
   const location = useLocation()
   // Theming (apply + toggle) is handled framework-neutrally by the shared
   // header (templates/partials/theme-init.html.twig), so it works on both the
   // ExtJS and SolidJS shells and the SPA needs no theme code of its own.
   let mainRef: HTMLElement | undefined
+  let liveRef: HTMLElement | undefined
   let initialRoute = true
+
+  const routeTitle = createMemo(() => {
+    const segment = location.pathname.replace(/^\/ui\/?/, '').split('/')[0] || 'month'
+
+    return (PAGE_TITLES[segment] ?? m.month_title)()
+  })
 
   onMount(() => {
     initHeaderDynamics(appConfig())
@@ -47,22 +68,35 @@ function Layout(props: ParentProps) {
   })
 
   createEffect(() => {
+    const title = routeTitle()
     syncNav(location.pathname)
-    // On client-side navigation (not the first paint) move focus to the page
-    // region so keyboard/screen-reader users land on the new content instead
-    // of staying on the just-clicked nav link (WCAG 2.4.3). From there ArrowUp
-    // re-enters the menubar (handled in header.ts), so the nav stays reachable.
+    // WCAG 2.4.2: every route is a "page" and needs its own document title.
+    document.title = `${title} – ${appConfig().appTitle}`
     if (initialRoute) {
       initialRoute = false
 
       return
+    }
+    // Client-side navigation: a route swap is silent to screen readers, so push
+    // the new page title into a polite live region (WCAG 4.1.3 status message),
+    // and move focus to the page region (WCAG 2.4.3) — from there ArrowUp
+    // re-enters the menubar (handled in header.ts), so the nav stays reachable.
+    if (liveRef !== undefined) {
+      liveRef.textContent = title
     }
     mainRef?.focus({ preventScroll: true })
   })
 
   return (
     <QueryClientProvider client={queryClient}>
-      <main id="main-content" ref={(el) => { mainRef = el }} tabindex="-1">{props.children}</main>
+      {/* Single per-route <h1> (visually hidden — no visual change) gives a
+          valid heading outline and names the focus region (aria-labelledby).
+          Pages render their own sub-sections as <h2>. */}
+      <main id="main-content" ref={(el) => { mainRef = el }} tabindex="-1" aria-labelledby="page-heading">
+        <h1 id="page-heading" class="visually-hidden">{routeTitle()}</h1>
+        <p ref={(el) => { liveRef = el }} class="visually-hidden" aria-live="polite" aria-atomic="true" />
+        {props.children}
+      </main>
     </QueryClientProvider>
   )
 }

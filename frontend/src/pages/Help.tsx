@@ -64,10 +64,9 @@ export default function Help() {
 
   return (
     <section class="help-page">
-      <h2 class="visually-hidden">{m.help_title()}</h2>
 
       <section class="help-section">
-        <h3>{m.help_usage()}</h3>
+        <h2>{m.help_usage()}</h2>
         <ul>
           <li>{m.help_usage_add()}</li>
           <li>{m.help_usage_edit()}</li>
@@ -77,7 +76,7 @@ export default function Help() {
       </section>
 
       <section class="help-section">
-        <h3>{m.help_shortcuts()}</h3>
+        <h2>{m.help_shortcuts()}</h2>
         <div class="shortcut-tables">
           <ShortcutTable caption={m.help_shortcuts_global()} rows={GLOBAL_SHORTCUTS} />
           <ShortcutTable caption={m.help_shortcuts_grid()} rows={GRID_SHORTCUTS} />
@@ -86,7 +85,7 @@ export default function Help() {
       </section>
 
       <section class="help-section">
-        <h3>{m.help_links()}</h3>
+        <h2>{m.help_links()}</h2>
         <ul>
           <li>
             <a href="https://github.com/netresearch/timetracker" target="_blank" rel="noopener noreferrer">
