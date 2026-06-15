@@ -40,6 +40,22 @@ describe('enableGridNavigation', () => {
     expect(grid.table.querySelectorAll('[tabindex="0"]').length).toBe(1)
   })
 
+  it('exposes grid row/column counts and indices', () => {
+    expect(grid.table.getAttribute('aria-rowcount')).toBe('3') // 1 header + 2 body rows
+    expect(grid.table.getAttribute('aria-colcount')).toBe('2')
+    expect(grid.table.querySelector('tbody tr')?.getAttribute('aria-rowindex')).toBe('2')
+    expect(grid.table.querySelector('tbody td')?.getAttribute('aria-colindex')).toBe('1')
+  })
+
+  it('marks a read-only grid with aria-readonly', () => {
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><tbody><tr><td>x</td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table, { readonly: true })
+    expect(table.getAttribute('aria-readonly')).toBe('true')
+    cleanup()
+  })
+
   it('takes cell controls out of the tab order (single grid tab stop)', () => {
     expect(grid.table.querySelector('button')?.tabIndex).toBe(-1)
   })
