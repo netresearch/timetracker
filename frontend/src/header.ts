@@ -64,16 +64,13 @@ async function updateWorktime(): Promise<void> {
   }
 }
 
-// Nav order matching the shared header markup; role-gated items that aren't
-// rendered are simply skipped, so Alt+N maps to the n-th *available* item.
-const NAV_KEYS = ['tracking', 'month', 'auswertung', 'extras', 'billing', 'admin', 'settings', 'help']
-
+// The nav links are rendered in document order (and the overflow script keeps
+// that order: it folds items from the end into the "More" menu, which itself is
+// the last child of .main-nav). Role-gated items are simply absent. So a single
+// query yields the n-th *available* item for Alt+N, with no key list to keep in
+// sync with the Twig template.
 function navLinks(): HTMLAnchorElement[] {
-  return NAV_KEYS.map((key) =>
-    key === 'tracking'
-      ? document.querySelector<HTMLAnchorElement>('.app-header .main-nav a.main-nav-link:not([data-nav])')
-      : document.querySelector<HTMLAnchorElement>(`.app-header .main-nav a.main-nav-link[data-nav="${key}"]`),
-  ).filter((link): link is HTMLAnchorElement => link !== null)
+  return Array.from(document.querySelectorAll<HTMLAnchorElement>('.app-header .main-nav a.main-nav-link'))
 }
 
 let shortcutsWired = false

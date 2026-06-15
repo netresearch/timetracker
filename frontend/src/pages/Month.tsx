@@ -158,7 +158,10 @@ function CalendarDayCell(props: { cell: CalendarCell; locale: string; selected: 
  * the calendar's highlighted today, with no server-timezone skew. Any other
  * value is treated as the explicit CSV of YYYY-MM-DD keys written back on edit.
  */
-export function resolveDayTokens(raw: string, now: Date = new Date()): string[] {
+export function resolveDayTokens(raw: string, nowInput: Date = new Date()): string[] {
+  // Normalize to midday so the day-arithmetic below can't slip to an adjacent
+  // day across a DST transition (a 23/25-hour day) or right at midnight.
+  const now = new Date(nowInput.getFullYear(), nowInput.getMonth(), nowInput.getDate(), 12)
   switch (raw.trim()) {
     case 'today':
       return [isoDate(now)]
