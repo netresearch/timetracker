@@ -73,7 +73,7 @@ describe('Admin', () => {
     mockEndpoints()
     const { getByRole, getByText, unmount } = renderAdmin()
 
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
     // teams relation column resolves id 2 → "Backend"
     expect(getByText('Backend')).toBeInTheDocument()
 
@@ -83,10 +83,10 @@ describe('Admin', () => {
   it('switches entity via the sub-nav', async () => {
     mockEndpoints()
     const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Users' }))
-    await waitFor(() => expect(getByRole('cell', { name: 'jdoe' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'jdoe' })).toBeInTheDocument())
 
     unmount()
   })
@@ -95,7 +95,7 @@ describe('Admin', () => {
     mockEndpoints()
     postJson.mockResolvedValue([7, 'New', true, false, []])
     const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Add' }))
     // The dialog is portalled to document.body (Ark UI); screen queries the
@@ -128,7 +128,7 @@ describe('Admin', () => {
     })
     const { getByRole, queryAllByRole, unmount } = renderAdmin()
 
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
     // Only the one well-formed customer renders; the malformed rows are dropped.
     expect(queryAllByRole('row').length).toBe(2) // header + 1 data row
 
@@ -145,12 +145,12 @@ describe('Admin', () => {
         : Promise.resolve([]),
     )
     const { getByRole, queryByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.input(getByRole('searchbox'), { target: { value: 'glob' } })
 
     await waitFor(() => expect(queryByRole('cell', { name: 'ACME' })).not.toBeInTheDocument())
-    expect(getByRole('cell', { name: 'Globex' })).toBeInTheDocument()
+    expect(getByRole('gridcell', { name: 'Globex' })).toBeInTheDocument()
 
     unmount()
   })
@@ -160,7 +160,7 @@ describe('Admin', () => {
     postJson.mockResolvedValue(null)
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Delete' }))
 
@@ -172,7 +172,7 @@ describe('Admin', () => {
     mockEndpoints()
     vi.spyOn(window, 'confirm').mockReturnValue(false)
     const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Delete' }))
 
@@ -184,7 +184,7 @@ describe('Admin', () => {
     mockEndpoints()
     postJson.mockRejectedValue(new ApiError(422, 'Name taken'))
     const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Add' }))
     const name = (await screen.findByRole('textbox')) as HTMLInputElement
@@ -201,7 +201,7 @@ describe('Admin', () => {
   it('cycles a column header through ascending, descending and unsorted', async () => {
     mockEndpoints()
     const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     const header = getByRole('button', { name: /Name/ })
     const th = () => header.closest('th')
@@ -226,7 +226,7 @@ describe('Admin', () => {
   it('has no automatically detectable accessibility violations', async () => {
     mockEndpoints()
     const { container, getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('cell', { name: 'ACME' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     expect(await axe(container)).toHaveNoViolations()
 

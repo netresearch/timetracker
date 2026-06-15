@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/solid-query'
-import { createMemo, createSignal, For, Show } from 'solid-js'
+import { createMemo, createSignal, For, onCleanup, Show } from 'solid-js'
 
 import {
   activitiesQuery,
@@ -20,6 +20,7 @@ import { OptionSelect } from '../components/OptionSelect'
 import { QueryBoundary } from '../components/QueryBoundary'
 import { appConfig } from '../config'
 import { isoDate } from '../lib/format'
+import { enableGridNavigation } from '../lib/gridNavigation'
 import { m } from '../paraglide/messages.js'
 
 function addDays(date: Date, days: number): Date {
@@ -241,7 +242,7 @@ export default function Auswertung() {
           <h3>{m.auswertung_last_entries()}</h3>
           <QueryBoundary query={entries}>
             <div class="table-scroll">
-              <table class="data-table">
+              <table class="data-table" ref={(el) => onCleanup(enableGridNavigation(el))}>
                 <thead>
                   <tr>
                     <th scope="col">{m.auswertung_date()}</th>

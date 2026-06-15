@@ -6,6 +6,7 @@ import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
+import { enableGridNavigation } from '../lib/gridNavigation'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
@@ -190,7 +191,7 @@ export function AdminCrudShell(props: {
 
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
         <div class="table-scroll">
-          <table class="data-table admin-table">
+          <table class="data-table admin-table" ref={(el) => onCleanup(enableGridNavigation(el))}>
             <thead>
               <tr>
                 <For each={props.descriptor.columns}>

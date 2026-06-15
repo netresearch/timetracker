@@ -61,7 +61,7 @@ describe('Auswertung', () => {
     expect(getByRole('heading', { name: 'Effort by customer' })).toBeInTheDocument()
     expect(getByText('80.00%')).toBeInTheDocument()
     // entries table
-    expect(getByRole('cell', { name: 'ABC-1' })).toBeInTheDocument()
+    expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument()
 
     unmount()
   })
