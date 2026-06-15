@@ -107,6 +107,14 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     if (options.readonly) {
       table.setAttribute('aria-readonly', 'true')
     }
+    // Advertise that this grid joins the page's arrow-key focus chain — i.e. it
+    // can be both entered and left with the arrow keys — only when it has an
+    // upward exit bridge. Grids without one (e.g. a read-only table whose
+    // surrounding form owns the arrow keys) stay Tab-only, so the page never
+    // lets you arrow *in* somewhere you can't arrow back *out* of.
+    if (options.onExit) {
+      table.setAttribute('data-arrow-nav', '')
+    }
     const all = rows()
     table.setAttribute('aria-rowcount', String(all.length))
     table.setAttribute('aria-colcount', String(all[0] ? cellsOf(all[0]).length : 0))

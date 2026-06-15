@@ -33,6 +33,17 @@ export default function Admin() {
             event.preventDefault()
             event.stopImmediatePropagation()
             document.querySelector<HTMLElement>('.admin-filter')?.focus()
+          } else if (event.key === 'ArrowUp') {
+            // Continue the chain upward to the active main navigation item — but
+            // only a *visible* bar item: when the active link has folded into the
+            // (closed) "More" menu (:not(.nav-menu-item) excludes it) fall back to
+            // the first bar link, then the "More" button, so ArrowUp never lands
+            // on a hidden element and dead-ends the chain.
+            event.preventDefault()
+            const mainNav = document.querySelector<HTMLElement>('.app-header .main-nav .main-nav-link[aria-current="page"]:not(.nav-menu-item)')
+              ?? document.querySelector<HTMLElement>('.app-header .main-nav .main-nav-link:not(.nav-menu-item)')
+              ?? document.querySelector<HTMLElement>('.app-header .main-nav .nav-more-btn')
+            mainNav?.focus()
           } else if (event.key === 'ArrowRight') {
             event.preventDefault()
             links[Math.min(links.length - 1, i + 1)]?.focus()

@@ -113,6 +113,15 @@
                 burger.setAttribute('aria-label', open
                     ? (burger.getAttribute('data-label-open') || 'Open menu')
                     : (burger.getAttribute('data-label-close') || 'Close menu'));
+                // On open, move focus into the drawer so a keyboard user lands on
+                // the first link instead of tabbing through the whole header
+                // (Escape already returns focus to the burger).
+                if (!open) {
+                    var firstDrawerLink = drawer.querySelector('.drawer-link');
+                    if (firstDrawerLink !== null) {
+                        firstDrawerLink.focus();
+                    }
+                }
             });
             drawer.addEventListener('click', function (event) {
                 if (event.target.closest('a')) {
@@ -199,6 +208,9 @@
                 return;
             }
             laying = true;
+            // The "More" button may be hidden below; if it currently holds focus,
+            // we must hand focus back to the bar so it isn't lost to <body>.
+            var moreHadFocus = moreWrap.contains(document.activeElement);
             restore();
             // Measure with "More" hidden so it doesn't itself force an overflow.
             moreWrap.hidden = true;
@@ -223,6 +235,17 @@
                 }
                 if (moreMenu.children.length === 0) {
                     moreWrap.hidden = true;
+                }
+            }
+            // If "More" had focus and just disappeared, keep focus in the bar
+            // (last still-visible link) rather than dropping it to <body>. A
+            // focused folded *link* moves with the DOM node on restore(), so only
+            // the button needs rescuing.
+            if (moreHadFocus && moreWrap.hidden) {
+                var barLinks = items.filter(function (link) { return link.parentNode !== moreMenu; });
+                var fallback = barLinks[barLinks.length - 1] || nav.querySelector('.main-nav-link');
+                if (fallback) {
+                    fallback.focus();
                 }
             }
             laying = false;

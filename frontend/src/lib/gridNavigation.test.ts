@@ -56,6 +56,18 @@ describe('enableGridNavigation', () => {
     cleanup()
   })
 
+  it('advertises data-arrow-nav only when an arrow-exit is wired', () => {
+    // No onExit → Tab-only grid, not an arrow-entry target for the page chain.
+    expect(grid.table.hasAttribute('data-arrow-nav')).toBe(false)
+
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><tbody><tr><td>x</td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table, { onExit: () => {} })
+    expect(table.hasAttribute('data-arrow-nav')).toBe(true)
+    cleanup()
+  })
+
   it('takes cell controls out of the tab order (single grid tab stop)', () => {
     expect(grid.table.querySelector('button')?.tabIndex).toBe(-1)
   })

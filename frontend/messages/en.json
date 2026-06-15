@@ -95,6 +95,7 @@
   "help_sc_leave_cell": "Return from a control to the cell",
   "help_sc_search_table": "Move between the search field and the table",
   "help_sc_tabs": "Switch to tab 1–7",
+  "help_sc_arrow_nav": "Move between the menu, sub-menu, search and table",
   "help_sc_add": "Add a new entry",
   "help_sc_continue": "Continue the selected/last entry",
   "help_sc_delete": "Delete the selected/last entry",

@@ -87,6 +87,14 @@ export function handleShortcut(event: KeyboardEvent): void {
     const inField = target !== null
       && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
 
+    // While a modal dialog is open (Ark UI sets role="dialog" + data-state),
+    // stand down entirely: its own focus trap owns the keyboard. Otherwise the
+    // modifier shortcuts (Alt+A would re-open/clobber the form, Alt+1–7 would
+    // navigate away without dismissing the dialog) reach controls behind it.
+    if (document.querySelector('[role="dialog"][data-state="open"]') !== null) {
+      return
+    }
+
     if (event.altKey && !event.ctrlKey && !event.metaKey && /^Digit[1-7]$/.test(event.code)) {
       const link = navLinks()[Number(event.code.slice(5)) - 1]
       if (link !== undefined) {
@@ -138,12 +146,67 @@ export function handleShortcut(event: KeyboardEvent): void {
     // scrolling once the user has interacted. Also enterable from the search
     // field via ArrowDown or Escape (back to the table).
     const active = document.activeElement
+
+    // Main navigation behaves as a horizontal menubar: Left/Right/Home/End rove
+    // between the visible bar items, ArrowDown drops into the page content
+    // (sub-nav → search → grid → first focusable). Enter/Space still activates.
+    // Folded links live inside the (open) "More" menu — they keep .main-nav-link
+    // but must NOT rove the bar (they'd have no index in the bar set and snap
+    // focus to the first bar link). Exclude anything inside .nav-more-menu so
+    // arrows on a folded link fall through to the menu's native Tab order.
+    const navItem = active instanceof HTMLElement
+      && active.closest('.app-header .main-nav') !== null
+      && active.closest('.nav-more-menu') === null
+      && (active.matches('.main-nav-link') || active.matches('.nav-more-btn'))
+      ? active
+      : null
+    if (navItem !== null && /^(ArrowRight|ArrowLeft|ArrowDown|Home|End)$/.test(event.key)) {
+      event.preventDefault()
+      // Bar items only: the priority-overflow script tags folded links with
+      // .nav-menu-item and moves them into the (hidden) "More" menu, so
+      // :not(.nav-menu-item) leaves exactly what's on the bar. The "More" button
+      // joins the roving order only once its wrapper is shown (something folded).
+      // This is structural, not geometric, so it never depends on layout being
+      // measured (offsetParent is unreliable mid-resize and absent in tests).
+      const items = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          '.app-header .main-nav .main-nav-link:not(.nav-menu-item), .app-header .main-nav .nav-more-btn',
+        ),
+      ).filter((el) => {
+        const more = el.closest<HTMLElement>('.nav-more')
+
+        return more === null || !more.hidden
+      })
+      const i = items.indexOf(navItem)
+      if (event.key === 'ArrowRight') {
+        items[Math.min(items.length - 1, i + 1)]?.focus()
+      } else if (event.key === 'ArrowLeft') {
+        items[Math.max(0, i - 1)]?.focus()
+      } else if (event.key === 'Home') {
+        items[0]?.focus()
+      } else if (event.key === 'End') {
+        items[items.length - 1]?.focus()
+      } else {
+        const target = document.querySelector<HTMLElement>('.admin-subnav-link[aria-current="page"]')
+          ?? document.querySelector<HTMLElement>('.admin-subnav-link')
+          ?? document.querySelector<HTMLElement>('#main-content input[type="search"]')
+          ?? document.querySelector<HTMLElement>('#main-content .data-table[role="grid"][data-arrow-nav] [tabindex="0"]')
+          ?? document.querySelector<HTMLElement>('#main-content button, #main-content a[href], #main-content input, #main-content select, #main-content textarea')
+        target?.focus()
+      }
+
+      return
+    }
+
+    // Only grids that advertise an arrow-exit (data-arrow-nav) are arrow-enter
+    // targets — so entry and exit stay symmetric and we never drop focus into a
+    // grid that can only be left with Tab (e.g. the read-only Auswertung table).
     const onPage = !inField && /^Arrow(Up|Down|Left|Right)$/.test(event.key)
       && active instanceof HTMLElement && active.id === 'main-content'
     const fromSearch = active instanceof HTMLInputElement && active.type === 'search'
       && (event.key === 'ArrowDown' || event.key === 'Escape')
     if (onPage || fromSearch) {
-      const grid = document.querySelector<HTMLElement>('#main-content .data-table[role="grid"]')
+      const grid = document.querySelector<HTMLElement>('#main-content .data-table[role="grid"][data-arrow-nav]')
       const cell = grid?.querySelector<HTMLElement>('[tabindex="0"]') ?? grid?.querySelector<HTMLElement>('th, td')
       if (cell) {
         event.preventDefault()

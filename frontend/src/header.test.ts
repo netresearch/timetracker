@@ -38,16 +38,30 @@ describe('handleShortcut', () => {
         <a class="main-nav-link" href="/">Time tracking</a>
         <a class="main-nav-link" data-nav="month" href="/ui/month">Overview</a>
         <a class="main-nav-link" data-nav="help" href="/ui/help">Help</a>
+        <div class="nav-more" hidden>
+          <button type="button" class="nav-more-btn">More</button>
+          <div class="nav-more-menu" hidden></div>
+        </div>
       </nav></header>
       <main id="main-content" tabindex="-1">
         <button type="button" data-keyboard-add>Add</button>
         <input type="search" class="admin-filter" />
-        <table class="data-table" role="grid"><tbody><tr><td tabindex="0">Alpha</td></tr></tbody></table>
+        <table class="data-table" role="grid" data-arrow-nav><tbody><tr><td tabindex="0">Alpha</td></tr></tbody></table>
       </main>`
     // Anchor clicks would trigger jsdom navigation warnings; swallow them.
     for (const a of document.querySelectorAll('a')) {
       a.addEventListener('click', (e) => e.preventDefault())
     }
+  }
+
+  /** Mimic the priority-overflow script folding the last bar link into "More". */
+  function foldLastNavLink(): void {
+    const links = document.querySelectorAll<HTMLElement>('.main-nav-link')
+    const last = links[links.length - 1]!
+    last.classList.add('nav-menu-item')
+    document.querySelector('.nav-more-menu')!.appendChild(last)
+    document.querySelector('.nav-more')!.removeAttribute('hidden')
+    document.querySelector('.nav-more-menu')!.removeAttribute('hidden')
   }
 
   const press = (init: KeyboardEventInit) => handleShortcut(new KeyboardEvent('keydown', init))
@@ -105,6 +119,17 @@ describe('handleShortcut', () => {
     expect((document.activeElement as HTMLElement).tagName).toBe('TD')
   })
 
+  it('does not arrow-enter a grid that lacks an arrow-exit (Tab-only)', () => {
+    setup()
+    // A read-only grid (no data-arrow-nav) must not be an arrow-entry target,
+    // so focus is never dropped where only Tab can leave.
+    document.querySelector('.data-table')!.removeAttribute('data-arrow-nav')
+    const search = document.querySelector('input[type="search"]') as HTMLInputElement
+    search.focus()
+    press({ key: 'ArrowDown' })
+    expect(document.activeElement).toBe(search) // stays put; no jump into the grid
+  })
+
   it('does not hijack "/" while typing in a field', () => {
     setup()
     const search = document.querySelector('input[type="search"]') as HTMLInputElement
@@ -114,5 +139,80 @@ describe('handleShortcut', () => {
     search.dispatchEvent(event)
     handleShortcut(event)
     expect(prevented).not.toHaveBeenCalled()
+  })
+
+  it('the main nav roves horizontally like a menubar', () => {
+    setup()
+    const links = document.querySelectorAll<HTMLAnchorElement>('.main-nav-link')
+    links[0]!.focus()
+    press({ key: 'ArrowRight' })
+    expect(document.activeElement).toBe(links[1])
+    press({ key: 'ArrowRight' })
+    expect(document.activeElement).toBe(links[2])
+    press({ key: 'ArrowRight' }) // clamps at the last item
+    expect(document.activeElement).toBe(links[2])
+    press({ key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(links[1])
+    press({ key: 'Home' })
+    expect(document.activeElement).toBe(links[0])
+    press({ key: 'End' })
+    expect(document.activeElement).toBe(links[2])
+  })
+
+  it('ArrowDown from a nav link drops focus into the page content', () => {
+    setup()
+    const first = document.querySelector('.main-nav-link') as HTMLAnchorElement
+    first.focus()
+    press({ key: 'ArrowDown' })
+    expect(document.activeElement).toBe(document.querySelector('input[type="search"]'))
+  })
+
+  it('ArrowDown from a nav link prefers the active sub-nav when present', () => {
+    setup()
+    const content = document.getElementById('main-content')!
+    content.insertAdjacentHTML('afterbegin',
+      '<nav><button class="admin-subnav-link">Users</button>'
+      + '<button class="admin-subnav-link" aria-current="page">Teams</button></nav>')
+    const first = document.querySelector('.main-nav-link') as HTMLAnchorElement
+    first.focus()
+    press({ key: 'ArrowDown' })
+    expect(document.activeElement).toBe(document.querySelector('.admin-subnav-link[aria-current="page"]'))
+  })
+
+  it('skips a folded nav item and includes "More" once it is shown', () => {
+    setup()
+    foldLastNavLink() // Help folds into the now-visible "More" menu
+    const links = document.querySelectorAll<HTMLAnchorElement>('.main-nav-link')
+    const more = document.querySelector('.nav-more-btn') as HTMLButtonElement
+    links[0]!.focus()
+    press({ key: 'End' }) // last *bar* stop is the More button, not the folded link
+    expect(document.activeElement).toBe(more)
+    press({ key: 'ArrowLeft' }) // back onto the last visible bar link (Overview)
+    expect(document.activeElement).toBe(links[1])
+  })
+
+  it('an arrow on a folded link inside the open "More" menu is a no-op', () => {
+    setup()
+    foldLastNavLink()
+    const folded = document.querySelector('.nav-more-menu .main-nav-link') as HTMLAnchorElement
+    folded.focus()
+    press({ key: 'ArrowRight' }) // must NOT yank focus out to the first bar link
+    expect(document.activeElement).toBe(folded)
+  })
+
+  it('stands down while a modal dialog is open', () => {
+    setup()
+    document.body.insertAdjacentHTML('beforeend', '<div role="dialog" data-state="open"></div>')
+    const add = document.querySelector('[data-keyboard-add]') as HTMLButtonElement
+    const clicked = vi.fn()
+    add.addEventListener('click', clicked)
+    press({ altKey: true, code: 'KeyA', key: 'a' }) // Alt+A must not reach the page
+    expect(clicked).not.toHaveBeenCalled()
+
+    const overview = document.querySelector('a[data-nav="month"]') as HTMLAnchorElement
+    const nav = vi.fn()
+    overview.addEventListener('click', nav)
+    press({ altKey: true, code: 'Digit2', key: '2' }) // Alt+2 must not navigate
+    expect(nav).not.toHaveBeenCalled()
   })
 })

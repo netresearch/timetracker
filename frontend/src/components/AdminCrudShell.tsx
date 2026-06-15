@@ -193,9 +193,10 @@ export function AdminCrudShell(props: {
             // ArrowUp from search hands focus up to the entity sub-navigation
             // (ArrowDown back into the table is handled globally in header.ts).
             if (event.key === 'ArrowUp') {
-              const subnav = document.querySelector<HTMLElement>(
-                '.admin-subnav-link[aria-current="page"], .admin-subnav-link',
-              )
+              // Return to the *active* entity, not merely the first one (a
+              // grouped selector would match the first DOM element of either).
+              const subnav = document.querySelector<HTMLElement>('.admin-subnav-link[aria-current="page"]')
+                ?? document.querySelector<HTMLElement>('.admin-subnav-link')
               if (subnav !== null) {
                 event.preventDefault()
                 subnav.focus()

@@ -12,6 +12,7 @@ interface Shortcut {
 const GLOBAL_SHORTCUTS: Shortcut[] = [
   { keys: 'Alt + 1…7', label: () => m.help_sc_tabs() },
   { keys: 'Alt + A', label: () => m.help_sc_add() },
+  { keys: '↑ ↓ ← →', label: () => m.help_sc_arrow_nav() },
   { keys: '/', label: () => m.help_sc_search() },
   { keys: '?', label: () => m.help_sc_help() },
 ]
