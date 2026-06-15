@@ -52,12 +52,22 @@
                 setExpanded(moreBtn, moreMenu, true);
             }
         }
+        function setBackgroundInert(on) {
+            // Make the page content behind the open drawer inert (non-focusable,
+            // hidden from AT). #main-content exists only on the SolidJS shell;
+            // no-op elsewhere. The drawer's own Tab trap (below) covers the rest.
+            var bg = document.getElementById('main-content');
+            if (bg !== null) {
+                bg.inert = on;
+            }
+        }
         function closeDrawer() {
             if (burger === null || drawer === null) {
                 return;
             }
             setExpanded(burger, drawer, false);
             burger.setAttribute('aria-label', burger.getAttribute('data-label-open') || 'Open menu');
+            setBackgroundInert(false);
         }
 
         if (moreBtn !== null && moreMenu !== null && moreWrap !== null) {
@@ -117,6 +127,7 @@
                 // the first link instead of tabbing through the whole header
                 // (Escape already returns focus to the burger).
                 if (!open) {
+                    setBackgroundInert(true);
                     var firstDrawerLink = drawer.querySelector('.drawer-link');
                     if (firstDrawerLink !== null) {
                         firstDrawerLink.focus();
@@ -126,6 +137,26 @@
             drawer.addEventListener('click', function (event) {
                 if (event.target.closest('a')) {
                     closeDrawer();
+                }
+            });
+            // Focus trap: keep Tab/Shift+Tab cycling within the open drawer so
+            // focus can't leak to the (now-inert) content behind it.
+            drawer.addEventListener('keydown', function (event) {
+                if (event.key !== 'Tab') {
+                    return;
+                }
+                var f = drawer.querySelectorAll('a[href], button:not([disabled])');
+                if (f.length === 0) {
+                    return;
+                }
+                var first = f[0];
+                var last = f[f.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
                 }
             });
         }
