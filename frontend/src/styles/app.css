@@ -1225,3 +1225,60 @@ th[aria-sort='descending'] .th-sort-glyph {
 @media (prefers-reduced-motion: reduce) {
   .kbd-hint { animation: none; }
 }
+
+/* ---- Full-page content presented as a modal (App.tsx PageDialog) ---- */
+.modal-page {
+  max-width: 46rem;
+  max-height: 92vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-page-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.modal-page-body {
+  overflow-y: auto;
+  padding: 1.4rem;
+}
+
+/* Inside the modal the page wrapper must not re-centre or cap its width. */
+.modal-page-body .form-page,
+.modal-page-body .help-page {
+  margin: 0;
+  max-width: none;
+}
+
+.modal-close {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 1.4rem;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.modal-close:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
