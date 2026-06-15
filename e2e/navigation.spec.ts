@@ -78,6 +78,21 @@ test.describe('Tab Navigation', () => {
     await expect(page.locator('input[type="checkbox"][name="show_empty_line"]')).toBeAttached();
   });
 
+  test('Settings opens as a modal dialog over the page and closes on Escape', async ({ page }) => {
+    // Modal-as-route: /ui/settings opens a dialog over the background page (the
+    // URL is preserved); Escape closes it and returns to that page.
+    await goToSettingsPage(page);
+    await expect(page).toHaveURL(/\/ui\/settings/);
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('form.stack-form')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page).toHaveURL(/\/ui\/month/, { timeout: 10000 });
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+
   test('should restore the tracking grid on page reload', async ({ page }) => {
     await goToTrackingTab(page);
 
