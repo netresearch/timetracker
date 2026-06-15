@@ -1138,6 +1138,26 @@ th[aria-sort='descending'] .th-sort-glyph {
   white-space: nowrap;
 }
 
+/* Inactive-records toggle sits inline in the toolbar (no bottom margin). */
+.admin-inactive-toggle {
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Page controls under the grid. */
+.admin-pagination {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: flex-end;
+  margin-top: 0.8rem;
+}
+
+.admin-page-status {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
 .link-button {
   align-items: center;
   background: none;
