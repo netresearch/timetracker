@@ -1264,10 +1264,12 @@ th[aria-sort='descending'] .th-sort-glyph {
 }
 
 .modal-close {
+  align-items: center;
+  display: flex;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  line-height: 1;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   font-size: 1.4rem;
   background: transparent;
   border: 0;
