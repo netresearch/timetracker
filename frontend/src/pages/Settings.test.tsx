@@ -5,9 +5,11 @@ import Settings from './Settings'
 
 describe('Settings', () => {
   it('only offers the locales the UI actually ships (de/en)', () => {
-    const { getByRole, unmount } = render(() => <Settings />)
+    const { container, unmount } = render(() => <Settings />)
 
-    const select = getByRole('combobox') as HTMLSelectElement
+    // Target the locale select specifically (the page also has a client-side
+    // grid-editing preference select).
+    const select = container.querySelector('select[name="locale"]') as HTMLSelectElement
     const values = Array.from(select.options).map((option) => option.value)
 
     expect(values).toEqual(['de', 'en'])

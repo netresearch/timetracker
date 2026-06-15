@@ -1139,11 +1139,14 @@ th[aria-sort='descending'] .th-sort-glyph {
 }
 
 .link-button {
+  align-items: center;
   background: none;
   border: 0;
   color: var(--color-link);
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
+  gap: 0.3rem;
   min-height: 44px;
   padding: 0 0.5rem;
   text-decoration: underline;
@@ -1151,6 +1154,14 @@ th[aria-sort='descending'] .th-sort-glyph {
 
 .link-button.is-danger {
   color: var(--color-danger-text);
+}
+
+/* Leading action glyph (Edit/Delete) — sized to the text, never the link colour
+   alone carrying meaning since the text label stays. */
+.action-ico {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
 }
 
 .modal-backdrop {

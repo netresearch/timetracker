@@ -25,9 +25,12 @@ test.describe('Admin inline cell editing', () => {
     await expect(editor).toBeVisible();
     await editor.fill(updated);
 
-    // Enter commits and moves down a row → leaving the row saves the whole entity.
-    const saved = page.waitForResponse((r) => /\/customer\/save$/.test(r.url()) && r.request().method() === 'POST');
+    // Enter commits and (by default) stays in the cell; leaving the row — here by
+    // focusing the filter box — saves the whole entity.
     await page.keyboard.press('Enter');
+    await expect(page.locator('td[data-inline-editing]')).toHaveCount(0); // editor closed, still on the cell
+    const saved = page.waitForResponse((r) => /\/customer\/save$/.test(r.url()) && r.request().method() === 'POST');
+    await page.locator('input.admin-filter').focus();
     await saved;
 
     // The edit survives a full reload (it was persisted, not just optimistic).

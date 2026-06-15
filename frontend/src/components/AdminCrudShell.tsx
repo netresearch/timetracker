@@ -6,6 +6,7 @@ import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
+import { getEnterBehavior } from '../lib/gridEditPref'
 import { gridNav, type ActivateKey, type GridMoveHandle } from '../lib/gridNavigation'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
@@ -262,11 +263,26 @@ export function AdminCrudShell(props: {
     if (!rowId || colKey === null) {
       return false
     }
+    const col = props.descriptor.columns.find((c) => c.key === colKey)
+    if (col && inlineEditable(col)) {
+      return beginEdit(rowId, colKey, key === 'type' ? initial : undefined)
+    }
+    // A column backed by a modal-only field (multiselect / locked relation, e.g.
+    // Customers → Teams) can't edit in place — Enter/F2 open the full edit modal
+    // so the field stays reachable from the keyboard instead of doing nothing.
+    if (col && fieldFor(colKey) !== undefined && key !== 'type') {
+      const row = visibleRows().find((r) => Number(r.id) === rowId)
+      if (row) {
+        openForm(row)
 
-    return beginEdit(rowId, colKey, key === 'type' ? initial : undefined)
+        return true
+      }
+    }
+
+    return false
   }
 
-  function commitCell(value: FormValues[string], direction?: 'down' | 'left' | 'right'): void {
+  function commitCell(value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay'): void {
     const cell = editCell()
     if (cell === null) {
       return
@@ -274,9 +290,13 @@ export function AdminCrudShell(props: {
     setDrafts(cell.rowId, cell.colKey, value)
     seedChar = undefined
     setEditCell(null)
-    // Move through the grid's own setActive (the single roving-tabindex writer);
-    // landing on a different row triggers that row's save via onTableFocusIn.
-    if (direction) {
+    // All focus moves go through the grid's own setActive (the single
+    // roving-tabindex writer); landing on a different row triggers that row's
+    // save via onTableFocusIn. 'stay' re-focuses the just-edited cell; an
+    // undefined direction (commit-on-blur) leaves focus wherever it went.
+    if (direction === 'stay') {
+      moveHandle?.focusActive()
+    } else if (direction) {
       moveHandle?.move(direction)
     }
   }
@@ -486,8 +506,14 @@ export function AdminCrudShell(props: {
                         focusing the row's action buttons "inside the row", so
                         clicking Edit doesn't read as a row-leave and flush. */}
                     <td class="admin-row-actions" data-row-id={String(Number(row.id))}>
-                      <button type="button" class="link-button" onClick={() => openForm(row)}>{m.admin_edit()}</button>
-                      <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>{m.admin_delete()}</button>
+                      <button type="button" class="link-button" onClick={() => openForm(row)}>
+                        <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                        {m.admin_edit()}
+                      </button>
+                      <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>
+                        <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6"/><path d="M10 11v6M14 11v6"/></svg>
+                        {m.admin_delete()}
+                      </button>
                       <Show when={rowErrors[Number(row.id)]}>
                         <span role="alert" class="form-status is-error">{rowErrors[Number(row.id)]}</span>
                       </Show>
@@ -639,7 +665,7 @@ function InlineEditor(props: {
   initial: FormValues[string]
   seed?: string
   options: OptionLookup
-  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right') => void
+  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay') => void
   onCancel: () => void
 }) {
   const isCheckbox = (): boolean => props.field.type === 'checkbox'
@@ -664,7 +690,7 @@ function InlineEditor(props: {
     return raw
   }
 
-  const finish = (direction?: 'down' | 'left' | 'right') => {
+  const finish = (direction?: 'down' | 'left' | 'right' | 'stay') => {
     if (done) {
       return
     }
@@ -683,7 +709,9 @@ function InlineEditor(props: {
     if (event.key === 'Enter') {
       event.preventDefault()
       event.stopPropagation()
-      finish('down')
+      // Enter's focus move is a user preference (default: stay in the cell);
+      // Tab below always advances, so the user keeps an explicit move key.
+      finish(getEnterBehavior())
     } else if (event.key === 'Tab') {
       event.preventDefault()
       event.stopPropagation()
