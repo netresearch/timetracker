@@ -292,14 +292,15 @@ export function handleShortcut(event: KeyboardEvent): void {
     }
 
     // Drop focus into the page's data grid — from the #main-content landing spot
-    // (ArrowDown) or from the search field (ArrowDown/Escape, back to the table).
-    // Only grids that advertise an arrow-exit (data-arrow-nav) are arrow-enter
-    // targets — so entry and exit stay symmetric and we never drop focus into a
-    // grid that can only be left with Tab (e.g. the read-only Auswertung table).
+    // (ArrowDown) or from the search field (ArrowDown). Escape is intentionally
+    // NOT a grid-entry key (it clears/leaves the filter in AdminCrudShell, the
+    // conventional Escape behaviour). Only grids that advertise an arrow-exit
+    // (data-arrow-nav) are arrow-enter targets — so entry and exit stay
+    // symmetric and we never drop focus into a grid that only Tab can leave.
     const onPage = !inField && event.key === 'ArrowDown'
       && active instanceof HTMLElement && active.id === 'main-content'
     const fromSearch = active instanceof HTMLInputElement && active.type === 'search'
-      && (event.key === 'ArrowDown' || event.key === 'Escape')
+      && event.key === 'ArrowDown'
     if (onPage || fromSearch) {
       const grid = document.querySelector<HTMLElement>('#main-content .data-table[role="grid"][data-arrow-nav]')
       const cell = grid?.querySelector<HTMLElement>('[tabindex="0"]') ?? grid?.querySelector<HTMLElement>('th, td')
@@ -337,6 +338,13 @@ function pollLoginStatus(config: AppConfig): void {
 export function initHeaderDynamics(config: AppConfig): void {
   setBadge(true, config.userName)
   initShortcuts()
+  // Advertise the Alt+1–7 nav shortcuts to assistive tech, matching
+  // handleShortcut's by-index mapping (so role-gated/absent items shift the
+  // numbering identically). Only the SolidJS shell implements these, which is
+  // exactly where this runs.
+  navLinks().slice(0, 7).forEach((link, i) => {
+    link.setAttribute('aria-keyshortcuts', `Alt+${i + 1}`)
+  })
   void updateWorktime()
   setTimeout(() => {
     pollLoginStatus(config)

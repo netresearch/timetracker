@@ -26,7 +26,8 @@ const GRID_SHORTCUTS: Shortcut[] = [
   { keys: 'Enter / F2', label: () => m.help_sc_enter_cell() },
   { keys: 'Tab / Shift + Tab', label: () => m.help_sc_cell_controls() },
   { keys: 'Esc', label: () => m.help_sc_leave_cell() },
-  { keys: '↓ / Esc', label: () => m.help_sc_search_table() },
+  { keys: '↓', label: () => m.help_sc_search_table() },
+  { keys: 'Esc', label: () => m.help_sc_search_clear() },
 ]
 
 // Classic time-tracking grid (still the ExtJS shell at /; KeyMap in main.js).
@@ -77,6 +78,7 @@ export default function Help() {
 
       <section class="help-section">
         <h2>{m.help_shortcuts()}</h2>
+        <p class="help-intro">{m.help_shortcuts_intro()}</p>
         <div class="shortcut-tables">
           <ShortcutTable caption={m.help_shortcuts_global()} rows={GLOBAL_SHORTCUTS} />
           <ShortcutTable caption={m.help_shortcuts_grid()} rows={GRID_SHORTCUTS} />

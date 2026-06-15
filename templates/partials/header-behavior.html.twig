@@ -164,9 +164,13 @@
         var badges = worktime
             ? Array.prototype.slice.call(worktime.querySelectorAll('.worktime-item:not(.worktime-item-month)'))
             : [];
-        // All nav items, in priority order (direct <a> children of .main-nav).
+        // Foldable nav items, in priority order (direct <a> children of
+        // .main-nav). The Help link is PINNED (never folds): it is the single
+        // entry point to the keyboard-shortcut docs, so it must stay visible on
+        // the bar rather than being the first item hidden into "More".
         var items = Array.prototype.slice.call(nav.children).filter(function (el) {
-            return el.tagName === 'A' && el.classList.contains('main-nav-link');
+            return el.tagName === 'A' && el.classList.contains('main-nav-link')
+                && el.getAttribute('data-nav') !== 'help';
         });
         var collapseMq = window.matchMedia(COLLAPSE_QUERY);
         var laying = false;

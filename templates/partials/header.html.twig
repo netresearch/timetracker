@@ -68,8 +68,12 @@
                folds bar items into it; the whole control hides when it's empty
                (header-behavior.html.twig). #}
             <div class="nav-more" hidden>
+                {# Disclosure button (aria-expanded + aria-controls): it reveals a
+                   group of navigation links, not a command menu — so no
+                   aria-haspopup="menu". Arrow-key roving of the revealed links is
+                   a progressive enhancement (header.ts), not menu semantics. #}
                 <button type="button" class="nav-more-btn" id="nav-more-btn"
-                        aria-haspopup="true" aria-expanded="false" aria-controls="nav-more-menu">
+                        aria-expanded="false" aria-controls="nav-more-menu">
                     {{ 'More'|trans }}
                     <svg class="nav-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                 </button>

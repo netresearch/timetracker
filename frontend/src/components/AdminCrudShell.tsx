@@ -187,19 +187,30 @@ export function AdminCrudShell(props: {
           class="admin-filter"
           placeholder={m.admin_filter()}
           aria-label={m.admin_filter()}
+          aria-keyshortcuts="/"
           value={filter()}
           onInput={(event) => setFilter(event.currentTarget.value)}
           onKeyDown={(event) => {
-            // ArrowUp from search hands focus up to the entity sub-navigation
-            // (ArrowDown back into the table is handled globally in header.ts).
+            // The *active* entity, not merely the first (a grouped selector
+            // would match the first DOM element of either kind).
+            const subnav = () => document.querySelector<HTMLElement>('.admin-subnav-link[aria-current="page"]')
+              ?? document.querySelector<HTMLElement>('.admin-subnav-link')
             if (event.key === 'ArrowUp') {
-              // Return to the *active* entity, not merely the first one (a
-              // grouped selector would match the first DOM element of either).
-              const subnav = document.querySelector<HTMLElement>('.admin-subnav-link[aria-current="page"]')
-                ?? document.querySelector<HTMLElement>('.admin-subnav-link')
-              if (subnav !== null) {
+              // ArrowUp hands focus up to the entity sub-navigation (ArrowDown
+              // back into the table is handled globally in header.ts).
+              const el = subnav()
+              if (el !== null) {
                 event.preventDefault()
-                subnav.focus()
+                el.focus()
+              }
+            } else if (event.key === 'Escape') {
+              // Conventional Escape: clear the filter if it has text, else leave
+              // the field back up to the sub-nav — never descend into the grid.
+              event.preventDefault()
+              if (filter() !== '') {
+                setFilter('')
+              } else {
+                subnav()?.focus()
               }
             }
           }}

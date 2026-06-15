@@ -120,16 +120,18 @@ describe('handleShortcut', () => {
     expect(document.activeElement).toBe(active)
   })
 
-  it('ArrowDown and Escape from the search field return to the table', () => {
+  it('ArrowDown from the search field enters the table (Escape does not)', () => {
     setup()
     const search = document.querySelector('input[type="search"]') as HTMLInputElement
     search.focus()
     press({ key: 'ArrowDown' })
     expect((document.activeElement as HTMLElement).tagName).toBe('TD')
 
+    // Escape is no longer a grid-entry key in the global handler — it clears/
+    // leaves the filter (AdminCrudShell). The global handler must leave it alone.
     search.focus()
     press({ key: 'Escape' })
-    expect((document.activeElement as HTMLElement).tagName).toBe('TD')
+    expect(document.activeElement).toBe(search)
   })
 
   it('does not arrow-enter a grid that lacks an arrow-exit (Tab-only)', () => {
