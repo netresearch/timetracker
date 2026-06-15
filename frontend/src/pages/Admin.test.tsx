@@ -331,16 +331,47 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('does not open an inline editor on a modal-only (multiselect) column', async () => {
+  it('opens the edit modal (not an inline editor) when activating a modal-only column', async () => {
     mockEndpoints()
-    const { getByRole, queryByRole, unmount } = renderAdmin()
+    const { getByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
+    // The "Backend" cell is the teams (multiselect) column — not inline-editable.
     const teamsCell = getByRole('gridcell', { name: 'Backend' })
     teamsCell.focus()
     fireEvent.keyDown(teamsCell, { key: 'Enter' })
 
-    expect(queryByRole('textbox')).not.toBeInTheDocument()
+    // No inline editor mounts in the cell; instead the full edit modal opens
+    // (portalled to document.body) so the field stays keyboard-reachable.
+    expect(teamsCell.querySelector('input')).toBeNull()
+    await screen.findByRole('dialog')
+    unmount()
+  })
+
+  it('keeps focus on the cell after Enter by default (stay, does not move down)', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/getAllCustomers'
+        ? Promise.resolve([
+            { customer: { id: 1, name: 'ACME', active: true, global: false, teams: [] } },
+            { customer: { id: 2, name: 'Globex', active: true, global: false, teams: [] } },
+          ])
+        : Promise.resolve([]),
+    )
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    const cell = getByRole('gridcell', { name: 'ACME' })
+    cell.focus()
+    fireEvent.keyDown(cell, { key: 'Enter' })
+    const editor = (await screen.findByRole('textbox')) as HTMLInputElement
+    fireEvent.input(editor, { target: { value: 'ACME9' } })
+    fireEvent.keyDown(editor, { key: 'Enter' }) // default: commit + stay
+
+    await waitFor(() => expect(screen.queryByRole('textbox')).not.toBeInTheDocument())
+    // Focus stayed on the row-1 name cell — it did not drop to Globex (row 2).
+    const active = document.activeElement as HTMLElement
+    expect(active.getAttribute('data-row-id')).toBe('1')
+    expect(active.getAttribute('data-col-key')).toBe('name')
     unmount()
   })
 

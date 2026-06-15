@@ -2,7 +2,15 @@ import { createSignal, For, Show } from 'solid-js'
 
 import { apiErrorMessage, postForm } from '../api/client'
 import { appConfig, type AppConfig } from '../config'
+import { getEnterBehavior, setEnterBehavior, type EnterBehavior } from '../lib/gridEditPref'
 import { m } from '../paraglide/messages.js'
+
+// Client-side-only UI preferences (localStorage, not the server settings).
+const ENTER_BEHAVIORS: { value: EnterBehavior; label: () => string }[] = [
+  { value: 'stay', label: () => m.settings_grid_enter_stay() },
+  { value: 'down', label: () => m.settings_grid_enter_down() },
+  { value: 'right', label: () => m.settings_grid_enter_right() },
+]
 
 interface SaveResponse {
   success: boolean
@@ -28,6 +36,7 @@ type Status = { kind: 'idle' | 'saving' } | { kind: 'ok' } | { kind: 'error'; me
 
 export default function Settings() {
   const config = appConfig()
+  const [enterPref, setEnterPref] = createSignal<EnterBehavior>(getEnterBehavior())
   const [status, setStatus] = createSignal<Status>({ kind: 'idle' })
   const statusMessage = () => {
     const current = status()
@@ -95,6 +104,24 @@ export default function Settings() {
             </label>
           )}
         </For>
+
+        {/* Client-side UI preference — applies instantly, not part of the Save. */}
+        <label class="field">
+          <span>{m.settings_grid_enter()}</span>
+          <select
+            value={enterPref()}
+            onChange={(event) => {
+              const next = event.currentTarget.value as EnterBehavior
+              setEnterPref(next)
+              setEnterBehavior(next)
+            }}
+          >
+            <For each={ENTER_BEHAVIORS}>
+              {(option) => <option value={option.value}>{option.label()}</option>}
+            </For>
+          </select>
+          <small class="field-hint">{m.settings_grid_enter_hint()}</small>
+        </label>
 
         <div class="form-actions">
           <button type="submit" class="primary-button" disabled={status().kind === 'saving'}>
