@@ -1,6 +1,6 @@
 import { Navigate, Route, Router, useLocation } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { createEffect, createMemo, onMount, type Component, type ParentProps } from 'solid-js'
+import { createEffect, createMemo, createSignal, onMount, Show, type Component, type ParentProps } from 'solid-js'
 
 import { SessionExpiredError } from './api/client'
 import { appConfig, canBill, canBulkEnter, hasRole } from './config'
@@ -40,6 +40,10 @@ const PAGE_TITLES: Record<string, () => string> = {
   help: m.help_title,
 }
 
+// Shown once ever: the keyboard model is otherwise invisible, so on the first
+// load we surface a dismissible hint pointing at the "?" shortcut overview.
+const HINT_SEEN_KEY = 'tt-kbd-hint-seen'
+
 function Layout(props: ParentProps) {
   const location = useLocation()
   // Theming (apply + toggle) is handled framework-neutrally by the shared
@@ -48,6 +52,7 @@ function Layout(props: ParentProps) {
   let mainRef: HTMLElement | undefined
   let liveRef: HTMLElement | undefined
   let initialRoute = true
+  const [showHint, setShowHint] = createSignal(false)
 
   const routeTitle = createMemo(() => {
     const segment = location.pathname.replace(/^\/ui\/?/, '').split('/')[0] || 'month'
@@ -64,6 +69,17 @@ function Layout(props: ParentProps) {
     // viewport put; #main-content is a tabindex=-1 region (no visible ring).
     if (document.activeElement === null || document.activeElement === document.body) {
       mainRef?.focus({ preventScroll: true })
+    }
+    // First-run discoverability: reveal the keyboard-shortcut hint once, then
+    // never again. Guarded so a blocked localStorage (private mode) just skips it.
+    try {
+      if (localStorage.getItem(HINT_SEEN_KEY) === null) {
+        localStorage.setItem(HINT_SEEN_KEY, '1')
+        setShowHint(true)
+        window.setTimeout(() => setShowHint(false), 9000)
+      }
+    } catch {
+      // localStorage unavailable — skip the hint.
     }
   })
 
@@ -97,6 +113,12 @@ function Layout(props: ParentProps) {
         <p ref={(el) => { liveRef = el }} class="visually-hidden" aria-live="polite" aria-atomic="true" />
         {props.children}
       </main>
+      <Show when={showHint()}>
+        <div class="kbd-hint" role="status">
+          <span>{m.kbd_hint()}</span>
+          <button type="button" class="kbd-hint-close" aria-label={m.kbd_hint_dismiss()} onClick={() => setShowHint(false)}>×</button>
+        </div>
+      </Show>
     </QueryClientProvider>
   )
 }
