@@ -59,26 +59,28 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     if (!(row instanceof HTMLTableRowElement)) {
       return null
     }
-    const r = rows().indexOf(row)
-    const c = cellsOf(row).indexOf(cell)
 
-    return r < 0 || c < 0 ? null : [r, c]
+    return [row.rowIndex, cell.cellIndex] // standard DOM indices: O(1), no allocation
   }
 
   function cellAt(r: number, c: number): Cell | undefined {
-    const all = rows()
+    const all = table.rows
     const row = all[Math.max(0, Math.min(all.length - 1, r))]
     if (!row) {
       return undefined
     }
-    const cells = cellsOf(row)
+    const cells = row.cells
 
     return cells[Math.max(0, Math.min(cells.length - 1, c))]
   }
 
   function setActive(cell: Cell, focus = true): void {
-    for (const c of table.querySelectorAll<Cell>('th, td')) {
-      c.tabIndex = -1
+    // Hot path — runs on every arrow keystroke. Flip only the single current
+    // roving cell and aria-current row (the bulk reset to tabindex=-1 happens
+    // once per render in sync()), so arrow nav stays O(1) on large grids.
+    const prevCell = table.querySelector<Cell>('th[tabindex="0"], td[tabindex="0"]')
+    if (prevCell !== null && prevCell !== cell) {
+      prevCell.tabIndex = -1
     }
     cell.tabIndex = 0
     const pos = position(cell)
@@ -86,8 +88,9 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       active = pos
     }
     activeCellEl = cell
-    for (const marked of table.querySelectorAll('tr[aria-current="true"]')) {
-      marked.removeAttribute('aria-current')
+    const prevRow = table.querySelector('tr[aria-current="true"]')
+    if (prevRow !== null && prevRow !== cell.parentElement) {
+      prevRow.removeAttribute('aria-current')
     }
     cell.parentElement?.setAttribute('aria-current', 'true')
     if (focus) {
@@ -125,6 +128,7 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       cellsOf(row).forEach((cell, c) => {
         cell.setAttribute('role', cell.tagName === 'TH' ? 'columnheader' : 'gridcell')
         cell.setAttribute('aria-colindex', String(c + 1))
+        cell.tabIndex = -1 // bulk-reset the roving stop here (render-time); setActive then sets the one active cell
         for (const control of cell.querySelectorAll<HTMLElement>(INTERACTIVE)) {
           control.tabIndex = -1
         }
@@ -177,7 +181,7 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     }
 
     const [r, c] = active
-    const lastRow = rows().length - 1
+    const lastRow = table.rows.length - 1 // live count, no per-keystroke allocation
 
     switch (event.key) {
       case 'ArrowRight':
