@@ -60,4 +60,26 @@ test.describe('Admin inline cell editing', () => {
     // The teams column maps to a multiselect field → no inline editor opens.
     await expect(page.locator('td[data-inline-editing]')).toHaveCount(0);
   });
+
+  test('the Edit button hands a pending inline draft to the modal (no stale data, no double-save)', async ({ page }) => {
+    let saved = false;
+    page.on('request', (r) => {
+      if (/\/customer\/save$/.test(r.url()) && r.request().method() === 'POST') saved = true;
+    });
+
+    const row = page.locator('table.admin-table tbody tr').first();
+    await row.locator('td[data-col-key="name"]').focus();
+    await page.keyboard.press('Enter');
+    const editor = page.locator('td[data-inline-editing] input.inline-editor').first();
+    await expect(editor).toBeVisible();
+    await editor.fill('Inline-Draft-X');
+
+    // Clicking Edit (same row → no premature flush) commits the draft on blur and
+    // opens the modal seeded from it, so the modal shows the edit, not stale data.
+    await row.locator('.admin-row-actions button.link-button').first().click();
+    await expect(page.locator('.modal input[type="text"]').first()).toHaveValue('Inline-Draft-X');
+
+    await page.waitForTimeout(600);
+    expect(saved).toBe(false); // the modal took over; no inline save fired
+  });
 });

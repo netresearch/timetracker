@@ -364,4 +364,27 @@ describe('Admin inline cell editing', () => {
 
     unmount()
   })
+
+  it('hands a pending inline draft to the modal instead of stale row data', async () => {
+    mockEndpoints()
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    // Start an inline edit but stay on the row (single-row list → no save).
+    const cell = getByRole('gridcell', { name: 'ACME' })
+    cell.focus()
+    fireEvent.keyDown(cell, { key: 'Enter' })
+    const inlineEditor = (await screen.findByRole('textbox')) as HTMLInputElement
+    fireEvent.input(inlineEditor, { target: { value: 'ACME-DIRTY' } })
+    fireEvent.keyDown(inlineEditor, { key: 'Enter' }) // commit; clamps on the only row
+
+    // Opening the modal must seed from the draft (the edited value), not the
+    // stale list row, and must not have fired an inline save.
+    fireEvent.click(getByRole('button', { name: 'Edit' }))
+    const modalName = (await screen.findByRole('textbox')) as HTMLInputElement
+    await waitFor(() => expect(modalName).toHaveValue('ACME-DIRTY'))
+    expect(postJson).not.toHaveBeenCalled()
+
+    unmount()
+  })
 })

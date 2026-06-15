@@ -142,7 +142,18 @@ export function AdminCrudShell(props: {
 
   function openForm(row: Row | null) {
     setError('')
-    const form = props.descriptor.toForm(row)
+    // If the row has a pending inline draft, the modal takes it over: seed from
+    // the draft (not the now-stale list row) and drop the inline draft + open
+    // editor so the inline and modal paths can't both save the same row.
+    const rowId = row !== null ? Number(row.id) : 0
+    const draft = rowId ? drafts[rowId] : undefined
+    const form = draft !== undefined ? { ...draft } : props.descriptor.toForm(row)
+    if (draft !== undefined) {
+      if (editCell()?.rowId === rowId) {
+        setEditCell(null)
+      }
+      setDrafts(produce((store) => { delete store[rowId] }))
+    }
     // reconcile replaces every key (and drops stale ones) in one diffed update.
     setValues(reconcile(form))
     setEditing(form)
@@ -400,15 +411,9 @@ export function AdminCrudShell(props: {
         <div class="table-scroll">
           <table
             class="data-table admin-table"
-            ref={(el) => {
-              tableEl = el
-              el.addEventListener('focusin', onTableFocusIn)
-              el.addEventListener('focusout', onTableFocusOut)
-              onCleanup(() => {
-                el.removeEventListener('focusin', onTableFocusIn)
-                el.removeEventListener('focusout', onTableFocusOut)
-              })
-            }}
+            ref={(el) => { tableEl = el }}
+            onFocusIn={onTableFocusIn}
+            onFocusOut={onTableFocusOut}
             use:gridNav={{
               items: visibleRows,
               onExit: (dir) => { if (dir === 'up') searchEl?.focus() },
@@ -477,7 +482,10 @@ export function AdminCrudShell(props: {
                         )
                       }}
                     </For>
-                    <td class="admin-row-actions">
+                    {/* data-row-id (no data-col-key → not inline-editable) keeps
+                        focusing the row's action buttons "inside the row", so
+                        clicking Edit doesn't read as a row-leave and flush. */}
+                    <td class="admin-row-actions" data-row-id={String(Number(row.id))}>
                       <button type="button" class="link-button" onClick={() => openForm(row)}>{m.admin_edit()}</button>
                       <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>{m.admin_delete()}</button>
                       <Show when={rowErrors[Number(row.id)]}>
@@ -636,6 +644,9 @@ function InlineEditor(props: {
 }) {
   const isCheckbox = (): boolean => props.field.type === 'checkbox'
   const [value, setValue] = createSignal<string | boolean>(isCheckbox() ? Boolean(props.initial) : String(props.initial ?? ''))
+  // Memoized so the <For> below sees a stable array (recreated only when the
+  // option source changes), not a fresh one on every render.
+  const selectOptions = createMemo(() => fieldSelectOptions(props.field, props.options))
   let control: HTMLInputElement | HTMLSelectElement | undefined
   // Guards against a second commit: the keydown move already committed, and the
   // editor then unmounts and blurs — the blur must not re-commit.
@@ -716,7 +727,7 @@ function InlineEditor(props: {
           onBlur={() => finish()}
         >
           <option value="">—</option>
-          <For each={fieldSelectOptions(props.field, props.options)}>
+          <For each={selectOptions()}>
             {(option) => <option value={String(option.value)}>{option.label}</option>}
           </For>
         </select>
