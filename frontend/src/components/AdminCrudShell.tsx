@@ -1,6 +1,6 @@
 import { Dialog } from '@ark-ui/solid/dialog'
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
-import { createEffect, createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
+import { createComputed, createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
 import { createStore, produce, reconcile } from 'solid-js/store'
 import { Portal } from 'solid-js/web'
 
@@ -25,7 +25,9 @@ const PAGE_SIZE = 50
 // One CSV field: guard against formula injection (a leading =,+,-,@ is neutered
 // with a leading apostrophe) and quote/escape per RFC 4180.
 function csvCell(value: string): string {
-  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
+  // Trim before the formula check: Excel strips leading whitespace and would
+  // still run "   =cmd", so a non-trimmed test could be bypassed.
+  const safe = /^[=+\-@]/.test(value.trim()) ? `'${value}` : value
 
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
@@ -165,10 +167,11 @@ export function AdminCrudShell(props: {
   // whenever the result set changes (filter / sort / active toggle); the slice
   // start is clamped so a shrunk result set can't strand us past the last page.
   const pageCount = createMemo(() => Math.max(1, Math.ceil(visibleRows().length / PAGE_SIZE)))
-  createEffect(() => {
-    filter()
-    sort()
-    hideInactive()
+  // Reset to the first page whenever the result set changes (visibleRows already
+  // tracks filter/sort/active toggle + data refetches). createComputed runs in
+  // the reactive phase before render, so there's no flash of the old page.
+  createComputed(() => {
+    visibleRows()
     setPage(0)
   })
   const pagedRows = createMemo<Row[]>(() => {
@@ -185,8 +188,8 @@ export function AdminCrudShell(props: {
       lines.push(columns.map((col) => csvCell(cellText(row, col))))
     }
     const csv = lines.map((cells) => cells.join(',')).join('\r\n')
-    // Prepend a BOM so Excel reads UTF-8; download via an object URL.
-    const blob = new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8;' })
+    // Prepend a BOM (explicit escape, not a literal char) so Excel reads UTF-8.
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
