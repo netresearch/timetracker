@@ -180,11 +180,11 @@ export function AdminCrudShell(props: {
     return visibleRows().slice(start, start + PAGE_SIZE)
   })
 
-  // Export the filtered/sorted rows (all pages) as the column values shown.
-  function exportCsv() {
+  // Export the given rows as the column values shown (all-filtered, or selected).
+  function exportCsv(rowsToExport: Row[]) {
     const columns = props.descriptor.columns
     const lines = [columns.map((col) => csvCell(col.label()))]
-    for (const row of visibleRows()) {
+    for (const row of rowsToExport) {
       lines.push(columns.map((col) => csvCell(cellText(row, col))))
     }
     const csv = lines.map((cells) => cells.join(',')).join('\r\n')
@@ -196,6 +196,74 @@ export function AdminCrudShell(props: {
     anchor.download = `${props.descriptor.key}.csv`
     anchor.click()
     URL.revokeObjectURL(url)
+  }
+
+  // ---- Row selection + bulk actions ---------------------------------------
+  // Selection is keyed by stable row id and persists across pages/filtering.
+  const [selected, setSelected] = createStore<Record<number, boolean>>({})
+  const selectedRows = createMemo<Row[]>(() => visibleRows().filter((row) => selected[Number(row.id)]))
+  const selectedCount = createMemo(() => selectedRows().length)
+  // Header checkbox reflects/toggles the whole filtered set (across pages).
+  const allSelected = createMemo(() => visibleRows().length > 0 && selectedRows().length === visibleRows().length)
+  const [bulkBusy, setBulkBusy] = createSignal(false)
+  // `indeterminate` is a DOM property (no HTML attribute), so drive it via a ref
+  // + a reactive computed rather than JSX.
+  let selectAllEl: HTMLInputElement | undefined
+  const someSelected = (): boolean => selectedCount() > 0 && !allSelected()
+  createComputed(() => {
+    if (selectAllEl) {
+      selectAllEl.indeterminate = someSelected()
+    }
+  })
+
+  const toggleRow = (rowId: number, on: boolean) => setSelected(rowId, on)
+  // Shallow-merge only the currently-visible rows so selections of rows hidden by
+  // the filter/another page are preserved (selection persists across filtering).
+  function toggleAll(on: boolean) {
+    const updates: Record<number, boolean> = {}
+    for (const row of visibleRows()) {
+      updates[Number(row.id)] = on
+    }
+    setSelected(updates)
+  }
+  function clearSelection() {
+    setSelected(reconcile({}))
+  }
+
+  // Run an async op over each selected row. Each row is deselected as it
+  // succeeds, so on a mid-way failure the failed + unprocessed rows stay selected
+  // (clear feedback); refresh always runs so the grid reflects partial success.
+  async function runBulk(action: (row: Row) => Promise<void>, successMessage: () => string) {
+    const targets = selectedRows()
+    if (targets.length === 0 || bulkBusy()) {
+      return
+    }
+    setBulkBusy(true)
+    setError('')
+    try {
+      for (const row of targets) {
+        await action(row)
+        setSelected(Number(row.id), false)
+      }
+      flashNotice(successMessage())
+    } catch (caught) {
+      setError(apiErrorMessage(caught, m.app_load_error()))
+    } finally {
+      await refreshAfterMutation()
+      setBulkBusy(false)
+    }
+  }
+
+  function bulkSetActive(active: boolean) {
+    const { saveEndpoint, toForm, toPayload } = props.descriptor
+    void runBulk((row) => postJson(saveEndpoint, toPayload({ ...toForm(row), active })), () => m.admin_saved())
+  }
+  function bulkDelete() {
+    if (!window.confirm(m.admin_bulk_delete_confirm({ count: String(selectedCount()) }))) {
+      return
+    }
+    const { deleteEndpoint } = props.descriptor
+    void runBulk((row) => postJson(deleteEndpoint, { id: row.id }), () => m.admin_deleted())
   }
 
   function openForm(row: Row | null) {
@@ -488,10 +556,23 @@ export function AdminCrudShell(props: {
             <span>{m.admin_show_inactive()}</span>
           </label>
         </Show>
-        <button type="button" class="action-button" onClick={() => exportCsv()} disabled={visibleRows().length === 0}>
+        <button type="button" class="action-button" onClick={() => exportCsv(visibleRows())} disabled={visibleRows().length === 0}>
           {m.admin_export_csv()}
         </button>
       </div>
+
+      <Show when={selectedCount() > 0}>
+        <div class="admin-bulk-bar" role="region" aria-label={m.admin_bulk_actions()} aria-busy={bulkBusy() ? 'true' : undefined}>
+          <span class="admin-bulk-count" role="status" aria-live="polite">{m.admin_bulk_selected({ count: String(selectedCount()) })}</span>
+          <Show when={hasActiveField()}>
+            <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(true)}>{m.admin_bulk_activate()}</button>
+            <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(false)}>{m.admin_bulk_deactivate()}</button>
+          </Show>
+          <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => exportCsv(selectedRows())}>{m.admin_bulk_export()}</button>
+          <button type="button" class="link-button is-danger" disabled={bulkBusy()} onClick={() => bulkDelete()}>{m.admin_delete()}</button>
+          <button type="button" class="link-button" disabled={bulkBusy()} onClick={() => clearSelection()}>{m.admin_bulk_clear()}</button>
+        </div>
+      </Show>
 
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
         <div class="table-scroll">
@@ -509,6 +590,15 @@ export function AdminCrudShell(props: {
           >
             <thead>
               <tr>
+                <th scope="col" class="boolean admin-select-col">
+                  <input
+                    ref={(el) => { selectAllEl = el; el.indeterminate = someSelected() }}
+                    type="checkbox"
+                    aria-label={m.admin_select_all()}
+                    checked={allSelected()}
+                    onInput={(event) => toggleAll(event.currentTarget.checked)}
+                  />
+                </th>
                 <For each={props.descriptor.columns}>
                   {(col) => (
                     <th
@@ -529,7 +619,15 @@ export function AdminCrudShell(props: {
             <tbody>
               <For each={pagedRows()}>
                 {(row) => (
-                  <tr aria-busy={savingRows[Number(row.id)] ? 'true' : undefined}>
+                  <tr aria-busy={savingRows[Number(row.id)] ? 'true' : undefined} classList={{ 'is-selected': Boolean(selected[Number(row.id)]) }}>
+                    <td class="boolean admin-select-col">
+                      <input
+                        type="checkbox"
+                        aria-label={m.admin_select_row({ label: props.descriptor.rowLabel(row) })}
+                        checked={Boolean(selected[Number(row.id)])}
+                        onInput={(event) => toggleRow(Number(row.id), event.currentTarget.checked)}
+                      />
+                    </td>
                     <For each={props.descriptor.columns}>
                       {(col) => {
                         const rowId = Number(row.id)

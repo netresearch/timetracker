@@ -34,9 +34,11 @@ test.describe('Admin inline cell editing', () => {
     await saved;
 
     // The edit survives a full reload (it was persisted, not just optimistic).
+    // exact: the row's selection checkbox is labelled "Select <name>", so a
+    // substring match would also hit the selection cell.
     await page.reload();
     await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
-    await expect(page.getByRole('gridcell', { name: updated })).toBeVisible();
+    await expect(page.getByRole('gridcell', { name: updated, exact: true })).toBeVisible();
   });
 
   test('opens an editor by typing and cancels with Escape', async ({ page }) => {
@@ -108,5 +110,22 @@ test.describe('Admin list — inactive filter & CSV export', () => {
       page.getByRole('button', { name: /CSV/i }).click(),
     ]);
     expect(download.suggestedFilename()).toBe('customers.csv');
+  });
+
+  test('selecting a row shows the bulk bar and exports the selection', async ({ page }) => {
+    // Non-destructive: select one row, confirm the bulk bar, export-selected.
+    await page.locator('table.admin-table tbody tr td.admin-select-col input[type="checkbox"]').first().check();
+    const bar = page.locator('.admin-bulk-bar');
+    await expect(bar).toBeVisible();
+    await expect(page.locator('.admin-bulk-count')).toHaveText(/1/);
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 8000 }),
+      page.getByRole('button', { name: /selected|auswahl/i }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('customers.csv');
+
+    await page.getByRole('button', { name: /^(clear|aufheben)$/i }).click();
+    await expect(bar).toBeHidden();
   });
 });
