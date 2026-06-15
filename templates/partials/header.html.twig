@@ -8,7 +8,7 @@
    Layout: a single app-bar. Primary items (Time tracking, Overview, Evaluation)
    sit inline; secondary + role-gated items (Extras, Billing, Administration) plus
    Settings and Help fold into a "More" disclosure menu. Worktime badges, a
-   single-button theme cycle and the user/logout cluster follow. Below ~880px the
+   single-button theme cycle and the user/logout cluster follow. Below 600px the
    nav collapses behind a hamburger drawer. Behaviour is wired framework-neutrally
    by partials/header-behavior.html.twig (menu/drawer) and theme-init.html.twig
    (theme cycle), so it works on BOTH shells. #}
@@ -122,7 +122,7 @@
         </button>
     </header>
 
-    {# Mobile drawer — opened by the hamburger below ~880px. Its links use
+    {# Mobile drawer — opened by the hamburger below 600px. Its links use
        .drawer-link (not .main-nav-link) so they don't duplicate the desktop
        selectors, and it carries no element IDs (worktime IDs stay unique to the
        bar's Month badge, which remains visible on mobile). #}

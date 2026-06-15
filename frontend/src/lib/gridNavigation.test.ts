@@ -148,6 +148,15 @@ describe('enableGridNavigation', () => {
     expect(document.activeElement).toBe(actionsCell)
   })
 
+  it('Space enters the cell like Enter (and does not scroll)', () => {
+    const actionsCell = grid.table.querySelectorAll('tbody td')[1] as HTMLElement
+    actionsCell.focus()
+    const ev = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true })
+    actionsCell.dispatchEvent(ev)
+    expect(document.activeElement?.textContent).toBe('Edit')
+    expect(ev.defaultPrevented).toBe(true) // scroll suppressed
+  })
+
   it('Tab past the last cell control does not trap (no preventDefault)', () => {
     const actionsCell = grid.table.querySelectorAll('tbody td')[1] as HTMLElement
     actionsCell.focus()

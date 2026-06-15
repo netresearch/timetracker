@@ -199,6 +199,25 @@ export function handleShortcut(event: KeyboardEvent): void {
       return
     }
 
+    // Tab / Shift+Tab from inside the open menu closes it and returns to the
+    // "More" button — a known bar position from which normal Tab and arrow
+    // roving continue — so the folded items are never a one-way Tab pocket.
+    if (active instanceof HTMLElement && active.closest('.nav-more-menu') !== null
+      && event.key === 'Tab') {
+      const moreBtn = document.querySelector<HTMLElement>('.nav-more-btn')
+      if (moreBtn !== null) {
+        event.preventDefault()
+        moreBtn.setAttribute('aria-expanded', 'false')
+        const moreMenu = document.querySelector<HTMLElement>('.nav-more-menu')
+        if (moreMenu !== null) {
+          moreMenu.hidden = true
+        }
+        moreBtn.focus()
+      }
+
+      return
+    }
+
     // Main navigation behaves as a horizontal menubar: Left/Right/Home/End rove
     // between the visible bar items, ArrowDown drops into the page content
     // (sub-nav → search → grid → first focusable). Enter/Space still activates.

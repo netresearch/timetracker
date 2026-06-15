@@ -247,6 +247,18 @@ describe('handleShortcut', () => {
     expect(document.activeElement).toBe(items[0])
   })
 
+  it('Tab from inside the open "More" menu closes it and returns to the button', () => {
+    setup()
+    foldNavLinks(2)
+    const more = document.querySelector('.nav-more-btn') as HTMLButtonElement
+    const item = document.querySelector('.nav-more-menu .main-nav-link') as HTMLAnchorElement
+    item.focus()
+    press({ key: 'Tab' }) // must not Tab item-by-item out to the worktime badges
+    expect(document.activeElement).toBe(more)
+    expect(more.getAttribute('aria-expanded')).toBe('false')
+    expect((document.querySelector('.nav-more-menu') as HTMLElement).hidden).toBe(true)
+  })
+
   it('stands down while a modal dialog is open', () => {
     setup()
     document.body.insertAdjacentHTML('beforeend', '<div role="dialog" data-state="open"></div>')

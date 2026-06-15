@@ -209,7 +209,10 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
         focusAt(event.ctrlKey ? lastRow : r, Number.MAX_SAFE_INTEGER)
         break
       case 'Enter':
-      case 'F2': {
+      case 'F2':
+      case ' ': {
+        // Enter/F2/Space all drop into the cell's first control (APG grid). Space
+        // is included so it activates the cell instead of scrolling the page.
         const control = cell.querySelector<HTMLElement>(INTERACTIVE)
         if (control) {
           control.focus()
