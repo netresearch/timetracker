@@ -67,10 +67,26 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   const rows = (): HTMLTableRowElement[] => Array.from(table.rows)
   const cellsOf = (row: HTMLTableRowElement): Cell[] => Array.from(row.cells)
 
+  // Height of the viewport the grid actually scrolls within — the nearest
+  // vertically-scrollable ancestor, else the window. NOT table.clientHeight:
+  // when the table isn't height-constrained (it scrolls with the document) that
+  // equals the full content height, so PageUp/Down would jump to the list ends
+  // instead of moving one screenful of rows.
+  function viewportHeight(): number {
+    for (let el = table.parentElement; el !== null; el = el.parentElement) {
+      const overflowY = getComputedStyle(el).overflowY
+      if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+        return el.clientHeight
+      }
+    }
+
+    return window.innerHeight
+  }
+
   function pageRows(): number {
     const sample = table.tBodies[0]?.rows[0]
     const rowHeight = sample?.getBoundingClientRect().height ?? 0
-    const visible = rowHeight > 0 ? Math.floor(table.clientHeight / rowHeight) - 1 : 0
+    const visible = rowHeight > 0 ? Math.floor(viewportHeight() / rowHeight) - 1 : 0
 
     return Math.max(1, visible || FALLBACK_PAGE_ROWS)
   }
