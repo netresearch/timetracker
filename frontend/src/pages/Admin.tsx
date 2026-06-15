@@ -1,5 +1,5 @@
-import { useNavigate, useParams } from '@solidjs/router'
-import { For, Show } from 'solid-js'
+import { useLocation, useNavigate, useParams } from '@solidjs/router'
+import { createEffect, For, Show } from 'solid-js'
 
 import { adminEntities } from '../admin/entities'
 import { useOptionSources } from '../admin/options'
@@ -7,16 +7,34 @@ import { AdminCrudShell } from '../components/AdminCrudShell'
 import { activeNavLink } from '../header'
 import { m } from '../paraglide/messages.js'
 
+// Remembers the entity the Admin URL last selected. When a page-level modal
+// (e.g. /ui/settings) opens over Admin, App.tsx re-renders Admin as the modal's
+// background — but the live route is the modal's, so useParams() no longer
+// carries the :entity segment. The background falls back to this so the (dimmed)
+// backdrop keeps its tab instead of flashing to the first entity.
+let lastAdminEntity: string | undefined
+
 export default function Admin() {
   const entities = adminEntities()
   const params = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
   const { lookup } = useOptionSources()
 
-  // The selected entity is the URL segment (/ui/admin/<key>), so it's
-  // deep-linkable and survives reload/back; an unknown/absent key falls back to
-  // the first entity. Switching navigates (pushes a history entry).
-  const activeKey = () => entities.find((entity) => entity.key === params.entity)?.key ?? entities[0]!.key
+  // True when Admin is the live route; false when it's a modal's background page.
+  const onAdminRoute = () => location.pathname.replace(/^\/ui/, '').startsWith('/admin')
+  // While Admin is the live route the URL segment is authoritative (and is
+  // recorded); as a background it falls back to the last recorded segment.
+  createEffect(() => {
+    if (onAdminRoute()) {
+      lastAdminEntity = params.entity
+    }
+  })
+  const activeKey = () => {
+    const key = params.entity ?? (onAdminRoute() ? undefined : lastAdminEntity)
+
+    return entities.find((entity) => entity.key === key)?.key ?? entities[0]!.key
+  }
   const active = () => entities.find((entity) => entity.key === activeKey()) ?? entities[0]!
 
   return (
