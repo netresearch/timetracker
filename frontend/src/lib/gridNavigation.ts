@@ -46,11 +46,23 @@ export function enableGridNavigation(table: HTMLTableElement): () => void {
     }
   }
 
+  // Highlight the row holding the current cell — the "current row" affordance
+  // the ExtJS grid provides (Help: "the focused entry has a highlighted row").
+  function markCurrentRow(cell: Cell): void {
+    for (const marked of table.querySelectorAll('tr.is-current-row')) {
+      marked.classList.remove('is-current-row')
+    }
+    if (cell.parentElement instanceof HTMLTableRowElement) {
+      cell.parentElement.classList.add('is-current-row')
+    }
+  }
+
   function setActive(cell: Cell): void {
     for (const c of table.querySelectorAll<Cell>('th, td')) {
       c.tabIndex = -1
     }
     cell.tabIndex = 0
+    markCurrentRow(cell)
     cell.focus()
   }
 
@@ -153,11 +165,14 @@ export function enableGridNavigation(table: HTMLTableElement): () => void {
     const target = event.target
     if (target instanceof HTMLElement) {
       const cell = target.closest('th, td') as Cell | null
-      if (cell !== null && table.contains(cell) && cell.tabIndex !== 0) {
-        for (const c of table.querySelectorAll<Cell>('th, td')) {
-          c.tabIndex = -1
+      if (cell !== null && table.contains(cell)) {
+        if (cell.tabIndex !== 0) {
+          for (const c of table.querySelectorAll<Cell>('th, td')) {
+            c.tabIndex = -1
+          }
+          cell.tabIndex = 0
         }
-        cell.tabIndex = 0
+        markCurrentRow(cell)
       }
     }
   }

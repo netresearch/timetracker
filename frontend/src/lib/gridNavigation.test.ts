@@ -68,6 +68,20 @@ describe('enableGridNavigation', () => {
     expect(document.activeElement).toBe(firstHeader)
   })
 
+  it('highlights the row of the current cell and follows arrow movement', () => {
+    const firstHeader = grid.table.querySelector('th') as HTMLElement
+    firstHeader.focus()
+    key(firstHeader, 'ArrowDown')
+    const alphaRow = (document.activeElement as HTMLElement).closest('tr')
+    expect(alphaRow?.classList.contains('is-current-row')).toBe(true)
+
+    key(document.activeElement!, 'ArrowDown')
+    const betaRow = (document.activeElement as HTMLElement).closest('tr')
+    expect(betaRow?.classList.contains('is-current-row')).toBe(true)
+    // The highlight moved off the previous row — only one current row at a time.
+    expect(grid.table.querySelectorAll('tr.is-current-row').length).toBe(1)
+  })
+
   it('Enter moves focus into the cell control, Escape returns to the cell', () => {
     const actionsCell = grid.table.querySelectorAll('tbody td')[1] as HTMLElement
     actionsCell.focus()

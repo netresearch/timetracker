@@ -81,13 +81,8 @@ let shortcutsWired = false
  * shortcuts (Alt+A/C/D/…) still live in the ExtJS tracking shell. Clicking the
  * nav link reuses the router's anchor interception and the role gating.
  */
-function initShortcuts(): void {
-  if (shortcutsWired) {
-    return
-  }
-  shortcutsWired = true
-
-  document.addEventListener('keydown', (event) => {
+export function handleShortcut(event: KeyboardEvent): void {
+  {
     const target = event.target as HTMLElement | null
     const inField = target !== null
       && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
@@ -108,8 +103,45 @@ function initShortcuts(): void {
         event.preventDefault()
         help.click()
       }
+
+      return
     }
-  })
+
+    // '/' jumps to the page's search/filter field (search mode).
+    if (event.key === '/' && !inField && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      const search = document.querySelector<HTMLElement>('#main-content input[type="search"]')
+      if (search !== null) {
+        event.preventDefault()
+        search.focus()
+      }
+
+      return
+    }
+
+    // Arrow keys while focus is still on the page (e.g. right after a route
+    // change, where the main region holds focus) enter the first data grid, so
+    // table keyboard navigation works without clicking a cell first.
+    if (!inField && /^Arrow(Up|Down|Left|Right)$/.test(event.key)) {
+      const active = document.activeElement
+      const onPage = active === document.body || (active instanceof HTMLElement && active.id === 'main-content')
+      if (onPage) {
+        const grid = document.querySelector<HTMLElement>('#main-content .data-table[role="grid"]')
+        const cell = grid?.querySelector<HTMLElement>('[tabindex="0"]') ?? grid?.querySelector<HTMLElement>('th, td')
+        if (cell) {
+          event.preventDefault()
+          cell.focus()
+        }
+      }
+    }
+  }
+}
+
+function initShortcuts(): void {
+  if (shortcutsWired) {
+    return
+  }
+  shortcutsWired = true
+  document.addEventListener('keydown', handleShortcut)
 }
 
 function pollLoginStatus(config: AppConfig): void {

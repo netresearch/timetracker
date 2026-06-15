@@ -975,6 +975,11 @@ kbd {
   outline-offset: -2px;
 }
 
+/* …and highlight the row of the current cell (the ExtJS "focused entry" row). */
+.data-table tbody tr.is-current-row {
+  background: var(--color-accent-soft);
+}
+
 .data-table .numeric {
   text-align: right;
   white-space: nowrap;
