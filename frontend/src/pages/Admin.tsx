@@ -27,7 +27,11 @@ export default function Admin() {
           const links = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('.admin-subnav-link'))
           const i = links.indexOf(document.activeElement as HTMLButtonElement)
           if (event.key === 'ArrowDown') {
+            // Stop the event reaching the global handler (same delegated target),
+            // which would otherwise see focus now on the search field and bounce
+            // it straight on into the grid, skipping the search step.
             event.preventDefault()
+            event.stopImmediatePropagation()
             document.querySelector<HTMLElement>('.admin-filter')?.focus()
           } else if (event.key === 'ArrowRight') {
             event.preventDefault()
