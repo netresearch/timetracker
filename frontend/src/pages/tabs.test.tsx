@@ -132,7 +132,9 @@ describe('Extras', () => {
 describe('Help', () => {
   it('renders shortcut tables without accessibility violations', async () => {
     const { container, getByText, unmount } = renderPage('/help', Help)
-    expect(getByText('Alt + A')).toBeInTheDocument()
+    // Global, table-navigation and tracking sections are all present.
+    expect(getByText('Alt + 1…7')).toBeInTheDocument()
+    expect(getByText('Ctrl + Home / End')).toBeInTheDocument()
     expect(await axe(container)).toHaveNoViolations()
     unmount()
   })

@@ -968,6 +968,21 @@ kbd {
   background: var(--color-accent-soft);
 }
 
+/* Keyboard grid navigation (use:gridNav): show which cell holds focus, using the
+   stronger focus token for contrast (>=3:1, WCAG 1.4.11) in both themes. */
+.data-table [role='gridcell']:focus-visible,
+.data-table [role='columnheader']:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* Highlight the current row (aria-current). A left bar is a non-colour cue so
+   it stays distinguishable from the hover/zebra backgrounds (WCAG 1.4.1). */
+.data-table tbody tr[aria-current='true'] {
+  background: var(--color-accent-soft);
+  box-shadow: inset 3px 0 0 0 var(--color-accent);
+}
+
 .data-table .numeric {
   text-align: right;
   white-space: nowrap;

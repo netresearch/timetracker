@@ -5,7 +5,7 @@
 
    Layout: a single app-bar. Primary nav inline; secondary/role-gated items plus
    Settings & Help fold into a "More" disclosure; worktime badges, a single
-   theme-cycle button and the user/logout cluster follow. Below 880px the nav
+   theme-cycle button and the user/logout cluster follow. Below 600px the nav
    collapses behind a hamburger drawer (WCAG 1.4.10 reflow).
 
    Theming: colours use light-dark() so the header follows the user's theme.
@@ -416,7 +416,7 @@
     outline-offset: 1px;
 }
 
-/* ---- Hamburger + mobile drawer (shown < 880px) ---- */
+/* ---- Hamburger + mobile drawer (shown < 600px) ---- */
 .nav-burger {
     display: none;
     align-items: center;

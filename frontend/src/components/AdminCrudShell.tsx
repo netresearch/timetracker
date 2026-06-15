@@ -6,6 +6,7 @@ import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
+import { gridNav } from '../lib/gridNavigation'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
@@ -166,10 +167,12 @@ export function AdminCrudShell(props: {
     }
   }
 
+  let searchEl: HTMLInputElement | undefined
+
   return (
     <div class="admin-crud">
       <div class="admin-crud-toolbar">
-        <button type="button" class="primary-button" onClick={() => openForm(null)}>
+        <button type="button" class="primary-button" data-keyboard-add aria-keyshortcuts="Alt+A" onClick={() => openForm(null)}>
           {m.admin_add()}
         </button>
         <Show when={error()}>
@@ -179,18 +182,36 @@ export function AdminCrudShell(props: {
           <span role="status" class="form-status is-ok">{notice()}</span>
         </Show>
         <input
+          ref={(el) => { searchEl = el }}
           type="search"
           class="admin-filter"
           placeholder={m.admin_filter()}
           aria-label={m.admin_filter()}
           value={filter()}
           onInput={(event) => setFilter(event.currentTarget.value)}
+          onKeyDown={(event) => {
+            // ArrowUp from search hands focus up to the entity sub-navigation
+            // (ArrowDown back into the table is handled globally in header.ts).
+            if (event.key === 'ArrowUp') {
+              // Return to the *active* entity, not merely the first one (a
+              // grouped selector would match the first DOM element of either).
+              const subnav = document.querySelector<HTMLElement>('.admin-subnav-link[aria-current="page"]')
+                ?? document.querySelector<HTMLElement>('.admin-subnav-link')
+              if (subnav !== null) {
+                event.preventDefault()
+                subnav.focus()
+              }
+            }
+          }}
         />
       </div>
 
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
         <div class="table-scroll">
-          <table class="data-table admin-table">
+          <table
+            class="data-table admin-table"
+            use:gridNav={{ items: visibleRows, onExit: (dir) => { if (dir === 'up') searchEl?.focus() } }}
+          >
             <thead>
               <tr>
                 <For each={props.descriptor.columns}>

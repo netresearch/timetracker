@@ -73,6 +73,18 @@ function navLinks(): HTMLAnchorElement[] {
   return Array.from(document.querySelectorAll<HTMLAnchorElement>('.app-header .main-nav a.main-nav-link'))
 }
 
+/**
+ * The menubar re-entry point: the active main-nav bar item, falling back to the
+ * first bar item and finally the "More" button. Only *visible* bar items
+ * (:not(.nav-menu-item)) qualify, so focus is never sent to a link folded into
+ * the closed overflow menu. Used wherever a page hands focus back up to the nav.
+ */
+export function activeNavLink(): HTMLElement | null {
+  return document.querySelector<HTMLElement>('.app-header .main-nav .main-nav-link[aria-current="page"]:not(.nav-menu-item)')
+    ?? document.querySelector<HTMLElement>('.app-header .main-nav .main-nav-link:not(.nav-menu-item)')
+    ?? document.querySelector<HTMLElement>('.app-header .main-nav .nav-more-btn')
+}
+
 let shortcutsWired = false
 
 /**
@@ -81,16 +93,19 @@ let shortcutsWired = false
  * shortcuts (Alt+A/C/D/…) still live in the ExtJS tracking shell. Clicking the
  * nav link reuses the router's anchor interception and the role gating.
  */
-function initShortcuts(): void {
-  if (shortcutsWired) {
-    return
-  }
-  shortcutsWired = true
-
-  document.addEventListener('keydown', (event) => {
+export function handleShortcut(event: KeyboardEvent): void {
+  {
     const target = event.target as HTMLElement | null
     const inField = target !== null
       && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
+
+    // While a modal dialog is open (Ark UI sets role="dialog" + data-state),
+    // stand down entirely: its own focus trap owns the keyboard. Otherwise the
+    // modifier shortcuts (Alt+A would re-open/clobber the form, Alt+1–7 would
+    // navigate away without dismissing the dialog) reach controls behind it.
+    if (document.querySelector('[role="dialog"][data-state="open"]') !== null) {
+      return
+    }
 
     if (event.altKey && !event.ctrlKey && !event.metaKey && /^Digit[1-7]$/.test(event.code)) {
       const link = navLinks()[Number(event.code.slice(5)) - 1]
@@ -102,14 +117,206 @@ function initShortcuts(): void {
       return
     }
 
-    if (event.key === '?' && !inField) {
+    // Alt+A → add a new entry on pages that offer one (the Add button is tagged
+    // with data-keyboard-add), mirroring the ExtJS tracking grid's Alt+A.
+    if (event.altKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyA') {
+      const add = document.querySelector<HTMLElement>('#main-content [data-keyboard-add]')
+      if (add !== null) {
+        event.preventDefault()
+        add.click()
+      }
+
+      return
+    }
+
+    // Single-character shortcut: only outside fields and without modifiers, so it
+    // can't fire while typing text (WCAG 2.1.4 mitigation).
+    if (event.key === '?' && !inField && !event.altKey && !event.ctrlKey && !event.metaKey) {
       const help = document.querySelector<HTMLAnchorElement>('.app-header .main-nav a[data-nav="help"]')
       if (help !== null) {
         event.preventDefault()
         help.click()
       }
+
+      return
     }
-  })
+
+    // '/' jumps to the page's search/filter field (search mode).
+    if (event.key === '/' && !inField && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      const search = document.querySelector<HTMLElement>('#main-content input[type="search"]')
+      if (search !== null) {
+        event.preventDefault()
+        search.focus()
+      }
+
+      return
+    }
+
+    // Move focus into the first data grid so table keyboard navigation works
+    // without a mouse click — but only from the route-change focus state (the
+    // #main-content region itself, not document.body), so we never hijack page
+    // scrolling once the user has interacted. Also enterable from the search
+    // field via ArrowDown or Escape (back to the table).
+    const active = document.activeElement
+
+    // "More" overflow as a WAI-ARIA menu button: ArrowDown/ArrowUp on the button
+    // opens the disclosure and moves focus to the first/last item (rather than the
+    // bar item's usual "descend into page content"). Escape closes and returns to
+    // the button — handled framework-neutrally in header-behavior.html.twig.
+    if (active instanceof HTMLElement && active.matches('.nav-more-btn')
+      && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+      event.preventDefault()
+      if (active.getAttribute('aria-expanded') !== 'true') {
+        active.click() // the behavior script's click handler opens + unhides the menu
+      }
+      const items = Array.from(document.querySelectorAll<HTMLElement>('.nav-more-menu .main-nav-link'))
+      if (event.key === 'ArrowDown') {
+        items[0]?.focus()
+      } else {
+        items[items.length - 1]?.focus()
+      }
+
+      return
+    }
+
+    // Inside the open "More" menu: ArrowUp/Down (and Home/End) rove its items,
+    // wrapping around like a vertical menu. Left/Right stay native (no-op).
+    if (active instanceof HTMLElement && active.closest('.nav-more-menu') !== null
+      && /^(ArrowDown|ArrowUp|Home|End)$/.test(event.key)) {
+      event.preventDefault()
+      const items = Array.from(document.querySelectorAll<HTMLElement>('.nav-more-menu .main-nav-link'))
+      const j = items.indexOf(active)
+      if (event.key === 'ArrowDown') {
+        items[(j + 1) % items.length]?.focus()
+      } else if (event.key === 'ArrowUp') {
+        items[(j - 1 + items.length) % items.length]?.focus()
+      } else if (event.key === 'Home') {
+        items[0]?.focus()
+      } else {
+        items[items.length - 1]?.focus()
+      }
+
+      return
+    }
+
+    // Tab / Shift+Tab from inside the open menu closes it and returns to the
+    // "More" button — a known bar position from which normal Tab and arrow
+    // roving continue — so the folded items are never a one-way Tab pocket.
+    if (active instanceof HTMLElement && active.closest('.nav-more-menu') !== null
+      && event.key === 'Tab') {
+      const moreBtn = document.querySelector<HTMLElement>('.nav-more-btn')
+      if (moreBtn !== null) {
+        event.preventDefault()
+        moreBtn.setAttribute('aria-expanded', 'false')
+        const moreMenu = document.querySelector<HTMLElement>('.nav-more-menu')
+        if (moreMenu !== null) {
+          moreMenu.hidden = true
+        }
+        moreBtn.focus()
+      }
+
+      return
+    }
+
+    // Main navigation behaves as a horizontal menubar: Left/Right/Home/End rove
+    // between the visible bar items, ArrowDown drops into the page content
+    // (sub-nav → search → grid → first focusable). Enter/Space still activates.
+    // Folded links live inside the (open) "More" menu — they keep .main-nav-link
+    // but must NOT rove the bar (they'd have no index in the bar set and snap
+    // focus to the first bar link). Exclude anything inside .nav-more-menu so
+    // arrows on a folded link fall through to the menu's native Tab order.
+    const navItem = active instanceof HTMLElement
+      && active.closest('.app-header .main-nav') !== null
+      && active.closest('.nav-more-menu') === null
+      && (active.matches('.main-nav-link') || active.matches('.nav-more-btn'))
+      ? active
+      : null
+    if (navItem !== null && /^(ArrowRight|ArrowLeft|ArrowDown|Home|End)$/.test(event.key)) {
+      event.preventDefault()
+      // Bar items only: the priority-overflow script tags folded links with
+      // .nav-menu-item and moves them into the (hidden) "More" menu, so
+      // :not(.nav-menu-item) leaves exactly what's on the bar. The "More" button
+      // joins the roving order only once its wrapper is shown (something folded).
+      // This is structural, not geometric, so it never depends on layout being
+      // measured (offsetParent is unreliable mid-resize and absent in tests).
+      const items = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          '.app-header .main-nav .main-nav-link:not(.nav-menu-item), .app-header .main-nav .nav-more-btn',
+        ),
+      ).filter((el) => {
+        const more = el.closest<HTMLElement>('.nav-more')
+
+        return more === null || !more.hidden
+      })
+      const i = items.indexOf(navItem)
+      if (event.key === 'ArrowRight') {
+        items[Math.min(items.length - 1, i + 1)]?.focus()
+      } else if (event.key === 'ArrowLeft') {
+        items[Math.max(0, i - 1)]?.focus()
+      } else if (event.key === 'Home') {
+        items[0]?.focus()
+      } else if (event.key === 'End') {
+        items[items.length - 1]?.focus()
+      } else {
+        // ArrowDown descends only into a real arrow-navigable target — the
+        // active sub-nav, the search field, or an arrow-exitable grid — each of
+        // which has an ArrowUp path back to the nav. We deliberately do NOT fall
+        // back to a generic focusable: descending onto, say, a filter button on
+        // a grid-less page (Auswertung/Billing/…) would be a one-way arrow trip
+        // (no ArrowUp home). On those pages ArrowDown is a no-op (Tab enters the
+        // content instead); the menubar stays put rather than stranding focus.
+        const target = document.querySelector<HTMLElement>('.admin-subnav-link[aria-current="page"]')
+          ?? document.querySelector<HTMLElement>('.admin-subnav-link')
+          ?? document.querySelector<HTMLElement>('#main-content input[type="search"]')
+          ?? document.querySelector<HTMLElement>('#main-content .data-table[role="grid"][data-arrow-nav] [tabindex="0"]')
+        target?.focus()
+      }
+
+      return
+    }
+
+    // #main-content is where focus lands on initial load and on every route
+    // change — it acts as a keyboard PIVOT. ArrowUp re-enters the main-nav
+    // menubar so EVERY page can climb back to the nav (not just Admin via its
+    // sub-nav); without it, activating a nav item stranded focus on grid-less
+    // pages (Billing/Extras/Month/…). ArrowDown drops into the page's grid.
+    if (!inField && event.key === 'ArrowUp'
+      && active instanceof HTMLElement && active.id === 'main-content') {
+      const nav = activeNavLink()
+      if (nav !== null) {
+        event.preventDefault()
+        nav.focus()
+      }
+
+      return
+    }
+
+    // Drop focus into the page's data grid — from the #main-content landing spot
+    // (ArrowDown) or from the search field (ArrowDown/Escape, back to the table).
+    // Only grids that advertise an arrow-exit (data-arrow-nav) are arrow-enter
+    // targets — so entry and exit stay symmetric and we never drop focus into a
+    // grid that can only be left with Tab (e.g. the read-only Auswertung table).
+    const onPage = !inField && event.key === 'ArrowDown'
+      && active instanceof HTMLElement && active.id === 'main-content'
+    const fromSearch = active instanceof HTMLInputElement && active.type === 'search'
+      && (event.key === 'ArrowDown' || event.key === 'Escape')
+    if (onPage || fromSearch) {
+      const grid = document.querySelector<HTMLElement>('#main-content .data-table[role="grid"][data-arrow-nav]')
+      const cell = grid?.querySelector<HTMLElement>('[tabindex="0"]') ?? grid?.querySelector<HTMLElement>('th, td')
+      if (cell) {
+        event.preventDefault()
+        cell.focus()
+      }
+    }
+  }
+}
+
+function initShortcuts(): void {
+  if (shortcutsWired) {
+    return
+  }
+  shortcutsWired = true
+  document.addEventListener('keydown', handleShortcut)
 }
 
 function pollLoginStatus(config: AppConfig): void {
