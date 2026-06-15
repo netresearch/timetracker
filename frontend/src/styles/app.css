@@ -1144,6 +1144,39 @@ th[aria-sort='descending'] .th-sort-glyph {
   white-space: nowrap;
 }
 
+/* Bulk-action bar shown when one or more rows are selected. */
+.admin-bulk-bar {
+  align-items: center;
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  padding: 0.5rem 0.9rem;
+}
+
+.admin-bulk-bar[aria-busy='true'] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.admin-bulk-count {
+  font-weight: 700;
+  margin-right: auto;
+}
+
+/* Narrow leading selection column. */
+.admin-select-col {
+  text-align: center;
+  width: 2.5rem;
+}
+
+.data-table tbody tr.is-selected {
+  background: var(--color-accent-soft);
+}
+
 /* Page controls under the grid. */
 .admin-pagination {
   align-items: center;

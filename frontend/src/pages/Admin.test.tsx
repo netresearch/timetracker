@@ -1,6 +1,6 @@
 import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
+import { fireEvent, render, screen, waitFor, within } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
@@ -489,6 +489,59 @@ describe('Admin list — inactive filter, paging, CSV export', () => {
     // Leading '=' is neutralized with an apostrophe so spreadsheets won't run it.
     expect(text).toContain("'=DANGER()")
 
+    unmount()
+  })
+})
+
+describe('Admin list — row selection & bulk actions', () => {
+  it('select-all selects every filtered row and shows the count', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/getAllCustomers'
+        ? Promise.resolve([
+            { customer: { id: 1, name: 'ACME', active: true, global: false, teams: [] } },
+            { customer: { id: 2, name: 'Globex', active: true, global: false, teams: [] } },
+          ])
+        : Promise.resolve([]),
+    )
+    const { getByRole, getByText, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('checkbox', { name: 'Select all rows' }))
+    expect(getByRole('checkbox', { name: 'Select ACME' })).toBeChecked()
+    expect(getByRole('checkbox', { name: 'Select Globex' })).toBeChecked()
+    expect(getByText('2 selected')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('bulk-deactivates the selected rows (whole-entity save with active=false)', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue([])
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('checkbox', { name: 'Select ACME' }))
+    fireEvent.click(getByRole('button', { name: 'Deactivate' }))
+
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ id: 1, active: false })),
+    )
+    unmount()
+  })
+
+  it('bulk-deletes the selected rows after confirm', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue(null)
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('checkbox', { name: 'Select ACME' }))
+    // Scope to the bulk bar — the row also has its own "Delete" action button.
+    const bulkBar = getByRole('region', { name: 'Bulk actions' })
+    fireEvent.click(within(bulkBar).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/customer/delete', { id: 1 }))
     unmount()
   })
 })
