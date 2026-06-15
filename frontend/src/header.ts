@@ -109,7 +109,9 @@ export function handleShortcut(event: KeyboardEvent): void {
       return
     }
 
-    if (event.key === '?' && !inField) {
+    // Single-character shortcut: only outside fields and without modifiers, so it
+    // can't fire while typing text (WCAG 2.1.4 mitigation).
+    if (event.key === '?' && !inField && !event.altKey && !event.ctrlKey && !event.metaKey) {
       const help = document.querySelector<HTMLAnchorElement>('.app-header .main-nav a[data-nav="help"]')
       if (help !== null) {
         event.preventDefault()
@@ -131,12 +133,13 @@ export function handleShortcut(event: KeyboardEvent): void {
     }
 
     // Move focus into the first data grid so table keyboard navigation works
-    // without a mouse click: with an arrow key while focus is still on the page
-    // (e.g. right after a route change, where #main-content holds focus), and
-    // from the search field via ArrowDown or Escape (back to the table).
+    // without a mouse click — but only from the route-change focus state (the
+    // #main-content region itself, not document.body), so we never hijack page
+    // scrolling once the user has interacted. Also enterable from the search
+    // field via ArrowDown or Escape (back to the table).
     const active = document.activeElement
     const onPage = !inField && /^Arrow(Up|Down|Left|Right)$/.test(event.key)
-      && (active === document.body || (active instanceof HTMLElement && active.id === 'main-content'))
+      && active instanceof HTMLElement && active.id === 'main-content'
     const fromSearch = active instanceof HTMLInputElement && active.type === 'search'
       && (event.key === 'ArrowDown' || event.key === 'Escape')
     if (onPage || fromSearch) {

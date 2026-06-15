@@ -66,16 +66,16 @@ describe('enableGridNavigation', () => {
     expect((document.activeElement as HTMLElement).closest('tr')?.querySelector('td')?.textContent).toBe('Beta')
   })
 
-  it('calls onExitTop when ArrowUp leaves the top row', () => {
+  it('calls onExit("up") when ArrowUp leaves the top row', () => {
     grid.cleanup()
     document.body.innerHTML = '<table class="data-table"><thead><tr><th>H</th></tr></thead><tbody><tr><td>A</td></tr></tbody></table>'
     const table = document.querySelector('table') as HTMLTableElement
-    const onExitTop = vi.fn()
-    const cleanup = enableGridNavigation(table, { onExitTop })
+    const onExit = vi.fn()
+    const cleanup = enableGridNavigation(table, { onExit })
     const th = table.querySelector('th') as HTMLElement
     th.focus()
     key(th, 'ArrowUp')
-    expect(onExitTop).toHaveBeenCalled()
+    expect(onExit).toHaveBeenCalledWith('up')
     cleanup()
   })
 
@@ -88,33 +88,33 @@ describe('enableGridNavigation', () => {
     expect(document.activeElement).toBe(firstHeader)
   })
 
-  it('highlights the row of the current cell and follows arrow movement', () => {
+  it('marks the current row with aria-current and follows arrow movement', () => {
     const firstHeader = grid.table.querySelector('th') as HTMLElement
     firstHeader.focus()
     key(firstHeader, 'ArrowDown')
     const alphaRow = (document.activeElement as HTMLElement).closest('tr')
-    expect(alphaRow?.classList.contains('is-current-row')).toBe(true)
+    expect(alphaRow?.getAttribute('aria-current')).toBe('true')
 
     key(document.activeElement!, 'ArrowDown')
     const betaRow = (document.activeElement as HTMLElement).closest('tr')
-    expect(betaRow?.classList.contains('is-current-row')).toBe(true)
-    // The highlight moved off the previous row — only one current row at a time.
-    expect(grid.table.querySelectorAll('tr.is-current-row').length).toBe(1)
+    expect(betaRow?.getAttribute('aria-current')).toBe('true')
+    // Only one current row at a time.
+    expect(grid.table.querySelectorAll('tr[aria-current="true"]').length).toBe(1)
   })
 
-  it('Enter enters the cell, Arrow/Tab reach every control, Escape returns', () => {
+  it('Enter enters the cell, Tab/Shift+Tab reach every control, Escape returns', () => {
     const actionsCell = grid.table.querySelectorAll('tbody td')[1] as HTMLElement
     actionsCell.focus()
     key(actionsCell, 'Enter')
     expect(document.activeElement?.textContent).toBe('Edit')
 
     // Both Edit and Delete must be reachable (the bug: Delete was unreachable).
-    key(document.activeElement!, 'ArrowRight')
-    expect(document.activeElement?.textContent).toBe('Delete')
-    key(document.activeElement!, 'ArrowLeft')
-    expect(document.activeElement?.textContent).toBe('Edit')
+    // Tab moves between a cell's controls; Arrow keys are reserved for the
+    // control itself (e.g. a future inline text editor's caret).
     key(document.activeElement!, 'Tab')
     expect(document.activeElement?.textContent).toBe('Delete')
+    key(document.activeElement!, 'Tab', { shiftKey: true })
+    expect(document.activeElement?.textContent).toBe('Edit')
 
     key(document.activeElement!, 'Escape')
     expect(document.activeElement).toBe(actionsCell)

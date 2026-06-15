@@ -1,76 +1,57 @@
-// Keyboard navigation for `.data-table` grids, following the WCAG APG "Data
-// Grid" pattern. The grid is a single Tab stop with a roving tabindex; arrow
-// keys move between cells, Enter/F2 moves focus into a cell's interactive
-// control (button/link/field), and Escape returns focus to the cell. Home/End
-// jump within the row, Ctrl+Home/End to the first/last cell of the grid.
+import { createEffect, onCleanup, type Accessor } from 'solid-js'
+
+// Keyboard navigation for `.data-table` grids, following the WAI-ARIA APG
+// "Grid" pattern. Used as a SolidJS directive (`use:gridNav`) so its listeners
+// and state are tied to the table element's lifetime (correct disposal when a
+// <Show>/<Suspense> swaps the table). The roving tabindex and current row are
+// derived from a tracked active cell and re-applied reactively when the row
+// data changes — so focus and the highlight survive filtering/sorting/refetch
+// instead of being wiped by the <For> reconcile.
 //
-// Pass 1 is navigation only; inline cell editing builds on top of this later.
-// enableGridNavigation re-applies roles/tabindex when rows change (the tables
-// are rendered from reactive <For> lists), and returns a cleanup function.
+// The grid is a single Tab stop: Arrow keys move between cells, Home/End and
+// Ctrl+Home/End jump within the row / whole grid, PageUp/Down move a viewport of
+// rows, Enter/F2 moves focus into a cell's control and Tab/Shift+Tab move
+// between several controls in a cell, Escape returns to the cell. ArrowUp off
+// the header row calls onExit('up') so the page can hand focus elsewhere. Full
+// grid semantics are exposed: role=grid (+ aria-readonly for read-only tables),
+// aria-rowcount/colcount, aria-rowindex/colindex, aria-current on the focused row.
 
 type Cell = HTMLTableCellElement
 
 const INTERACTIVE = 'button, a[href], input, select, textarea'
-const PAGE_ROWS = 10
+const FALLBACK_PAGE_ROWS = 10
 
-interface GridNavigationOptions {
-  /** Called when ArrowUp is pressed on the top (header) row, so the caller can
-   *  hand focus to whatever sits above the grid (e.g. a search field). */
-  onExitTop?: () => void
+export interface GridNavOptions {
+  /** Reactive row data. Reading it subscribes the grid to re-sync (roles,
+   *  roving tabindex, focus restoration) whenever the rendered rows change. */
+  items?: Accessor<readonly unknown[]>
+  /** Read-only data table → role=grid with aria-readonly (no cell editing). */
+  readonly?: boolean
+  /** Called when navigating off an edge (currently 'up' off the header row). */
+  onExit?: (direction: 'up' | 'down' | 'left' | 'right') => void
 }
 
-export function enableGridNavigation(table: HTMLTableElement, options: GridNavigationOptions = {}): () => void {
-  table.setAttribute('role', 'grid')
+interface GridController {
+  /** Re-apply ARIA + roving tabindex and restore the active cell/focus. */
+  sync: () => void
+  /** Remove listeners. */
+  dispose: () => void
+}
+
+function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridController {
+  let active: [number, number] = [0, 0]
+  // The element we last focused, so a re-render that removes it is detectable.
+  let activeCellEl: Cell | null = null
 
   const rows = (): HTMLTableRowElement[] => Array.from(table.rows)
   const cellsOf = (row: HTMLTableRowElement): Cell[] => Array.from(row.cells)
 
-  function applyRoles(): void {
-    for (const row of rows()) {
-      row.setAttribute('role', 'row')
-      for (const cell of cellsOf(row)) {
-        cell.setAttribute('role', cell.tagName === 'TH' ? 'columnheader' : 'gridcell')
-        // Controls inside cells are reached via Enter/F2, not Tab, so they must
-        // not be in the document tab order while the grid owns navigation.
-        for (const control of cell.querySelectorAll<HTMLElement>(INTERACTIVE)) {
-          if (!control.hasAttribute('data-grid-tabindex')) {
-            control.setAttribute('data-grid-tabindex', String(control.tabIndex))
-          }
-          control.tabIndex = -1
-        }
-        if (cell.tabIndex !== 0) {
-          cell.tabIndex = -1
-        }
-      }
-    }
-    // Keep exactly one cell in the tab order.
-    if (table.querySelector('[role="gridcell"][tabindex="0"], [role="columnheader"][tabindex="0"]') === null) {
-      const firstRow = rows()[0]
-      const first = firstRow ? cellsOf(firstRow)[0] : undefined
-      if (first) {
-        first.tabIndex = 0
-      }
-    }
-  }
+  function pageRows(): number {
+    const sample = table.tBodies[0]?.rows[0]
+    const rowHeight = sample?.getBoundingClientRect().height ?? 0
+    const visible = rowHeight > 0 ? Math.floor(table.clientHeight / rowHeight) - 1 : 0
 
-  // Highlight the row holding the current cell — the "current row" affordance
-  // the ExtJS grid provides (Help: "the focused entry has a highlighted row").
-  function markCurrentRow(cell: Cell): void {
-    for (const marked of table.querySelectorAll('tr.is-current-row')) {
-      marked.classList.remove('is-current-row')
-    }
-    if (cell.parentElement instanceof HTMLTableRowElement) {
-      cell.parentElement.classList.add('is-current-row')
-    }
-  }
-
-  function setActive(cell: Cell): void {
-    for (const c of table.querySelectorAll<Cell>('th, td')) {
-      c.tabIndex = -1
-    }
-    cell.tabIndex = 0
-    markCurrentRow(cell)
-    cell.focus()
+    return Math.max(1, visible || FALLBACK_PAGE_ROWS)
   }
 
   function position(cell: Cell): [number, number] | null {
@@ -84,16 +65,70 @@ export function enableGridNavigation(table: HTMLTableElement, options: GridNavig
     return r < 0 || c < 0 ? null : [r, c]
   }
 
-  function focusAt(r: number, c: number): void {
+  function cellAt(r: number, c: number): Cell | undefined {
     const all = rows()
     const row = all[Math.max(0, Math.min(all.length - 1, r))]
     if (!row) {
-      return
+      return undefined
     }
     const cells = cellsOf(row)
-    const cell = cells[Math.max(0, Math.min(cells.length - 1, c))]
+
+    return cells[Math.max(0, Math.min(cells.length - 1, c))]
+  }
+
+  function setActive(cell: Cell, focus = true): void {
+    for (const c of table.querySelectorAll<Cell>('th, td')) {
+      c.tabIndex = -1
+    }
+    cell.tabIndex = 0
+    const pos = position(cell)
+    if (pos !== null) {
+      active = pos
+    }
+    activeCellEl = cell
+    for (const marked of table.querySelectorAll('tr[aria-current="true"]')) {
+      marked.removeAttribute('aria-current')
+    }
+    cell.parentElement?.setAttribute('aria-current', 'true')
+    if (focus) {
+      cell.focus()
+    }
+  }
+
+  function focusAt(r: number, c: number): void {
+    const cell = cellAt(r, c)
     if (cell) {
       setActive(cell)
+    }
+  }
+
+  function sync(): void {
+    table.setAttribute('role', 'grid')
+    if (options.readonly) {
+      table.setAttribute('aria-readonly', 'true')
+    }
+    const all = rows()
+    table.setAttribute('aria-rowcount', String(all.length))
+    table.setAttribute('aria-colcount', String(all[0] ? cellsOf(all[0]).length : 0))
+
+    all.forEach((row, r) => {
+      row.setAttribute('role', 'row')
+      row.setAttribute('aria-rowindex', String(r + 1))
+      cellsOf(row).forEach((cell, c) => {
+        cell.setAttribute('role', cell.tagName === 'TH' ? 'columnheader' : 'gridcell')
+        cell.setAttribute('aria-colindex', String(c + 1))
+        for (const control of cell.querySelectorAll<HTMLElement>(INTERACTIVE)) {
+          control.tabIndex = -1
+        }
+      })
+    })
+
+    // Restore the roving tab stop to the tracked coordinates; re-focus only if a
+    // re-render removed the focused cell and dropped focus to <body>.
+    const lostFocus = activeCellEl !== null && !table.contains(activeCellEl) && document.activeElement === document.body
+    const target = cellAt(active[0], active[1])
+    if (target) {
+      setActive(target, lostFocus)
     }
   }
 
@@ -108,9 +143,9 @@ export function enableGridNavigation(table: HTMLTableElement, options: GridNavig
     }
 
     // Widget mode: focus is inside a cell control. Escape returns to the cell;
-    // when a cell has several controls (e.g. Edit + Delete), Arrow/Tab move
-    // between them (they're out of the document tab order); everything else is
-    // left to the control (typing in a field, etc.).
+    // Tab/Shift+Tab move between a cell's controls (Arrow keys are left to the
+    // control, e.g. a future inline editor's caret). Tab past the edge drops
+    // back to the cell so it leaves the grid.
     if (document.activeElement !== cell) {
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -118,31 +153,23 @@ export function enableGridNavigation(table: HTMLTableElement, options: GridNavig
 
         return
       }
-      const controls = Array.from(cell.querySelectorAll<HTMLElement>(INTERACTIVE))
-      const index = controls.indexOf(document.activeElement as HTMLElement)
-      const forward = event.key === 'ArrowRight' || (event.key === 'Tab' && !event.shiftKey)
-      const backward = event.key === 'ArrowLeft' || (event.key === 'Tab' && event.shiftKey)
-      if (index !== -1 && (forward || backward)) {
-        const next = index + (forward ? 1 : -1)
-        if (next >= 0 && next < controls.length) {
+      if (event.key === 'Tab') {
+        const controls = Array.from(cell.querySelectorAll<HTMLElement>(INTERACTIVE))
+        const i = controls.indexOf(document.activeElement as HTMLElement)
+        const next = i + (event.shiftKey ? -1 : 1)
+        if (i !== -1 && next >= 0 && next < controls.length) {
           event.preventDefault()
           controls[next]!.focus()
-        } else if (event.key === 'Tab') {
-          // At the cell's edge: drop back to the cell so Tab leaves the grid.
-          setActive(cell)
+        } else if (i !== -1) {
+          setActive(cell, false)
         }
       }
 
       return
     }
 
-    const pos = position(cell)
-    if (pos === null) {
-      return
-    }
-    const [r, c] = pos
+    const [r, c] = active
     const lastRow = rows().length - 1
-    const lastCol = cellsOf(rows()[r]!).length - 1
 
     switch (event.key) {
       case 'ArrowRight':
@@ -155,32 +182,23 @@ export function enableGridNavigation(table: HTMLTableElement, options: GridNavig
         focusAt(r + 1, c)
         break
       case 'ArrowUp':
-        // Off the top row, hand focus to whatever sits above the grid.
-        if (r === 0 && options.onExitTop) {
-          options.onExitTop()
+        if (r === 0 && options.onExit) {
+          options.onExit('up')
         } else {
           focusAt(r - 1, c)
         }
         break
       case 'PageDown':
-        focusAt(r + PAGE_ROWS, c)
+        focusAt(r + pageRows(), c)
         break
       case 'PageUp':
-        focusAt(r - PAGE_ROWS, c)
+        focusAt(r - pageRows(), c)
         break
       case 'Home':
-        if (event.ctrlKey) {
-          focusAt(0, 0)
-        } else {
-          focusAt(r, 0)
-        }
+        focusAt(event.ctrlKey ? 0 : r, 0)
         break
       case 'End':
-        if (event.ctrlKey) {
-          focusAt(lastRow, Number.MAX_SAFE_INTEGER)
-        } else {
-          focusAt(r, lastCol)
-        }
+        focusAt(event.ctrlKey ? lastRow : r, Number.MAX_SAFE_INTEGER)
         break
       case 'Enter':
       case 'F2': {
@@ -196,32 +214,53 @@ export function enableGridNavigation(table: HTMLTableElement, options: GridNavig
     event.preventDefault()
   }
 
-  // Track the active cell as focus moves so the roving tabindex follows clicks.
   function onFocusin(event: FocusEvent): void {
     const target = event.target
     if (target instanceof HTMLElement) {
       const cell = target.closest('th, td') as Cell | null
-      if (cell !== null && table.contains(cell)) {
-        if (cell.tabIndex !== 0) {
-          for (const c of table.querySelectorAll<Cell>('th, td')) {
-            c.tabIndex = -1
-          }
-          cell.tabIndex = 0
-        }
-        markCurrentRow(cell)
+      if (cell !== null && table.contains(cell) && cell.tabIndex !== 0) {
+        setActive(cell, false)
       }
     }
   }
 
-  applyRoles()
-  const observer = new MutationObserver(() => applyRoles())
-  observer.observe(table, { childList: true, subtree: true })
   table.addEventListener('keydown', onKeydown)
   table.addEventListener('focusin', onFocusin)
 
-  return () => {
-    observer.disconnect()
-    table.removeEventListener('keydown', onKeydown)
-    table.removeEventListener('focusin', onFocusin)
+  return {
+    sync,
+    dispose: () => {
+      table.removeEventListener('keydown', onKeydown)
+      table.removeEventListener('focusin', onFocusin)
+    },
+  }
+}
+
+/** SolidJS directive: `<table use:gridNav={{ items, readonly, onExit }}>`. */
+export function gridNav(table: HTMLTableElement, value: Accessor<GridNavOptions>): void {
+  const options = value()
+  const controller = setupGridNav(table, options)
+  // Initial sync + reactive re-sync whenever the row data changes.
+  createEffect(() => {
+    options.items?.()
+    controller.sync()
+  })
+  onCleanup(controller.dispose)
+}
+
+/** Imperative form for non-reactive callers (unit tests). Syncs once. */
+export function enableGridNavigation(table: HTMLTableElement, options: GridNavOptions = {}): () => void {
+  const controller = setupGridNav(table, options)
+  controller.sync()
+
+  return controller.dispose
+}
+
+declare module 'solid-js' {
+  // eslint-disable-next-line @typescript-eslint/no-namespace -- JSX directive augmentation
+  namespace JSX {
+    interface Directives {
+      gridNav: GridNavOptions
+    }
   }
 }
