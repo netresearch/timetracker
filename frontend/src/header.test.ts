@@ -180,6 +180,17 @@ describe('handleShortcut', () => {
     expect(document.activeElement).toBe(document.querySelector('input[type="search"]'))
   })
 
+  it('ArrowDown from a nav link is a no-op on grid-less pages (no one-way descent)', () => {
+    setup()
+    // A page with no sub-nav, no search and no arrow-nav grid (e.g. Billing):
+    // ArrowDown must NOT strand focus on a generic control it cannot arrow back from.
+    document.getElementById('main-content')!.innerHTML = '<button type="button">Pay</button>'
+    const first = document.querySelector('.main-nav-link') as HTMLAnchorElement
+    first.focus()
+    press({ key: 'ArrowDown' })
+    expect(document.activeElement).toBe(first) // stays in the menubar
+  })
+
   it('ArrowDown from a nav link prefers the active sub-nav when present', () => {
     setup()
     const content = document.getElementById('main-content')!

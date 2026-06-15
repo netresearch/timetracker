@@ -239,11 +239,17 @@ export function handleShortcut(event: KeyboardEvent): void {
       } else if (event.key === 'End') {
         items[items.length - 1]?.focus()
       } else {
+        // ArrowDown descends only into a real arrow-navigable target — the
+        // active sub-nav, the search field, or an arrow-exitable grid — each of
+        // which has an ArrowUp path back to the nav. We deliberately do NOT fall
+        // back to a generic focusable: descending onto, say, a filter button on
+        // a grid-less page (Auswertung/Billing/…) would be a one-way arrow trip
+        // (no ArrowUp home). On those pages ArrowDown is a no-op (Tab enters the
+        // content instead); the menubar stays put rather than stranding focus.
         const target = document.querySelector<HTMLElement>('.admin-subnav-link[aria-current="page"]')
           ?? document.querySelector<HTMLElement>('.admin-subnav-link')
           ?? document.querySelector<HTMLElement>('#main-content input[type="search"]')
           ?? document.querySelector<HTMLElement>('#main-content .data-table[role="grid"][data-arrow-nav] [tabindex="0"]')
-          ?? document.querySelector<HTMLElement>('#main-content button, #main-content a[href], #main-content input, #main-content select, #main-content textarea')
         target?.focus()
       }
 
