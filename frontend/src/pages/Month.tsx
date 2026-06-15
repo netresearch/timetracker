@@ -151,6 +151,41 @@ function CalendarDayCell(props: { cell: CalendarCell; locale: string; selected: 
   )
 }
 
+/**
+ * Resolve the `days` query param into ISO day keys. The header worktime badges
+ * deep-link with symbolic tokens (`today`, `current-week`, `current-month`) that
+ * are resolved here against the client's *local* clock — so they always match
+ * the calendar's highlighted today, with no server-timezone skew. Any other
+ * value is treated as the explicit CSV of YYYY-MM-DD keys written back on edit.
+ */
+export function resolveDayTokens(raw: string, nowInput: Date = new Date()): string[] {
+  // Normalize to midday so the day-arithmetic below can't slip to an adjacent
+  // day across a DST transition (a 23/25-hour day) or right at midnight.
+  const now = new Date(nowInput.getFullYear(), nowInput.getMonth(), nowInput.getDate(), 12)
+  switch (raw.trim()) {
+    case 'today':
+      return [isoDate(now)]
+    case 'current-week': {
+      const monday = new Date(now)
+      monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+
+      return Array.from({ length: 7 }, (_, i) => {
+        const day = new Date(monday)
+        day.setDate(monday.getDate() + i)
+
+        return isoDate(day)
+      })
+    }
+    case 'current-month': {
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+
+      return Array.from({ length: last }, (_, i) => isoDate(new Date(now.getFullYear(), now.getMonth(), i + 1)))
+    }
+    default:
+      return raw.split(',').map((key) => key.trim()).filter(Boolean)
+  }
+}
+
 export default function Month() {
   const config = appConfig()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -176,7 +211,7 @@ export default function Month() {
   const selectedKeys = createMemo<ReadonlySet<string>>(() => {
     const raw = typeof searchParams.days === 'string' ? searchParams.days : ''
 
-    return new Set(raw.split(',').map((key) => key.trim()).filter(Boolean))
+    return new Set(resolveDayTokens(raw))
   })
   const yearMode = createMemo(() => searchParams.scope === 'year')
   const scope = createMemo<Scope>(() => (selectedKeys().size > 0 ? 'selection' : yearMode() ? 'year' : 'month'))

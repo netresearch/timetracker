@@ -64,6 +64,54 @@ async function updateWorktime(): Promise<void> {
   }
 }
 
+// The nav links are rendered in document order (and the overflow script keeps
+// that order: it folds items from the end into the "More" menu, which itself is
+// the last child of .main-nav). Role-gated items are simply absent. So a single
+// query yields the n-th *available* item for Alt+N, with no key list to keep in
+// sync with the Twig template.
+function navLinks(): HTMLAnchorElement[] {
+  return Array.from(document.querySelectorAll<HTMLAnchorElement>('.app-header .main-nav a.main-nav-link'))
+}
+
+let shortcutsWired = false
+
+/**
+ * Keyboard shortcuts for the SolidJS shell (documented on the Help page):
+ * Alt+1–7 switches to the n-th nav item, and `?` opens Help. The grid-specific
+ * shortcuts (Alt+A/C/D/…) still live in the ExtJS tracking shell. Clicking the
+ * nav link reuses the router's anchor interception and the role gating.
+ */
+function initShortcuts(): void {
+  if (shortcutsWired) {
+    return
+  }
+  shortcutsWired = true
+
+  document.addEventListener('keydown', (event) => {
+    const target = event.target as HTMLElement | null
+    const inField = target !== null
+      && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
+
+    if (event.altKey && !event.ctrlKey && !event.metaKey && /^Digit[1-7]$/.test(event.code)) {
+      const link = navLinks()[Number(event.code.slice(5)) - 1]
+      if (link !== undefined) {
+        event.preventDefault()
+        link.click()
+      }
+
+      return
+    }
+
+    if (event.key === '?' && !inField) {
+      const help = document.querySelector<HTMLAnchorElement>('.app-header .main-nav a[data-nav="help"]')
+      if (help !== null) {
+        event.preventDefault()
+        help.click()
+      }
+    }
+  })
+}
+
 function pollLoginStatus(config: AppConfig): void {
   void getJson<{ loginStatus: boolean }>('/status/check')
     .then((status) => {
@@ -81,6 +129,7 @@ function pollLoginStatus(config: AppConfig): void {
 
 export function initHeaderDynamics(config: AppConfig): void {
   setBadge(true, config.userName)
+  initShortcuts()
   void updateWorktime()
   setTimeout(() => {
     pollLoginStatus(config)
