@@ -129,3 +129,41 @@ test.describe('Admin list — inactive filter & CSV export', () => {
     await expect(bar).toBeHidden();
   });
 });
+
+test.describe('Admin URL-addressable sub-nav', () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page, 'i.myself', 'myself123');
+    await page.goto('/ui/admin');
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+  });
+
+  test('selecting an entity updates the URL and is deep-linkable', async ({ page }) => {
+    await page.locator('.admin-subnav-link', { hasText: /Projekte|Projects/ }).click();
+    await expect(page).toHaveURL(/\/ui\/admin\/projects/);
+
+    // The selection survives a full reload (URL-driven, not client state).
+    await page.reload();
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+    await expect(page).toHaveURL(/\/ui\/admin\/projects/);
+    await expect(page.locator('.admin-subnav-link[aria-current="page"]')).toHaveText(/Projekte|Projects/);
+
+    // Direct deep-link to another entity.
+    await page.goto('/ui/admin/users');
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+    await expect(page.locator('.admin-subnav-link[aria-current="page"]')).toHaveText(/Nutzer|Users/);
+  });
+
+  test('a modal opened over Admin keeps the background on its entity', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto('/ui/admin/projects');
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+
+    // Client-side nav to a modal route (preserves the page underneath).
+    await page.locator('a.main-nav-link[data-nav="settings"]').click();
+    await expect(page).toHaveURL(/\/ui\/settings/);
+    await expect(page.locator('.modal-page')).toBeVisible();
+
+    // The dimmed background Admin stays on Projects, not reset to the first tab.
+    await expect(page.locator('.admin-subnav-link[aria-current="page"]')).toHaveText(/Projekte|Projects/);
+  });
+});
