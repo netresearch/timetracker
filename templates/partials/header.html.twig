@@ -61,6 +61,7 @@
                data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}"><svg class="nav-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0 1.6 1.6 0 0 0-1.7-1.6 1.6 1.6 0 0 0-1.8.3 2 2 0 1 1-2.8-2.8 1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H2a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.5-1.3 1.6 1.6 0 0 0-.3-1.8 2 2 0 1 1 2.8-2.8 1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0 1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3 2 2 0 1 1 2.8 2.8 1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4 1.6 1.6 0 0 0-1.5 1z"/></svg>{{ 'Settings'|trans }}</a>
             <a class="main-nav-link{% if active == 'help' %} is-active{% endif %}"
                {% if active == 'help' %}aria-current="page"{% endif %}
+               aria-keyshortcuts="?" title="{{ 'Help'|trans }} (?)"
                data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}"><svg class="nav-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 1.9-2.6 2.3-2.6 4"/><circle cx="12" cy="17.4" r="1.1" fill="currentColor" stroke="none"/></svg>{{ 'Help'|trans }}</a>
 
             {# Overflow disclosure — empty until the priority-overflow script

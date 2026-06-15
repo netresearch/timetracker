@@ -172,7 +172,7 @@ export function AdminCrudShell(props: {
   return (
     <div class="admin-crud">
       <div class="admin-crud-toolbar">
-        <button type="button" class="primary-button" data-keyboard-add onClick={() => openForm(null)}>
+        <button type="button" class="primary-button" data-keyboard-add aria-keyshortcuts="Alt+A" onClick={() => openForm(null)}>
           {m.admin_add()}
         </button>
         <Show when={error()}>
