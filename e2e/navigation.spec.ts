@@ -93,6 +93,23 @@ test.describe('Tab Navigation', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
+  test('closing a modal returns to the page it was opened from, not Overview', async ({ page }) => {
+    // Regression: useLocation().pathname carries the /ui base and useNavigate()
+    // re-adds it, so closing used to navigate /ui/ui/… → catch-all → Overview.
+    // Opening a modal FROM another page must return to THAT page on Escape.
+    await goToAuswertungPage(page);
+    await expect(page).toHaveURL(/\/ui\/auswertung/);
+
+    await goToSettingsPage(page); // opens the Settings modal over Evaluation
+    await expect(page).toHaveURL(/\/ui\/settings/);
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page).toHaveURL(/\/ui\/auswertung/, { timeout: 10000 });
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('section.auswertung')).toBeVisible();
+  });
+
   test('should restore the tracking grid on page reload', async ({ page }) => {
     await goToTrackingTab(page);
 

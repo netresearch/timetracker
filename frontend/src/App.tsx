@@ -54,6 +54,11 @@ const MODAL_SEGMENTS = new Set(['settings', 'help', 'extras', 'billing'])
 const segmentOf = (pathname: string): string =>
   pathname.replace(/^\/ui\/?/, '').split('/')[0] || 'month'
 
+// useLocation().pathname includes the router base (/ui), but useNavigate()
+// prepends the base itself — so navigating to the raw pathname would double it
+// (/ui/ui/…) and fall through to the catch-all → Month. Strip the base once.
+const toRoutePath = (pathname: string): string => pathname.replace(/^\/ui/, '') || '/month'
+
 /** Wraps a routed modal page in the shared Ark dialog (focus trap, Esc, backdrop). */
 function PageDialog(props: { title: string; onClose: () => void; children: JSX.Element }) {
   return (
@@ -165,7 +170,7 @@ function Layout(props: ParentProps) {
         </Show>
       </main>
       <Show when={isModal()}>
-        <PageDialog title={routeTitle()} onClose={() => navigate(lastFullPath())}>
+        <PageDialog title={routeTitle()} onClose={() => navigate(toRoutePath(lastFullPath()))}>
           {props.children}
         </PageDialog>
       </Show>
