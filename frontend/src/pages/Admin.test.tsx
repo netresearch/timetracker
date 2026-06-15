@@ -233,3 +233,135 @@ describe('Admin', () => {
     unmount()
   })
 })
+
+describe('Admin inline cell editing', () => {
+  it('opens an inline editor on Enter and saves the whole entity on row-leave', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue([1, 'ACME2', true, false, [2]])
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    const cell = getByRole('gridcell', { name: 'ACME' })
+    cell.focus()
+    fireEvent.keyDown(cell, { key: 'Enter' })
+
+    const editor = (await screen.findByRole('textbox')) as HTMLInputElement
+    fireEvent.input(editor, { target: { value: 'ACME2' } })
+    // Enter commits the cell; the single row stays put (clamped).
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    // The committed value is shown immediately, before any save.
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME2' })).toBeInTheDocument())
+    expect(postJson).not.toHaveBeenCalled()
+
+    // Leaving the table (focusing the filter box) saves the dirty row once.
+    ;(getByRole('searchbox') as HTMLElement).focus()
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ id: 1, name: 'ACME2', active: true, global: false })),
+    )
+    expect(postJson).toHaveBeenCalledTimes(1)
+
+    unmount()
+  })
+
+  it('seeds the editor with the printable key that opened it', async () => {
+    mockEndpoints()
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    const cell = getByRole('gridcell', { name: 'ACME' })
+    cell.focus()
+    fireEvent.keyDown(cell, { key: 'Z' })
+
+    const editor = (await screen.findByRole('textbox')) as HTMLInputElement
+    await waitFor(() => expect(editor.value).toBe('Z'))
+
+    unmount()
+  })
+
+  it('batches edits across columns of one row into a single save', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue([1, 'ACME2', true, true, [2]])
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    // Edit the name cell.
+    const nameCell = getByRole('gridcell', { name: 'ACME' })
+    nameCell.focus()
+    fireEvent.keyDown(nameCell, { key: 'Enter' })
+    const editor = (await screen.findByRole('textbox')) as HTMLInputElement
+    fireEvent.input(editor, { target: { value: 'ACME2' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME2' })).toBeInTheDocument())
+
+    // Edit the "global" checkbox cell in the same row (— → toggle on).
+    const globalCell = getByRole('gridcell', { name: '—' })
+    globalCell.focus()
+    fireEvent.keyDown(globalCell, { key: 'Enter' })
+    const check = (await screen.findByRole('checkbox')) as HTMLInputElement
+    fireEvent.click(check)
+    fireEvent.keyDown(check, { key: 'Enter' })
+
+    // Both edits live on one draft → leaving the row saves exactly once.
+    ;(getByRole('searchbox') as HTMLElement).focus()
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ name: 'ACME2', global: true })),
+    )
+    expect(postJson).toHaveBeenCalledTimes(1)
+
+    unmount()
+  })
+
+  it('cancels an edit on Escape without saving', async () => {
+    mockEndpoints()
+    const { getByRole, queryByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    const cell = getByRole('gridcell', { name: 'ACME' })
+    cell.focus()
+    fireEvent.keyDown(cell, { key: 'Enter' })
+    const editor = (await screen.findByRole('textbox')) as HTMLInputElement
+    fireEvent.input(editor, { target: { value: 'Discarded' } })
+    fireEvent.keyDown(editor, { key: 'Escape' })
+
+    await waitFor(() => expect(queryByRole('textbox')).not.toBeInTheDocument())
+    expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument()
+    ;(getByRole('searchbox') as HTMLElement).focus()
+    expect(postJson).not.toHaveBeenCalled()
+
+    unmount()
+  })
+
+  it('does not open an inline editor on a modal-only (multiselect) column', async () => {
+    mockEndpoints()
+    const { getByRole, queryByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    const teamsCell = getByRole('gridcell', { name: 'Backend' })
+    teamsCell.focus()
+    fireEvent.keyDown(teamsCell, { key: 'Enter' })
+
+    expect(queryByRole('textbox')).not.toBeInTheDocument()
+    unmount()
+  })
+
+  it('keeps the draft and shows a row error when the save fails', async () => {
+    mockEndpoints()
+    postJson.mockRejectedValue(new ApiError(422, 'Name taken'))
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    const cell = getByRole('gridcell', { name: 'ACME' })
+    cell.focus()
+    fireEvent.keyDown(cell, { key: 'Enter' })
+    const editor = (await screen.findByRole('textbox')) as HTMLInputElement
+    fireEvent.input(editor, { target: { value: 'ACME2' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    ;(getByRole('searchbox') as HTMLElement).focus()
+
+    await waitFor(() => expect(getByRole('alert')).toHaveTextContent('Name taken'))
+    // The edited value is retained (not rolled back) so it isn't lost.
+    expect(getByRole('gridcell', { name: 'ACME2' })).toBeInTheDocument()
+
+    unmount()
+  })
+})

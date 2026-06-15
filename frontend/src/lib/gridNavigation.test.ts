@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { enableGridNavigation } from './gridNavigation'
+import { enableGridNavigation, type GridMoveHandle } from './gridNavigation'
 
 function buildGrid(): { table: HTMLTableElement; cleanup: () => void } {
   document.body.innerHTML = `
@@ -168,5 +168,109 @@ describe('enableGridNavigation', () => {
     document.activeElement!.dispatchEvent(ev)
     expect(ev.defaultPrevented).toBe(false)
     expect(actionsCell.getAttribute('tabindex')).toBe('0')
+  })
+})
+
+describe('inline-edit hooks', () => {
+  function buildEditableGrid(): HTMLTableElement {
+    document.body.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Name</th></tr></thead>
+        <tbody>
+          <tr><td data-row-id="1" data-col-key="name">Alpha</td></tr>
+          <tr><td data-row-id="2" data-col-key="name">Beta</td></tr>
+        </tbody>
+      </table>`
+
+    return document.querySelector('table') as HTMLTableElement
+  }
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('routes Enter and F2 through onActivate and suppresses the default control focus', () => {
+    const table = buildEditableGrid()
+    const onActivate = vi.fn(() => true)
+    const cleanup = enableGridNavigation(table, { onActivate })
+    const cell = table.querySelector('tbody td') as HTMLElement
+    cell.focus()
+
+    for (const k of ['Enter', 'F2'] as const) {
+      const ev = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true })
+      cell.dispatchEvent(ev)
+      expect(onActivate).toHaveBeenLastCalledWith(cell, k)
+      expect(ev.defaultPrevented).toBe(true)
+    }
+    cleanup()
+  })
+
+  it('routes a printable key through onActivate seeded with the character', () => {
+    const table = buildEditableGrid()
+    const onActivate = vi.fn(() => true)
+    const cleanup = enableGridNavigation(table, { onActivate })
+    const cell = table.querySelector('tbody td') as HTMLElement
+    cell.focus()
+
+    const ev = new KeyboardEvent('keydown', { key: 'x', bubbles: true, cancelable: true })
+    cell.dispatchEvent(ev)
+    expect(onActivate).toHaveBeenCalledWith(cell, 'type', 'x')
+    expect(ev.defaultPrevented).toBe(true)
+    cleanup()
+  })
+
+  it('leaves a declined activation to the existing behaviour (no preventDefault)', () => {
+    const table = buildEditableGrid()
+    const onActivate = vi.fn(() => false)
+    const cleanup = enableGridNavigation(table, { onActivate })
+    const cell = table.querySelector('tbody td') as HTMLElement
+    cell.focus()
+
+    // A printable key the editor declines must fall through unhandled.
+    const ev = new KeyboardEvent('keydown', { key: 'x', bubbles: true, cancelable: true })
+    cell.dispatchEvent(ev)
+    expect(ev.defaultPrevented).toBe(false)
+    cleanup()
+  })
+
+  it('yields Escape and Tab to a cell flagged data-inline-editing', () => {
+    document.body.innerHTML = `
+      <table class="data-table"><tbody>
+        <tr><td data-row-id="1" data-col-key="name" data-inline-editing><input type="text" /></td></tr>
+      </tbody></table>`
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table)
+    const input = table.querySelector('input') as HTMLInputElement
+    input.focus()
+
+    // Without the editor flag gridNav would consume Escape (return to cell) and
+    // Tab; with it, both pass through so the editor's own handler owns them.
+    for (const k of ['Escape', 'Tab'] as const) {
+      const ev = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true })
+      input.dispatchEvent(ev)
+      expect(ev.defaultPrevented).toBe(false)
+      expect(document.activeElement).toBe(input)
+    }
+    cleanup()
+  })
+
+  it('exposes a roving move handle that keeps a single tab stop + current row', () => {
+    const table = buildEditableGrid()
+    let handle: GridMoveHandle | null = null
+    const cleanup = enableGridNavigation(table, { moveRef: (h) => { handle = h } })
+    const firstCell = table.querySelector('tbody td') as HTMLElement
+    firstCell.focus()
+
+    handle!.move('down')
+    expect((document.activeElement as HTMLElement).textContent).toBe('Beta')
+    expect(table.querySelectorAll('[tabindex="0"]').length).toBe(1)
+    expect(table.querySelectorAll('tr[aria-current="true"]').length).toBe(1)
+
+    handle!.focusActive()
+    expect((document.activeElement as HTMLElement).textContent).toBe('Beta')
+
+    cleanup()
+    // The handle is revoked on disposal.
+    expect(handle).toBeNull()
   })
 })
