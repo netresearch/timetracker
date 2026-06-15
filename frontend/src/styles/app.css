@@ -992,6 +992,35 @@ kbd {
   text-align: center;
 }
 
+/* Inline (spreadsheet-style) editing: editable cells get a faint text cursor so
+   the affordance is discoverable, and the in-cell editor fills the cell so the
+   value doesn't shift when an editor opens. */
+.data-table td.is-editable {
+  cursor: text;
+}
+
+.inline-editor {
+  background: var(--color-bg);
+  border: 1px solid var(--color-accent);
+  border-radius: 4px;
+  box-sizing: border-box;
+  font: inherit;
+  margin: -0.3rem -0.4rem;
+  padding: 0.25rem 0.5rem;
+  width: calc(100% + 0.8rem);
+}
+
+.inline-editor.inline-check {
+  margin: 0;
+  padding: 0;
+  width: auto;
+}
+
+/* A saving row dims slightly and blocks pointer interaction until it settles. */
+.data-table tbody tr[aria-busy='true'] {
+  opacity: 0.6;
+}
+
 /* Sortable column header — a borderless button that fills the whole cell so
    the entire header is clickable (and keyboard-focusable as a real button). */
 .th-sort {

@@ -21,6 +21,20 @@ type Cell = HTMLTableCellElement
 const INTERACTIVE = 'button, a[href], input, select, textarea'
 const FALLBACK_PAGE_ROWS = 10
 
+/** How a cell edit was triggered: Enter/F2 open an empty editor; 'type' opens
+ *  one seeded with the printable character the user pressed. */
+export type ActivateKey = 'Enter' | 'F2' | 'type'
+
+/** Imperative roving handle the grid hands to an inline-edit owner so it can
+ *  move the active cell through the SAME `setActive()` the arrow keys use —
+ *  keeping the grid the single writer of the roving tabindex + aria-current. */
+export interface GridMoveHandle {
+  /** Move the active cell one step (clamped at the edges) and focus it. */
+  move: (direction: 'up' | 'down' | 'left' | 'right') => void
+  /** Re-focus the current active cell (e.g. after an editor is dismissed). */
+  focusActive: () => void
+}
+
 export interface GridNavOptions {
   /** Reactive row data. Reading it subscribes the grid to re-sync (roles,
    *  roving tabindex, focus restoration) whenever the rendered rows change. */
@@ -29,6 +43,13 @@ export interface GridNavOptions {
   readonly?: boolean
   /** Called when navigating off an edge (currently 'up' off the header row). */
   onExit?: (direction: 'up' | 'down' | 'left' | 'right') => void
+  /** Begin editing the focused cell. Called on Enter/F2 and on a printable key
+   *  (key='type', `initial` = the character). Return true if an editor was
+   *  opened so the grid suppresses its default "focus first control". */
+  onActivate?: (cell: Cell, key: ActivateKey, initial?: string) => boolean
+  /** Receives the roving handle on setup and `null` on disposal, so an
+   *  inline-edit owner can move the active cell after committing an edit. */
+  moveRef?: (handle: GridMoveHandle | null) => void
 }
 
 interface GridController {
@@ -105,6 +126,16 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     }
   }
 
+  // Move the active cell one step, reusing focusAt's clamping. Unlike the
+  // ArrowUp handler this never calls onExit — an inline editor committing with
+  // Enter on the top data row should stay in the grid, not leave it.
+  function focusRelative(direction: 'up' | 'down' | 'left' | 'right'): void {
+    const [r, c] = active
+    const dr = direction === 'up' ? -1 : direction === 'down' ? 1 : 0
+    const dc = direction === 'left' ? -1 : direction === 'right' ? 1 : 0
+    focusAt(r + dr, c + dc)
+  }
+
   function sync(): void {
     table.setAttribute('role', 'grid')
     if (options.readonly) {
@@ -156,9 +187,14 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
 
     // Widget mode: focus is inside a cell control. Escape returns to the cell;
     // Tab/Shift+Tab move between a cell's controls (Arrow keys are left to the
-    // control, e.g. a future inline editor's caret). Tab past the edge drops
-    // back to the cell so it leaves the grid.
+    // control, e.g. an inline editor's caret). Tab past the edge drops back to
+    // the cell so it leaves the grid.
     if (document.activeElement !== cell) {
+      // An inline editor owns Escape/Tab (commit/cancel/move) for its cell, so
+      // the grid yields both keys while that cell is being edited.
+      if (cell.hasAttribute('data-inline-editing')) {
+        return
+      }
       if (event.key === 'Escape') {
         event.preventDefault()
         setActive(cell)
@@ -213,18 +249,43 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
         focusAt(event.ctrlKey ? lastRow : r, Number.MAX_SAFE_INTEGER)
         break
       case 'Enter':
-      case 'F2':
+      case 'F2': {
+        // Offer the cell to an inline-edit owner first; if it opens an editor it
+        // returns true and we stop here. Otherwise drop into the cell's first
+        // control (APG grid) so action cells keep working unchanged.
+        if (options.onActivate?.(cell, event.key)) {
+          break
+        }
+        cell.querySelector<HTMLElement>(INTERACTIVE)?.focus()
+        break
+      }
       case ' ': {
-        // Enter/F2/Space all drop into the cell's first control (APG grid). Space
-        // is included so it activates the cell instead of scrolling the page.
+        // Space drops into the cell's control (APG) — or, on a display cell with
+        // no control, offers it to the inline editor seeded with a space. Either
+        // way it activates the cell instead of scrolling the page.
         const control = cell.querySelector<HTMLElement>(INTERACTIVE)
         if (control) {
           control.focus()
+        } else {
+          options.onActivate?.(cell, 'type', ' ')
         }
         break
       }
-      default:
+      default: {
+        // A printable character begins editing seeded with that character. If no
+        // editor takes it, fall through unhandled (no preventDefault).
+        if (
+          event.key.length === 1 &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.altKey &&
+          options.onActivate?.(cell, 'type', event.key)
+        ) {
+          break
+        }
+
         return
+      }
     }
     event.preventDefault()
   }
@@ -242,11 +303,25 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   table.addEventListener('keydown', onKeydown)
   table.addEventListener('focusin', onFocusin)
 
+  // Hand the inline-edit owner a roving handle so it can move the active cell
+  // (after committing an edit) through setActive — the single writer of the
+  // roving tabindex + aria-current.
+  options.moveRef?.({
+    move: focusRelative,
+    focusActive: () => {
+      const cell = cellAt(active[0], active[1])
+      if (cell) {
+        setActive(cell)
+      }
+    },
+  })
+
   return {
     sync,
     dispose: () => {
       table.removeEventListener('keydown', onKeydown)
       table.removeEventListener('focusin', onFocusin)
+      options.moveRef?.(null)
     },
   }
 }
