@@ -238,4 +238,61 @@ describe('Tracking (Worklog grid)', () => {
 
     unmount()
   })
+
+  it('Add inserts a new row that saves as a create (no id)', async () => {
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Add entry' }))
+    // The new row is at the top; fill start + end (both required to save).
+    let cell = editCell(container, 'start')
+    fireEvent.input(cell, { target: { value: '9' } })
+    fireEvent.keyDown(cell, { key: 'Enter' })
+    cell = editCell(container, 'end')
+    fireEvent.input(cell, { target: { value: '10' } })
+    fireEvent.keyDown(cell, { key: 'Enter' })
+    ;(getByRole('combobox') as HTMLElement).focus()
+
+    await waitFor(() => {
+      const call = postJson.mock.calls.find((args) => args[0] === '/tracking/save')
+      expect(call).toBeTruthy()
+      expect(call?.[1]).not.toHaveProperty('id') // new entry → server creates
+      expect(call?.[1]).toMatchObject({ start: '09:00', end: '10:00' })
+    })
+
+    unmount()
+  })
+
+  it('Continue clones the latest entry into a new row', async () => {
+    mockApi() // the one entry has customer 1 (ACME)
+    const { getByRole, getAllByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Continue' }))
+
+    // Original entry + the cloned new row both show the customer 'ACME'.
+    await waitFor(() => expect(getAllByRole('gridcell', { name: 'ACME' }).length).toBe(2))
+
+    unmount()
+  })
+
+  it('Prolong sets the latest entry end to now and saves it', async () => {
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Prolong' }))
+
+    await waitFor(() => {
+      const call = postJson.mock.calls.find((args) => args[0] === '/tracking/save')
+      expect(call).toBeTruthy()
+      expect(call?.[1]).toMatchObject({ id: 1, start: '09:00' })
+      expect(String((call?.[1] as Record<string, unknown>).end)).toMatch(/^\d{2}:\d{2}$/)
+    })
+
+    unmount()
+  })
 })

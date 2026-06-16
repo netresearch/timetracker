@@ -3,6 +3,7 @@ import { createMemo, createSignal, For, Show } from 'solid-js'
 
 import { apiErrorMessage, postJson } from '../api/client'
 import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, type NamedOption, type TrackingEntry } from '../api/queries'
+import { appConfig } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { gridNav } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
@@ -21,6 +22,50 @@ const CLASS_ROW: Record<number, string> = { 2: 'is-daybreak', 4: 'is-pause', 8: 
 
 const num = (value: unknown): number => Number(value ?? 0)
 const str = (value: unknown): string => (value === undefined || value === null ? '' : String(value))
+
+// Build the /tracking/save body shared by inline-save and Prolong. A non-positive
+// id is omitted so the server creates a new entry.
+function savePayload(fields: {
+  id: number
+  date: string
+  start: string
+  end: string
+  ticket: unknown
+  description: unknown
+  customer: unknown
+  project: unknown
+  activity: unknown
+}): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    date: fields.date,
+    start: fields.start,
+    end: fields.end,
+    ticket: str(fields.ticket).toUpperCase().trim(),
+    description: str(fields.description),
+    customer: num(fields.customer),
+    project: num(fields.project),
+    activity: num(fields.activity),
+  }
+  if (fields.id > 0) {
+    payload.id = fields.id
+  }
+
+  return payload
+}
+
+// Today as d/m/Y (list-row format); the date input draft is derived via toIsoDate.
+function todayDmy(): string {
+  const now = new Date()
+
+  return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+}
+
+// Current wall-clock time as H:i.
+function nowHi(): string {
+  const now = new Date()
+
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
 
 // The editable fields drive the in-cell editor; duration is server-derived.
 const FIELDS: FieldDef[] = [
@@ -91,7 +136,11 @@ export default function Tracking() {
   const projects = useQuery(trackingProjectsQuery)
   const activities = useQuery(activitiesQuery)
 
-  const rows = createMemo<TrackingEntry[]>(() => entries.data ?? [])
+  // Unsaved new rows (Add/Continue) carry a temporary negative id and render
+  // above the fetched entries; they save as creates and drop on success.
+  const [newRows, setNewRows] = createSignal<TrackingEntry[]>([])
+  let tempId = -1
+  const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
   const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
 
   const optionLookup: OptionLookup = (source: OptionSource) => {
@@ -163,17 +212,21 @@ export default function Tracking() {
       if (start === null || end === null) {
         throw new Error(m.tracking_invalid_time())
       }
-      await postJson('/tracking/save', {
+      const isNew = num(entry.id) <= 0
+      await postJson('/tracking/save', savePayload({
         id: num(entry.id),
         date: str(draft.date),
         start,
         end,
-        ticket: str(draft.ticket).toUpperCase().trim(),
-        description: str(draft.description),
-        customer: num(draft.customer),
-        project: num(draft.project),
-        activity: num(draft.activity),
-      })
+        ticket: draft.ticket,
+        description: draft.description,
+        customer: draft.customer,
+        project: draft.project,
+        activity: draft.activity,
+      }))
+      if (isNew) {
+        setNewRows((list) => list.filter((row) => num(row.id) !== num(entry.id)))
+      }
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
     },
     onCommit: handleCommit,
@@ -223,6 +276,82 @@ export default function Tracking() {
     }
   }
 
+  // Insert a fresh new-row at the top and open it for editing.
+  function pushNewRow(seed: Partial<TrackingEntry>, firstCol: string): void {
+    const row: TrackingEntry = {
+      id: tempId,
+      date: todayDmy(),
+      start: '',
+      end: '',
+      user: 0,
+      customer: 0,
+      project: 0,
+      activity: 0,
+      description: '',
+      ticket: '',
+      duration: '',
+      durationMinutes: 0,
+      class: 0,
+      worklog: null,
+      extTicket: null,
+      ...seed,
+    }
+    tempId -= 1
+    setNewRows((list) => [row, ...list])
+    editor.beginEdit(num(row.id), firstCol)
+  }
+
+  // Add (Alt+A): a blank entry; suggest the start from the latest entry's end.
+  function addEntry(): void {
+    const previous = (entries.data ?? [])[0]
+    pushNewRow({ start: appConfig().suggestTime && previous !== undefined ? str(previous.end) : '' }, 'customer')
+  }
+
+  // Continue: clone the latest entry's customer/project/activity/ticket/description
+  // into a fresh blank-time row.
+  function continueEntry(): void {
+    const previous = (entries.data ?? [])[0]
+    if (previous === undefined) {
+      addEntry()
+
+      return
+    }
+    pushNewRow(
+      {
+        customer: num(previous.customer),
+        project: num(previous.project),
+        activity: num(previous.activity),
+        description: str(previous.description),
+        ticket: str(previous.ticket),
+      },
+      'start',
+    )
+  }
+
+  // Prolong-last (Alt+P): set the latest entry's end to now and save it.
+  async function prolongLast(): Promise<void> {
+    const first = (entries.data ?? [])[0]
+    if (first === undefined) {
+      return
+    }
+    try {
+      await postJson('/tracking/save', savePayload({
+        id: num(first.id),
+        date: toIsoDate(str(first.date)),
+        start: str(first.start),
+        end: nowHi(),
+        ticket: first.ticket,
+        description: first.description,
+        customer: first.customer,
+        project: first.project,
+        activity: first.activity,
+      }))
+      await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+    } catch (caught) {
+      window.alert(apiErrorMessage(caught, m.app_load_error()))
+    }
+  }
+
   let daysSelectEl: HTMLSelectElement | undefined
 
   return (
@@ -230,6 +359,11 @@ export default function Tracking() {
       <h2 class="visually-hidden">{m.tracking_title()}</h2>
 
       <div class="tracking-toolbar">
+        <button type="button" class="primary-button" data-keyboard-add aria-keyshortcuts="Alt+A" onClick={() => addEntry()}>
+          {m.tracking_add()}
+        </button>
+        <button type="button" class="action-button" onClick={() => continueEntry()}>{m.tracking_continue()}</button>
+        <button type="button" class="action-button" onClick={() => void prolongLast()}>{m.tracking_prolong()}</button>
         <label class="tracking-days">
           <span>{m.tracking_days_label()}</span>
           <select
@@ -270,7 +404,7 @@ export default function Tracking() {
                   const id = num(entry.id)
 
                   return (
-                    <tr class={`tracking-row ${CLASS_ROW[entry.class] ?? ''}`.trimEnd()} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
+                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : CLASS_ROW[entry.class] ?? ''}`.trimEnd()} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
                       <For each={COLUMNS}>
                         {(col) => {
                           const editable = FIELD_BY_KEY.has(col.key)
