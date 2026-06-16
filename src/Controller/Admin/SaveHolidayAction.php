@@ -14,7 +14,6 @@ use App\Dto\HolidaySaveDto;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
-use DateTime;
 use Doctrine\DBAL\Connection;
 use Exception;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -27,13 +26,8 @@ final class SaveHolidayAction extends BaseController
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(#[MapRequestPayload] HolidaySaveDto $holidaySaveDto): Response|JsonResponse|Error
     {
-        try {
-            $day = new DateTime($holidaySaveDto->day);
-        } catch (Exception) {
-            return new Error($this->translate('Please provide a valid date.'), \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $dayString = $day->format('Y-m-d');
+        // The day is a validated Y-m-d string (Assert\Date on the DTO).
+        $day = $holidaySaveDto->day;
 
         // Holidays carry a DateTime primary key, which the ORM UnitOfWork cannot
         // manage (it stringifies the identifier). Persist via DBAL instead
@@ -42,12 +36,12 @@ final class SaveHolidayAction extends BaseController
         $connection = $this->doctrineRegistry->getConnection();
 
         // A holiday is keyed by day and immutable; a duplicate day is a conflict, not an update.
-        if (false !== $connection->fetchOne('SELECT day FROM holidays WHERE day = ?', [$dayString])) {
+        if (false !== $connection->fetchOne('SELECT day FROM holidays WHERE day = ?', [$day])) {
             return new Error($this->translate('A holiday already exists for this date.'), \Symfony\Component\HttpFoundation\Response::HTTP_CONFLICT);
         }
 
         try {
-            $connection->insert('holidays', ['day' => $dayString, 'name' => $holidaySaveDto->name]);
+            $connection->insert('holidays', ['day' => $day, 'name' => $holidaySaveDto->name]);
         } catch (Exception $exception) {
             $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -56,8 +50,8 @@ final class SaveHolidayAction extends BaseController
         }
 
         return new JsonResponse([
-            'id' => (int) $day->format('Ymd'),
-            'day' => $dayString,
+            'id' => (int) str_replace('-', '', $day),
+            'day' => $day,
             'name' => $holidaySaveDto->name,
         ]);
     }

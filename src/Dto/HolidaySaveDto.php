@@ -20,7 +20,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 final readonly class HolidaySaveDto
 {
     public function __construct(
+        // Assert\Date rejects impossible calendar dates (e.g. 2026-02-31) that
+        // `new DateTime()` would silently roll over instead of throwing on.
         #[Assert\NotBlank(message: 'Please provide a valid date.')]
+        #[Assert\Date(message: 'Please provide a valid date.')]
         public string $day = '',
         #[Assert\NotBlank(message: 'Please provide a holiday name.')]
         public string $name = '',

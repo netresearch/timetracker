@@ -74,11 +74,25 @@ final class HolidayCrudTest extends AbstractWebTestCase
         $this->createJsonRequest(Request::METHOD_POST, '/holiday/delete', ['day' => $day]);
     }
 
-    public function testInvalidDateIsRejected(): void
+    public function testSaveRejectsMalformedAndImpossibleDates(): void
     {
         $this->logInSession('unittest');
 
+        // Malformed string.
         $this->createJsonRequest(Request::METHOD_POST, '/holiday/save', ['day' => 'not-a-date', 'name' => 'Bad']);
+        $this->assertStatusCode(422);
+
+        // Impossible calendar date: Assert\Date rejects it, where new DateTime() would
+        // have silently rolled it over to 2099-03-03.
+        $this->createJsonRequest(Request::METHOD_POST, '/holiday/save', ['day' => '2099-02-31', 'name' => 'Bad']);
+        $this->assertStatusCode(422);
+    }
+
+    public function testDeleteRejectsMalformedDate(): void
+    {
+        $this->logInSession('unittest');
+
+        $this->createJsonRequest(Request::METHOD_POST, '/holiday/delete', ['day' => 'not-a-date']);
         $this->assertStatusCode(422);
     }
 

@@ -15,7 +15,6 @@ use App\Exception\EntityAlreadyDeletedException;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
-use DateTime;
 use Doctrine\DBAL\Connection;
 use Exception;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -31,16 +30,11 @@ final class DeleteHolidayAction extends BaseController
     public function __invoke(#[MapRequestPayload] HolidayDeleteDto $holidayDeleteDto): JsonResponse|Error|Response
     {
         try {
-            $day = new DateTime($holidayDeleteDto->day);
-        } catch (Exception) {
-            return new Error($this->translate('Please provide a valid date.'), \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        try {
             // Delete via DBAL: the ORM cannot manage the entity's DateTime primary key.
+            // The day is a validated Y-m-d string (Assert\Date on the DTO).
             /** @var Connection $connection */
             $connection = $this->doctrineRegistry->getConnection();
-            $affected = $connection->delete('holidays', ['day' => $day->format('Y-m-d')]);
+            $affected = $connection->delete('holidays', ['day' => $holidayDeleteDto->day]);
 
             if (0 === $affected) {
                 throw new EntityAlreadyDeletedException('Already deleted');

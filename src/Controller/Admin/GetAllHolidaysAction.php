@@ -36,8 +36,8 @@ final class GetAllHolidaysAction extends BaseController
         // the admin grid track selection/rows, while `day` drives the keyed delete.
         $data = [];
         foreach ($rows as $row) {
-            $dayValue = $row['day'] ?? '';
-            $nameValue = $row['name'] ?? '';
+            $dayValue = $row['day'] ?? null;
+            $nameValue = $row['name'] ?? null;
             $day = substr(is_string($dayValue) ? $dayValue : '', 0, 10);
             $data[] = ['holiday' => [
                 'id' => (int) str_replace('-', '', $day),
