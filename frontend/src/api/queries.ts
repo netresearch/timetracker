@@ -120,12 +120,34 @@ interface TrackingEntryRow {
   entry: TrackingEntry
 }
 
+// A chronological sort key from the row format: date is 'd/m/Y', so reorder it
+// to 'Y-m-d' (lexically = chronological) and append start ('H:i') as the
+// tiebreaker. A blank/non-matching date sorts to the end of its direction.
+function entrySortKey(entry: TrackingEntry): string {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(entry.date ?? '')
+  const iso = match !== null ? `${match[3]}-${match[2]}-${match[1]}` : (entry.date ?? '')
+
+  return `${iso} ${entry.start ?? ''}`
+}
+
 export function trackingEntriesQuery(days: number) {
   return {
     queryKey: ['tracking-entries', days] as const,
     queryFn: () => getJson<TrackingEntryRow[]>(`/getData/days/${days}`),
+    // Newest entry first. The backend (getEntriesByUser) returns day/start
+    // ASCending (shared with the legacy ExtJS grid + export), so the new grid
+    // sorts client-side instead — which also makes [0] the latest entry, as
+    // Add (suggest-start) / Prolong-last / Continue all assume.
     select: (rows: TrackingEntryRow[]): TrackingEntry[] =>
-      rows.map((row) => row?.entry).filter((entry): entry is TrackingEntry => entry != null),
+      rows
+        .map((row) => row?.entry)
+        .filter((entry): entry is TrackingEntry => entry != null)
+        .sort((a, b) => {
+          const ka = entrySortKey(a)
+          const kb = entrySortKey(b)
+
+          return ka < kb ? 1 : ka > kb ? -1 : 0
+        }),
     // Keep the current rows visible while switching the days range (no flicker).
     placeholderData: keepPreviousData,
   }

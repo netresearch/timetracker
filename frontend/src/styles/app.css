@@ -1009,6 +1009,26 @@ kbd {
   gap: 0.5rem;
 }
 
+/* The days-range select must use the theme tokens (like .field select) — an
+   unstyled native select renders a light box in dark mode. color-scheme keeps
+   the option popup legible in both themes. */
+.tracking-days select {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  color-scheme: light dark;
+  font: inherit;
+  min-height: 36px;
+  padding: 0 0.4rem;
+}
+
+.tracking-days select:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
 .tracking-empty {
   margin-top: var(--space-3, 0.75rem);
   color: var(--color-text-muted, #666);
@@ -1181,8 +1201,18 @@ th[aria-sort='descending'] .th-sort-glyph {
   overflow: hidden;
 }
 
-.admin-row-actions,
-.tracking-row-actions {
+.admin-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+/* Tracking's action cell stays a real table-cell so the EntryClass row border
+   (.tracking-row.is-* > td) spans it — a display:flex <td> drops out of the
+   collapse-border model and the colour stops short of the last column. The
+   button row lays out in an inner wrapper instead. */
+.tracking-row-actions > .row-actions {
+  align-items: center;
   display: flex;
   gap: 0.4rem;
   white-space: nowrap;
