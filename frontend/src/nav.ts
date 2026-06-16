@@ -6,7 +6,9 @@
 export function syncNav(pathname: string): void {
   const segment = pathname.replace(/^\/ui\/?/, '').split('/')[0] || 'month'
 
-  for (const link of document.querySelectorAll<HTMLAnchorElement>('.main-nav-link[data-nav]')) {
+  // Main-bar links plus the relocated Settings/Help icon actions (but not the
+  // worktime badges, which also carry data-nav="month").
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('.main-nav-link[data-nav], .header-icon-link[data-nav]')) {
     const isActive = link.dataset.nav === segment
     link.classList.toggle('is-active', isActive)
     if (isActive) {
