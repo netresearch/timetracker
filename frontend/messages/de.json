@@ -136,6 +136,8 @@
   "tracking_class_daybreak": "Tageswechsel",
   "tracking_class_pause": "Pause",
   "tracking_class_overlap": "Zeitüberschneidung",
+  "tracking_invalid_time": "Bitte eine gültige Start- und Endzeit eingeben.",
+  "tracking_actions": "Aktionen",
   "auswertung_title": "Auswertung",
   "auswertung_no_data": "Keine Daten gefunden.",
   "auswertung_label": "Name",

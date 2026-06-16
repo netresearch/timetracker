@@ -147,22 +147,22 @@ export function InlineEditor(props: {
   )
 }
 
-const rowId = (row: Row): number => Number(row.id)
+const idOf = (row: object): number => Number((row as { id?: unknown }).id)
 
-export interface InlineGridEditConfig {
+export interface InlineGridEditConfig<R extends object> {
   /** Reactive list of the rows currently shown (keyed by a numeric `id`). */
-  rows: Accessor<readonly Row[]>
+  rows: Accessor<readonly R[]>
   /** The field backing a column key (drives the editor type), or undefined. */
   fieldFor: (colKey: string) => FieldDef | undefined
   /** Whether a column can be edited in place (vs modal-only / read-only). */
   isInlineEditable: (colKey: string) => boolean
   /** Seed a fresh draft from a row (the editable form values). */
-  seedDraft: (row: Row) => FormValues
+  seedDraft: (row: R) => FormValues
   /** Persist one row's draft (POST + refetch); rejects to surface a row error. */
-  saveRow: (draft: FormValues, row: Row) => Promise<void>
+  saveRow: (draft: FormValues, row: R) => Promise<void>
   /** Fallback for activating a non-inline column (e.g. open a modal); return
    *  true if it handled the activation. */
-  onModalActivate?: (row: Row) => boolean
+  onModalActivate?: (row: R) => boolean
   /** Called after a successful row save (e.g. a toast). */
   onSaved?: () => void
   /** Map a save error to a per-row message. Defaults to the generic load error. */
@@ -175,7 +175,7 @@ export interface InlineGridEditConfig {
  * per-row drafts (keyed by `id`) and saves the whole row once focus leaves it.
  * Create it inside a component (it registers reactive state + onCleanup).
  */
-export function createInlineGridEdit(config: InlineGridEditConfig) {
+export function createInlineGridEdit<R extends object>(config: InlineGridEditConfig<R>) {
   const [editCell, setEditCell] = createSignal<{ rowId: number; colKey: string } | null>(null)
   const [drafts, setDrafts] = createStore<Record<number, FormValues>>({})
   const [savingRows, setSavingRows] = createStore<Record<number, boolean>>({})
@@ -185,14 +185,14 @@ export function createInlineGridEdit(config: InlineGridEditConfig) {
   let tableEl: HTMLElement | undefined
   let lastFocusedRowId: number | null = null
 
-  const rowById = (id: number): Row | undefined => config.rows().find((row) => rowId(row) === id)
+  const rowById = (id: number): R | undefined => config.rows().find((row) => idOf(row) === id)
 
   // The row merged with its pending draft, so edited-but-unsaved cells render
   // current values without touching the query cache.
-  const overlayRow = (row: Row): Row => {
-    const draft = drafts[rowId(row)]
+  const overlayRow = (row: R): R => {
+    const draft = drafts[idOf(row)]
 
-    return draft !== undefined ? { ...row, ...draft } : row
+    return draft !== undefined ? { ...row, ...draft } as R : row
   }
 
   const isEditing = (id: number, colKey: string): boolean => {

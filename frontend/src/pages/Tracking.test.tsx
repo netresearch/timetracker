@@ -6,11 +6,14 @@ import { axe } from 'vitest-axe'
 import Tracking from './Tracking'
 
 const getJson = vi.fn()
+const postJson = vi.fn()
 
 vi.mock('../api/client', () => ({
   SessionExpiredError: class extends Error {},
   ApiError: class extends Error {},
+  apiErrorMessage: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
   getJson: (...args: unknown[]) => getJson(...args),
+  postJson: (...args: unknown[]) => postJson(...args),
 }))
 
 function mockApi() {
@@ -51,8 +54,25 @@ function renderTracking() {
 
 afterEach(() => {
   getJson.mockReset()
+  postJson.mockReset()
   vi.restoreAllMocks()
 })
+
+// Open the inline editor on a column's first cell and return its control.
+function editCell(container: HTMLElement, colKey: string): HTMLInputElement {
+  const cell = container.querySelector<HTMLElement>(`td[data-col-key="${colKey}"]`)
+  if (cell === null) {
+    throw new Error(`no cell for ${colKey}`)
+  }
+  cell.focus()
+  fireEvent.keyDown(cell, { key: 'Enter' })
+  const control = cell.querySelector<HTMLInputElement>('input, select')
+  if (control === null) {
+    throw new Error(`no editor for ${colKey}`)
+  }
+
+  return control
+}
 
 describe('Tracking (Worklog grid)', () => {
   it('renders recent entries with resolved relation names and the server duration', async () => {
@@ -99,6 +119,60 @@ describe('Tracking (Worklog grid)', () => {
     await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
 
     expect(await axe(container)).toHaveNoViolations()
+
+    unmount()
+  })
+
+  it('saves the whole entry to /tracking/save on row-leave', async () => {
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'xyz-9' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    // Nothing saved until the row is left.
+    expect(postJson).not.toHaveBeenCalled()
+
+    // Leave the table (focus the days selector) → the dirty row saves once.
+    ;(getByRole('combobox') as HTMLElement).focus()
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({
+        id: 1, ticket: 'XYZ-9', date: '2026-06-16', start: '09:00', end: '10:30', customer: 1, project: 4, activity: 5,
+      })),
+    )
+    expect(postJson).toHaveBeenCalledTimes(1)
+
+    unmount()
+  })
+
+  it('parses a terse start time to H:i before saving', async () => {
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'start')
+    fireEvent.input(editor, { target: { value: '8' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    ;(getByRole('combobox') as HTMLElement).focus()
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ start: '08:00' })))
+
+    unmount()
+  })
+
+  it('deletes an entry via /tracking/delete after confirmation', async () => {
+    mockApi()
+    postJson.mockResolvedValue({ success: true })
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/delete', { id: 1 }))
 
     unmount()
   })
