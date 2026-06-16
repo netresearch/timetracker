@@ -262,8 +262,10 @@ export function AdminCrudShell(props: {
     if (!window.confirm(m.admin_bulk_delete_confirm({ count: String(selectedCount()) }))) {
       return
     }
-    const { deleteEndpoint } = props.descriptor
-    void runBulk((row) => postJson(deleteEndpoint, { id: row.id }), () => m.admin_deleted())
+    // Hoist the (reactive) descriptor reads out of the per-row closure; most
+    // entities delete by numeric id, holidays and the like by deletePayload.
+    const { deleteEndpoint, deletePayload } = props.descriptor
+    void runBulk((row) => postJson(deleteEndpoint, deletePayload?.(row) ?? { id: row.id }), () => m.admin_deleted())
   }
 
   function openForm(row: Row | null) {
@@ -311,7 +313,7 @@ export function AdminCrudShell(props: {
     }
     const rowId = Number(row.id)
     try {
-      await postJson(props.descriptor.deleteEndpoint, { id: row.id })
+      await postJson(props.descriptor.deleteEndpoint, props.descriptor.deletePayload?.(row) ?? { id: row.id })
       await refreshAfterMutation()
       // Drop any pending inline edit for the row that no longer exists.
       setDrafts(produce((store) => { delete store[rowId] }))
@@ -336,6 +338,9 @@ export function AdminCrudShell(props: {
   const fieldFor = (colKey: string): FieldDef | undefined => props.descriptor.fields.find((f) => f.name === colKey)
 
   function inlineEditable(col: ColumnDef): boolean {
+    if (props.descriptor.editable === false) {
+      return false
+    }
     const field = fieldFor(col.key)
 
     return field !== undefined && INLINE_TYPES.has(field.type) && field.lockedOnEdit !== true
@@ -670,10 +675,12 @@ export function AdminCrudShell(props: {
                         focusing the row's action buttons "inside the row", so
                         clicking Edit doesn't read as a row-leave and flush. */}
                     <td class="admin-row-actions" data-row-id={String(Number(row.id))}>
-                      <button type="button" class="link-button" onClick={() => openForm(row)}>
-                        <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                        {m.admin_edit()}
-                      </button>
+                      <Show when={props.descriptor.editable !== false}>
+                        <button type="button" class="link-button" onClick={() => openForm(row)}>
+                          <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                          {m.admin_edit()}
+                        </button>
+                      </Show>
                       <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>
                         <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6"/><path d="M10 11v6M14 11v6"/></svg>
                         {m.admin_delete()}

@@ -210,6 +210,29 @@ export function adminEntities(): EntityDescriptor[] {
       toPayload: (v) => ({ id: v.id, name: v.name }),
     },
     {
+      key: 'holidays',
+      title: () => m.admin_e_holidays(),
+      listEndpoint: '/getAllHolidays',
+      rowKey: 'holiday',
+      saveEndpoint: '/holiday/save',
+      deleteEndpoint: '/holiday/delete',
+      // Holidays are immutable and keyed by day → add + delete only, no editing.
+      // The backend exposes a synthetic numeric id (Ymd) for row tracking; delete keys on day.
+      editable: false,
+      deletePayload: (row) => ({ day: str(row.day) }),
+      columns: [
+        { key: 'day', label: () => m.admin_f_day() },
+        { key: 'name', label: () => m.admin_f_name() },
+      ],
+      fields: [
+        { name: 'day', label: () => m.admin_f_day(), type: 'date', required: true },
+        { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
+      ],
+      rowLabel: (row) => `${str(row.day)} ${str(row.name)}`,
+      toForm: (row) => row === null ? { id: 0, day: '', name: '' } : { id: num(row.id), day: str(row.day), name: str(row.name) },
+      toPayload: (v) => ({ day: v.day, name: v.name }),
+    },
+    {
       key: 'presets',
       title: () => m.admin_e_presets(),
       listEndpoint: '/getAllPresets',
