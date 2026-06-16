@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { fireEvent, render, waitFor } from '@solidjs/testing-library'
+import { fireEvent, render, screen, waitFor, within } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
@@ -16,29 +16,48 @@ vi.mock('../api/client', () => ({
   postJson: (...args: unknown[]) => postJson(...args),
 }))
 
-function mockApi() {
+// Single source for the grid's GET endpoints; each test supplies only the data
+// it cares about (the rest default to empty) — keeps the mocks duplication-free.
+interface MockData {
+  entries?: unknown[]
+  customers?: unknown[]
+  projects?: unknown[]
+  activities?: unknown[]
+  ticketSystems?: unknown[]
+}
+
+function mockTracking(data: MockData): void {
   getJson.mockImplementation((path: string) => {
     if (path.startsWith('/getData/days/')) {
-      return Promise.resolve([
-        {
-          entry: {
-            id: 1, date: '16/06/2026', start: '09:00', end: '10:30', user: 3,
-            customer: 1, project: 4, activity: 5, description: 'Work', ticket: 'ABC-1',
-            duration: '1:30', durationMinutes: 90, class: 8, worklog: null, extTicket: null,
-          },
-        },
-      ])
+      return Promise.resolve(data.entries ?? [])
     }
     switch (path) {
       case '/getCustomers':
-        return Promise.resolve([{ customer: { id: 1, name: 'ACME' } }])
+        return Promise.resolve(data.customers ?? [])
       case '/getAllProjects':
-        return Promise.resolve([{ project: { id: 4, name: 'Site' } }])
+        return Promise.resolve(data.projects ?? [])
       case '/getActivities':
-        return Promise.resolve([{ activity: { id: 5, name: 'Dev' } }])
+        return Promise.resolve(data.activities ?? [])
+      case '/getTicketSystems':
+        return Promise.resolve(data.ticketSystems ?? [])
       default:
         return Promise.resolve([])
     }
+  })
+}
+
+const DEFAULT_ENTRY = {
+  id: 1, date: '16/06/2026', start: '09:00', end: '10:30', user: 3,
+  customer: 1, project: 4, activity: 5, description: 'Work', ticket: 'ABC-1',
+  duration: '1:30', durationMinutes: 90, class: 8, worklog: null, extTicket: null,
+}
+
+function mockApi() {
+  mockTracking({
+    entries: [{ entry: DEFAULT_ENTRY }],
+    customers: [{ customer: { id: 1, name: 'ACME' } }],
+    projects: [{ project: { id: 4, name: 'Site' } }],
+    activities: [{ activity: { id: 5, name: 'Dev' } }],
   })
 }
 
@@ -178,20 +197,11 @@ describe('Tracking (Worklog grid)', () => {
   })
 
   it('maps a ticket prefix to its project and customer on commit', async () => {
-    getJson.mockImplementation((path: string) => {
-      if (path.startsWith('/getData/days/')) {
-        return Promise.resolve([{ entry: { id: 1, date: '16/06/2026', start: '09:00', end: '10:30', user: 3, customer: 0, project: 0, activity: 5, description: 'Work', ticket: '', duration: '1:30', durationMinutes: 90, class: 0, worklog: null, extTicket: null } }])
-      }
-      switch (path) {
-        case '/getCustomers':
-          return Promise.resolve([{ customer: { id: 7, name: 'ACME' } }])
-        case '/getAllProjects':
-          return Promise.resolve([{ project: { id: 9, name: 'Apollo', customer: 7, jiraId: 'APO' } }])
-        case '/getActivities':
-          return Promise.resolve([{ activity: { id: 5, name: 'Dev' } }])
-        default:
-          return Promise.resolve([])
-      }
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 0, project: 0, ticket: '', class: 0 } }],
+      customers: [{ customer: { id: 7, name: 'ACME' } }],
+      projects: [{ project: { id: 9, name: 'Apollo', customer: 7, jiraId: 'APO' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
     })
     postJson.mockResolvedValue({})
     const { getByRole, container, unmount } = renderTracking()
@@ -210,23 +220,14 @@ describe('Tracking (Worklog grid)', () => {
   })
 
   it('filters the project dropdown by the row customer (cascade)', async () => {
-    getJson.mockImplementation((path: string) => {
-      if (path.startsWith('/getData/days/')) {
-        return Promise.resolve([{ entry: { id: 1, date: '16/06/2026', start: '09:00', end: '10:30', user: 3, customer: 7, project: 9, activity: 5, description: 'Work', ticket: '', duration: '1:30', durationMinutes: 90, class: 0, worklog: null, extTicket: null } }])
-      }
-      switch (path) {
-        case '/getCustomers':
-          return Promise.resolve([{ customer: { id: 7, name: 'ACME' } }])
-        case '/getAllProjects':
-          return Promise.resolve([
-            { project: { id: 9, name: 'Apollo', customer: 7, jiraId: 'APO' } },
-            { project: { id: 10, name: 'Zeus', customer: 8, jiraId: 'ZEU' } },
-          ])
-        case '/getActivities':
-          return Promise.resolve([{ activity: { id: 5, name: 'Dev' } }])
-        default:
-          return Promise.resolve([])
-      }
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 7, project: 9, ticket: '', class: 0 } }],
+      customers: [{ customer: { id: 7, name: 'ACME' } }],
+      projects: [
+        { project: { id: 9, name: 'Apollo', customer: 7, jiraId: 'APO' } },
+        { project: { id: 10, name: 'Zeus', customer: 8, jiraId: 'ZEU' } },
+      ],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
     })
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
@@ -315,6 +316,46 @@ describe('Tracking (Worklog grid)', () => {
     fireEvent.keyDown(document, { key: 'p', altKey: true })
 
     await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 1 })))
+
+    unmount()
+  })
+
+  it('renders the ticket as a link to its ticket system', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 7, project: 9, ticket: 'APO-42', class: 0 } }],
+      customers: [{ customer: { id: 7, name: 'ACME' } }],
+      projects: [{ project: { id: 9, name: 'Apollo', customer: 7, jiraId: 'APO', ticket_system: 2 } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+      ticketSystems: [{ ticketSystem: { id: 2, name: 'Jira', ticketUrl: 'https://jira/browse/%s' } }],
+    })
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    expect(getByRole('link', { name: 'APO-42' })).toHaveAttribute('href', 'https://jira/browse/APO-42')
+
+    unmount()
+  })
+
+  it('Alt+I shows the per-scope summary popup', async () => {
+    mockApi()
+    postJson.mockResolvedValue({
+      customer: { scope: 'customer', name: 'ACME', entries: 5, total: 300, own: 120, estimation: 0 },
+      project: { scope: 'project', name: 'Site', entries: 3, total: 180, own: 90, estimation: 600 },
+      activity: { scope: 'activity', name: 'Dev', entries: 2, total: 120, own: 60, estimation: 0 },
+      ticket: { scope: 'ticket', name: 'ABC-1', entries: 1, total: 60, own: 60, estimation: 0 },
+    })
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    fireEvent.keyDown(document, { key: 'i', altKey: true })
+
+    // The summary dialog is portalled to document.body → query via screen.
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('ACME')).toBeInTheDocument()
+    expect(within(dialog).getByText('Site')).toBeInTheDocument()
+    expect(within(dialog).getByText('Dev')).toBeInTheDocument()
+    // estimation shown for the project scope (600 min → 10:00).
+    expect(within(dialog).getByText('10:00')).toBeInTheDocument()
 
     unmount()
   })
