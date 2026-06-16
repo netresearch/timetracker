@@ -159,7 +159,7 @@ test.describe('Admin URL-addressable sub-nav', () => {
     await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
 
     // Client-side nav to a modal route (preserves the page underneath).
-    await page.locator('a.main-nav-link[data-nav="settings"]').click();
+    await page.locator('a[data-nav="settings"]').click();
     await expect(page).toHaveURL(/\/ui\/settings/);
     await expect(page.locator('.modal-page')).toBeVisible();
 

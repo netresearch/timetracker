@@ -171,7 +171,7 @@ test.describe('Success Notifications', () => {
   test('should show success notification after settings save', async ({ page }) => {
     // Settings moved to the SolidJS UI; reach it via the header nav (inline or
     // folded into "More" depending on width).
-    await clickHeaderNav(page, 'a.main-nav-link[data-nav="settings"]');
+    await clickHeaderNav(page, 'a[data-nav="settings"]');
     await page.waitForURL(/\/ui\/settings/, { timeout: 10000 });
     await page.waitForSelector('form.stack-form', { timeout: 10000 });
 

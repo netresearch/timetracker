@@ -144,7 +144,9 @@ export function handleShortcut(event: KeyboardEvent): void {
     // Single-character shortcut: only outside fields and without modifiers, so it
     // can't fire while typing text (WCAG 2.1.4 mitigation).
     if (event.key === '?' && !inField && !event.altKey && !event.ctrlKey && !event.metaKey) {
-      const help = document.querySelector<HTMLAnchorElement>('.app-header .main-nav a[data-nav="help"]')
+      // Help moved out of .main-nav into the header icon group, so match by
+      // data-nav across the whole header rather than scoping to .main-nav.
+      const help = document.querySelector<HTMLAnchorElement>('.app-header a[data-nav="help"]')
       if (help !== null) {
         event.preventDefault()
         help.click()

@@ -25,8 +25,10 @@ export const NAV_LINKS = {
   auswertung: 'a.main-nav-link[data-nav="auswertung"]',
   extras: 'a.main-nav-link[data-nav="extras"]',
   billing: 'a.main-nav-link[data-nav="billing"]',
-  settings: 'a.main-nav-link[data-nav="settings"]',
-  help: 'a.main-nav-link[data-nav="help"]',
+  // Settings & Help are icon actions beside the theme switch (not main-nav-link),
+  // so match by data-nav alone.
+  settings: 'a[data-nav="settings"]',
+  help: 'a[data-nav="help"]',
   admin: 'a.main-nav-link[data-nav="admin"]',
 } as const;
 
