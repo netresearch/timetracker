@@ -1,8 +1,10 @@
+import { Dialog } from '@ark-ui/solid/dialog'
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
-import { createMemo, createSignal, For, onCleanup, onMount, Show } from 'solid-js'
+import { createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
+import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, postJson } from '../api/client'
-import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, type NamedOption, type TrackingEntry } from '../api/queries'
+import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, type NamedOption, type SummaryScope, type TrackingEntry } from '../api/queries'
 import { appConfig } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { gridNav } from '../lib/gridNavigation'
@@ -65,6 +67,14 @@ function nowHi(): string {
   const now = new Date()
 
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
+
+// Minutes → H:i (for the summary popup totals).
+function fmtMinutes(minutes: number): string {
+  const sign = minutes < 0 ? '-' : ''
+  const abs = Math.abs(minutes)
+
+  return `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, '0')}`
 }
 
 // The editable fields drive the in-cell editor; duration is server-derived.
@@ -135,6 +145,8 @@ export default function Tracking() {
   const customers = useQuery(trackingCustomersQuery)
   const projects = useQuery(trackingProjectsQuery)
   const activities = useQuery(activitiesQuery)
+  const ticketSystems = useQuery(trackingTicketSystemsQuery)
+  const [summary, setSummary] = createSignal<SummaryScope[] | null>(null)
 
   // Unsaved new rows (Add/Continue) carry a temporary negative id and render
   // above the fetched entries; they save as creates and drop on success.
@@ -262,6 +274,55 @@ export default function Tracking() {
     }
   }
 
+  // The ticket-system URL for a ticket, resolved via the entry's project (mirrors
+  // the ExtJS getTicketsystemUrlByTicket, with the same bugs.nr fallback).
+  function ticketUrlFor(ticket: string, projectId: number): string {
+    const project = (projects.data ?? []).find((candidate) => candidate.id === projectId)
+    const system = project !== undefined ? (ticketSystems.data ?? []).find((candidate) => candidate.id === project.ticketSystem) : undefined
+    const pattern = system !== undefined && system.ticketUrl !== '' ? system.ticketUrl : 'https://bugs.nr/%s'
+
+    return pattern.split('%s').join(ticket)
+  }
+
+  // Cell render: ticket → a link to its ticket system; date → text + a hidden
+  // row-state label; everything else → plain text.
+  function cellContent(entry: TrackingEntry, colKey: string): JSX.Element {
+    if (colKey === 'ticket') {
+      const row = editor.overlayRow(entry)
+      const ticket = str(row.ticket)
+
+      return ticket === ''
+        ? ''
+        : <a class="ticket-link" href={ticketUrlFor(ticket, num(row.project))} target="_blank" rel="noopener noreferrer">{ticket}</a>
+    }
+    if (colKey === 'date') {
+      return (
+        <>
+          {displayCell(entry, 'date')}
+          <Show when={classLabel(entry.class) !== ''}>
+            <span class="visually-hidden"> ({classLabel(entry.class)})</span>
+          </Show>
+        </>
+      )
+    }
+
+    return displayCell(entry, colKey)
+  }
+
+  // Alt+I: per-customer/project/activity/ticket totals for an entry (or the latest).
+  async function showInfo(entry?: TrackingEntry): Promise<void> {
+    const target = entry ?? (entries.data ?? [])[0]
+    if (target === undefined) {
+      return
+    }
+    try {
+      const result = await postJson<Record<string, SummaryScope>>('/getSummary', { id: num(target.id) })
+      setSummary([result.customer, result.project, result.activity, result.ticket].filter((scope): scope is SummaryScope => scope != null))
+    } catch (caught) {
+      window.alert(apiErrorMessage(caught, m.app_load_error()))
+    }
+  }
+
   async function removeEntry(entry: TrackingEntry): Promise<void> {
     if (!window.confirm(m.admin_delete_confirm())) {
       return
@@ -382,6 +443,10 @@ export default function Tracking() {
         event.preventDefault()
         window.location.assign(exportHref())
         break
+      case 'i':
+        event.preventDefault()
+        void showInfo()
+        break
       default:
         break
     }
@@ -402,6 +467,7 @@ export default function Tracking() {
         </button>
         <button type="button" class="action-button" onClick={() => continueEntry()} aria-keyshortcuts="Alt+C">{m.tracking_continue()}</button>
         <button type="button" class="action-button" onClick={() => void prolongLast()} aria-keyshortcuts="Alt+P">{m.tracking_prolong()}</button>
+        <button type="button" class="action-button" onClick={() => void showInfo()} aria-keyshortcuts="Alt+I">{m.tracking_info()}</button>
         <a class="action-button" href={exportHref()} aria-keyshortcuts="Alt+X">{m.tracking_export()}</a>
         <label class="tracking-days">
           <span>{m.tracking_days_label()}</span>
@@ -459,14 +525,7 @@ export default function Tracking() {
                             >
                               <Show
                                 when={editor.isEditing(id, col.key)}
-                                fallback={
-                                  <>
-                                    {displayCell(entry, col.key)}
-                                    <Show when={col.key === 'date' && classLabel(entry.class) !== ''}>
-                                      <span class="visually-hidden"> ({classLabel(entry.class)})</span>
-                                    </Show>
-                                  </>
-                                }
+                                fallback={cellContent(entry, col.key)}
                               >
                                 <InlineEditor
                                   field={FIELD_BY_KEY.get(col.key)!}
@@ -507,6 +566,44 @@ export default function Tracking() {
         <Show when={rows().length === 0 && !entries.isLoading}>
           <p class="tracking-empty">{m.tracking_empty()}</p>
         </Show>
+      </Show>
+
+      <Show when={summary() !== null}>
+        <Dialog.Root open onOpenChange={(details) => { if (!details.open) setSummary(null) }} lazyMount unmountOnExit>
+          <Portal>
+            <Dialog.Backdrop class="modal-backdrop" />
+            <Dialog.Positioner class="modal-positioner">
+              <Dialog.Content class="modal">
+                <header class="modal-page-header">
+                  <Dialog.Title class="modal-page-title">{m.tracking_info()}</Dialog.Title>
+                  <Dialog.CloseTrigger class="modal-close" aria-label={m.dialog_close()}>×</Dialog.CloseTrigger>
+                </header>
+                <table class="data-table tracking-summary">
+                  <thead>
+                    <tr>
+                      <th scope="col">{m.tracking_summary_scope()}</th>
+                      <th scope="col" class="numeric">{m.tracking_summary_own()}</th>
+                      <th scope="col" class="numeric">{m.tracking_summary_total()}</th>
+                      <th scope="col" class="numeric">{m.tracking_summary_estimation()}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <For each={summary() ?? []}>
+                      {(scope) => (
+                        <tr>
+                          <th scope="row">{scope.name === '' ? scope.scope : scope.name}</th>
+                          <td class="numeric">{fmtMinutes(scope.own)}</td>
+                          <td class="numeric">{fmtMinutes(scope.total)}</td>
+                          <td class="numeric">{scope.estimation > 0 ? fmtMinutes(scope.estimation) : '—'}</td>
+                        </tr>
+                      )}
+                    </For>
+                  </tbody>
+                </table>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
       </Show>
     </section>
   )

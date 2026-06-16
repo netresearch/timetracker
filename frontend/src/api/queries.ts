@@ -139,6 +139,7 @@ export interface TrackingProject {
   name: string
   customer: number
   jiraId: string
+  ticketSystem: number
 }
 
 export function trackingProjectsQuery() {
@@ -154,9 +155,43 @@ export function trackingProjectsQuery() {
           name: String(project.name ?? ''),
           customer: Number(project.customer ?? 0),
           jiraId: String(project.jiraId ?? project.jira_id ?? ''),
+          ticketSystem: Number(project.ticket_system ?? project.ticketSystem ?? 0),
         })),
     staleTime: REFERENCE_STALE_TIME,
   }
+}
+
+// Ticket systems with their URL pattern (a "%s" placeholder), for linking a
+// ticket to its system. Open to all users (/getTicketSystems).
+export interface TrackingTicketSystem {
+  id: number
+  ticketUrl: string
+}
+
+export function trackingTicketSystemsQuery() {
+  return {
+    queryKey: ['tracking-ticketsystems'] as const,
+    queryFn: () => getJson<{ ticketSystem?: Record<string, unknown> }[]>('/getTicketSystems'),
+    select: (rows: { ticketSystem?: Record<string, unknown> }[]): TrackingTicketSystem[] =>
+      rows
+        .map((row) => row?.ticketSystem)
+        .filter((system): system is Record<string, unknown> => system != null)
+        .map((system) => ({
+          id: Number(system.id ?? 0),
+          ticketUrl: String(system.ticketUrl ?? system.ticketurl ?? ''),
+        })),
+    staleTime: REFERENCE_STALE_TIME,
+  }
+}
+
+/** Summary scope row from POST /getSummary (minutes for total/own/estimation). */
+export interface SummaryScope {
+  scope: string
+  name: string
+  entries: number
+  total: number
+  own: number
+  estimation: number
 }
 
 /** Shared filter shape for every interpretation view. */
