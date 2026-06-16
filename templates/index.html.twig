@@ -17,8 +17,14 @@
                 var ttSeenRoot = sessionStorage.getItem('tt:viewedRoot');
                 sessionStorage.setItem('tt:viewedRoot', '1');
                 var ttLastView = localStorage.getItem('tt:lastView');
-                if (!ttSeenRoot && ttLastView && ttLastView.indexOf('/ui/') === 0 && ttLastView !== location.pathname) {
-                    location.replace(ttLastView);
+                if (!ttSeenRoot && ttLastView && ttLastView !== location.pathname) {
+                    // Resolve + validate so a crafted value (e.g. path traversal to a
+                    // protocol-relative URL) can't redirect off-origin: only a same-origin
+                    // /ui/ path is honoured, and we navigate to the RESOLVED pathname.
+                    var ttTarget = new URL(ttLastView, location.origin);
+                    if (ttTarget.origin === location.origin && ttTarget.pathname.indexOf('/ui/') === 0) {
+                        location.replace(ttTarget.pathname + ttTarget.search + ttTarget.hash);
+                    }
                 }
             } catch (e) {}
         </script>

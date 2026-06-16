@@ -12,11 +12,43 @@ const DAYS_OPTIONS = [1, 3, 7, 35] as const
 const DEFAULT_DAYS = 3
 
 // Server-computed EntryClass → row modifier, mirroring the ExtJS row borders.
-// (PLAIN=1 is unstyled; DEFAULT=0 too.)
+// (PLAIN=1 and DEFAULT=0 are unstyled.)
 const CLASS_ROW: Record<number, string> = {
   2: 'is-daybreak',
   4: 'is-pause',
   8: 'is-overlap',
+}
+
+// Non-colour cue for the row class so the daybreak/break/overlap states are
+// perceivable by screen readers and without colour vision (WCAG 1.4.1 / 1.3.1).
+function classLabel(entryClass: number): string {
+  switch (entryClass) {
+    case 2:
+      return m.tracking_class_daybreak()
+    case 4:
+      return m.tracking_class_pause()
+    case 8:
+      return m.tracking_class_overlap()
+    default:
+      return ''
+  }
+}
+
+interface DisplayEntry extends TrackingEntry {
+  customerName: string
+  projectName: string
+  activityName: string
+  rowClass: string
+  stateLabel: string
+}
+
+function nameOf(list: NamedOption[] | undefined, id: number | null): string {
+  // Blank (not the raw id) while the option list is still loading.
+  if (id === null || id <= 0 || list === undefined) {
+    return ''
+  }
+
+  return list.find((option) => option.id === id)?.label ?? String(id)
 }
 
 /**
@@ -32,15 +64,23 @@ export default function Tracking() {
   const projects = useQuery(projectsQuery)
   const activities = useQuery(activitiesQuery)
 
-  const rows = createMemo<TrackingEntry[]>(() => entries.data ?? [])
+  // Resolve relation ids → names (and the row class/label) once per data change,
+  // not on every render — and keep referentially-stable rows for the grid.
+  const rows = createMemo<DisplayEntry[]>(() => {
+    const list = entries.data ?? []
+    const customerList = customers.data
+    const projectList = projects.data
+    const activityList = activities.data
 
-  const nameOf = (list: NamedOption[] | undefined, id: number | null): string => {
-    if (id === null || id <= 0) {
-      return ''
-    }
-
-    return list?.find((option) => option.id === id)?.label ?? String(id)
-  }
+    return list.map((entry) => ({
+      ...entry,
+      customerName: nameOf(customerList, entry.customer),
+      projectName: nameOf(projectList, entry.project),
+      activityName: nameOf(activityList, entry.activity),
+      rowClass: CLASS_ROW[entry.class] ?? '',
+      stateLabel: classLabel(entry.class),
+    }))
+  })
 
   let daysSelectEl: HTMLSelectElement | undefined
 
@@ -89,14 +129,19 @@ export default function Tracking() {
             <tbody>
               <For each={rows()}>
                 {(entry) => (
-                  <tr class={`tracking-row ${CLASS_ROW[entry.class] ?? ''}`.trimEnd()}>
-                    <td>{entry.date}</td>
+                  <tr class={`tracking-row ${entry.rowClass}`.trimEnd()}>
+                    <td>
+                      {entry.date}
+                      <Show when={entry.stateLabel}>
+                        <span class="visually-hidden"> ({entry.stateLabel})</span>
+                      </Show>
+                    </td>
                     <td class="numeric">{entry.start}</td>
                     <td class="numeric">{entry.end}</td>
                     <td>{entry.ticket}</td>
-                    <td>{nameOf(customers.data, entry.customer)}</td>
-                    <td>{nameOf(projects.data, entry.project)}</td>
-                    <td>{nameOf(activities.data, entry.activity)}</td>
+                    <td>{entry.customerName}</td>
+                    <td>{entry.projectName}</td>
+                    <td>{entry.activityName}</td>
                     <td>{entry.description}</td>
                     <td class="numeric">{entry.duration}</td>
                   </tr>
@@ -106,6 +151,9 @@ export default function Tracking() {
           </table>
         </div>
 
+        <Show when={entries.isLoading}>
+          <p class="tracking-loading">{m.app_loading()}</p>
+        </Show>
         <Show when={rows().length === 0 && !entries.isLoading}>
           <p class="tracking-empty">{m.tracking_empty()}</p>
         </Show>
