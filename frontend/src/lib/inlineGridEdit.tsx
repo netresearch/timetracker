@@ -163,6 +163,9 @@ export interface InlineGridEditConfig<R extends object> {
   /** Fallback for activating a non-inline column (e.g. open a modal); return
    *  true if it handled the activation. */
   onModalActivate?: (row: R) => boolean
+  /** Called right after a cell commits, so the host can derive sibling draft
+   *  fields (e.g. a ticket → project/customer mapping). */
+  onCommit?: (id: number, colKey: string, value: FormValues[string]) => void
   /** Called after a successful row save (e.g. a toast). */
   onSaved?: () => void
   /** Map a save error to a per-row message. Defaults to the generic load error. */
@@ -258,6 +261,8 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       return
     }
     setDrafts(cell.rowId, cell.colKey, value)
+    // Let the host react to a commit (e.g. derive sibling fields from a ticket).
+    config.onCommit?.(cell.rowId, cell.colKey, value)
     seedChar = undefined
     setEditCell(null)
     // All focus moves go through the grid's setActive (the single roving-tabindex
@@ -377,6 +382,12 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     cancelCell,
     takeDraft,
     flushRow,
+    // Set a sibling field on an existing draft (e.g. after a ticket→project map).
+    setDraftField: (id: number, colKey: string, value: FormValues[string]): void => {
+      if (drafts[id] !== undefined) {
+        setDrafts(id, colKey, value)
+      }
+    },
     setMoveHandle: (handle: GridMoveHandle | null): void => { moveHandle = handle },
     setTableEl: (el: HTMLElement | undefined): void => { tableEl = el },
     onTableFocusIn,

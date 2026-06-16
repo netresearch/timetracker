@@ -131,6 +131,34 @@ export function trackingEntriesQuery(days: number) {
   }
 }
 
+// Projects with the fields the work-log grid needs beyond {id,label}: the
+// customer (for cascading the project dropdown) and jiraId (for ticket→project
+// mapping). Open to all users (/getAllProjects is IS_AUTHENTICATED_FULLY).
+export interface TrackingProject {
+  id: number
+  name: string
+  customer: number
+  jiraId: string
+}
+
+export function trackingProjectsQuery() {
+  return {
+    queryKey: ['tracking-projects'] as const,
+    queryFn: () => getJson<{ project?: Record<string, unknown> }[]>('/getAllProjects'),
+    select: (rows: { project?: Record<string, unknown> }[]): TrackingProject[] =>
+      rows
+        .map((row) => row?.project)
+        .filter((project): project is Record<string, unknown> => project != null)
+        .map((project) => ({
+          id: Number(project.id ?? 0),
+          name: String(project.name ?? ''),
+          customer: Number(project.customer ?? 0),
+          jiraId: String(project.jiraId ?? project.jira_id ?? ''),
+        })),
+    staleTime: REFERENCE_STALE_TIME,
+  }
+}
+
 /** Shared filter shape for every interpretation view. */
 export interface InterpretationFilters {
   datestart: string

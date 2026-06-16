@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 
 import { apiErrorMessage, postJson } from '../api/client'
-import { activitiesQuery, projectsQuery, trackingCustomersQuery, trackingEntriesQuery, type NamedOption, type TrackingEntry } from '../api/queries'
+import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, type NamedOption, type TrackingEntry } from '../api/queries'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { gridNav } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
@@ -88,21 +88,53 @@ export default function Tracking() {
   const [days, setDays] = createSignal<number>(DEFAULT_DAYS)
   const entries = useQuery(() => trackingEntriesQuery(days()))
   const customers = useQuery(trackingCustomersQuery)
-  const projects = useQuery(projectsQuery)
+  const projects = useQuery(trackingProjectsQuery)
   const activities = useQuery(activitiesQuery)
 
   const rows = createMemo<TrackingEntry[]>(() => entries.data ?? [])
+  const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
 
   const optionLookup: OptionLookup = (source: OptionSource) => {
     switch (source) {
       case 'customers':
         return customers.data ?? []
-      case 'projects':
-        return projects.data ?? []
       case 'activities':
         return activities.data ?? []
+      case 'projects': {
+        // Cascade: while editing, show only the projects for the row's customer
+        // (prod has ~1000 projects, so an unfiltered list is unusable).
+        const cell = editor.editCell()
+        const customerId = cell !== null ? num(editor.draftValue(cell.rowId, 'customer')) : 0
+        const list = projects.data ?? []
+        const scoped = customerId > 0 ? list.filter((project) => project.customer === customerId) : list
+
+        return scoped.map((project) => ({ id: project.id, label: project.name }))
+      }
       default:
         return []
+    }
+  }
+
+  // Derive project (+ its customer) from a ticket prefix matching a project's
+  // jiraId; clear a now-mismatched project when the customer changes.
+  function handleCommit(id: number, colKey: string, value: unknown): void {
+    if (colKey === 'ticket') {
+      const prefix = str(value).toUpperCase().trim().split(/[-:]/)[0]
+      if (prefix === '') {
+        return
+      }
+      const project = (projects.data ?? []).find((candidate) => candidate.jiraId !== '' && candidate.jiraId.toUpperCase() === prefix)
+      if (project !== undefined) {
+        editor.setDraftField(id, 'project', project.id)
+        if (project.customer > 0) {
+          editor.setDraftField(id, 'customer', project.customer)
+        }
+      }
+    } else if (colKey === 'customer') {
+      const current = (projects.data ?? []).find((project) => project.id === num(editor.draftValue(id, 'project')))
+      if (current !== undefined && current.customer !== num(value)) {
+        editor.setDraftField(id, 'project', 0)
+      }
     }
   }
 
@@ -144,6 +176,7 @@ export default function Tracking() {
       })
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
     },
+    onCommit: handleCommit,
     saveErrorMessage: (caught) => (caught instanceof Error ? caught.message : m.app_load_error()),
   })
 
@@ -164,7 +197,7 @@ export default function Tracking() {
       case 'customer':
         return nameOf(customers.data, num(row.customer))
       case 'project':
-        return nameOf(projects.data, num(row.project))
+        return nameOf(allProjectOptions(), num(row.project))
       case 'activity':
         return nameOf(activities.data, num(row.activity))
       case 'description':
