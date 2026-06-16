@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
-import { createMemo, createSignal, For, Show } from 'solid-js'
+import { createMemo, createSignal, For, onCleanup, onMount, Show } from 'solid-js'
 
 import { apiErrorMessage, postJson } from '../api/client'
 import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, type NamedOption, type TrackingEntry } from '../api/queries'
@@ -352,6 +352,44 @@ export default function Tracking() {
     }
   }
 
+  const exportHref = (): string => `/export/${days()}`
+
+  // Grid-local Alt-shortcuts (Add/Alt+A is wired via the shared header). Ignored
+  // while a cell is being edited or focus is in a form control, and only the
+  // keys we own are intercepted.
+  function onGridShortcut(event: KeyboardEvent): void {
+    if (!event.altKey || event.ctrlKey || event.metaKey || event.repeat || editor.editCell() !== null) {
+      return
+    }
+    const target = event.target
+    if (target instanceof HTMLElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) {
+      return
+    }
+    switch (event.key.toLowerCase()) {
+      case 'c':
+        event.preventDefault()
+        continueEntry()
+        break
+      case 'p':
+        event.preventDefault()
+        void prolongLast()
+        break
+      case 'r':
+        event.preventDefault()
+        void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+        break
+      case 'x':
+        event.preventDefault()
+        window.location.assign(exportHref())
+        break
+      default:
+        break
+    }
+  }
+
+  onMount(() => document.addEventListener('keydown', onGridShortcut))
+  onCleanup(() => document.removeEventListener('keydown', onGridShortcut))
+
   let daysSelectEl: HTMLSelectElement | undefined
 
   return (
@@ -362,8 +400,9 @@ export default function Tracking() {
         <button type="button" class="primary-button" data-keyboard-add aria-keyshortcuts="Alt+A" onClick={() => addEntry()}>
           {m.tracking_add()}
         </button>
-        <button type="button" class="action-button" onClick={() => continueEntry()}>{m.tracking_continue()}</button>
-        <button type="button" class="action-button" onClick={() => void prolongLast()}>{m.tracking_prolong()}</button>
+        <button type="button" class="action-button" onClick={() => continueEntry()} aria-keyshortcuts="Alt+C">{m.tracking_continue()}</button>
+        <button type="button" class="action-button" onClick={() => void prolongLast()} aria-keyshortcuts="Alt+P">{m.tracking_prolong()}</button>
+        <a class="action-button" href={exportHref()} aria-keyshortcuts="Alt+X">{m.tracking_export()}</a>
         <label class="tracking-days">
           <span>{m.tracking_days_label()}</span>
           <select
