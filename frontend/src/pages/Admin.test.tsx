@@ -40,6 +40,8 @@ function mockEndpoints() {
         return Promise.resolve([{ project: { id: 4, name: 'Site', customer: 1, jiraId: 'ABC', active: true, global: false } }])
       case '/getActivities':
         return Promise.resolve([{ activity: { id: 5, name: 'Dev', needsTicket: false, factor: 1 } }])
+      case '/getAllHolidays':
+        return Promise.resolve([{ holiday: { id: 20260101, day: '2026-01-01', name: 'New Year' } }])
       case '/getTicketSystems':
         return Promise.resolve([{ ticketSystem: { id: 6, name: 'Jira', type: 'JIRA', bookTime: true, url: 'https://x' } }])
       default:
@@ -256,6 +258,23 @@ describe('Admin', () => {
     expect(within(dialog).getByText('Invoice')).toBeInTheDocument()
     expect(within(dialog).getByText('Internal reference')).toBeInTheDocument()
     expect(within(dialog).getByText('External reference')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('holidays are immutable: no Edit button, and delete posts the day (not id)', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue({ success: true })
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const { getByRole, queryByRole, unmount } = renderAdmin('/admin/holidays')
+    await waitFor(() => expect(getByRole('gridcell', { name: 'New Year' })).toBeInTheDocument())
+
+    // editable:false → the per-row Edit button is hidden (delete still applies).
+    expect(queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+
+    // Delete keys on the day, not the synthetic numeric id.
+    fireEvent.click(getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/holiday/delete', { day: '2026-01-01' }))
 
     unmount()
   })

@@ -46,6 +46,17 @@ export interface EntityDescriptor {
   toForm: (row: Record<string, unknown> | null) => FormValues
   /** Build the JSON save payload from the submitted form values. */
   toPayload: (values: FormValues) => Record<string, unknown>
+  /**
+   * When false, existing rows cannot be edited — no inline cell editing and no
+   * per-row Edit button (e.g. immutable, create-and-delete-only entities).
+   * Adding and deleting still apply. Defaults to true.
+   */
+  editable?: boolean
+  /**
+   * Build the delete payload from a list row. Defaults to `{ id: row.id }`;
+   * override for entities keyed by something other than a numeric id.
+   */
+  deletePayload?: (row: Record<string, unknown>) => Record<string, unknown>
 }
 
 /** Resolves an OptionSource to its loaded options (for column renderers). */

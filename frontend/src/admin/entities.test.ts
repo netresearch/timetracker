@@ -58,4 +58,14 @@ describe('admin entity descriptors', () => {
     expect(customerCol.render?.({ customer: 99 }, lookup)).toBe('99')
     expect(customerCol.render?.({ customer: 0 }, lookup)).toBe('')
   })
+
+  it('holidays are immutable (not editable) and delete by day, not id', () => {
+    const holidays = byKey('holidays')
+    expect(holidays.editable).toBe(false)
+    // Delete keys on the day (the entity PK), not the synthetic numeric id.
+    expect(holidays.deletePayload?.({ id: 20260101, day: '2026-01-01', name: 'New Year' })).toEqual({ day: '2026-01-01' })
+    // Add form starts blank; save payload carries day + name only.
+    expect(holidays.toForm(null)).toMatchObject({ day: '', name: '' })
+    expect(holidays.toPayload({ id: 0, day: '2026-01-01', name: 'New Year' })).toEqual({ day: '2026-01-01', name: 'New Year' })
+  })
 })
