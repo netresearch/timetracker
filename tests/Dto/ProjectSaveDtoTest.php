@@ -66,9 +66,6 @@ final class ProjectSaveDtoTest extends TestCase
             additionalInformationFromExternal: true,
             internalJiraTicketSystem: 'internal-jira',
             internalJiraProjectKey: 'INTERNAL',
-            invoice: 'INV-2026-001',
-            internalReference: 'INT-REF-9',
-            externalReference: 'EXT-REF-7',
         );
 
         self::assertSame(42, $dto->id);
@@ -88,9 +85,6 @@ final class ProjectSaveDtoTest extends TestCase
         self::assertTrue($dto->additionalInformationFromExternal);
         self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
         self::assertSame('INTERNAL', $dto->internalJiraProjectKey);
-        self::assertSame('INV-2026-001', $dto->invoice);
-        self::assertSame('INT-REF-9', $dto->internalReference);
-        self::assertSame('EXT-REF-7', $dto->externalReference);
     }
 
     // ==================== fromRequest tests ====================
@@ -127,9 +121,6 @@ final class ProjectSaveDtoTest extends TestCase
             'additionalInformationFromExternal' => '1',
             'internalJiraTicketSystem' => 'internal-jira',
             'internalJiraProjectKey' => 'INTERNAL',
-            'invoice' => 'INV-2026-001',
-            'internalReference' => 'INT-REF-9',
-            'externalReference' => 'EXT-REF-7',
         ]);
 
         $dto = ProjectSaveDto::fromRequest($request);
@@ -151,9 +142,6 @@ final class ProjectSaveDtoTest extends TestCase
         self::assertTrue($dto->additionalInformationFromExternal);
         self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
         self::assertSame('INTERNAL', $dto->internalJiraProjectKey);
-        self::assertSame('INV-2026-001', $dto->invoice);
-        self::assertSame('INT-REF-9', $dto->internalReference);
-        self::assertSame('EXT-REF-7', $dto->externalReference);
     }
 
     public function testFromRequestWithEmptyInternalJiraTicketSystem(): void
@@ -185,6 +173,29 @@ final class ProjectSaveDtoTest extends TestCase
         self::assertNull($dto->project_lead);
         self::assertNull($dto->technical_lead);
         self::assertNull($dto->ticket_system);
+    }
+
+    public function testReferenceFieldsRoundTrip(): void
+    {
+        // Constructor stores the invoice / internal / external reference fields.
+        $constructed = new ProjectSaveDto(
+            invoice: 'INV-2026-001',
+            internalReference: 'INT-REF-9',
+            externalReference: 'EXT-REF-7',
+        );
+        self::assertSame('INV-2026-001', $constructed->invoice);
+        self::assertSame('INT-REF-9', $constructed->internalReference);
+        self::assertSame('EXT-REF-7', $constructed->externalReference);
+
+        // fromRequest maps them off the request payload.
+        $mapped = ProjectSaveDto::fromRequest($this->createRequestWithData([
+            'invoice' => 'INV-FROM-REQ',
+            'internalReference' => 'INT-FROM-REQ',
+            'externalReference' => 'EXT-FROM-REQ',
+        ]));
+        self::assertSame('INV-FROM-REQ', $mapped->invoice);
+        self::assertSame('INT-FROM-REQ', $mapped->internalReference);
+        self::assertSame('EXT-FROM-REQ', $mapped->externalReference);
     }
 
     // ==================== Helper methods ====================
