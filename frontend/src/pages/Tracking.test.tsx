@@ -176,4 +176,66 @@ describe('Tracking (Worklog grid)', () => {
 
     unmount()
   })
+
+  it('maps a ticket prefix to its project and customer on commit', async () => {
+    getJson.mockImplementation((path: string) => {
+      if (path.startsWith('/getData/days/')) {
+        return Promise.resolve([{ entry: { id: 1, date: '16/06/2026', start: '09:00', end: '10:30', user: 3, customer: 0, project: 0, activity: 5, description: 'Work', ticket: '', duration: '1:30', durationMinutes: 90, class: 0, worklog: null, extTicket: null } }])
+      }
+      switch (path) {
+        case '/getCustomers':
+          return Promise.resolve([{ customer: { id: 7, name: 'ACME' } }])
+        case '/getAllProjects':
+          return Promise.resolve([{ project: { id: 9, name: 'Apollo', customer: 7, jiraId: 'APO' } }])
+        case '/getActivities':
+          return Promise.resolve([{ activity: { id: 5, name: 'Dev' } }])
+        default:
+          return Promise.resolve([])
+      }
+    })
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'apo-42' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    ;(getByRole('combobox') as HTMLElement).focus()
+
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ ticket: 'APO-42', project: 9, customer: 7 })),
+    )
+
+    unmount()
+  })
+
+  it('filters the project dropdown by the row customer (cascade)', async () => {
+    getJson.mockImplementation((path: string) => {
+      if (path.startsWith('/getData/days/')) {
+        return Promise.resolve([{ entry: { id: 1, date: '16/06/2026', start: '09:00', end: '10:30', user: 3, customer: 7, project: 9, activity: 5, description: 'Work', ticket: '', duration: '1:30', durationMinutes: 90, class: 0, worklog: null, extTicket: null } }])
+      }
+      switch (path) {
+        case '/getCustomers':
+          return Promise.resolve([{ customer: { id: 7, name: 'ACME' } }])
+        case '/getAllProjects':
+          return Promise.resolve([
+            { project: { id: 9, name: 'Apollo', customer: 7, jiraId: 'APO' } },
+            { project: { id: 10, name: 'Zeus', customer: 8, jiraId: 'ZEU' } },
+          ])
+        case '/getActivities':
+          return Promise.resolve([{ activity: { id: 5, name: 'Dev' } }])
+        default:
+          return Promise.resolve([])
+      }
+    })
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    const select = editCell(container, 'project')
+    const labels = Array.from(select.querySelectorAll('option')).map((option) => option.textContent)
+    expect(labels).toContain('Apollo') // customer 7's project
+    expect(labels).not.toContain('Zeus') // customer 8's project is filtered out
+
+    unmount()
+  })
 })
