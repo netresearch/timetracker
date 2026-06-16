@@ -76,4 +76,25 @@ final class AccountCrudTest extends AbstractWebTestCase
         self::assertGreaterThanOrEqual(400, $statusCode);
         self::assertLessThan(500, $statusCode);
     }
+
+    public function testSaveAccountWithUnknownIdReturnsNotFound(): void
+    {
+        $this->logInSession('unittest');
+
+        // Updating a non-existent id falls through to the "No entry for id." branch.
+        $this->client->request(Request::METHOD_POST, '/account/save', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['id' => 999999, 'name' => 'Ghost account'], JSON_THROW_ON_ERROR));
+
+        $this->assertStatusCode(404);
+    }
+
+    public function testDeleteUnknownAccountReturnsError(): void
+    {
+        $this->logInSession('unittest');
+
+        // Deleting a non-existent id raises EntityAlreadyDeletedException, which the
+        // action maps to an unprocessable-entity error response.
+        $this->client->request(Request::METHOD_POST, '/account/delete', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['id' => 999999], JSON_THROW_ON_ERROR));
+
+        $this->assertStatusCode(422);
+    }
 }
