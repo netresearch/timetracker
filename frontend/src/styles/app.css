@@ -1028,6 +1028,11 @@ kbd {
   border-bottom: 4px solid #e5484d;
 }
 
+/* Unsaved new row (Add/Continue) — a faint tint marks it until it saves. */
+.tracking-row.is-new > td {
+  background: var(--color-accent-soft, #fff6e5);
+}
+
 /* Inline (spreadsheet-style) editing: editable cells get a faint text cursor so
    the affordance is discoverable, and the in-cell editor fills the cell so the
    value doesn't shift when an editor opens. */
