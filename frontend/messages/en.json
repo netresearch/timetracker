@@ -136,6 +136,8 @@
   "tracking_class_daybreak": "Day break",
   "tracking_class_pause": "Break",
   "tracking_class_overlap": "Time overlap",
+  "tracking_invalid_time": "Please enter a valid start and end time.",
+  "tracking_actions": "Actions",
   "auswertung_title": "Evaluation",
   "auswertung_no_data": "No data found.",
   "auswertung_label": "Name",

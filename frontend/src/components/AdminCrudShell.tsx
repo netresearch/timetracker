@@ -1,21 +1,18 @@
 import { Dialog } from '@ark-ui/solid/dialog'
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
-import { createComputed, createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
-import { createStore, produce, reconcile } from 'solid-js/store'
+import { createComputed, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
+import { createStore, reconcile } from 'solid-js/store'
 import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
-import { getEnterBehavior } from '../lib/gridEditPref'
-import { gridNav, type ActivateKey, type GridMoveHandle } from '../lib/gridNavigation'
+import { createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
+import { gridNav } from '../lib/gridNavigation'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
 type Row = Record<string, unknown>
 
-// Field types that get a compact in-cell editor; everything else (multiselect,
-// the locked relation columns) stays modal-only.
-const INLINE_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date', 'checkbox', 'select'])
 
 // Rows rendered per page. The list is fetched whole (a few hundred KB even for
 // ~1k rows) but rendering every row at once is the cost — paging keeps the DOM,
@@ -32,15 +29,6 @@ function csvCell(value: string): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
-/** Shared option resolution for both the modal FieldControl and the inline
- *  editor, so relation/static dropdowns stay identical in either surface. */
-function fieldSelectOptions(field: FieldDef, options: OptionLookup): { value: string | number; label: string }[] {
-  if (field.staticOptions) {
-    return field.staticOptions.map((option) => ({ value: option.value, label: option.label() }))
-  }
-
-  return field.source ? options(field.source).map((option) => ({ value: option.id, label: option.label })) : []
-}
 
 /**
  * Reusable admin CRUD surface: a list grid + add/edit modal form + delete,
@@ -268,20 +256,47 @@ export function AdminCrudShell(props: {
     void runBulk((row) => postJson(deleteEndpoint, deletePayload?.(row) ?? { id: row.id }), () => m.admin_deleted())
   }
 
+  const fieldFor = (colKey: string): FieldDef | undefined => props.descriptor.fields.find((field) => field.name === colKey)
+
+  function isColInlineEditable(colKey: string): boolean {
+    if (props.descriptor.editable === false) {
+      return false
+    }
+    const field = fieldFor(colKey)
+
+    return field !== undefined && INLINE_TYPES.has(field.type) && field.lockedOnEdit !== true
+  }
+
+  const inlineEditable = (col: ColumnDef): boolean => isColInlineEditable(col.key)
+
+  // The shared spreadsheet-edit controller (per-row drafts, save-on-row-leave);
+  // gridNav stays the roving-tabindex owner. A row saves the whole entity.
+  const editor = createInlineGridEdit({
+    rows: visibleRows,
+    fieldFor,
+    isInlineEditable: isColInlineEditable,
+    seedDraft: (row) => props.descriptor.toForm(row),
+    saveRow: async (draft) => {
+      await postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload({ ...draft }))
+      await refreshAfterMutation()
+    },
+    onModalActivate: (row) => { openForm(row); return true },
+    onSaved: () => flashNotice(m.admin_saved()),
+    saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
+  })
+
+  // A cell shows the committed draft value (through the column's own formatter)
+  // while the row is dirty, else the persisted value.
+  const displayText = (row: Row, col: ColumnDef): string => cellText(editor.overlayRow(row), col)
+
   function openForm(row: Row | null) {
     setError('')
     // If the row has a pending inline draft, the modal takes it over: seed from
     // the draft (not the now-stale list row) and drop the inline draft + open
     // editor so the inline and modal paths can't both save the same row.
     const rowId = row !== null ? Number(row.id) : 0
-    const draft = rowId ? drafts[rowId] : undefined
-    const form = draft !== undefined ? { ...draft } : props.descriptor.toForm(row)
-    if (draft !== undefined) {
-      if (editCell()?.rowId === rowId) {
-        setEditCell(null)
-      }
-      setDrafts(produce((store) => { delete store[rowId] }))
-    }
+    const draft = rowId ? editor.takeDraft(rowId) : undefined
+    const form = draft !== undefined ? draft : props.descriptor.toForm(row)
     // reconcile replaces every key (and drops stale ones) in one diffed update.
     setValues(reconcile(form))
     setEditing(form)
@@ -316,196 +331,12 @@ export function AdminCrudShell(props: {
       await postJson(props.descriptor.deleteEndpoint, props.descriptor.deletePayload?.(row) ?? { id: row.id })
       await refreshAfterMutation()
       // Drop any pending inline edit for the row that no longer exists.
-      setDrafts(produce((store) => { delete store[rowId] }))
+      editor.takeDraft(rowId)
       flashNotice(m.admin_deleted())
     } catch (caught) {
       setError(apiErrorMessage(caught, m.app_load_error()))
     }
   }
-
-  // ---- Inline cell editing -------------------------------------------------
-  // The grid stays a pure navigation/ARIA controller (use:gridNav); all edit
-  // state lives here, keyed by stable row id so a sort/filter/refetch can't
-  // desync it. A cell commit accumulates onto its row's draft and the whole
-  // entity is saved once, when focus leaves the row (see onTableFocusIn).
-  const [editCell, setEditCell] = createSignal<{ rowId: number; colKey: string } | null>(null)
-  const [drafts, setDrafts] = createStore<Record<number, FormValues>>({})
-  const [savingRows, setSavingRows] = createStore<Record<number, boolean>>({})
-  const [rowErrors, setRowErrors] = createStore<Record<number, string>>({})
-  let seedChar: string | undefined
-  let moveHandle: GridMoveHandle | null = null
-
-  const fieldFor = (colKey: string): FieldDef | undefined => props.descriptor.fields.find((f) => f.name === colKey)
-
-  function inlineEditable(col: ColumnDef): boolean {
-    if (props.descriptor.editable === false) {
-      return false
-    }
-    const field = fieldFor(col.key)
-
-    return field !== undefined && INLINE_TYPES.has(field.type) && field.lockedOnEdit !== true
-  }
-
-  const isEditing = (rowId: number, colKey: string): boolean => {
-    const cell = editCell()
-
-    return cell !== null && cell.rowId === rowId && cell.colKey === colKey
-  }
-
-  // What a cell shows: the committed draft value (rendered through the column's
-  // own formatter) while the row is dirty, else the persisted value. This keeps
-  // edited-but-unsaved cells visibly current without touching the query cache.
-  function displayText(row: Row, col: ColumnDef): string {
-    const draft = drafts[Number(row.id)]
-    if (draft !== undefined && col.key in draft) {
-      return cellText({ ...row, [col.key]: draft[col.key] }, col)
-    }
-
-    return cellText(row, col)
-  }
-
-  function beginEdit(rowId: number, colKey: string, char?: string): boolean {
-    const col = props.descriptor.columns.find((c) => c.key === colKey)
-    if (!col || !inlineEditable(col)) {
-      return false
-    }
-    const row = visibleRows().find((r) => Number(r.id) === rowId)
-    if (!row) {
-      return false
-    }
-    if (drafts[rowId] === undefined) {
-      setDrafts(rowId, props.descriptor.toForm(row))
-    }
-    const field = fieldFor(colKey)
-    // Only text-like fields are seeded with the keystroke that opened them.
-    seedChar = char !== undefined && (field?.type === 'text' || field?.type === 'number' || field?.type === 'date') ? char : undefined
-    setRowErrors(rowId, '')
-    setEditCell({ rowId, colKey })
-
-    return true
-  }
-
-  // gridNav offers the focused cell on Enter/F2/printable; we open an editor and
-  // return true so the grid suppresses its default "focus first control".
-  const onActivate = (cell: HTMLTableCellElement, key: ActivateKey, initial?: string): boolean => {
-    const rowId = Number(cell.getAttribute('data-row-id'))
-    const colKey = cell.getAttribute('data-col-key')
-    if (!rowId || colKey === null) {
-      return false
-    }
-    const col = props.descriptor.columns.find((c) => c.key === colKey)
-    if (col && inlineEditable(col)) {
-      return beginEdit(rowId, colKey, key === 'type' ? initial : undefined)
-    }
-    // A column backed by a modal-only field (multiselect / locked relation, e.g.
-    // Customers → Teams) can't edit in place — Enter/F2 open the full edit modal
-    // so the field stays reachable from the keyboard instead of doing nothing.
-    if (col && fieldFor(colKey) !== undefined && key !== 'type') {
-      const row = visibleRows().find((r) => Number(r.id) === rowId)
-      if (row) {
-        openForm(row)
-
-        return true
-      }
-    }
-
-    return false
-  }
-
-  function commitCell(value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay'): void {
-    const cell = editCell()
-    if (cell === null) {
-      return
-    }
-    setDrafts(cell.rowId, cell.colKey, value)
-    seedChar = undefined
-    setEditCell(null)
-    // All focus moves go through the grid's own setActive (the single
-    // roving-tabindex writer); landing on a different row triggers that row's
-    // save via onTableFocusIn. 'stay' re-focuses the just-edited cell; an
-    // undefined direction (commit-on-blur) leaves focus wherever it went.
-    if (direction === 'stay') {
-      moveHandle?.focusActive()
-    } else if (direction) {
-      moveHandle?.move(direction)
-    }
-  }
-
-  function cancelCell(): void {
-    seedChar = undefined
-    setEditCell(null)
-    moveHandle?.focusActive()
-  }
-
-  async function flushRow(rowId: number): Promise<void> {
-    const draft = drafts[rowId]
-    if (draft === undefined || savingRows[rowId]) {
-      return
-    }
-    setSavingRows(rowId, true)
-    setRowErrors(rowId, '')
-    try {
-      await postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload({ ...draft }))
-      await refreshAfterMutation()
-      // Refetch has the saved values now, so dropping the draft shows no flash.
-      setDrafts(produce((store) => { delete store[rowId] }))
-      flashNotice(m.admin_saved())
-    } catch (caught) {
-      // Keep the draft so the user's edits aren't lost; surface a per-row error.
-      setRowErrors(rowId, apiErrorMessage(caught, m.app_load_error()))
-    } finally {
-      setSavingRows(rowId, false)
-    }
-  }
-
-  // Row-leave detection: when focus moves to a cell in a different row, save the
-  // row we left (if dirty). Tracking focusin alone is robust — an editor closing
-  // and the grid re-focusing the next cell both surface here.
-  let tableEl: HTMLTableElement | undefined
-  let lastFocusedRowId: number | null = null
-
-  function rowIdOf(node: EventTarget | null): number | null {
-    const cell = node instanceof HTMLElement ? node.closest<HTMLElement>('td[data-row-id]') : null
-
-    return cell ? Number(cell.getAttribute('data-row-id')) : null
-  }
-
-  function onTableFocusIn(event: FocusEvent): void {
-    const rowId = rowIdOf(event.target)
-    if (rowId === lastFocusedRowId) {
-      return
-    }
-    if (lastFocusedRowId !== null) {
-      void flushRow(lastFocusedRowId) // a no-op when that row has no pending draft
-    }
-    lastFocusedRowId = rowId
-  }
-
-  function flushIfFocusLeftTable(): void {
-    if (tableEl === undefined || (document.activeElement !== null && tableEl.contains(document.activeElement))) {
-      return
-    }
-    if (lastFocusedRowId !== null) {
-      void flushRow(lastFocusedRowId) // a no-op when that row has no pending draft
-    }
-  }
-
-  function onTableFocusOut(): void {
-    // Deferred so an editor unmounting + the grid re-focusing the next cell (all
-    // synchronous) doesn't read as "left the table"; by the microtask the dust
-    // has settled and document.activeElement is authoritative.
-    queueMicrotask(flushIfFocusLeftTable)
-  }
-
-  // Switching entity / unmounting must not silently drop a pending edit.
-  onCleanup(() => {
-    for (const key of Object.keys(drafts)) {
-      const rowId = Number(key)
-      if (drafts[rowId] !== undefined && !savingRows[rowId]) {
-        void postJson(props.descriptor.saveEndpoint, props.descriptor.toPayload({ ...drafts[rowId]! }))
-      }
-    }
-  })
 
   let searchEl: HTMLInputElement | undefined
 
@@ -583,14 +414,14 @@ export function AdminCrudShell(props: {
         <div class="table-scroll">
           <table
             class="data-table admin-table"
-            ref={(el) => { tableEl = el }}
-            onFocusIn={onTableFocusIn}
-            onFocusOut={onTableFocusOut}
+            ref={(el) => { editor.setTableEl(el) }}
+            onFocusIn={editor.onTableFocusIn}
+            onFocusOut={editor.onTableFocusOut}
             use:gridNav={{
               items: pagedRows,
               onExit: (dir) => { if (dir === 'up') searchEl?.focus() },
-              onActivate,
-              moveRef: (handle) => { moveHandle = handle },
+              onActivate: editor.onActivate,
+              moveRef: (handle) => { editor.setMoveHandle(handle) },
             }}
           >
             <thead>
@@ -624,7 +455,7 @@ export function AdminCrudShell(props: {
             <tbody>
               <For each={pagedRows()}>
                 {(row) => (
-                  <tr aria-busy={savingRows[Number(row.id)] ? 'true' : undefined} classList={{ 'is-selected': Boolean(selected[Number(row.id)]) }}>
+                  <tr aria-busy={editor.savingRows[Number(row.id)] ? 'true' : undefined} classList={{ 'is-selected': Boolean(selected[Number(row.id)]) }}>
                     <td class="boolean admin-select-col">
                       <input
                         type="checkbox"
@@ -646,25 +477,25 @@ export function AdminCrudShell(props: {
                             classList={{ numeric: col.align === 'right', boolean: col.align === 'center', 'is-editable': editable }}
                             data-row-id={String(rowId)}
                             data-col-key={col.key}
-                            data-inline-editing={isEditing(rowId, col.key) ? '' : undefined}
-                            aria-label={isEditing(rowId, col.key) ? col.label() : undefined}
+                            data-inline-editing={editor.isEditing(rowId, col.key) ? '' : undefined}
+                            aria-label={editor.isEditing(rowId, col.key) ? col.label() : undefined}
                             onDblClick={() => {
                               if (editable) {
-                                beginEdit(rowId, col.key)
+                                editor.beginEdit(rowId, col.key)
                               } else if (modalOnly) {
                                 openForm(row)
                               }
                             }}
                           >
-                            <Show when={isEditing(rowId, col.key)} fallback={displayText(row, col)}>
+                            <Show when={editor.isEditing(rowId, col.key)} fallback={displayText(row, col)}>
                               <InlineEditor
                                 field={fieldFor(col.key)!}
                                 label={col.label()}
-                                initial={drafts[rowId]?.[col.key] ?? ''}
-                                seed={seedChar}
+                                initial={editor.draftValue(rowId, col.key) ?? ''}
+                                seed={editor.seedChar()}
                                 options={props.options}
-                                onCommit={commitCell}
-                                onCancel={cancelCell}
+                                onCommit={editor.commitCell}
+                                onCancel={editor.cancelCell}
                               />
                             </Show>
                           </td>
@@ -685,8 +516,8 @@ export function AdminCrudShell(props: {
                         <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6"/><path d="M10 11v6M14 11v6"/></svg>
                         {m.admin_delete()}
                       </button>
-                      <Show when={rowErrors[Number(row.id)]}>
-                        <span role="alert" class="form-status is-error">{rowErrors[Number(row.id)]}</span>
+                      <Show when={editor.rowErrors[Number(row.id)]}>
+                        <span role="alert" class="form-status is-error">{editor.rowErrors[Number(row.id)]}</span>
                       </Show>
                     </td>
                   </tr>
@@ -836,126 +667,3 @@ function FieldControl(props: {
   )
 }
 
-/**
- * Compact in-cell editor for inline (spreadsheet-style) editing. It owns its
- * keys: Enter commits and moves down, Tab/Shift+Tab commit and move right/left,
- * Escape cancels; all four stopPropagation so neither the grid nor the global
- * shortcut handler sees them. Blur commits in place (click-away). The value is
- * coerced back to the field's payload type on commit, matching FieldControl.
- */
-function InlineEditor(props: {
-  field: FieldDef
-  label: string
-  initial: FormValues[string]
-  seed?: string
-  options: OptionLookup
-  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay') => void
-  onCancel: () => void
-}) {
-  const isCheckbox = (): boolean => props.field.type === 'checkbox'
-  const [value, setValue] = createSignal<string | boolean>(isCheckbox() ? Boolean(props.initial) : String(props.initial ?? ''))
-  // Memoized so the <For> below sees a stable array (recreated only when the
-  // option source changes), not a fresh one on every render.
-  const selectOptions = createMemo(() => fieldSelectOptions(props.field, props.options))
-  let control: HTMLInputElement | HTMLSelectElement | undefined
-  // Guards against a second commit: the keydown move already committed, and the
-  // editor then unmounts and blurs — the blur must not re-commit.
-  let done = false
-
-  function coerced(): FormValues[string] {
-    if (isCheckbox()) {
-      return value() as boolean
-    }
-    const raw = value() as string
-    if (props.field.type === 'number' || (props.field.type === 'select' && props.field.stringValue !== true)) {
-      return Number(raw)
-    }
-
-    return raw
-  }
-
-  const finish = (direction?: 'down' | 'left' | 'right' | 'stay') => {
-    if (done) {
-      return
-    }
-    done = true
-    props.onCommit(coerced(), direction)
-  }
-  const cancel = () => {
-    if (done) {
-      return
-    }
-    done = true
-    props.onCancel()
-  }
-
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-      // Enter's focus move is a user preference (default: stay in the cell);
-      // Tab below always advances, so the user keeps an explicit move key.
-      finish(getEnterBehavior())
-    } else if (event.key === 'Tab') {
-      event.preventDefault()
-      event.stopPropagation()
-      finish(event.shiftKey ? 'left' : 'right')
-    } else if (event.key === 'Escape') {
-      event.preventDefault()
-      event.stopPropagation()
-      cancel()
-    }
-  }
-
-  onMount(() => {
-    if (props.seed !== undefined && control instanceof HTMLInputElement) {
-      setValue(props.seed)
-    }
-    control?.focus()
-  })
-
-  return (
-    <Switch>
-      <Match when={isCheckbox()}>
-        <input
-          ref={(el) => { control = el }}
-          type="checkbox"
-          class="inline-editor inline-check"
-          aria-label={props.label}
-          checked={value() as boolean}
-          onInput={(e) => setValue(e.currentTarget.checked)}
-          onKeyDown={onKeyDown}
-          onBlur={() => finish()}
-        />
-      </Match>
-      <Match when={props.field.type === 'select'}>
-        <select
-          ref={(el) => { control = el }}
-          class="inline-editor"
-          aria-label={props.label}
-          value={value() as string}
-          onInput={(e) => setValue(e.currentTarget.value)}
-          onKeyDown={onKeyDown}
-          onBlur={() => finish()}
-        >
-          <option value="">—</option>
-          <For each={selectOptions()}>
-            {(option) => <option value={String(option.value)}>{option.label}</option>}
-          </For>
-        </select>
-      </Match>
-      <Match when={true}>
-        <input
-          ref={(el) => { control = el }}
-          type={props.field.type === 'number' ? 'number' : props.field.type === 'date' ? 'date' : 'text'}
-          class="inline-editor"
-          aria-label={props.label}
-          value={value() as string}
-          onInput={(e) => setValue(e.currentTarget.value)}
-          onKeyDown={onKeyDown}
-          onBlur={() => finish()}
-        />
-      </Match>
-    </Switch>
-  )
-}

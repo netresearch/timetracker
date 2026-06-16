@@ -1168,7 +1168,8 @@ th[aria-sort='descending'] .th-sort-glyph {
   overflow: hidden;
 }
 
-.admin-row-actions {
+.admin-row-actions,
+.tracking-row-actions {
   display: flex;
   gap: 0.4rem;
   white-space: nowrap;
