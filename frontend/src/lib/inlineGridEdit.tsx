@@ -184,8 +184,12 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   let moveHandle: GridMoveHandle | null = null
   let tableEl: HTMLElement | undefined
   let lastFocusedRowId: number | null = null
+  // Non-reactive snapshot of the row a draft was seeded from, so a pending edit
+  // can still save on unmount even if the parent already cleared the rows list
+  // (e.g. route/tab change) — rowById() would then return undefined.
+  const originalRows = new Map<number, R>()
 
-  const rowById = (id: number): R | undefined => config.rows().find((row) => idOf(row) === id)
+  const rowById = (id: number): R | undefined => originalRows.get(id) ?? config.rows().find((row) => idOf(row) === id)
 
   // The row merged with its pending draft, so edited-but-unsaved cells render
   // current values without touching the query cache.
@@ -214,6 +218,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     }
     if (drafts[id] === undefined) {
       setDrafts(id, config.seedDraft(row))
+      originalRows.set(id, row)
     }
     const field = config.fieldFor(colKey)
     // Only text-like fields are seeded with the keystroke that opened them.
@@ -281,6 +286,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       setEditCell(null)
     }
     setDrafts(produce((store) => { delete store[id] }))
+    originalRows.delete(id)
 
     return { ...draft }
   }
@@ -297,6 +303,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       await config.saveRow({ ...draft }, row)
       // Refetch has the saved values now, so dropping the draft shows no flash.
       setDrafts(produce((store) => { delete store[id] }))
+      originalRows.delete(id)
       config.onSaved?.()
     } catch (caught) {
       // Keep the draft so edits aren't lost; surface a per-row error.

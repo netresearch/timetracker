@@ -182,6 +182,8 @@ export default function Tracking() {
     }
     try {
       await postJson('/tracking/delete', { id: num(entry.id) })
+      // Drop any pending inline draft for the now-deleted entry.
+      editor.takeDraft(num(entry.id))
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
     } catch (caught) {
       window.alert(apiErrorMessage(caught, m.app_load_error()))

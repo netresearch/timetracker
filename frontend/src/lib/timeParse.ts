@@ -7,19 +7,27 @@
  * 12a (→ 00:00), 12p (→ 12:00).
  */
 export function parseTime(input: string): string | null {
-  const raw = input.trim().toLowerCase()
-  if (raw === '') {
+  let body = input.trim().toLowerCase()
+  if (body === '') {
     return null
   }
 
-  // Optional am/pm suffix (a, p, am, pm, with optional dots/space).
+  // Optional am/pm suffix — string ops (not a regex) to avoid backtracking.
   let meridiem: 'a' | 'p' | null = null
-  let body = raw
-  const suffix = /\s*([ap])\.?m?\.?$/.exec(body)
-  if (suffix !== null) {
-    meridiem = suffix[1] as 'a' | 'p'
-    body = body.slice(0, suffix.index).trim()
+  if (body.endsWith('am')) {
+    meridiem = 'a'
+    body = body.slice(0, -2)
+  } else if (body.endsWith('pm')) {
+    meridiem = 'p'
+    body = body.slice(0, -2)
+  } else if (body.endsWith('a')) {
+    meridiem = 'a'
+    body = body.slice(0, -1)
+  } else if (body.endsWith('p')) {
+    meridiem = 'p'
+    body = body.slice(0, -1)
   }
+  body = body.trim()
 
   let hours: number
   let minutes: number

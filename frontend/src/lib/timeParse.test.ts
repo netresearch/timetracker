@@ -3,53 +3,43 @@ import { describe, expect, it } from 'vitest'
 import { parseTime, toIsoDate } from './timeParse'
 
 describe('parseTime', () => {
-  it('parses separated forms', () => {
-    expect(parseTime('9:30')).toBe('09:30')
-    expect(parseTime('09:30')).toBe('09:30')
-    expect(parseTime('9.30')).toBe('09:30')
-    expect(parseTime('9h30')).toBe('09:30')
-    expect(parseTime('14:05')).toBe('14:05')
+  it.each([
+    ['9:30', '09:30'],
+    ['09:30', '09:30'],
+    ['9.30', '09:30'],
+    ['9h30', '09:30'],
+    ['14:05', '14:05'],
+    ['930', '09:30'],
+    ['0930', '09:30'],
+    ['9', '09:00'],
+    ['09', '09:00'],
+    ['1830', '18:30'],
+    ['9:30am', '09:30'],
+    ['9:30a', '09:30'],
+    ['9:30pm', '21:30'],
+    ['930p', '21:30'],
+    ['9p', '21:00'],
+    ['12a', '00:00'],
+    ['12p', '12:00'],
+    ['  8:15 AM ', '08:15'],
+  ])('parses %s → %s', (input, expected) => {
+    expect(parseTime(input)).toBe(expected)
   })
 
-  it('parses terse digit forms', () => {
-    expect(parseTime('930')).toBe('09:30')
-    expect(parseTime('0930')).toBe('09:30')
-    expect(parseTime('9')).toBe('09:00')
-    expect(parseTime('09')).toBe('09:00')
-    expect(parseTime('1830')).toBe('18:30')
-  })
-
-  it('applies am/pm', () => {
-    expect(parseTime('9:30am')).toBe('09:30')
-    expect(parseTime('9:30a')).toBe('09:30')
-    expect(parseTime('9:30pm')).toBe('21:30')
-    expect(parseTime('930p')).toBe('21:30')
-    expect(parseTime('9p')).toBe('21:00')
-    expect(parseTime('12a')).toBe('00:00')
-    expect(parseTime('12p')).toBe('12:00')
-  })
-
-  it('trims and is case-insensitive', () => {
-    expect(parseTime('  8:15 AM ')).toBe('08:15')
-  })
-
-  it('rejects invalid input', () => {
-    expect(parseTime('')).toBeNull()
-    expect(parseTime('abc')).toBeNull()
-    expect(parseTime('25:00')).toBeNull()
-    expect(parseTime('9:75')).toBeNull()
-    expect(parseTime('99')).toBeNull()
+  it.each(['', 'abc', '25:00', '9:75', '99'])('rejects %s', (input) => {
+    expect(parseTime(input)).toBeNull()
   })
 })
 
 describe('toIsoDate', () => {
-  it('converts d/m/Y to Y-m-d', () => {
-    expect(toIsoDate('16/06/2026')).toBe('2026-06-16')
-    expect(toIsoDate('01/01/2025')).toBe('2025-01-01')
+  it.each([
+    ['16/06/2026', '2026-06-16'],
+    ['01/01/2025', '2025-01-01'],
+  ])('converts %s → %s', (input, expected) => {
+    expect(toIsoDate(input)).toBe(expected)
   })
 
-  it('returns empty for unrecognised input', () => {
-    expect(toIsoDate('2026-06-16')).toBe('')
-    expect(toIsoDate('')).toBe('')
+  it.each(['2026-06-16', ''])('returns empty for unrecognised %s', (input) => {
+    expect(toIsoDate(input)).toBe('')
   })
 })
