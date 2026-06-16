@@ -295,4 +295,27 @@ describe('Tracking (Worklog grid)', () => {
 
     unmount()
   })
+
+  it('exposes a CSV export link for the current day range', async () => {
+    mockApi()
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    expect(getByRole('link', { name: 'Export CSV' })).toHaveAttribute('href', '/export/3')
+
+    unmount()
+  })
+
+  it('Alt+P prolongs the latest entry from the keyboard', async () => {
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    fireEvent.keyDown(document, { key: 'p', altKey: true })
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 1 })))
+
+    unmount()
+  })
 })

@@ -141,6 +141,7 @@
   "tracking_add": "Eintrag hinzufügen",
   "tracking_continue": "Fortsetzen",
   "tracking_prolong": "Verlängern",
+  "tracking_export": "CSV-Export",
   "auswertung_title": "Auswertung",
   "auswertung_no_data": "Keine Daten gefunden.",
   "auswertung_label": "Name",
