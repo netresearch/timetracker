@@ -41,6 +41,9 @@ final class ProjectSaveDtoTest extends TestCase
         self::assertFalse($dto->additionalInformationFromExternal);
         self::assertNull($dto->internalJiraTicketSystem);
         self::assertSame('', $dto->internalJiraProjectKey);
+        self::assertNull($dto->invoice);
+        self::assertNull($dto->internalReference);
+        self::assertNull($dto->externalReference);
     }
 
     public function testConstructorWithCustomValues(): void
@@ -63,6 +66,9 @@ final class ProjectSaveDtoTest extends TestCase
             additionalInformationFromExternal: true,
             internalJiraTicketSystem: 'internal-jira',
             internalJiraProjectKey: 'INTERNAL',
+            invoice: 'INV-2026-001',
+            internalReference: 'INT-REF-9',
+            externalReference: 'EXT-REF-7',
         );
 
         self::assertSame(42, $dto->id);
@@ -82,6 +88,9 @@ final class ProjectSaveDtoTest extends TestCase
         self::assertTrue($dto->additionalInformationFromExternal);
         self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
         self::assertSame('INTERNAL', $dto->internalJiraProjectKey);
+        self::assertSame('INV-2026-001', $dto->invoice);
+        self::assertSame('INT-REF-9', $dto->internalReference);
+        self::assertSame('EXT-REF-7', $dto->externalReference);
     }
 
     // ==================== fromRequest tests ====================
@@ -118,6 +127,9 @@ final class ProjectSaveDtoTest extends TestCase
             'additionalInformationFromExternal' => '1',
             'internalJiraTicketSystem' => 'internal-jira',
             'internalJiraProjectKey' => 'INTERNAL',
+            'invoice' => 'INV-2026-001',
+            'internalReference' => 'INT-REF-9',
+            'externalReference' => 'EXT-REF-7',
         ]);
 
         $dto = ProjectSaveDto::fromRequest($request);
@@ -139,6 +151,9 @@ final class ProjectSaveDtoTest extends TestCase
         self::assertTrue($dto->additionalInformationFromExternal);
         self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
         self::assertSame('INTERNAL', $dto->internalJiraProjectKey);
+        self::assertSame('INV-2026-001', $dto->invoice);
+        self::assertSame('INT-REF-9', $dto->internalReference);
+        self::assertSame('EXT-REF-7', $dto->externalReference);
     }
 
     public function testFromRequestWithEmptyInternalJiraTicketSystem(): void
