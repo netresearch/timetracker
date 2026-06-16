@@ -7,6 +7,7 @@ import Tracking from './Tracking'
 
 const getJson = vi.fn()
 const postJson = vi.fn()
+const postForm = vi.fn()
 
 vi.mock('../api/client', () => ({
   SessionExpiredError: class extends Error {},
@@ -14,6 +15,7 @@ vi.mock('../api/client', () => ({
   apiErrorMessage: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
   getJson: (...args: unknown[]) => getJson(...args),
   postJson: (...args: unknown[]) => postJson(...args),
+  postForm: (...args: unknown[]) => postForm(...args),
 }))
 
 // Single source for the grid's GET endpoints; each test supplies only the data
@@ -74,8 +76,25 @@ function renderTracking() {
 afterEach(() => {
   getJson.mockReset()
   postJson.mockReset()
+  postForm.mockReset()
   vi.restoreAllMocks()
 })
+
+// Move the keyboard cursor to the Nth body row (0-based) so the active-row
+// (aria-current) toolbar actions target it. gridNav sets aria-current on focus,
+// then each ArrowDown advances one row.
+function focusBodyRow(container: HTMLElement, index: number): void {
+  const firstCell = container.querySelector<HTMLElement>('tbody td[data-row-id]')
+  if (firstCell === null) {
+    throw new Error('no body cell')
+  }
+  firstCell.focus()
+  // gridNav moves focus to the new cell on each step, so fire on whatever cell
+  // currently holds focus (not always the first one).
+  for (let i = 0; i < index; i += 1) {
+    fireEvent.keyDown(document.activeElement ?? firstCell, { key: 'ArrowDown' })
+  }
+}
 
 // Open the inline editor on a column's first cell and return its control.
 function editCell(container: HTMLElement, colKey: string): HTMLInputElement {
@@ -336,19 +355,23 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('Alt+I shows the per-scope summary popup', async () => {
+  it('Alt+I requests the summary as form-encoded (legacy $request->request) and shows it', async () => {
     mockApi()
-    postJson.mockResolvedValue({
+    // /getSummary reads form params, so the client uses postForm and returns the
+    // JSON *text*; a JSON body would leave the server's id null → all-zero totals.
+    postForm.mockResolvedValue(JSON.stringify({
       customer: { scope: 'customer', name: 'ACME', entries: 5, total: 300, own: 120, estimation: 0 },
       project: { scope: 'project', name: 'Site', entries: 3, total: 180, own: 90, estimation: 600 },
       activity: { scope: 'activity', name: 'Dev', entries: 2, total: 120, own: 60, estimation: 0 },
       ticket: { scope: 'ticket', name: 'ABC-1', entries: 1, total: 60, own: 60, estimation: 0 },
-    })
+    }))
     const { getByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
 
     fireEvent.keyDown(document, { key: 'i', altKey: true })
 
+    expect(postForm).toHaveBeenCalledWith('/getSummary', { id: 1 })
+    expect(postJson).not.toHaveBeenCalledWith('/getSummary', expect.anything())
     // The summary dialog is portalled to document.body → query via screen.
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('ACME')).toBeInTheDocument()
@@ -356,6 +379,75 @@ describe('Tracking (Worklog grid)', () => {
     expect(within(dialog).getByText('Dev')).toBeInTheDocument()
     // estimation shown for the project scope (600 min → 10:00).
     expect(within(dialog).getByText('10:00')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('sorts fetched entries newest-first regardless of server order', async () => {
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: '14/06/2026', start: '09:00', description: 'Oldest', class: 0 } },
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: '16/06/2026', start: '10:00', description: 'Newest', class: 0 } },
+        { entry: { ...DEFAULT_ENTRY, id: 3, date: '15/06/2026', start: '14:00', description: 'Middle', class: 0 } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Newest' })).toBeInTheDocument())
+
+    const dates = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"]')).map((td) => td.textContent)
+    expect(dates).toEqual(['16/06/2026', '15/06/2026', '14/06/2026'])
+
+    unmount()
+  })
+
+  it('Continue clones the keyboard-cursor row (incl. ticket), not the top row', async () => {
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } },
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: '15/06/2026', ticket: 'XYZ-9', customer: 2, project: 5 } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }, { customer: { id: 2, name: 'BroCorp' } }],
+      projects: [{ project: { id: 4, name: 'Site', customer: 1 } }, { project: { id: 5, name: 'App', customer: 2 } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { container, getByRole, getAllByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'BroCorp' })).toBeInTheDocument())
+
+    // Cursor on the 2nd (older, XYZ-9/BroCorp) row, then Continue.
+    focusBodyRow(container, 1)
+    fireEvent.click(getByRole('button', { name: 'Continue' }))
+
+    // The cloned new row carries the cursor row's customer + ticket (not ABC-1/ACME).
+    await waitFor(() => expect(getAllByRole('gridcell', { name: 'BroCorp' }).length).toBe(2))
+    const xyzLinks = Array.from(container.querySelectorAll('a.ticket-link')).filter((a) => a.textContent === 'XYZ-9')
+    expect(xyzLinks.length).toBe(2)
+
+    unmount()
+  })
+
+  it('Alt+I summarizes the keyboard-cursor row, not the top row', async () => {
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', description: 'Top' } },
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: '15/06/2026', description: 'Second' } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    postForm.mockResolvedValue(JSON.stringify({
+      customer: { scope: 'customer', name: 'ACME', entries: 1, total: 60, own: 60, estimation: 0 },
+    }))
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Second' })).toBeInTheDocument())
+
+    focusBodyRow(container, 1) // cursor on the 2nd row (id 2)
+    fireEvent.keyDown(document, { key: 'i', altKey: true })
+
+    expect(postForm).toHaveBeenCalledWith('/getSummary', { id: 2 })
 
     unmount()
   })

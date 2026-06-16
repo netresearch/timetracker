@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
-import { apiErrorMessage, postJson } from '../api/client'
+import { apiErrorMessage, postForm, postJson } from '../api/client'
 import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, type NamedOption, type SummaryScope, type TrackingEntry } from '../api/queries'
 import { appConfig } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
@@ -152,6 +152,8 @@ export default function Tracking() {
   // above the fetched entries; they save as creates and drop on success.
   const [newRows, setNewRows] = createSignal<TrackingEntry[]>([])
   let tempId = -1
+  // The grid element, captured in its ref — read for the keyboard-cursor row.
+  let tableEl: HTMLTableElement | undefined
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
   const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
 
@@ -309,14 +311,37 @@ export default function Tracking() {
     return displayCell(entry, colKey)
   }
 
-  // Alt+I: per-customer/project/activity/ticket totals for an entry (or the latest).
-  async function showInfo(entry?: TrackingEntry): Promise<void> {
-    const target = entry ?? (entries.data ?? [])[0]
+  // The entry of the row holding the keyboard cursor (gridNav marks it
+  // aria-current); undefined when focus is on the header or outside the grid.
+  function activeEntry(): TrackingEntry | undefined {
+    const rowId = tableEl?.querySelector('tr[aria-current="true"] [data-row-id]')?.getAttribute('data-row-id')
+    if (rowId === null || rowId === undefined) {
+      return undefined
+    }
+
+    return rows().find((entry) => String(num(entry.id)) === rowId)
+  }
+
+  // The saved entry under the cursor, else the most recent saved entry — the
+  // target for Continue and Info. A new/unsaved cursor row (id <= 0) has no
+  // server summary and nothing meaningful to clone, so it falls back.
+  function activeOrLatestEntry(): TrackingEntry | undefined {
+    const active = activeEntry()
+
+    return active !== undefined && num(active.id) > 0 ? active : (entries.data ?? [])[0]
+  }
+
+  // Alt+I: per-customer/project/activity/ticket totals for the cursor row (or
+  // the latest entry). /getSummary is a legacy endpoint that reads form params
+  // ($request->request->get('id')), so it must be POSTed as form-encoded — a
+  // JSON body leaves `id` null and the server answers all-zero totals.
+  async function showInfo(): Promise<void> {
+    const target = activeOrLatestEntry()
     if (target === undefined) {
       return
     }
     try {
-      const result = await postJson<Record<string, SummaryScope>>('/getSummary', { id: num(target.id) })
+      const result = JSON.parse(await postForm('/getSummary', { id: num(target.id) })) as Record<string, SummaryScope>
       setSummary([result.customer, result.project, result.activity, result.ticket].filter((scope): scope is SummaryScope => scope != null))
     } catch (caught) {
       window.alert(apiErrorMessage(caught, m.app_load_error()))
@@ -368,22 +393,22 @@ export default function Tracking() {
     pushNewRow({ start: appConfig().suggestTime && previous !== undefined ? str(previous.end) : '' }, 'customer')
   }
 
-  // Continue: clone the latest entry's customer/project/activity/ticket/description
-  // into a fresh blank-time row.
+  // Continue: clone the cursor row's (or, with no cursor, the latest entry's)
+  // customer/project/activity/ticket/description into a fresh blank-time row.
   function continueEntry(): void {
-    const previous = (entries.data ?? [])[0]
-    if (previous === undefined) {
+    const source = activeOrLatestEntry()
+    if (source === undefined) {
       addEntry()
 
       return
     }
     pushNewRow(
       {
-        customer: num(previous.customer),
-        project: num(previous.project),
-        activity: num(previous.activity),
-        description: str(previous.description),
-        ticket: str(previous.ticket),
+        customer: num(source.customer),
+        project: num(source.project),
+        activity: num(source.activity),
+        description: str(source.description),
+        ticket: str(source.ticket),
       },
       'start',
     )
@@ -487,7 +512,7 @@ export default function Tracking() {
         <div class="table-scroll">
           <table
             class="data-table tracking-table"
-            ref={(el) => { editor.setTableEl(el) }}
+            ref={(el) => { editor.setTableEl(el); tableEl = el }}
             onFocusIn={editor.onTableFocusIn}
             onFocusOut={editor.onTableFocusOut}
             use:gridNav={{
@@ -544,13 +569,15 @@ export default function Tracking() {
                       {/* data-row-id (no data-col-key → not inline-editable) keeps focus
                           "inside the row" so clicking Delete isn't read as a row-leave. */}
                       <td class="tracking-row-actions" data-row-id={String(id)}>
-                        <button type="button" class="link-button is-danger" onClick={() => void removeEntry(entry)}>
-                          <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6"/><path d="M10 11v6M14 11v6"/></svg>
-                          {m.admin_delete()}
-                        </button>
-                        <Show when={editor.rowErrors[id]}>
-                          <span role="alert" class="form-status is-error">{editor.rowErrors[id]}</span>
-                        </Show>
+                        <div class="row-actions">
+                          <button type="button" class="link-button is-danger" onClick={() => void removeEntry(entry)}>
+                            <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6"/><path d="M10 11v6M14 11v6"/></svg>
+                            {m.admin_delete()}
+                          </button>
+                          <Show when={editor.rowErrors[id]}>
+                            <span role="alert" class="form-status is-error">{editor.rowErrors[id]}</span>
+                          </Show>
+                        </div>
                       </td>
                     </tr>
                   )
