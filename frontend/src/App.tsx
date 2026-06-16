@@ -16,6 +16,7 @@ import Extras from './pages/Extras'
 import Help from './pages/Help'
 import Month from './pages/Month'
 import Settings from './pages/Settings'
+import Tracking from './pages/Tracking'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ const queryClient = new QueryClient({
 // one source so they never drift.
 const PAGE_TITLES: Record<string, () => string> = {
   month: m.month_title,
+  tracking: m.tracking_title,
   auswertung: m.auswertung_title,
   admin: m.admin_title,
   extras: m.extras_title,
@@ -128,6 +130,14 @@ function Layout(props: ParentProps) {
     const modal = isModal()
     const title = routeTitle()
     syncNav(location.pathname)
+    // Last-view memory (soft opt-in for the parallel work-log grids): the shared
+    // header writes this on full page loads; mirror it on SPA client-side
+    // navigation so the next login returns the user to the view they left.
+    try {
+      localStorage.setItem('tt:lastView', location.pathname)
+    } catch {
+      // localStorage unavailable (private mode) — skip.
+    }
     // WCAG 2.4.2: every route is a "page" and needs its own document title.
     document.title = `${title} – ${appConfig().appTitle}`
     // Remember the last full page so a modal renders it behind and returns to it.
@@ -199,6 +209,7 @@ function guarded(component: Component, allowed: () => boolean): Component {
 // backdrop content). Admin keeps its role guard.
 const BG_PAGES: Record<string, Component> = {
   month: Month,
+  tracking: Tracking,
   auswertung: Auswertung,
   admin: guarded(Admin, () => hasRole('ROLE_ADMIN')),
 }
@@ -208,6 +219,7 @@ export default function App() {
     <Router base="/ui" root={Layout}>
       <Route path="/" component={RedirectToMonth} />
       <Route path="/month" component={Month} />
+      <Route path="/tracking" component={Tracking} />
       <Route path="/auswertung" component={Auswertung} />
       <Route path="/settings" component={Settings} />
       <Route path="/help" component={Help} />

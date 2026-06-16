@@ -992,6 +992,42 @@ kbd {
   text-align: center;
 }
 
+/* ── Work-log (Worklog) grid ────────────────────────────────────────────────
+   The /ui/tracking grid reuses .data-table; these add the days-range toolbar,
+   the empty state, and the server-class-driven row borders that mirror the
+   legacy ExtJS grid (day break / break / time overlap). */
+.tracking-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-3, 0.75rem);
+}
+
+.tracking-days {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tracking-empty {
+  margin-top: var(--space-3, 0.75rem);
+  color: var(--color-text-muted, #666);
+}
+
+/* EntryClass-driven row borders (DAYBREAK=2, PAUSE=4, OVERLAP=8). The colour is
+   a redundant cue alongside the value itself, so it isn't the only signal. */
+.tracking-row.is-daybreak > td {
+  border-bottom: 4px solid #00889a;
+}
+
+.tracking-row.is-pause > td {
+  border-bottom: 4px solid #9aa0a6;
+}
+
+.tracking-row.is-overlap > td {
+  border-bottom: 4px solid #e5484d;
+}
+
 /* Inline (spreadsheet-style) editing: editable cells get a faint text cursor so
    the affordance is discoverable, and the in-cell editor fills the cell so the
    value doesn't shift when an editor opens. */

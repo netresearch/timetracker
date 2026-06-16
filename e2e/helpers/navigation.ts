@@ -21,6 +21,9 @@ export const TABS = {
  * full navigation to the corresponding /ui route.
  */
 export const NAV_LINKS = {
+  // The new SolidJS work-log grid; runs alongside the legacy ExtJS grid, which
+  // keeps the no-data-nav "Time tracking" link to / (TABS.tracking).
+  worklog: 'a.main-nav-link[data-nav="tracking"]',
   month: 'a.main-nav-link[data-nav="month"]',
   auswertung: 'a.main-nav-link[data-nav="auswertung"]',
   extras: 'a.main-nav-link[data-nav="extras"]',
@@ -86,6 +89,16 @@ export async function goToAuswertungPage(page: Page): Promise<void> {
   await page.locator(NAV_LINKS.auswertung).click();
   await page.waitForURL(/\/ui\/auswertung/, { timeout: 10000 });
   await page.waitForSelector('section.auswertung', { timeout: 10000 });
+}
+
+/**
+ * Navigate to the new SolidJS Worklog grid via the shared header "Worklog" link.
+ * Runs alongside the legacy ExtJS time-tracking grid (still at /).
+ */
+export async function goToWorklogPage(page: Page): Promise<void> {
+  await page.locator(NAV_LINKS.worklog).first().click();
+  await page.waitForURL(/\/ui\/tracking/, { timeout: 10000 });
+  await page.waitForSelector('table.tracking-table', { timeout: 10000 });
 }
 
 /**
