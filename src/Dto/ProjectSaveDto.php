@@ -49,6 +49,9 @@ final readonly class ProjectSaveDto
         public bool $additionalInformationFromExternal = false,
         public ?string $internalJiraTicketSystem = null,
         public string $internalJiraProjectKey = '',
+        public ?string $invoice = null,
+        public ?string $internalReference = null,
+        public ?string $externalReference = null,
     ) {
     }
 
@@ -79,6 +82,9 @@ final readonly class ProjectSaveDto
             additionalInformationFromExternal: (bool) $request->request->get('additionalInformationFromExternal'),
             internalJiraTicketSystem: ('' === $internal || null === $internal) ? null : (string) $internal,
             internalJiraProjectKey: (string) $request->request->get('internalJiraProjectKey', ''),
+            invoice: null !== $request->request->get('invoice') ? (string) $request->request->get('invoice') : null,
+            internalReference: null !== $request->request->get('internalReference') ? (string) $request->request->get('internalReference') : null,
+            externalReference: null !== $request->request->get('externalReference') ? (string) $request->request->get('externalReference') : null,
         );
     }
 }

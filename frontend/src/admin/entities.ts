@@ -71,6 +71,8 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'jiraId', label: () => m.admin_f_jira_id() },
         { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center' },
         { key: 'global', label: () => m.admin_f_global(), render: (row) => mark(row.global), align: 'center' },
+        // View-only: auto-synced from the ticket system (no matching field → read-only).
+        { key: 'subtickets', label: () => m.admin_f_subtickets() },
       ],
       fields: [
         { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
@@ -96,10 +98,13 @@ export function adminEntities(): EntityDescriptor[] {
         { name: 'estimation', label: () => m.admin_f_estimation(), type: 'text' },
         { name: 'internalJiraProjectKey', label: () => m.admin_f_internal_jira_key(), type: 'text' },
         { name: 'internalJiraTicketSystem', label: () => m.admin_f_internal_jira_system(), type: 'select', source: 'ticketSystems' },
+        { name: 'invoice', label: () => m.admin_f_invoice(), type: 'text' },
+        { name: 'internalReference', label: () => m.admin_f_internal_ref(), type: 'text' },
+        { name: 'externalReference', label: () => m.admin_f_external_ref(), type: 'text' },
       ],
       rowLabel: (row) => str(row.name),
       toForm: (row) => row === null
-        ? { id: 0, name: '', customer: 0, ticket_system: 0, jiraId: '', jiraTicket: '', additionalInformationFromExternal: false, active: true, global: false, project_lead: 0, technical_lead: 0, offer: '', cost_center: '', billing: 0, estimation: '', internalJiraProjectKey: '', internalJiraTicketSystem: 0 }
+        ? { id: 0, name: '', customer: 0, ticket_system: 0, jiraId: '', jiraTicket: '', additionalInformationFromExternal: false, active: true, global: false, project_lead: 0, technical_lead: 0, offer: '', cost_center: '', billing: 0, estimation: '', internalJiraProjectKey: '', internalJiraTicketSystem: 0, invoice: '', internalReference: '', externalReference: '' }
         : {
             id: num(row.id),
             name: str(row.name),
@@ -118,6 +123,9 @@ export function adminEntities(): EntityDescriptor[] {
             estimation: str(pick(row, 'estimationText', 'estimation')),
             internalJiraProjectKey: str(pick(row, 'internalJiraProjectKey', 'internal_jira_project_key')),
             internalJiraTicketSystem: num(pick(row, 'internalJiraTicketSystem', 'internal_jira_ticket_system')),
+            invoice: str(row.invoice),
+            internalReference: str(pick(row, 'internalReference', 'internal_reference')),
+            externalReference: str(pick(row, 'externalReference', 'external_reference')),
           },
       toPayload: (v) => ({ ...v }),
     },

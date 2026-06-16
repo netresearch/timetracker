@@ -241,6 +241,24 @@ describe('Admin', () => {
 
     unmount()
   })
+
+  it('exposes the new Projects fields and the read-only subtickets column', async () => {
+    mockEndpoints()
+    const { getByRole, unmount } = renderAdmin('/admin/projects')
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Site' })).toBeInTheDocument())
+
+    // The auto-synced subtickets column is shown (read-only).
+    expect(getByRole('columnheader', { name: /Subtickets/i })).toBeInTheDocument()
+
+    // The edit modal exposes the three new editable fields.
+    fireEvent.click(getByRole('button', { name: 'Edit' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Invoice')).toBeInTheDocument()
+    expect(within(dialog).getByText('Internal reference')).toBeInTheDocument()
+    expect(within(dialog).getByText('External reference')).toBeInTheDocument()
+
+    unmount()
+  })
 })
 
 describe('Admin inline cell editing', () => {
