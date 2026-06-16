@@ -25,10 +25,10 @@ export const NAV_LINKS = {
   auswertung: 'a.main-nav-link[data-nav="auswertung"]',
   extras: 'a.main-nav-link[data-nav="extras"]',
   billing: 'a.main-nav-link[data-nav="billing"]',
-  // Settings & Help are icon actions beside the theme switch (not main-nav-link),
-  // so match by data-nav alone.
-  settings: 'a[data-nav="settings"]',
-  help: 'a[data-nav="help"]',
+  // Settings & Help are icon actions beside the theme switch — .header-icon-link
+  // (scoped so it doesn't also match the mobile drawer's .drawer-link[data-nav]).
+  settings: 'a.header-icon-link[data-nav="settings"]',
+  help: 'a.header-icon-link[data-nav="help"]',
   admin: 'a.main-nav-link[data-nav="admin"]',
 } as const;
 

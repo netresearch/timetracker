@@ -450,6 +450,17 @@
     outline-offset: 1px;
 }
 
+/* Desktop logout is icon-only (matches the Settings/Help icon actions); the
+   shared :hover above still tints it red as the danger affordance. The drawer
+   logout keeps its text label. */
+.badge-logout {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+}
+
 /* ---- Hamburger + mobile drawer (shown < 600px) ---- */
 .nav-burger {
     display: none;
