@@ -5,6 +5,23 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        {# Soft opt-in for the parallel work-log grids: on the FIRST root view of a
+           browser session (i.e. the post-login landing), if the user last used a
+           SolidJS (/ui/*) view, return them there before the heavy ExtJS bundle
+           loads. The once-per-session sessionStorage guard is essential: without
+           it, clicking the "Time tracking" link (→ /) would bounce straight back
+           to the last /ui view, making the ExtJS grid unreachable. The shared
+           header writes tt:lastView on every page. #}
+        <script>
+            try {
+                var ttSeenRoot = sessionStorage.getItem('tt:viewedRoot');
+                sessionStorage.setItem('tt:viewedRoot', '1');
+                var ttLastView = localStorage.getItem('tt:lastView');
+                if (!ttSeenRoot && ttLastView && ttLastView.indexOf('/ui/') === 0 && ttLastView !== location.pathname) {
+                    location.replace(ttLastView);
+                }
+            } catch (e) {}
+        </script>
         <title>{{ apptitle }}</title>
         <link rel="stylesheet" href="{{ asset('build/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('build/css/header.css') }}" type="text/css">

@@ -90,6 +90,46 @@ export const presetsQuery = optionSourceQuery('presets', '/getAllPresets', 'pres
 export const teamsQuery = optionSourceQuery('teams', '/getAllTeams', 'team')
 export const ticketSystemsQuery = optionSourceQuery('ticketsystems', '/getTicketSystems', 'ticketSystem')
 export const activitiesQuery = optionSourceQuery('activities', '/getActivities', 'activity')
+// The work-log grid serves every user, so it uses the open /getCustomers
+// (user-scoped) rather than the ROLE_ADMIN /getAllCustomers.
+export const trackingCustomersQuery = optionSourceQuery('tracking-customers', '/getCustomers', 'customer')
+
+// ── Time-tracking work-log entries (the /ui/tracking grid) ───────────────────
+// GET /getData/days/{days} returns ExtJS-style row-wrapped entries; the grid
+// reads the unwrapped list. duration + class are server-derived — class drives
+// row styling (EntryClass: PLAIN=1, DAYBREAK=2, PAUSE=4, OVERLAP=8).
+export interface TrackingEntry {
+  id: number
+  date: string | null
+  start: string | null
+  end: string | null
+  user: number | null
+  customer: number | null
+  project: number | null
+  activity: number | null
+  description: string
+  ticket: string
+  duration: string
+  durationMinutes: number
+  class: number
+  worklog: number | null
+  extTicket: string | null
+}
+
+interface TrackingEntryRow {
+  entry: TrackingEntry
+}
+
+export function trackingEntriesQuery(days: number) {
+  return {
+    queryKey: ['tracking-entries', days] as const,
+    queryFn: () => getJson<TrackingEntryRow[]>(`/getData/days/${days}`),
+    select: (rows: TrackingEntryRow[]): TrackingEntry[] =>
+      rows.map((row) => row?.entry).filter((entry): entry is TrackingEntry => entry != null),
+    // Keep the current rows visible while switching the days range (no flicker).
+    placeholderData: keepPreviousData,
+  }
+}
 
 /** Shared filter shape for every interpretation view. */
 export interface InterpretationFilters {
