@@ -64,6 +64,32 @@ function renderAdmin(path = '/admin') {
   ))
 }
 
+// Renders the customer grid (customer 1 has team 2) with the given team
+// catalogue, then opens the inline tag editor on the "Backend" teams cell.
+async function openTeamsTagEditor(teams: { id: number; name: string }[]) {
+  getJson.mockImplementation((path: string) =>
+    path === '/getAllCustomers'
+      ? Promise.resolve([{ customer: { id: 1, name: 'ACME', active: true, global: false, teams: [2] } }])
+      : path === '/getAllTeams'
+        ? Promise.resolve(teams.map((team) => ({ team })))
+        : Promise.resolve([]),
+  )
+  const utils = renderAdmin()
+  await waitFor(() => expect(utils.getByRole('gridcell', { name: 'Backend' })).toBeInTheDocument())
+
+  const teamsCell = utils.getByRole('gridcell', { name: 'Backend' })
+  teamsCell.focus()
+  fireEvent.keyDown(teamsCell, { key: 'Enter' })
+  const addSelect = await waitFor(() => {
+    const el = teamsCell.querySelector<HTMLSelectElement>('select.tag-add')
+    if (el === null) throw new Error('inline tag editor not mounted')
+
+    return el
+  })
+
+  return { ...utils, teamsCell, addSelect }
+}
+
 afterEach(() => {
   getJson.mockReset()
   postJson.mockReset()
@@ -365,20 +391,41 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('opens the edit modal (not an inline editor) when activating a modal-only column', async () => {
-    mockEndpoints()
-    const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+  it('inline-edits a multiselect column as tag chips (add commits + auto-saves)', async () => {
+    postJson.mockResolvedValue([1, 'ACME', true, false, [2, 3]])
+    const { teamsCell, addSelect, unmount } = await openTeamsTagEditor([
+      { id: 2, name: 'Backend' },
+      { id: 3, name: 'Frontend' },
+    ])
 
-    // The "Backend" cell is the teams (multiselect) column — not inline-editable.
-    const teamsCell = getByRole('gridcell', { name: 'Backend' })
-    teamsCell.focus()
-    fireEvent.keyDown(teamsCell, { key: 'Enter' })
+    // An inline tag editor opened (chip for the current team + an add dropdown),
+    // not the modal.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(within(teamsCell).getByText('Backend')).toBeInTheDocument() // existing team is a chip
 
-    // No inline editor mounts in the cell; instead the full edit modal opens
-    // (portalled to document.body) so the field stays keyboard-reachable.
-    expect(teamsCell.querySelector('input')).toBeNull()
-    await screen.findByRole('dialog')
+    // Add "Frontend" → Enter commits → the complete row auto-saves with [2, 3].
+    fireEvent.input(addSelect, { target: { value: '3' } })
+    fireEvent.keyDown(addSelect, { key: 'Enter' })
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [2, 3] })),
+    )
+
+    unmount()
+  })
+
+  it('removes the last tag with Backspace in the inline multiselect (keyboard path)', async () => {
+    postJson.mockResolvedValue([1, 'ACME', true, false, []])
+    const { teamsCell, addSelect, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
+
+    // Backspace removes the last chip (no .tag chips remain); Enter commits →
+    // auto-saves with no teams.
+    fireEvent.keyDown(addSelect, { key: 'Backspace' })
+    await waitFor(() => expect(teamsCell.querySelector('.tag')).toBeNull())
+    fireEvent.keyDown(addSelect, { key: 'Enter' })
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [] })),
+    )
+
     unmount()
   })
 

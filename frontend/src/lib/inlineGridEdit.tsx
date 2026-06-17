@@ -10,7 +10,7 @@ export type Row = Record<string, unknown>
 
 // Field types that get a compact in-cell editor; everything else (multiselect,
 // locked relation columns) stays modal-only.
-export const INLINE_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date', 'checkbox', 'select'])
+export const INLINE_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date', 'checkbox', 'select', 'multiselect'])
 
 /** Shared option resolution for both the modal FieldControl and the inline
  *  editor, so relation/static dropdowns stay identical in either surface. */
@@ -144,6 +144,123 @@ export function InlineEditor(props: {
         />
       </Match>
     </Switch>
+  )
+}
+
+/**
+ * In-cell multiselect editor: the selected options render as removable tag chips
+ * with an "add" dropdown of the remaining options (Teams: [DEV ×] [PL ×] +). The
+ * value is the selected ids (number[]). Commit moves through the same onCommit
+ * as the single-cell editor: Enter commits in place, Escape cancels, and tabbing
+ * or clicking out of the whole widget commits (checked after the focus settles,
+ * so moving between chips/the dropdown — incl. removing one — doesn't commit).
+ */
+export function InlineMultiSelect(props: {
+  field: FieldDef
+  label: string
+  initial: FormValues[string]
+  options: OptionLookup
+  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay') => void
+  onCancel: () => void
+}) {
+  const allOptions = createMemo(() => fieldSelectOptions(props.field, props.options))
+  const [selected, setSelected] = createSignal<number[]>(Array.isArray(props.initial) ? [...(props.initial as number[])] : [])
+  const unselected = createMemo(() => allOptions().filter((option) => !selected().includes(Number(option.value))))
+  const labelOf = (id: number): string => allOptions().find((option) => Number(option.value) === id)?.label ?? String(id)
+  let container: HTMLDivElement | undefined
+  let addSelect: HTMLSelectElement | undefined
+  let done = false
+
+  function add(id: number): void {
+    if (id > 0 && !selected().includes(id)) {
+      setSelected([...selected(), id])
+    }
+    addSelect?.focus() // keep focus in the widget so the add reads as one action
+  }
+  function remove(id: number): void {
+    setSelected(selected().filter((value) => value !== id))
+    addSelect?.focus() // the chip's × unmounts — keep focus inside so it isn't a commit
+  }
+  // Takes the value so the signal is read in the (tracked) event handler, not in
+  // the deferred focusout microtask.
+  const finish = (value: number[], direction?: 'down' | 'left' | 'right' | 'stay') => {
+    if (done) {
+      return
+    }
+    done = true
+    props.onCommit([...value], direction)
+  }
+  const cancel = () => {
+    if (!done) {
+      done = true
+      props.onCancel()
+    }
+  }
+
+  onMount(() => addSelect?.focus())
+
+  return (
+    <div
+      ref={(el) => { container = el }}
+      class="inline-editor inline-tags"
+      role="group"
+      aria-label={props.label}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          event.stopPropagation()
+          finish(selected(), 'stay')
+        } else if (event.key === 'Tab') {
+          // Keep spreadsheet cell-to-cell nav: commit and move to the adjacent
+          // cell rather than tabbing focus out of the grid entirely.
+          event.preventDefault()
+          event.stopPropagation()
+          finish(selected(), event.shiftKey ? 'left' : 'right')
+        } else if (event.key === 'Escape') {
+          event.preventDefault()
+          event.stopPropagation()
+          cancel()
+        } else if (event.key === 'Backspace' && selected().length > 0) {
+          // Tag-input convention: Backspace removes the last chip (the × buttons
+          // are out of the Tab order, so this is the keyboard removal path).
+          event.preventDefault()
+          remove(selected()[selected().length - 1]!)
+        }
+      }}
+      onFocusOut={() => {
+        // Capture the value now (tracked handler), then commit only when focus
+        // has actually left the whole widget — checked after it settles, so
+        // moving between chips/the dropdown (incl. removing one) doesn't commit.
+        const value = selected()
+        // eslint-disable-next-line solid/reactivity -- intentional deferred commit of the captured value after focus settles
+        queueMicrotask(() => {
+          if (!done && container !== undefined && !container.contains(document.activeElement)) {
+            finish(value)
+          }
+        })
+      }}
+    >
+      <For each={selected()}>
+        {(id) => (
+          <span class="tag">
+            <span class="tag-label">{labelOf(id)}</span>
+            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${props.label}: ${labelOf(id)} ✕`} onClick={() => remove(id)}>×</button>
+          </span>
+        )}
+      </For>
+      <select
+        ref={(el) => { addSelect = el }}
+        class="tag-add"
+        aria-label={props.label}
+        value=""
+        onInput={(event) => { add(Number(event.currentTarget.value)); event.currentTarget.value = '' }}
+      >
+        <option value="">+</option>
+        <For each={unselected()}>
+          {(option) => <option value={String(option.value)}>{option.label}</option>}
+        </For>
+      </select>
+    </div>
   )
 }
 

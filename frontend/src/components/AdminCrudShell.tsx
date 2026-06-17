@@ -6,7 +6,7 @@ import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
-import { createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
+import { createInlineGridEdit, fieldSelectOptions, InlineEditor, InlineMultiSelect, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { gridNav } from '../lib/gridNavigation'
 import { DiskIcon, DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
 import { m } from '../paraglide/messages.js'
@@ -527,15 +527,30 @@ export function AdminCrudShell(props: {
                             }}
                           >
                             <Show when={editor.isEditing(rowId, col.key)} fallback={displayText(row, col)}>
-                              <InlineEditor
-                                field={fieldFor(col.key)!}
-                                label={col.label()}
-                                initial={editor.draftValue(rowId, col.key) ?? ''}
-                                seed={editor.seedChar()}
-                                options={props.options}
-                                onCommit={editor.commitCell}
-                                onCancel={editor.cancelCell}
-                              />
+                              <Switch
+                                fallback={
+                                  <InlineEditor
+                                    field={fieldFor(col.key)!}
+                                    label={col.label()}
+                                    initial={editor.draftValue(rowId, col.key) ?? ''}
+                                    seed={editor.seedChar()}
+                                    options={props.options}
+                                    onCommit={editor.commitCell}
+                                    onCancel={editor.cancelCell}
+                                  />
+                                }
+                              >
+                                <Match when={fieldFor(col.key)?.type === 'multiselect'}>
+                                  <InlineMultiSelect
+                                    field={fieldFor(col.key)!}
+                                    label={col.label()}
+                                    initial={editor.draftValue(rowId, col.key) ?? []}
+                                    options={props.options}
+                                    onCommit={editor.commitCell}
+                                    onCancel={editor.cancelCell}
+                                  />
+                                </Match>
+                              </Switch>
                             </Show>
                           </td>
                         )
