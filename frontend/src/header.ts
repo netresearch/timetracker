@@ -349,8 +349,9 @@ export function showAccessHints(): void {
   if (document.body.classList.contains('show-access-keys')) {
     return
   }
-  // Nav bar items 1..N (mirrors the Alt+N targets; single digits only).
-  navLinks().slice(0, 9).forEach((link, index) => link.setAttribute(ACCESS_HINT_ATTR, String(index + 1)))
+  // Nav bar items 1..7 only — that's the range the Alt+N handler binds
+  // (/^Digit[1-7]$/), so a badge never advertises a shortcut that won't fire.
+  navLinks().slice(0, 7).forEach((link, index) => link.setAttribute(ACCESS_HINT_ATTR, String(index + 1)))
   document.querySelectorAll<HTMLElement>('[aria-keyshortcuts]').forEach((el) => {
     const key = accessKeyOf(el.getAttribute('aria-keyshortcuts'))
     if (key !== null) {
