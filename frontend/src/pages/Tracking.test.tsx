@@ -451,4 +451,32 @@ describe('Tracking (Worklog grid)', () => {
 
     unmount()
   })
+
+  it('normalizes a terse start time in the cell on commit (1300 → 13:00)', async () => {
+    mockApi()
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    const startEditor = editCell(container, 'start')
+    fireEvent.input(startEditor, { target: { value: '1300' } })
+    fireEvent.keyDown(startEditor, { key: 'Enter' })
+
+    await waitFor(() => expect(getByRole('gridcell', { name: '13:00' })).toBeInTheDocument())
+
+    unmount()
+  })
+
+  it('opens the bulk-entry modal from the toolbar', async () => {
+    mockApi()
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: /Bulk entry/i }))
+
+    // The bulk-entry form (portalled dialog) appears without leaving the grid.
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText(/Bulk entry/i)).toBeInTheDocument()
+
+    unmount()
+  })
 })

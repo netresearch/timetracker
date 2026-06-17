@@ -9,7 +9,8 @@ import { appConfig } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { gridNav } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
-import { DownloadIcon, TrashIcon } from '../lib/icons'
+import { DownloadIcon, PlusIcon, TrashIcon } from '../lib/icons'
+import { BulkEntryForm } from '../components/BulkEntryForm'
 import { parseTime, toIsoDate } from '../lib/timeParse'
 import { m } from '../paraglide/messages.js'
 
@@ -148,6 +149,7 @@ export default function Tracking() {
   const activities = useQuery(activitiesQuery)
   const ticketSystems = useQuery(trackingTicketSystemsQuery)
   const [summary, setSummary] = createSignal<SummaryScope[] | null>(null)
+  const [bulkOpen, setBulkOpen] = createSignal(false)
 
   // Unsaved new rows (Add/Continue) carry a temporary negative id and render
   // above the fetched entries; they save as creates and drop on success.
@@ -179,8 +181,13 @@ export default function Tracking() {
     }
   }
 
-  // Derive project (+ its customer) from a ticket prefix matching a project's
-  // jiraId; clear a now-mismatched project when the customer changes.
+  // Suggested start for a fresh row / empty start cell: the latest entry's end,
+  // else the current wall-clock time (so a new entry continues from the last one).
+  const suggestedStart = (): string => str((entries.data ?? [])[0]?.end) || nowHi()
+
+  // On commit: ticket → derive project/customer; customer change → clear a now-
+  // mismatched project; start/end → normalize a terse time (1300 → 13:00) so the
+  // cell shows the fixed value immediately, not on the next refetch.
   function handleCommit(id: number, colKey: string, value: unknown): void {
     if (colKey === 'ticket') {
       const prefix = str(value).toUpperCase().trim().split(/[-:]/)[0]
@@ -199,6 +206,11 @@ export default function Tracking() {
       if (current !== undefined && current.customer !== num(value)) {
         editor.setDraftField(id, 'project', 0)
       }
+    } else if (colKey === 'start' || colKey === 'end') {
+      const parsed = parseTime(str(value))
+      if (parsed !== null && parsed !== str(value)) {
+        editor.setDraftField(id, colKey, parsed)
+      }
     }
   }
 
@@ -213,7 +225,9 @@ export default function Tracking() {
     seedDraft: (entry) => ({
       id: num(entry.id),
       date: toIsoDate(str(entry.date)),
-      start: str(entry.start),
+      // An empty start (a fresh row) prefills with the suggested start so the
+      // editor opens on a sensible value rather than blank.
+      start: str(entry.start) || suggestedStart(),
       end: str(entry.end),
       ticket: str(entry.ticket),
       customer: num(entry.customer),
@@ -486,9 +500,10 @@ export default function Tracking() {
       <h2 class="visually-hidden">{m.tracking_title()}</h2>
 
       <div class="tracking-toolbar">
-        <button type="button" class="primary-button" data-keyboard-add aria-keyshortcuts="Alt+A" onClick={() => addEntry()}>
-          {m.tracking_add()}
+        <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
+          <PlusIcon />
         </button>
+        <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
         <button type="button" class="action-button" onClick={() => continueEntry()} aria-keyshortcuts="Alt+C">{m.tracking_continue()}</button>
         <button type="button" class="action-button" onClick={() => void prolongLast()} aria-keyshortcuts="Alt+P">{m.tracking_prolong()}</button>
         <button type="button" class="action-button" onClick={() => void showInfo()} aria-keyshortcuts="Alt+I">{m.tracking_info()}</button>
@@ -635,6 +650,25 @@ export default function Tracking() {
                     </For>
                   </tbody>
                 </table>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
+      </Show>
+
+      <Show when={bulkOpen()}>
+        <Dialog.Root open onOpenChange={(details) => { if (!details.open) setBulkOpen(false) }} lazyMount unmountOnExit>
+          <Portal>
+            <Dialog.Backdrop class="modal-backdrop" />
+            <Dialog.Positioner class="modal-positioner">
+              <Dialog.Content class="modal">
+                <header class="modal-page-header">
+                  <Dialog.Title class="modal-page-title">{m.extras_title()}</Dialog.Title>
+                  <Dialog.CloseTrigger class="modal-close" aria-label={m.dialog_close()}>×</Dialog.CloseTrigger>
+                </header>
+                {/* Bulk-created entries may fall outside the current days range;
+                    refetch so any that land in view appear. */}
+                <BulkEntryForm onSaved={() => void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })} />
               </Dialog.Content>
             </Dialog.Positioner>
           </Portal>
