@@ -426,7 +426,9 @@ export function AdminCrudShell(props: {
               // Space ticks/unticks the cursor row (one keystroke, any cell).
               onRowSelectToggle: (cell) => {
                 const id = Number(cell.getAttribute('data-row-id'))
-                if (id <= 0) {
+                // A missing/non-numeric data-row-id yields NaN (NaN <= 0 is
+                // false), so test for a positive integer to avoid a NaN key.
+                if (!Number.isInteger(id) || id <= 0) {
                   return false
                 }
                 toggleRow(id, !selected[id])
@@ -531,7 +533,7 @@ export function AdminCrudShell(props: {
                   {/* Save error gets its own full-width row beneath the row, near
                       the data and not crammed into the icon-only actions cell. */}
                   <Show when={editor.rowErrors[Number(row.id)]}>
-                    <tr class="admin-row-error">
+                    <tr class="row-error">
                       <td colspan={props.descriptor.columns.length + 2}>
                         <span role="alert" class="form-status is-error">{editor.rowErrors[Number(row.id)]}</span>
                       </td>

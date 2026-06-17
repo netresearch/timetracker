@@ -1323,7 +1323,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 
 /* Inline save error gets its own full-width row beneath the offending row,
    near the data instead of crammed into the (now icon-only) actions cell. */
-.admin-row-error > td {
+.row-error > td {
   border-top: 0;
   padding: 0.1rem 0.9rem 0.5rem;
 }

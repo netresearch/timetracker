@@ -535,6 +535,7 @@ export default function Tracking() {
                   const id = num(entry.id)
 
                   return (
+                    <>
                     <tr class={`tracking-row ${id <= 0 ? 'is-new' : CLASS_ROW[entry.class] ?? ''}`.trimEnd()} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
                       <For each={COLUMNS}>
                         {(col) => {
@@ -574,12 +575,18 @@ export default function Tracking() {
                           <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void removeEntry(entry)}>
                             <TrashIcon />
                           </button>
-                          <Show when={editor.rowErrors[id]}>
-                            <span role="alert" class="form-status is-error">{editor.rowErrors[id]}</span>
-                          </Show>
                         </div>
                       </td>
                     </tr>
+                    {/* Save error gets its own full-width row beneath the row. */}
+                    <Show when={editor.rowErrors[id]}>
+                      <tr class="row-error">
+                        <td colspan={COLUMNS.length + 1}>
+                          <span role="alert" class="form-status is-error">{editor.rowErrors[id]}</span>
+                        </td>
+                      </tr>
+                    </Show>
+                    </>
                   )
                 }}
               </For>
