@@ -27,3 +27,7 @@ export function TrashIcon(): JSX.Element {
 export function DownloadIcon(): JSX.Element {
   return <Icon><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></Icon>
 }
+
+export function PlusIcon(): JSX.Element {
+  return <Icon><path d="M12 5v14M5 12h14" /></Icon>
+}
