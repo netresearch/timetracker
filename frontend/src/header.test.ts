@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { formatDays, formatDuration, handleShortcut } from './header'
+import { formatDays, formatDuration, handleShortcut, hideAccessHints, showAccessHints } from './header'
 
 describe('formatDuration', () => {
   it('formats minutes as H:MM like the ExtJS header', () => {
@@ -143,6 +143,24 @@ describe('handleShortcut', () => {
     handleShortcut(event)
     expect(document.activeElement).toBe(document.body)
     expect(event.defaultPrevented).toBe(false)
+  })
+
+  it('the Alt-hold overlay badges nav items 1..N and shortcut elements with their key', () => {
+    setup()
+    document.getElementById('main-content')!.insertAdjacentHTML(
+      'afterbegin', '<button type="button" aria-keyshortcuts="Alt+A">Add</button>',
+    )
+
+    showAccessHints()
+    expect(document.body.classList.contains('show-access-keys')).toBe(true)
+    const navHints = Array.from(document.querySelectorAll('.main-nav a.main-nav-link'))
+      .map((el) => el.getAttribute('data-access-hint'))
+    expect(navHints.slice(0, 3)).toEqual(['1', '2', '3'])
+    expect(document.querySelector('[aria-keyshortcuts="Alt+A"]')?.getAttribute('data-access-hint')).toBe('A')
+
+    hideAccessHints()
+    expect(document.body.classList.contains('show-access-keys')).toBe(false)
+    expect(document.querySelector('[data-access-hint]')).toBeNull()
   })
 
   it('ArrowDown on <body> with no grid stays put (native scroll preserved)', () => {

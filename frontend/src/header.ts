@@ -331,12 +331,63 @@ export function handleShortcut(event: KeyboardEvent): void {
   }
 }
 
+// ── Access-key overlay ───────────────────────────────────────────────────────
+// Holding Alt reveals the keyboard shortcuts as small badges: 1..N on the nav
+// bar items (Alt+1..N) and the modifier key on anything advertising an
+// aria-keyshortcuts (Alt+A on Add, Alt+C on Continue, …). The page just sets a
+// data-access-hint attribute + a body class; the badge itself is CSS.
+const ACCESS_HINT_ATTR = 'data-access-hint'
+
+/** "Alt+C" → "C", "Alt+1" → "1", "?" → "?"; the part after the last "+". */
+function accessKeyOf(shortcut: string | null): string | null {
+  const key = (shortcut ?? '').split('+').pop()?.trim() ?? ''
+
+  return key === '' ? null : key.toUpperCase()
+}
+
+export function showAccessHints(): void {
+  if (document.body.classList.contains('show-access-keys')) {
+    return
+  }
+  // Nav bar items 1..7 only — that's the range the Alt+N handler binds
+  // (/^Digit[1-7]$/), so a badge never advertises a shortcut that won't fire.
+  navLinks().slice(0, 7).forEach((link, index) => link.setAttribute(ACCESS_HINT_ATTR, String(index + 1)))
+  document.querySelectorAll<HTMLElement>('[aria-keyshortcuts]').forEach((el) => {
+    const key = accessKeyOf(el.getAttribute('aria-keyshortcuts'))
+    if (key !== null) {
+      el.setAttribute(ACCESS_HINT_ATTR, key)
+    }
+  })
+  document.body.classList.add('show-access-keys')
+}
+
+export function hideAccessHints(): void {
+  if (!document.body.classList.contains('show-access-keys')) {
+    return
+  }
+  document.querySelectorAll(`[${ACCESS_HINT_ATTR}]`).forEach((el) => el.removeAttribute(ACCESS_HINT_ATTR))
+  document.body.classList.remove('show-access-keys')
+}
+
 function initShortcuts(): void {
   if (shortcutsWired) {
     return
   }
   shortcutsWired = true
   document.addEventListener('keydown', handleShortcut)
+  // Alt-hold shows the shortcut badges; Alt-up (or losing the window — so a
+  // missed keyup can't strand them) hides them.
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Alt' && !event.repeat) {
+      showAccessHints()
+    }
+  })
+  document.addEventListener('keyup', (event) => {
+    if (event.key === 'Alt') {
+      hideAccessHints()
+    }
+  })
+  window.addEventListener('blur', hideAccessHints)
 }
 
 function pollLoginStatus(config: AppConfig): void {

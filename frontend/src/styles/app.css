@@ -1348,6 +1348,34 @@ th[aria-sort='descending'] .th-sort-glyph {
   color: var(--color-warning-text);
 }
 
+/* Access-key overlay: while Alt is held (body.show-access-keys, set by
+   header.ts), each shortcut target shows a small corner badge with its key —
+   1..N on the nav items, the letter on the toolbar actions. */
+.show-access-keys [data-access-hint] {
+  position: relative;
+}
+
+.show-access-keys [data-access-hint]::after {
+  content: attr(data-access-hint);
+  align-items: center;
+  background: var(--color-accent);
+  border-radius: 4px;
+  color: light-dark(#ffffff, #10171a);
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 700;
+  height: 1.05rem;
+  inset-block-start: -0.4rem;
+  inset-inline-end: -0.4rem;
+  justify-content: center;
+  line-height: 1;
+  min-width: 1.05rem;
+  padding: 0 0.2rem;
+  pointer-events: none;
+  position: absolute;
+  z-index: 6;
+}
+
 .modal-backdrop {
   background: rgba(0, 0, 0, 0.45);
   inset: 0;
