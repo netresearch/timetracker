@@ -462,6 +462,41 @@ describe('Admin inline cell editing', () => {
 
     unmount()
   })
+
+  it('does not drop an edit committed while an auto-save is in flight', async () => {
+    mockEndpoints()
+    let resolveFirst!: () => void
+    postJson
+      .mockImplementationOnce(() => new Promise<void>((resolve) => { resolveFirst = () => resolve() })) // 1st save hangs
+      .mockResolvedValue([1, 'A2', true, false, [2]])
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+
+    // Edit name → A1 → commit. The complete row auto-saves, but the POST hangs.
+    const cell = getByRole('gridcell', { name: 'ACME' })
+    cell.focus()
+    fireEvent.keyDown(cell, { key: 'Enter' })
+    let editor = (await screen.findByRole('textbox')) as HTMLInputElement
+    fireEvent.input(editor, { target: { value: 'A1' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    await waitFor(() => expect(postJson).toHaveBeenCalledTimes(1))
+
+    // Edit the same cell again → A2 → commit WHILE the first save is still in flight.
+    const dirtyCell = getByRole('gridcell', { name: 'A1' })
+    dirtyCell.focus()
+    fireEvent.keyDown(dirtyCell, { key: 'Enter' })
+    editor = (await screen.findByRole('textbox')) as HTMLInputElement
+    fireEvent.input(editor, { target: { value: 'A2' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+
+    // The first save resolves; the A2 edit must NOT be dropped — it re-saves.
+    resolveFirst()
+    await waitFor(() =>
+      expect(postJson).toHaveBeenLastCalledWith('/customer/save', expect.objectContaining({ name: 'A2' })),
+    )
+
+    unmount()
+  })
 })
 
 describe('Admin list — inactive filter, paging, CSV export', () => {

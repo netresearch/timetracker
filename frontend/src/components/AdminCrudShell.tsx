@@ -285,13 +285,17 @@ export function AdminCrudShell(props: {
     onSaved: () => flashNotice(m.admin_saved()),
     saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
     // Required fields must be filled for the row to auto-save; an empty one is
-    // hinted (border) until then.
+    // hinted (border) until then. A select/relation "none" is 0; for a numeric
+    // field 0 is a real value, so it isn't treated as empty.
     invalidFields: (draft) => props.descriptor.fields
       .filter((field) => field.required === true)
       .filter((field) => {
         const value = draft[field.name]
+        if (value === undefined || value === null || value === '') {
+          return true
+        }
 
-        return value === undefined || value === null || value === '' || value === 0
+        return field.type === 'select' && value === 0
       })
       .map((field) => field.name),
   })

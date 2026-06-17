@@ -337,12 +337,20 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     }
     setSavingRows(id, true)
     setRowErrors(id, '')
+    // Snapshot what we send: an edit committed WHILE this save is in flight (the
+    // savingRows guard blocks a concurrent flush) lands in the live draft, so we
+    // must not clear those newer edits on success — compare before dropping.
+    const snapshot = { ...draft }
+    const sentJson = JSON.stringify(snapshot)
     try {
-      await config.saveRow({ ...draft }, row)
-      // Refetch has the saved values now, so dropping the draft shows no flash.
-      setDrafts(produce((store) => { delete store[id] }))
-      setFieldHints(produce((store) => { delete store[id] }))
-      originalRows.delete(id)
+      await config.saveRow(snapshot, row)
+      // Refetch has the saved values now, so dropping the draft shows no flash —
+      // but only when nothing changed since (else the newer edits would be lost).
+      if (drafts[id] !== undefined && JSON.stringify({ ...drafts[id] }) === sentJson) {
+        setDrafts(produce((store) => { delete store[id] }))
+        setFieldHints(produce((store) => { delete store[id] }))
+        originalRows.delete(id)
+      }
       config.onSaved?.()
     } catch (caught) {
       // Keep the draft so edits aren't lost. An auto-save stays quiet (the field
@@ -353,6 +361,11 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       }
     } finally {
       setSavingRows(id, false)
+    }
+    // Edits arrived during the save (draft kept + changed) → persist the newer
+    // state (recomputes hints; auto-saves again only if still complete).
+    if (drafts[id] !== undefined && JSON.stringify({ ...drafts[id] }) !== sentJson) {
+      refreshHints(id)
     }
   }
 
