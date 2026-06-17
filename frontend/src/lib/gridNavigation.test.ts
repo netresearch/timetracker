@@ -94,6 +94,50 @@ describe('enableGridNavigation', () => {
     expect((document.activeElement as HTMLElement).closest('tr')?.querySelector('td')?.textContent).toBe('Beta')
   })
 
+  it('PageUp on the top row crosses to the previous page (onPageEdge) and lands on the last row', () => {
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><thead><tr><th>N</th></tr></thead><tbody><tr><td>Alpha</td></tr><tr><td>Beta</td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const onPageEdge = vi.fn(() => true)
+    const cleanup = enableGridNavigation(table, { onPageEdge })
+    const firstCell = table.querySelector('tbody td') as HTMLElement
+    firstCell.focus()
+    key(firstCell, 'PageUp')
+    expect(onPageEdge).toHaveBeenCalledWith('prev')
+    expect(document.activeElement?.textContent).toBe('Beta') // landed on the last row
+    cleanup()
+  })
+
+  it('PageDown on the bottom row crosses to the next page and lands on the first row', () => {
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><thead><tr><th>N</th></tr></thead><tbody><tr><td>Alpha</td></tr><tr><td>Beta</td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const onPageEdge = vi.fn(() => true)
+    const cleanup = enableGridNavigation(table, { onPageEdge })
+    const lastCell = table.querySelectorAll('tbody td')[1] as HTMLElement
+    lastCell.focus()
+    key(lastCell, 'PageDown')
+    expect(onPageEdge).toHaveBeenCalledWith('next')
+    expect(document.activeElement?.textContent).toBe('Alpha') // landed on the first row
+    cleanup()
+  })
+
+  it('stays within the page when onPageEdge declines (returns false)', () => {
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><thead><tr><th>N</th></tr></thead><tbody><tr><td>Alpha</td></tr><tr><td>Beta</td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const onPageEdge = vi.fn(() => false) // e.g. already at the first page
+    const cleanup = enableGridNavigation(table, { onPageEdge })
+    const firstCell = table.querySelector('tbody td') as HTMLElement
+    firstCell.focus()
+    key(firstCell, 'PageUp')
+    expect(onPageEdge).toHaveBeenCalledWith('prev')
+    // No page change → the normal within-page PageUp runs, clamping to the top
+    // (the header row); it must NOT have crossed to a sibling page's last row.
+    expect(document.activeElement?.textContent).toBe('N')
+    cleanup()
+  })
+
   it('calls onExit("up") when ArrowUp leaves the top row', () => {
     grid.cleanup()
     document.body.innerHTML = '<table class="data-table"><thead><tr><th>H</th></tr></thead><tbody><tr><td>A</td></tr></tbody></table>'
