@@ -9,6 +9,7 @@ import { appConfig } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { gridNav } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
+import { DownloadIcon, TrashIcon } from '../lib/icons'
 import { parseTime, toIsoDate } from '../lib/timeParse'
 import { m } from '../paraglide/messages.js'
 
@@ -493,7 +494,7 @@ export default function Tracking() {
         <button type="button" class="action-button" onClick={() => continueEntry()} aria-keyshortcuts="Alt+C">{m.tracking_continue()}</button>
         <button type="button" class="action-button" onClick={() => void prolongLast()} aria-keyshortcuts="Alt+P">{m.tracking_prolong()}</button>
         <button type="button" class="action-button" onClick={() => void showInfo()} aria-keyshortcuts="Alt+I">{m.tracking_info()}</button>
-        <a class="action-button" href={exportHref()} aria-keyshortcuts="Alt+X">{m.tracking_export()}</a>
+        <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
         <label class="tracking-days">
           <span>{m.tracking_days_label()}</span>
           <select
@@ -570,9 +571,8 @@ export default function Tracking() {
                           "inside the row" so clicking Delete isn't read as a row-leave. */}
                       <td class="tracking-row-actions" data-row-id={String(id)}>
                         <div class="row-actions">
-                          <button type="button" class="link-button is-danger" onClick={() => void removeEntry(entry)}>
-                            <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6"/><path d="M10 11v6M14 11v6"/></svg>
-                            {m.admin_delete()}
+                          <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void removeEntry(entry)}>
+                            <TrashIcon />
                           </button>
                           <Show when={editor.rowErrors[id]}>
                             <span role="alert" class="form-status is-error">{editor.rowErrors[id]}</span>

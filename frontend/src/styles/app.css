@@ -1289,12 +1289,43 @@ th[aria-sort='descending'] .th-sort-glyph {
   color: var(--color-danger-text);
 }
 
-/* Leading action glyph (Edit/Delete) — sized to the text, never the link colour
-   alone carrying meaning since the text label stays. */
+/* Leading action glyph (Edit/Delete) — sized to the text when a label is shown. */
 .action-ico {
   width: 1em;
   height: 1em;
   flex-shrink: 0;
+}
+
+/* Icon-only action buttons (Edit/Delete/Export in the grids + bulk bar): the
+   accessible name comes from aria-label/title, so drop the text-link underline
+   and make the button a square target. Kept at 44px (comfort) and never below
+   24×24 (WCAG 2.2 AA 2.5.8); the larger glyph keeps it legible without a label. */
+.link-button.is-icon,
+.action-button.is-icon {
+  gap: 0;
+  justify-content: center;
+  min-width: 44px;
+  padding: 0;
+  text-decoration: none;
+}
+
+.link-button.is-icon .action-ico,
+.action-button.is-icon .action-ico {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.link-button.is-icon:hover,
+.action-button.is-icon:hover {
+  background: var(--color-accent-soft);
+  border-radius: 8px;
+}
+
+/* Inline save error gets its own full-width row beneath the offending row,
+   near the data instead of crammed into the (now icon-only) actions cell. */
+.admin-row-error > td {
+  border-top: 0;
+  padding: 0.1rem 0.9rem 0.5rem;
 }
 
 .modal-backdrop {

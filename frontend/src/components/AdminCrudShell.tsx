@@ -8,6 +8,7 @@ import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
 import { createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { gridNav } from '../lib/gridNavigation'
+import { DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
@@ -392,8 +393,8 @@ export function AdminCrudShell(props: {
             <span>{m.admin_show_inactive()}</span>
           </label>
         </Show>
-        <button type="button" class="action-button" onClick={() => exportCsv(visibleRows())} disabled={visibleRows().length === 0}>
-          {m.admin_export_csv()}
+        <button type="button" class="action-button is-icon" aria-label={m.admin_export_csv()} title={m.admin_export_csv()} onClick={() => exportCsv(visibleRows())} disabled={visibleRows().length === 0}>
+          <DownloadIcon />
         </button>
       </div>
 
@@ -404,8 +405,8 @@ export function AdminCrudShell(props: {
             <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(true)}>{m.admin_bulk_activate()}</button>
             <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(false)}>{m.admin_bulk_deactivate()}</button>
           </Show>
-          <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => exportCsv(selectedRows())}>{m.admin_bulk_export()}</button>
-          <button type="button" class="link-button is-danger" disabled={bulkBusy()} onClick={() => bulkDelete()}>{m.admin_delete()}</button>
+          <button type="button" class="action-button is-icon" disabled={bulkBusy()} aria-label={m.admin_bulk_export()} title={m.admin_bulk_export()} onClick={() => exportCsv(selectedRows())}><DownloadIcon /></button>
+          <button type="button" class="link-button is-icon is-danger" disabled={bulkBusy()} aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => bulkDelete()}><TrashIcon /></button>
           <button type="button" class="link-button" disabled={bulkBusy()} onClick={() => clearSelection()}>{m.admin_bulk_clear()}</button>
         </div>
       </Show>
@@ -422,6 +423,16 @@ export function AdminCrudShell(props: {
               onExit: (dir) => { if (dir === 'up') searchEl?.focus() },
               onActivate: editor.onActivate,
               moveRef: (handle) => { editor.setMoveHandle(handle) },
+              // Space ticks/unticks the cursor row (one keystroke, any cell).
+              onRowSelectToggle: (cell) => {
+                const id = Number(cell.getAttribute('data-row-id'))
+                if (id <= 0) {
+                  return false
+                }
+                toggleRow(id, !selected[id])
+
+                return true
+              },
             }}
           >
             <thead>
@@ -455,8 +466,9 @@ export function AdminCrudShell(props: {
             <tbody>
               <For each={pagedRows()}>
                 {(row) => (
+                  <>
                   <tr aria-busy={editor.savingRows[Number(row.id)] ? 'true' : undefined} classList={{ 'is-selected': Boolean(selected[Number(row.id)]) }}>
-                    <td class="boolean admin-select-col">
+                    <td class="boolean admin-select-col" data-row-id={String(Number(row.id))}>
                       <input
                         type="checkbox"
                         aria-label={m.admin_select_row({ label: props.descriptor.rowLabel(row) })}
@@ -507,20 +519,25 @@ export function AdminCrudShell(props: {
                         clicking Edit doesn't read as a row-leave and flush. */}
                     <td class="admin-row-actions" data-row-id={String(Number(row.id))}>
                       <Show when={props.descriptor.editable !== false}>
-                        <button type="button" class="link-button" onClick={() => openForm(row)}>
-                          <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                          {m.admin_edit()}
+                        <button type="button" class="link-button is-icon" aria-label={m.admin_edit()} title={m.admin_edit()} onClick={() => openForm(row)}>
+                          <EditIcon />
                         </button>
                       </Show>
-                      <button type="button" class="link-button is-danger" onClick={() => void remove(row)}>
-                        <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6"/><path d="M10 11v6M14 11v6"/></svg>
-                        {m.admin_delete()}
+                      <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void remove(row)}>
+                        <TrashIcon />
                       </button>
-                      <Show when={editor.rowErrors[Number(row.id)]}>
-                        <span role="alert" class="form-status is-error">{editor.rowErrors[Number(row.id)]}</span>
-                      </Show>
                     </td>
                   </tr>
+                  {/* Save error gets its own full-width row beneath the row, near
+                      the data and not crammed into the icon-only actions cell. */}
+                  <Show when={editor.rowErrors[Number(row.id)]}>
+                    <tr class="admin-row-error">
+                      <td colspan={props.descriptor.columns.length + 2}>
+                        <span role="alert" class="form-status is-error">{editor.rowErrors[Number(row.id)]}</span>
+                      </td>
+                    </tr>
+                  </Show>
+                  </>
                 )}
               </For>
             </tbody>
