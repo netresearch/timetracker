@@ -157,6 +157,27 @@ describe('enableGridNavigation', () => {
     expect(ev.defaultPrevented).toBe(true) // scroll suppressed
   })
 
+  it('Space toggles the row selection (onRowSelectToggle) and skips the default', () => {
+    document.body.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Sel</th><th>Name</th></tr></thead>
+        <tbody><tr><td data-row-id="1"><input type="checkbox" /></td><td data-row-id="1">Alpha</td></tr></tbody>
+      </table>`
+    const table = document.querySelector('table') as HTMLTableElement
+    const onRowSelectToggle = vi.fn(() => true)
+    const cleanup = enableGridNavigation(table, { onRowSelectToggle })
+    const nameCell = table.querySelectorAll('tbody td')[1] as HTMLElement
+    nameCell.focus()
+    const ev = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true })
+    nameCell.dispatchEvent(ev)
+
+    expect(onRowSelectToggle).toHaveBeenCalledOnce()
+    expect(ev.defaultPrevented).toBe(true)
+    // The default Space behaviour (focusing a control) is skipped — focus stays.
+    expect(document.activeElement).toBe(nameCell)
+    cleanup()
+  })
+
   it('Tab past the last cell control does not trap (no preventDefault)', () => {
     const actionsCell = grid.table.querySelectorAll('tbody td')[1] as HTMLElement
     actionsCell.focus()

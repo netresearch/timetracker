@@ -77,9 +77,10 @@ test.describe('Administration UI', () => {
     await expect(page.locator('.modal')).toHaveCount(0);
     await expect(row(page, name)).toHaveCount(1);
 
-    // Edit (rename)
+    // Edit (rename). The action buttons are icon-only, so match the accessible
+    // name (aria-label), not visible text.
     const renamed = `${name}_Renamed`;
-    await row(page, name).locator('button.link-button').filter({ hasText: EDIT }).click();
+    await row(page, name).getByRole('button', { name: EDIT }).click();
     const editForm = page.locator('.modal form.stack-form');
     await expect(editForm).toBeVisible();
     const nameInput = editForm.locator('.field input[type="text"]').first();
@@ -90,7 +91,7 @@ test.describe('Administration UI', () => {
 
     // Delete (native confirm)
     page.once('dialog', (dialog) => dialog.accept());
-    await row(page, renamed).locator('button.link-button').filter({ hasText: DELETE }).click();
+    await row(page, renamed).getByRole('button', { name: DELETE }).click();
     await expect(row(page, renamed)).toHaveCount(0);
   });
 });

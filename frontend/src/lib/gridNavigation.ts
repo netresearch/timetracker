@@ -50,6 +50,11 @@ export interface GridNavOptions {
   /** Receives the roving handle on setup and `null` on disposal, so an
    *  inline-edit owner can move the active cell after committing an edit. */
   moveRef?: (handle: GridMoveHandle | null) => void
+  /** Toggle the focused cell's row selection. Called on Space (from any cell);
+   *  return true if it handled the key, so the grid skips its default Space
+   *  behaviour (focus a control / seed an editor). Lets a selectable grid be
+   *  ticked with a single keystroke from anywhere in the row. */
+  onRowSelectToggle?: (cell: Cell) => boolean
 }
 
 interface GridController {
@@ -281,9 +286,14 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
         break
       }
       case ' ': {
-        // Space drops into the cell's control (APG) — or, on a display cell with
-        // no control, offers it to the inline editor seeded with a space. Either
-        // way it activates the cell instead of scrolling the page.
+        // On a selectable grid, Space ticks/unticks the row (single keystroke,
+        // from any cell) — this takes precedence over the default below.
+        if (options.onRowSelectToggle?.(cell)) {
+          break
+        }
+        // Otherwise Space drops into the cell's control (APG) — or, on a display
+        // cell with no control, offers it to the inline editor seeded with a
+        // space. Either way it activates the cell instead of scrolling the page.
         const control = cell.querySelector<HTMLElement>(INTERACTIVE)
         if (control) {
           control.focus()
