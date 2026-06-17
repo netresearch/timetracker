@@ -120,6 +120,35 @@ describe('handleShortcut', () => {
     expect(document.activeElement).toBe(active)
   })
 
+  // Clicking empty space drops focus to <body>; an arrow key must still
+  // (re-)enter the page so keyboard navigation never dead-ends after a click out.
+  it('ArrowDown with focus on <body> enters the data grid', () => {
+    setup()
+    document.body.focus()
+    expect(document.activeElement).toBe(document.body)
+    press({ key: 'ArrowDown' })
+    expect((document.activeElement as HTMLElement).tagName).toBe('TD')
+  })
+
+  it('ArrowUp with focus on <body> re-enters the main-nav', () => {
+    setup()
+    const active = document.querySelector('a[data-nav="month"]') as HTMLAnchorElement
+    active.setAttribute('aria-current', 'page')
+    document.body.focus()
+    press({ key: 'ArrowUp' })
+    expect(document.activeElement).toBe(active)
+  })
+
+  it('ArrowDown on <body> with no grid stays put (native scroll preserved)', () => {
+    setup()
+    document.getElementById('main-content')!.innerHTML = '<p>No grid here</p>'
+    document.body.focus()
+    const event = new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true })
+    handleShortcut(event)
+    expect(document.activeElement).toBe(document.body) // no target → no jump
+    expect(event.defaultPrevented).toBe(false) // page can still scroll
+  })
+
   it('ArrowDown from the search field enters the table (Escape does not)', () => {
     setup()
     const search = document.querySelector('input[type="search"]') as HTMLInputElement

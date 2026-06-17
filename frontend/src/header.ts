@@ -167,11 +167,15 @@ export function handleShortcut(event: KeyboardEvent): void {
     }
 
     // Move focus into the first data grid so table keyboard navigation works
-    // without a mouse click — but only from the route-change focus state (the
-    // #main-content region itself, not document.body), so we never hijack page
-    // scrolling once the user has interacted. Also enterable from the search
-    // field via ArrowDown or Escape (back to the table).
+    // without a mouse click. The keyboard "pivot" is the #main-content landing
+    // region OR a bare <body> — focus drops to <body> when the user clicks
+    // empty space, and from there an arrow key MUST still (re-)enter the nav or
+    // grid, or keyboard navigation dead-ends after any click outside. Entry only
+    // fires when a real target exists (so grid-less pages keep native scroll),
+    // and the grid is also enterable from the search field via ArrowDown.
     const active = document.activeElement
+    const atPivot = active === null || active === document.body
+      || (active instanceof HTMLElement && active.id === 'main-content')
 
     // "More" overflow as a WAI-ARIA menu button: ArrowDown/ArrowUp on the button
     // opens the disclosure and moves focus to the first/last item (rather than the
@@ -294,8 +298,7 @@ export function handleShortcut(event: KeyboardEvent): void {
     // menubar so EVERY page can climb back to the nav (not just Admin via its
     // sub-nav); without it, activating a nav item stranded focus on grid-less
     // pages (Billing/Extras/Month/…). ArrowDown drops into the page's grid.
-    if (!inField && event.key === 'ArrowUp'
-      && active instanceof HTMLElement && active.id === 'main-content') {
+    if (!inField && event.key === 'ArrowUp' && atPivot) {
       const nav = activeNavLink()
       if (nav !== null) {
         event.preventDefault()
@@ -311,8 +314,7 @@ export function handleShortcut(event: KeyboardEvent): void {
     // conventional Escape behaviour). Only grids that advertise an arrow-exit
     // (data-arrow-nav) are arrow-enter targets — so entry and exit stay
     // symmetric and we never drop focus into a grid that only Tab can leave.
-    const onPage = !inField && event.key === 'ArrowDown'
-      && active instanceof HTMLElement && active.id === 'main-content'
+    const onPage = !inField && event.key === 'ArrowDown' && atPivot
     const fromSearch = active instanceof HTMLInputElement && active.type === 'search'
       && event.key === 'ArrowDown'
     if (onPage || fromSearch) {
