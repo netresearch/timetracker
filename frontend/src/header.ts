@@ -167,11 +167,17 @@ export function handleShortcut(event: KeyboardEvent): void {
     }
 
     // Move focus into the first data grid so table keyboard navigation works
-    // without a mouse click — but only from the route-change focus state (the
-    // #main-content region itself, not document.body), so we never hijack page
-    // scrolling once the user has interacted. Also enterable from the search
-    // field via ArrowDown or Escape (back to the table).
+    // without a mouse click. ArrowDown enters the grid from the #main-content
+    // landing region OR a bare <body> — focus drops to <body> when the user
+    // clicks empty space, and from there an arrow key MUST still reach the grid
+    // or keyboard navigation dead-ends after any click outside. It only fires
+    // when a grid target actually exists, so grid-less pages keep native scroll;
+    // the grid is also enterable from the search field via ArrowDown. (ArrowUp
+    // re-entry stays #main-content-only — see below — so it never steals the
+    // native scroll-up from <body>, which Tab already reaches the nav from.)
     const active = document.activeElement
+    const atGridPivot = active === null || active === document.body
+      || (active instanceof HTMLElement && active.id === 'main-content')
 
     // "More" overflow as a WAI-ARIA menu button: ArrowDown/ArrowUp on the button
     // opens the disclosure and moves focus to the first/last item (rather than the
@@ -311,8 +317,7 @@ export function handleShortcut(event: KeyboardEvent): void {
     // conventional Escape behaviour). Only grids that advertise an arrow-exit
     // (data-arrow-nav) are arrow-enter targets — so entry and exit stay
     // symmetric and we never drop focus into a grid that only Tab can leave.
-    const onPage = !inField && event.key === 'ArrowDown'
-      && active instanceof HTMLElement && active.id === 'main-content'
+    const onPage = !inField && event.key === 'ArrowDown' && atGridPivot
     const fromSearch = active instanceof HTMLInputElement && active.type === 'search'
       && event.key === 'ArrowDown'
     if (onPage || fromSearch) {
