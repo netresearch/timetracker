@@ -97,14 +97,14 @@ export function adminEntities(): EntityDescriptor[] {
         },
         { name: 'estimation', label: () => m.admin_f_estimation(), type: 'text' },
         { name: 'internalJiraProjectKey', label: () => m.admin_f_internal_jira_key(), type: 'text' },
-        { name: 'internalJiraTicketSystem', label: () => m.admin_f_internal_jira_system(), type: 'select', source: 'ticketSystems' },
+        { name: 'internalJiraTicketSystem', label: () => m.admin_f_internal_jira_system(), type: 'select', source: 'ticketSystems', stringValue: true },
         { name: 'invoice', label: () => m.admin_f_invoice(), type: 'text' },
         { name: 'internalReference', label: () => m.admin_f_internal_ref(), type: 'text' },
         { name: 'externalReference', label: () => m.admin_f_external_ref(), type: 'text' },
       ],
       rowLabel: (row) => str(row.name),
       toForm: (row) => row === null
-        ? { id: 0, name: '', customer: 0, ticket_system: 0, jiraId: '', jiraTicket: '', additionalInformationFromExternal: false, active: true, global: false, project_lead: 0, technical_lead: 0, offer: '', cost_center: '', billing: 0, estimation: '', internalJiraProjectKey: '', internalJiraTicketSystem: 0, invoice: '', internalReference: '', externalReference: '' }
+        ? { id: 0, name: '', customer: 0, ticket_system: 0, jiraId: '', jiraTicket: '', additionalInformationFromExternal: false, active: true, global: false, project_lead: 0, technical_lead: 0, offer: '', cost_center: '', billing: 0, estimation: '', internalJiraProjectKey: '', internalJiraTicketSystem: '', invoice: '', internalReference: '', externalReference: '' }
         : {
             id: num(row.id),
             name: str(row.name),
@@ -122,7 +122,7 @@ export function adminEntities(): EntityDescriptor[] {
             billing: num(row.billing),
             estimation: str(pick(row, 'estimationText', 'estimation')),
             internalJiraProjectKey: str(pick(row, 'internalJiraProjectKey', 'internal_jira_project_key')),
-            internalJiraTicketSystem: num(pick(row, 'internalJiraTicketSystem', 'internal_jira_ticket_system')),
+            internalJiraTicketSystem: str(pick(row, 'internalJiraTicketSystem', 'internal_jira_ticket_system')),
             invoice: str(row.invoice),
             internalReference: str(pick(row, 'internalReference', 'internal_reference')),
             externalReference: str(pick(row, 'externalReference', 'external_reference')),

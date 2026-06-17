@@ -62,7 +62,7 @@ final class ProjectSaveDtoTest extends TestCase
             offer: 'OFF-001',
             project_lead: 10,
             technical_lead: 20,
-            ticket_system: '1',
+            ticket_system: 1,
             additionalInformationFromExternal: true,
             internalJiraTicketSystem: 'internal-jira',
             internalJiraProjectKey: 'INTERNAL',
@@ -81,10 +81,22 @@ final class ProjectSaveDtoTest extends TestCase
         self::assertSame('OFF-001', $dto->offer);
         self::assertSame(10, $dto->project_lead);
         self::assertSame(20, $dto->technical_lead);
-        self::assertSame('1', $dto->ticket_system);
+        self::assertSame(1, $dto->ticket_system);
         self::assertTrue($dto->additionalInformationFromExternal);
         self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
         self::assertSame('INTERNAL', $dto->internalJiraProjectKey);
+    }
+
+    public function testTicketSystemIsIntForJsonPayload(): void
+    {
+        // The SolidJS admin sends ticket_system as a numeric select id via a JSON
+        // body bound by #[MapRequestPayload]; the property must be int so that
+        // validation accepts it (a ?string property rejected the number, which is
+        // what produced the "should be of type null|string" save error). Sibling
+        // FK selects (customer/project_lead/technical_lead) are int for the same reason.
+        $dto = new ProjectSaveDto(ticket_system: 7);
+
+        self::assertSame(7, $dto->ticket_system);
     }
 
     // ==================== fromRequest tests ====================
@@ -138,7 +150,7 @@ final class ProjectSaveDtoTest extends TestCase
         self::assertSame('OFF-001', $dto->offer);
         self::assertSame(10, $dto->project_lead);
         self::assertSame(20, $dto->technical_lead);
-        self::assertSame('1', $dto->ticket_system);
+        self::assertSame(1, $dto->ticket_system);
         self::assertTrue($dto->additionalInformationFromExternal);
         self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
         self::assertSame('INTERNAL', $dto->internalJiraProjectKey);

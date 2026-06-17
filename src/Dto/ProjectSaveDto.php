@@ -45,7 +45,7 @@ final readonly class ProjectSaveDto
         #[Map(if: false)]
         public ?int $technical_lead = null,
         #[Map(if: false)]
-        public ?string $ticket_system = null,
+        public ?int $ticket_system = null,
         public bool $additionalInformationFromExternal = false,
         public ?string $internalJiraTicketSystem = null,
         public string $internalJiraProjectKey = '',
@@ -78,7 +78,7 @@ final readonly class ProjectSaveDto
             offer: null !== $request->request->get('offer') ? (string) $request->request->get('offer') : null,
             project_lead: null !== $request->request->get('project_lead') ? (int) $request->request->get('project_lead') : null,
             technical_lead: null !== $request->request->get('technical_lead') ? (int) $request->request->get('technical_lead') : null,
-            ticket_system: null !== $request->request->get('ticket_system') ? (string) $request->request->get('ticket_system') : null,
+            ticket_system: null !== $request->request->get('ticket_system') ? (int) $request->request->get('ticket_system') : null,
             additionalInformationFromExternal: (bool) $request->request->get('additionalInformationFromExternal'),
             internalJiraTicketSystem: ('' === $internal || null === $internal) ? null : (string) $internal,
             internalJiraProjectKey: (string) $request->request->get('internalJiraProjectKey', ''),
