@@ -175,7 +175,10 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   function focusPageLanding(edge: 'first' | 'last', column: number): void {
     const rows = dataRows()
     const target = edge === 'first' ? rows[0] : rows[rows.length - 1]
-    const cell = target?.cells[Math.max(0, Math.min(target.cells.length - 1, column))]
+    if (target === undefined) {
+      return
+    }
+    const cell = target.cells[Math.max(0, Math.min(target.cells.length - 1, column))]
     if (cell) {
       setActive(cell)
     }
@@ -295,7 +298,9 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
         const rows = dataRows()
         // On the bottom data row, PageDown crosses to the next page (landing on
         // its first row); otherwise it moves a viewport of rows within the page.
-        if (activeCellEl?.parentElement === rows[rows.length - 1] && options.onPageEdge?.('next')) {
+        // `cell` is the focused cell (always set here), so its row is reliable —
+        // and never undefined-matches an empty dataRows().
+        if (cell.parentElement === rows[rows.length - 1] && options.onPageEdge?.('next')) {
           focusPageLanding('first', c)
         } else {
           focusAt(r + pageRows(), c)
@@ -305,7 +310,7 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       case 'PageUp': {
         // On the top data row, PageUp crosses to the previous page (landing on
         // its last row, so you keep moving upward); otherwise within the page.
-        if (activeCellEl?.parentElement === dataRows()[0] && options.onPageEdge?.('prev')) {
+        if (cell.parentElement === dataRows()[0] && options.onPageEdge?.('prev')) {
           focusPageLanding('last', c)
         } else {
           focusAt(r - pageRows(), c)
