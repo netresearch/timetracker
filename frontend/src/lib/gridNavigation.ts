@@ -274,7 +274,14 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       return
     }
 
-    const [r, c] = active
+    // Derive the position from the focused cell's LIVE DOM index, not the tracked
+    // `active` coords — a row inserted/removed without a gridNav re-sync (e.g. a
+    // save-error row appearing beneath another row) would otherwise leave `active`
+    // stale and jump the cursor on the next key. The focused cell's own rowIndex
+    // is always correct.
+    const livePos = position(cell)
+    const r = livePos ? livePos[0] : active[0]
+    const c = livePos ? livePos[1] : active[1]
     const lastRow = table.rows.length - 1 // live count, no per-keystroke allocation
 
     switch (event.key) {

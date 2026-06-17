@@ -151,6 +151,20 @@ describe('enableGridNavigation', () => {
     cleanup()
   })
 
+  it('arrow nav follows the focused cell after a row is inserted above it (no stale-index jump)', () => {
+    const betaCell = grid.table.querySelectorAll('tbody td')[2] as HTMLElement // Beta's name cell
+    betaCell.focus()
+    // Insert a row directly above Beta — mimics a save-error row appearing under
+    // the row above, which shifts Beta's rowIndex without a gridNav re-sync.
+    const inserted = document.createElement('tr')
+    inserted.innerHTML = '<td>Err</td><td></td>'
+    betaCell.closest('tr')!.before(inserted)
+    // ArrowUp must land on the just-inserted neighbour (live position), not jump
+    // to where Beta used to be relative to the stale tracked coords.
+    key(betaCell, 'ArrowUp')
+    expect(document.activeElement?.textContent).toBe('Err')
+  })
+
   it('clamps at the grid edges', () => {
     const firstHeader = grid.table.querySelector('th') as HTMLElement
     firstHeader.focus()
