@@ -1507,6 +1507,16 @@ th[aria-sort='descending'] .th-sort-glyph {
   padding: 0.3rem 0.6rem;
 }
 
+/* Sortable headers carry their padding on the inner button (the th stays at 0)
+   so the whole cell is clickable — keep that in compact and shrink the button. */
+:root[data-density='compact'] .data-table thead th:has(.th-sort) {
+  padding: 0;
+}
+
+:root[data-density='compact'] .th-sort {
+  padding: 0.3rem 0.6rem;
+}
+
 :root[data-density='compact'] .data-table tbody td {
   padding: 0.25rem 0.6rem;
 }

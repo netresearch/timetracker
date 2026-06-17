@@ -16,9 +16,9 @@
     }
     function apply(pref) {
         if (pref === 'compact') {
-            document.documentElement.dataset.density = 'compact';
+            document.documentElement.setAttribute('data-density', 'compact');
         } else {
-            delete document.documentElement.dataset.density;
+            document.documentElement.removeAttribute('data-density');
         }
     }
     // Apply immediately (still in <head>) so the first paint matches the choice.
