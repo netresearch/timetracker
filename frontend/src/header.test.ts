@@ -130,13 +130,19 @@ describe('handleShortcut', () => {
     expect((document.activeElement as HTMLElement).tagName).toBe('TD')
   })
 
-  it('ArrowUp with focus on <body> re-enters the main-nav', () => {
+  // ArrowUp from <body> must NOT be hijacked: the nav is on every page, so
+  // stealing it would break native keyboard scroll-up after any empty-space
+  // click. Tab already reaches the nav from <body>; only the grid needed an
+  // arrow re-entry (ArrowDown, above).
+  it('ArrowUp on <body> preserves native scroll (does not jump to nav)', () => {
     setup()
-    const active = document.querySelector('a[data-nav="month"]') as HTMLAnchorElement
-    active.setAttribute('aria-current', 'page')
+    const navLink = document.querySelector('a[data-nav="month"]') as HTMLAnchorElement
+    navLink.setAttribute('aria-current', 'page')
     document.body.focus()
-    press({ key: 'ArrowUp' })
-    expect(document.activeElement).toBe(active)
+    const event = new KeyboardEvent('keydown', { key: 'ArrowUp', cancelable: true })
+    handleShortcut(event)
+    expect(document.activeElement).toBe(document.body)
+    expect(event.defaultPrevented).toBe(false)
   })
 
   it('ArrowDown on <body> with no grid stays put (native scroll preserved)', () => {
