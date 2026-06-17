@@ -161,26 +161,22 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('saves the whole entry to /tracking/save on row-leave', async () => {
-    mockApi()
+  it('auto-saves the whole entry to /tracking/save on commit when the row is complete', async () => {
+    mockApi() // DEFAULT_ENTRY has every required field → editing it keeps it complete
     postJson.mockResolvedValue({})
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
     const editor = editCell(container, 'ticket')
     fireEvent.input(editor, { target: { value: 'xyz-9' } })
-    fireEvent.keyDown(editor, { key: 'Enter' })
-    // Nothing saved until the row is left.
-    expect(postJson).not.toHaveBeenCalled()
+    fireEvent.keyDown(editor, { key: 'Enter' }) // commit → row complete → auto-save
 
-    // Leave the table (focus the days selector) → the dirty row saves once.
-    ;(getByRole('combobox') as HTMLElement).focus()
+    // Saved on commit — no need to leave the row.
     await waitFor(() =>
       expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({
         id: 1, ticket: 'XYZ-9', date: '2026-06-16', start: '09:00', end: '10:30', customer: 1, project: 4, activity: 5,
       })),
     )
-    expect(postJson).toHaveBeenCalledTimes(1)
 
     unmount()
   })
@@ -453,7 +449,14 @@ describe('Tracking (Worklog grid)', () => {
   })
 
   it('normalizes a terse start time in the cell on commit (1300 → 13:00)', async () => {
-    mockApi()
+    // An incomplete row (no customer) won't auto-save, so the normalized draft
+    // value stays visible instead of being reverted by a save+refetch.
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 0, class: 0 } }],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
 

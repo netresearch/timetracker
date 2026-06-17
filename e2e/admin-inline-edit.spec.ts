@@ -66,12 +66,7 @@ test.describe('Admin inline cell editing', () => {
     await expect(page.locator('td[data-inline-editing]')).toHaveCount(0);
   });
 
-  test('the Edit button hands a pending inline draft to the modal (no stale data, no double-save)', async ({ page }) => {
-    let saved = false;
-    page.on('request', (r) => {
-      if (/\/customer\/save$/.test(r.url()) && r.request().method() === 'POST') saved = true;
-    });
-
+  test('the Edit button opens the modal seeded with the in-progress inline value', async ({ page }) => {
     const row = page.locator('table.admin-table tbody tr').first();
     await row.locator('td[data-col-key="name"]').focus();
     await page.keyboard.press('Enter');
@@ -79,13 +74,12 @@ test.describe('Admin inline cell editing', () => {
     await expect(editor).toBeVisible();
     await editor.fill('Inline-Draft-X');
 
-    // Clicking Edit (same row → no premature flush) commits the draft on blur and
-    // opens the modal seeded from it, so the modal shows the edit, not stale data.
-    await row.locator('.admin-row-actions button.link-button').first().click();
+    // Clicking Edit commits the in-progress value and opens the modal seeded from
+    // it (the complete row also auto-saves in the background), so the modal shows
+    // the edit, not stale list data. Target Edit by name — a dirty row leads with
+    // the disk (force-save) button, so .first() would be the wrong control.
+    await row.getByRole('button', { name: /^(Bearbeiten|Edit)$/i }).click();
     await expect(page.locator('.modal input[type="text"]').first()).toHaveValue('Inline-Draft-X');
-
-    await page.waitForTimeout(600);
-    expect(saved).toBe(false); // the modal took over; no inline save fired
   });
 });
 

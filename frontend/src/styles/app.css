@@ -1330,6 +1330,24 @@ th[aria-sort='descending'] .th-sort-glyph {
   padding: 0.1rem 0.9rem 0.5rem;
 }
 
+/* Unsaved (dirty) row: a faint warning tint marks pending edits until the row
+   auto-saves (complete) or is force-saved via its disk button. */
+.data-table tbody tr.is-dirty > td {
+  background: var(--color-warning-bg);
+}
+
+/* A missing/invalid field while auto-saving — a quiet inset border hint, never
+   a blocking message (the full error only shows on row-leave / force-save). */
+.data-table td.is-invalid {
+  box-shadow: inset 0 0 0 2px var(--color-danger-text);
+}
+
+/* The force-save (disk) action shows only while unsaved and is tinted to draw
+   the eye to the pending row. */
+.link-button.is-unsaved {
+  color: var(--color-warning-text);
+}
+
 .modal-backdrop {
   background: rgba(0, 0, 0, 0.45);
   inset: 0;

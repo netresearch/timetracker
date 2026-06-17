@@ -9,7 +9,7 @@ import { appConfig } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { gridNav } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
-import { DownloadIcon, PlusIcon, TrashIcon } from '../lib/icons'
+import { DiskIcon, DownloadIcon, PlusIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { parseTime, toIsoDate } from '../lib/timeParse'
 import { m } from '../paraglide/messages.js'
@@ -261,6 +261,18 @@ export default function Tracking() {
     },
     onCommit: handleCommit,
     saveErrorMessage: (caught) => (caught instanceof Error ? caught.message : m.app_load_error()),
+    // Required for a bookable entry — the row auto-saves once all are valid.
+    invalidFields: (draft) => {
+      const invalid: string[] = []
+      if (str(draft.date) === '') invalid.push('date')
+      if (parseTime(str(draft.start)) === null) invalid.push('start')
+      if (parseTime(str(draft.end)) === null) invalid.push('end')
+      if (num(draft.customer) <= 0) invalid.push('customer')
+      if (num(draft.project) <= 0) invalid.push('project')
+      if (num(draft.activity) <= 0) invalid.push('activity')
+
+      return invalid
+    },
   })
 
   // Display value from the draft-overlaid row, so an edited-but-unsaved cell
@@ -553,14 +565,14 @@ export default function Tracking() {
 
                   return (
                     <>
-                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : CLASS_ROW[entry.class] ?? ''}`.trimEnd()} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
+                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : CLASS_ROW[entry.class] ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id) }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
                       <For each={COLUMNS}>
                         {(col) => {
                           const editable = FIELD_BY_KEY.has(col.key)
 
                           return (
                             <td
-                              classList={{ numeric: col.numeric, 'is-editable': editable }}
+                              classList={{ numeric: col.numeric, 'is-editable': editable, 'is-invalid': editor.fieldInvalid(id, col.key) }}
                               data-row-id={String(id)}
                               data-col-key={col.key}
                               data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
@@ -589,6 +601,12 @@ export default function Tracking() {
                           "inside the row" so clicking Delete isn't read as a row-leave. */}
                       <td class="tracking-row-actions" data-row-id={String(id)}>
                         <div class="row-actions">
+                          {/* Only while unsaved: force a full save (shows the full error if it fails). */}
+                          <Show when={editor.isDirty(id)}>
+                            <button type="button" class="link-button is-icon is-unsaved" aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(id, 'force')}>
+                              <DiskIcon />
+                            </button>
+                          </Show>
                           <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void removeEntry(entry)}>
                             <TrashIcon />
                           </button>

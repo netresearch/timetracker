@@ -8,7 +8,7 @@ import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
 import { createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { gridNav } from '../lib/gridNavigation'
-import { DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
+import { DiskIcon, DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
@@ -284,6 +284,20 @@ export function AdminCrudShell(props: {
     onModalActivate: (row) => { openForm(row); return true },
     onSaved: () => flashNotice(m.admin_saved()),
     saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
+    // Required fields must be filled for the row to auto-save; an empty one is
+    // hinted (border) until then. A select/relation "none" is 0; for a numeric
+    // field 0 is a real value, so it isn't treated as empty.
+    invalidFields: (draft) => props.descriptor.fields
+      .filter((field) => field.required === true)
+      .filter((field) => {
+        const value = draft[field.name]
+        if (value === undefined || value === null || value === '') {
+          return true
+        }
+
+        return field.type === 'select' && value === 0
+      })
+      .map((field) => field.name),
   })
 
   // A cell shows the committed draft value (through the column's own formatter)
@@ -480,7 +494,7 @@ export function AdminCrudShell(props: {
               <For each={pagedRows()}>
                 {(row) => (
                   <>
-                  <tr aria-busy={editor.savingRows[Number(row.id)] ? 'true' : undefined} classList={{ 'is-selected': Boolean(selected[Number(row.id)]) }}>
+                  <tr aria-busy={editor.savingRows[Number(row.id)] ? 'true' : undefined} classList={{ 'is-selected': Boolean(selected[Number(row.id)]), 'is-dirty': editor.isDirty(Number(row.id)) }}>
                     <td class="boolean admin-select-col" data-row-id={String(Number(row.id))}>
                       <input
                         type="checkbox"
@@ -499,7 +513,7 @@ export function AdminCrudShell(props: {
 
                         return (
                           <td
-                            classList={{ numeric: col.align === 'right', boolean: col.align === 'center', 'is-editable': editable }}
+                            classList={{ numeric: col.align === 'right', boolean: col.align === 'center', 'is-editable': editable, 'is-invalid': editor.fieldInvalid(Number(row.id), col.key) }}
                             data-row-id={String(rowId)}
                             data-col-key={col.key}
                             data-inline-editing={editor.isEditing(rowId, col.key) ? '' : undefined}
@@ -531,6 +545,12 @@ export function AdminCrudShell(props: {
                         focusing the row's action buttons "inside the row", so
                         clicking Edit doesn't read as a row-leave and flush. */}
                     <td class="admin-row-actions" data-row-id={String(Number(row.id))}>
+                      {/* Only while unsaved: force a full save (shows the full error if it fails). */}
+                      <Show when={editor.isDirty(Number(row.id))}>
+                        <button type="button" class="link-button is-icon is-unsaved" aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(Number(row.id), 'force')}>
+                          <DiskIcon />
+                        </button>
+                      </Show>
                       <Show when={props.descriptor.editable !== false}>
                         <button type="button" class="link-button is-icon" aria-label={m.admin_edit()} title={m.admin_edit()} onClick={() => openForm(row)}>
                           <EditIcon />
