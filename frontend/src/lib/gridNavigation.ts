@@ -159,6 +159,23 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     }
   }
 
+  // The active cell's CURRENT position: its live DOM index while it's still
+  // attached — so a row inserted/removed without a gridNav re-sync (e.g. a
+  // save-error row appearing beneath another row) never leaves the tracked
+  // coords stale and jumps the cursor — falling back to the tracked `active`
+  // only when a re-render has detached the element (sync() then restores to the
+  // same logical position). Single source of truth for every nav path.
+  function currentPos(): [number, number] {
+    if (activeCellEl !== null && table.contains(activeCellEl)) {
+      const pos = position(activeCellEl)
+      if (pos !== null) {
+        return pos
+      }
+    }
+
+    return active
+  }
+
   // The data rows of the first <tbody>, excluding any non-data rows (e.g. a
   // `.row-error` row rendered beneath an entry) so the top/bottom-edge tests and
   // the page-edge landing target track real entries, not error rows.
@@ -188,7 +205,7 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   // ArrowUp handler this never calls onExit — an inline editor committing with
   // Enter on the top data row should stay in the grid, not leave it.
   function focusRelative(direction: 'up' | 'down' | 'left' | 'right'): void {
-    const [r, c] = active
+    const [r, c] = currentPos()
     const dr = direction === 'up' ? -1 : direction === 'down' ? 1 : 0
     const dc = direction === 'left' ? -1 : direction === 'right' ? 1 : 0
     focusAt(r + dr, c + dc)
@@ -274,14 +291,9 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       return
     }
 
-    // Derive the position from the focused cell's LIVE DOM index, not the tracked
-    // `active` coords — a row inserted/removed without a gridNav re-sync (e.g. a
-    // save-error row appearing beneath another row) would otherwise leave `active`
-    // stale and jump the cursor on the next key. The focused cell's own rowIndex
-    // is always correct.
-    const livePos = position(cell)
-    const r = livePos ? livePos[0] : active[0]
-    const c = livePos ? livePos[1] : active[1]
+    // Use the active cell's live position (see currentPos) so a row inserted/
+    // removed without a re-sync can't leave the coords stale and jump the cursor.
+    const [r, c] = currentPos()
     const lastRow = table.rows.length - 1 // live count, no per-keystroke allocation
 
     switch (event.key) {
