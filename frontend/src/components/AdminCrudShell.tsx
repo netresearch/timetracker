@@ -527,8 +527,7 @@ export function AdminCrudShell(props: {
                             }}
                           >
                             <Show when={editor.isEditing(rowId, col.key)} fallback={displayText(row, col)}>
-                              <Show
-                                when={fieldFor(col.key)?.type === 'multiselect'}
+                              <Switch
                                 fallback={
                                   <InlineEditor
                                     field={fieldFor(col.key)!}
@@ -541,15 +540,17 @@ export function AdminCrudShell(props: {
                                   />
                                 }
                               >
-                                <InlineMultiSelect
-                                  field={fieldFor(col.key)!}
-                                  label={col.label()}
-                                  initial={editor.draftValue(rowId, col.key) ?? []}
-                                  options={props.options}
-                                  onCommit={editor.commitCell}
-                                  onCancel={editor.cancelCell}
-                                />
-                              </Show>
+                                <Match when={fieldFor(col.key)?.type === 'multiselect'}>
+                                  <InlineMultiSelect
+                                    field={fieldFor(col.key)!}
+                                    label={col.label()}
+                                    initial={editor.draftValue(rowId, col.key) ?? []}
+                                    options={props.options}
+                                    onCommit={editor.commitCell}
+                                    onCancel={editor.cancelCell}
+                                  />
+                                </Match>
+                              </Switch>
                             </Show>
                           </td>
                         )

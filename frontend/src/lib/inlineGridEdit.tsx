@@ -210,10 +210,21 @@ export function InlineMultiSelect(props: {
           event.preventDefault()
           event.stopPropagation()
           finish(selected(), 'stay')
+        } else if (event.key === 'Tab') {
+          // Keep spreadsheet cell-to-cell nav: commit and move to the adjacent
+          // cell rather than tabbing focus out of the grid entirely.
+          event.preventDefault()
+          event.stopPropagation()
+          finish(selected(), event.shiftKey ? 'left' : 'right')
         } else if (event.key === 'Escape') {
           event.preventDefault()
           event.stopPropagation()
           cancel()
+        } else if (event.key === 'Backspace' && selected().length > 0) {
+          // Tag-input convention: Backspace removes the last chip (the × buttons
+          // are out of the Tab order, so this is the keyboard removal path).
+          event.preventDefault()
+          remove(selected()[selected().length - 1]!)
         }
       }}
       onFocusOut={() => {
@@ -233,7 +244,7 @@ export function InlineMultiSelect(props: {
         {(id) => (
           <span class="tag">
             <span class="tag-label">{labelOf(id)}</span>
-            <button type="button" class="tag-remove" aria-label={`${props.label}: ${labelOf(id)} ✕`} onClick={() => remove(id)}>×</button>
+            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${props.label}: ${labelOf(id)} ✕`} onClick={() => remove(id)}>×</button>
           </span>
         )}
       </For>

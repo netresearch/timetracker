@@ -402,6 +402,40 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
+  it('removes the last tag with Backspace in the inline multiselect (keyboard path)', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/getAllCustomers'
+        ? Promise.resolve([{ customer: { id: 1, name: 'ACME', active: true, global: false, teams: [2] } }])
+        : path === '/getAllTeams'
+          ? Promise.resolve([{ team: { id: 2, name: 'Backend' } }])
+          : Promise.resolve([]),
+    )
+    postJson.mockResolvedValue([1, 'ACME', true, false, []])
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Backend' })).toBeInTheDocument())
+
+    const teamsCell = getByRole('gridcell', { name: 'Backend' })
+    teamsCell.focus()
+    fireEvent.keyDown(teamsCell, { key: 'Enter' })
+    const addSelect = await waitFor(() => {
+      const el = teamsCell.querySelector<HTMLSelectElement>('select.tag-add')
+      if (el === null) throw new Error('inline tag editor not mounted')
+
+      return el
+    })
+
+    // Backspace removes the last chip (no .tag chips remain); Enter commits →
+    // auto-saves with no teams.
+    fireEvent.keyDown(addSelect, { key: 'Backspace' })
+    await waitFor(() => expect(teamsCell.querySelector('.tag')).toBeNull())
+    fireEvent.keyDown(addSelect, { key: 'Enter' })
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [] })),
+    )
+
+    unmount()
+  })
+
   it('keeps focus on the cell after Enter by default (stay, does not move down)', async () => {
     getJson.mockImplementation((path: string) =>
       path === '/getAllCustomers'
