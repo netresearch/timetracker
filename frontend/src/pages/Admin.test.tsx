@@ -281,8 +281,8 @@ describe('Admin', () => {
 })
 
 describe('Admin inline cell editing', () => {
-  it('opens an inline editor on Enter and saves the whole entity on row-leave', async () => {
-    mockEndpoints()
+  it('auto-saves a complete row on commit (no need to leave the row)', async () => {
+    mockEndpoints() // the customer row has its required name → editing keeps it complete
     postJson.mockResolvedValue([1, 'ACME2', true, false, [2]])
     const { getByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
@@ -293,18 +293,12 @@ describe('Admin inline cell editing', () => {
 
     const editor = (await screen.findByRole('textbox')) as HTMLInputElement
     fireEvent.input(editor, { target: { value: 'ACME2' } })
-    // Enter commits the cell; the single row stays put (clamped).
-    fireEvent.keyDown(editor, { key: 'Enter' })
-    // The committed value is shown immediately, before any save.
-    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME2' })).toBeInTheDocument())
-    expect(postJson).not.toHaveBeenCalled()
+    fireEvent.keyDown(editor, { key: 'Enter' }) // commit → row complete → auto-save
 
-    // Leaving the table (focusing the filter box) saves the dirty row once.
-    ;(getByRole('searchbox') as HTMLElement).focus()
+    // Saved on commit — no row-leave needed.
     await waitFor(() =>
       expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ id: 1, name: 'ACME2', active: true, global: false })),
     )
-    expect(postJson).toHaveBeenCalledTimes(1)
 
     unmount()
   })
@@ -324,23 +318,14 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('batches edits across columns of one row into a single save', async () => {
+  it('auto-saves a checkbox edit immediately, without leaving the row', async () => {
     mockEndpoints()
-    postJson.mockResolvedValue([1, 'ACME2', true, true, [2]])
+    postJson.mockResolvedValue([1, 'ACME', true, true, [2]])
     const { getByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
-    // Edit the name cell.
-    const nameCell = getByRole('gridcell', { name: 'ACME' })
-    nameCell.focus()
-    fireEvent.keyDown(nameCell, { key: 'Enter' })
-    const editor = (await screen.findByRole('textbox')) as HTMLInputElement
-    fireEvent.input(editor, { target: { value: 'ACME2' } })
-    fireEvent.keyDown(editor, { key: 'Enter' })
-    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME2' })).toBeInTheDocument())
-
-    // Edit the "global" checkbox cell in the same row (— → toggle on). Scope the
-    // query to the cell so it doesn't match the toolbar's "Show inactive" toggle.
+    // Toggle the "global" checkbox cell (— → on) on the (complete) ACME row.
+    // Scoping to the cell avoids matching the toolbar's "Show inactive" toggle.
     const globalCell = getByRole('gridcell', { name: '—' })
     globalCell.focus()
     fireEvent.keyDown(globalCell, { key: 'Enter' })
@@ -351,14 +336,11 @@ describe('Admin inline cell editing', () => {
       return el
     })
     fireEvent.click(check)
-    fireEvent.keyDown(check, { key: 'Enter' })
+    fireEvent.keyDown(check, { key: 'Enter' }) // commit → row complete → auto-save
 
-    // Both edits live on one draft → leaving the row saves exactly once.
-    ;(getByRole('searchbox') as HTMLElement).focus()
     await waitFor(() =>
-      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ name: 'ACME2', global: true })),
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ global: true })),
     )
-    expect(postJson).toHaveBeenCalledTimes(1)
 
     unmount()
   })
@@ -427,10 +409,10 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('keeps the draft and shows a row error when the save fails', async () => {
+  it('auto-save fails quietly; the disk (force) save shows the full error and keeps the draft', async () => {
     mockEndpoints()
     postJson.mockRejectedValue(new ApiError(422, 'Name taken'))
-    const { getByRole, unmount } = renderAdmin()
+    const { getByRole, queryByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     const cell = getByRole('gridcell', { name: 'ACME' })
@@ -438,9 +420,17 @@ describe('Admin inline cell editing', () => {
     fireEvent.keyDown(cell, { key: 'Enter' })
     const editor = (await screen.findByRole('textbox')) as HTMLInputElement
     fireEvent.input(editor, { target: { value: 'ACME2' } })
-    fireEvent.keyDown(editor, { key: 'Enter' })
-    ;(getByRole('searchbox') as HTMLElement).focus()
+    fireEvent.keyDown(editor, { key: 'Enter' }) // commit → auto-save attempt
 
+    // Auto-save attempted (complete row); its failure is quiet — no alert. Wait
+    // for it to settle (row no longer aria-busy) so the force save isn't skipped.
+    await waitFor(() => expect(postJson).toHaveBeenCalled())
+    const dirtyRow = getByRole('gridcell', { name: 'ACME2' }).closest('tr')!
+    await waitFor(() => expect(dirtyRow).not.toHaveAttribute('aria-busy'))
+    expect(queryByRole('alert')).not.toBeInTheDocument()
+
+    // The disk (force) save appears while unsaved → it surfaces the full error.
+    fireEvent.click(getByRole('button', { name: /save/i }))
     await waitFor(() => expect(getByRole('alert')).toHaveTextContent('Name taken'))
     // The edited value is retained (not rolled back) so it isn't lost.
     expect(getByRole('gridcell', { name: 'ACME2' })).toBeInTheDocument()
@@ -450,23 +440,25 @@ describe('Admin inline cell editing', () => {
 
   it('hands a pending inline draft to the modal instead of stale row data', async () => {
     mockEndpoints()
+    // The save fails, so the auto-save keeps the draft dirty (rather than
+    // clearing it), letting us verify the still-pending draft seeds the modal.
+    postJson.mockRejectedValue(new ApiError(422, 'nope'))
     const { getByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
-    // Start an inline edit but stay on the row (single-row list → no save).
     const cell = getByRole('gridcell', { name: 'ACME' })
     cell.focus()
     fireEvent.keyDown(cell, { key: 'Enter' })
     const inlineEditor = (await screen.findByRole('textbox')) as HTMLInputElement
     fireEvent.input(inlineEditor, { target: { value: 'ACME-DIRTY' } })
-    fireEvent.keyDown(inlineEditor, { key: 'Enter' }) // commit; clamps on the only row
+    fireEvent.keyDown(inlineEditor, { key: 'Enter' }) // commit → auto-save (quiet fail → draft kept)
+    await waitFor(() => expect(postJson).toHaveBeenCalled())
 
-    // Opening the modal must seed from the draft (the edited value), not the
-    // stale list row, and must not have fired an inline save.
+    // Opening the modal must seed from the still-pending draft (the edited value),
+    // not the stale list row.
     fireEvent.click(getByRole('button', { name: 'Edit' }))
     const modalName = (await screen.findByRole('textbox')) as HTMLInputElement
     await waitFor(() => expect(modalName).toHaveValue('ACME-DIRTY'))
-    expect(postJson).not.toHaveBeenCalled()
 
     unmount()
   })

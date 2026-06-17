@@ -170,7 +170,16 @@ export interface InlineGridEditConfig<R extends object> {
   onSaved?: () => void
   /** Map a save error to a per-row message. Defaults to the generic load error. */
   saveErrorMessage?: (error: unknown) => string
+  /** The column keys whose draft value is missing/invalid (empty array = the row
+   *  is complete and may auto-save). Drives the per-cell invalid hint and gates
+   *  auto-save on completeness. Omit to disable auto-save (save on leave/force). */
+  invalidFields?: (draft: FormValues, row: R) => string[]
 }
+
+/** How a save was triggered. 'auto' (a complete row after a cell commit) stays
+ *  quiet on failure — only the field hints show; 'force' (the save button) and
+ *  'leave' (focus left the row) surface the full row error. */
+export type SaveMode = 'auto' | 'force' | 'leave'
 
 /**
  * The spreadsheet-style inline-edit controller shared by the admin grid and the
@@ -183,6 +192,9 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   const [drafts, setDrafts] = createStore<Record<number, FormValues>>({})
   const [savingRows, setSavingRows] = createStore<Record<number, boolean>>({})
   const [rowErrors, setRowErrors] = createStore<Record<number, string>>({})
+  // Per-row list of missing/invalid column keys, for the quiet (border) hint
+  // shown while auto-saving — never a blocking error message.
+  const [fieldHints, setFieldHints] = createStore<Record<number, string[]>>({})
   let seedChar: string | undefined
   let moveHandle: GridMoveHandle | null = null
   let tableEl: HTMLElement | undefined
@@ -265,12 +277,32 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     config.onCommit?.(cell.rowId, cell.colKey, value)
     seedChar = undefined
     setEditCell(null)
+    refreshHints(cell.rowId)
     // All focus moves go through the grid's setActive (the single roving-tabindex
     // writer); landing on a different row triggers that row's save via focusin.
     if (direction === 'stay') {
       moveHandle?.focusActive()
     } else if (direction) {
       moveHandle?.move(direction)
+    }
+  }
+
+  // After a commit: recompute the row's invalid-field hints and, when the row is
+  // complete (no invalid fields), auto-save it quietly. Saving no longer depends
+  // on leaving the row. A no-op when the host provides no invalidFields.
+  function refreshHints(id: number): void {
+    if (config.invalidFields === undefined) {
+      return
+    }
+    const draft = drafts[id]
+    const row = rowById(id)
+    if (draft === undefined || row === undefined) {
+      return
+    }
+    const invalid = config.invalidFields(draft, row)
+    setFieldHints(id, invalid)
+    if (invalid.length === 0) {
+      void flushRow(id, 'auto')
     }
   }
 
@@ -291,12 +323,13 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       setEditCell(null)
     }
     setDrafts(produce((store) => { delete store[id] }))
+    setFieldHints(produce((store) => { delete store[id] }))
     originalRows.delete(id)
 
     return { ...draft }
   }
 
-  async function flushRow(id: number): Promise<void> {
+  async function flushRow(id: number, mode: SaveMode = 'leave'): Promise<void> {
     const draft = drafts[id]
     const row = rowById(id)
     if (draft === undefined || row === undefined || savingRows[id]) {
@@ -308,11 +341,16 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       await config.saveRow({ ...draft }, row)
       // Refetch has the saved values now, so dropping the draft shows no flash.
       setDrafts(produce((store) => { delete store[id] }))
+      setFieldHints(produce((store) => { delete store[id] }))
       originalRows.delete(id)
       config.onSaved?.()
     } catch (caught) {
-      // Keep the draft so edits aren't lost; surface a per-row error.
-      setRowErrors(id, config.saveErrorMessage?.(caught) ?? m.app_load_error())
+      // Keep the draft so edits aren't lost. An auto-save stays quiet (the field
+      // hints already mark what's off); an explicit force/leave surfaces the full
+      // error so a real failure is never hidden.
+      if (mode !== 'auto') {
+        setRowErrors(id, config.saveErrorMessage?.(caught) ?? m.app_load_error())
+      }
     } finally {
       setSavingRows(id, false)
     }
@@ -333,7 +371,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       return
     }
     if (lastFocusedRowId !== null) {
-      void flushRow(lastFocusedRowId)
+      void flushRow(lastFocusedRowId, 'leave')
     }
     lastFocusedRowId = id
   }
@@ -343,7 +381,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       return
     }
     if (lastFocusedRowId !== null) {
-      void flushRow(lastFocusedRowId)
+      void flushRow(lastFocusedRowId, 'leave')
     }
   }
 
@@ -371,6 +409,9 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     drafts,
     savingRows,
     rowErrors,
+    fieldHints,
+    /** True when the row has a missing/invalid draft value for this column. */
+    fieldInvalid: (id: number, colKey: string): boolean => (fieldHints[id]?.includes(colKey) ?? false),
     seedChar: (): string | undefined => seedChar,
     overlayRow,
     isEditing,
