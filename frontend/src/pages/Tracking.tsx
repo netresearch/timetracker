@@ -481,8 +481,6 @@ export default function Tracking() {
   onMount(() => document.addEventListener('keydown', onGridShortcut))
   onCleanup(() => document.removeEventListener('keydown', onGridShortcut))
 
-  let daysSelectEl: HTMLSelectElement | undefined
-
   return (
     <section class="tracking">
       <h2 class="visually-hidden">{m.tracking_title()}</h2>
@@ -498,7 +496,6 @@ export default function Tracking() {
         <label class="tracking-days">
           <span>{m.tracking_days_label()}</span>
           <select
-            ref={(el) => { daysSelectEl = el }}
             value={String(days())}
             onChange={(event) => setDays(Number(event.currentTarget.value))}
           >
@@ -518,7 +515,11 @@ export default function Tracking() {
             onFocusOut={editor.onTableFocusOut}
             use:gridNav={{
               items: rows,
-              onExit: (direction) => { if (direction === 'up') daysSelectEl?.focus() },
+              // ArrowUp off the top row hands focus to the #main-content pivot
+              // (NOT the days <select>, whose own arrow keys change its value and
+              // trap the cursor). From the pivot the header handles ArrowUp→nav /
+              // ArrowDown→grid, so the keyboard chain stays escapable both ways.
+              onExit: (direction) => { if (direction === 'up') document.getElementById('main-content')?.focus() },
               onActivate: editor.onActivate,
               moveRef: (handle) => { editor.setMoveHandle(handle) },
             }}
