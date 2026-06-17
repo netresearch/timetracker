@@ -43,7 +43,7 @@ export function BulkEntryForm(props: { onSaved?: () => void }) {
     if (startDate() > endDate()) {
       return m.extras_date_order()
     }
-    if (!useContract() && startTime() >= endTime()) {
+    if (!useContract() && (startTime() === '' || endTime() === '' || startTime() >= endTime())) {
       return m.extras_time_order()
     }
 

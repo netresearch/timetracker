@@ -226,8 +226,9 @@ export default function Tracking() {
       id: num(entry.id),
       date: toIsoDate(str(entry.date)),
       // An empty start (a fresh row) prefills with the suggested start so the
-      // editor opens on a sensible value rather than blank.
-      start: str(entry.start) || suggestedStart(),
+      // editor opens on a sensible value — but only when the user's suggest-time
+      // preference is on (mirrors addEntry; respects the opt-out).
+      start: str(entry.start) || (appConfig().suggestTime ? suggestedStart() : ''),
       end: str(entry.end),
       ticket: str(entry.ticket),
       customer: num(entry.customer),
