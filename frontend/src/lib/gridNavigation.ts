@@ -55,6 +55,13 @@ export interface GridNavOptions {
    *  behaviour (focus a control / seed an editor). Lets a selectable grid be
    *  ticked with a single keystroke from anywhere in the row. */
   onRowSelectToggle?: (cell: Cell) => boolean
+  /** Page the data at a vertical edge: PageUp on the top data row asks for the
+   *  'prev' page, PageDown on the bottom row for 'next'. Return true if the page
+   *  changed (the grid then lands on the last/first row of the new page), so an
+   *  adjacent page is one keystroke away without scrolling the cursor across the
+   *  whole table. Return false (e.g. already at the first/last page) to fall
+   *  back to the normal within-page PageUp/Down. */
+  onPageEdge?: (direction: 'prev' | 'next') => boolean
 }
 
 interface GridController {
@@ -147,6 +154,28 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
 
   function focusAt(r: number, c: number): void {
     const cell = cellAt(r, c)
+    if (cell) {
+      setActive(cell)
+    }
+  }
+
+  // The data rows of the first <tbody>, excluding any non-data rows (e.g. a
+  // `.row-error` row rendered beneath an entry) so the top/bottom-edge tests and
+  // the page-edge landing target track real entries, not error rows.
+  function dataRows(): HTMLTableRowElement[] {
+    const body = table.tBodies[0]
+
+    return body ? Array.from(body.rows).filter((row) => !row.classList.contains('row-error')) : []
+  }
+
+  // After a page change (onPageEdge), land on the last data row (came up from
+  // the top via PageUp → continue upward) or the first (came down via PageDown),
+  // keeping the column. The new page's rows are already in the DOM by here
+  // (Solid applies the row update synchronously when the page signal changes).
+  function focusPageLanding(edge: 'first' | 'last', column: number): void {
+    const rows = dataRows()
+    const target = edge === 'first' ? rows[0] : rows[rows.length - 1]
+    const cell = target?.cells[Math.max(0, Math.min(target.cells.length - 1, column))]
     if (cell) {
       setActive(cell)
     }
@@ -262,12 +291,27 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
           focusAt(r - 1, c)
         }
         break
-      case 'PageDown':
-        focusAt(r + pageRows(), c)
+      case 'PageDown': {
+        const rows = dataRows()
+        // On the bottom data row, PageDown crosses to the next page (landing on
+        // its first row); otherwise it moves a viewport of rows within the page.
+        if (activeCellEl?.parentElement === rows[rows.length - 1] && options.onPageEdge?.('next')) {
+          focusPageLanding('first', c)
+        } else {
+          focusAt(r + pageRows(), c)
+        }
         break
-      case 'PageUp':
-        focusAt(r - pageRows(), c)
+      }
+      case 'PageUp': {
+        // On the top data row, PageUp crosses to the previous page (landing on
+        // its last row, so you keep moving upward); otherwise within the page.
+        if (activeCellEl?.parentElement === dataRows()[0] && options.onPageEdge?.('prev')) {
+          focusPageLanding('last', c)
+        } else {
+          focusAt(r - pageRows(), c)
+        }
         break
+      }
       case 'Home':
         focusAt(event.ctrlKey ? 0 : r, 0)
         break

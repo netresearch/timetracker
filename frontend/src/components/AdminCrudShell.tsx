@@ -435,6 +435,17 @@ export function AdminCrudShell(props: {
 
                 return true
               },
+              // PageUp on the top row → previous page, PageDown on the bottom
+              // row → next page (one keystroke, no scrolling to the pager).
+              onPageEdge: (direction) => {
+                const target = direction === 'prev' ? page() - 1 : page() + 1
+                if (target < 0 || target >= pageCount()) {
+                  return false
+                }
+                setPage(target)
+
+                return true
+              },
             }}
           >
             <thead>
