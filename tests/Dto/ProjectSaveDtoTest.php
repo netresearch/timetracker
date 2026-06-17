@@ -68,23 +68,7 @@ final class ProjectSaveDtoTest extends TestCase
             internalJiraProjectKey: 'INTERNAL',
         );
 
-        self::assertSame(42, $dto->id);
-        self::assertSame('Test Project', $dto->name);
-        self::assertSame(5, $dto->customer);
-        self::assertSame('PROJ', $dto->jiraId);
-        self::assertSame('PROJ-123', $dto->jiraTicket);
-        self::assertTrue($dto->active);
-        self::assertTrue($dto->global);
-        self::assertSame('5d', $dto->estimation);
-        self::assertSame(1, $dto->billing);
-        self::assertSame('CC001', $dto->cost_center);
-        self::assertSame('OFF-001', $dto->offer);
-        self::assertSame(10, $dto->project_lead);
-        self::assertSame(20, $dto->technical_lead);
-        self::assertSame(1, $dto->ticket_system);
-        self::assertTrue($dto->additionalInformationFromExternal);
-        self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
-        self::assertSame('INTERNAL', $dto->internalJiraProjectKey);
+        $this->assertSampleProjectDto($dto);
     }
 
     public function testTicketSystemIsIntForJsonPayload(): void
@@ -137,23 +121,7 @@ final class ProjectSaveDtoTest extends TestCase
 
         $dto = ProjectSaveDto::fromRequest($request);
 
-        self::assertSame(42, $dto->id);
-        self::assertSame('Test Project', $dto->name);
-        self::assertSame(5, $dto->customer);
-        self::assertSame('PROJ', $dto->jiraId);
-        self::assertSame('PROJ-123', $dto->jiraTicket);
-        self::assertTrue($dto->active);
-        self::assertTrue($dto->global);
-        self::assertSame('5d', $dto->estimation);
-        self::assertSame(1, $dto->billing);
-        self::assertSame('CC001', $dto->cost_center);
-        self::assertSame('OFF-001', $dto->offer);
-        self::assertSame(10, $dto->project_lead);
-        self::assertSame(20, $dto->technical_lead);
-        self::assertSame(1, $dto->ticket_system);
-        self::assertTrue($dto->additionalInformationFromExternal);
-        self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
-        self::assertSame('INTERNAL', $dto->internalJiraProjectKey);
+        $this->assertSampleProjectDto($dto);
     }
 
     public function testFromRequestWithEmptyInternalJiraTicketSystem(): void
@@ -211,6 +179,32 @@ final class ProjectSaveDtoTest extends TestCase
     }
 
     // ==================== Helper methods ====================
+
+    /**
+     * Assert the field values shared by the constructor and fromRequest "all
+     * data" cases (kept in one place so the two callers don't duplicate the
+     * full assertion block).
+     */
+    private function assertSampleProjectDto(ProjectSaveDto $dto): void
+    {
+        self::assertSame(42, $dto->id);
+        self::assertSame('Test Project', $dto->name);
+        self::assertSame(5, $dto->customer);
+        self::assertSame('PROJ', $dto->jiraId);
+        self::assertSame('PROJ-123', $dto->jiraTicket);
+        self::assertTrue($dto->active);
+        self::assertTrue($dto->global);
+        self::assertSame('5d', $dto->estimation);
+        self::assertSame(1, $dto->billing);
+        self::assertSame('CC001', $dto->cost_center);
+        self::assertSame('OFF-001', $dto->offer);
+        self::assertSame(10, $dto->project_lead);
+        self::assertSame(20, $dto->technical_lead);
+        self::assertSame(1, $dto->ticket_system);
+        self::assertTrue($dto->additionalInformationFromExternal);
+        self::assertSame('internal-jira', $dto->internalJiraTicketSystem);
+        self::assertSame('INTERNAL', $dto->internalJiraProjectKey);
+    }
 
     /**
      * @param array<string, mixed> $data
