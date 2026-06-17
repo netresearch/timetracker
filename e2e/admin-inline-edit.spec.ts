@@ -57,13 +57,15 @@ test.describe('Admin inline cell editing', () => {
     await expect(page.locator('td[data-col-key="name"]').first()).toHaveText(original);
   });
 
-  test('does not inline-edit a modal-only (multiselect) column', async ({ page }) => {
+  test('inline-edits a multiselect column as tag chips', async ({ page }) => {
     const teamsCell = page.locator('td[data-col-key="teams"]').first();
     await teamsCell.focus();
     await page.keyboard.press('Enter');
 
-    // The teams column maps to a multiselect field → no inline editor opens.
-    await expect(page.locator('td[data-inline-editing]')).toHaveCount(0);
+    // The teams column opens an inline tag editor (chips + an add dropdown),
+    // not the modal.
+    await expect(teamsCell.locator('select.tag-add')).toBeVisible();
+    await expect(page.locator('[role="dialog"]')).toHaveCount(0);
   });
 
   test('the Edit button opens the modal seeded with the in-progress inline value', async ({ page }) => {
