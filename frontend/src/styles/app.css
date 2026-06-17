@@ -122,7 +122,9 @@ a {
 main {
   margin: 0 auto;
   max-width: 76rem;
-  padding: 1.5rem 2rem;
+  /* Tighter top padding condenses the gap below the main nav (and above the
+     admin sub-nav) without crowding the sides. */
+  padding: 1rem 2rem;
 }
 
 .today-button {
@@ -1485,4 +1487,58 @@ th[aria-sort='descending'] .th-sort-glyph {
 .modal-close:hover {
   background: var(--color-accent-soft);
   color: var(--color-accent-text);
+}
+
+/* ── Display density ─────────────────────────────────────────────────────────
+   Compact (opt-in via the header toggle → data-density on <html>) tightens the
+   data-dense surfaces and uses the full viewport width; Comfort (default) is
+   unchanged. Every interactive target stays ≥24×24px (WCAG 2.2 AA 2.5.8) — the
+   denser controls clamp at 30px, never below. See density-init.html.twig. */
+:root[data-density='compact'] main {
+  max-width: none;
+  padding: 0.5rem 1rem;
+}
+
+:root[data-density='compact'] .admin-page {
+  max-width: none;
+}
+
+:root[data-density='compact'] .data-table thead th {
+  padding: 0.3rem 0.6rem;
+}
+
+/* Sortable headers carry their padding on the inner button (the th stays at 0)
+   so the whole cell is clickable — keep that in compact and shrink the button. */
+:root[data-density='compact'] .data-table thead th:has(.th-sort) {
+  padding: 0;
+}
+
+:root[data-density='compact'] .th-sort {
+  padding: 0.3rem 0.6rem;
+}
+
+:root[data-density='compact'] .data-table tbody td {
+  padding: 0.25rem 0.6rem;
+}
+
+:root[data-density='compact'] .tracking-toolbar,
+:root[data-density='compact'] .admin-crud-toolbar {
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+:root[data-density='compact'] .admin-subnav {
+  margin-bottom: 0.6rem;
+}
+
+:root[data-density='compact'] .link-button,
+:root[data-density='compact'] .action-button,
+:root[data-density='compact'] .admin-subnav-link,
+:root[data-density='compact'] .tracking-days select {
+  min-height: 30px;
+}
+
+:root[data-density='compact'] .link-button.is-icon,
+:root[data-density='compact'] .action-button.is-icon {
+  min-width: 30px;
 }

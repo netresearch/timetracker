@@ -1,0 +1,73 @@
+{# Framework-neutral display-density toggle shared by BOTH shells (ExtJS + the
+   SolidJS /ui shell). Applies the saved preference before first paint (no flash)
+   and wires the two-state toggle button rendered in the shared header. Comfort
+   (default) keeps the roomy spacing; Compact tightens padding and uses the full
+   width — both stay within WCAG 2.2 AA target sizes. Single source of truth;
+   neither shell needs framework-specific density code. #}
+<script>
+(function () {
+    var KEY = 'timetracker-density';
+    function read() {
+        try {
+            return window.localStorage.getItem(KEY) === 'compact' ? 'compact' : 'comfort';
+        } catch (error) {
+            return 'comfort';
+        }
+    }
+    function apply(pref) {
+        if (pref === 'compact') {
+            document.documentElement.setAttribute('data-density', 'compact');
+        } else {
+            document.documentElement.removeAttribute('data-density');
+        }
+    }
+    // Apply immediately (still in <head>) so the first paint matches the choice.
+    apply(read());
+
+    var LABELS = {
+        comfort: {{ ('Comfortable spacing'|trans)|json_encode|raw }},
+        compact: {{ ('Compact spacing'|trans)|json_encode|raw }}
+    };
+    var SWITCH_TO = {{ ('Switch to'|trans)|json_encode|raw }};
+
+    function store(pref) {
+        try {
+            if (pref === 'compact') {
+                window.localStorage.setItem(KEY, 'compact');
+            } else {
+                window.localStorage.removeItem(KEY);
+            }
+        } catch (error) {
+            // Storage disabled/restricted — apply for this session only.
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var button = document.getElementById('density-toggle');
+        if (button === null) {
+            return;
+        }
+        var icons = button.querySelectorAll('[data-density-icon]');
+        function mark(pref) {
+            var next = pref === 'compact' ? 'comfort' : 'compact';
+            button.setAttribute('aria-pressed', pref === 'compact' ? 'true' : 'false');
+            button.setAttribute('aria-label', LABELS[pref] + ' — ' + SWITCH_TO + ' ' + LABELS[next]);
+            button.setAttribute('title', LABELS[pref]);
+            icons.forEach(function (icon) {
+                if (icon.getAttribute('data-density-icon') === pref) {
+                    icon.removeAttribute('hidden');
+                } else {
+                    icon.setAttribute('hidden', '');
+                }
+            });
+        }
+        mark(read());
+        button.addEventListener('click', function () {
+            var next = read() === 'compact' ? 'comfort' : 'compact';
+            store(next);
+            apply(next);
+            mark(next);
+        });
+    });
+})();
+</script>

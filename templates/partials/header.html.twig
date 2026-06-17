@@ -121,6 +121,15 @@
             </button>
         </div>
 
+        {# Display-density toggle — framework-neutral; wired by partials/density-init.html.twig.
+           Two-state button (Comfortable ⇄ Compact), aria-pressed = compact. #}
+        <div class="header-theme">
+            <button type="button" class="theme-cycle" id="density-toggle" aria-pressed="false" aria-label="{{ 'Compact spacing'|trans }}">
+                <svg class="theme-ico" data-density-icon="comfort" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <svg class="theme-ico" data-density-icon="compact" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" hidden><path d="M4 4h16M4 8h16M4 12h16M4 16h16M4 20h16"/></svg>
+            </button>
+        </div>
+
         <div class="header-account">
             <span id="user-badge" class="user-badge js-user-badge status_active" role="status" aria-live="polite" aria-label="{{ 'User status'|trans }}">
                 <span class="status-indicator" aria-hidden="true"></span>
