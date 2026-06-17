@@ -64,6 +64,32 @@ function renderAdmin(path = '/admin') {
   ))
 }
 
+// Renders the customer grid (customer 1 has team 2) with the given team
+// catalogue, then opens the inline tag editor on the "Backend" teams cell.
+async function openTeamsTagEditor(teams: { id: number; name: string }[]) {
+  getJson.mockImplementation((path: string) =>
+    path === '/getAllCustomers'
+      ? Promise.resolve([{ customer: { id: 1, name: 'ACME', active: true, global: false, teams: [2] } }])
+      : path === '/getAllTeams'
+        ? Promise.resolve(teams.map((team) => ({ team })))
+        : Promise.resolve([]),
+  )
+  const utils = renderAdmin()
+  await waitFor(() => expect(utils.getByRole('gridcell', { name: 'Backend' })).toBeInTheDocument())
+
+  const teamsCell = utils.getByRole('gridcell', { name: 'Backend' })
+  teamsCell.focus()
+  fireEvent.keyDown(teamsCell, { key: 'Enter' })
+  const addSelect = await waitFor(() => {
+    const el = teamsCell.querySelector<HTMLSelectElement>('select.tag-add')
+    if (el === null) throw new Error('inline tag editor not mounted')
+
+    return el
+  })
+
+  return { ...utils, teamsCell, addSelect }
+}
+
 afterEach(() => {
   getJson.mockReset()
   postJson.mockReset()
@@ -366,29 +392,14 @@ describe('Admin inline cell editing', () => {
   })
 
   it('inline-edits a multiselect column as tag chips (add commits + auto-saves)', async () => {
-    getJson.mockImplementation((path: string) =>
-      path === '/getAllCustomers'
-        ? Promise.resolve([{ customer: { id: 1, name: 'ACME', active: true, global: false, teams: [2] } }])
-        : path === '/getAllTeams'
-          ? Promise.resolve([{ team: { id: 2, name: 'Backend' } }, { team: { id: 3, name: 'Frontend' } }])
-          : Promise.resolve([]),
-    )
     postJson.mockResolvedValue([1, 'ACME', true, false, [2, 3]])
-    const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('gridcell', { name: 'Backend' })).toBeInTheDocument())
+    const { teamsCell, addSelect, unmount } = await openTeamsTagEditor([
+      { id: 2, name: 'Backend' },
+      { id: 3, name: 'Frontend' },
+    ])
 
-    const teamsCell = getByRole('gridcell', { name: 'Backend' })
-    teamsCell.focus()
-    fireEvent.keyDown(teamsCell, { key: 'Enter' })
-
-    // An inline tag editor opens (chip for the current team + an add dropdown),
+    // An inline tag editor opened (chip for the current team + an add dropdown),
     // not the modal.
-    const addSelect = await waitFor(() => {
-      const el = teamsCell.querySelector<HTMLSelectElement>('select.tag-add')
-      if (el === null) throw new Error('inline tag editor not mounted')
-
-      return el
-    })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(within(teamsCell).getByText('Backend')).toBeInTheDocument() // existing team is a chip
 
@@ -403,26 +414,8 @@ describe('Admin inline cell editing', () => {
   })
 
   it('removes the last tag with Backspace in the inline multiselect (keyboard path)', async () => {
-    getJson.mockImplementation((path: string) =>
-      path === '/getAllCustomers'
-        ? Promise.resolve([{ customer: { id: 1, name: 'ACME', active: true, global: false, teams: [2] } }])
-        : path === '/getAllTeams'
-          ? Promise.resolve([{ team: { id: 2, name: 'Backend' } }])
-          : Promise.resolve([]),
-    )
     postJson.mockResolvedValue([1, 'ACME', true, false, []])
-    const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('gridcell', { name: 'Backend' })).toBeInTheDocument())
-
-    const teamsCell = getByRole('gridcell', { name: 'Backend' })
-    teamsCell.focus()
-    fireEvent.keyDown(teamsCell, { key: 'Enter' })
-    const addSelect = await waitFor(() => {
-      const el = teamsCell.querySelector<HTMLSelectElement>('select.tag-add')
-      if (el === null) throw new Error('inline tag editor not mounted')
-
-      return el
-    })
+    const { teamsCell, addSelect, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
 
     // Backspace removes the last chip (no .tag chips remain); Enter commits →
     // auto-saves with no teams.
