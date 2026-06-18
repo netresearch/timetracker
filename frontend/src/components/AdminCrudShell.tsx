@@ -6,7 +6,7 @@ import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
-import { createInlineGridEdit, fieldSelectOptions, InlineEditor, InlineMultiSelect, INLINE_TYPES } from '../lib/inlineGridEdit'
+import { createInlineGridEdit, fieldSelectOptions, InlineEditor, InlineMultiSelect, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { gridNav } from '../lib/gridNavigation'
 import { DiskIcon, DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
 import { m } from '../paraglide/messages.js'
@@ -510,6 +510,10 @@ export function AdminCrudShell(props: {
                         // A column whose field is modal-only (multiselect / locked
                         // relation) still opens the full form on double-click.
                         const modalOnly = !editable && fieldFor(col.key) !== undefined
+                        const fieldType = fieldFor(col.key)?.type
+                        // Single-line editors overlay a hidden ghost of the value (below)
+                        // so opening one can't re-flow the auto-layout column.
+                        const overlayEditor = fieldType !== undefined && INLINE_OVERLAY_TYPES.has(fieldType)
 
                         return (
                           <td
@@ -527,6 +531,11 @@ export function AdminCrudShell(props: {
                             }}
                           >
                             <Show when={editor.isEditing(rowId, col.key)} fallback={displayText(row, col)}>
+                              {/* Hidden ghost holds the column width so the overlaying
+                                  single-line editor can't make the table re-flow. */}
+                              <Show when={overlayEditor}>
+                                <span class="inline-ghost" aria-hidden="true">{displayText(row, col)}</span>
+                              </Show>
                               <Switch
                                 fallback={
                                   <InlineEditor
@@ -560,12 +569,6 @@ export function AdminCrudShell(props: {
                         focusing the row's action buttons "inside the row", so
                         clicking Edit doesn't read as a row-leave and flush. */}
                     <td class="admin-row-actions" data-row-id={String(Number(row.id))}>
-                      {/* Only while unsaved: force a full save (shows the full error if it fails). */}
-                      <Show when={editor.isDirty(Number(row.id))}>
-                        <button type="button" class="link-button is-icon is-unsaved" aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(Number(row.id), 'force')}>
-                          <DiskIcon />
-                        </button>
-                      </Show>
                       <Show when={props.descriptor.editable !== false}>
                         <button type="button" class="link-button is-icon" aria-label={m.admin_edit()} title={m.admin_edit()} onClick={() => openForm(row)}>
                           <EditIcon />
@@ -573,6 +576,12 @@ export function AdminCrudShell(props: {
                       </Show>
                       <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void remove(row)}>
                         <TrashIcon />
+                      </button>
+                      {/* Force a full save (shows the full error if it fails). Always rendered as
+                          the last action in a reserved slot — only its visibility toggles — so the
+                          Edit/Delete icons never shift when a row becomes dirty. */}
+                      <button type="button" class="link-button is-icon is-unsaved" classList={{ 'action-slot-hidden': !editor.isDirty(Number(row.id)) }} aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(Number(row.id), 'force')}>
+                        <DiskIcon />
                       </button>
                     </td>
                   </tr>

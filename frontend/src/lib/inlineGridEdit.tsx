@@ -12,6 +12,12 @@ export type Row = Record<string, unknown>
 // locked relation columns) stays modal-only.
 export const INLINE_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date', 'checkbox', 'select', 'multiselect'])
 
+// Single-line editors that overlay the cell (absolutely positioned over a hidden
+// "ghost" of the value, which holds the column width) so opening them can't make
+// the auto-layout table re-flow the column. Checkbox and multiselect editors stay
+// in flow (they aren't single-line text and size differently).
+export const INLINE_OVERLAY_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date', 'select'])
+
 /** Shared option resolution for both the modal FieldControl and the inline
  *  editor, so relation/static dropdowns stay identical in either surface. */
 export function fieldSelectOptions(field: FieldDef, options: OptionLookup): { value: string | number; label: string }[] {
@@ -338,7 +344,31 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   }
 
   const draftValue = (id: number, colKey: string): FormValues[string] | undefined => drafts[id]?.[colKey]
-  const isDirty = (id: number): boolean => drafts[id] !== undefined
+
+  // A draft is only "dirty" when it actually differs from the row it was seeded
+  // from. Entering a cell seeds a draft (so the editor + overlay work), but that
+  // alone is not a change — comparing against a fresh seed keeps the dirty cues
+  // (warning tint, disk button) and the save off until the user really edits.
+  const rowDirty = (id: number): boolean => {
+    const draft = drafts[id]
+    if (draft === undefined) {
+      return false
+    }
+    const row = rowById(id)
+    return row !== undefined && JSON.stringify(draft) !== JSON.stringify(config.seedDraft(row))
+  }
+  const isDirty = rowDirty
+
+  // Drop a draft that ended up identical to its original row (opened a cell and
+  // left without changing it, or edited a value back) so the row shows no dirty
+  // state and never triggers a no-op save.
+  function discardIfClean(id: number): void {
+    if (drafts[id] !== undefined && !rowDirty(id)) {
+      setDrafts(produce((store) => { delete store[id] }))
+      setFieldHints(produce((store) => { delete store[id] }))
+      originalRows.delete(id)
+    }
+  }
 
   function beginEdit(id: number, colKey: string, char?: string): boolean {
     if (!config.isInlineEditable(colKey)) {
@@ -394,6 +424,10 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     config.onCommit?.(cell.rowId, cell.colKey, value)
     seedChar = undefined
     setEditCell(null)
+    // If the net result equals the original row (no real change, or a value
+    // edited back), drop the draft so the row stays clean — and refreshHints
+    // then sees no draft and skips the (pointless) auto-save.
+    discardIfClean(cell.rowId)
     refreshHints(cell.rowId)
     // All focus moves go through the grid's setActive (the single roving-tabindex
     // writer); landing on a different row triggers that row's save via focusin.
@@ -424,8 +458,14 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   }
 
   function cancelCell(): void {
+    const id = editCell()?.rowId
     seedChar = undefined
     setEditCell(null)
+    // Cancelling the current cell leaves the draft untouched; if that draft only
+    // ever held the seeded (unchanged) values, drop it so the row stays clean.
+    if (id !== undefined) {
+      discardIfClean(id)
+    }
     moveHandle?.focusActive()
   }
 
@@ -450,6 +490,13 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     const draft = drafts[id]
     const row = rowById(id)
     if (draft === undefined || row === undefined || savingRows[id]) {
+      return
+    }
+    // Nothing actually changed (e.g. the row was only navigated through) — drop
+    // the no-op draft instead of POSTing an identical row.
+    if (!rowDirty(id)) {
+      discardIfClean(id)
+
       return
     }
     setSavingRows(id, true)
@@ -526,7 +573,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     for (const key of Object.keys(drafts)) {
       const id = Number(key)
       const row = rowById(id)
-      if (drafts[id] !== undefined && row !== undefined && !savingRows[id]) {
+      if (rowDirty(id) && row !== undefined && !savingRows[id]) {
         // Best-effort flush on unmount; the component is gone, so swallow a
         // failure (nowhere to surface it) rather than leak an unhandled rejection.
         void config.saveRow({ ...drafts[id]! }, row).catch(() => { /* discarded */ })
