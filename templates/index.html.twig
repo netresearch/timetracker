@@ -5,29 +5,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        {# Soft opt-in for the parallel work-log grids: on the FIRST root view of a
-           browser session (i.e. the post-login landing), if the user last used a
-           SolidJS (/ui/*) view, return them there before the heavy ExtJS bundle
-           loads. The once-per-session sessionStorage guard is essential: without
-           it, clicking the "Time tracking" link (→ /) would bounce straight back
-           to the last /ui view, making the ExtJS grid unreachable. The shared
-           header writes tt:lastView on every page. #}
-        <script>
-            try {
-                var ttSeenRoot = sessionStorage.getItem('tt:viewedRoot');
-                sessionStorage.setItem('tt:viewedRoot', '1');
-                var ttLastView = localStorage.getItem('tt:lastView');
-                if (!ttSeenRoot && ttLastView && ttLastView !== location.pathname) {
-                    // Resolve + validate so a crafted value (e.g. path traversal to a
-                    // protocol-relative URL) can't redirect off-origin: only a same-origin
-                    // /ui/ path is honoured, and we navigate to the RESOLVED pathname.
-                    var ttTarget = new URL(ttLastView, location.origin);
-                    if (ttTarget.origin === location.origin && ttTarget.pathname.indexOf('/ui/') === 0) {
-                        location.replace(ttTarget.pathname + ttTarget.search + ttTarget.hash);
-                    }
-                }
-            } catch (e) {}
-        </script>
+        {# After a login, return the user to their last-opened /ui view before the
+           heavy ExtJS bundle loads (see partials/last-view.html.twig). #}
+        {% include 'partials/last-view.html.twig' with {mode: 'restore'} %}
         <title>{{ apptitle }}</title>
         <link rel="stylesheet" href="{{ asset('build/js/ext-js/resources/css/ext-all-gray.css') }}" type="text/css">
         <link rel="stylesheet" href="{{ asset('build/css/header.css') }}" type="text/css">
