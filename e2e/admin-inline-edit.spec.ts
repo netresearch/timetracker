@@ -78,10 +78,63 @@ test.describe('Admin inline cell editing', () => {
 
     // Clicking Edit commits the in-progress value and opens the modal seeded from
     // it (the complete row also auto-saves in the background), so the modal shows
-    // the edit, not stale list data. Target Edit by name — a dirty row leads with
-    // the disk (force-save) button, so .first() would be the wrong control.
+    // the edit, not stale list data. Target Edit by name — the cell also has the
+    // Delete and the (reserved) disk force-save button, so .first() could be the
+    // wrong control.
     await row.getByRole('button', { name: /^(Bearbeiten|Edit)$/i }).click();
     await expect(page.locator('.modal input[type="text"]').first()).toHaveValue('Inline-Draft-X');
+  });
+
+  test('opening and closing the editor neither resizes the cell nor moves its border', async ({ page }) => {
+    const cell = page.locator('td[data-col-key="name"]').first();
+    const before = await cell.boundingBox();
+
+    await cell.focus();
+    await page.keyboard.press('Enter');
+    const editor = page.locator('td[data-inline-editing] input.inline-editor').first();
+    await expect(editor).toBeVisible();
+    const during = await cell.boundingBox();
+    const inputBox = await editor.boundingBox();
+    const editingTd = page.locator('td[data-inline-editing]').first();
+    const tdOutline = await editingTd.evaluate((el) => parseFloat(getComputedStyle(el).outlineWidth));
+    const ed = await editor.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { outline: s.outlineStyle, border: parseFloat(s.borderTopWidth), radius: parseFloat(s.borderTopLeftRadius) };
+    });
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('td[data-inline-editing]')).toHaveCount(0);
+    const after = await cell.boundingBox();
+
+    // No resize — width AND height — when the editor opens or closes. (Width
+    // catches an editor that overflows and widens the column.)
+    expect(Math.round(during!.width)).toBe(Math.round(before!.width));
+    expect(Math.round(during!.height)).toBe(Math.round(before!.height));
+    expect(Math.round(after!.width)).toBe(Math.round(before!.width));
+    expect(Math.round(after!.height)).toBe(Math.round(before!.height));
+    // The current-cell border is the cell's OWN 2px outline, kept while editing,
+    // so it can't jump or round — and the editor draws no border/radius/outline.
+    expect(tdOutline).toBe(2);
+    expect(ed.outline).toBe('none');
+    expect(ed.border).toBe(0);
+    expect(ed.radius).toBe(0);
+    // The editor stays within the cell (never overflows it).
+    expect(inputBox!.x).toBeGreaterThanOrEqual(before!.x - 1);
+    expect(inputBox!.x + inputBox!.width).toBeLessThanOrEqual(before!.x + before!.width + 1);
+  });
+
+  test('revealing the disk (force-save) icon shifts neither the Edit icon nor the cell width', async ({ page }) => {
+    const actionsCell = page.locator('td.admin-row-actions').first();
+    const editBtn = actionsCell.getByRole('button', { name: /^(Bearbeiten|Edit)$/i });
+    const editX = (await editBtn.boundingBox())!.x;
+    const cellWidth = (await actionsCell.boundingBox())!.width;
+
+    // The disk button always occupies a reserved slot; revealing it (as a dirty
+    // row would) must move neither the leading icons nor the cell's width.
+    await actionsCell.locator('.is-unsaved').evaluate((el) => el.classList.remove('action-slot-hidden'));
+
+    expect(Math.round((await editBtn.boundingBox())!.x)).toBe(Math.round(editX));
+    expect(Math.round((await actionsCell.boundingBox())!.width)).toBe(Math.round(cellWidth));
   });
 });
 

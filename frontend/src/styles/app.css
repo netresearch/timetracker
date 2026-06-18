@@ -957,8 +957,12 @@ kbd {
 }
 
 .data-table tbody td {
+  /* Exposed so the in-cell editor can cancel exactly this padding and fill the
+     cell with zero layout shift, at any density (see .inline-editor). */
+  --cell-pad-y: 0.55rem;
+  --cell-pad-x: 0.9rem;
   border-top: 1px solid var(--color-border);
-  padding: 0.55rem 0.9rem;
+  padding: var(--cell-pad-y) var(--cell-pad-x);
   vertical-align: middle;
 }
 
@@ -975,9 +979,13 @@ kbd {
    :focus (not :focus-visible) on purpose — gridNav makes a cell "current" the
    same way whether reached by arrow keys or a mouse click (setActive + focus),
    so the indicator must be modality-independent. :focus-visible would suppress
-   the outline on pointer focus, leaving clicked cells current-but-invisible. */
+   the outline on pointer focus, leaving clicked cells current-but-invisible.
+   The editing cell ([data-inline-editing]) keeps the SAME outline even though
+   focus has moved into its child editor — so the current-cell border never
+   jumps, rounds, or resizes when the inline editor opens or closes. */
 .data-table [role='gridcell']:focus,
-.data-table [role='columnheader']:focus {
+.data-table [role='columnheader']:focus,
+.data-table td[data-inline-editing] {
   outline: 2px solid var(--color-focus);
   outline-offset: -2px;
 }
@@ -1074,24 +1082,52 @@ kbd {
   cursor: text;
 }
 
+/* The editor sits seamlessly inside the cell: no border, radius, background or
+   outline of its own. The cell's own focus outline (kept while
+   [data-inline-editing]) is the single current-cell indicator, so it can't jump
+   or round when the editor opens/closes. */
 .inline-editor {
-  background: var(--color-bg);
-  border: 1px solid var(--color-accent);
-  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   box-sizing: border-box;
   font: inherit;
-  margin: -0.3rem -0.4rem;
-  padding: 0.25rem 0.5rem;
-  width: calc(100% + 0.8rem);
+  margin: 0;
+  outline: none;
+  padding: 0;
+  width: 100%;
 }
 
+/* Single-line editors (text/number/date/select) overlay the cell absolutely on
+   top of a hidden "ghost" copy of the value (.inline-ghost). The ghost stays in
+   flow and holds the column's width, so swapping the text for an input never
+   re-flows the auto-layout table (no horizontal jump). The editor fills the cell
+   (inset:0) and re-applies the cell's x-padding so the text stays exactly where
+   the value was; a single-line input centres vertically like the static text. */
+.data-table td[data-inline-editing] {
+  position: relative;
+}
+
+.inline-ghost {
+  visibility: hidden;
+}
+
+.data-table td[data-inline-editing] .inline-editor:not(.inline-check):not(.inline-tags) {
+  inset: 0;
+  padding: 0 var(--cell-pad-x);
+  position: absolute;
+  width: auto;
+}
+
+/* A checkbox isn't single-line text — don't stretch it to fill the cell width. */
 .inline-editor.inline-check {
   margin: 0;
   padding: 0;
   width: auto;
 }
 
-/* Inline multiselect: selected options as removable chips + an "add" dropdown. */
+/* Inline multiselect: selected options as removable chips + an "add" dropdown.
+   Fills the cell like the text editor but may wrap to more than one line. */
 .inline-editor.inline-tags {
   align-items: center;
   display: flex;
@@ -1394,6 +1430,13 @@ th[aria-sort='descending'] .th-sort-glyph {
   color: var(--color-warning-text);
 }
 
+/* The disk button keeps its slot reserved (it's the last action) and only
+   toggles visibility, so showing/hiding it never shifts the other action icons.
+   visibility:hidden also drops it from the tab order and the a11y tree. */
+.action-slot-hidden {
+  visibility: hidden;
+}
+
 /* Access-key overlay: while Alt is held (body.show-access-keys, set by
    header.ts), each shortcut target shows a small corner badge with its key —
    1..N on the nav items, the letter on the toolbar actions. */
@@ -1610,7 +1653,8 @@ th[aria-sort='descending'] .th-sort-glyph {
 }
 
 :root[data-density='compact'] .data-table tbody td {
-  padding: 0.25rem 0.6rem;
+  --cell-pad-y: 0.25rem;
+  --cell-pad-x: 0.6rem;
 }
 
 :root[data-density='compact'] .tracking-toolbar,
