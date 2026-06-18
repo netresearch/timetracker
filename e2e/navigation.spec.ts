@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login } from './helpers/auth';
+import { login, logout, TEST_USERS } from './helpers/auth';
 import {
   goToTrackingTab,
   goToAuswertungPage,
@@ -9,6 +9,15 @@ import {
   NAV_LINKS,
 } from './helpers/navigation';
 import { waitForGrid } from './helpers/grid';
+
+/** Submit the login form without asserting the landing URL (the restore may
+ *  redirect away from /), so the last-view tests can assert their own landing. */
+async function submitLogin(page: import('@playwright/test').Page): Promise<void> {
+  await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
+  await page.locator('input[name="_username"]').fill(TEST_USERS.developer.username);
+  await page.locator('input[name="_password"]').fill(TEST_USERS.developer.password);
+  await page.locator('#form-submit').click();
+}
 
 /**
  * E2E tests for tab navigation and UI structure.
@@ -276,5 +285,35 @@ test.describe('Responsive Behavior', () => {
     // Header navigation to the SolidJS settings page should still work
     await goToSettingsPage(page);
     await expect(page.locator('select[name="locale"]')).toBeAttached();
+  });
+});
+
+test.describe('Last-opened view memory', () => {
+  // Each test starts from the same state: visit /ui/auswertung (recorded as
+  // tt:lastView), log out, then log back in in the SAME tab — where the old
+  // once-per-session guard failed to restore the view.
+  test.beforeEach(async ({ page }) => {
+    await login(page); // fresh context → no saved view yet → lands on /
+    await goToAuswertungPage(page); // → /ui/auswertung; the header records it as tt:lastView
+    await expect(page).toHaveURL(/\/ui\/auswertung/);
+
+    await logout(page); // → /login (flags that a login is in progress)
+    await submitLogin(page);
+  });
+
+  test('returns the user to their last-opened /ui view after re-login', async ({ page }) => {
+    await expect(page).toHaveURL(/\/ui\/auswertung/, { timeout: 15000 });
+  });
+
+  test('an explicit visit to the ExtJS root after a restore does not bounce back to /ui', async ({
+    page,
+  }) => {
+    await expect(page).toHaveURL(/\/ui\/auswertung/, { timeout: 15000 });
+
+    // The restore flag is one-shot: navigating to / afterwards (e.g. the legacy
+    // "Time tracking" link) must stay on the ExtJS shell, not bounce to /ui.
+    await page.goto('/');
+    await waitForGrid(page);
+    await expect(page).toHaveURL('/');
   });
 });
