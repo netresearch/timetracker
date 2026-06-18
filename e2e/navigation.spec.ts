@@ -289,26 +289,25 @@ test.describe('Responsive Behavior', () => {
 });
 
 test.describe('Last-opened view memory', () => {
-  test('returns the user to their last-opened /ui view after re-login', async ({ page }) => {
+  // Each test starts from the same state: visit /ui/auswertung (recorded as
+  // tt:lastView), log out, then log back in in the SAME tab — where the old
+  // once-per-session guard failed to restore the view.
+  test.beforeEach(async ({ page }) => {
     await login(page); // fresh context → no saved view yet → lands on /
     await goToAuswertungPage(page); // → /ui/auswertung; the header records it as tt:lastView
     await expect(page).toHaveURL(/\/ui\/auswertung/);
 
     await logout(page); // → /login (flags that a login is in progress)
-
-    // Re-login in the SAME tab. The old once-per-session guard blocked this and
-    // left the user on the ExtJS root; they must now be returned to /ui/auswertung.
     await submitLogin(page);
+  });
+
+  test('returns the user to their last-opened /ui view after re-login', async ({ page }) => {
     await expect(page).toHaveURL(/\/ui\/auswertung/, { timeout: 15000 });
   });
 
   test('an explicit visit to the ExtJS root after a restore does not bounce back to /ui', async ({
     page,
   }) => {
-    await login(page);
-    await goToAuswertungPage(page);
-    await logout(page);
-    await submitLogin(page);
     await expect(page).toHaveURL(/\/ui\/auswertung/, { timeout: 15000 });
 
     // The restore flag is one-shot: navigating to / afterwards (e.g. the legacy
