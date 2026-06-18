@@ -30,6 +30,16 @@ function csvCell(value: string): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
+/** On/off indicator for a boolean column: a green dot for true, empty for false,
+ *  with visually-hidden Yes/No so it isn't colour-only (WCAG 1.4.1). */
+function BoolDot(props: Readonly<{ on: boolean }>) {
+  return (
+    <span class="bool-cell">
+      <Show when={props.on}><span class="bool-dot" aria-hidden="true" /></Show>
+      <span class="visually-hidden">{props.on ? m.app_yes() : m.app_no()}</span>
+    </span>
+  )
+}
 
 /**
  * Reusable admin CRUD surface: a list grid + add/edit modal form + delete,
@@ -530,7 +540,10 @@ export function AdminCrudShell(props: {
                               }
                             }}
                           >
-                            <Show when={editor.isEditing(rowId, col.key)} fallback={displayText(row, col)}>
+                            <Show
+                              when={editor.isEditing(rowId, col.key)}
+                              fallback={col.boolean ? <BoolDot on={Boolean(editor.overlayRow(row)[col.key])} /> : displayText(row, col)}
+                            >
                               {/* Hidden ghost holds the column width so the overlaying
                                   single-line editor can't make the table re-flow. */}
                               <Show when={overlayEditor}>

@@ -5,14 +5,13 @@ import { createEffect, createMemo, createSignal, onMount, Show, type Component, 
 import { Dynamic, Portal } from 'solid-js/web'
 
 import { SessionExpiredError } from './api/client'
-import { appConfig, canBill, canBulkEnter, hasRole } from './config'
+import { appConfig, canBill, hasRole } from './config'
 import { initHeaderDynamics } from './header'
 import { syncNav } from './nav'
 import { m } from './paraglide/messages.js'
 import Admin from './pages/Admin'
 import Auswertung from './pages/Auswertung'
 import Billing from './pages/Billing'
-import Extras from './pages/Extras'
 import Help from './pages/Help'
 import Month from './pages/Month'
 import Settings from './pages/Settings'
@@ -38,7 +37,6 @@ const PAGE_TITLES: Record<string, () => string> = {
   tracking: m.tracking_title,
   auswertung: m.auswertung_title,
   admin: m.admin_title,
-  extras: m.extras_title,
   billing: m.billing_title,
   settings: m.settings_title,
   help: m.help_title,
@@ -51,7 +49,7 @@ const HINT_SEEN_KEY = 'tt-kbd-hint-seen'
 // Secondary pages that present as a modal dialog over the page you were on.
 // Deep-linkable: /ui/settings opens the dialog over the last full page (or Month
 // for a direct visit); closing returns to that page.
-const MODAL_SEGMENTS = new Set(['settings', 'help', 'extras', 'billing'])
+const MODAL_SEGMENTS = new Set(['settings', 'help', 'billing'])
 
 const segmentOf = (pathname: string): string =>
   pathname.replace(/^\/ui\/?/, '').split('/')[0] || 'month'
@@ -223,7 +221,6 @@ export default function App() {
       <Route path="/auswertung" component={Auswertung} />
       <Route path="/settings" component={Settings} />
       <Route path="/help" component={Help} />
-      <Route path="/extras" component={guarded(Extras, canBulkEnter)} />
       <Route path="/billing" component={guarded(Billing, canBill)} />
       <Route path="/admin/:entity?" component={guarded(Admin, () => hasRole('ROLE_ADMIN'))} />
       <Route path="*rest" component={RedirectToMonth} />

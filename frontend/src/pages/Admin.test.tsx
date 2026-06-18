@@ -80,14 +80,14 @@ async function openTeamsTagEditor(teams: { id: number; name: string }[]) {
   const teamsCell = utils.getByRole('gridcell', { name: 'Backend' })
   teamsCell.focus()
   fireEvent.keyDown(teamsCell, { key: 'Enter' })
-  const addSelect = await waitFor(() => {
-    const el = teamsCell.querySelector<HTMLSelectElement>('select.tag-add')
+  const addBtn = await waitFor(() => {
+    const el = teamsCell.querySelector<HTMLButtonElement>('button.tag-add')
     if (el === null) throw new Error('inline tag editor not mounted')
 
     return el
   })
 
-  return { ...utils, teamsCell, addSelect }
+  return { ...utils, teamsCell, addBtn }
 }
 
 afterEach(() => {
@@ -381,9 +381,9 @@ describe('Admin inline cell editing', () => {
     const { getByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
-    // Toggle the "global" checkbox cell (— → on) on the (complete) ACME row.
-    // Scoping to the cell avoids matching the toolbar's "Show inactive" toggle.
-    const globalCell = getByRole('gridcell', { name: '—' })
+    // Toggle the "global" checkbox cell (No → on) on the (complete) ACME row.
+    // The boolean cell's accessible name is its visually-hidden Yes/No text.
+    const globalCell = getByRole('gridcell', { name: 'No' })
     globalCell.focus()
     fireEvent.keyDown(globalCell, { key: 'Enter' })
     const check = await waitFor(() => {
@@ -422,21 +422,30 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('inline-edits a multiselect column as tag chips (add commits + auto-saves)', async () => {
+  it('adds a tag via the menu — one option per pick, not one per keystroke', async () => {
     postJson.mockResolvedValue([1, 'ACME', true, false, [2, 3]])
-    const { teamsCell, addSelect, unmount } = await openTeamsTagEditor([
+    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([
       { id: 2, name: 'Backend' },
       { id: 3, name: 'Frontend' },
     ])
 
-    // An inline tag editor opened (chip for the current team + an add dropdown),
-    // not the modal.
+    // An inline tag editor opened (chip for the current team + an add button),
+    // not the modal — and no menu until it's opened.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(within(teamsCell).getByText('Backend')).toBeInTheDocument() // existing team is a chip
+    expect(teamsCell.querySelector('[role="menu"]')).toBeNull()
 
-    // Add "Frontend" → Enter commits → the complete row auto-saves with [2, 3].
-    fireEvent.input(addSelect, { target: { value: '3' } })
-    fireEvent.keyDown(addSelect, { key: 'Enter' })
+    // Opening the menu adds nothing (the old <select> added on every arrow key).
+    fireEvent.click(addBtn)
+    expect(teamsCell.querySelector('[role="menu"]')).not.toBeNull()
+    expect(teamsCell.querySelectorAll('.tag')).toHaveLength(1)
+
+    // Picking the option (Frontend, the only unselected one) adds exactly one chip.
+    fireEvent.click(within(teamsCell).getByRole('menuitem', { name: 'Frontend' }))
+    await waitFor(() => expect(teamsCell.querySelectorAll('.tag')).toHaveLength(2))
+
+    // Menu auto-closed (no options left); Enter on the add button commits → [2, 3].
+    fireEvent.keyDown(addBtn, { key: 'Enter' })
     await waitFor(() =>
       expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [2, 3] })),
     )
@@ -444,15 +453,47 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
+  it('opens the add menu from the keyboard (ArrowDown), without adding', async () => {
+    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([
+      { id: 2, name: 'Backend' },
+      { id: 3, name: 'Frontend' },
+    ])
+
+    fireEvent.keyDown(addBtn, { key: 'ArrowDown' })
+    expect(teamsCell.querySelector('[role="menu"]')).not.toBeNull()
+    expect(within(teamsCell).getByRole('menuitem', { name: 'Frontend' })).toBeInTheDocument()
+    expect(teamsCell.querySelectorAll('.tag')).toHaveLength(1) // opening added nothing
+
+    unmount()
+  })
+
+  it('removes a chip by clicking its × with the mouse, then commits', async () => {
+    postJson.mockResolvedValue([1, 'ACME', true, false, []])
+    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
+
+    const removeBtn = teamsCell.querySelector('.tag-remove') as HTMLElement
+    expect(removeBtn).not.toBeNull()
+    fireEvent.mouseDown(removeBtn) // preventDefault keeps focus → no premature commit
+    fireEvent.click(removeBtn) // removes the only chip
+    await waitFor(() => expect(teamsCell.querySelector('.tag')).toBeNull())
+
+    fireEvent.keyDown(addBtn, { key: 'Enter' }) // commit → auto-save with no teams
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [] })),
+    )
+
+    unmount()
+  })
+
   it('removes the last tag with Backspace in the inline multiselect (keyboard path)', async () => {
     postJson.mockResolvedValue([1, 'ACME', true, false, []])
-    const { teamsCell, addSelect, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
+    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
 
     // Backspace removes the last chip (no .tag chips remain); Enter commits →
     // auto-saves with no teams.
-    fireEvent.keyDown(addSelect, { key: 'Backspace' })
+    fireEvent.keyDown(addBtn, { key: 'Backspace' })
     await waitFor(() => expect(teamsCell.querySelector('.tag')).toBeNull())
-    fireEvent.keyDown(addSelect, { key: 'Enter' })
+    fireEvent.keyDown(addBtn, { key: 'Enter' })
     await waitFor(() =>
       expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [] })),
     )
@@ -725,6 +766,46 @@ describe('Admin list — row selection & bulk actions', () => {
     await waitFor(() => expect(getByRole('alert')).toBeInTheDocument())
     expect(getByText('1 selected')).toBeInTheDocument()
     expect(getByRole('checkbox', { name: 'Select Globex' })).toBeChecked()
+
+    unmount()
+  })
+})
+
+describe('Admin status page', () => {
+  it('renders the diagnostics returned by /admin/status', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/admin/status'
+        ? Promise.resolve({
+            app: { title: 'TT', env: 'test', debug: false, locale: 'en', version: null },
+            php: { version: '8.5.0', extensions: ['intl', 'pdo_mysql'] },
+            symfony: { kernel: '7.3.0' },
+            packages: { 'doctrine/orm': '3.1.0' },
+            database: { driver: 'mysql', platform: 'MariaDBPlatform', serverVersion: '11.4.2-MariaDB', host: 'db', port: '3306', name: 'tt' },
+            config: { ldap_host: 'ldap.example', ldap_ssl: true },
+          })
+        : Promise.resolve([]),
+    )
+    const { getByRole, getByText, unmount } = renderAdmin('/admin/status')
+
+    await waitFor(() => expect(getByText('8.5.0')).toBeInTheDocument())
+    expect(getByRole('heading', { name: 'PHP' })).toBeInTheDocument()
+    expect(getByRole('heading', { name: 'Database' })).toBeInTheDocument()
+    expect(getByText('MariaDBPlatform')).toBeInTheDocument()
+    expect(getByText('11.4.2-MariaDB')).toBeInTheDocument()
+    expect(getByText('intl, pdo_mysql')).toBeInTheDocument()
+    // boolean config renders Yes/No, not raw true/false
+    expect(getByText('Yes')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('shows an error message when the status request fails', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/admin/status' ? Promise.reject(new ApiError(500, 'boom')) : Promise.resolve([]),
+    )
+    const { getByRole, unmount } = renderAdmin('/admin/status')
+
+    await waitFor(() => expect(getByRole('alert')).toHaveTextContent(/status information/i))
 
     unmount()
   })

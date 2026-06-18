@@ -5,7 +5,7 @@ import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, postForm, postJson } from '../api/client'
 import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, type NamedOption, type SummaryScope, type TrackingEntry } from '../api/queries'
-import { appConfig } from '../config'
+import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { gridNav } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
@@ -516,7 +516,10 @@ export default function Tracking() {
         <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
           <PlusIcon />
         </button>
-        <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
+        {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
+        <Show when={canBulkEnter()}>
+          <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
+        </Show>
         <button type="button" class="action-button" onClick={() => continueEntry()} aria-keyshortcuts="Alt+C">{m.tracking_continue()}</button>
         <button type="button" class="action-button" onClick={() => void prolongLast()} aria-keyshortcuts="Alt+P">{m.tracking_prolong()}</button>
         <button type="button" class="action-button" onClick={() => void showInfo()} aria-keyshortcuts="Alt+I">{m.tracking_info()}</button>

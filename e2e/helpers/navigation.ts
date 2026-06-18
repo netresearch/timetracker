@@ -26,7 +26,6 @@ export const NAV_LINKS = {
   worklog: 'a.main-nav-link[data-nav="tracking"]',
   month: 'a.main-nav-link[data-nav="month"]',
   auswertung: 'a.main-nav-link[data-nav="auswertung"]',
-  extras: 'a.main-nav-link[data-nav="extras"]',
   billing: 'a.main-nav-link[data-nav="billing"]',
   // Settings & Help are icon actions beside the theme switch — .header-icon-link
   // (scoped so it doesn't also match the mobile drawer's .drawer-link[data-nav]).

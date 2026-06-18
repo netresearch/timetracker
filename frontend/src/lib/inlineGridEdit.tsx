@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, Match, onCleanup, onMount, Switch, type Accessor } from 'solid-js'
+import { createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
 import { createStore, produce } from 'solid-js/store'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
@@ -173,19 +173,49 @@ export function InlineMultiSelect(props: {
   const [selected, setSelected] = createSignal<number[]>(Array.isArray(props.initial) ? [...(props.initial as number[])] : [])
   const unselected = createMemo(() => allOptions().filter((option) => !selected().includes(Number(option.value))))
   const labelOf = (id: number): string => allOptions().find((option) => Number(option.value) === id)?.label ?? String(id)
+  // The "add" control is a popup MENU OF BUTTONS, not a native <select> (which
+  // fired change on every arrow keypress, adding a chip per keystroke) and not a
+  // role=listbox + aria-activedescendant (invalid ARIA on a <button>). Real,
+  // focusable <button> options are keyboard-native and accessible.
+  const [menuOpen, setMenuOpen] = createSignal(false)
   let container: HTMLDivElement | undefined
-  let addSelect: HTMLSelectElement | undefined
+  let addBtn: HTMLButtonElement | undefined
+  let menuEl: HTMLDivElement | undefined
   let done = false
 
   function add(id: number): void {
     if (id > 0 && !selected().includes(id)) {
       setSelected([...selected(), id])
     }
-    addSelect?.focus() // keep focus in the widget so the add reads as one action
   }
   function remove(id: number): void {
     setSelected(selected().filter((value) => value !== id))
-    addSelect?.focus() // the chip's × unmounts — keep focus inside so it isn't a commit
+    addBtn?.focus() // the chip's × unmounts — keep focus inside so it isn't a commit
+  }
+  const focusFirstItem = (): void => {
+    queueMicrotask(() => menuEl?.querySelector<HTMLButtonElement>('.tag-menu-item')?.focus())
+  }
+  function openMenu(): void {
+    if (unselected().length > 0) {
+      setMenuOpen(true)
+      focusFirstItem()
+    }
+  }
+  function closeMenu(refocusAddBtn = true): void {
+    setMenuOpen(false)
+    if (refocusAddBtn) {
+      addBtn?.focus()
+    }
+  }
+  // Add an option, keeping the menu usable for adding several in a row (it closes
+  // once nothing is left to add).
+  function addOption(id: number): void {
+    add(id)
+    if (unselected().length === 0) {
+      closeMenu()
+    } else {
+      focusFirstItem()
+    }
   }
   // Takes the value so the signal is read in the (tracked) event handler, not in
   // the deferred focusout microtask.
@@ -203,7 +233,7 @@ export function InlineMultiSelect(props: {
     }
   }
 
-  onMount(() => addSelect?.focus())
+  onMount(() => addBtn?.focus())
 
   return (
     <div
@@ -212,6 +242,11 @@ export function InlineMultiSelect(props: {
       role="group"
       aria-label={props.label}
       onKeyDown={(event) => {
+        // While the add-menu is open it owns the arrow/enter/escape keys (handled
+        // on the button below); don't let them commit/cancel the whole edit.
+        if (menuOpen()) {
+          return
+        }
         if (event.key === 'Enter') {
           event.preventDefault()
           event.stopPropagation()
@@ -236,7 +271,7 @@ export function InlineMultiSelect(props: {
       onFocusOut={() => {
         // Capture the value now (tracked handler), then commit only when focus
         // has actually left the whole widget — checked after it settles, so
-        // moving between chips/the dropdown (incl. removing one) doesn't commit.
+        // moving between chips/the menu (incl. removing one) doesn't commit.
         const value = selected()
         // eslint-disable-next-line solid/reactivity -- intentional deferred commit of the captured value after focus settles
         queueMicrotask(() => {
@@ -250,22 +285,65 @@ export function InlineMultiSelect(props: {
         {(id) => (
           <span class="tag">
             <span class="tag-label">{labelOf(id)}</span>
-            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${props.label}: ${labelOf(id)} ✕`} onClick={() => remove(id)}>×</button>
+            {/* preventDefault on mousedown so clicking × doesn't blur the widget
+                (which would commit + unmount before the click removes the chip). */}
+            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${props.label}: ${labelOf(id)} ✕`} onMouseDown={(event) => event.preventDefault()} onClick={() => remove(id)}>×</button>
           </span>
         )}
       </For>
-      <select
-        ref={(el) => { addSelect = el }}
-        class="tag-add"
-        aria-label={props.label}
-        value=""
-        onInput={(event) => { add(Number(event.currentTarget.value)); event.currentTarget.value = '' }}
-      >
-        <option value="">+</option>
-        <For each={unselected()}>
-          {(option) => <option value={String(option.value)}>{option.label}</option>}
-        </For>
-      </select>
+      <span class="tag-add-wrap">
+        <button
+          ref={(el) => { addBtn = el }}
+          type="button"
+          class="tag-add"
+          aria-haspopup="true"
+          aria-expanded={menuOpen()}
+          aria-label={`${m.admin_add()} — ${props.label}`}
+          onClick={() => (menuOpen() ? closeMenu() : openMenu())}
+          onKeyDown={(event) => {
+            // Closed: Down/Space open the menu; Enter/Tab/Escape/Backspace bubble
+            // to the container (commit / move / cancel / remove last).
+            if (!menuOpen() && (event.key === 'ArrowDown' || event.key === ' ')) {
+              event.preventDefault()
+              event.stopPropagation()
+              openMenu()
+            }
+          }}
+        >+</button>
+        <Show when={menuOpen()}>
+          <div
+            ref={(el) => { menuEl = el }}
+            class="tag-menu"
+            role="menu"
+            aria-label={props.label}
+            onKeyDown={(event) => {
+              const items = Array.from(menuEl?.querySelectorAll<HTMLButtonElement>('.tag-menu-item') ?? [])
+              const i = items.indexOf(document.activeElement as HTMLButtonElement)
+              if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                event.stopPropagation()
+                items[Math.min(items.length - 1, i + 1)]?.focus()
+              } else if (event.key === 'ArrowUp') {
+                event.preventDefault()
+                event.stopPropagation()
+                items[Math.max(0, i - 1)]?.focus()
+              } else if (event.key === 'Escape') {
+                event.preventDefault()
+                event.stopPropagation()
+                closeMenu()
+              } else if (event.key === 'Tab') {
+                closeMenu(false) // close, then let the container's Tab move to the next cell
+              }
+            }}
+          >
+            <For each={unselected()}>
+              {(option) => (
+                <button type="button" role="menuitem" class="tag-menu-item" onClick={() => addOption(Number(option.value))}>{option.label}</button>
+              )}
+            </For>
+          </div>
+        </Show>
+      </span>
     </div>
   )
 }

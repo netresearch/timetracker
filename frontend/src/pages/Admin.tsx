@@ -6,6 +6,10 @@ import { useOptionSources } from '../admin/options'
 import { AdminCrudShell } from '../components/AdminCrudShell'
 import { activeNavLink } from '../header'
 import { m } from '../paraglide/messages.js'
+import AdminStatus from './AdminStatus'
+
+// A non-CRUD sub-page (read-only diagnostics) shown alongside the entity tabs.
+const STATUS_KEY = 'status'
 
 // Remembers the entity the Admin URL last selected. When a page-level modal
 // (e.g. /ui/settings) opens over Admin, App.tsx re-renders Admin as the modal's
@@ -32,6 +36,9 @@ export default function Admin() {
   })
   const activeKey = () => {
     const key = params.entity ?? (onAdminRoute() ? undefined : lastAdminEntity)
+    if (key === STATUS_KEY) {
+      return STATUS_KEY
+    }
 
     return entities.find((entity) => entity.key === key)?.key ?? entities[0]!.key
   }
@@ -91,13 +98,26 @@ export default function Admin() {
             </button>
           )}
         </For>
+        <button
+          type="button"
+          class="admin-subnav-link"
+          classList={{ 'is-active': activeKey() === STATUS_KEY }}
+          aria-current={activeKey() === STATUS_KEY ? 'page' : undefined}
+          onClick={() => navigate(`/admin/${STATUS_KEY}`)}
+        >
+          {m.admin_status()}
+        </button>
       </nav>
 
       {/* keyed on the active entity so the shell remounts on switch — its sort,
           filter and any open edit form reset instead of bleeding across
           entities (and binding an open form to the wrong save endpoint). */}
-      <Show when={activeKey()} keyed>
-        <AdminCrudShell descriptor={active()} options={lookup} />
+      <Show when={activeKey() === STATUS_KEY} fallback={
+        <Show when={activeKey()} keyed>
+          <AdminCrudShell descriptor={active()} options={lookup} />
+        </Show>
+      }>
+        <AdminStatus />
       </Show>
     </section>
   )
