@@ -1006,6 +1006,22 @@ kbd {
   text-align: center;
 }
 
+/* Boolean cell: a green dot for true, nothing for false (the Yes/No text is
+   visually-hidden for screen readers, so it isn't colour-only). */
+.bool-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bool-dot {
+  background: var(--color-success-text);
+  border-radius: 50%;
+  display: inline-block;
+  height: 0.6rem;
+  width: 0.6rem;
+}
+
 /* ── Work-log (Worklog) grid ────────────────────────────────────────────────
    The /ui/tracking grid reuses .data-table; these add the days-range toolbar,
    the empty state, and the server-class-driven row borders that mirror the
@@ -1160,13 +1176,50 @@ kbd {
   min-width: 1.5rem;
 }
 
+/* The add control is a button that opens a listbox menu of unselected options. */
+.inline-tags .tag-add-wrap {
+  position: relative;
+}
+
 .inline-tags .tag-add {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text);
+  cursor: pointer;
   font: inherit;
+  line-height: 1;
   min-height: 1.7rem;
+  min-width: 1.7rem;
+}
+
+.inline-tags .tag-menu {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.5));
+  inset-inline-start: 0;
+  inset-block-start: calc(100% + 0.2rem);
+  list-style: none;
+  margin: 0;
+  max-height: 14rem;
+  min-width: 10rem;
+  overflow-y: auto;
+  padding: 0.2rem;
+  position: absolute;
+  z-index: 20;
+}
+
+.inline-tags .tag-menu li {
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  white-space: nowrap;
+}
+
+.inline-tags .tag-menu li.is-active,
+.inline-tags .tag-menu li:hover {
+  background: var(--color-accent-soft);
 }
 
 /* A saving row dims slightly and blocks pointer interaction until it settles. */
@@ -1221,6 +1274,45 @@ th[aria-sort='descending'] .th-sort-glyph {
 .admin-page {
   margin: 0 auto;
   max-width: 80rem;
+}
+
+/* Read-only diagnostics page (Admin → Status): grouped definition lists. */
+.status-page {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+
+.status-group {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+}
+
+.status-group-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 0.6rem;
+}
+
+.status-list {
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0;
+}
+
+.status-list dt {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.status-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .admin-subnav {

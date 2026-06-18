@@ -62,10 +62,20 @@ test.describe('Admin inline cell editing', () => {
     await teamsCell.focus();
     await page.keyboard.press('Enter');
 
-    // The teams column opens an inline tag editor (chips + an add dropdown),
-    // not the modal.
-    await expect(teamsCell.locator('select.tag-add')).toBeVisible();
+    // The teams column opens an inline tag editor (chips + an add button that
+    // opens a listbox menu), not the modal. (Add/remove behaviour is unit-tested
+    // in Admin.test.tsx; here we just confirm the inline editor mounts.)
+    const addBtn = teamsCell.locator('button.tag-add');
+    await expect(addBtn).toBeVisible();
     await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+  });
+
+  test('the Status sub-page shows read-only diagnostics', async ({ page }) => {
+    await page.goto('/ui/admin/status');
+    await expect(page.getByRole('heading', { name: 'PHP' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Database' })).toBeVisible();
+    // The live PHP and DB server versions render (a dotted version string).
+    await expect(page.locator('.status-group').filter({ hasText: 'PHP' })).toContainText(/\d+\.\d+/);
   });
 
   test('the Edit button opens the modal seeded with the in-progress inline value', async ({ page }) => {

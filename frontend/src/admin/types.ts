@@ -6,10 +6,14 @@ export type OptionSource = 'customers' | 'projects' | 'users' | 'teams' | 'ticke
 export interface ColumnDef {
   key: string
   label: () => string
-  /** Render a cell from the raw row object (e.g. id→name, bool→✓). */
+  /** Render a cell from the raw row object (e.g. id→name). For a `boolean`
+   *  column this is the (invisible) sort key only — the cell shows a dot. */
   render?: (row: Record<string, unknown>, options: OptionLookup) => string
-  /** Cell/header alignment. Numbers → 'right', booleans (✓/—) → 'center'. */
+  /** Cell/header alignment. Numbers → 'right', booleans → 'center'. */
   align?: 'left' | 'right' | 'center'
+  /** Render the cell as an on/off indicator (green dot for true, empty for
+   *  false) instead of text; `render` still supplies the sort key. */
+  boolean?: boolean
 }
 
 export type FieldType = 'text' | 'number' | 'checkbox' | 'date' | 'select' | 'multiselect' | 'textarea'

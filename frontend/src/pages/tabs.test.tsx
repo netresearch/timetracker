@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import Billing from './Billing'
-import Extras from './Extras'
+import { BulkEntryForm } from '../components/BulkEntryForm'
 import Help from './Help'
 import Settings from './Settings'
 
@@ -88,10 +88,10 @@ describe('Settings', () => {
   })
 })
 
-describe('Extras', () => {
+describe('Bulk entry form', () => {
   it('blocks submit and shows a message when no preset is chosen', async () => {
     getJson.mockResolvedValue([])
-    const { getByText, getByRole, unmount } = renderPage('/extras', Extras)
+    const { getByText, getByRole, unmount } = renderPage('/bulk', () => <BulkEntryForm />)
 
     fireEvent.submit(getByRole('button', { name: /Create entries/i }).closest('form') as HTMLFormElement)
 
@@ -105,7 +105,7 @@ describe('Extras', () => {
     getJson.mockResolvedValue([{ preset: { id: 3, name: 'Standard' } }])
     postForm.mockResolvedValue('2 entries have been added')
 
-    const { container, getByText, getByRole, unmount } = renderPage('/extras', Extras)
+    const { container, getByText, getByRole, unmount } = renderPage('/bulk', () => <BulkEntryForm />)
     await waitFor(() => expect(getByText('Standard')).toBeInTheDocument())
 
     const select = container.querySelector('select') as HTMLSelectElement

@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, Match, onCleanup, onMount, Switch, type Accessor } from 'solid-js'
+import { createMemo, createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
 import { createStore, produce } from 'solid-js/store'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
@@ -173,19 +173,44 @@ export function InlineMultiSelect(props: {
   const [selected, setSelected] = createSignal<number[]>(Array.isArray(props.initial) ? [...(props.initial as number[])] : [])
   const unselected = createMemo(() => allOptions().filter((option) => !selected().includes(Number(option.value))))
   const labelOf = (id: number): string => allOptions().find((option) => Number(option.value) === id)?.label ?? String(id)
+  // The "add" control is a listbox menu, not a native <select>: a native select
+  // fires change on EVERY arrow keypress while closed, which added a chip per
+  // keystroke and made it impossible to navigate to the option you want.
+  const [menuOpen, setMenuOpen] = createSignal(false)
+  const [activeIdx, setActiveIdx] = createSignal(0)
+  const listId = createUniqueId()
   let container: HTMLDivElement | undefined
-  let addSelect: HTMLSelectElement | undefined
+  let addBtn: HTMLButtonElement | undefined
   let done = false
 
   function add(id: number): void {
     if (id > 0 && !selected().includes(id)) {
       setSelected([...selected(), id])
     }
-    addSelect?.focus() // keep focus in the widget so the add reads as one action
   }
   function remove(id: number): void {
     setSelected(selected().filter((value) => value !== id))
-    addSelect?.focus() // the chip's × unmounts — keep focus inside so it isn't a commit
+    addBtn?.focus() // the chip's × unmounts — keep focus inside so it isn't a commit
+  }
+  function openMenu(): void {
+    if (unselected().length > 0) {
+      setActiveIdx(0)
+      setMenuOpen(true)
+    }
+  }
+  // Add the highlighted option; keep the menu open to add several in a row,
+  // clamping the active index as the list shrinks (closing once it's empty).
+  function addActive(): void {
+    const option = unselected()[activeIdx()]
+    if (option !== undefined) {
+      add(Number(option.value))
+      if (unselected().length === 0) {
+        setMenuOpen(false)
+      } else {
+        setActiveIdx((index) => Math.min(index, unselected().length - 1))
+      }
+      addBtn?.focus()
+    }
   }
   // Takes the value so the signal is read in the (tracked) event handler, not in
   // the deferred focusout microtask.
@@ -203,7 +228,7 @@ export function InlineMultiSelect(props: {
     }
   }
 
-  onMount(() => addSelect?.focus())
+  onMount(() => addBtn?.focus())
 
   return (
     <div
@@ -212,6 +237,11 @@ export function InlineMultiSelect(props: {
       role="group"
       aria-label={props.label}
       onKeyDown={(event) => {
+        // While the add-menu is open it owns the arrow/enter/escape keys (handled
+        // on the button below); don't let them commit/cancel the whole edit.
+        if (menuOpen()) {
+          return
+        }
         if (event.key === 'Enter') {
           event.preventDefault()
           event.stopPropagation()
@@ -236,7 +266,7 @@ export function InlineMultiSelect(props: {
       onFocusOut={() => {
         // Capture the value now (tracked handler), then commit only when focus
         // has actually left the whole widget — checked after it settles, so
-        // moving between chips/the dropdown (incl. removing one) doesn't commit.
+        // moving between chips/the menu (incl. removing one) doesn't commit.
         const value = selected()
         // eslint-disable-next-line solid/reactivity -- intentional deferred commit of the captured value after focus settles
         queueMicrotask(() => {
@@ -250,22 +280,80 @@ export function InlineMultiSelect(props: {
         {(id) => (
           <span class="tag">
             <span class="tag-label">{labelOf(id)}</span>
-            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${props.label}: ${labelOf(id)} ✕`} onClick={() => remove(id)}>×</button>
+            {/* preventDefault on mousedown so clicking × doesn't blur the widget
+                (which would commit + unmount before the click removes the chip). */}
+            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${props.label}: ${labelOf(id)} ✕`} onMouseDown={(event) => event.preventDefault()} onClick={() => remove(id)}>×</button>
           </span>
         )}
       </For>
-      <select
-        ref={(el) => { addSelect = el }}
-        class="tag-add"
-        aria-label={props.label}
-        value=""
-        onInput={(event) => { add(Number(event.currentTarget.value)); event.currentTarget.value = '' }}
-      >
-        <option value="">+</option>
-        <For each={unselected()}>
-          {(option) => <option value={String(option.value)}>{option.label}</option>}
-        </For>
-      </select>
+      <span class="tag-add-wrap">
+        <button
+          ref={(el) => { addBtn = el }}
+          type="button"
+          class="tag-add"
+          aria-haspopup="listbox"
+          aria-expanded={menuOpen()}
+          aria-controls={listId}
+          aria-activedescendant={menuOpen() ? `${listId}-opt-${activeIdx()}` : undefined}
+          aria-label={`${m.admin_add()} — ${props.label}`}
+          onClick={() => (menuOpen() ? setMenuOpen(false) : openMenu())}
+          onKeyDown={(event) => {
+            if (!menuOpen()) {
+              // Closed: arrows/space open the menu; Enter/Tab/Escape/Backspace
+              // bubble to the container (commit / move / cancel / remove last).
+              if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === ' ') {
+                event.preventDefault()
+                event.stopPropagation()
+                openMenu()
+              }
+
+              return
+            }
+            // Open: the menu owns navigation + selection.
+            if (event.key === 'ArrowDown') {
+              event.preventDefault()
+              event.stopPropagation()
+              setActiveIdx((index) => Math.min(index + 1, unselected().length - 1))
+            } else if (event.key === 'ArrowUp') {
+              event.preventDefault()
+              event.stopPropagation()
+              setActiveIdx((index) => Math.max(index - 1, 0))
+            } else if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              event.stopPropagation()
+              addActive()
+            } else if (event.key === 'Escape') {
+              event.preventDefault()
+              event.stopPropagation()
+              setMenuOpen(false)
+            } else if (event.key === 'Tab') {
+              setMenuOpen(false) // let Tab bubble so the container moves to the next cell
+            }
+          }}
+        >+</button>
+        <Show when={menuOpen()}>
+          <ul id={listId} class="tag-menu" role="listbox" aria-label={props.label}>
+            <For each={unselected()}>
+              {(option, index) => (
+                <li
+                  id={`${listId}-opt-${index()}`}
+                  role="option"
+                  aria-selected={index() === activeIdx()}
+                  classList={{ 'is-active': index() === activeIdx() }}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    add(Number(option.value))
+                    if (unselected().length === 0) {
+                      setMenuOpen(false)
+                    }
+                    addBtn?.focus()
+                  }}
+                >{option.label}</li>
+              )}
+            </For>
+          </ul>
+        </Show>
+      </span>
     </div>
   )
 }

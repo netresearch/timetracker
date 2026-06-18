@@ -48,11 +48,6 @@
             <a class="main-nav-link{% if active == 'auswertung' %} is-active{% endif %}"
                {% if active == 'auswertung' %}aria-current="page"{% endif %}
                data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
-            {% if isAdmin %}
-                <a class="main-nav-link{% if active == 'extras' %} is-active{% endif %}"
-                   {% if active == 'extras' %}aria-current="page"{% endif %}
-                   data-nav="extras" href="{{ path('ui_spa', {'path': 'extras'}) }}">{{ 'Extras'|trans }}</a>
-            {% endif %}
             {% if canBill %}
                 <a class="main-nav-link{% if active == 'billing' %} is-active{% endif %}"
                    {% if active == 'billing' %}aria-current="page"{% endif %}
@@ -155,9 +150,6 @@
             <a class="drawer-link" data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}">{{ 'Worklog'|trans }}</a>
             <a class="drawer-link{% if active == 'month' %} is-active{% endif %}" data-nav="month" href="{{ monthPath }}">{{ 'Overview'|trans }}</a>
             <a class="drawer-link{% if active == 'auswertung' %} is-active{% endif %}" data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
-            {% if isAdmin %}
-                <a class="drawer-link{% if active == 'extras' %} is-active{% endif %}" data-nav="extras" href="{{ path('ui_spa', {'path': 'extras'}) }}">{{ 'Extras'|trans }}</a>
-            {% endif %}
             {% if canBill %}
                 <a class="drawer-link{% if active == 'billing' %} is-active{% endif %}" data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
             {% endif %}
