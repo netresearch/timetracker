@@ -329,7 +329,10 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('committing a cell without changing it leaves the row clean (no save, no dirty cues)', async () => {
+  // Opening the ACME name cell, then leaving it via `exitKey` without changing
+  // the value, must leave the row clean: no save, no warning tint, and the disk
+  // (force-save) stays hidden in its reserved slot.
+  async function expectRowStaysCleanAfter(exitKey: 'Enter' | 'Escape') {
     mockEndpoints()
     const { getByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
@@ -339,11 +342,9 @@ describe('Admin inline cell editing', () => {
     cell.focus()
     fireEvent.keyDown(cell, { key: 'Enter' }) // open the editor (seeds a draft)
     const editor = (await screen.findByRole('textbox')) as HTMLInputElement
-    fireEvent.keyDown(editor, { key: 'Enter' }) // commit the unchanged value
+    fireEvent.keyDown(editor, { key: exitKey })
 
     await waitFor(() => expect(screen.queryByRole('textbox')).not.toBeInTheDocument())
-    // No real change → no save, no warning tint, and the disk (force-save) stays
-    // hidden in its reserved slot.
     expect(postJson).not.toHaveBeenCalled()
     expect(row.classList.contains('is-dirty')).toBe(false)
     const disk = row.querySelector('.is-unsaved') as HTMLElement
@@ -351,27 +352,13 @@ describe('Admin inline cell editing', () => {
     expect(disk.classList.contains('action-slot-hidden')).toBe(true)
 
     unmount()
-  })
+  }
 
-  it('does not mark the row dirty or save when a cell is opened then cancelled (Escape)', async () => {
-    mockEndpoints()
-    const { getByRole, unmount } = renderAdmin()
-    await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
+  it('committing a cell without changing it leaves the row clean (no save, no dirty cues)', () =>
+    expectRowStaysCleanAfter('Enter'))
 
-    const cell = getByRole('gridcell', { name: 'ACME' })
-    const row = cell.closest('tr') as HTMLTableRowElement
-    cell.focus()
-    fireEvent.keyDown(cell, { key: 'Enter' })
-    const editor = (await screen.findByRole('textbox')) as HTMLInputElement
-    fireEvent.keyDown(editor, { key: 'Escape' })
-
-    await waitFor(() => expect(screen.queryByRole('textbox')).not.toBeInTheDocument())
-    expect(postJson).not.toHaveBeenCalled()
-    expect(row.classList.contains('is-dirty')).toBe(false)
-    expect((row.querySelector('.is-unsaved') as HTMLElement).classList.contains('action-slot-hidden')).toBe(true)
-
-    unmount()
-  })
+  it('does not mark the row dirty or save when a cell is opened then cancelled (Escape)', () =>
+    expectRowStaysCleanAfter('Escape'))
 
   it('seeds the editor with the printable key that opened it', async () => {
     mockEndpoints()
