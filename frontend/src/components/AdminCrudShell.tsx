@@ -32,7 +32,7 @@ function csvCell(value: string): string {
 
 /** On/off indicator for a boolean column: a green dot for true, empty for false,
  *  with visually-hidden Yes/No so it isn't colour-only (WCAG 1.4.1). */
-function BoolDot(props: { on: boolean }) {
+function BoolDot(props: Readonly<{ on: boolean }>) {
   return (
     <span class="bool-cell">
       <Show when={props.on}><span class="bool-dot" aria-hidden="true" /></Show>

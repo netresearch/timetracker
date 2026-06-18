@@ -33,7 +33,7 @@ use const PHP_VERSION;
 final class GetStatusAction extends BaseController
 {
     /** Composer packages worth surfacing (guarded — unknown ones are skipped). */
-    private const PACKAGES = [
+    private const array PACKAGES = [
         'symfony/framework-bundle',
         'doctrine/orm',
         'doctrine/dbal',
@@ -44,14 +44,18 @@ final class GetStatusAction extends BaseController
     ];
 
     /** PHP extensions worth surfacing if loaded (the full list is noise). */
-    private const EXTENSIONS = [
+    private const array EXTENSIONS = [
         'pdo_mysql', 'mysqli', 'intl', 'mbstring', 'openssl', 'ldap',
         'curl', 'json', 'opcache', 'sodium', 'gd', 'zip',
     ];
 
+    public function __construct(private readonly Connection $connection)
+    {
+    }
+
     #[Route(path: '/admin/status', name: 'admin_status_attr', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function __invoke(Connection $connection): JsonResponse
+    public function __invoke(): JsonResponse
     {
         return new JsonResponse([
             'app' => [
@@ -67,14 +71,14 @@ final class GetStatusAction extends BaseController
                 'version' => PHP_VERSION,
                 'extensions' => array_values(array_filter(
                     self::EXTENSIONS,
-                    static fn (string $ext): bool => extension_loaded($ext),
+                    extension_loaded(...),
                 )),
             ],
             'symfony' => [
                 'kernel' => Kernel::VERSION,
             ],
             'packages' => $this->packageVersions(),
-            'database' => $this->databaseInfo($connection),
+            'database' => $this->databaseInfo($this->connection),
             'config' => [
                 'ldap_host' => $this->param('ldap_host'),
                 'ldap_port' => $this->param('ldap_port'),
@@ -149,7 +153,7 @@ final class GetStatusAction extends BaseController
             'serverVersion' => $serverVersion,
             'host' => $str($parts['host'] ?? null),
             'port' => $str($parts['port'] ?? null),
-            'name' => $schema ?? $str(isset($parts['path']) ? ltrim((string) $parts['path'], '/') : null),
+            'name' => $schema ?? $str(isset($parts['path']) ? ltrim($parts['path'], '/') : null),
         ];
     }
 }

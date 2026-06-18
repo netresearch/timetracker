@@ -22,11 +22,14 @@ function fmt(value: unknown): string {
   if (Array.isArray(value)) {
     return value.length > 0 ? value.join(', ') : '—'
   }
+  if (typeof value === 'object') {
+    return JSON.stringify(value)
+  }
 
   return String(value)
 }
 
-function StatusGroup(props: { title: string; rows: Record<string, unknown> }) {
+function StatusGroup(props: Readonly<{ title: string; rows: Record<string, unknown> }>) {
   return (
     <section class="status-group">
       <h2 class="status-group-title">{props.title}</h2>

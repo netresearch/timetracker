@@ -422,7 +422,7 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('adds a tag via the keyboard menu (arrow + Enter), not on every keystroke', async () => {
+  it('adds a tag via the menu — one option per pick, not one per keystroke', async () => {
     postJson.mockResolvedValue([1, 'ACME', true, false, [2, 3]])
     const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([
       { id: 2, name: 'Backend' },
@@ -430,19 +430,21 @@ describe('Admin inline cell editing', () => {
     ])
 
     // An inline tag editor opened (chip for the current team + an add button),
-    // not the modal — and no listbox until it's opened.
+    // not the modal — and no menu until it's opened.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(within(teamsCell).getByText('Backend')).toBeInTheDocument() // existing team is a chip
-    expect(teamsCell.querySelector('[role="listbox"]')).toBeNull()
+    expect(teamsCell.querySelector('[role="menu"]')).toBeNull()
 
-    // ArrowDown opens the menu (does NOT add); Enter adds the highlighted option
-    // (Frontend, the only unselected one) — exactly one chip, not one per key.
-    fireEvent.keyDown(addBtn, { key: 'ArrowDown' })
-    expect(teamsCell.querySelector('[role="listbox"]')).not.toBeNull()
-    fireEvent.keyDown(addBtn, { key: 'Enter' }) // add Frontend
+    // Opening the menu adds nothing (the old <select> added on every arrow key).
+    fireEvent.click(addBtn)
+    expect(teamsCell.querySelector('[role="menu"]')).not.toBeNull()
+    expect(teamsCell.querySelectorAll('.tag')).toHaveLength(1)
+
+    // Picking the option (Frontend, the only unselected one) adds exactly one chip.
+    fireEvent.click(within(teamsCell).getByRole('menuitem', { name: 'Frontend' }))
     await waitFor(() => expect(teamsCell.querySelectorAll('.tag')).toHaveLength(2))
 
-    // Menu auto-closed (no options left); Enter now commits → auto-save [2, 3].
+    // Menu auto-closed (no options left); Enter on the add button commits → [2, 3].
     fireEvent.keyDown(addBtn, { key: 'Enter' })
     await waitFor(() =>
       expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [2, 3] })),
@@ -451,22 +453,16 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('adds a tag by clicking a menu option with the mouse', async () => {
-    postJson.mockResolvedValue([1, 'ACME', true, false, [2, 3]])
+  it('opens the add menu from the keyboard (ArrowDown), without adding', async () => {
     const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([
       { id: 2, name: 'Backend' },
       { id: 3, name: 'Frontend' },
     ])
 
-    fireEvent.click(addBtn) // open the menu
-    const option = within(teamsCell).getByRole('option', { name: 'Frontend' })
-    fireEvent.click(option) // mouse-add → one chip
-    await waitFor(() => expect(teamsCell.querySelectorAll('.tag')).toHaveLength(2))
-
-    fireEvent.keyDown(addBtn, { key: 'Enter' }) // commit
-    await waitFor(() =>
-      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [2, 3] })),
-    )
+    fireEvent.keyDown(addBtn, { key: 'ArrowDown' })
+    expect(teamsCell.querySelector('[role="menu"]')).not.toBeNull()
+    expect(within(teamsCell).getByRole('menuitem', { name: 'Frontend' })).toBeInTheDocument()
+    expect(teamsCell.querySelectorAll('.tag')).toHaveLength(1) // opening added nothing
 
     unmount()
   })

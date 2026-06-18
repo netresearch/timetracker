@@ -72,10 +72,12 @@ test.describe('Admin inline cell editing', () => {
 
   test('the Status sub-page shows read-only diagnostics', async ({ page }) => {
     await page.goto('/ui/admin/status');
-    await expect(page.getByRole('heading', { name: 'PHP' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Database' })).toBeVisible();
-    // The live PHP and DB server versions render (a dotted version string).
-    await expect(page.locator('.status-group').filter({ hasText: 'PHP' })).toContainText(/\d+\.\d+/);
+    // Six groups (app/php/symfony/db/packages/config). Assert on locale-independent
+    // data, not the translated headings: real version strings + the DB platform.
+    await expect(page.locator('.status-group')).toHaveCount(6);
+    // Bounded quantifiers (no unbounded backtracking): a dotted version string.
+    await expect(page.locator('.status-page')).toContainText(/\d{1,4}\.\d{1,4}/);
+    await expect(page.locator('.status-page')).toContainText(/MariaDB|MySQL/i);
   });
 
   test('the Edit button opens the modal seeded with the in-progress inline value', async ({ page }) => {

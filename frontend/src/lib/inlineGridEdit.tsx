@@ -1,4 +1,4 @@
-import { createMemo, createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
+import { createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
 import { createStore, produce } from 'solid-js/store'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
@@ -173,14 +173,14 @@ export function InlineMultiSelect(props: {
   const [selected, setSelected] = createSignal<number[]>(Array.isArray(props.initial) ? [...(props.initial as number[])] : [])
   const unselected = createMemo(() => allOptions().filter((option) => !selected().includes(Number(option.value))))
   const labelOf = (id: number): string => allOptions().find((option) => Number(option.value) === id)?.label ?? String(id)
-  // The "add" control is a listbox menu, not a native <select>: a native select
-  // fires change on EVERY arrow keypress while closed, which added a chip per
-  // keystroke and made it impossible to navigate to the option you want.
+  // The "add" control is a popup MENU OF BUTTONS, not a native <select> (which
+  // fired change on every arrow keypress, adding a chip per keystroke) and not a
+  // role=listbox + aria-activedescendant (invalid ARIA on a <button>). Real,
+  // focusable <button> options are keyboard-native and accessible.
   const [menuOpen, setMenuOpen] = createSignal(false)
-  const [activeIdx, setActiveIdx] = createSignal(0)
-  const listId = createUniqueId()
   let container: HTMLDivElement | undefined
   let addBtn: HTMLButtonElement | undefined
+  let menuEl: HTMLDivElement | undefined
   let done = false
 
   function add(id: number): void {
@@ -192,24 +192,29 @@ export function InlineMultiSelect(props: {
     setSelected(selected().filter((value) => value !== id))
     addBtn?.focus() // the chip's × unmounts — keep focus inside so it isn't a commit
   }
+  const focusFirstItem = (): void => {
+    queueMicrotask(() => menuEl?.querySelector<HTMLButtonElement>('.tag-menu-item')?.focus())
+  }
   function openMenu(): void {
     if (unselected().length > 0) {
-      setActiveIdx(0)
       setMenuOpen(true)
+      focusFirstItem()
     }
   }
-  // Add the highlighted option; keep the menu open to add several in a row,
-  // clamping the active index as the list shrinks (closing once it's empty).
-  function addActive(): void {
-    const option = unselected()[activeIdx()]
-    if (option !== undefined) {
-      add(Number(option.value))
-      if (unselected().length === 0) {
-        setMenuOpen(false)
-      } else {
-        setActiveIdx((index) => Math.min(index, unselected().length - 1))
-      }
+  function closeMenu(refocusAddBtn = true): void {
+    setMenuOpen(false)
+    if (refocusAddBtn) {
       addBtn?.focus()
+    }
+  }
+  // Add an option, keeping the menu usable for adding several in a row (it closes
+  // once nothing is left to add).
+  function addOption(id: number): void {
+    add(id)
+    if (unselected().length === 0) {
+      closeMenu()
+    } else {
+      focusFirstItem()
     }
   }
   // Takes the value so the signal is read in the (tracked) event handler, not in
@@ -291,67 +296,52 @@ export function InlineMultiSelect(props: {
           ref={(el) => { addBtn = el }}
           type="button"
           class="tag-add"
-          aria-haspopup="listbox"
+          aria-haspopup="true"
           aria-expanded={menuOpen()}
-          aria-controls={listId}
-          aria-activedescendant={menuOpen() ? `${listId}-opt-${activeIdx()}` : undefined}
           aria-label={`${m.admin_add()} — ${props.label}`}
-          onClick={() => (menuOpen() ? setMenuOpen(false) : openMenu())}
+          onClick={() => (menuOpen() ? closeMenu() : openMenu())}
           onKeyDown={(event) => {
-            if (!menuOpen()) {
-              // Closed: arrows/space open the menu; Enter/Tab/Escape/Backspace
-              // bubble to the container (commit / move / cancel / remove last).
-              if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === ' ') {
-                event.preventDefault()
-                event.stopPropagation()
-                openMenu()
-              }
-
-              return
-            }
-            // Open: the menu owns navigation + selection.
-            if (event.key === 'ArrowDown') {
+            // Closed: Down/Space open the menu; Enter/Tab/Escape/Backspace bubble
+            // to the container (commit / move / cancel / remove last).
+            if (!menuOpen() && (event.key === 'ArrowDown' || event.key === ' ')) {
               event.preventDefault()
               event.stopPropagation()
-              setActiveIdx((index) => Math.min(index + 1, unselected().length - 1))
-            } else if (event.key === 'ArrowUp') {
-              event.preventDefault()
-              event.stopPropagation()
-              setActiveIdx((index) => Math.max(index - 1, 0))
-            } else if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              event.stopPropagation()
-              addActive()
-            } else if (event.key === 'Escape') {
-              event.preventDefault()
-              event.stopPropagation()
-              setMenuOpen(false)
-            } else if (event.key === 'Tab') {
-              setMenuOpen(false) // let Tab bubble so the container moves to the next cell
+              openMenu()
             }
           }}
         >+</button>
         <Show when={menuOpen()}>
-          <ul id={listId} class="tag-menu" role="listbox" aria-label={props.label}>
+          <div
+            ref={(el) => { menuEl = el }}
+            class="tag-menu"
+            role="menu"
+            aria-label={props.label}
+            onKeyDown={(event) => {
+              const items = Array.from(menuEl?.querySelectorAll<HTMLButtonElement>('.tag-menu-item') ?? [])
+              const i = items.indexOf(document.activeElement as HTMLButtonElement)
+              if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                event.stopPropagation()
+                items[Math.min(items.length - 1, i + 1)]?.focus()
+              } else if (event.key === 'ArrowUp') {
+                event.preventDefault()
+                event.stopPropagation()
+                items[Math.max(0, i - 1)]?.focus()
+              } else if (event.key === 'Escape') {
+                event.preventDefault()
+                event.stopPropagation()
+                closeMenu()
+              } else if (event.key === 'Tab') {
+                closeMenu(false) // close, then let the container's Tab move to the next cell
+              }
+            }}
+          >
             <For each={unselected()}>
-              {(option, index) => (
-                <li
-                  id={`${listId}-opt-${index()}`}
-                  role="option"
-                  aria-selected={index() === activeIdx()}
-                  classList={{ 'is-active': index() === activeIdx() }}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    add(Number(option.value))
-                    if (unselected().length === 0) {
-                      setMenuOpen(false)
-                    }
-                    addBtn?.focus()
-                  }}
-                >{option.label}</li>
+              {(option) => (
+                <button type="button" role="menuitem" class="tag-menu-item" onClick={() => addOption(Number(option.value))}>{option.label}</button>
               )}
             </For>
-          </ul>
+          </div>
         </Show>
       </span>
     </div>

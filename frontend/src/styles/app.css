@@ -1198,10 +1198,10 @@ kbd {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   box-shadow: 0 6px 18px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.5));
+  display: flex;
+  flex-direction: column;
   inset-inline-start: 0;
   inset-block-start: calc(100% + 0.2rem);
-  list-style: none;
-  margin: 0;
   max-height: 14rem;
   min-width: 10rem;
   overflow-y: auto;
@@ -1210,16 +1210,22 @@ kbd {
   z-index: 20;
 }
 
-.inline-tags .tag-menu li {
+.inline-tags .tag-menu-item {
+  background: none;
+  border: 0;
   border-radius: 4px;
+  color: var(--color-text);
   cursor: pointer;
-  padding: 0.3rem 0.5rem;
+  font: inherit;
+  padding: 0.35rem 0.6rem;
+  text-align: start;
   white-space: nowrap;
 }
 
-.inline-tags .tag-menu li.is-active,
-.inline-tags .tag-menu li:hover {
+.inline-tags .tag-menu-item:hover,
+.inline-tags .tag-menu-item:focus-visible {
   background: var(--color-accent-soft);
+  outline: none;
 }
 
 /* A saving row dims slightly and blocks pointer interaction until it settles. */
