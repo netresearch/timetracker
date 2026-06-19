@@ -30,6 +30,34 @@ function csvCell(value: string): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
+// A select/multiselect cell value → the list of chip values to render. A single
+// select is one chip; "none" (0 / '' / null) is no chips.
+function chipValues(raw: unknown): (string | number)[] {
+  if (Array.isArray(raw)) {
+    return raw as (string | number)[]
+  }
+  if (raw === undefined || raw === null || raw === '' || raw === 0) {
+    return []
+  }
+
+  return [raw as string | number]
+}
+
+/** Read-only chips for a select/multiselect column in display mode, so reference
+ *  columns read as chips (visually distinct from free-text) whether or not the
+ *  cell is being edited. */
+function ReadonlyChips(props: Readonly<{ values: (string | number)[]; options: { value: string | number; label: string }[] }>) {
+  const labelOf = (value: string | number): string => props.options.find((option) => String(option.value) === String(value))?.label ?? String(value)
+
+  return (
+    <span class="inline-tags is-readonly">
+      <For each={props.values}>
+        {(value) => <span class="tag"><span class="tag-label">{labelOf(value)}</span></span>}
+      </For>
+    </span>
+  )
+}
+
 /** On/off indicator for a boolean column: a green dot for true, empty for false,
  *  with visually-hidden Yes/No so it isn't colour-only (WCAG 1.4.1). */
 function BoolDot(props: Readonly<{ on: boolean }>) {
@@ -542,7 +570,13 @@ export function AdminCrudShell(props: {
                           >
                             <Show
                               when={editor.isEditing(rowId, col.key)}
-                              fallback={col.boolean ? <BoolDot on={Boolean(editor.overlayRow(row)[col.key])} /> : displayText(row, col)}
+                              fallback={
+                                col.boolean
+                                  ? <BoolDot on={Boolean(editor.overlayRow(row)[col.key])} />
+                                  : fieldType === 'select' || fieldType === 'multiselect'
+                                    ? <ReadonlyChips values={chipValues(editor.overlayRow(row)[col.key])} options={fieldSelectOptions(fieldFor(col.key)!, props.options)} />
+                                    : displayText(row, col)
+                              }
                             >
                               {/* Hidden ghost holds the column width so the overlaying
                                   single-line editor can't make the table re-flow. */}

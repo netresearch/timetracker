@@ -1111,6 +1111,9 @@ kbd {
   margin: 0;
   outline: none;
   padding: 0;
+  /* Inherit the cell's alignment so editing a right-aligned (numeric) cell keeps
+     the value right-aligned instead of jumping left. */
+  text-align: inherit;
   width: 100%;
 }
 
@@ -1133,6 +1136,12 @@ kbd {
   padding: 0 var(--cell-pad-x);
   position: absolute;
   width: auto;
+}
+
+/* A <select> editor: drop the native chrome (dropdown arrow) so it reads as the
+   plain text it overlays — the arrow would shift the text and flicker on open. */
+.data-table td[data-inline-editing] select.inline-editor {
+  appearance: none;
 }
 
 /* A checkbox isn't single-line text — don't stretch it to fill the cell width. */
@@ -1160,6 +1169,25 @@ kbd {
   font-size: 0.85rem;
   gap: 0.1rem;
   padding: 0 0.1rem 0 0.4rem;
+}
+
+/* Chips are roving-tabindex focusable in the editor (Left/Right + Delete). */
+.inline-tags .tag:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+/* Read-only chips: the same chip styling shown in the cell when NOT editing, so
+   a multiselect column reads as chips throughout (no ×, symmetric padding). */
+.inline-tags.is-readonly {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.inline-tags.is-readonly .tag {
+  padding: 0 0.4rem;
 }
 
 .inline-tags .tag-remove {

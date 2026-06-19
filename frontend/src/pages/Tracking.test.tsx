@@ -206,7 +206,9 @@ describe('Tracking (Worklog grid)', () => {
 
     fireEvent.click(getByRole('button', { name: 'Delete' }))
 
-    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/delete', { id: 1 }))
+    // /tracking/delete is form-encoded (reads $request->request, shared with the
+    // ExtJS shell), so it goes out via postForm — not postJson.
+    await waitFor(() => expect(postForm).toHaveBeenCalledWith('/tracking/delete', { id: 1 }))
 
     unmount()
   })
@@ -393,8 +395,9 @@ describe('Tracking (Worklog grid)', () => {
     const { container, getByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Newest' })).toBeInTheDocument())
 
+    // Dates render in ISO (yyyy-mm-dd), one consistent format everywhere.
     const dates = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"]')).map((td) => td.textContent)
-    expect(dates).toEqual(['16/06/2026', '15/06/2026', '14/06/2026'])
+    expect(dates).toEqual(['2026-06-16', '2026-06-15', '2026-06-14'])
 
     unmount()
   })
@@ -412,9 +415,10 @@ describe('Tracking (Worklog grid)', () => {
     const { container, getByRole, getAllByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'BroCorp' })).toBeInTheDocument())
 
-    // Cursor on the 2nd (older, XYZ-9/BroCorp) row, then Continue.
+    // Cursor on the 2nd (older, XYZ-9/BroCorp) row, then Continue via Alt+C
+    // (the cursor-row shortcut; the per-row icons clone their own row instead).
     focusBodyRow(container, 1)
-    fireEvent.click(getByRole('button', { name: 'Continue' }))
+    fireEvent.keyDown(document.body, { key: 'c', altKey: true })
 
     // The cloned new row carries the cursor row's customer + ticket (not ABC-1/ACME).
     await waitFor(() => expect(getAllByRole('gridcell', { name: 'BroCorp' }).length).toBe(2))

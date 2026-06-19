@@ -501,6 +501,45 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
+  it('navigates to a chip with the keyboard (ArrowLeft) and removes it with Delete', async () => {
+    postJson.mockResolvedValue([1, 'ACME', true, false, []])
+    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
+
+    // Focus starts on the add button; ArrowLeft moves to the Backend chip.
+    addBtn.focus()
+    fireEvent.keyDown(addBtn, { key: 'ArrowLeft' })
+    const chip = teamsCell.querySelector('.tag') as HTMLElement
+    expect(document.activeElement).toBe(chip)
+
+    fireEvent.keyDown(chip, { key: 'Delete' }) // removes the focused chip
+    await waitFor(() => expect(teamsCell.querySelector('.tag')).toBeNull())
+    fireEvent.keyDown(addBtn, { key: 'Enter' }) // commit
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [] })),
+    )
+
+    unmount()
+  })
+
+  it('renders selected teams as read-only chips in display mode (not just when editing)', async () => {
+    getJson.mockImplementation((path: string) =>
+      path === '/getAllCustomers'
+        ? Promise.resolve([{ customer: { id: 1, name: 'ACME', active: true, global: false, teams: [2] } }])
+        : path === '/getAllTeams'
+          ? Promise.resolve([{ team: { id: 2, name: 'Backend' } }])
+          : Promise.resolve([]),
+    )
+    const { getByRole, unmount } = renderAdmin()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Backend' })).toBeInTheDocument())
+
+    // The teams cell shows a chip without being edited (no editor mounted).
+    const cell = getByRole('gridcell', { name: 'Backend' })
+    expect(cell.querySelector('.inline-tags.is-readonly .tag')).not.toBeNull()
+    expect(cell.querySelector('input, select, button')).toBeNull()
+
+    unmount()
+  })
+
   it('keeps focus on the cell after Enter by default (stay, does not move down)', async () => {
     getJson.mockImplementation((path: string) =>
       path === '/getAllCustomers'

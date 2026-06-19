@@ -40,3 +40,18 @@ export function DiskIcon(): JSX.Element {
     </Icon>
   )
 }
+
+// Continue: a play triangle — clone this entry into a fresh row.
+export function ContinueIcon(): JSX.Element {
+  return <Icon><path d="M7 5v14l11-7z" /></Icon>
+}
+
+// Prolong: a clock — set this entry's end to now.
+export function ProlongIcon(): JSX.Element {
+  return <Icon><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></Icon>
+}
+
+// Info: an "i" in a circle — show the summary for this entry's ticket.
+export function InfoIcon(): JSX.Element {
+  return <Icon><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 7.5h.01" /></Icon>
+}
