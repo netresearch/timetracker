@@ -144,7 +144,6 @@ export function InlineEditor(props: {
           // date control renders in the browser's locale (mm/dd/yyyy, dd.mm.yyyy),
           // which changes the format on edit. Text keeps it yyyy-mm-dd throughout.
           type={props.field.type === 'number' ? 'number' : 'text'}
-          inputmode={props.field.type === 'date' ? 'numeric' : undefined}
           placeholder={props.field.type === 'date' ? 'YYYY-MM-DD' : undefined}
           class="inline-editor"
           aria-label={props.label}
