@@ -1211,6 +1211,11 @@ kbd {
    (inset:0) and re-applies the cell's x-padding so the text stays exactly where
    the value was; a single-line input centres vertically like the static text. */
 .data-table td[data-inline-editing] {
+  /* A subtle accent wash marks the cell as IN edit mode — the read↔edit cue a
+     select cell otherwise lacks (a text editor has its caret). Layered via
+     color-mix so it tints over whatever the row already paints, in both themes,
+     with no layout shift (the seamless-border contract is untouched). */
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
   position: relative;
 }
 
