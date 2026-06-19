@@ -2,6 +2,8 @@ import { createSignal, For, Show } from 'solid-js'
 
 import { apiErrorMessage, postForm } from '../api/client'
 import { appConfig, type AppConfig } from '../config'
+import { dateFormat, setDateFormat, formatWith, validatePattern, type DateFormatMode } from '../lib/dateFormat'
+import { isoDate } from '../lib/format'
 import { getEnterBehavior, setEnterBehavior, type EnterBehavior } from '../lib/gridEditPref'
 import { m } from '../paraglide/messages.js'
 
@@ -10,6 +12,12 @@ const ENTER_BEHAVIORS: { value: EnterBehavior; label: () => string }[] = [
   { value: 'stay', label: () => m.settings_grid_enter_stay() },
   { value: 'down', label: () => m.settings_grid_enter_down() },
   { value: 'right', label: () => m.settings_grid_enter_right() },
+]
+
+const DATE_MODES: { value: DateFormatMode; label: () => string }[] = [
+  { value: 'iso', label: () => m.settings_dateformat_iso() },
+  { value: 'auto', label: () => m.settings_dateformat_auto() },
+  { value: 'custom', label: () => m.settings_dateformat_custom() },
 ]
 
 interface SaveResponse {
@@ -37,6 +45,20 @@ type Status = { kind: 'idle' | 'saving' } | { kind: 'ok' } | { kind: 'error'; me
 export default function Settings() {
   const config = appConfig()
   const [enterPref, setEnterPref] = createSignal<EnterBehavior>(getEnterBehavior())
+  // Date-format preference (client-side; applies instantly to open grids).
+  const [dfMode, setDfMode] = createSignal<DateFormatMode>(dateFormat().mode)
+  const [dfPattern, setDfPattern] = createSignal(dateFormat().pattern)
+  const sampleIso = isoDate(new Date())
+  const dfInvalid = (): boolean => dfMode() === 'custom' && !validatePattern(dfPattern()).ok
+  const dfPreview = (): string => formatWith(sampleIso, { mode: dfMode(), pattern: dfPattern() })
+  // Persist on every change, but only when valid (an invalid custom pattern keeps
+  // the last good one rather than blanking dates).
+  const commitDateFormat = (): void => {
+    const mode = dfMode()
+    if (mode !== 'custom' || validatePattern(dfPattern()).ok) {
+      setDateFormat({ mode, pattern: dfPattern() })
+    }
+  }
   const [status, setStatus] = createSignal<Status>({ kind: 'idle' })
   const statusMessage = () => {
     const current = status()
@@ -121,6 +143,37 @@ export default function Settings() {
             </For>
           </select>
           <small class="field-hint">{m.settings_grid_enter_hint()}</small>
+        </label>
+
+        {/* Client-side UI preference — applies instantly, not part of the Save.
+            Display-only: the wire format and the inline date editor stay ISO. */}
+        <label class="field">
+          <span>{m.settings_dateformat()}</span>
+          <select
+            value={dfMode()}
+            onChange={(event) => { setDfMode(event.currentTarget.value as DateFormatMode); commitDateFormat() }}
+          >
+            <For each={DATE_MODES}>
+              {(option) => <option value={option.value}>{option.label()}</option>}
+            </For>
+          </select>
+          <Show when={dfMode() === 'custom'}>
+            <input
+              type="text"
+              name="date_pattern"
+              maxLength={32}
+              value={dfPattern()}
+              aria-label={m.settings_dateformat_pattern()}
+              aria-invalid={dfInvalid() ? 'true' : undefined}
+              onInput={(event) => { setDfPattern(event.currentTarget.value); commitDateFormat() }}
+            />
+            <small class="field-hint">{m.settings_dateformat_pattern_hint()}</small>
+          </Show>
+          <small class="field-hint" aria-live="polite">
+            <Show when={!dfInvalid()} fallback={m.settings_dateformat_invalid()}>
+              {m.settings_dateformat_preview()}: {dfPreview()}
+            </Show>
+          </small>
         </label>
 
         <div class="form-actions">

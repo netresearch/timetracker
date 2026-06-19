@@ -6,6 +6,7 @@ import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, tracking
 import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { num, str } from '../lib/coerce'
+import { formatUserDate } from '../lib/dateFormat'
 import { formatMinutes } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
@@ -112,10 +113,10 @@ function classLabel(entryClass: number): string {
   }
 }
 
-// d/m/Y (list rows) or Y-m-d (draft) → Y-m-d (ISO) for display — one consistent
-// date format everywhere, matching the inline editor.
+// d/m/Y (list rows) or Y-m-d (draft) → the user's chosen display format (ISO by
+// default). The wire format and the inline editor stay ISO; this is display-only.
 function displayDate(value: string): string {
-  return dmyToIso(value) ?? value
+  return formatUserDate(dmyToIso(value) ?? value)
 }
 
 // One icon button in the row-actions cell — same shape for Continue/Prolong/Info/
@@ -294,7 +295,9 @@ export default function Tracking() {
     // Required for a bookable entry — the row auto-saves once all are valid.
     invalidFields: (draft) => {
       const invalid: string[] = []
-      if (str(draft.date) === '') invalid.push('date')
+      // The date must be a complete ISO yyyy-mm-dd, not merely non-empty, so a
+      // half-typed manual edit ('2026-06') can't auto-save garbage.
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(str(draft.date))) invalid.push('date')
       if (parseTime(str(draft.start)) === null) invalid.push('start')
       if (parseTime(str(draft.end)) === null) invalid.push('end')
       if (num(draft.customer) <= 0) invalid.push('customer')
