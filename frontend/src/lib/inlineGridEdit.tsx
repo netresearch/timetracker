@@ -108,6 +108,17 @@ export function InlineEditor(props: {
       setValue(props.seed)
     }
     control?.focus()
+    // A select editor auto-opens its option list, so Enter-to-edit visibly reveals
+    // the dropdown rather than looking identical to read mode (the Enter keydown is
+    // a transient user activation). Progressive — browsers without showPicker fall
+    // back to the user pressing Space / Alt+Down.
+    if (control instanceof HTMLSelectElement && typeof control.showPicker === 'function') {
+      try {
+        control.showPicker()
+      } catch {
+        // no transient user activation (or blocked) — ignore; Space/Alt+Down still works.
+      }
+    }
   })
 
   return (
