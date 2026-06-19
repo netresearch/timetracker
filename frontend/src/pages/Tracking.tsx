@@ -290,7 +290,7 @@ export default function Tracking() {
     // Announce every successful save (auto, force, or row-leave) — the only
     // confirmation a screen-reader/low-vision user gets that the row persisted.
     onSaved: () => announce(m.tracking_saved()),
-    saveErrorMessage: (caught) => (caught instanceof Error ? caught.message : m.app_load_error()),
+    saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
     // Required for a bookable entry — the row auto-saves once all are valid.
     invalidFields: (draft) => {
       const invalid: string[] = []

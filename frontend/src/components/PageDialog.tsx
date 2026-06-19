@@ -1,5 +1,5 @@
 import { Dialog } from '@ark-ui/solid/dialog'
-import { Show, type JSX } from 'solid-js'
+import { createUniqueId, Show, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
 import { m } from '../paraglide/messages.js'
@@ -17,6 +17,8 @@ export function PageDialog(props: {
   ariaLabel?: string
   children: JSX.Element
 }): JSX.Element {
+  const titleId = createUniqueId()
+
   return (
     <Dialog.Root
       open={props.open}
@@ -27,10 +29,16 @@ export function PageDialog(props: {
       <Portal>
         <Dialog.Backdrop class="modal-backdrop" />
         <Dialog.Positioner class="modal-positioner">
-          <Dialog.Content class="modal" aria-label={props.ariaLabel ?? props.title}>
+          {/* With a visible title, name the dialog by reference (WCAG 1.3.1/4.1.2);
+              fall back to aria-label only for a chrome-less dialog. */}
+          <Dialog.Content
+            class="modal"
+            aria-label={props.title === undefined ? props.ariaLabel : undefined}
+            aria-labelledby={props.title !== undefined ? titleId : undefined}
+          >
             <Show when={props.title !== undefined}>
               <header class="modal-page-header">
-                <Dialog.Title class="modal-page-title">{props.title}</Dialog.Title>
+                <Dialog.Title id={titleId} class="modal-page-title">{props.title}</Dialog.Title>
                 <Dialog.CloseTrigger class="modal-close" aria-label={m.dialog_close()}>×</Dialog.CloseTrigger>
               </header>
             </Show>
