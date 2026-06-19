@@ -172,4 +172,31 @@ test.describe('Worklog CRUD', () => {
 
     await expect(page.getByRole('link', { name: /Export CSV|CSV-Export/i })).toHaveAttribute('href', '/export/35');
   });
+
+  test('a select cell shows a dropdown chevron and opening its editor does not shift the cell', async ({ page }) => {
+    const stamp = await createEntry(page);
+    const cell = rowByStamp(page, stamp).locator('td[data-col-key="customer"]');
+
+    // The chevron affordance marks a select cell (distinct from a text cell) in
+    // STATIC mode — a rendered ::after with a visible border-triangle.
+    await expect(cell).toHaveClass(/is-select/);
+    const staticCaret = await cell.evaluate((el) => parseFloat(getComputedStyle(el, '::after').borderTopWidth));
+    expect(staticCaret).toBeGreaterThan(0);
+
+    // Opening the inline editor must not reflow the cell (the caret gutter is
+    // reserved identically on the cell and the overlaying select editor).
+    const before = await cell.boundingBox();
+    await cell.focus();
+    await page.keyboard.press('Enter');
+    await expect(cell.locator('select.inline-editor')).toBeVisible();
+    const during = await cell.boundingBox();
+    // The chevron is still painted in edit mode (same affordance, same spot).
+    const editCaret = await cell.evaluate((el) => parseFloat(getComputedStyle(el, '::after').borderTopWidth));
+    expect(editCaret).toBeGreaterThan(0);
+
+    await page.keyboard.press('Escape');
+    const after = await cell.boundingBox();
+    expect(Math.round(during!.width)).toBe(Math.round(before!.width));
+    expect(Math.round(after!.width)).toBe(Math.round(before!.width));
+  });
 });

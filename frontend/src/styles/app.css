@@ -989,6 +989,10 @@ kbd {
      cell with zero layout shift, at any density (see .inline-editor). */
   --cell-pad-y: 0.55rem;
   --cell-pad-x: 0.9rem;
+  /* Right-gutter reserved for a select cell's dropdown chevron; 0 elsewhere. It
+     inherits into the overlaying editor (custom props cascade), so the cell and
+     its editor reserve the same gutter and the text origin can't shift on open. */
+  --caret-w: 0px;
   border-top: 1px solid var(--color-border);
   padding: var(--cell-pad-y) var(--cell-pad-x);
   vertical-align: middle;
@@ -1216,15 +1220,43 @@ kbd {
 
 .data-table td[data-inline-editing] .inline-editor:not(.inline-check):not(.inline-tags) {
   inset: 0;
-  padding: 0 var(--cell-pad-x);
+  /* Re-apply the cell's x-padding; the right side also reserves the select caret
+     gutter (--caret-w inherited from the cell — 0 for non-select). */
+  padding-block: 0;
+  padding-inline: var(--cell-pad-x) calc(var(--cell-pad-x) + var(--caret-w));
   position: absolute;
   width: auto;
 }
 
-/* A <select> editor: drop the native chrome (dropdown arrow) so it reads as the
-   plain text it overlays — the arrow would shift the text and flicker on open. */
+/* A <select> editor: drop the native chrome (dropdown arrow) so the overlay reads
+   as the value it sits on — the native arrow would shift the text and flicker on
+   open. The cell paints its own non-reflowing chevron instead (.is-select below). */
 .data-table td[data-inline-editing] select.inline-editor {
   appearance: none;
+}
+
+/* A select cell is a chooser, not free text. Mark it with a chevron in the right
+   gutter, present in BOTH static and edit mode (identical position), so a select
+   reads as editable and the static→edit transition stays a visual no-op. The
+   gutter is reserved on the cell (here) and on the overlaying editor (above, via
+   the inherited --caret-w), so the text origin never moves when editing opens. */
+.data-table td.is-select {
+  --caret-w: 1.1rem;
+  padding-inline-end: calc(var(--cell-pad-x) + var(--caret-w));
+  position: relative;
+}
+
+.data-table td.is-select::after {
+  border-inline: 0.28rem solid transparent;
+  border-top: 0.34rem solid currentColor;
+  content: "";
+  inset-inline-end: var(--cell-pad-x);
+  opacity: 0.55;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-25%);
+  z-index: 1;
 }
 
 /* A checkbox isn't single-line text — don't stretch it to fill the cell width. */
