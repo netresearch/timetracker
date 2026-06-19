@@ -639,7 +639,7 @@ export default function Tracking() {
 
                           return (
                             <td
-                              classList={{ numeric: col.numeric, 'is-editable': editable, 'is-invalid': editor.fieldInvalid(id, col.key) }}
+                              classList={{ numeric: col.numeric, 'is-editable': editable, 'is-invalid': editor.fieldInvalid(id, col.key), 'is-select': editable && fieldType === 'select' }}
                               data-row-id={String(id)}
                               data-col-key={col.key}
                               data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
