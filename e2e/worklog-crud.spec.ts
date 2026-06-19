@@ -1,16 +1,14 @@
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
+import { createWorklogEntry, openEditor, rowByStamp } from './helpers/worklog';
 
 /**
  * End-to-end coverage of the SolidJS Worklog CRUD journey (create / edit / save /
  * delete / prolong), which previously had only read-only e2e tests. The grid runs
- * in German on the e2e stack, so all control matchers are locale-tolerant.
- *
- * The seeded entries are months old (outside the default day range), so every
- * test creates its own entry for *today* via the Add flow — picking the main seed
- * customer (id 1, which has active projects) and the first project/activity — then
- * acts on it, located by a unique description stamp.
+ * in German on the e2e stack, so all control matchers are locale-tolerant. Entries
+ * are created per-test (see helpers/worklog) since the seed data predates the
+ * default day range.
  */
 
 const isSave = (r: { url(): string; request(): { method(): string } }): boolean =>
@@ -18,86 +16,7 @@ const isSave = (r: { url(): string; request(): { method(): string } }): boolean 
 const isDelete = (r: { url(): string; request(): { method(): string } }): boolean =>
   /\/tracking\/delete$/.test(r.url()) && r.request().method() === 'POST';
 
-async function openEditor(page: Page, row: Locator, colKey: string): Promise<Locator> {
-  await row.locator(`td[data-col-key="${colKey}"]`).focus();
-  await page.keyboard.press('Enter');
-  const editor = page.locator('td[data-inline-editing] input.inline-editor, td[data-inline-editing] select.inline-editor').first();
-  await expect(editor).toBeVisible();
-  return editor;
-}
-
-async function pickFirstReal(select: Locator): Promise<string> {
-  // Wait for the options to load (the dropdowns are query-backed) before picking.
-  const firstOption = select.locator('option[value]:not([value=""])').first();
-  await expect(firstOption).toBeAttached({ timeout: 10000 });
-  const value = await firstOption.getAttribute('value');
-  await select.selectOption(value);
-  return value ?? '';
-}
-
-// Create one entry dated today and return its unique description stamp.
-async function createEntry(page: Page): Promise<string> {
-  const stamp = `e2e-${Date.now()}`;
-  await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
-  const row = page.locator('tr.tracking-row.is-new').first();
-  await expect(row).toBeVisible();
-
-  // The Add flow opens the customer editor automatically. Pick the first real
-  // customer that actually has projects, so the cascade-filtered project editor
-  // isn't empty (some seed customers have none).
-  let projectValue = '';
-  for (let attempt = 0; attempt < 6 && projectValue === ''; attempt += 1) {
-    const customer = page.locator('td[data-inline-editing] select.inline-editor').first();
-    await expect(customer).toBeVisible();
-    const options = customer.locator('option[value]:not([value=""])');
-    await expect(options.first()).toBeAttached({ timeout: 10000 });
-    const value = await options.nth(attempt).getAttribute('value');
-    if (value === null) {
-      break; // no more customers to try
-    }
-    await customer.selectOption(value);
-    await page.keyboard.press('Enter');
-
-    const project = await openEditor(page, row, 'project'); // cascade-filtered to the customer
-    const realProject = project.locator('option[value]:not([value=""])').first();
-    if (await realProject.count() > 0 && (await realProject.getAttribute('value')) !== null) {
-      projectValue = (await realProject.getAttribute('value')) ?? '';
-      await project.selectOption(projectValue);
-      await page.keyboard.press('Enter');
-      break;
-    }
-    // This customer has no projects — cancel and try the next one.
-    await page.keyboard.press('Escape');
-    await openEditor(page, row, 'customer');
-  }
-  expect(projectValue).not.toBe('');
-
-  const activity = await openEditor(page, row, 'activity');
-  await pickFirstReal(activity);
-  await page.keyboard.press('Enter');
-
-  const description = await openEditor(page, row, 'description');
-  await description.fill(stamp);
-  await page.keyboard.press('Enter');
-
-  const start = await openEditor(page, row, 'start');
-  await start.fill('08:00');
-  await page.keyboard.press('Enter');
-
-  // Completing end makes the row valid → it auto-saves with no explicit save click.
-  const saved = page.waitForResponse(isSave);
-  const end = await openEditor(page, row, 'end');
-  await end.fill('09:00');
-  await page.keyboard.press('Enter');
-  await saved;
-
-  await expect(page.getByRole('gridcell', { name: stamp })).toBeVisible();
-  return stamp;
-}
-
-function rowByStamp(page: Page, stamp: string): Locator {
-  return page.locator('tr.tracking-row').filter({ hasText: stamp }).first();
-}
+const createEntry = createWorklogEntry;
 
 test.describe('Worklog CRUD', () => {
   test.beforeEach(async ({ page }) => {

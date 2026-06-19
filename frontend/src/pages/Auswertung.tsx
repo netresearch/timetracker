@@ -19,6 +19,7 @@ import { EffortChart, type EffortRow } from '../components/EffortChart'
 import { OptionSelect } from '../components/OptionSelect'
 import { QueryBoundary } from '../components/QueryBoundary'
 import { appConfig } from '../config'
+import { formatUserDate } from '../lib/dateFormat'
 import { isoDate } from '../lib/format'
 import { dmyToIso } from '../lib/timeParse'
 import { gridNav } from '../lib/gridNavigation'
@@ -260,7 +261,7 @@ export default function Auswertung() {
                   <For each={entries.data}>
                     {(record) => (
                       <tr>
-                        <td>{dmyToIso(record.entry.date ?? '') ?? record.entry.date}</td>
+                        <td>{formatUserDate(dmyToIso(record.entry.date ?? '') ?? record.entry.date ?? '')}</td>
                         <td>{record.entry.ticket}</td>
                         <td>{record.entry.description}</td>
                         <td class="numeric">{record.entry.duration}</td>
