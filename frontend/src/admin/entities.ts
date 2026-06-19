@@ -1,3 +1,4 @@
+import { num, str } from '../lib/coerce'
 import { m } from '../paraglide/messages.js'
 import type { EntityDescriptor, OptionLookup, OptionSource } from './types'
 
@@ -27,8 +28,6 @@ function pick(row: Row, ...keys: string[]): unknown {
   return undefined
 }
 
-const num = (v: unknown): number => Number(v ?? 0)
-const str = (v: unknown): string => (v === undefined || v === null ? '' : String(v))
 const bool: (v: unknown) => boolean = Boolean
 
 export function adminEntities(): EntityDescriptor[] {

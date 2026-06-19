@@ -567,10 +567,10 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('auto-save fails quietly; the disk (force) save shows the full error and keeps the draft', async () => {
+  it('surfaces a failed auto-save error and keeps the edited value (draft retained)', async () => {
     mockEndpoints()
     postJson.mockRejectedValue(new ApiError(422, 'Name taken'))
-    const { getByRole, queryByRole, unmount } = renderAdmin()
+    const { getByRole, unmount } = renderAdmin()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
 
     const cell = getByRole('gridcell', { name: 'ACME' })
@@ -580,15 +580,8 @@ describe('Admin inline cell editing', () => {
     fireEvent.input(editor, { target: { value: 'ACME2' } })
     fireEvent.keyDown(editor, { key: 'Enter' }) // commit → auto-save attempt
 
-    // Auto-save attempted (complete row); its failure is quiet — no alert. Wait
-    // for it to settle (row no longer aria-busy) so the force save isn't skipped.
-    await waitFor(() => expect(postJson).toHaveBeenCalled())
-    const dirtyRow = getByRole('gridcell', { name: 'ACME2' }).closest('tr')!
-    await waitFor(() => expect(dirtyRow).not.toHaveAttribute('aria-busy'))
-    expect(queryByRole('alert')).not.toBeInTheDocument()
-
-    // The disk (force) save appears while unsaved → it surfaces the full error.
-    fireEvent.click(getByRole('button', { name: /save/i }))
+    // Auto-save fires on the now-complete row; its failure is surfaced (no longer
+    // silent) so a genuine server rejection on a complete row isn't hidden.
     await waitFor(() => expect(getByRole('alert')).toHaveTextContent('Name taken'))
     // The edited value is retained (not rolled back) so it isn't lost.
     expect(getByRole('gridcell', { name: 'ACME2' })).toBeInTheDocument()

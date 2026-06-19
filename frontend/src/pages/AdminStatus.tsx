@@ -12,6 +12,26 @@ interface StatusData {
   config: Record<string, unknown>
 }
 
+// Translations for the fixed structural keys (app/php/symfony/database groups).
+// The packages + config groups carry raw identifiers (composer names, config
+// keys), so those fall back to the key itself.
+const FIELD_LABELS: Record<string, () => string> = {
+  title: () => m.status_field_title(),
+  env: () => m.status_field_env(),
+  debug: () => m.status_field_debug(),
+  locale: () => m.status_field_locale(),
+  version: () => m.status_field_version(),
+  extensions: () => m.status_field_extensions(),
+  kernel: () => m.status_field_kernel(),
+  driver: () => m.status_field_driver(),
+  platform: () => m.status_field_platform(),
+  serverVersion: () => m.status_field_serverVersion(),
+  host: () => m.status_field_host(),
+  port: () => m.status_field_port(),
+  name: () => m.status_field_name(),
+}
+const fieldLabel = (key: string): string => FIELD_LABELS[key]?.() ?? key
+
 function fmt(value: unknown): string {
   if (value === null || value === undefined || value === '') {
     return '—'
@@ -37,7 +57,7 @@ function StatusGroup(props: Readonly<{ title: string; rows: Record<string, unkno
         <For each={Object.entries(props.rows)}>
           {([key, value]) => (
             <>
-              <dt>{key}</dt>
+              <dt>{fieldLabel(key)}</dt>
               <dd>{fmt(value)}</dd>
             </>
           )}
