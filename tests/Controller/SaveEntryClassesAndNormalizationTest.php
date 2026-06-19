@@ -135,4 +135,41 @@ final class SaveEntryClassesAndNormalizationTest extends AbstractWebTestCase
         self::assertInstanceOf(Entry::class, $entry);
         self::assertSame('EXT-77', $entry->getInternalJiraTicketOriginalKey());
     }
+
+    public function testClearingTicketAndDescriptionPersists(): void
+    {
+        $this->logInSession('unittest');
+
+        // create an entry carrying both a ticket and a description ...
+        $created = $this->saveEntry($this->saveParameters([
+            'start' => self::NINE,
+            'end' => self::TEN,
+            'ticket' => 'SA-123',
+            'description' => 'initial note',
+        ]));
+        $entryId = $created['id'];
+        self::assertIsInt($entryId);
+        self::assertSame('SA-123', $created['ticket']);
+
+        // ... then re-save the same entry with both fields cleared. The clear
+        // must persist instead of silently reverting on the next refetch.
+        $this->saveEntry($this->saveParameters([
+            'id' => $entryId,
+            'start' => self::NINE,
+            'end' => self::TEN,
+            'ticket' => '',
+            'description' => '',
+        ]));
+
+        $container = $this->client->getContainer();
+        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
+        $doctrine = $container->get('doctrine');
+        $manager = $doctrine->getManager();
+        $manager->clear(); // re-read the persisted state, not the unit-of-work cache
+        $entry = $manager->getRepository(Entry::class)->find($entryId);
+
+        self::assertInstanceOf(Entry::class, $entry);
+        self::assertSame('', $entry->getTicket());
+        self::assertSame('', $entry->getDescription());
+    }
 }

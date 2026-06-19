@@ -241,13 +241,13 @@ final class SaveEntryAction extends BaseTrackingController
             return $dateError;
         }
 
-        if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
-            $entry->setDescription($entrySaveDto->description);
-        }
-
-        if ('' !== $ticket && '0' !== $ticket) {
-            $entry->setTicket($ticket);
-        }
+        // Always reflect the submitted state so clearing a description or ticket
+        // inline actually persists. Both clients POST the whole record (the
+        // SolidJS grid via savePayload, the ExtJS grid via `params: record.data`),
+        // sending '' for a cleared field — the previous non-empty guard made the
+        // cleared value silently revert on the next refetch.
+        $entry->setDescription($entrySaveDto->description);
+        $entry->setTicket($ticket);
 
         // v4 parity: the UI round-trips the original external ticket key of
         // mirrored entries in "extTicket" (see internal Jira ticket system)
