@@ -112,11 +112,11 @@ export function InlineEditor(props: {
     // the dropdown rather than looking identical to read mode (the Enter keydown is
     // a transient user activation). Progressive — browsers without showPicker fall
     // back to the user pressing Space / Alt+Down.
-    if (control instanceof HTMLSelectElement) {
+    if (control instanceof HTMLSelectElement && typeof control.showPicker === 'function') {
       try {
         control.showPicker()
       } catch {
-        // showPicker unsupported or no user activation — ignore.
+        // no transient user activation (or blocked) — ignore; Space/Alt+Down still works.
       }
     }
   })

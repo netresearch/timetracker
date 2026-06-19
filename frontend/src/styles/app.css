@@ -1215,7 +1215,7 @@ kbd {
      select cell otherwise lacks (a text editor has its caret). Layered via
      color-mix so it tints over whatever the row already paints, in both themes,
      with no layout shift (the seamless-border contract is untouched). */
-  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
   position: relative;
 }
 
