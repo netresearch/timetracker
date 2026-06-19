@@ -97,11 +97,21 @@ function applyTokens(iso: string, tokens: Token[]): string {
   return out
 }
 
-function formatAuto(iso: string): string {
-  const [year, month, day] = iso.split('-').map(Number)
-  const date = new Date(year!, month! - 1, day!) // local, no timezone shift
+// Cache the formatter per locale — formatAuto runs once per rendered date cell.
+let autoFormatter: Intl.DateTimeFormat | null = null
+let autoLocale: string | null = null
 
-  return new Intl.DateTimeFormat(appConfig().locale, { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
+function formatAuto(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number) // 4-digit year guaranteed by ISO_SHAPE upstream
+  const locale = appConfig().locale
+  if (autoFormatter === null || autoLocale !== locale) {
+    autoLocale = locale
+    autoFormatter = new Intl.DateTimeFormat(locale, { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' })
+  }
+
+  // Build + format in UTC so a date-only value can't drift by a day across a DST
+  // boundary in some timezones.
+  return autoFormatter.format(new Date(Date.UTC(year!, month! - 1, day!)))
 }
 
 /** Format an ISO yyyy-mm-dd date with an explicit preference (pure — used by the
@@ -131,8 +141,8 @@ function load(): DateFormatPref {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw !== null) {
-      const parsed = JSON.parse(raw) as Partial<DateFormatPref>
-      if (parsed.mode === 'iso' || parsed.mode === 'auto' || parsed.mode === 'custom') {
+      const parsed = JSON.parse(raw) as Partial<DateFormatPref> | null
+      if (parsed !== null && typeof parsed === 'object' && (parsed.mode === 'iso' || parsed.mode === 'auto' || parsed.mode === 'custom')) {
         return { mode: parsed.mode, pattern: typeof parsed.pattern === 'string' ? parsed.pattern : DEFAULT_PREF.pattern }
       }
     }
