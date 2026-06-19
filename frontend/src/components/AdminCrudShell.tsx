@@ -554,7 +554,7 @@ export function AdminCrudShell(props: {
 
                         return (
                           <td
-                            classList={{ numeric: col.align === 'right', boolean: col.align === 'center', 'is-editable': editable, 'is-invalid': editor.fieldInvalid(Number(row.id), col.key), 'is-select': fieldType === 'select' }}
+                            classList={{ numeric: col.align === 'right', boolean: col.align === 'center', 'is-editable': editable, 'is-invalid': editor.fieldInvalid(rowId, col.key), 'is-select': editable && fieldType === 'select' }}
                             data-row-id={String(rowId)}
                             data-col-key={col.key}
                             data-inline-editing={editor.isEditing(rowId, col.key) ? '' : undefined}
