@@ -200,11 +200,14 @@ describe('Tracking (Worklog grid)', () => {
   it('deletes an entry via /tracking/delete after confirmation', async () => {
     mockApi()
     postJson.mockResolvedValue({ success: true })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const { getByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
+    // The trash icon opens an in-page confirmation dialog (no native window.confirm);
+    // confirming there triggers the actual delete.
     fireEvent.click(getByRole('button', { name: 'Delete' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }))
 
     // /tracking/delete is form-encoded (reads $request->request, shared with the
     // ExtJS shell), so it goes out via postForm — not postJson.

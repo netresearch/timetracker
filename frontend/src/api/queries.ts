@@ -1,6 +1,7 @@
 import { keepPreviousData } from '@tanstack/solid-query'
 
 import { getJson } from './client'
+import { dmyToIso } from '../lib/timeParse'
 
 // Response shape of GET /interpretation/time (GroupByWorktimeAction):
 // one record per day with booked time, `name` formatted as 'yy-mm-dd'.
@@ -124,8 +125,7 @@ interface TrackingEntryRow {
 // to 'Y-m-d' (lexically = chronological) and append start ('H:i') as the
 // tiebreaker. A blank/non-matching date sorts to the end of its direction.
 function entrySortKey(entry: TrackingEntry): string {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(entry.date ?? '')
-  const iso = match !== null ? `${match[3]}-${match[2]}-${match[1]}` : (entry.date ?? '')
+  const iso = dmyToIso(entry.date ?? '') ?? (entry.date ?? '')
 
   return `${iso} ${entry.start ?? ''}`
 }

@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
+import { createMemo, createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
 import { createStore, produce } from 'solid-js/store'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
@@ -51,6 +51,9 @@ export function InlineEditor(props: {
   // option source changes), not a fresh one on every render.
   const selectOptions = createMemo(() => fieldSelectOptions(props.field, props.options))
   let control: HTMLInputElement | HTMLSelectElement | undefined
+  // Stable id linking the date input to its visually-hidden format hint, so the
+  // required YYYY-MM-DD format is announced (a placeholder alone is not reliable).
+  const dateHintId = createUniqueId()
   // Guards against a second commit: the keydown move already committed, and the
   // editor then unmounts and blurs — the blur must not re-commit.
   let done = false
@@ -145,6 +148,7 @@ export function InlineEditor(props: {
           // which changes the format on edit. Text keeps it yyyy-mm-dd throughout.
           type={props.field.type === 'number' ? 'number' : 'text'}
           placeholder={props.field.type === 'date' ? 'YYYY-MM-DD' : undefined}
+          aria-describedby={props.field.type === 'date' ? dateHintId : undefined}
           class="inline-editor"
           aria-label={props.label}
           value={value() as string}
@@ -152,6 +156,9 @@ export function InlineEditor(props: {
           onKeyDown={onKeyDown}
           onBlur={() => finish()}
         />
+        <Show when={props.field.type === 'date'}>
+          <span id={dateHintId} class="visually-hidden">{m.tracking_date_format_hint()}</span>
+        </Show>
       </Match>
     </Switch>
   )
@@ -176,7 +183,10 @@ export function InlineMultiSelect(props: {
   const allOptions = createMemo(() => fieldSelectOptions(props.field, props.options))
   const [selected, setSelected] = createSignal<number[]>(Array.isArray(props.initial) ? [...(props.initial as number[])] : [])
   const unselected = createMemo(() => allOptions().filter((option) => !selected().includes(Number(option.value))))
-  const labelOf = (id: number): string => allOptions().find((option) => Number(option.value) === id)?.label ?? String(id)
+  // id→label map (rebuilt only when the options change) so resolving a chip's
+  // name is O(1) rather than an O(n) .find on each of its (re)renders.
+  const optionLabels = createMemo(() => new Map(allOptions().map((option) => [Number(option.value), option.label])))
+  const labelOf = (id: number): string => optionLabels().get(id) ?? String(id)
   // The "add" control is a popup MENU OF BUTTONS, not a native <select> (which
   // fired change on every arrow keypress, adding a chip per keystroke) and not a
   // role=listbox + aria-activedescendant (invalid ARIA on a <button>). Real,
@@ -322,18 +332,22 @@ export function InlineMultiSelect(props: {
         })
       }}
     >
-      <For each={selected()}>
-        {(id) => (
-          // Focusable (roving tabindex) so Left/Right reach it and Delete/Backspace
-          // removes it; aria-label names the tag for screen readers.
-          <span class="tag" tabindex="-1" data-tag-id={id} aria-label={labelOf(id)}>
-            <span class="tag-label">{labelOf(id)}</span>
-            {/* preventDefault on mousedown so clicking × doesn't blur the widget
-                (which would commit + unmount before the click removes the chip). */}
-            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${m.admin_delete()}: ${labelOf(id)}`} onMouseDown={(event) => event.preventDefault()} onClick={() => { remove(id); addBtn?.focus() }}>×</button>
-          </span>
-        )}
-      </For>
+      {/* role=list over the selected tags gives each chip a name+role+position for
+          AT (display:contents keeps the chips in the parent's flex flow). */}
+      <span class="tag-list" role="list">
+        <For each={selected()}>
+          {(id) => (
+            // Focusable (roving tabindex) so Left/Right reach it and Delete/Backspace
+            // removes it; aria-label names the tag for screen readers.
+            <span class="tag" role="listitem" tabindex="-1" data-tag-id={id} aria-label={labelOf(id)}>
+              <span class="tag-label">{labelOf(id)}</span>
+              {/* preventDefault on mousedown so clicking × doesn't blur the widget
+                  (which would commit + unmount before the click removes the chip). */}
+              <button type="button" class="tag-remove" tabindex="-1" aria-label={`${m.admin_delete()}: ${labelOf(id)}`} onMouseDown={(event) => event.preventDefault()} onClick={() => { remove(id); addBtn?.focus() }}>×</button>
+            </span>
+          )}
+        </For>
+      </span>
       <span class="tag-add-wrap">
         <button
           ref={(el) => { addBtn = el }}
@@ -419,11 +433,6 @@ export interface InlineGridEditConfig<R extends object> {
    *  auto-save on completeness. Omit to disable auto-save (save on leave/force). */
   invalidFields?: (draft: FormValues, row: R) => string[]
 }
-
-/** How a save was triggered. 'auto' (a complete row after a cell commit) stays
- *  quiet on failure — only the field hints show; 'force' (the save button) and
- *  'leave' (focus left the row) surface the full row error. */
-export type SaveMode = 'auto' | 'force' | 'leave'
 
 /**
  * The spreadsheet-style inline-edit controller shared by the admin grid and the
@@ -574,7 +583,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     const invalid = config.invalidFields(draft, row)
     setFieldHints(id, invalid)
     if (invalid.length === 0) {
-      void flushRow(id, 'auto')
+      void flushRow(id)
     }
   }
 
@@ -607,7 +616,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     return { ...draft }
   }
 
-  async function flushRow(id: number, mode: SaveMode = 'leave'): Promise<void> {
+  async function flushRow(id: number): Promise<void> {
     const draft = drafts[id]
     const row = rowById(id)
     if (draft === undefined || row === undefined || savingRows[id]) {
@@ -638,12 +647,11 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       }
       config.onSaved?.()
     } catch (caught) {
-      // Keep the draft so edits aren't lost. An auto-save stays quiet (the field
-      // hints already mark what's off); an explicit force/leave surfaces the full
-      // error so a real failure is never hidden.
-      if (mode !== 'auto') {
-        setRowErrors(id, config.saveErrorMessage?.(caught) ?? m.app_load_error())
-      }
+      // Keep the draft so edits aren't lost, and surface the failure. Auto-save
+      // fires only once a row is complete (no invalid fields), so a rejection
+      // here is a genuine server error (overlap, inactive project) with no field
+      // hint to explain it — staying silent would hide a real failure.
+      setRowErrors(id, config.saveErrorMessage?.(caught) ?? m.app_load_error())
     } finally {
       setSavingRows(id, false)
     }
@@ -669,7 +677,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       return
     }
     if (lastFocusedRowId !== null) {
-      void flushRow(lastFocusedRowId, 'leave')
+      void flushRow(lastFocusedRowId)
     }
     lastFocusedRowId = id
   }
@@ -679,7 +687,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       return
     }
     if (lastFocusedRowId !== null) {
-      void flushRow(lastFocusedRowId, 'leave')
+      void flushRow(lastFocusedRowId)
     }
   }
 

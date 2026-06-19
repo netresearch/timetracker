@@ -1,14 +1,13 @@
-import { Dialog } from '@ark-ui/solid/dialog'
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
 import { createComputed, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
 import { createStore, reconcile } from 'solid-js/store'
-import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
 import { createInlineGridEdit, fieldSelectOptions, InlineEditor, InlineMultiSelect, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { gridNav } from '../lib/gridNavigation'
 import { DiskIcon, DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
+import { PageDialog } from './PageDialog'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
@@ -627,7 +626,7 @@ export function AdminCrudShell(props: {
                       {/* Force a full save (shows the full error if it fails). Always rendered as
                           the last action in a reserved slot — only its visibility toggles — so the
                           Edit/Delete icons never shift when a row becomes dirty. */}
-                      <button type="button" class="link-button is-icon is-unsaved" classList={{ 'action-slot-hidden': !editor.isDirty(Number(row.id)) }} aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(Number(row.id), 'force')}>
+                      <button type="button" class="link-button is-icon is-unsaved" classList={{ 'action-slot-hidden': !editor.isDirty(Number(row.id)) }} aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(Number(row.id))}>
                         <DiskIcon />
                       </button>
                     </td>
@@ -668,38 +667,25 @@ export function AdminCrudShell(props: {
         </Show>
       </Show>
 
-      {/* Ark UI Dialog gives the edit form a real focus trap, focus-on-open,
-          focus-return to the triggering button, scroll lock and Escape/outside
-          dismissal — handled by the library rather than the previous hand-rolled
-          backdrop. */}
-      <Dialog.Root
-        open={editing() !== null}
-        onOpenChange={(details) => { if (!details.open) setEditing(null) }}
-        lazyMount
-        unmountOnExit
-      >
-        <Portal>
-          <Dialog.Backdrop class="modal-backdrop" />
-          <Dialog.Positioner class="modal-positioner">
-            <Dialog.Content class="modal" aria-label={props.descriptor.title()}>
-              <form class="stack-form" onSubmit={(event) => void submit(event)}>
-                <For each={props.descriptor.fields}>
-                  {(field) => <FieldControl field={field} values={values} setField={setField} options={props.options} editing={editing() !== null && Number(values.id ?? 0) > 0} />}
-                </For>
-                <div class="form-actions">
-                  <button type="submit" class="primary-button" disabled={saving()}>
-                    {saving() ? m.app_saving() : m.app_save()}
-                  </button>
-                  <button type="button" class="action-button" onClick={() => setEditing(null)}>{m.admin_cancel()}</button>
-                  <Show when={error()}>
-                    <span role="alert" class="form-status is-error">{error()}</span>
-                  </Show>
-                </div>
-              </form>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
+      {/* The shared PageDialog (Ark UI) gives the edit form a real focus trap,
+          focus-on-open, focus-return to the triggering button, scroll lock and
+          Escape/outside dismissal. No header → chrome-less; aria-label names it. */}
+      <PageDialog open={editing() !== null} onClose={() => setEditing(null)} ariaLabel={props.descriptor.title()}>
+        <form class="stack-form" onSubmit={(event) => void submit(event)}>
+          <For each={props.descriptor.fields}>
+            {(field) => <FieldControl field={field} values={values} setField={setField} options={props.options} editing={editing() !== null && Number(values.id ?? 0) > 0} />}
+          </For>
+          <div class="form-actions">
+            <button type="submit" class="primary-button" disabled={saving()}>
+              {saving() ? m.app_saving() : m.app_save()}
+            </button>
+            <button type="button" class="action-button" onClick={() => setEditing(null)}>{m.admin_cancel()}</button>
+            <Show when={error()}>
+              <span role="alert" class="form-status is-error">{error()}</span>
+            </Show>
+          </div>
+        </form>
+      </PageDialog>
     </div>
   )
 }

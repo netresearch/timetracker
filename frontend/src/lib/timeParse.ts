@@ -61,9 +61,18 @@ export function parseTime(input: string): string | null {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
 
+/**
+ * Convert a d/m/Y date string (the ExtJS list-row format) to Y-m-d (ISO), or
+ * null when it doesn't match. Shared by toIsoDate, the grid's displayDate, and
+ * the entry sort key so the one regex lives in a single place.
+ */
+export function dmyToIso(value: string): string | null {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim())
+
+  return match !== null ? `${match[3]}-${match[2]}-${match[1]}` : null
+}
+
 /** ExtJS list rows carry the date as d/m/Y; the HTML date input needs Y-m-d. */
 export function toIsoDate(displayDate: string): string {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(displayDate.trim())
-
-  return match !== null ? `${match[3]}-${match[2]}-${match[1]}` : ''
+  return dmyToIso(displayDate) ?? ''
 }

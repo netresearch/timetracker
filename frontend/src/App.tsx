@@ -200,7 +200,9 @@ function RedirectToMonth() {
 // role-restricted page falls back to the month view instead of 403-ing on
 // its data endpoints.
 function guarded(component: Component, allowed: () => boolean): Component {
-  return () => (allowed() ? component({}) : <RedirectToMonth />)
+  // Instantiate via <Dynamic> (createComponent) rather than calling component({})
+  // directly, so the page mounts under a proper owner with reactive context.
+  return () => (allowed() ? <Dynamic component={component} /> : <RedirectToMonth />)
 }
 
 // Full pages that can sit behind an open modal (rendered as the modal's

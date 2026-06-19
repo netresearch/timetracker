@@ -1,17 +1,18 @@
-import { Dialog } from '@ark-ui/solid/dialog'
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
-import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, postForm, postJson } from '../api/client'
 import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, type NamedOption, type SummaryScope, type TrackingEntry } from '../api/queries'
 import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
-import { gridNav } from '../lib/gridNavigation'
+import { num, str } from '../lib/coerce'
+import { formatMinutes } from '../lib/format'
+import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
-import { parseTime, toIsoDate } from '../lib/timeParse'
+import { PageDialog } from '../components/PageDialog'
+import { dmyToIso, parseTime, toIsoDate } from '../lib/timeParse'
 import { m } from '../paraglide/messages.js'
 
 // Register the directive with the JSX namespace (Solid tree-shakes unused imports).
@@ -23,9 +24,6 @@ const ENTRIES_KEY = 'tracking-entries'
 
 // Server-computed EntryClass → row modifier, mirroring the ExtJS row borders.
 const CLASS_ROW: Record<number, string> = { 2: 'is-daybreak', 4: 'is-pause', 8: 'is-overlap' }
-
-const num = (value: unknown): number => Number(value ?? 0)
-const str = (value: unknown): string => (value === undefined || value === null ? '' : String(value))
 
 // Build the /tracking/save body shared by inline-save and Prolong. A non-positive
 // id is omitted so the server creates a new entry.
@@ -39,6 +37,7 @@ function savePayload(fields: {
   customer: unknown
   project: unknown
   activity: unknown
+  extTicket: unknown
 }): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     date: fields.date,
@@ -49,6 +48,9 @@ function savePayload(fields: {
     customer: num(fields.customer),
     project: num(fields.project),
     activity: num(fields.activity),
+    // Round-trip the mirrored-entry's original Jira key — the backend resets it
+    // to null when this is absent, which silently breaks worklog remapping.
+    extTicket: str(fields.extTicket),
   }
   if (fields.id > 0) {
     payload.id = fields.id
@@ -69,14 +71,6 @@ function nowHi(): string {
   const now = new Date()
 
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-}
-
-// Minutes → H:i (for the summary popup totals).
-function fmtMinutes(minutes: number): string {
-  const sign = minutes < 0 ? '-' : ''
-  const abs = Math.abs(minutes)
-
-  return `${sign}${Math.floor(abs / 60)}:${String(abs % 60).padStart(2, '0')}`
 }
 
 // The editable fields drive the in-cell editor; duration is server-derived.
@@ -118,20 +112,27 @@ function classLabel(entryClass: number): string {
   }
 }
 
-function nameOf(list: NamedOption[] | undefined, id: number): string {
-  if (id <= 0 || list === undefined) {
-    return ''
-  }
-
-  return list.find((option) => option.id === id)?.label ?? String(id)
-}
-
 // d/m/Y (list rows) or Y-m-d (draft) → Y-m-d (ISO) for display — one consistent
 // date format everywhere, matching the inline editor.
 function displayDate(value: string): string {
-  const dmy = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim())
+  return dmyToIso(value) ?? value
+}
 
-  return dmy !== null ? `${dmy[3]}-${dmy[2]}-${dmy[1]}` : value
+// One icon button in the row-actions cell — same shape for Continue/Prolong/Info/
+// Delete (label drives both the accessible name and the hover tooltip).
+function RowAction(props: { label: string; danger?: boolean; onClick: () => void; children: JSX.Element }): JSX.Element {
+  return (
+    <button
+      type="button"
+      class="link-button is-icon"
+      classList={{ 'is-danger': props.danger }}
+      aria-label={props.label}
+      title={props.label}
+      onClick={() => props.onClick()}
+    >
+      {props.children}
+    </button>
+  )
 }
 
 /**
@@ -151,6 +152,20 @@ export default function Tracking() {
   const ticketSystems = useQuery(trackingTicketSystemsQuery)
   const [summary, setSummary] = createSignal<SummaryScope[] | null>(null)
   const [bulkOpen, setBulkOpen] = createSignal(false)
+  // Confirmation dialog for a destructive delete (replaces window.confirm).
+  const [pendingDelete, setPendingDelete] = createSignal<TrackingEntry | null>(null)
+
+  // Polite live region: a screen reader gets no other confirmation that a row
+  // saved, deleted, or its end time changed (the row just mutates or vanishes).
+  const [notice, setNotice] = createSignal('')
+  function announce(message: string): void {
+    // Clear, then set on the next microtask so an identical consecutive message
+    // is still a DOM change and re-announces in the live region.
+    setNotice('')
+    queueMicrotask(() => setNotice(message))
+  }
+  // Assertive in-page error for delete/prolong/info failures (replaces window.alert).
+  const [pageError, setPageError] = createSignal('')
 
   // Unsaved new rows (Add/Continue) carry a temporary negative id and render
   // above the fetched entries; they save as creates and drop on success.
@@ -158,8 +173,18 @@ export default function Tracking() {
   let tempId = -1
   // The grid element, captured in its ref — read for the keyboard-cursor row.
   let tableEl: HTMLTableElement | undefined
+  // The grid's move handle — used to restore cell focus after a row is deleted.
+  let gridHandle: GridMoveHandle | null = null
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
   const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
+
+  // id→label maps, rebuilt only when the option list changes, so resolving a
+  // relation cell is O(1) instead of an O(n) .find on every row render.
+  const toLabelMap = (list: NamedOption[] | undefined): Map<number, string> => new Map((list ?? []).map((option) => [option.id, option.label]))
+  const customerLabels = createMemo(() => toLabelMap(customers.data))
+  const projectLabels = createMemo(() => toLabelMap(allProjectOptions()))
+  const activityLabels = createMemo(() => toLabelMap(activities.data))
+  const labelFrom = (map: Map<number, string>, id: number): string => (id > 0 ? (map.get(id) ?? String(id)) : '')
 
   const optionLookup: OptionLookup = (source: OptionSource) => {
     switch (source) {
@@ -254,6 +279,7 @@ export default function Tracking() {
         customer: draft.customer,
         project: draft.project,
         activity: draft.activity,
+        extTicket: entry.extTicket, // preserve the mirrored-entry key (not editable inline)
       }))
       if (isNew) {
         setNewRows((list) => list.filter((row) => num(row.id) !== num(entry.id)))
@@ -261,7 +287,10 @@ export default function Tracking() {
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
     },
     onCommit: handleCommit,
-    saveErrorMessage: (caught) => (caught instanceof Error ? caught.message : m.app_load_error()),
+    // Announce every successful save (auto, force, or row-leave) — the only
+    // confirmation a screen-reader/low-vision user gets that the row persisted.
+    onSaved: () => announce(m.tracking_saved()),
+    saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
     // Required for a bookable entry — the row auto-saves once all are valid.
     invalidFields: (draft) => {
       const invalid: string[] = []
@@ -291,11 +320,11 @@ export default function Tracking() {
       case 'ticket':
         return str(row.ticket)
       case 'customer':
-        return nameOf(customers.data, num(row.customer))
+        return labelFrom(customerLabels(), num(row.customer))
       case 'project':
-        return nameOf(allProjectOptions(), num(row.project))
+        return labelFrom(projectLabels(), num(row.project))
       case 'activity':
-        return nameOf(activities.data, num(row.activity))
+        return labelFrom(activityLabels(), num(row.activity))
       case 'description':
         return str(row.description)
       case 'duration':
@@ -369,18 +398,23 @@ export default function Tracking() {
     if (target === undefined) {
       return
     }
+    setPageError('')
     try {
       const result = JSON.parse(await postForm('/getSummary', { id: num(target.id) })) as Record<string, SummaryScope>
       setSummary([result.customer, result.project, result.activity, result.ticket].filter((scope): scope is SummaryScope => scope != null))
     } catch (caught) {
-      window.alert(apiErrorMessage(caught, m.app_load_error()))
+      setPageError(apiErrorMessage(caught, m.app_load_error()))
     }
   }
 
-  async function removeEntry(entry: TrackingEntry): Promise<void> {
-    if (!window.confirm(m.admin_delete_confirm())) {
+  // Delete is gated by an accessible confirmation dialog (no native window.confirm).
+  async function confirmDelete(): Promise<void> {
+    const entry = pendingDelete()
+    setPendingDelete(null)
+    if (entry === undefined || entry === null) {
       return
     }
+    setPageError('')
     try {
       // /tracking/delete reads form params ($request->request, shared with the
       // ExtJS shell), so it must be posted as a form — not a JSON body.
@@ -388,8 +422,12 @@ export default function Tracking() {
       // Drop any pending inline draft for the now-deleted entry.
       editor.takeDraft(num(entry.id))
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+      announce(m.tracking_deleted())
+      // The deleted row (and its trash button) left the DOM — restore cell focus
+      // to the grid so keyboard users aren't dropped back to document start.
+      queueMicrotask(() => gridHandle?.focusActive())
     } catch (caught) {
-      window.alert(apiErrorMessage(caught, m.app_load_error()))
+      setPageError(apiErrorMessage(caught, m.app_load_error()))
     }
   }
 
@@ -447,25 +485,34 @@ export default function Tracking() {
 
   // Prolong-last (Alt+P): set the latest entry's end to now and save it.
   async function prolongLast(entry?: TrackingEntry): Promise<void> {
-    const first = entry ?? (entries.data ?? [])[0]
-    if (first === undefined) {
+    const base = entry ?? (entries.data ?? [])[0]
+    if (base === undefined) {
       return
     }
+    setPageError('')
+    // Fold in any pending in-cell edit on this row so Prolong doesn't save stale
+    // server values or silently discard the draft (the draft's date is already
+    // ISO; the untouched row's is d/m/Y).
+    const merged = editor.overlayRow(base)
+    const date = str(merged.date).includes('-') ? str(merged.date) : toIsoDate(str(merged.date))
     try {
       await postJson('/tracking/save', savePayload({
-        id: num(first.id),
-        date: toIsoDate(str(first.date)),
-        start: str(first.start),
+        id: num(base.id),
+        date,
+        start: parseTime(str(merged.start)) ?? str(merged.start),
         end: nowHi(),
-        ticket: first.ticket,
-        description: first.description,
-        customer: first.customer,
-        project: first.project,
-        activity: first.activity,
+        ticket: merged.ticket,
+        description: merged.description,
+        customer: merged.customer,
+        project: merged.project,
+        activity: merged.activity,
+        extTicket: base.extTicket,
       }))
+      editor.takeDraft(num(base.id)) // the draft is now persisted — clear it
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+      announce(m.tracking_prolonged())
     } catch (caught) {
-      window.alert(apiErrorMessage(caught, m.app_load_error()))
+      setPageError(apiErrorMessage(caught, m.app_load_error()))
     }
   }
 
@@ -515,6 +562,13 @@ export default function Tracking() {
     <section class="tracking">
       <h2 class="visually-hidden">{m.tracking_title()}</h2>
 
+      {/* Polite live region — save/delete/prolong confirmations for AT users. */}
+      <p class="visually-hidden" role="status" aria-live="polite">{notice()}</p>
+      {/* In-page error for delete/prolong/info failures (was window.alert). */}
+      <Show when={pageError() !== ''}>
+        <p class="form-status is-error" role="alert">{pageError()}</p>
+      </Show>
+
       <div class="tracking-toolbar">
         <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
           <PlusIcon />
@@ -533,11 +587,15 @@ export default function Tracking() {
             onChange={(event) => setDays(Number(event.currentTarget.value))}
           >
             <For each={DAYS_OPTIONS}>
-              {(option) => <option value={String(option)}>{m.tracking_days_option({ count: String(option) })}</option>}
+              {(option) => <option value={String(option)}>{option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}</option>}
             </For>
           </select>
         </label>
       </div>
+
+      {/* Inline-edit + keyboard discoverability (the only on-screen cue otherwise
+          is a hover text-cursor on editable cells). */}
+      <p class="tracking-hint">{m.tracking_edit_hint()}</p>
 
       <Show when={!entries.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
         <div class="table-scroll">
@@ -554,7 +612,7 @@ export default function Tracking() {
               // ArrowDown→grid, so the keyboard chain stays escapable both ways.
               onExit: (direction) => { if (direction === 'up') document.getElementById('main-content')?.focus() },
               onActivate: editor.onActivate,
-              moveRef: (handle) => { editor.setMoveHandle(handle) },
+              moveRef: (handle) => { editor.setMoveHandle(handle); gridHandle = handle },
             }}
           >
             <thead>
@@ -585,7 +643,6 @@ export default function Tracking() {
                               data-row-id={String(id)}
                               data-col-key={col.key}
                               data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
-                              aria-label={editor.isEditing(id, col.key) ? col.label() : undefined}
                               onDblClick={() => { if (editable) editor.beginEdit(id, col.key) }}
                             >
                               <Show
@@ -617,23 +674,15 @@ export default function Tracking() {
                         <div class="row-actions">
                           {/* Per-row Continue / Prolong / Info — only for saved entries. */}
                           <Show when={id > 0}>
-                            <button type="button" class="link-button is-icon" aria-label={m.tracking_continue()} title={m.tracking_continue()} onClick={() => continueEntry(entry)}>
-                              <ContinueIcon />
-                            </button>
-                            <button type="button" class="link-button is-icon" aria-label={m.tracking_prolong()} title={m.tracking_prolong()} onClick={() => void prolongLast(entry)}>
-                              <ProlongIcon />
-                            </button>
-                            <button type="button" class="link-button is-icon" aria-label={m.tracking_info()} title={m.tracking_info()} onClick={() => void showInfo(entry)}>
-                              <InfoIcon />
-                            </button>
+                            <RowAction label={m.tracking_continue()} onClick={() => continueEntry(entry)}><ContinueIcon /></RowAction>
+                            <RowAction label={m.tracking_prolong()} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
+                            <RowAction label={m.tracking_info()} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
                           </Show>
-                          <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void removeEntry(entry)}>
-                            <TrashIcon />
-                          </button>
+                          <RowAction label={m.admin_delete()} danger onClick={() => setPendingDelete(entry)}><TrashIcon /></RowAction>
                           {/* Force a full save (shows the full error if it fails). Always rendered as
                               the last action in a reserved slot — only its visibility toggles — so the
                               Delete icon never shifts when a row becomes dirty. */}
-                          <button type="button" class="link-button is-icon is-unsaved" classList={{ 'action-slot-hidden': !editor.isDirty(id) }} aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(id, 'force')}>
+                          <button type="button" class="link-button is-icon is-unsaved" classList={{ 'action-slot-hidden': !editor.isDirty(id) }} aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(id)}>
                             <DiskIcon />
                           </button>
                         </div>
@@ -659,66 +708,65 @@ export default function Tracking() {
           <p class="tracking-loading">{m.app_loading()}</p>
         </Show>
         <Show when={rows().length === 0 && !entries.isLoading}>
-          <p class="tracking-empty">{m.tracking_empty()}</p>
+          <div class="tracking-empty">
+            <p>{m.tracking_empty()}</p>
+            <button type="button" class="primary-button" onClick={() => addEntry()}>{m.tracking_empty_cta()}</button>
+          </div>
+        </Show>
+
+        {/* Legend for the colour-coded row borders — the colour alone is not an
+            accessible cue, so each swatch is paired with its label. */}
+        <Show when={rows().length > 0}>
+          <p class="tracking-legend">
+            <span class="visually-hidden">{m.tracking_legend_title()}: </span>
+            <span class="tracking-legend-item is-daybreak">{m.tracking_class_daybreak()}</span>
+            <span class="tracking-legend-item is-pause">{m.tracking_class_pause()}</span>
+            <span class="tracking-legend-item is-overlap">{m.tracking_class_overlap()}</span>
+          </p>
         </Show>
       </Show>
 
-      <Show when={summary() !== null}>
-        <Dialog.Root open onOpenChange={(details) => { if (!details.open) setSummary(null) }} lazyMount unmountOnExit>
-          <Portal>
-            <Dialog.Backdrop class="modal-backdrop" />
-            <Dialog.Positioner class="modal-positioner">
-              <Dialog.Content class="modal">
-                <header class="modal-page-header">
-                  <Dialog.Title class="modal-page-title">{m.tracking_info()}</Dialog.Title>
-                  <Dialog.CloseTrigger class="modal-close" aria-label={m.dialog_close()}>×</Dialog.CloseTrigger>
-                </header>
-                <table class="data-table tracking-summary">
-                  <thead>
-                    <tr>
-                      <th scope="col">{m.tracking_summary_scope()}</th>
-                      <th scope="col" class="numeric">{m.tracking_summary_own()}</th>
-                      <th scope="col" class="numeric">{m.tracking_summary_total()}</th>
-                      <th scope="col" class="numeric">{m.tracking_summary_estimation()}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <For each={summary() ?? []}>
-                      {(scope) => (
-                        <tr>
-                          <th scope="row">{scope.name === '' ? scope.scope : scope.name}</th>
-                          <td class="numeric">{fmtMinutes(scope.own)}</td>
-                          <td class="numeric">{fmtMinutes(scope.total)}</td>
-                          <td class="numeric">{scope.estimation > 0 ? fmtMinutes(scope.estimation) : '—'}</td>
-                        </tr>
-                      )}
-                    </For>
-                  </tbody>
-                </table>
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
-        </Dialog.Root>
-      </Show>
+      <PageDialog open={summary() !== null} onClose={() => setSummary(null)} title={m.tracking_info()}>
+        <div class="table-scroll">
+          <table class="data-table tracking-summary">
+            <thead>
+              <tr>
+                <th scope="col">{m.tracking_summary_scope()}</th>
+                <th scope="col" class="numeric">{m.tracking_summary_own()}</th>
+                <th scope="col" class="numeric">{m.tracking_summary_total()}</th>
+                <th scope="col" class="numeric">{m.tracking_summary_estimation()}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <For each={summary() ?? []}>
+                {(scope) => (
+                  <tr>
+                    <th scope="row">{scope.name === '' ? scope.scope : scope.name}</th>
+                    <td class="numeric">{formatMinutes(scope.own)}</td>
+                    <td class="numeric">{formatMinutes(scope.total)}</td>
+                    <td class="numeric">{scope.estimation > 0 ? formatMinutes(scope.estimation) : '—'}</td>
+                  </tr>
+                )}
+              </For>
+            </tbody>
+          </table>
+        </div>
+      </PageDialog>
 
-      <Show when={bulkOpen()}>
-        <Dialog.Root open onOpenChange={(details) => { if (!details.open) setBulkOpen(false) }} lazyMount unmountOnExit>
-          <Portal>
-            <Dialog.Backdrop class="modal-backdrop" />
-            <Dialog.Positioner class="modal-positioner">
-              <Dialog.Content class="modal">
-                <header class="modal-page-header">
-                  <Dialog.Title class="modal-page-title">{m.extras_title()}</Dialog.Title>
-                  <Dialog.CloseTrigger class="modal-close" aria-label={m.dialog_close()}>×</Dialog.CloseTrigger>
-                </header>
-                {/* Bulk-created entries may fall outside the current days range;
-                    refetch so any that land in view appear. */}
-                <BulkEntryForm onSaved={() => void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })} />
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
-        </Dialog.Root>
-      </Show>
+      {/* Bulk-created entries may fall outside the current days range;
+          refetch so any that land in view appear. */}
+      <PageDialog open={bulkOpen()} onClose={() => setBulkOpen(false)} title={m.extras_title()}>
+        <BulkEntryForm onSaved={() => void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })} />
+      </PageDialog>
+
+      {/* Accessible delete confirmation (replaces native window.confirm). */}
+      <PageDialog open={pendingDelete() !== null} onClose={() => setPendingDelete(null)} title={m.tracking_delete_title()}>
+        <p class="dialog-body">{m.tracking_delete_body()}</p>
+        <div class="form-actions">
+          <button type="button" class="primary-button is-danger" onClick={() => void confirmDelete()}>{m.tracking_delete_confirm()}</button>
+          <button type="button" class="action-button" onClick={() => setPendingDelete(null)}>{m.admin_cancel()}</button>
+        </div>
+      </PageDialog>
     </section>
   )
 }
