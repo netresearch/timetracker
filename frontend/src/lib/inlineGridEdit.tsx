@@ -140,7 +140,12 @@ export function InlineEditor(props: {
       <Match when={true}>
         <input
           ref={(el) => { control = el }}
-          type={props.field.type === 'number' ? 'number' : props.field.type === 'date' ? 'date' : 'text'}
+          // Dates use a text input with the ISO value, not type="date": a native
+          // date control renders in the browser's locale (mm/dd/yyyy, dd.mm.yyyy),
+          // which changes the format on edit. Text keeps it yyyy-mm-dd throughout.
+          type={props.field.type === 'number' ? 'number' : 'text'}
+          inputmode={props.field.type === 'date' ? 'numeric' : undefined}
+          placeholder={props.field.type === 'date' ? 'YYYY-MM-DD' : undefined}
           class="inline-editor"
           aria-label={props.label}
           value={value() as string}
@@ -190,7 +195,35 @@ export function InlineMultiSelect(props: {
   }
   function remove(id: number): void {
     setSelected(selected().filter((value) => value !== id))
-    addBtn?.focus() // the chip's × unmounts — keep focus inside so it isn't a commit
+  }
+  // Focusable items, in DOM order: each chip, then the add button. Chips carry a
+  // roving tabindex so Left/Right can move between them (and the add button).
+  const navItems = (): HTMLElement[] => Array.from(container?.querySelectorAll<HTMLElement>('.tag, .tag-add') ?? [])
+  function moveFocus(delta: number): void {
+    const items = navItems()
+    const current = items.indexOf(document.activeElement as HTMLElement)
+    const from = current === -1 ? items.length - 1 : current
+    items[Math.max(0, Math.min(items.length - 1, from + delta))]?.focus()
+  }
+  // Remove the focused chip, then keep focus inside the widget (the chip now in
+  // its place, or the add button) so the removal doesn't read as a commit.
+  function removeFocusedChip(): void {
+    const active = document.activeElement
+    if (!(active instanceof HTMLElement) || !active.classList.contains('tag')) {
+      return
+    }
+    const index = navItems().indexOf(active)
+    const id = Number(active.dataset.tagId)
+    if (!Number.isInteger(id) || id <= 0) {
+      return
+    }
+    remove(id)
+    // Re-focus the next item SYNCHRONOUSLY (Solid has already re-rendered the
+    // removed chip away): the focus-out check is deferred to a microtask, so
+    // focus must be back inside the widget before it runs, or the removal would
+    // read as "focus left" and commit/close the editor.
+    const after = navItems()
+    ;(after[Math.min(index, after.length - 1)] ?? addBtn)?.focus()
   }
   const focusFirstItem = (): void => {
     queueMicrotask(() => menuEl?.querySelector<HTMLButtonElement>('.tag-menu-item')?.focus())
@@ -247,7 +280,13 @@ export function InlineMultiSelect(props: {
         if (menuOpen()) {
           return
         }
-        if (event.key === 'Enter') {
+        const onChip = document.activeElement instanceof HTMLElement && document.activeElement.classList.contains('tag')
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          // Move between chips and the add button.
+          event.preventDefault()
+          event.stopPropagation()
+          moveFocus(event.key === 'ArrowLeft' ? -1 : 1)
+        } else if (event.key === 'Enter') {
           event.preventDefault()
           event.stopPropagation()
           finish(selected(), 'stay')
@@ -261,11 +300,14 @@ export function InlineMultiSelect(props: {
           event.preventDefault()
           event.stopPropagation()
           cancel()
-        } else if (event.key === 'Backspace' && selected().length > 0) {
-          // Tag-input convention: Backspace removes the last chip (the × buttons
-          // are out of the Tab order, so this is the keyboard removal path).
+        } else if (event.key === 'Delete' || event.key === 'Backspace') {
           event.preventDefault()
-          remove(selected()[selected().length - 1]!)
+          if (onChip) {
+            removeFocusedChip() // remove the chip the user navigated to
+          } else if (event.key === 'Backspace' && selected().length > 0) {
+            remove(selected()[selected().length - 1]!) // tag-input convention: Backspace removes the last
+            addBtn?.focus()
+          }
         }
       }}
       onFocusOut={() => {
@@ -283,11 +325,13 @@ export function InlineMultiSelect(props: {
     >
       <For each={selected()}>
         {(id) => (
-          <span class="tag">
+          // Focusable (roving tabindex) so Left/Right reach it and Delete/Backspace
+          // removes it; aria-label names the tag for screen readers.
+          <span class="tag" tabindex="-1" data-tag-id={id} aria-label={labelOf(id)}>
             <span class="tag-label">{labelOf(id)}</span>
             {/* preventDefault on mousedown so clicking × doesn't blur the widget
                 (which would commit + unmount before the click removes the chip). */}
-            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${props.label}: ${labelOf(id)} ✕`} onMouseDown={(event) => event.preventDefault()} onClick={() => remove(id)}>×</button>
+            <button type="button" class="tag-remove" tabindex="-1" aria-label={`${m.admin_delete()}: ${labelOf(id)}`} onMouseDown={(event) => event.preventDefault()} onClick={() => { remove(id); addBtn?.focus() }}>×</button>
           </span>
         )}
       </For>

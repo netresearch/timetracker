@@ -9,7 +9,7 @@ import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { gridNav } from '../lib/gridNavigation'
 import { createInlineGridEdit, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
-import { DiskIcon, DownloadIcon, PlusIcon, TrashIcon } from '../lib/icons'
+import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { parseTime, toIsoDate } from '../lib/timeParse'
 import { m } from '../paraglide/messages.js'
@@ -126,11 +126,12 @@ function nameOf(list: NamedOption[] | undefined, id: number): string {
   return list.find((option) => option.id === id)?.label ?? String(id)
 }
 
-// d/m/Y (list rows) or Y-m-d (date-input draft) → d/m/Y for display.
+// d/m/Y (list rows) or Y-m-d (draft) → Y-m-d (ISO) for display — one consistent
+// date format everywhere, matching the inline editor.
 function displayDate(value: string): string {
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  const dmy = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim())
 
-  return iso !== null ? `${iso[3]}/${iso[2]}/${iso[1]}` : value
+  return dmy !== null ? `${dmy[3]}-${dmy[2]}-${dmy[1]}` : value
 }
 
 /**
@@ -363,8 +364,8 @@ export default function Tracking() {
   // the latest entry). /getSummary is a legacy endpoint that reads form params
   // ($request->request->get('id')), so it must be POSTed as form-encoded — a
   // JSON body leaves `id` null and the server answers all-zero totals.
-  async function showInfo(): Promise<void> {
-    const target = activeOrLatestEntry()
+  async function showInfo(entry?: TrackingEntry): Promise<void> {
+    const target = entry ?? activeOrLatestEntry()
     if (target === undefined) {
       return
     }
@@ -381,7 +382,9 @@ export default function Tracking() {
       return
     }
     try {
-      await postJson('/tracking/delete', { id: num(entry.id) })
+      // /tracking/delete reads form params ($request->request, shared with the
+      // ExtJS shell), so it must be posted as a form — not a JSON body.
+      await postForm('/tracking/delete', { id: num(entry.id) })
       // Drop any pending inline draft for the now-deleted entry.
       editor.takeDraft(num(entry.id))
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
@@ -423,8 +426,8 @@ export default function Tracking() {
 
   // Continue: clone the cursor row's (or, with no cursor, the latest entry's)
   // customer/project/activity/ticket/description into a fresh blank-time row.
-  function continueEntry(): void {
-    const source = activeOrLatestEntry()
+  function continueEntry(entry?: TrackingEntry): void {
+    const source = entry ?? activeOrLatestEntry()
     if (source === undefined) {
       addEntry()
 
@@ -443,8 +446,8 @@ export default function Tracking() {
   }
 
   // Prolong-last (Alt+P): set the latest entry's end to now and save it.
-  async function prolongLast(): Promise<void> {
-    const first = (entries.data ?? [])[0]
+  async function prolongLast(entry?: TrackingEntry): Promise<void> {
+    const first = entry ?? (entries.data ?? [])[0]
     if (first === undefined) {
       return
     }
@@ -520,9 +523,8 @@ export default function Tracking() {
         <Show when={canBulkEnter()}>
           <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
         </Show>
-        <button type="button" class="action-button" onClick={() => continueEntry()} aria-keyshortcuts="Alt+C">{m.tracking_continue()}</button>
-        <button type="button" class="action-button" onClick={() => void prolongLast()} aria-keyshortcuts="Alt+P">{m.tracking_prolong()}</button>
-        <button type="button" class="action-button" onClick={() => void showInfo()} aria-keyshortcuts="Alt+I">{m.tracking_info()}</button>
+        {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
+            still act on the keyboard-cursor row via the global shortcut handler. */}
         <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
         <label class="tracking-days">
           <span>{m.tracking_days_label()}</span>
@@ -613,6 +615,18 @@ export default function Tracking() {
                           "inside the row" so clicking Delete isn't read as a row-leave. */}
                       <td class="tracking-row-actions" data-row-id={String(id)}>
                         <div class="row-actions">
+                          {/* Per-row Continue / Prolong / Info — only for saved entries. */}
+                          <Show when={id > 0}>
+                            <button type="button" class="link-button is-icon" aria-label={m.tracking_continue()} title={m.tracking_continue()} onClick={() => continueEntry(entry)}>
+                              <ContinueIcon />
+                            </button>
+                            <button type="button" class="link-button is-icon" aria-label={m.tracking_prolong()} title={m.tracking_prolong()} onClick={() => void prolongLast(entry)}>
+                              <ProlongIcon />
+                            </button>
+                            <button type="button" class="link-button is-icon" aria-label={m.tracking_info()} title={m.tracking_info()} onClick={() => void showInfo(entry)}>
+                              <InfoIcon />
+                            </button>
+                          </Show>
                           <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void removeEntry(entry)}>
                             <TrashIcon />
                           </button>
