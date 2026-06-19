@@ -20,6 +20,7 @@ import { OptionSelect } from '../components/OptionSelect'
 import { QueryBoundary } from '../components/QueryBoundary'
 import { appConfig } from '../config'
 import { isoDate } from '../lib/format'
+import { dmyToIso } from '../lib/timeParse'
 import { gridNav } from '../lib/gridNavigation'
 import { m } from '../paraglide/messages.js'
 
@@ -259,7 +260,7 @@ export default function Auswertung() {
                   <For each={entries.data}>
                     {(record) => (
                       <tr>
-                        <td>{record.entry.date}</td>
+                        <td>{dmyToIso(record.entry.date ?? '') ?? record.entry.date}</td>
                         <td>{record.entry.ticket}</td>
                         <td>{record.entry.description}</td>
                         <td class="numeric">{record.entry.duration}</td>

@@ -360,13 +360,14 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
           break
         }
         // Otherwise Space drops into the cell's control (APG) — or, on a display
-        // cell with no control, offers it to the inline editor seeded with a
-        // space. Either way it activates the cell instead of scrolling the page.
+        // cell with no control, opens the inline editor on its current value (no
+        // seeded space, which would read as accidental input). Either way it
+        // activates the cell instead of scrolling the page.
         const control = cell.querySelector<HTMLElement>(INTERACTIVE)
         if (control) {
           control.focus()
         } else {
-          options.onActivate?.(cell, 'type', ' ')
+          options.onActivate?.(cell, 'type')
         }
         break
       }

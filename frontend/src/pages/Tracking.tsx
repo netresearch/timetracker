@@ -118,6 +118,23 @@ function displayDate(value: string): string {
   return dmyToIso(value) ?? value
 }
 
+// One icon button in the row-actions cell — same shape for Continue/Prolong/Info/
+// Delete (label drives both the accessible name and the hover tooltip).
+function RowAction(props: { label: string; danger?: boolean; onClick: () => void; children: JSX.Element }): JSX.Element {
+  return (
+    <button
+      type="button"
+      class="link-button is-icon"
+      classList={{ 'is-danger': props.danger }}
+      aria-label={props.label}
+      title={props.label}
+      onClick={() => props.onClick()}
+    >
+      {props.children}
+    </button>
+  )
+}
+
 /**
  * The SolidJS work-log grid (/ui/tracking), running alongside the legacy ExtJS
  * grid. Inline cell editing reuses the shared inline-grid controller; start/end
@@ -657,19 +674,11 @@ export default function Tracking() {
                         <div class="row-actions">
                           {/* Per-row Continue / Prolong / Info — only for saved entries. */}
                           <Show when={id > 0}>
-                            <button type="button" class="link-button is-icon" aria-label={m.tracking_continue()} title={m.tracking_continue()} onClick={() => continueEntry(entry)}>
-                              <ContinueIcon />
-                            </button>
-                            <button type="button" class="link-button is-icon" aria-label={m.tracking_prolong()} title={m.tracking_prolong()} onClick={() => void prolongLast(entry)}>
-                              <ProlongIcon />
-                            </button>
-                            <button type="button" class="link-button is-icon" aria-label={m.tracking_info()} title={m.tracking_info()} onClick={() => void showInfo(entry)}>
-                              <InfoIcon />
-                            </button>
+                            <RowAction label={m.tracking_continue()} onClick={() => continueEntry(entry)}><ContinueIcon /></RowAction>
+                            <RowAction label={m.tracking_prolong()} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
+                            <RowAction label={m.tracking_info()} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
                           </Show>
-                          <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => setPendingDelete(entry)}>
-                            <TrashIcon />
-                          </button>
+                          <RowAction label={m.admin_delete()} danger onClick={() => setPendingDelete(entry)}><TrashIcon /></RowAction>
                           {/* Force a full save (shows the full error if it fails). Always rendered as
                               the last action in a reserved slot — only its visibility toggles — so the
                               Delete icon never shifts when a row becomes dirty. */}
