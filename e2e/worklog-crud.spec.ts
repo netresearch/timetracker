@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
-import { createWorklogEntry, openEditor, rowByStamp } from './helpers/worklog';
+import { createWorklogEntry, openTextEditor, rowByStamp } from './helpers/worklog';
 
 /**
  * End-to-end coverage of the SolidJS Worklog CRUD journey (create / edit / save /
@@ -34,7 +34,7 @@ test.describe('Worklog CRUD', () => {
 
     // EDIT: change the description; a complete row auto-saves on commit.
     const edited = `${stamp}-edited`;
-    const editor = await openEditor(page, rowByStamp(page, stamp), 'description');
+    const editor = await openTextEditor(page, rowByStamp(page, stamp), 'description');
     const resaved = page.waitForResponse(isSave);
     await editor.fill(edited);
     await page.keyboard.press('Enter');
@@ -92,30 +92,17 @@ test.describe('Worklog CRUD', () => {
     await expect(page.getByRole('link', { name: /Export CSV|CSV-Export/i })).toHaveAttribute('href', '/export/35');
   });
 
-  test('a select cell shows a dropdown chevron and opening its editor does not shift the cell', async ({ page }) => {
+  test('a relation cell edits via a filterable combobox and resolves to a chip', async ({ page }) => {
     const stamp = await createEntry(page);
+    // Read mode: the customer cell renders its value as a chip (not free text).
     const cell = rowByStamp(page, stamp).locator('td[data-col-key="customer"]');
+    await expect(cell.locator('.inline-tags .tag')).toHaveCount(1);
 
-    // The chevron affordance marks a select cell (distinct from a text cell) in
-    // STATIC mode — a rendered ::after with a visible border-triangle.
-    await expect(cell).toHaveClass(/is-select/);
-    const staticCaret = await cell.evaluate((el) => parseFloat(getComputedStyle(el, '::after').borderTopWidth));
-    expect(staticCaret).toBeGreaterThan(0);
-
-    // Opening the inline editor must not reflow the cell (the caret gutter is
-    // reserved identically on the cell and the overlaying select editor).
-    const before = await cell.boundingBox();
+    // Edit mode: a combobox opens with a filter input and an option list.
     await cell.focus();
     await page.keyboard.press('Enter');
-    await expect(cell.locator('select.inline-editor')).toBeVisible();
-    const during = await cell.boundingBox();
-    // The chevron is still painted in edit mode (same affordance, same spot).
-    const editCaret = await cell.evaluate((el) => parseFloat(getComputedStyle(el, '::after').borderTopWidth));
-    expect(editCaret).toBeGreaterThan(0);
-
+    await expect(page.locator('td[data-inline-editing] .combobox-input')).toBeVisible();
+    await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
     await page.keyboard.press('Escape');
-    const after = await cell.boundingBox();
-    expect(Math.round(during!.width)).toBe(Math.round(before!.width));
-    expect(Math.round(after!.width)).toBe(Math.round(before!.width));
   });
 });

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { fireEvent, render, screen, waitFor, within } from '@solidjs/testing-library'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
@@ -74,6 +74,7 @@ function renderTracking() {
 }
 
 afterEach(() => {
+  cleanup() // unmount even after a throwing test, so a body-portalled combobox + body-inert can't leak into the next test
   getJson.mockReset()
   postJson.mockReset()
   postForm.mockReset()
@@ -252,10 +253,10 @@ describe('Tracking (Worklog grid)', () => {
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
 
-    const select = editCell(container, 'project')
-    const labels = Array.from(select.querySelectorAll('option')).map((option) => option.textContent)
-    expect(labels).toContain('Apollo') // customer 7's project
-    expect(labels).not.toContain('Zeus') // customer 8's project is filtered out
+    editCell(container, 'project') // opens the combobox (options portal to body)
+    // The cascade filters the combobox to the row customer's projects.
+    expect(await screen.findByRole('option', { name: 'Apollo' })).toBeInTheDocument() // customer 7's project
+    expect(screen.queryByRole('option', { name: 'Zeus' })).not.toBeInTheDocument() // customer 8's is filtered out
 
     unmount()
   })

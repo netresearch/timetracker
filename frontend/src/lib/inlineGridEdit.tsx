@@ -1,4 +1,4 @@
-import { createMemo, createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
+import { createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
 import { createStore, produce } from 'solid-js/store'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
@@ -16,7 +16,7 @@ export const INLINE_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date',
 // "ghost" of the value, which holds the column width) so opening them can't make
 // the auto-layout table re-flow the column. Checkbox and multiselect editors stay
 // in flow (they aren't single-line text and size differently).
-export const INLINE_OVERLAY_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date', 'select'])
+export const INLINE_OVERLAY_TYPES = new Set<FieldDef['type']>(['text', 'number', 'date'])
 
 /** Shared option resolution for both the modal FieldControl and the inline
  *  editor, so relation/static dropdowns stay identical in either surface. */
@@ -26,6 +26,33 @@ export function fieldSelectOptions(field: FieldDef, options: OptionLookup): { va
   }
 
   return field.source ? options(field.source).map((option) => ({ value: option.id, label: option.label })) : []
+}
+
+/** A select/multiselect cell value → the list of chip values to render. A single
+ *  select is one chip; "none" (0 / '' / null) is no chips. */
+export function chipValues(raw: unknown): (string | number)[] {
+  if (Array.isArray(raw)) {
+    return raw as (string | number)[]
+  }
+  if (raw === undefined || raw === null || raw === '' || raw === 0) {
+    return []
+  }
+
+  return [raw as string | number]
+}
+
+/** Read-only chips for a select/multiselect column in display mode, so reference
+ *  columns read as chips (visually distinct from free text) in both grids. */
+export function ReadonlyChips(props: Readonly<{ values: (string | number)[]; options: { value: string | number; label: string }[] }>) {
+  const labelOf = (value: string | number): string => props.options.find((option) => String(option.value) === String(value))?.label ?? String(value)
+
+  return (
+    <span class="inline-tags is-readonly">
+      <For each={props.values}>
+        {(value) => <span class="tag"><span class="tag-label">{labelOf(value)}</span></span>}
+      </For>
+    </span>
+  )
 }
 
 /**
@@ -47,9 +74,6 @@ export function InlineEditor(props: {
 }) {
   const isCheckbox = (): boolean => props.field.type === 'checkbox'
   const [value, setValue] = createSignal<string | boolean>(isCheckbox() ? Boolean(props.initial) : String(props.initial ?? ''))
-  // Memoized so the <For> below sees a stable array (recreated only when the
-  // option source changes), not a fresh one on every render.
-  const selectOptions = createMemo(() => fieldSelectOptions(props.field, props.options))
   let control: HTMLInputElement | HTMLSelectElement | undefined
   // Stable id linking the date input to its visually-hidden format hint, so the
   // required YYYY-MM-DD format is announced (a placeholder alone is not reliable).
@@ -108,17 +132,6 @@ export function InlineEditor(props: {
       setValue(props.seed)
     }
     control?.focus()
-    // A select editor auto-opens its option list, so Enter-to-edit visibly reveals
-    // the dropdown rather than looking identical to read mode (the Enter keydown is
-    // a transient user activation). Progressive — browsers without showPicker fall
-    // back to the user pressing Space / Alt+Down.
-    if (control instanceof HTMLSelectElement && typeof control.showPicker === 'function') {
-      try {
-        control.showPicker()
-      } catch {
-        // no transient user activation (or blocked) — ignore; Space/Alt+Down still works.
-      }
-    }
   })
 
   return (
@@ -134,22 +147,6 @@ export function InlineEditor(props: {
           onKeyDown={onKeyDown}
           onBlur={() => finish()}
         />
-      </Match>
-      <Match when={props.field.type === 'select'}>
-        <select
-          ref={(el) => { control = el }}
-          class="inline-editor"
-          aria-label={props.label}
-          value={value() as string}
-          onInput={(e) => setValue(e.currentTarget.value)}
-          onKeyDown={onKeyDown}
-          onBlur={() => finish()}
-        >
-          <option value="">—</option>
-          <For each={selectOptions()}>
-            {(option) => <option value={String(option.value)}>{option.label}</option>}
-          </For>
-        </select>
       </Match>
       <Match when={true}>
         <input
@@ -172,247 +169,6 @@ export function InlineEditor(props: {
         </Show>
       </Match>
     </Switch>
-  )
-}
-
-/**
- * In-cell multiselect editor: the selected options render as removable tag chips
- * with an "add" dropdown of the remaining options (Teams: [DEV ×] [PL ×] +). The
- * value is the selected ids (number[]). Commit moves through the same onCommit
- * as the single-cell editor: Enter commits in place, Escape cancels, and tabbing
- * or clicking out of the whole widget commits (checked after the focus settles,
- * so moving between chips/the dropdown — incl. removing one — doesn't commit).
- */
-export function InlineMultiSelect(props: {
-  field: FieldDef
-  label: string
-  initial: FormValues[string]
-  options: OptionLookup
-  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay') => void
-  onCancel: () => void
-}) {
-  const allOptions = createMemo(() => fieldSelectOptions(props.field, props.options))
-  const [selected, setSelected] = createSignal<number[]>(Array.isArray(props.initial) ? [...(props.initial as number[])] : [])
-  const unselected = createMemo(() => allOptions().filter((option) => !selected().includes(Number(option.value))))
-  // id→label map (rebuilt only when the options change) so resolving a chip's
-  // name is O(1) rather than an O(n) .find on each of its (re)renders.
-  const optionLabels = createMemo(() => new Map(allOptions().map((option) => [Number(option.value), option.label])))
-  const labelOf = (id: number): string => optionLabels().get(id) ?? String(id)
-  // The "add" control is a popup MENU OF BUTTONS, not a native <select> (which
-  // fired change on every arrow keypress, adding a chip per keystroke) and not a
-  // role=listbox + aria-activedescendant (invalid ARIA on a <button>). Real,
-  // focusable <button> options are keyboard-native and accessible.
-  const [menuOpen, setMenuOpen] = createSignal(false)
-  let container: HTMLDivElement | undefined
-  let addBtn: HTMLButtonElement | undefined
-  let menuEl: HTMLDivElement | undefined
-  let done = false
-
-  function add(id: number): void {
-    if (id > 0 && !selected().includes(id)) {
-      setSelected([...selected(), id])
-    }
-  }
-  function remove(id: number): void {
-    setSelected(selected().filter((value) => value !== id))
-  }
-  // Focusable items, in DOM order: each chip, then the add button. Chips carry a
-  // roving tabindex so Left/Right can move between them (and the add button).
-  const navItems = (): HTMLElement[] => Array.from(container?.querySelectorAll<HTMLElement>('.tag, .tag-add') ?? [])
-  function moveFocus(delta: number): void {
-    const items = navItems()
-    const current = items.indexOf(document.activeElement as HTMLElement)
-    const from = current === -1 ? items.length - 1 : current
-    items[Math.max(0, Math.min(items.length - 1, from + delta))]?.focus()
-  }
-  // Remove the focused chip, then keep focus inside the widget (the chip now in
-  // its place, or the add button) so the removal doesn't read as a commit.
-  function removeFocusedChip(): void {
-    const active = document.activeElement
-    if (!(active instanceof HTMLElement) || !active.classList.contains('tag')) {
-      return
-    }
-    const index = navItems().indexOf(active)
-    const id = Number(active.dataset.tagId)
-    if (!Number.isInteger(id) || id <= 0) {
-      return
-    }
-    remove(id)
-    // Re-focus the next item SYNCHRONOUSLY (Solid has already re-rendered the
-    // removed chip away): the focus-out check is deferred to a microtask, so
-    // focus must be back inside the widget before it runs, or the removal would
-    // read as "focus left" and commit/close the editor.
-    const after = navItems()
-    ;(after[Math.min(index, after.length - 1)] ?? addBtn)?.focus()
-  }
-  const focusFirstItem = (): void => {
-    queueMicrotask(() => menuEl?.querySelector<HTMLButtonElement>('.tag-menu-item')?.focus())
-  }
-  function openMenu(): void {
-    if (unselected().length > 0) {
-      setMenuOpen(true)
-      focusFirstItem()
-    }
-  }
-  function closeMenu(refocusAddBtn = true): void {
-    setMenuOpen(false)
-    if (refocusAddBtn) {
-      addBtn?.focus()
-    }
-  }
-  // Add an option, keeping the menu usable for adding several in a row (it closes
-  // once nothing is left to add).
-  function addOption(id: number): void {
-    add(id)
-    if (unselected().length === 0) {
-      closeMenu()
-    } else {
-      focusFirstItem()
-    }
-  }
-  // Takes the value so the signal is read in the (tracked) event handler, not in
-  // the deferred focusout microtask.
-  const finish = (value: number[], direction?: 'down' | 'left' | 'right' | 'stay') => {
-    if (done) {
-      return
-    }
-    done = true
-    props.onCommit([...value], direction)
-  }
-  const cancel = () => {
-    if (!done) {
-      done = true
-      props.onCancel()
-    }
-  }
-
-  onMount(() => addBtn?.focus())
-
-  return (
-    <div
-      ref={(el) => { container = el }}
-      class="inline-editor inline-tags"
-      role="group"
-      aria-label={props.label}
-      onKeyDown={(event) => {
-        // While the add-menu is open it owns the arrow/enter/escape keys (handled
-        // on the button below); don't let them commit/cancel the whole edit.
-        if (menuOpen()) {
-          return
-        }
-        const onChip = document.activeElement instanceof HTMLElement && document.activeElement.classList.contains('tag')
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-          // Move between chips and the add button.
-          event.preventDefault()
-          event.stopPropagation()
-          moveFocus(event.key === 'ArrowLeft' ? -1 : 1)
-        } else if (event.key === 'Enter') {
-          event.preventDefault()
-          event.stopPropagation()
-          finish(selected(), 'stay')
-        } else if (event.key === 'Tab') {
-          // Keep spreadsheet cell-to-cell nav: commit and move to the adjacent
-          // cell rather than tabbing focus out of the grid entirely.
-          event.preventDefault()
-          event.stopPropagation()
-          finish(selected(), event.shiftKey ? 'left' : 'right')
-        } else if (event.key === 'Escape') {
-          event.preventDefault()
-          event.stopPropagation()
-          cancel()
-        } else if (event.key === 'Delete' || event.key === 'Backspace') {
-          event.preventDefault()
-          if (onChip) {
-            removeFocusedChip() // remove the chip the user navigated to
-          } else if (event.key === 'Backspace' && selected().length > 0) {
-            remove(selected()[selected().length - 1]!) // tag-input convention: Backspace removes the last
-            addBtn?.focus()
-          }
-        }
-      }}
-      onFocusOut={() => {
-        // Capture the value now (tracked handler), then commit only when focus
-        // has actually left the whole widget — checked after it settles, so
-        // moving between chips/the menu (incl. removing one) doesn't commit.
-        const value = selected()
-        // eslint-disable-next-line solid/reactivity -- intentional deferred commit of the captured value after focus settles
-        queueMicrotask(() => {
-          if (!done && container !== undefined && !container.contains(document.activeElement)) {
-            finish(value)
-          }
-        })
-      }}
-    >
-      {/* role=list over the selected tags gives each chip a name+role+position for
-          AT (display:contents keeps the chips in the parent's flex flow). */}
-      <span class="tag-list" role="list">
-        <For each={selected()}>
-          {(id) => (
-            // Focusable (roving tabindex) so Left/Right reach it and Delete/Backspace
-            // removes it; aria-label names the tag for screen readers.
-            <span class="tag" role="listitem" tabindex="-1" data-tag-id={id} aria-label={labelOf(id)}>
-              <span class="tag-label">{labelOf(id)}</span>
-              {/* preventDefault on mousedown so clicking × doesn't blur the widget
-                  (which would commit + unmount before the click removes the chip). */}
-              <button type="button" class="tag-remove" tabindex="-1" aria-label={`${m.admin_delete()}: ${labelOf(id)}`} onMouseDown={(event) => event.preventDefault()} onClick={() => { remove(id); addBtn?.focus() }}>×</button>
-            </span>
-          )}
-        </For>
-      </span>
-      <span class="tag-add-wrap">
-        <button
-          ref={(el) => { addBtn = el }}
-          type="button"
-          class="tag-add"
-          aria-haspopup="true"
-          aria-expanded={menuOpen()}
-          aria-label={`${m.admin_add()} — ${props.label}`}
-          onClick={() => (menuOpen() ? closeMenu() : openMenu())}
-          onKeyDown={(event) => {
-            // Closed: Down/Space open the menu; Enter/Tab/Escape/Backspace bubble
-            // to the container (commit / move / cancel / remove last).
-            if (!menuOpen() && (event.key === 'ArrowDown' || event.key === ' ')) {
-              event.preventDefault()
-              event.stopPropagation()
-              openMenu()
-            }
-          }}
-        >+</button>
-        <Show when={menuOpen()}>
-          <div
-            ref={(el) => { menuEl = el }}
-            class="tag-menu"
-            role="menu"
-            aria-label={props.label}
-            onKeyDown={(event) => {
-              const items = Array.from(menuEl?.querySelectorAll<HTMLButtonElement>('.tag-menu-item') ?? [])
-              const i = items.indexOf(document.activeElement as HTMLButtonElement)
-              if (event.key === 'ArrowDown') {
-                event.preventDefault()
-                event.stopPropagation()
-                items[Math.min(items.length - 1, i + 1)]?.focus()
-              } else if (event.key === 'ArrowUp') {
-                event.preventDefault()
-                event.stopPropagation()
-                items[Math.max(0, i - 1)]?.focus()
-              } else if (event.key === 'Escape') {
-                event.preventDefault()
-                event.stopPropagation()
-                closeMenu()
-              } else if (event.key === 'Tab') {
-                closeMenu(false) // close, then let the container's Tab move to the next cell
-              }
-            }}
-          >
-            <For each={unselected()}>
-              {(option) => (
-                <button type="button" role="menuitem" class="tag-menu-item" onClick={() => addOption(Number(option.value))}>{option.label}</button>
-              )}
-            </For>
-          </div>
-        </Show>
-      </span>
-    </div>
   )
 }
 
@@ -682,7 +438,15 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     return cell ? Number(cell.getAttribute('data-row-id')) : null
   }
 
+  // A ChipSelect editor body-portals its listbox outside the table; focus inside
+  // it must read as "still editing the row", not "left the table".
+  const inChipSelectPopup = (node: EventTarget | null): boolean =>
+    node instanceof HTMLElement && node.closest('[data-chipselect-popup]') !== null
+
   function onTableFocusIn(event: FocusEvent): void {
+    if (inChipSelectPopup(event.target)) {
+      return // focusing the portalled popup doesn't leave the current row
+    }
     const id = rowIdOf(event.target)
     if (id === lastFocusedRowId) {
       return
@@ -694,7 +458,8 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   }
 
   function flushIfFocusLeftTable(): void {
-    if (tableEl === undefined || (document.activeElement !== null && tableEl.contains(document.activeElement))) {
+    const active = document.activeElement
+    if (tableEl === undefined || (active !== null && (tableEl.contains(active) || inChipSelectPopup(active)))) {
       return
     }
     if (lastFocusedRowId !== null) {

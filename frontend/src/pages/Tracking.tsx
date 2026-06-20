@@ -9,7 +9,8 @@ import { num, str } from '../lib/coerce'
 import { formatUserDate } from '../lib/dateFormat'
 import { formatMinutes } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
-import { createInlineGridEdit, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
+import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
+import { ChipSelect } from '../lib/chipSelect'
 import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { PageDialog } from '../components/PageDialog'
@@ -368,6 +369,11 @@ export default function Tracking() {
         </>
       )
     }
+    // Relation columns read as chips (matching the admin grid), not free text.
+    const field = FIELD_BY_KEY.get(colKey)
+    if (field !== undefined && (field.type === 'select' || field.type === 'multiselect')) {
+      return <ReadonlyChips values={chipValues(num((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey]))} options={fieldSelectOptions(field, optionLookup)} />
+    }
 
     return displayCell(entry, colKey)
   }
@@ -642,7 +648,7 @@ export default function Tracking() {
 
                           return (
                             <td
-                              classList={{ numeric: col.numeric, 'is-editable': editable, 'is-invalid': editor.fieldInvalid(id, col.key), 'is-select': editable && fieldType === 'select' }}
+                              classList={{ numeric: col.numeric, 'is-editable': editable, 'is-invalid': editor.fieldInvalid(id, col.key) }}
                               data-row-id={String(id)}
                               data-col-key={col.key}
                               data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
@@ -652,20 +658,37 @@ export default function Tracking() {
                                 when={editor.isEditing(id, col.key)}
                                 fallback={cellContent(entry, col.key)}
                               >
-                                {/* Hidden ghost holds the column width so the overlaying
-                                    single-line editor can't make the table re-flow. */}
-                                <Show when={overlayEditor}>
-                                  <span class="inline-ghost" aria-hidden="true">{cellContent(entry, col.key)}</span>
+                                <Show
+                                  when={fieldType === 'select' || fieldType === 'multiselect'}
+                                  fallback={
+                                    <>
+                                      {/* Hidden ghost holds the column width so the overlaying
+                                          single-line editor can't make the table re-flow. */}
+                                      <Show when={overlayEditor}>
+                                        <span class="inline-ghost" aria-hidden="true">{cellContent(entry, col.key)}</span>
+                                      </Show>
+                                      <InlineEditor
+                                        field={FIELD_BY_KEY.get(col.key)!}
+                                        label={col.label()}
+                                        initial={editor.draftValue(id, col.key) ?? ''}
+                                        seed={editor.seedChar()}
+                                        options={optionLookup}
+                                        onCommit={editor.commitCell}
+                                        onCancel={editor.cancelCell}
+                                      />
+                                    </>
+                                  }
+                                >
+                                  <ChipSelect
+                                    field={FIELD_BY_KEY.get(col.key)!}
+                                    label={col.label()}
+                                    initial={editor.draftValue(id, col.key) ?? (fieldType === 'multiselect' ? [] : '')}
+                                    options={optionLookup}
+                                    multiple={fieldType === 'multiselect'}
+                                    onCommit={editor.commitCell}
+                                    onCancel={editor.cancelCell}
+                                  />
                                 </Show>
-                                <InlineEditor
-                                  field={FIELD_BY_KEY.get(col.key)!}
-                                  label={col.label()}
-                                  initial={editor.draftValue(id, col.key) ?? ''}
-                                  seed={editor.seedChar()}
-                                  options={optionLookup}
-                                  onCommit={editor.commitCell}
-                                  onCancel={editor.cancelCell}
-                                />
                               </Show>
                             </td>
                           )

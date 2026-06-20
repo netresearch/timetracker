@@ -2,17 +2,31 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Shared Worklog-grid helpers. The seeded entries predate the default day range,
- * so tests create their own entry for *today* via the Add flow — picking the
- * first seed customer that actually has projects, then the first project/activity
- * — and locate it by a unique description stamp.
+ * so tests create their own entry for *today* via the Add flow. Relation cells
+ * (customer/project/activity) are Ark Combobox chip editors — picked by opening
+ * the cell, optionally filtering, and clicking the first option.
  */
 
-export async function openEditor(page: Page, row: Locator, colKey: string): Promise<Locator> {
+export async function openTextEditor(page: Page, row: Locator, colKey: string): Promise<Locator> {
   await row.locator(`td[data-col-key="${colKey}"]`).focus();
   await page.keyboard.press('Enter');
-  const editor = page.locator('td[data-inline-editing] input.inline-editor, td[data-inline-editing] select.inline-editor').first();
+  const editor = page.locator('td[data-inline-editing] input.inline-editor').first();
   await expect(editor).toBeVisible();
   return editor;
+}
+
+// Open a relation cell's combobox (Add already opens the first one) and pick its
+// first available option, committing it.
+export async function pickFirstOption(page: Page, row: Locator, colKey: string, alreadyOpen = false): Promise<void> {
+  if (!alreadyOpen) {
+    await row.locator(`td[data-col-key="${colKey}"]`).focus();
+    await page.keyboard.press('Enter');
+  }
+  await expect(page.locator('td[data-inline-editing] .combobox-input').first()).toBeVisible();
+  const option = page.locator('.combobox-content .combobox-item').first();
+  await expect(option).toBeVisible({ timeout: 8000 });
+  await option.click();
+  await expect(page.locator('.combobox-content')).toBeHidden({ timeout: 4000 });
 }
 
 export function rowByStamp(page: Page, stamp: string): Locator {
@@ -26,49 +40,22 @@ export async function createWorklogEntry(page: Page): Promise<string> {
   const row = page.locator('tr.tracking-row.is-new').first();
   await expect(row).toBeVisible();
 
-  // Add opens the customer editor automatically. Pick the first real customer
-  // that actually has projects, so the cascade-filtered project editor isn't
-  // empty (some seed customers have none).
-  let projectValue = '';
-  for (let attempt = 0; attempt < 6 && projectValue === ''; attempt += 1) {
-    const customer = page.locator('td[data-inline-editing] select.inline-editor').first();
-    await expect(customer).toBeVisible();
-    const options = customer.locator('option[value]:not([value=""])');
-    await expect(options.first()).toBeAttached({ timeout: 10000 });
-    const value = await options.nth(attempt).getAttribute('value');
-    if (value === null) {
-      break;
-    }
-    await customer.selectOption(value);
-    await page.keyboard.press('Enter');
+  // Add opens the customer combobox; pick the first bookable customer, then its
+  // first (cascade-filtered) project, then the first activity.
+  await pickFirstOption(page, row, 'customer', true);
+  await pickFirstOption(page, row, 'project');
+  await pickFirstOption(page, row, 'activity');
 
-    const project = await openEditor(page, row, 'project');
-    const realProject = project.locator('option[value]:not([value=""])').first();
-    if (await realProject.count() > 0 && (await realProject.getAttribute('value')) !== null) {
-      projectValue = (await realProject.getAttribute('value')) ?? '';
-      await project.selectOption(projectValue);
-      await page.keyboard.press('Enter');
-      break;
-    }
-    await page.keyboard.press('Escape');
-    await openEditor(page, row, 'customer');
-  }
-  expect(projectValue).not.toBe('');
-
-  const activity = await openEditor(page, row, 'activity');
-  await activity.selectOption((await activity.locator('option[value]:not([value=""])').first().getAttribute('value')));
-  await page.keyboard.press('Enter');
-
-  const description = await openEditor(page, row, 'description');
+  const description = await openTextEditor(page, row, 'description');
   await description.fill(stamp);
   await page.keyboard.press('Enter');
 
-  const start = await openEditor(page, row, 'start');
+  const start = await openTextEditor(page, row, 'start');
   await start.fill('08:00');
   await page.keyboard.press('Enter');
 
   const saved = page.waitForResponse((r) => /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST');
-  const end = await openEditor(page, row, 'end');
+  const end = await openTextEditor(page, row, 'end');
   await end.fill('09:00');
   await page.keyboard.press('Enter');
   await saved;

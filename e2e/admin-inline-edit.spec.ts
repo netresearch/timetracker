@@ -57,17 +57,17 @@ test.describe('Admin inline cell editing', () => {
     await expect(page.locator('td[data-col-key="name"]').first()).toHaveText(original);
   });
 
-  test('inline-edits a multiselect column as tag chips', async ({ page }) => {
+  test('inline-edits a multiselect column as a chip combobox', async ({ page }) => {
     const teamsCell = page.locator('td[data-col-key="teams"]').first();
     await teamsCell.focus();
     await page.keyboard.press('Enter');
 
-    // The teams column opens an inline tag editor (chips + an add button that
-    // opens a listbox menu), not the modal. (Add/remove behaviour is unit-tested
-    // in Admin.test.tsx; here we just confirm the inline editor mounts.)
-    const addBtn = teamsCell.locator('button.tag-add');
-    await expect(addBtn).toBeVisible();
+    // The teams column opens an inline filterable combobox (a text input + an
+    // option list), with the selection rendered as chips — not the modal.
+    await expect(page.locator('td[data-inline-editing] .combobox-input')).toBeVisible();
+    await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
     await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+    await page.keyboard.press('Escape');
   });
 
   test('the Status sub-page shows read-only diagnostics', async ({ page }) => {

@@ -1,6 +1,6 @@
 import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { fireEvent, render, screen, waitFor, within } from '@solidjs/testing-library'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
@@ -65,8 +65,8 @@ function renderAdmin(path = '/admin') {
 }
 
 // Renders the customer grid (customer 1 has team 2) with the given team
-// catalogue, then opens the inline tag editor on the "Backend" teams cell.
-async function openTeamsTagEditor(teams: { id: number; name: string }[]) {
+// catalogue, then opens the inline chip-combobox editor on the "Backend" teams cell.
+async function openTeamsCombobox(teams: { id: number; name: string }[]) {
   getJson.mockImplementation((path: string) =>
     path === '/getAllCustomers'
       ? Promise.resolve([{ customer: { id: 1, name: 'ACME', active: true, global: false, teams: [2] } }])
@@ -80,17 +80,13 @@ async function openTeamsTagEditor(teams: { id: number; name: string }[]) {
   const teamsCell = utils.getByRole('gridcell', { name: 'Backend' })
   teamsCell.focus()
   fireEvent.keyDown(teamsCell, { key: 'Enter' })
-  const addBtn = await waitFor(() => {
-    const el = teamsCell.querySelector<HTMLButtonElement>('button.tag-add')
-    if (el === null) throw new Error('inline tag editor not mounted')
+  await waitFor(() => expect(teamsCell.querySelector('.combobox-input')).not.toBeNull())
 
-    return el
-  })
-
-  return { ...utils, teamsCell, addBtn }
+  return { ...utils, teamsCell }
 }
 
 afterEach(() => {
+  cleanup() // unmount even after a throwing test, so a body-portalled combobox + body-inert can't leak into the next test
   getJson.mockReset()
   postJson.mockReset()
   vi.restoreAllMocks()
@@ -422,104 +418,22 @@ describe('Admin inline cell editing', () => {
     unmount()
   })
 
-  it('adds a tag via the menu — one option per pick, not one per keystroke', async () => {
-    postJson.mockResolvedValue([1, 'ACME', true, false, [2, 3]])
-    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([
+  it('inline-edits the teams multiselect as a chip combobox (not the modal)', async () => {
+    const { teamsCell, unmount } = await openTeamsCombobox([
       { id: 2, name: 'Backend' },
       { id: 3, name: 'Frontend' },
     ])
 
-    // An inline tag editor opened (chip for the current team + an add button),
-    // not the modal — and no menu until it's opened.
+    // The teams cell opens an inline filterable combobox, not the modal; the
+    // current team renders as a chip and the option list shows the catalogue.
+    // (add/remove/commit behaviour is unit-tested in chipSelect.test.tsx + e2e.)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(within(teamsCell).getByText('Backend')).toBeInTheDocument() // existing team is a chip
-    expect(teamsCell.querySelector('[role="menu"]')).toBeNull()
-
-    // Opening the menu adds nothing (the old <select> added on every arrow key).
-    fireEvent.click(addBtn)
-    expect(teamsCell.querySelector('[role="menu"]')).not.toBeNull()
-    expect(teamsCell.querySelectorAll('.tag')).toHaveLength(1)
-
-    // Picking the option (Frontend, the only unselected one) adds exactly one chip.
-    fireEvent.click(within(teamsCell).getByRole('menuitem', { name: 'Frontend' }))
-    await waitFor(() => expect(teamsCell.querySelectorAll('.tag')).toHaveLength(2))
-
-    // Menu auto-closed (no options left); Enter on the add button commits → [2, 3].
-    fireEvent.keyDown(addBtn, { key: 'Enter' })
-    await waitFor(() =>
-      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [2, 3] })),
-    )
+    expect(within(teamsCell).getByRole('listitem')).toHaveTextContent('Backend')
+    expect(await screen.findByRole('option', { name: 'Frontend' })).toBeInTheDocument()
 
     unmount()
   })
 
-  it('opens the add menu from the keyboard (ArrowDown), without adding', async () => {
-    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([
-      { id: 2, name: 'Backend' },
-      { id: 3, name: 'Frontend' },
-    ])
-
-    fireEvent.keyDown(addBtn, { key: 'ArrowDown' })
-    expect(teamsCell.querySelector('[role="menu"]')).not.toBeNull()
-    expect(within(teamsCell).getByRole('menuitem', { name: 'Frontend' })).toBeInTheDocument()
-    expect(teamsCell.querySelectorAll('.tag')).toHaveLength(1) // opening added nothing
-
-    unmount()
-  })
-
-  it('removes a chip by clicking its × with the mouse, then commits', async () => {
-    postJson.mockResolvedValue([1, 'ACME', true, false, []])
-    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
-
-    const removeBtn = teamsCell.querySelector('.tag-remove') as HTMLElement
-    expect(removeBtn).not.toBeNull()
-    fireEvent.mouseDown(removeBtn) // preventDefault keeps focus → no premature commit
-    fireEvent.click(removeBtn) // removes the only chip
-    await waitFor(() => expect(teamsCell.querySelector('.tag')).toBeNull())
-
-    fireEvent.keyDown(addBtn, { key: 'Enter' }) // commit → auto-save with no teams
-    await waitFor(() =>
-      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [] })),
-    )
-
-    unmount()
-  })
-
-  it('removes the last tag with Backspace in the inline multiselect (keyboard path)', async () => {
-    postJson.mockResolvedValue([1, 'ACME', true, false, []])
-    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
-
-    // Backspace removes the last chip (no .tag chips remain); Enter commits →
-    // auto-saves with no teams.
-    fireEvent.keyDown(addBtn, { key: 'Backspace' })
-    await waitFor(() => expect(teamsCell.querySelector('.tag')).toBeNull())
-    fireEvent.keyDown(addBtn, { key: 'Enter' })
-    await waitFor(() =>
-      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [] })),
-    )
-
-    unmount()
-  })
-
-  it('navigates to a chip with the keyboard (ArrowLeft) and removes it with Delete', async () => {
-    postJson.mockResolvedValue([1, 'ACME', true, false, []])
-    const { teamsCell, addBtn, unmount } = await openTeamsTagEditor([{ id: 2, name: 'Backend' }])
-
-    // Focus starts on the add button; ArrowLeft moves to the Backend chip.
-    addBtn.focus()
-    fireEvent.keyDown(addBtn, { key: 'ArrowLeft' })
-    const chip = teamsCell.querySelector('.tag') as HTMLElement
-    expect(document.activeElement).toBe(chip)
-
-    fireEvent.keyDown(chip, { key: 'Delete' }) // removes the focused chip
-    await waitFor(() => expect(teamsCell.querySelector('.tag')).toBeNull())
-    fireEvent.keyDown(addBtn, { key: 'Enter' }) // commit
-    await waitFor(() =>
-      expect(postJson).toHaveBeenCalledWith('/customer/save', expect.objectContaining({ teams: [] })),
-    )
-
-    unmount()
-  })
 
   it('renders selected teams as read-only chips in display mode (not just when editing)', async () => {
     getJson.mockImplementation((path: string) =>
