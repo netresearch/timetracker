@@ -57,17 +57,49 @@ test.describe('Admin inline cell editing', () => {
     await expect(page.locator('td[data-col-key="name"]').first()).toHaveText(original);
   });
 
-  test('inline-edits a multiselect column as tag chips', async ({ page }) => {
-    const teamsCell = page.locator('td[data-col-key="teams"]').first();
-    await teamsCell.focus();
+  test('inline-edits a multiselect column as a chip combobox and persists the pick', async ({ page }) => {
+    // The teams column lives on the Users entity. Target sandy.supporter and TOGGLE
+    // a team — add an unselected one if there's room, else remove a selected one —
+    // so the test is idempotent across re-runs (teams is required, so ≥1 remains).
+    await page.goto('/ui/admin/users');
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+    await page.locator('input.admin-filter').fill('sandy');
+    const row = page.locator('table.admin-table tbody tr').filter({ hasText: /sandy/i }).first();
+    await expect(row).toBeVisible();
+    const before = await row.locator('td[data-col-key="teams"] .tag').count();
+
+    await row.locator('td[data-col-key="teams"]').focus();
     await page.keyboard.press('Enter');
 
-    // The teams column opens an inline tag editor (chips + an add button that
-    // opens a listbox menu), not the modal. (Add/remove behaviour is unit-tested
-    // in Admin.test.tsx; here we just confirm the inline editor mounts.)
-    const addBtn = teamsCell.locator('button.tag-add');
-    await expect(addBtn).toBeVisible();
+    // The teams column opens an inline filterable combobox (a text input + an
+    // option list), with the selection rendered as chips — not the modal.
+    await expect(page.locator('td[data-inline-editing] .combobox-input')).toBeVisible();
     await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+    await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
+
+    const unselected = page.locator('.combobox-content .combobox-item:not([data-state="checked"])');
+    let expected: number;
+    if ((await unselected.count()) > 0) {
+      await unselected.first().click(); // add a team → one more chip
+      expected = before + 1;
+    } else {
+      await page.locator('.combobox-content .combobox-item[data-state="checked"]').first().click(); // remove one → one fewer (still ≥1)
+      expected = before - 1;
+    }
+    await expect(page.locator('td[data-inline-editing] .tag')).toHaveCount(expected);
+
+    // Leaving the row saves the whole user — exercising the body-portal multi-commit
+    // path (the picked array must survive focus-out and reach /user/save).
+    const saved = page.waitForResponse((r) => /\/user\/save$/.test(r.url()) && r.request().method() === 'POST');
+    await page.locator('input.admin-filter').focus();
+    await saved;
+
+    // The change survives a full reload (persisted, not just optimistic).
+    await page.reload();
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+    await page.locator('input.admin-filter').fill('sandy');
+    await expect(page.locator('table.admin-table tbody tr').filter({ hasText: /sandy/i }).first()
+      .locator('td[data-col-key="teams"] .tag')).toHaveCount(expected);
   });
 
   test('the Status sub-page shows read-only diagnostics', async ({ page }) => {

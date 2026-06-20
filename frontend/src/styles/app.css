@@ -989,10 +989,6 @@ kbd {
      cell with zero layout shift, at any density (see .inline-editor). */
   --cell-pad-y: 0.55rem;
   --cell-pad-x: 0.9rem;
-  /* Right-gutter reserved for a select cell's dropdown chevron; 0 elsewhere. It
-     inherits into the overlaying editor (custom props cascade), so the cell and
-     its editor reserve the same gutter and the text origin can't shift on open. */
-  --caret-w: 0px;
   border-top: 1px solid var(--color-border);
   padding: var(--cell-pad-y) var(--cell-pad-x);
   vertical-align: middle;
@@ -1225,43 +1221,9 @@ kbd {
 
 .data-table td[data-inline-editing] .inline-editor:not(.inline-check):not(.inline-tags) {
   inset: 0;
-  /* Re-apply the cell's x-padding; the right side also reserves the select caret
-     gutter (--caret-w inherited from the cell — 0 for non-select). */
-  padding-block: 0;
-  padding-inline: var(--cell-pad-x) calc(var(--cell-pad-x) + var(--caret-w));
+  padding: 0 var(--cell-pad-x);
   position: absolute;
   width: auto;
-}
-
-/* A <select> editor: drop the native chrome (dropdown arrow) so the overlay reads
-   as the value it sits on — the native arrow would shift the text and flicker on
-   open. The cell paints its own non-reflowing chevron instead (.is-select below). */
-.data-table td[data-inline-editing] select.inline-editor {
-  appearance: none;
-}
-
-/* A select cell is a chooser, not free text. Mark it with a chevron in the right
-   gutter, present in BOTH static and edit mode (identical position), so a select
-   reads as editable and the static→edit transition stays a visual no-op. The
-   gutter is reserved on the cell (here) and on the overlaying editor (above, via
-   the inherited --caret-w), so the text origin never moves when editing opens. */
-.data-table td.is-select {
-  --caret-w: 1.1rem;
-  padding-inline-end: calc(var(--cell-pad-x) + var(--caret-w));
-  position: relative;
-}
-
-.data-table td.is-select::after {
-  border-inline: 0.28rem solid transparent;
-  border-top: 0.34rem solid currentColor;
-  content: "";
-  inset-inline-end: var(--cell-pad-x);
-  opacity: 0.55;
-  pointer-events: none;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-25%);
-  z-index: 1;
 }
 
 /* A checkbox isn't single-line text — don't stretch it to fill the cell width. */
@@ -1278,6 +1240,89 @@ kbd {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
+}
+
+/* ---- Ark Combobox inline chip editor (single + multi) ---- */
+.chip-select {
+  width: 100%;
+}
+
+.combobox-control {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  /* min-width:0 so a single-select overlay (absolute, clamped to the cell width)
+     can't force the cell wider than its read-mode content. */
+  min-width: 0;
+}
+
+.combobox-input {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  flex: 1;
+  font: inherit;
+  min-width: 0;
+  outline: 0;
+  padding: 0;
+}
+
+.combobox-trigger {
+  background: none;
+  border: 0;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0 0.2rem;
+}
+
+.combobox-positioner {
+  /* Above every incidental fixed overlay (modal 100/101, first-run hint 1100):
+     the popup is body-portalled and only present while a cell is being edited. */
+  z-index: 1200;
+}
+
+.combobox-content {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px light-dark(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.5));
+  max-height: 14rem;
+  /* Clamp the content (min-width 11rem can exceed a narrow cell's sameWidth
+     positioner) so it never runs off the viewport's right edge. */
+  max-width: min(90vw, 18rem);
+  min-width: 11rem;
+  overflow-y: auto;
+  padding: 0.2rem;
+}
+
+.combobox-item {
+  align-items: center;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.9rem;
+  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem;
+}
+
+.combobox-item[data-highlighted] {
+  background: var(--color-accent-soft);
+}
+
+.combobox-item[data-state="checked"] {
+  font-weight: 600;
+}
+
+.combobox-indicator {
+  color: var(--color-accent);
+}
+
+.combobox-empty {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  padding: 0.5rem;
 }
 
 .inline-tags .tag {
@@ -1322,59 +1367,6 @@ kbd {
   /* Discrete inline control: >=24px (WCAG 2.2 AA 2.5.8); flex-centred glyph. */
   min-height: 1.5rem;
   min-width: 1.5rem;
-}
-
-/* The add control is a button that opens a listbox menu of unselected options. */
-.inline-tags .tag-add-wrap {
-  position: relative;
-}
-
-.inline-tags .tag-add {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text);
-  cursor: pointer;
-  font: inherit;
-  line-height: 1;
-  min-height: 1.7rem;
-  min-width: 1.7rem;
-}
-
-.inline-tags .tag-menu {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  box-shadow: 0 6px 18px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.5));
-  display: flex;
-  flex-direction: column;
-  inset-inline-start: 0;
-  inset-block-start: calc(100% + 0.2rem);
-  max-height: 14rem;
-  max-width: min(90vw, 16rem); /* never run off the screen edge on narrow viewports */
-  min-width: 10rem;
-  overflow-y: auto;
-  padding: 0.2rem;
-  position: absolute;
-  z-index: 20;
-}
-
-.inline-tags .tag-menu-item {
-  background: none;
-  border: 0;
-  border-radius: 4px;
-  color: var(--color-text);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.35rem 0.6rem;
-  text-align: start;
-  white-space: nowrap;
-}
-
-.inline-tags .tag-menu-item:hover,
-.inline-tags .tag-menu-item:focus-visible {
-  background: var(--color-accent-soft);
-  outline: none;
 }
 
 /* A saving row dims slightly and blocks pointer interaction until it settles. */

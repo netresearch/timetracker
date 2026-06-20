@@ -4,7 +4,8 @@ import { createStore, reconcile } from 'solid-js/store'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
 import { optionSourceKey } from '../api/queries'
-import { createInlineGridEdit, fieldSelectOptions, InlineEditor, InlineMultiSelect, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
+import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
+import { ChipSelect } from '../lib/chipSelect'
 import { gridNav } from '../lib/gridNavigation'
 import { DiskIcon, DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
 import { PageDialog } from './PageDialog'
@@ -29,33 +30,6 @@ function csvCell(value: string): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
-// A select/multiselect cell value → the list of chip values to render. A single
-// select is one chip; "none" (0 / '' / null) is no chips.
-function chipValues(raw: unknown): (string | number)[] {
-  if (Array.isArray(raw)) {
-    return raw as (string | number)[]
-  }
-  if (raw === undefined || raw === null || raw === '' || raw === 0) {
-    return []
-  }
-
-  return [raw as string | number]
-}
-
-/** Read-only chips for a select/multiselect column in display mode, so reference
- *  columns read as chips (visually distinct from free-text) whether or not the
- *  cell is being edited. */
-function ReadonlyChips(props: Readonly<{ values: (string | number)[]; options: { value: string | number; label: string }[] }>) {
-  const labelOf = (value: string | number): string => props.options.find((option) => String(option.value) === String(value))?.label ?? String(value)
-
-  return (
-    <span class="inline-tags is-readonly">
-      <For each={props.values}>
-        {(value) => <span class="tag"><span class="tag-label">{labelOf(value)}</span></span>}
-      </For>
-    </span>
-  )
-}
 
 /** On/off indicator for a boolean column: a green dot for true, empty for false,
  *  with visually-hidden Yes/No so it isn't colour-only (WCAG 1.4.1). */
@@ -554,7 +528,7 @@ export function AdminCrudShell(props: {
 
                         return (
                           <td
-                            classList={{ numeric: col.align === 'right', boolean: col.align === 'center', 'is-editable': editable, 'is-invalid': editor.fieldInvalid(rowId, col.key), 'is-select': editable && fieldType === 'select' }}
+                            classList={{ numeric: col.align === 'right', boolean: col.align === 'center', 'is-editable': editable, 'is-invalid': editor.fieldInvalid(rowId, col.key) }}
                             data-row-id={String(rowId)}
                             data-col-key={col.key}
                             data-inline-editing={editor.isEditing(rowId, col.key) ? '' : undefined}
@@ -577,35 +551,42 @@ export function AdminCrudShell(props: {
                                     : displayText(row, col)
                               }
                             >
-                              {/* Hidden ghost holds the column width so the overlaying
-                                  single-line editor can't make the table re-flow. */}
-                              <Show when={overlayEditor}>
-                                <span class="inline-ghost" aria-hidden="true">{displayText(row, col)}</span>
-                              </Show>
-                              <Switch
+                              <Show
+                                when={fieldType === 'select' || fieldType === 'multiselect'}
                                 fallback={
-                                  <InlineEditor
-                                    field={fieldFor(col.key)!}
-                                    label={col.label()}
-                                    initial={editor.draftValue(rowId, col.key) ?? ''}
-                                    seed={editor.seedChar()}
-                                    options={props.options}
-                                    onCommit={editor.commitCell}
-                                    onCancel={editor.cancelCell}
-                                  />
+                                  <>
+                                    {/* Hidden ghost holds the column width so the overlaying
+                                        single-line editor can't make the table re-flow. */}
+                                    <Show when={overlayEditor}>
+                                      <span class="inline-ghost" aria-hidden="true">{displayText(row, col)}</span>
+                                    </Show>
+                                    <InlineEditor
+                                      field={fieldFor(col.key)!}
+                                      label={col.label()}
+                                      initial={editor.draftValue(rowId, col.key) ?? ''}
+                                      seed={editor.seedChar()}
+                                      options={props.options}
+                                      onCommit={editor.commitCell}
+                                      onCancel={editor.cancelCell}
+                                    />
+                                  </>
                                 }
                               >
-                                <Match when={fieldFor(col.key)?.type === 'multiselect'}>
-                                  <InlineMultiSelect
-                                    field={fieldFor(col.key)!}
-                                    label={col.label()}
-                                    initial={editor.draftValue(rowId, col.key) ?? []}
-                                    options={props.options}
-                                    onCommit={editor.commitCell}
-                                    onCancel={editor.cancelCell}
-                                  />
-                                </Match>
-                              </Switch>
+                                {/* Ghost holds the column width so the overlaying single-select
+                                    editor can't re-flow the table (multi-select wraps in flow). */}
+                                <Show when={fieldType === 'select'}>
+                                  <span class="inline-ghost" aria-hidden="true"><ReadonlyChips values={chipValues(editor.overlayRow(row)[col.key])} options={fieldSelectOptions(fieldFor(col.key)!, props.options)} /></span>
+                                </Show>
+                                <ChipSelect
+                                  field={fieldFor(col.key)!}
+                                  label={col.label()}
+                                  initial={editor.draftValue(rowId, col.key) ?? (fieldType === 'multiselect' ? [] : '')}
+                                  options={props.options}
+                                  multiple={fieldType === 'multiselect'}
+                                  onCommit={editor.commitCell}
+                                  onCancel={editor.cancelCell}
+                                />
+                              </Show>
                             </Show>
                           </td>
                         )
