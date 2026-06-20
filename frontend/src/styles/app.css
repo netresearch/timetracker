@@ -1251,7 +1251,9 @@ kbd {
   align-items: center;
   display: flex;
   flex: 1;
-  min-width: 5rem;
+  /* min-width:0 so a single-select overlay (absolute, clamped to the cell width)
+     can't force the cell wider than its read-mode content. */
+  min-width: 0;
 }
 
 .combobox-input {
@@ -1260,7 +1262,7 @@ kbd {
   color: inherit;
   flex: 1;
   font: inherit;
-  min-width: 4rem;
+  min-width: 0;
   outline: 0;
   padding: 0;
 }
@@ -1275,7 +1277,9 @@ kbd {
 }
 
 .combobox-positioner {
-  z-index: 40;
+  /* Above every incidental fixed overlay (modal 100/101, first-run hint 1100):
+     the popup is body-portalled and only present while a cell is being edited. */
+  z-index: 1200;
 }
 
 .combobox-content {
@@ -1284,6 +1288,9 @@ kbd {
   border-radius: 8px;
   box-shadow: 0 8px 24px light-dark(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.5));
   max-height: 14rem;
+  /* Clamp the content (min-width 11rem can exceed a narrow cell's sameWidth
+     positioner) so it never runs off the viewport's right edge. */
+  max-width: min(90vw, 18rem);
   min-width: 11rem;
   overflow-y: auto;
   padding: 0.2rem;
@@ -1360,59 +1367,6 @@ kbd {
   /* Discrete inline control: >=24px (WCAG 2.2 AA 2.5.8); flex-centred glyph. */
   min-height: 1.5rem;
   min-width: 1.5rem;
-}
-
-/* The add control is a button that opens a listbox menu of unselected options. */
-.inline-tags .tag-add-wrap {
-  position: relative;
-}
-
-.inline-tags .tag-add {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text);
-  cursor: pointer;
-  font: inherit;
-  line-height: 1;
-  min-height: 1.7rem;
-  min-width: 1.7rem;
-}
-
-.inline-tags .tag-menu {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  box-shadow: 0 6px 18px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.5));
-  display: flex;
-  flex-direction: column;
-  inset-inline-start: 0;
-  inset-block-start: calc(100% + 0.2rem);
-  max-height: 14rem;
-  max-width: min(90vw, 16rem); /* never run off the screen edge on narrow viewports */
-  min-width: 10rem;
-  overflow-y: auto;
-  padding: 0.2rem;
-  position: absolute;
-  z-index: 20;
-}
-
-.inline-tags .tag-menu-item {
-  background: none;
-  border: 0;
-  border-radius: 4px;
-  color: var(--color-text);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.35rem 0.6rem;
-  text-align: start;
-  white-space: nowrap;
-}
-
-.inline-tags .tag-menu-item:hover,
-.inline-tags .tag-menu-item:focus-visible {
-  background: var(--color-accent-soft);
-  outline: none;
 }
 
 /* A saving row dims slightly and blocks pointer interaction until it settles. */

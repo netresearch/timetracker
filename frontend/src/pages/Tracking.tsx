@@ -81,9 +81,9 @@ const FIELDS: FieldDef[] = [
   { name: 'start', label: () => m.tracking_col_start(), type: 'text', required: true },
   { name: 'end', label: () => m.tracking_col_end(), type: 'text', required: true },
   { name: 'ticket', label: () => m.tracking_col_ticket(), type: 'text' },
-  { name: 'customer', label: () => m.tracking_col_customer(), type: 'select', source: 'customers' },
-  { name: 'project', label: () => m.tracking_col_project(), type: 'select', source: 'projects' },
-  { name: 'activity', label: () => m.tracking_col_activity(), type: 'select', source: 'activities' },
+  { name: 'customer', label: () => m.tracking_col_customer(), type: 'select', source: 'customers', required: true },
+  { name: 'project', label: () => m.tracking_col_project(), type: 'select', source: 'projects', required: true },
+  { name: 'activity', label: () => m.tracking_col_activity(), type: 'select', source: 'activities', required: true },
   { name: 'description', label: () => m.tracking_col_description(), type: 'text' },
 ]
 const FIELD_BY_KEY = new Map(FIELDS.map((field) => [field.name, field]))
@@ -208,6 +208,11 @@ export default function Tracking() {
         return []
     }
   }
+
+  // Read-mode chip labels resolve against the FULL option set: the cascade in
+  // optionLookup narrows only the OPEN editor's project list — it must never
+  // mislabel another row's project chip while a customer is being edited.
+  const readOptionLookup: OptionLookup = (source: OptionSource) => (source === 'projects' ? allProjectOptions() : optionLookup(source))
 
   // Suggested start for a fresh row / empty start cell: the latest entry's end,
   // else the current wall-clock time (so a new entry continues from the last one).
@@ -372,7 +377,7 @@ export default function Tracking() {
     // Relation columns read as chips (matching the admin grid), not free text.
     const field = FIELD_BY_KEY.get(colKey)
     if (field !== undefined && (field.type === 'select' || field.type === 'multiselect')) {
-      return <ReadonlyChips values={chipValues(num((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey]))} options={fieldSelectOptions(field, optionLookup)} />
+      return <ReadonlyChips values={chipValues(num((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey]))} options={fieldSelectOptions(field, readOptionLookup)} />
     }
 
     return displayCell(entry, colKey)
@@ -679,6 +684,11 @@ export default function Tracking() {
                                     </>
                                   }
                                 >
+                                  {/* Ghost holds the column width so the overlaying single-select
+                                      editor can't re-flow the table (multi-select wraps in flow). */}
+                                  <Show when={fieldType === 'select'}>
+                                    <span class="inline-ghost" aria-hidden="true">{cellContent(entry, col.key)}</span>
+                                  </Show>
                                   <ChipSelect
                                     field={FIELD_BY_KEY.get(col.key)!}
                                     label={col.label()}

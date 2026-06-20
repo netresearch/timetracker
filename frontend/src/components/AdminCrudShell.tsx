@@ -572,6 +572,11 @@ export function AdminCrudShell(props: {
                                   </>
                                 }
                               >
+                                {/* Ghost holds the column width so the overlaying single-select
+                                    editor can't re-flow the table (multi-select wraps in flow). */}
+                                <Show when={fieldType === 'select'}>
+                                  <span class="inline-ghost" aria-hidden="true"><ReadonlyChips values={chipValues(editor.overlayRow(row)[col.key])} options={fieldSelectOptions(fieldFor(col.key)!, props.options)} /></span>
+                                </Show>
                                 <ChipSelect
                                   field={fieldFor(col.key)!}
                                   label={col.label()}

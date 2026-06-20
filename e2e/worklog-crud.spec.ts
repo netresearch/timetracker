@@ -92,17 +92,32 @@ test.describe('Worklog CRUD', () => {
     await expect(page.getByRole('link', { name: /Export CSV|CSV-Export/i })).toHaveAttribute('href', '/export/35');
   });
 
-  test('a relation cell edits via a filterable combobox and resolves to a chip', async ({ page }) => {
+  test('a relation cell edits via a filterable combobox, without reflow, and Escape cancels', async ({ page }) => {
     const stamp = await createEntry(page);
-    // Read mode: the customer cell renders its value as a chip (not free text).
+    // Read mode: the customer cell renders its value as a single chip (not free text).
     const cell = rowByStamp(page, stamp).locator('td[data-col-key="customer"]');
     await expect(cell.locator('.inline-tags .tag')).toHaveCount(1);
+    const original = ((await cell.locator('.inline-tags .tag').textContent()) ?? '').trim();
+    const before = await cell.boundingBox();
 
     // Edit mode: a combobox opens with a filter input and an option list.
     await cell.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('td[data-inline-editing] .combobox-input')).toBeVisible();
     await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
+
+    // The single-select editor overlays the cell — opening it must not widen the
+    // column (the no-reflow contract the native-select editor used to uphold).
+    const during = await cell.boundingBox();
+    expect(Math.abs(during!.width - before!.width)).toBeLessThanOrEqual(1);
+
+    // Escape cancels: the editor closes, the chip is unchanged, and nothing is saved.
+    let saveFired = false;
+    page.on('request', (r) => { if (isSave(r)) saveFired = true; });
     await page.keyboard.press('Escape');
+    await expect(page.locator('td[data-inline-editing]')).toHaveCount(0);
+    await expect(cell.locator('.inline-tags .tag')).toHaveCount(1);
+    await expect(cell.locator('.inline-tags .tag')).toHaveText(original);
+    expect(saveFired).toBe(false);
   });
 });
