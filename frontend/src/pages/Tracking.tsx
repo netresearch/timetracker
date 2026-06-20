@@ -377,7 +377,7 @@ export default function Tracking() {
     // Relation columns read as chips (matching the admin grid), not free text.
     const field = FIELD_BY_KEY.get(colKey)
     if (field !== undefined && (field.type === 'select' || field.type === 'multiselect')) {
-      return <ReadonlyChips values={chipValues(num((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey]))} options={fieldSelectOptions(field, readOptionLookup)} />
+      return <ReadonlyChips values={chipValues((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey])} options={fieldSelectOptions(field, readOptionLookup)} />
     }
 
     return displayCell(entry, colKey)
