@@ -43,11 +43,25 @@ describe('admin entity descriptors', () => {
     expect(byKey('contracts').toForm(null)).toMatchObject({ hours_1: 8, hours_5: 8, hours_6: 0, hours_0: 0 })
   })
 
-  it('boolean columns render ✓/—', () => {
+  it('boolean columns render ✓/— as the sort key', () => {
     const active = col(byKey('customers'), 'active')
     expect(active.render?.({ active: true }, noOptions)).toBe('✓')
     expect(active.render?.({ active: false }, noOptions)).toBe('—')
     expect(active.align).toBe('center')
+  })
+
+  // The `render` above is only the (hidden) sort key; `boolean: true` is what makes
+  // the cell paint the BoolDot. Every boolean-backed column must set it, or it
+  // renders the raw ✓/— text instead of the dot (inconsistent with active/global).
+  it.each([
+    ['customers', 'active'],
+    ['customers', 'global'],
+    ['projects', 'active'],
+    ['projects', 'global'],
+    ['ticketsystems', 'bookTime'],
+    ['activities', 'needsTicket'],
+  ])('%s.%s is a boolean (dot) column', (entityKey, colKey) => {
+    expect(col(byKey(entityKey), colKey).boolean).toBe(true)
   })
 
   it('relation columns resolve id→label, fall back to the id, and blank on 0', () => {

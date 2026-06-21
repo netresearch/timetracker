@@ -268,7 +268,7 @@ export function adminEntities(): EntityDescriptor[] {
       columns: [
         { key: 'name', label: () => m.admin_f_name() },
         { key: 'type', label: () => m.admin_f_type() },
-        { key: 'bookTime', label: () => m.admin_f_book_time(), render: (row) => mark(pick(row, 'bookTime', 'book_time')), align: 'center' },
+        { key: 'bookTime', label: () => m.admin_f_book_time(), render: (row) => mark(pick(row, 'bookTime', 'book_time')), align: 'center', boolean: true },
         { key: 'url', label: () => m.admin_f_url() },
       ],
       fields: [
@@ -313,7 +313,7 @@ export function adminEntities(): EntityDescriptor[] {
       deleteEndpoint: '/activity/delete',
       columns: [
         { key: 'name', label: () => m.admin_f_name() },
-        { key: 'needsTicket', label: () => m.admin_f_needs_ticket(), render: (row) => mark(pick(row, 'needsTicket', 'needs_ticket')), align: 'center' },
+        { key: 'needsTicket', label: () => m.admin_f_needs_ticket(), render: (row) => mark(pick(row, 'needsTicket', 'needs_ticket')), align: 'center', boolean: true },
         { key: 'factor', label: () => m.admin_f_factor(), align: 'right' },
       ],
       fields: [
