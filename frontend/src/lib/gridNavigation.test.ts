@@ -87,6 +87,72 @@ describe('enableGridNavigation', () => {
     expect((document.activeElement as HTMLElement).closest('tr')?.querySelector('td')?.textContent).toBe('Beta')
   })
 
+  it('skips a .row-error row in vertical nav, keeping the column', () => {
+    grid.cleanup()
+    document.body.innerHTML = `
+      <table class="data-table"><tbody>
+        <tr><td data-col-key="a">A1</td><td data-col-key="b">B1</td></tr>
+        <tr class="row-error"><td colspan="2">save failed</td></tr>
+        <tr><td data-col-key="a">A2</td><td data-col-key="b">B2</td></tr>
+      </tbody></table>`
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table)
+    const b1 = table.tBodies[0]!.rows[0]!.cells[1]!
+    b1.focus()
+    key(b1, 'ArrowDown')
+    // Lands on B2 (same column), NOT the 1-cell error row.
+    expect(document.activeElement).toBe(table.tBodies[0]!.rows[2]!.cells[1])
+    key(document.activeElement!, 'ArrowUp')
+    expect(document.activeElement).toBe(b1)
+    cleanup()
+  })
+
+  it('does not move onto a trailing .row-error row at the bottom edge', () => {
+    grid.cleanup()
+    document.body.innerHTML = `
+      <table class="data-table"><tbody>
+        <tr><td data-col-key="a">A1</td></tr>
+        <tr class="row-error"><td>save failed</td></tr>
+      </tbody></table>`
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table)
+    const a1 = table.tBodies[0]!.rows[0]!.cells[0]!
+    a1.focus()
+    key(a1, 'ArrowDown') // only an error row below → stay put, don't clamp onto it
+    expect(document.activeElement).toBe(a1)
+    cleanup()
+  })
+
+  it('Ctrl+C copies the focused cell text; paste seeds the editor (onActivate type)', () => {
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><tbody><tr><td data-col-key="a" data-row-id="1">Gamma</td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const onActivate = vi.fn(() => true)
+    const cleanup = enableGridNavigation(table, { onActivate })
+    const cell = table.querySelector('td') as HTMLElement
+    cell.focus()
+
+    // jsdom has no DataTransfer — stub clipboardData on a plain event.
+    const clip = (type: string, text = ''): Event => {
+      const store: Record<string, string> = { 'text/plain': text }
+      const event = new Event(type, { bubbles: true, cancelable: true })
+      Object.defineProperty(event, 'clipboardData', {
+        value: { getData: (t: string) => store[t] ?? '', setData: (t: string, v: string) => { store[t] = v } },
+      })
+
+      return event
+    }
+
+    const copyEvent = clip('copy')
+    cell.dispatchEvent(copyEvent)
+    expect((copyEvent as unknown as { clipboardData: DataTransfer }).clipboardData.getData('text/plain')).toBe('Gamma')
+    expect(copyEvent.defaultPrevented).toBe(true)
+
+    cell.dispatchEvent(clip('paste', 'hello world'))
+    expect(onActivate).toHaveBeenCalledWith(cell, 'type', 'hello world')
+    cleanup()
+  })
+
   it('PageDown jumps down a page, clamped to the last row', () => {
     const firstHeader = grid.table.querySelector('th') as HTMLElement
     firstHeader.focus()

@@ -214,9 +214,17 @@ export default function Tracking() {
   // mislabel another row's project chip while a customer is being edited.
   const readOptionLookup: OptionLookup = (source: OptionSource) => (source === 'projects' ? allProjectOptions() : optionLookup(source))
 
-  // Suggested start for a fresh row / empty start cell: the latest entry's end,
-  // else the current wall-clock time (so a new entry continues from the last one).
-  const suggestedStart = (): string => str((entries.data ?? [])[0]?.end) || nowHi()
+  // Suggested start for a fresh row / empty start cell: continue from the latest
+  // entry's end ONLY if that entry is from TODAY; otherwise a fresh day starts at
+  // the current wall-clock time, not yesterday's (or older) last end.
+  const suggestedStart = (): string => {
+    const latest = (entries.data ?? [])[0]
+    if (latest !== undefined && dmyToIso(str(latest.date)) === dmyToIso(todayDmy())) {
+      return str(latest.end) || nowHi()
+    }
+
+    return nowHi()
+  }
 
   // On commit: ticket → derive project/customer; customer change → clear a now-
   // mismatched project; start/end → normalize a terse time (1300 → 13:00) so the
