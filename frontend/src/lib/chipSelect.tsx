@@ -107,7 +107,7 @@ export function ChipSelect(props: {
     // The single-select input lives in the body-portalled popup; if it isn't ready
     // on the first tick, focus it on the next frame so typing starts immediately.
     if (document.activeElement !== inputEl) {
-      requestAnimationFrame(() => inputEl?.focus())
+      requestAnimationFrame(() => { if (inputEl?.isConnected) inputEl.focus() })
     }
   })
 
@@ -130,6 +130,7 @@ export function ChipSelect(props: {
       finish(getEnterBehavior())
     } else if (event.key === 'Backspace' && props.multiple && inputValue() === '' && selected().length > 0) {
       event.preventDefault()
+      event.stopPropagation() // don't let the grid/global shortcuts also see the Backspace
       setSelected(selected().slice(0, -1))
     }
   }
