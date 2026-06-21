@@ -105,7 +105,10 @@ function editCell(container: HTMLElement, colKey: string): HTMLInputElement {
   }
   cell.focus()
   fireEvent.keyDown(cell, { key: 'Enter' })
+  // The editor's input is in the cell (text / multi-select) or body-portalled in the
+  // combobox popup (single-select search field lives at the top of the dropdown).
   const control = cell.querySelector<HTMLInputElement>('input, select')
+    ?? document.querySelector<HTMLInputElement>('.combobox-input')
   if (control === null) {
     throw new Error(`no editor for ${colKey}`)
   }

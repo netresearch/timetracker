@@ -1,5 +1,5 @@
 import { Combobox, createListCollection } from '@ark-ui/solid/combobox'
-import { createMemo, createSignal, For, onMount, Show } from 'solid-js'
+import { createMemo, createSignal, For, type JSX, onMount, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
@@ -15,17 +15,19 @@ type Item = { value: string; label: string }
 const CLEAR_VALUE = '__clear__'
 
 /**
- * Filterable chip combobox for an inline relation cell — one component for single
- * (input + value, overlays the cell) and multi select (removable chips, in flow),
- * replacing the native-<select> editor and the hand-rolled InlineMultiSelect across
- * both grids. Built on Ark UI Combobox: type to filter, keyboard-navigable listbox.
+ * Filterable chip combobox for an inline relation cell, built on Ark UI Combobox.
+ *
+ * Two layouts that share all the logic:
+ * - MULTI: removable chips + a leading magnifier + the search input, all IN the
+ *   cell (admin cells are wide enough).
+ * - SINGLE: the cell stays compact — just the current value + a ▾ — and the search
+ *   field lives at the top of the (roomy, body-portalled) dropdown, so it is never
+ *   constrained by a narrow column. The current value is the checked list item.
  *
  * Boundary: Ark deals in string[] and our option values are *either* numeric ids
- * (relations) or strings (e.g. user `type`, `locale`). The selection is carried
- * verbatim as the option's string value and converted back to the field's payload
- * type only in coerced() — so a string-valued select round-trips as its string,
- * never as `Number('DEV')` → NaN. Every commit funnels through the controller's
- * onCommit so the grid's cascade / auto-save still fire.
+ * (relations) or strings (e.g. user `type`/`locale`); the selection is carried
+ * verbatim as the option's string value and converted to the field's payload type
+ * only in coerced() — so a string select round-trips as its string, never NaN.
  */
 export function ChipSelect(props: {
   field: FieldDef
@@ -36,9 +38,6 @@ export function ChipSelect(props: {
   onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay') => void
   onCancel: () => void
 }) {
-  // Selection is the list of selected option values, as strings (Ark's native
-  // shape). 0 / '' / null read as "nothing selected"; a numeric id is kept only
-  // when > 0 (0 is the relation "unset" sentinel — see chipValues()).
   const initialValues = (): string[] => {
     const raw = props.initial
     if (Array.isArray(raw)) {
@@ -66,9 +65,7 @@ export function ChipSelect(props: {
 
   const allItems = createMemo<Item[]>(() => fieldSelectOptions(props.field, props.options).map((option) => ({ value: String(option.value), label: option.label })))
   const labelOf = (value: string): string => allItems().find((item) => item.value === value)?.label ?? value
-  // Offer an explicit "none" only for an optional, numeric (relation) single select
-  // — the editor the native <select>'s empty <option> used to provide. String-valued
-  // selects (locale/type) always carry a value and are not cleared to ''.
+  // Offer an explicit "none" only for an optional, numeric (relation) single select.
   const showClear = (): boolean => !props.multiple && props.field.required !== true && props.field.stringValue !== true
   const filteredItems = createMemo<Item[]>(() => {
     const query = inputValue().trim().toLowerCase()
@@ -76,7 +73,6 @@ export function ChipSelect(props: {
 
     return showClear() && query === '' ? [{ value: CLEAR_VALUE, label: m.app_select_none() }, ...base] : base
   })
-  // Ark requires a collection; rebuild it from the filtered items (we filter, not zag).
   const collection = createMemo(() => createListCollection<Item>({ items: filteredItems(), itemToValue: (item) => item.value, itemToString: (item) => item.label }))
 
   const coerced = (): FormValues[string] => {
@@ -108,16 +104,62 @@ export function ChipSelect(props: {
 
   onMount(() => {
     inputEl?.focus()
+    // The single-select input lives in the body-portalled popup; if it isn't ready
+    // on the first tick, focus it on the next frame so typing starts immediately.
+    if (document.activeElement !== inputEl) {
+      requestAnimationFrame(() => { if (inputEl?.isConnected) inputEl.focus() })
+    }
   })
+
+  const onInputKeyDown = (event: KeyboardEvent): void => {
+    // The listbox owns Arrow/Enter while open; the cell owns Tab (always), Enter when
+    // the list is closed, and Backspace to drop the last chip when the filter is empty.
+    // Escape with the list open is handled in onOpenChange (zag consumes it first);
+    // this branch covers the closed list and environments where zag doesn't.
+    if (event.key === 'Tab') {
+      event.preventDefault()
+      event.stopPropagation()
+      finish(event.shiftKey ? 'left' : 'right')
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      event.stopPropagation()
+      cancel()
+    } else if (event.key === 'Enter' && !open()) {
+      event.preventDefault()
+      event.stopPropagation()
+      finish(getEnterBehavior())
+    } else if (event.key === 'Backspace' && props.multiple && inputValue() === '' && selected().length > 0) {
+      event.preventDefault()
+      event.stopPropagation() // don't let the grid/global shortcuts also see the Backspace
+      setSelected(selected().slice(0, -1))
+    }
+  }
+
+  const magnifier = (): JSX.Element => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <line x1="15.6" y1="15.6" x2="21" y2="21" />
+    </svg>
+  )
+
+  const searchInput = (): JSX.Element => (
+    <Combobox.Input
+      ref={(element) => { inputEl = element }}
+      class="combobox-input"
+      aria-label={props.label}
+      placeholder={props.multiple && selected().length === 0 ? m.app_type_to_add() : m.app_type_to_search()}
+      onKeyDown={onInputKeyDown}
+    />
+  )
 
   return (
     <div
       ref={(element) => { rootEl = element }}
       class={`inline-editor chip-select${props.multiple ? ' inline-tags' : ''}`}
       onFocusOut={() => {
-        // Commit only once focus has actually left the whole widget — including
-        // the body-portalled popup (data-chipselect-popup) — checked after focus
-        // settles, so moving into the listbox doesn't commit/close the editor.
+        // Commit once focus leaves the whole widget — including the body-portalled
+        // popup (data-chipselect-popup) — checked after focus settles so moving into
+        // the listbox/search doesn't commit/close the editor.
         // eslint-disable-next-line solid/reactivity -- deferred commit after focus settles
         queueMicrotask(() => {
           const active = document.activeElement
@@ -128,12 +170,19 @@ export function ChipSelect(props: {
         })
       }}
     >
+      {/* Multi: a leading magnifier in the cell. Single's search lives in the popup. */}
       <Show when={props.multiple}>
-        <span class="tag-list" role="list">
-          <For each={selected()}>
-            {(value) => (
-              <span class="tag" role="listitem">
-                <span class="tag-label">{labelOf(value)}</span>
+        <span class="combobox-search" aria-hidden="true">{magnifier()}</span>
+      </Show>
+
+      {/* Selection chips in the cell: multi = removable; single = the current value
+          (no ×) so the cell stays a compact value display. */}
+      <span class="tag-list" role="list">
+        <For each={selected()}>
+          {(value) => (
+            <span class="tag" role="listitem">
+              <span class="tag-label">{labelOf(value)}</span>
+              <Show when={props.multiple}>
                 <button
                   type="button"
                   class="tag-remove"
@@ -142,25 +191,24 @@ export function ChipSelect(props: {
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => { setSelected(selected().filter((current) => current !== value)); inputEl?.focus() }}
                 >×</button>
-              </span>
-            )}
-          </For>
-        </span>
-      </Show>
+              </Show>
+            </span>
+          )}
+        </For>
+      </span>
 
-      {/* Announce selection changes (add / remove / single replace) — Ark's own
-          live region only narrates the highlighted option during navigation. */}
+      {/* Announce selection changes — Ark's own live region only narrates the
+          highlighted option during navigation. */}
       <span class="visually-hidden" role="status" aria-live="polite">
         {selected().map(labelOf).join(', ')}
       </span>
 
       <Combobox.Root
+        class="chip-select-root"
         collection={collection()}
         multiple={props.multiple}
         value={selected()}
         onValueChange={(details) => {
-          // State only; single-select commit is driven by onSelect (which fires even
-          // when the same value is re-picked, where onValueChange would not).
           if (props.multiple) {
             setSelected(details.value)
           }
@@ -177,11 +225,10 @@ export function ChipSelect(props: {
         defaultOpen
         onOpenChange={(details) => {
           setOpen(details.open)
-          // A single Escape cancels the whole cell edit. zag consumes Escape on a
-          // document listener to close ITS list before any element-level handler
-          // runs, so we hook the close itself (reason 'escape-key') rather than the
-          // keydown. Other close reasons (item-select, interact-outside) must not
-          // cancel — those commit via onSelect / focus-out.
+          // A single Escape cancels the whole cell edit: zag consumes Escape on a
+          // document listener to close ITS list before any element-level handler runs,
+          // so we hook the close itself (reason 'escape-key'). Other close reasons
+          // (item-select, interact-outside) must not cancel.
           if (!details.open && details.reason === 'escape-key') {
             cancel()
           }
@@ -190,54 +237,38 @@ export function ChipSelect(props: {
         closeOnSelect={!props.multiple}
         allowCustomValue={false}
         inputBehavior="autohighlight"
-        positioning={{ sameWidth: true, gutter: 2, flip: true, fitViewport: true }}
+        // Multi tethers the popup to the (wide) cell; single lets the popup size to
+        // its own content so the search field is never bound to a narrow column.
+        positioning={{ sameWidth: props.multiple, gutter: 2, flip: true, fitViewport: true }}
         onInteractOutside={(event) => {
-          // Keep the popup open while focus/clicks stay within the editing cell.
           const target = event.target as Node | null
           if (target !== null && rootEl?.contains(target)) {
-            event.preventDefault()
+            event.preventDefault() // a click within the cell keeps editing
+          } else {
+            finish() // a genuine outside interaction commits (covers single's popup input)
           }
         }}
       >
         <Combobox.Label class="visually-hidden">{props.label}</Combobox.Label>
         <Combobox.Control class="combobox-control">
-          <Combobox.Input
-            ref={(element) => { inputEl = element }}
-            class="combobox-input"
-            aria-label={props.label}
-            placeholder={!props.multiple && selected().length > 0 ? labelOf(selected()[0]!) : ''}
-            onKeyDown={(event) => {
-              // The listbox owns Arrow/Enter while open; the cell owns Tab (always),
-              // Enter when the list is closed, and Backspace to drop the last chip when
-              // the filter input is empty. Escape cancels: when the list is open in a
-              // real browser zag consumes it first (handled in onOpenChange); this
-              // branch covers the closed list and environments where zag doesn't.
-              if (event.key === 'Tab') {
-                event.preventDefault()
-                event.stopPropagation()
-                finish(event.shiftKey ? 'left' : 'right')
-              } else if (event.key === 'Escape') {
-                event.preventDefault()
-                event.stopPropagation()
-                cancel()
-              } else if (event.key === 'Enter' && !open()) {
-                event.preventDefault()
-                event.stopPropagation()
-                finish(getEnterBehavior())
-              } else if (event.key === 'Backspace' && props.multiple && inputValue() === '' && selected().length > 0) {
-                event.preventDefault()
-                setSelected(selected().slice(0, -1))
-              }
-            }}
-          />
+          {/* Multi: the search input sits in the cell, next to the chips. */}
+          <Show when={props.multiple}>{searchInput()}</Show>
           <Combobox.Trigger class="combobox-trigger" tabindex="-1" aria-label={props.label}>▾</Combobox.Trigger>
         </Combobox.Control>
-        {/* Body-portal so the popup floats above the grid and is never clipped by
-            the .table-scroll overflow; data-chipselect-popup whitelists it in the
-            grid's focus-out logic so opening it doesn't save/close the row. */}
+        {/* Body-portal so the popup floats above the grid and is never clipped by the
+            .table-scroll overflow; data-chipselect-popup whitelists it in the grid's
+            focus-out logic so opening it doesn't save/close the row. */}
         <Portal>
           <Combobox.Positioner class="combobox-positioner" data-chipselect-popup>
             <Combobox.Content class="combobox-content">
+              {/* Single: a roomy, sticky search field at the TOP of the dropdown —
+                  not constrained by the narrow cell. */}
+              <Show when={!props.multiple}>
+                <div class="combobox-search-row">
+                  <span class="combobox-search" aria-hidden="true">{magnifier()}</span>
+                  {searchInput()}
+                </div>
+              </Show>
               <For each={filteredItems()}>
                 {(item) => (
                   <Combobox.Item item={item} class="combobox-item">
