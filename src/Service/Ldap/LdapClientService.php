@@ -33,8 +33,8 @@ use function strlen;
 
 class LdapClientService
 {
-    /** @var string LDAP host name or IP. */
-    protected $host = '192.168.1.2';
+    /** @var string LDAP host name or IP (always set from the ldap_host env via setHost() before use). */
+    protected $host = '';
 
     /** @var int LDAP host port. */
     protected $port = 389;
