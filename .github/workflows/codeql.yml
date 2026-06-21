@@ -9,13 +9,16 @@ on:
     - cron: '30 2 * * 1' # Weekly on Monday
 
 permissions:
-  security-events: write
   contents: read
 
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
     strategy:
       fail-fast: false
       matrix:
