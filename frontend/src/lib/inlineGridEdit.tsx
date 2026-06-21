@@ -311,6 +311,29 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     return false
   }
 
+  // Tab / Shift+Tab from an editor: move horizontally to the next INLINE-EDITABLE
+  // cell and open its editor — so Tab walks across the row staying in edit mode
+  // (the classic-grid behaviour), skipping non-editable cells (duration, actions)
+  // and stopping at the row edge. Reads document.activeElement because the grid's
+  // move handle is the single writer of focus + the roving tabindex.
+  function moveAndEdit(direction: 'left' | 'right'): void {
+    for (let i = 0; i < 30; i++) {
+      const before = document.activeElement
+      moveHandle?.move(direction)
+      const cell = document.activeElement
+      if (!(cell instanceof HTMLElement) || cell === before) {
+        return // clamped at the row edge — no editable cell that way
+      }
+      const colKey = cell.getAttribute('data-col-key')
+      const id = Number(cell.getAttribute('data-row-id'))
+      if (id && colKey !== null && config.isInlineEditable(colKey)) {
+        beginEdit(id, colKey)
+
+        return
+      }
+    }
+  }
+
   function commitCell(value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay'): void {
     const cell = editCell()
     if (cell === null) {
@@ -330,6 +353,8 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     // writer); landing on a different row triggers that row's save via focusin.
     if (direction === 'stay') {
       moveHandle?.focusActive()
+    } else if (direction === 'left' || direction === 'right') {
+      moveAndEdit(direction)
     } else if (direction) {
       moveHandle?.move(direction)
     }

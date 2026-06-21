@@ -201,14 +201,28 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     }
   }
 
+  // The next row index in a vertical direction, skipping non-data (.row-error)
+  // rows — so ArrowUp/Down (and an editor's commit-move) step entry-to-entry and
+  // never land on a 1-cell error row, which would collapse the cursor's column to 0.
+  function verticalStep(fromRow: number, dir: -1 | 1): number {
+    let next = fromRow + dir
+    while (table.rows[next]?.classList.contains('row-error')) {
+      next += dir
+    }
+
+    return next
+  }
+
   // Move the active cell one step, reusing focusAt's clamping. Unlike the
   // ArrowUp handler this never calls onExit — an inline editor committing with
   // Enter on the top data row should stay in the grid, not leave it.
   function focusRelative(direction: 'up' | 'down' | 'left' | 'right'): void {
     const [r, c] = currentPos()
-    const dr = direction === 'up' ? -1 : direction === 'down' ? 1 : 0
-    const dc = direction === 'left' ? -1 : direction === 'right' ? 1 : 0
-    focusAt(r + dr, c + dc)
+    if (direction === 'up' || direction === 'down') {
+      focusAt(verticalStep(r, direction === 'up' ? -1 : 1), c)
+    } else {
+      focusAt(r, c + (direction === 'left' ? -1 : 1))
+    }
   }
 
   function sync(): void {
@@ -304,13 +318,13 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
         focusAt(r, c - 1)
         break
       case 'ArrowDown':
-        focusAt(r + 1, c)
+        focusAt(verticalStep(r, 1), c)
         break
       case 'ArrowUp':
         if (r === 0 && options.onExit) {
           options.onExit('up')
         } else {
-          focusAt(r - 1, c)
+          focusAt(verticalStep(r, -1), c)
         }
         break
       case 'PageDown': {
@@ -400,8 +414,42 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     }
   }
 
+  // Spreadsheet-style clipboard. With a cell (not one of its controls) focused
+  // and nothing selected, Ctrl/Cmd+C copies the cell's text and Ctrl/Cmd+V pastes
+  // into it by opening the editor seeded with the pasted text (like typing the
+  // string). The inline editor owns the clipboard while a cell is being edited.
+  function focusedCell(): Cell | null {
+    const el = document.activeElement
+    if (el instanceof HTMLElement && (el.tagName === 'TD' || el.tagName === 'TH') && table.contains(el) && !el.hasAttribute('data-inline-editing')) {
+      return el as Cell
+    }
+
+    return null
+  }
+
+  function onCopy(event: ClipboardEvent): void {
+    if ((window.getSelection()?.toString() ?? '') !== '') {
+      return // a real text selection copies normally
+    }
+    const cell = focusedCell()
+    if (cell !== null) {
+      event.clipboardData?.setData('text/plain', (cell.textContent ?? '').trim())
+      event.preventDefault()
+    }
+  }
+
+  function onPaste(event: ClipboardEvent): void {
+    const cell = focusedCell()
+    const text = event.clipboardData?.getData('text/plain') ?? ''
+    if (cell !== null && text !== '' && options.onActivate?.(cell, 'type', text) === true) {
+      event.preventDefault()
+    }
+  }
+
   table.addEventListener('keydown', onKeydown)
   table.addEventListener('focusin', onFocusin)
+  table.addEventListener('copy', onCopy)
+  table.addEventListener('paste', onPaste)
 
   // Hand the inline-edit owner a roving handle so it can move the active cell
   // (after committing an edit) through setActive — the single writer of the
@@ -421,6 +469,8 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     dispose: () => {
       table.removeEventListener('keydown', onKeydown)
       table.removeEventListener('focusin', onFocusin)
+      table.removeEventListener('copy', onCopy)
+      table.removeEventListener('paste', onPaste)
       options.moveRef?.(null)
     },
   }
