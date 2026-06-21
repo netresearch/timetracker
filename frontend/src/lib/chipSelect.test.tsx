@@ -72,8 +72,8 @@ describe('ChipSelect (jsdom)', () => {
     render(() => <ChipSelect field={typeField} label="Type" initial="DEV" options={noOptions} multiple={false} onCommit={onCommit} onCancel={vi.fn()} />)
     await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
 
-    // The existing value is shown (as the input's placeholder), not an empty editor.
-    expect(screen.getByRole('combobox')).toHaveAttribute('placeholder', 'DEV')
+    // The existing value is preserved and shown as the checked option (not lost to NaN).
+    expect(screen.getByRole('option', { name: 'DEV' })).toHaveAttribute('data-state', 'checked')
     fireEvent.click(screen.getByRole('option', { name: 'PL' }))
     await waitFor(() => expect(onCommit).toHaveBeenCalledWith('PL', expect.anything()))
   })

@@ -103,7 +103,7 @@ test.describe('Worklog CRUD', () => {
     // Edit mode: a combobox opens with a filter input and an option list.
     await cell.focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('td[data-inline-editing] .combobox-input')).toBeVisible();
+    await expect(page.locator('.combobox-input')).toBeVisible();
     await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
 
     // The single-select editor overlays the cell — opening it must not widen the

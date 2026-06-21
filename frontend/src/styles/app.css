@@ -1242,38 +1242,92 @@ kbd {
   gap: 0.25rem;
 }
 
-/* ---- Ark Combobox inline chip editor (single + multi) ---- */
+/* ---- Ark Combobox inline chip editor (single + multi) ----
+   In edit mode the cell LIFTS into an obviously typeable search field: a surface
+   fill + an accent inner border + a focus ring, a leading magnifier, an italic
+   "type to search" placeholder and an accent caret. The field reads STRONGER than
+   the read-mode chips (fixing the inverted hierarchy) and the three converging cues
+   (magnifier + placeholder + caret) announce that you can type. */
 .chip-select {
   width: 100%;
+}
+
+/* Root is display:contents so the magnifier, chips and input share ONE flex row
+   (the field) rather than the input sitting in its own separate box. */
+.chip-select-root {
+  display: contents;
+}
+
+/* MULTI: the cell IS the search field — surface fill + accent border + focus ring,
+   with the magnifier, chips and input on one (wrapping) row. */
+.data-table td[data-inline-editing] .chip-select.inline-tags {
+  align-items: center;
+  background: var(--color-surface);
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1.5px var(--color-accent);
+  column-gap: 0.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.1rem 0.35rem;
+  row-gap: 0.2rem;
+}
+
+.data-table td[data-inline-editing] .chip-select.inline-tags:focus-within {
+  box-shadow:
+    inset 0 0 0 1.5px var(--color-accent),
+    0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+/* SINGLE: the cell stays a compact value + ▾ — the search field is at the top of the
+   (roomy) popup, so a narrow column never constrains it. */
+.data-table td[data-inline-editing] .chip-select:not(.inline-tags) {
+  align-items: center;
+  column-gap: 0.3rem;
+  display: flex;
+}
+
+.combobox-search {
+  align-items: center;
+  color: var(--color-accent);
+  display: inline-flex;
+  flex: none;
 }
 
 .combobox-control {
   align-items: center;
   display: flex;
   flex: 1;
-  /* min-width:0 so a single-select overlay (absolute, clamped to the cell width)
-     can't force the cell wider than its read-mode content. */
-  min-width: 0;
+  min-width: 4ch;
 }
 
 .combobox-input {
   background: transparent;
   border: 0;
-  color: inherit;
+  caret-color: var(--color-accent);
+  color: var(--color-text);
   flex: 1;
   font: inherit;
-  min-width: 0;
+  min-width: 4ch;
   outline: 0;
   padding: 0;
+}
+
+/* The placeholder is now an instruction ("Tippen zum Suchen…") — make it read as a
+   hint, not a value. */
+.combobox-input::placeholder {
+  color: var(--color-text-muted);
+  font-style: italic;
+  opacity: 1;
 }
 
 .combobox-trigger {
   background: none;
   border: 0;
-  color: var(--color-text-muted);
+  color: var(--color-accent);
   cursor: pointer;
-  font-size: 0.7rem;
-  padding: 0 0.2rem;
+  flex: none;
+  font-size: 0.8rem;
+  padding: 0 0.15rem;
 }
 
 .combobox-positioner {
@@ -1291,9 +1345,28 @@ kbd {
   /* Clamp the content (min-width 11rem can exceed a narrow cell's sameWidth
      positioner) so it never runs off the viewport's right edge. */
   max-width: min(90vw, 18rem);
-  min-width: 11rem;
+  min-width: 14rem;
   overflow-y: auto;
   padding: 0.2rem;
+}
+
+/* SINGLE: a roomy search field pinned to the top of the dropdown — magnifier +
+   input, sticky so it stays while options scroll, bled to the popup's edges. */
+.combobox-search-row {
+  align-items: center;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  gap: 0.45rem;
+  margin: -0.2rem -0.2rem 0.25rem;
+  padding: 0.5rem 0.6rem;
+  position: sticky;
+  top: -0.2rem;
+  z-index: 1;
+}
+
+.combobox-search-row .combobox-input {
+  font-size: 0.95rem;
 }
 
 .combobox-item {
@@ -1325,7 +1398,8 @@ kbd {
   padding: 0.5rem;
 }
 
-.inline-tags .tag {
+.chip-select .tag,
+.inline-tags.is-readonly .tag {
   align-items: center;
   background: var(--color-accent-soft);
   border: 1px solid var(--color-accent);
@@ -1337,7 +1411,7 @@ kbd {
 }
 
 /* Chips are roving-tabindex focusable in the editor (Left/Right + Delete). */
-.inline-tags .tag:focus-visible {
+.chip-select .tag:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 1px;
 }
@@ -1355,7 +1429,7 @@ kbd {
   padding: 0 0.4rem;
 }
 
-.inline-tags .tag-remove {
+.chip-select .tag-remove {
   align-items: center;
   background: none;
   border: 0;

@@ -73,7 +73,7 @@ test.describe('Admin inline cell editing', () => {
 
     // The teams column opens an inline filterable combobox (a text input + an
     // option list), with the selection rendered as chips — not the modal.
-    await expect(page.locator('td[data-inline-editing] .combobox-input')).toBeVisible();
+    await expect(page.locator('.combobox-input')).toBeVisible();
     await expect(page.locator('[role="dialog"]')).toHaveCount(0);
     await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
 

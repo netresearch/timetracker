@@ -22,7 +22,7 @@ export async function pickFirstOption(page: Page, row: Locator, colKey: string, 
     await row.locator(`td[data-col-key="${colKey}"]`).focus();
     await page.keyboard.press('Enter');
   }
-  await expect(page.locator('td[data-inline-editing] .combobox-input').first()).toBeVisible();
+  await expect(page.locator('.combobox-input').first()).toBeVisible();
   const option = page.locator('.combobox-content .combobox-item').first();
   await expect(option).toBeVisible({ timeout: 8000 });
   await option.click();
