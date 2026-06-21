@@ -209,6 +209,11 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     while (table.rows[next]?.classList.contains('row-error')) {
       next += dir
     }
+    // Ran off the end (only error rows that way) → don't move, so we never clamp
+    // back onto a trailing error row and collapse the column.
+    if (!table.rows[next]) {
+      return fromRow
+    }
 
     return next
   }
@@ -432,8 +437,8 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       return // a real text selection copies normally
     }
     const cell = focusedCell()
-    if (cell !== null) {
-      event.clipboardData?.setData('text/plain', (cell.textContent ?? '').trim())
+    if (cell !== null && event.clipboardData) {
+      event.clipboardData.setData('text/plain', (cell.textContent ?? '').trim())
       event.preventDefault()
     }
   }

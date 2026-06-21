@@ -107,6 +107,22 @@ describe('enableGridNavigation', () => {
     cleanup()
   })
 
+  it('does not move onto a trailing .row-error row at the bottom edge', () => {
+    grid.cleanup()
+    document.body.innerHTML = `
+      <table class="data-table"><tbody>
+        <tr><td data-col-key="a">A1</td></tr>
+        <tr class="row-error"><td>save failed</td></tr>
+      </tbody></table>`
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table)
+    const a1 = table.tBodies[0]!.rows[0]!.cells[0]!
+    a1.focus()
+    key(a1, 'ArrowDown') // only an error row below → stay put, don't clamp onto it
+    expect(document.activeElement).toBe(a1)
+    cleanup()
+  })
+
   it('Ctrl+C copies the focused cell text; paste seeds the editor (onActivate type)', () => {
     grid.cleanup()
     document.body.innerHTML = '<table class="data-table"><tbody><tr><td data-col-key="a" data-row-id="1">Gamma</td></tr></tbody></table>'
