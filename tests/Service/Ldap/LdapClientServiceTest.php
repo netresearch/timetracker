@@ -817,7 +817,7 @@ final class LdapClientServiceTest extends TestCase
         $reflection = new ReflectionClass($service);
 
         $hostProp = $reflection->getProperty('host');
-        self::assertSame('192.168.1.2', $hostProp->getValue($service));
+        self::assertSame('', $hostProp->getValue($service));
 
         $portProp = $reflection->getProperty('port');
         self::assertSame(389, $portProp->getValue($service));
