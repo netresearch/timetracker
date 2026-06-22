@@ -79,7 +79,7 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await expect(page.locator('tr.tracking-row')).toHaveCount(before);
   });
 
-  test('Enter guides a new entry to the next required field (customer → project → activity → end)', async ({ page }) => {
+  test('Enter guides a new entry to the next required field (customer → project → activity)', async ({ page }) => {
     await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
     const row = page.locator('tr.tracking-row.is-new').first();
     await expect(row).toBeVisible();
@@ -89,13 +89,13 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
       await page.keyboard.press('ArrowDown'); // highlight an option
       await page.keyboard.press('Enter'); // Enter-driven pick guides to the next required field
     };
+    // customer/project/activity are always required-and-empty for a new row, so the
+    // guide jumps through them. (date/start/end are pre-filled by suggest-time +
+    // the end-prefill minimum, so they're skipped — the guide only targets empties.)
     await arrowEnter();
     await expect(row.locator('td[data-col-key="project"][data-inline-editing]')).toBeVisible();
     await arrowEnter();
     await expect(row.locator('td[data-col-key="activity"][data-inline-editing]')).toBeVisible();
-    await arrowEnter();
-    // start is pre-filled by suggest-time, so the guide skips it straight to end.
-    await expect(row.locator('td[data-col-key="end"][data-inline-editing]')).toBeVisible();
   });
 
   test('Enter committing a select editor keeps focus on a grid cell (no focus loss)', async ({ page }) => {
