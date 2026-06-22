@@ -128,6 +128,10 @@ CREATE TABLE `ticket_systems` (
   `ticketurl` VARCHAR(255) NOT NULL,
   `oauth_consumer_key` VARCHAR(100) NULL,
   `oauth_consumer_secret` VARCHAR(4000) NULL,
+  `deployment_type` VARCHAR(15) NOT NULL DEFAULT 'SERVER',
+  `oauth2_client_id` VARCHAR(255) NULL,
+  `oauth2_client_secret` VARCHAR(255) NULL,
+  `cloud_id` VARCHAR(64) NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
@@ -286,7 +290,9 @@ CREATE TABLE `users_ticket_systems` (
   `user_id` int(11) NOT NULL,
   `ticket_system_id` int(11) NOT NULL,
   `accesstoken` varchar(50) NOT NULL,
-  `tokensecret` varchar(50) NOT NULL,
+  `tokensecret` TEXT NULL,
+  `refresh_token` TEXT NULL,
+  `token_expires_at` DATETIME NULL,
   `avoidconnection` TINYINT(1) unsigned DEFAULT '0' NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_user_id_idx` (`user_id`),

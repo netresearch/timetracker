@@ -106,7 +106,7 @@ final class SaveTicketSystemAction extends BaseController
     }
 
     /**
-     * @return array{password: string, publicKey: string, privateKey: string, oauthConsumerKey: ?string, oauthConsumerSecret: ?string}
+     * @return array{password: string, publicKey: string, privateKey: string, oauthConsumerKey: ?string, oauthConsumerSecret: ?string, oauth2ClientSecret: ?string}
      */
     private function captureStoredSecrets(TicketSystem $ticketSystem): array
     {
@@ -116,6 +116,7 @@ final class SaveTicketSystemAction extends BaseController
             'privateKey' => $ticketSystem->getPrivateKey(),
             'oauthConsumerKey' => $ticketSystem->getOauthConsumerKey(),
             'oauthConsumerSecret' => $ticketSystem->getOauthConsumerSecret(),
+            'oauth2ClientSecret' => $ticketSystem->getOauth2ClientSecret(),
         ];
     }
 
@@ -123,7 +124,7 @@ final class SaveTicketSystemAction extends BaseController
      * Restore any credential the secret-free edit form submitted blank to its
      * stored value, so a blank field means "keep" rather than "wipe".
      *
-     * @param array{password: string, publicKey: string, privateKey: string, oauthConsumerKey: ?string, oauthConsumerSecret: ?string} $storedSecrets
+     * @param array{password: string, publicKey: string, privateKey: string, oauthConsumerKey: ?string, oauthConsumerSecret: ?string, oauth2ClientSecret: ?string} $storedSecrets
      */
     private function restoreBlankSecrets(TicketSystem $ticketSystem, TicketSystemSaveDto $dto, array $storedSecrets): void
     {
@@ -145,6 +146,10 @@ final class SaveTicketSystemAction extends BaseController
 
         if (null === $dto->oauthConsumerSecret || '' === $dto->oauthConsumerSecret) {
             $ticketSystem->setOauthConsumerSecret($storedSecrets['oauthConsumerSecret']);
+        }
+
+        if (null === $dto->oauth2ClientSecret || '' === $dto->oauth2ClientSecret) {
+            $ticketSystem->setOauth2ClientSecret($storedSecrets['oauth2ClientSecret']);
         }
     }
 }

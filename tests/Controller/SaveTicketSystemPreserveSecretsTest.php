@@ -34,6 +34,7 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
         'privateKey' => 'stored-private-key',
         'oauthConsumerKey' => 'stored-consumer-key',
         'oauthConsumerSecret' => 'stored-consumer-secret',
+        'oauth2ClientSecret' => 'stored-oauth2-secret',
     ];
 
     private function seedSecrets(): void
@@ -50,6 +51,7 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
         $ticketSystem->setPrivateKey(self::SECRETS['privateKey']);
         $ticketSystem->setOauthConsumerKey(self::SECRETS['oauthConsumerKey']);
         $ticketSystem->setOauthConsumerSecret(self::SECRETS['oauthConsumerSecret']);
+        $ticketSystem->setOauth2ClientSecret(self::SECRETS['oauth2ClientSecret']);
 
         $em->persist($ticketSystem);
         $em->flush();
@@ -96,6 +98,7 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
         self::assertSame(self::SECRETS['privateKey'], $ticketSystem->getPrivateKey());
         self::assertSame(self::SECRETS['oauthConsumerKey'], $ticketSystem->getOauthConsumerKey());
         self::assertSame(self::SECRETS['oauthConsumerSecret'], $ticketSystem->getOauthConsumerSecret());
+        self::assertSame(self::SECRETS['oauth2ClientSecret'], $ticketSystem->getOauth2ClientSecret());
     }
 
     public function testNonBlankCredentialsAreUpdated(): void
@@ -109,6 +112,7 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
             'type' => 'JIRA',
             'password' => 'rotated-password',
             'oauthConsumerSecret' => 'rotated-secret',
+            'oauth2ClientSecret' => 'rotated-oauth2-secret',
         ], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
 
@@ -124,6 +128,37 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
         // Supplied credentials overwrite; untouched ones keep their stored value.
         self::assertSame('rotated-password', $ticketSystem->getPassword());
         self::assertSame('rotated-secret', $ticketSystem->getOauthConsumerSecret());
+        self::assertSame('rotated-oauth2-secret', $ticketSystem->getOauth2ClientSecret());
         self::assertSame(self::SECRETS['privateKey'], $ticketSystem->getPrivateKey());
+    }
+
+    public function testDeploymentTypeAndOauth2ClientIdMapOntoEntity(): void
+    {
+        $this->logInSession('unittest');
+        $this->seedSecrets();
+
+        // The non-secret Cloud fields flow through the ObjectMapper onto the
+        // entity. oauth2ClientId is non-secret, so it is sent (and updated)
+        // normally; deploymentType discriminates the transport.
+        $this->client->request(Request::METHOD_POST, '/ticketsystem/save', [
+            'id' => 1,
+            'name' => 'testSystem',
+            'type' => 'JIRA',
+            'deploymentType' => 'CLOUD',
+            'oauth2ClientId' => 'mapped-client-id',
+        ], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(200);
+
+        $container = $this->client->getContainer();
+        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
+        $doctrine = $container->get('doctrine');
+        $em = $doctrine->getManager();
+        $em->clear();
+
+        $ticketSystem = $em->getRepository(TicketSystem::class)->find(1);
+        self::assertInstanceOf(TicketSystem::class, $ticketSystem);
+
+        self::assertSame('CLOUD', $ticketSystem->getDeploymentTypeRaw());
+        self::assertSame('mapped-client-id', $ticketSystem->getOauth2ClientId());
     }
 }

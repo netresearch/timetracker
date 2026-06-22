@@ -34,6 +34,9 @@ final readonly class TicketSystemSaveDto
         public string $ticketUrl = '',
         public ?string $oauthConsumerKey = null,
         public ?string $oauthConsumerSecret = null,
+        public string $deploymentType = 'SERVER',
+        public ?string $oauth2ClientId = null,
+        public ?string $oauth2ClientSecret = null,
     ) {
     }
 }

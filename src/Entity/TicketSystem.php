@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Enum\DeploymentType;
 use App\Enum\TicketSystemType;
 use App\Model\Base;
 use App\Repository\TicketSystemRepository;
@@ -85,6 +86,26 @@ class TicketSystem extends Base
     protected ?string $oauthConsumerSecret = null;
 
     /**
+     * Deployment discriminator (SERVER = OAuth 1.0a Server/DC, CLOUD = OAuth 2.0
+     * 3LO). Stored as string to handle unknown/user-entered values gracefully.
+     */
+    #[ORM\Column(name: 'deployment_type', type: 'string', length: 15, options: ['default' => 'SERVER'])]
+    protected string $deploymentType = 'SERVER';
+
+    #[ORM\Column(name: 'oauth2_client_id', type: 'string', length: 255, nullable: true)]
+    protected ?string $oauth2ClientId = null;
+
+    #[ORM\Column(name: 'oauth2_client_secret', type: 'string', length: 255, nullable: true)]
+    protected ?string $oauth2ClientSecret = null;
+
+    /**
+     * Atlassian cloud id, resolved once at first auth via accessible-resources.
+     * Server-side only (never admin-entered); non-secret.
+     */
+    #[ORM\Column(name: 'cloud_id', type: 'string', length: 64, nullable: true)]
+    protected ?string $cloudId = null;
+
+    /**
      * Credential fields that must never leave the server. They are needed only
      * server-side, so both the list endpoint (GetTicketSystemsAction) and the
      * save response (SaveTicketSystemAction) strip them. Base::toArray() emits
@@ -99,6 +120,7 @@ class TicketSystem extends Base
         'privateKey', 'private_key',
         'oauthConsumerKey', 'oauth_consumer_key',
         'oauthConsumerSecret', 'oauth_consumer_secret',
+        'oauth2ClientSecret', 'oauth2_client_secret',
     ];
 
     /**
@@ -327,6 +349,79 @@ class TicketSystem extends Base
     public function setOauthConsumerSecret(?string $oauthConsumerSecret): static
     {
         $this->oauthConsumerSecret = $oauthConsumerSecret;
+
+        return $this;
+    }
+
+    /**
+     * Set deployment type.
+     *
+     * @return $this
+     */
+    public function setDeploymentType(DeploymentType|string $deploymentType): static
+    {
+        $this->deploymentType = $deploymentType instanceof DeploymentType ? $deploymentType->value : $deploymentType;
+
+        return $this;
+    }
+
+    /**
+     * Get deployment type as enum (unknown values fallback to SERVER).
+     */
+    public function getDeploymentType(): DeploymentType
+    {
+        return DeploymentType::tryFrom($this->deploymentType) ?? DeploymentType::SERVER;
+    }
+
+    /**
+     * Get raw deployment type string (for display/debugging unknown types).
+     */
+    public function getDeploymentTypeRaw(): string
+    {
+        return $this->deploymentType;
+    }
+
+    public function getOauth2ClientId(): ?string
+    {
+        return $this->oauth2ClientId;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setOauth2ClientId(?string $oauth2ClientId): static
+    {
+        $this->oauth2ClientId = $oauth2ClientId;
+
+        return $this;
+    }
+
+    public function getOauth2ClientSecret(): ?string
+    {
+        return $this->oauth2ClientSecret;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setOauth2ClientSecret(?string $oauth2ClientSecret): static
+    {
+        $this->oauth2ClientSecret = $oauth2ClientSecret;
+
+        return $this;
+    }
+
+    public function getCloudId(): ?string
+    {
+        return $this->cloudId;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setCloudId(?string $cloudId): static
+    {
+        $this->cloudId = $cloudId;
 
         return $this;
     }

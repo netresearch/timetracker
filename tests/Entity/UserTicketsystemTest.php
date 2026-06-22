@@ -12,6 +12,7 @@ namespace Tests\Entity;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\UserTicketsystem;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 
@@ -43,5 +44,34 @@ final class UserTicketsystemTest extends TestCase
 
         self::assertSame($ts, $userTicketsystem->getTicketSystem());
         self::assertSame($user, $userTicketsystem->getUser());
+    }
+
+    public function testRefreshTokenAndExpiryAreNullByDefault(): void
+    {
+        $userTicketsystem = new UserTicketsystem();
+
+        self::assertNull($userTicketsystem->getRefreshToken());
+        self::assertNull($userTicketsystem->getTokenExpiresAt());
+    }
+
+    public function testRefreshTokenAndExpiryGettersAndSetters(): void
+    {
+        $expiresAt = new DateTimeImmutable('2026-01-01 12:00:00');
+        $userTicketsystem = new UserTicketsystem();
+
+        $result = $userTicketsystem
+            ->setRefreshToken('rt-123')
+            ->setTokenExpiresAt($expiresAt);
+
+        self::assertSame($userTicketsystem, $result);
+        self::assertSame('rt-123', $userTicketsystem->getRefreshToken());
+        self::assertSame($expiresAt, $userTicketsystem->getTokenExpiresAt());
+
+        // Both are nullable (Cloud-only columns; OAuth-1 rows leave them null).
+        $userTicketsystem->setRefreshToken(null);
+        $userTicketsystem->setTokenExpiresAt(null);
+
+        self::assertNull($userTicketsystem->getRefreshToken());
+        self::assertNull($userTicketsystem->getTokenExpiresAt());
     }
 }

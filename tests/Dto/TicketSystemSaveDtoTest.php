@@ -32,6 +32,9 @@ final class TicketSystemSaveDtoTest extends TestCase
         self::assertSame('', $dto->ticketUrl);
         self::assertNull($dto->oauthConsumerKey);
         self::assertNull($dto->oauthConsumerSecret);
+        self::assertSame('SERVER', $dto->deploymentType);
+        self::assertNull($dto->oauth2ClientId);
+        self::assertNull($dto->oauth2ClientSecret);
     }
 
     public function testConstructorWithCustomValues(): void
@@ -49,6 +52,9 @@ final class TicketSystemSaveDtoTest extends TestCase
             ticketUrl: 'https://jira.example.com/browse/%s',
             oauthConsumerKey: 'consumer-key',
             oauthConsumerSecret: 'consumer-secret',
+            deploymentType: 'CLOUD',
+            oauth2ClientId: 'client-id',
+            oauth2ClientSecret: 'client-secret',
         );
 
         self::assertSame(42, $dto->id);
@@ -63,6 +69,9 @@ final class TicketSystemSaveDtoTest extends TestCase
         self::assertSame('https://jira.example.com/browse/%s', $dto->ticketUrl);
         self::assertSame('consumer-key', $dto->oauthConsumerKey);
         self::assertSame('consumer-secret', $dto->oauthConsumerSecret);
+        self::assertSame('CLOUD', $dto->deploymentType);
+        self::assertSame('client-id', $dto->oauth2ClientId);
+        self::assertSame('client-secret', $dto->oauth2ClientSecret);
     }
 
     public function testConstructorWithPartialValues(): void
