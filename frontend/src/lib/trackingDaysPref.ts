@@ -7,9 +7,12 @@ const STORAGE_KEY = 'tt-tracking-days'
 
 export function getTrackingDays(allowed: readonly number[], fallback: number): number {
   try {
-    const value = Number(localStorage.getItem(STORAGE_KEY))
-    if (allowed.includes(value)) {
-      return value
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw !== null) {
+      const value = Number(raw)
+      if (allowed.includes(value)) {
+        return value
+      }
     }
   } catch {
     // localStorage unavailable (private mode) — fall through to the default.

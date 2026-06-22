@@ -602,10 +602,13 @@ export default function Tracking() {
     const merged = editor.overlayRow(base)
     const date = str(merged.date).includes('-') ? str(merged.date) : toIsoDate(str(merged.date))
     const start = parseTime(str(merged.start)) ?? str(merged.start)
-    // Never set an end earlier than the entry's start — on a stale (e.g. yesterday)
-    // entry the current wall-clock time can be before its start, which would write a
-    // backward span. Keep the existing end in that case rather than corrupting it.
-    const end = nowHi() >= start ? nowHi() : parseTime(str(merged.end)) ?? str(merged.end)
+    // Prolong sets the end to "now", which only makes sense once now is at/after the
+    // entry's start. On a not-yet-started (e.g. future-dated) entry that would write a
+    // backward span — abort rather than save a meaningless edit with the old end.
+    if (nowHi() < start) {
+      return
+    }
+    const end = nowHi()
     try {
       await postJson('/tracking/save', savePayload({
         id: num(base.id),
@@ -661,7 +664,10 @@ export default function Tracking() {
         break
       case 'p':
         event.preventDefault()
-        void prolongLast(activeOrLatestEntry())
+        // Prolong always targets the latest entry (not the cursor row): it rewrites
+        // the end to "now", which would corrupt an older focused entry. Unlike
+        // Continue/Info, this action mutates, so it stays latest-only.
+        void prolongLast()
         break
       case 'r':
         event.preventDefault()
