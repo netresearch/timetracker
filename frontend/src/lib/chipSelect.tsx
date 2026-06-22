@@ -35,7 +35,7 @@ export function ChipSelect(props: {
   initial: FormValues[string]
   options: OptionLookup
   multiple: boolean
-  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay') => void
+  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => void
   onCancel: () => void
 }) {
   const initialValues = (): string[] => {
@@ -62,6 +62,9 @@ export function ChipSelect(props: {
   let rootEl: HTMLDivElement | undefined
   let inputEl: HTMLInputElement | undefined
   let done = false
+  // True when an Enter keystroke (not a click) drove the pending selection, so the
+  // resulting onSelect commits as 'next' (guides to the next required field).
+  let committedByEnter = false
 
   const allItems = createMemo<Item[]>(() => fieldSelectOptions(props.field, props.options).map((option) => ({ value: String(option.value), label: option.label })))
   const labelOf = (value: string): string => allItems().find((item) => item.value === value)?.label ?? value
@@ -87,7 +90,7 @@ export function ChipSelect(props: {
     return props.field.stringValue === true ? first : Number(first)
   }
 
-  const finish = (direction?: 'down' | 'left' | 'right' | 'stay'): void => {
+  const finish = (direction?: 'down' | 'left' | 'right' | 'stay' | 'next'): void => {
     if (done) {
       return
     }
@@ -124,10 +127,16 @@ export function ChipSelect(props: {
       event.preventDefault()
       event.stopPropagation()
       cancel()
-    } else if (event.key === 'Enter' && !open()) {
-      event.preventDefault()
-      event.stopPropagation()
-      finish(getEnterBehavior())
+    } else if (event.key === 'Enter') {
+      if (open()) {
+        // The list is open: let zag select the highlighted item; mark that an Enter
+        // (not a click) drove the resulting onSelect so it commits as 'next'.
+        committedByEnter = true
+      } else {
+        event.preventDefault()
+        event.stopPropagation()
+        finish('next')
+      }
     } else if (event.key === 'Backspace' && props.multiple && inputValue() === '' && selected().length > 0) {
       event.preventDefault()
       event.stopPropagation() // don't let the grid/global shortcuts also see the Backspace
@@ -215,10 +224,16 @@ export function ChipSelect(props: {
         }}
         onSelect={(details) => {
           if (props.multiple) {
+            committedByEnter = false
+
             return
           }
           setSelected(details.itemValue === CLEAR_VALUE ? [] : [details.itemValue])
-          finish(getEnterBehavior()) // single pick commits + moves per the user's Enter pref
+          // Enter-driven pick guides to the next required field; a click pick follows
+          // the user's Enter (stay/down) preference.
+          const direction = committedByEnter ? 'next' : getEnterBehavior()
+          committedByEnter = false
+          finish(direction)
         }}
         inputValue={inputValue()}
         onInputValueChange={(details) => setInputValue(details.inputValue)}

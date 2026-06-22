@@ -69,7 +69,7 @@ export function InlineEditor(props: {
   initial: FormValues[string]
   seed?: string
   options: OptionLookup
-  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay') => void
+  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => void
   onCancel: () => void
 }) {
   const isCheckbox = (): boolean => props.field.type === 'checkbox'
@@ -94,7 +94,7 @@ export function InlineEditor(props: {
     return raw
   }
 
-  const finish = (direction?: 'down' | 'left' | 'right' | 'stay') => {
+  const finish = (direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => {
     if (done) {
       return
     }
@@ -113,9 +113,10 @@ export function InlineEditor(props: {
     if (event.key === 'Enter') {
       event.preventDefault()
       event.stopPropagation()
-      // Enter's focus move is a user preference (default: stay in the cell);
-      // Tab below always advances, so the user keeps an explicit move key.
-      finish(getEnterBehavior())
+      // 'next' = Enter: the controller guides to the next required field on an
+      // incomplete row, else falls back to the user's stay/down preference. Tab
+      // below always advances, so the user keeps an explicit move key.
+      finish('next')
     } else if (event.key === 'Tab') {
       event.preventDefault()
       event.stopPropagation()
@@ -341,7 +342,42 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     }
   }
 
-  function commitCell(value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay'): void {
+  // Enter on an INCOMPLETE row jumps to the next field that still needs input (a
+  // required/invalid cell) and opens its editor — a guided fill flow. Cyclic in the
+  // row's column order, so it also reaches a required cell to the LEFT of the one
+  // just committed (e.g. Add opens on customer, then loops back for date/start/end).
+  // Returns false when nothing required remains — Enter then follows the stay/down
+  // preference. A no-op when the host provides no invalidFields.
+  function moveToNextRequired(rowId: number, fromColKey: string): boolean {
+    if (config.invalidFields === undefined || tableEl === undefined) {
+      return false
+    }
+    const draft = drafts[rowId]
+    const row = rowById(rowId)
+    if (draft === undefined || row === undefined) {
+      return false
+    }
+    const invalid = new Set(config.invalidFields(draft, row))
+    if (invalid.size === 0) {
+      return false
+    }
+    const colKeys = Array.from(tableEl.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`))
+      .map((td) => td.getAttribute('data-col-key'))
+    const from = colKeys.indexOf(fromColKey)
+    for (let step = 1; step <= colKeys.length; step++) {
+      const colKey = colKeys[(from + step) % colKeys.length]
+      if (colKey != null && invalid.has(colKey) && config.isInlineEditable(colKey)) {
+        moveHandle?.focusCell(rowId, colKey)
+        beginEdit(rowId, colKey)
+
+        return true
+      }
+    }
+
+    return false
+  }
+
+  function commitCell(value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay' | 'next'): void {
     const cell = editCell()
     if (cell === null) {
       return
@@ -356,14 +392,40 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     // then sees no draft and skips the (pointless) auto-save.
     discardIfClean(cell.rowId)
     refreshHints(cell.rowId)
-    // All focus moves go through the grid's setActive (the single roving-tabindex
-    // writer); landing on a different row triggers that row's save via focusin.
-    if (direction === 'stay') {
-      moveHandle?.focusActive()
-    } else if (direction === 'left' || direction === 'right') {
-      moveAndEdit(direction)
-    } else if (direction) {
-      moveHandle?.move(direction)
+
+    // The post-commit move (all through the grid's setActive — the single
+    // roving-tabindex writer). Enter (stay/down) on an incomplete row is guided to
+    // the next required field; otherwise it follows the stay/down preference. Tab
+    // walks to the next editable cell.
+    const { rowId, colKey } = cell
+    const advance = (): void => {
+      if (direction === 'left' || direction === 'right') {
+        moveAndEdit(direction)
+
+        return
+      }
+      // Enter ('next'): guide to the next required field on an incomplete row, else
+      // fall back to the user's Enter (stay/down) preference. Click-select and the
+      // plain stay/down directions keep their behaviour (no guide).
+      const enter = direction === 'next'
+      if (enter && moveToNextRequired(rowId, colKey)) {
+        return
+      }
+      const effective = enter ? getEnterBehavior() : direction
+      if (effective === 'down') {
+        moveHandle?.move('down')
+      } else if (effective === 'stay') {
+        moveHandle?.focusActive()
+      }
+    }
+    // A select/multiselect editor lives in a body-portal; Ark restores focus to its
+    // (now-unmounting) trigger as it closes, which would steal focus to <body> and
+    // lose the cell. Run the move AFTER that teardown so focus lands where we put it.
+    const fromType = config.fieldFor(colKey)?.type
+    if (fromType === 'select' || fromType === 'multiselect') {
+      requestAnimationFrame(advance)
+    } else {
+      advance()
     }
   }
 

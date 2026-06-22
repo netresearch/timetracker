@@ -78,4 +78,34 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await row.locator('.is-reset').click();
     await expect(page.locator('tr.tracking-row')).toHaveCount(before);
   });
+
+  test('Enter guides a new entry to the next required field (customer → project → activity → end)', async ({ page }) => {
+    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+    const row = page.locator('tr.tracking-row.is-new').first();
+    await expect(row).toBeVisible();
+
+    const arrowEnter = async (): Promise<void> => {
+      await expect(page.locator('.combobox-input').first()).toBeVisible();
+      await page.keyboard.press('ArrowDown'); // highlight an option
+      await page.keyboard.press('Enter'); // Enter-driven pick guides to the next required field
+    };
+    await arrowEnter();
+    await expect(row.locator('td[data-col-key="project"][data-inline-editing]')).toBeVisible();
+    await arrowEnter();
+    await expect(row.locator('td[data-col-key="activity"][data-inline-editing]')).toBeVisible();
+    await arrowEnter();
+    // start is pre-filled by suggest-time, so the guide skips it straight to end.
+    await expect(row.locator('td[data-col-key="end"][data-inline-editing]')).toBeVisible();
+  });
+
+  test('Enter committing a select editor keeps focus on a grid cell (no focus loss)', async ({ page }) => {
+    const stamp = await createWorklogEntry(page);
+    const row = rowByStamp(page, stamp);
+
+    await row.locator('td[data-col-key="customer"]').focus();
+    await page.keyboard.press('Enter'); // open the (portalled) select editor
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter'); // commit — focus must return to a grid cell, not <body>
+    await expect(page.locator('.tracking-table td:focus')).toHaveCount(1);
+  });
 });

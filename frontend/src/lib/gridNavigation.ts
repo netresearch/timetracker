@@ -33,6 +33,9 @@ export interface GridMoveHandle {
   move: (direction: 'up' | 'down' | 'left' | 'right') => void
   /** Re-focus the current active cell (e.g. after an editor is dismissed). */
   focusActive: () => void
+  /** Make a specific cell (by data-row-id + data-col-key) the active one and focus
+   *  it — for jumping straight to a target cell (e.g. the next required field). */
+  focusCell: (rowId: number, colKey: string) => void
 }
 
 export interface GridNavOptions {
@@ -488,6 +491,12 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       const cell = cellAt(active[0], active[1])
       if (cell) {
         setActive(cell)
+      }
+    },
+    focusCell: (rowId, colKey) => {
+      const cell = table.querySelector<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key="${colKey}"]`)
+      if (cell !== null) {
+        setActive(cell as Cell)
       }
     },
   })
