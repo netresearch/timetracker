@@ -1,0 +1,29 @@
+# Codecov configuration.
+#
+# 1. Coverage is informational — it never blocks a merge (matches the existing
+#    `fail_ci_if_error: false` on every upload).
+# 2. Stop the flaky partial-upload drops: this repo uploads coverage many times
+#    per run (flags: unit, integration, and e2e ×10 shards). `carryforward: true`
+#    keeps a flag's previous coverage when a given run doesn't re-upload it, so a
+#    missing/late upload can't report an impossible coverage drop.
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        informational: true
+
+flags:
+  unit:
+    carryforward: true
+  integration:
+    carryforward: true
+  e2e:
+    carryforward: true

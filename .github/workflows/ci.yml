@@ -6,13 +6,12 @@ on:
   pull_request:
     branches: ["**"]
 
-permissions:
-  contents: read
-
 jobs:
   setup:
     name: Setup Dependencies
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -77,6 +76,8 @@ jobs:
   frontend:
     name: Frontend (SolidJS)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 15
     defaults:
       run:
@@ -108,6 +109,8 @@ jobs:
   lint:
     name: Lint & Static Analysis
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 10
     needs: setup
     steps:
@@ -182,6 +185,8 @@ jobs:
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 10
     needs: setup
     steps:
@@ -230,6 +235,8 @@ jobs:
   test-integration:
     name: Integration Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 15
     needs: setup
     steps:
@@ -290,6 +297,8 @@ jobs:
   e2e:
     name: E2E Tests (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 15
     needs: setup
     strategy:
@@ -411,3 +420,29 @@ jobs:
         env:
           COMPOSE_PROFILES: e2e
         run: docker compose down
+
+  # Single aggregate gate: green only when every job above succeeded. Lets branch
+  # protection require one check ("CI Success") instead of enumerating all jobs +
+  # the 10 e2e shard names.
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    if: always()
+    needs: [setup, frontend, lint, test-unit, test-integration, e2e]
+    steps:
+      - name: Verify all jobs succeeded
+        # Pass the results through env (never interpolate ${{ }} into the shell —
+        # that would be a script-injection sink).
+        env:
+          RESULTS: ${{ join(needs.*.result, ',') }}
+        run: |
+          echo "Upstream job results: $RESULTS"
+          case "$RESULTS" in
+            *failure*|*cancelled*)
+              echo "::error::A CI job failed or was cancelled."
+              exit 1
+              ;;
+          esac
+          echo "All CI jobs succeeded."
