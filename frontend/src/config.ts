@@ -9,6 +9,11 @@ export interface AppConfig {
   showFuture: boolean
   logoutUrl: string
   legacyUrl: string
+  /** CSRF token for the 'authenticate' intention — stateless, so it stays valid
+   *  across a session that expires while the SPA is open (re-login overlay). */
+  csrfToken: string
+  /** Where the re-login overlay posts — the unified `_login` route. */
+  loginPath: string
 }
 
 declare global {

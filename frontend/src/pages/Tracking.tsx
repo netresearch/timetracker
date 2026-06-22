@@ -14,6 +14,7 @@ import { ChipSelect } from '../lib/chipSelect'
 import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { PageDialog } from '../components/PageDialog'
+import { sessionExpired } from '../lib/session'
 import { dmyToIso, parseTime, toIsoDate } from '../lib/timeParse'
 import { m } from '../paraglide/messages.js'
 
@@ -672,7 +673,10 @@ export default function Tracking() {
           is a hover text-cursor on editable cells). */}
       <p class="tracking-hint">{m.tracking_edit_hint()}</p>
 
-      <Show when={!entries.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
+      {/* A session-expiry refetch errors too, but the overlay owns that — keep the
+          last-good grid (and the user's drafts) visible+dimmed behind it, not a
+          jarring "load error". A genuine error (session OK) still shows the fallback. */}
+      <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
         <div class="table-scroll">
           <table
             class="data-table tracking-table"

@@ -1,11 +1,13 @@
 import { Dialog } from '@ark-ui/solid/dialog'
 import { Navigate, Route, Router, useLocation, useNavigate } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { createEffect, createMemo, createSignal, onMount, Show, type Component, type JSX, type ParentProps } from 'solid-js'
+import { createEffect, createMemo, createSignal, onCleanup, onMount, Show, type Component, type JSX, type ParentProps } from 'solid-js'
 import { Dynamic, Portal } from 'solid-js/web'
 
 import { SessionExpiredError } from './api/client'
+import { SessionExpiredOverlay } from './components/SessionExpiredOverlay'
 import { appConfig, canBill, hasRole } from './config'
+import { sessionExpired, setSessionExpired, startSessionMonitor } from './lib/session'
 import { initHeaderDynamics } from './header'
 import { syncNav } from './nav'
 import { m } from './paraglide/messages.js'
@@ -101,6 +103,10 @@ function Layout(props: ParentProps) {
     isModal() ? (PAGE_TITLES[segmentOf(lastFullPath())] ?? m.month_title)() : routeTitle())
   const background = createMemo(() => BG_PAGES[segmentOf(lastFullPath())] ?? Month)
 
+  // Surface a silently-expired backend session (issue #408): probe on tab refocus
+  // + a gentle interval, so the re-login overlay appears even when the user is idle.
+  onCleanup(startSessionMonitor())
+
   onMount(() => {
     initHeaderDynamics(appConfig())
     // Initial load / F5: land focus on the page region (only if the browser
@@ -187,6 +193,11 @@ function Layout(props: ParentProps) {
           <span>{m.kbd_hint()}</span>
           <button type="button" class="kbd-hint-close" aria-label={m.kbd_hint_dismiss()} onClick={() => setShowHint(false)}>×</button>
         </div>
+      </Show>
+      {/* Lost backend session → dim+lock the page and re-login in place; on success
+          refetch (the stale 302'd data) and resume — drafts survive (no unmount). */}
+      <Show when={sessionExpired()}>
+        <SessionExpiredOverlay onSuccess={() => { setSessionExpired(false); void queryClient.invalidateQueries() }} />
       </Show>
     </QueryClientProvider>
   )
