@@ -1,0 +1,41 @@
+# Codecov configuration.
+#
+# Two goals:
+# 1. Coverage is informational — it never blocks a merge (matches the existing
+#    `fail_ci_if_error: false` on every upload).
+# 2. Stop the flaky partial-upload drops: this repo uploads coverage 12 times per
+#    run (flags: unit ×1, integration ×1, e2e ×10 shards). Codecov must wait for
+#    all of them before computing a status, and carry a flag's last value forward
+#    when a given run doesn't re-upload it — otherwise a single missing/late upload
+#    reports an impossible coverage drop.
+codecov:
+  require_ci_to_pass: true
+  notify:
+    # unit (1) + integration (1) + e2e shards (10) = 12 coverage uploads.
+    after_n_builds: 12
+    wait_for_ci: true
+
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        informational: true
+
+# Carry a flag's previous coverage forward when a run doesn't upload it, so a
+# missing/late upload can't drop project coverage to an impossible value.
+flags:
+  unit:
+    carryforward: true
+  integration:
+    carryforward: true
+  e2e:
+    carryforward: true
+
+comment:
+  after_n_builds: 12
+  require_changes: false

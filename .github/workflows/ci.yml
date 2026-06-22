@@ -411,3 +411,24 @@ jobs:
         env:
           COMPOSE_PROFILES: e2e
         run: docker compose down
+
+  # Single aggregate gate: green only when every job above succeeded. Lets branch
+  # protection require one check ("CI Success") instead of enumerating all jobs +
+  # the 10 e2e shard names.
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [setup, frontend, lint, test-unit, test-integration, e2e]
+    steps:
+      - name: Verify all jobs succeeded
+        run: |
+          results='${{ join(needs.*.result, ',') }}'
+          echo "Upstream job results: $results"
+          case "$results" in
+            *failure*|*cancelled*)
+              echo "::error::A CI job failed or was cancelled."
+              exit 1
+              ;;
+          esac
+          echo "All CI jobs succeeded."
