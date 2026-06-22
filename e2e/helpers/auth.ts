@@ -1,4 +1,4 @@
-import { expect, Page } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 
 /**
  * Test credentials, defaulting to the values seeded in docker/ldap/dev-users.ldif
@@ -43,6 +43,26 @@ export async function loginAs(
 ): Promise<void> {
   const user = TEST_USERS[userKey];
   await login(page, user.username, user.password);
+}
+
+/**
+ * Per-worker users for specs that create/mutate worklog data. Both exist in the
+ * e2e DB *and* in LDAP *and* can book the global "Freizeit" customer. (unittest is
+ * in LDAP but absent from the e2e DB, so it can't be used here.)
+ */
+const ISOLATION_USERS = ['developer', 'myself'] as const;
+
+/**
+ * Log in as a user chosen by the running worker's slot, so specs that create
+ * worklog entries never share a backend account with a *concurrently* running
+ * spec — and therefore never see each other's rows. `parallelIndex` is the worker
+ * slot [0..workers-1]; two tests with the same slot never run at the same time, so
+ * concurrent specs always get distinct users for up to ISOLATION_USERS.length
+ * workers. CI runs exactly 2 workers, matching the two available users.
+ */
+export async function loginIsolated(page: Page): Promise<void> {
+  const userKey = ISOLATION_USERS[test.info().parallelIndex % ISOLATION_USERS.length];
+  await loginAs(page, userKey);
 }
 
 /**

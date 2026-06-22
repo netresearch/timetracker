@@ -7,6 +7,10 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * the cell, optionally filtering, and clicking the first option.
  */
 
+/** A successful POST to the worklog save endpoint (used to await an auto-save). */
+const isSaveResponse = (r: { url(): string; request(): { method(): string } }): boolean =>
+  /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST';
+
 export async function openTextEditor(page: Page, row: Locator, colKey: string): Promise<Locator> {
   await row.locator(`td[data-col-key="${colKey}"]`).focus();
   await page.keyboard.press('Enter');
@@ -33,6 +37,36 @@ export function rowByStamp(page: Page, stamp: string): Locator {
   return page.locator('tr.tracking-row').filter({ hasText: stamp }).first();
 }
 
+/**
+ * Delete every e2e-stamped entry the current user can see, via the same plain
+ * form-POST the app uses (session cookie, same-origin → CSRF origin check passes).
+ * Call it in an afterEach so the shared db-e2e doesn't accumulate the fixed-time
+ * entries these tests create — left to pile up they overlap at 08:00–09:00 and
+ * confuse cell-focus + clipboard targeting (the no-teardown pollution the testing
+ * review flagged). Best-effort: a failed delete is swallowed, never failing the test.
+ */
+export async function cleanupWorklogEntries(page: Page): Promise<void> {
+  await page
+    .evaluate(async () => {
+      const ids = new Set<string>();
+      document.querySelectorAll('tr.tracking-row').forEach((tr) => {
+        if (tr.textContent?.includes('e2e-') === true) {
+          const id = tr.querySelector('[data-row-id]')?.getAttribute('data-row-id');
+          if (id != null && Number(id) > 0) ids.add(id);
+        }
+      });
+      for (const id of ids) {
+        await fetch('/tracking/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          credentials: 'same-origin',
+          body: `id=${encodeURIComponent(id)}`,
+        }).catch(() => undefined);
+      }
+    })
+    .catch(() => undefined);
+}
+
 /** Create one entry dated today and return its unique description stamp. */
 export async function createWorklogEntry(page: Page): Promise<string> {
   const stamp = `e2e-${Date.now()}`;
@@ -40,26 +74,34 @@ export async function createWorklogEntry(page: Page): Promise<string> {
   const row = page.locator('tr.tracking-row.is-new').first();
   await expect(row).toBeVisible();
 
-  // Add opens the customer combobox; pick the first bookable customer, then its
-  // first (cascade-filtered) project, then the first activity.
-  await pickFirstOption(page, row, 'customer', true);
-  await pickFirstOption(page, row, 'project');
-  await pickFirstOption(page, row, 'activity');
+  // Add opens the customer combobox; close it so we can set the plain fields first.
+  await page.keyboard.press('Escape');
 
+  // Set explicit start/end/description while the row still lacks its required
+  // relations and therefore can't auto-save — so nothing saves mid-helper and the
+  // .is-new row never detaches under us (the historic tracking-grid flake). Fixed
+  // early times, *overriding* the suggest-time default that starts entries at "now"
+  // and marches +minDuration each one, keep every entry at 08:00–09:00: no drift
+  // toward midnight (which saturated the day into invalid spans), and "now" is always
+  // past the start so Prolong/Continue are valid.
+  const start = await openTextEditor(page, row, 'start');
+  await start.fill('08:00');
+  await page.keyboard.press('Enter');
+  const end = await openTextEditor(page, row, 'end');
+  await end.fill('09:00');
+  await page.keyboard.press('Enter');
   const description = await openTextEditor(page, row, 'description');
   await description.fill(stamp);
   await page.keyboard.press('Enter');
 
-  const start = await openTextEditor(page, row, 'start');
-  await start.fill('08:00');
-  await page.keyboard.press('Enter');
-
-  const saved = page.waitForResponse((r) => /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST');
-  const end = await openTextEditor(page, row, 'end');
-  await end.fill('09:00');
-  await page.keyboard.press('Enter');
+  // Complete the three required relations; the last one validates the row and fires a
+  // single save carrying every field set above.
+  const saved = page.waitForResponse(isSaveResponse);
+  await pickFirstOption(page, row, 'customer');
+  await pickFirstOption(page, row, 'project');
+  await pickFirstOption(page, row, 'activity');
   await saved;
 
-  await expect(page.getByRole('gridcell', { name: stamp })).toBeVisible();
+  await expect(rowByStamp(page, stamp)).toBeVisible();
   return stamp;
 }

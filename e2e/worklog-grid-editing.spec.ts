@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-import { login } from './helpers/auth';
+import { loginIsolated } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
-import { createWorklogEntry, rowByStamp } from './helpers/worklog';
+import { cleanupWorklogEntries, createWorklogEntry, rowByStamp } from './helpers/worklog';
 
 /**
  * Spreadsheet-style keyboard + clipboard editing on the SolidJS worklog grid:
@@ -12,18 +12,31 @@ import { createWorklogEntry, rowByStamp } from './helpers/worklog';
 test.describe('Worklog grid — keyboard & clipboard editing', () => {
   test.beforeEach(async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-    await login(page);
+    await loginIsolated(page);
     await goToWorklogPage(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await cleanupWorklogEntries(page);
   });
 
   test('Tab walks to the next editable cell, staying in edit mode', async ({ page }) => {
     const stamp = await createWorklogEntry(page);
     const row = rowByStamp(page, stamp);
 
-    // Start typing on the start cell → it enters inline edit mode (seeded).
-    await row.locator('td[data-col-key="start"]').focus();
+    // Start typing on the start cell → it enters inline edit mode (seeded). Wait for
+    // the cell to actually hold focus before the keystroke, or under load the '9' can
+    // land before focus settles and never opens the editor.
+    const startCell = row.locator('td[data-col-key="start"]');
+    await startCell.focus();
+    await expect(startCell).toBeFocused();
     await page.keyboard.press('9');
-    await expect(page.locator('td[data-col-key="start"][data-inline-editing] input.inline-editor')).toBeVisible();
+    const startEditor = page.locator('td[data-col-key="start"][data-inline-editing] input.inline-editor');
+    await expect(startEditor).toBeVisible();
+    // The editor focuses itself on mount; wait for that before Tab, or the keystroke
+    // can land on the still-focused cell (which yields Tab to the browser) instead of
+    // the editor's own commit-and-walk handler.
+    await expect(startEditor).toBeFocused();
 
     // Tab commits and moves to the next editable cell (end), still in edit mode.
     await page.keyboard.press('Tab');
