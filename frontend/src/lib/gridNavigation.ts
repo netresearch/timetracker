@@ -320,6 +320,11 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) {
       const lower = event.key.toLowerCase()
       if (lower === 'c') {
+        // A real text selection copies natively (the browser's own copy of the
+        // selection) — only synthesize a copy for a bare, unselected focused cell.
+        if ((window.getSelection()?.toString() ?? '') !== '') {
+          return
+        }
         event.preventDefault()
         copyCellText(cell)
 

@@ -155,6 +155,31 @@ describe('enableGridNavigation', () => {
     cleanup()
   })
 
+  it('Ctrl+C with an active text selection copies natively, not the whole cell', () => {
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><tbody><tr><td data-col-key="a">Gamma</td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table)
+    const cell = table.querySelector('td') as HTMLElement
+    cell.focus()
+
+    const writeText = vi.fn(() => Promise.resolve())
+    const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    const getSelection = vi.spyOn(window, 'getSelection').mockReturnValue({ toString: () => 'amm' } as Selection)
+
+    key(cell, 'c', { ctrlKey: true })
+    expect(writeText).not.toHaveBeenCalled() // a real selection → native copy, not synthesized
+
+    getSelection.mockRestore()
+    if (original) {
+      Object.defineProperty(navigator, 'clipboard', original)
+    } else {
+      Reflect.deleteProperty(navigator, 'clipboard')
+    }
+    cleanup()
+  })
+
   it('PageDown jumps down a page, clamped to the last row', () => {
     const firstHeader = grid.table.querySelector('th') as HTMLElement
     firstHeader.focus()
