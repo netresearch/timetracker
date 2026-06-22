@@ -1,9 +1,9 @@
-import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
-import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { fireEvent, render, waitFor } from '@solidjs/testing-library'
+import type { Component } from 'solid-js'
+import { fireEvent, waitFor } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { renderWithProviders } from '../test/renderWithProviders'
 import Billing from './Billing'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import Help from './Help'
@@ -24,17 +24,9 @@ vi.mock('../api/client', () => ({
 }))
 
 function renderPage(path: string, component: () => unknown) {
-  const history = createMemoryHistory()
-  history.set({ value: path })
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  return render(() => (
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter history={history}>
-        <Route path={path} component={component as never} />
-      </MemoryRouter>
-    </QueryClientProvider>
-  ))
+  return renderWithProviders(undefined, {
+    route: { initialPath: path, component: component as Component },
+  })
 }
 
 afterEach(() => {

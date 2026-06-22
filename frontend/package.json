@@ -8,7 +8,8 @@
     "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
     "lint": "eslint .",
     "typecheck": "bun run i18n:compile && tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ark-ui/solid": "^5.37.1",
