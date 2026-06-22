@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, screen, waitFor, within } from '@solidjs/testing-library'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import { renderWithProviders } from '../test/renderWithProviders'
@@ -72,6 +72,17 @@ function renderTracking() {
   return renderWithProviders(() => <Tracking />)
 }
 
+beforeEach(() => {
+  // Freeze the clock (Date only — leave setTimeout/Interval real so waitFor still
+  // polls) to noon on the seeded test date. Several toolbar actions read the wall
+  // clock — Prolong sets the entry's end to "now" and aborts when now precedes the
+  // entry's start — so without a fixed clock the suite fails whenever it runs before
+  // the fixture's start time (e.g. an early-morning CI run). Noon keeps every seeded
+  // entry in the past.
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2024-01-15T12:00:00'))
+})
+
 afterEach(() => {
   cleanup() // unmount even after a throwing test, so a body-portalled combobox + body-inert can't leak into the next test
   // The day range now persists to localStorage — clear it so a range change in
@@ -81,6 +92,7 @@ afterEach(() => {
   postJson.mockReset()
   postForm.mockReset()
   vi.restoreAllMocks()
+  vi.useRealTimers()
 })
 
 // Move the keyboard cursor to the Nth body row (0-based) so the active-row
