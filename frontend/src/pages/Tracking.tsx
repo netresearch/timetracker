@@ -11,7 +11,7 @@ import { formatMinutes } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
-import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, TrashIcon } from '../lib/icons'
+import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { PageDialog } from '../components/PageDialog'
 import { dmyToIso, parseTime, toIsoDate } from '../lib/timeParse'
@@ -322,6 +322,13 @@ export default function Tracking() {
     },
   })
 
+  // A row counts as "unsaved" — and so shows the disk (force-save) + reset
+  // actions — when it has real pending edits OR when it's a brand-new row
+  // (id <= 0) that was never persisted. This drives only the visual cue; the
+  // save-gating dirtiness in the controller is unchanged, so leaving a pristine
+  // new row still never triggers a spurious save.
+  const isUnsaved = (id: number): boolean => id <= 0 || editor.isDirty(id)
+
   // Display value from the draft-overlaid row, so an edited-but-unsaved cell
   // shows the new value (relation ids resolved to names here, not pre-memoized,
   // because the overlay changes as the draft does).
@@ -453,6 +460,20 @@ export default function Tracking() {
     }
   }
 
+  // Reset (discard): throw away a row's unsaved edits and restore the saved
+  // state. A brand-new row has no DB state, so it's removed entirely (mirrors the
+  // create-success drop in saveRow) — never POSTed to /tracking/delete.
+  function resetEntry(entry: TrackingEntry): void {
+    const id = num(entry.id)
+    editor.resetRow(id)
+    if (id <= 0) {
+      setNewRows((list) => list.filter((row) => num(row.id) !== id))
+      // The removed row left the DOM — keep keyboard focus inside the grid.
+      queueMicrotask(() => gridHandle?.focusActive())
+    }
+    announce(m.tracking_reset_done())
+  }
+
   // Insert a fresh new-row at the top and open it for editing.
   function pushNewRow(seed: Partial<TrackingEntry>, firstCol: string): void {
     const row: TrackingEntry = {
@@ -478,10 +499,11 @@ export default function Tracking() {
     editor.beginEdit(num(row.id), firstCol)
   }
 
-  // Add (Alt+A): a blank entry; suggest the start from the latest entry's end.
+  // Add (Alt+A): a blank entry. suggestedStart inherits the latest entry's end
+  // ONLY when that entry is from today; on a fresh day it starts at the current
+  // time, not yesterday's (or older) last end.
   function addEntry(): void {
-    const previous = (entries.data ?? [])[0]
-    pushNewRow({ start: appConfig().suggestTime && previous !== undefined ? str(previous.end) : '' }, 'customer')
+    pushNewRow({ start: appConfig().suggestTime ? suggestedStart() : '' }, 'customer')
   }
 
   // Continue: clone the cursor row's (or, with no cursor, the latest entry's)
@@ -540,6 +562,14 @@ export default function Tracking() {
 
   const exportHref = (): string => `/export/${days()}`
 
+  // Reload the worklog entries (the Alt+R shortcut and the toolbar refresh button
+  // share this). Only the entries query is invalidated — the reference/option
+  // lookups carry a long staleTime and aren't force-refreshed on a routine reload.
+  function refreshEntries(): void {
+    void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+    announce(m.tracking_refreshed())
+  }
+
   // Grid-local Alt-shortcuts (Add/Alt+A is wired via the shared header). Ignored
   // while a cell is being edited or focus is in a form control, and only the
   // keys we own are intercepted.
@@ -562,7 +592,7 @@ export default function Tracking() {
         break
       case 'r':
         event.preventDefault()
-        void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+        refreshEntries()
         break
       case 'x':
         event.preventDefault()
@@ -599,6 +629,10 @@ export default function Tracking() {
         <Show when={canBulkEnter()}>
           <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
         </Show>
+        {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
+        <button type="button" class="action-button is-icon" aria-keyshortcuts="Alt+R" aria-label={m.tracking_refresh()} title={m.tracking_refresh()} onClick={() => refreshEntries()}>
+          <RefreshIcon />
+        </button>
         {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
             still act on the keyboard-cursor row via the global shortcut handler. */}
         <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
@@ -723,11 +757,16 @@ export default function Tracking() {
                             <RowAction label={m.tracking_info()} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
                           </Show>
                           <RowAction label={m.admin_delete()} danger onClick={() => setPendingDelete(entry)}><TrashIcon /></RowAction>
-                          {/* Force a full save (shows the full error if it fails). Always rendered as
-                              the last action in a reserved slot — only its visibility toggles — so the
-                              Delete icon never shifts when a row becomes dirty. */}
-                          <button type="button" class="link-button is-icon is-unsaved" classList={{ 'action-slot-hidden': !editor.isDirty(id) }} aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(id)}>
+                          {/* Force-save and discard (reset) share the unsaved cue: both show while the
+                              row has pending edits, and always for a brand-new row (id <= 0). Each keeps
+                              a reserved slot (visibility only toggles) so the Delete icon never shifts.
+                              The disk force-saves (surfacing the full error); the reset throws the edits
+                              away — restoring the DB values, or removing an unsaved new row. */}
+                          <button type="button" class="link-button is-icon is-unsaved" classList={{ 'action-slot-hidden': !isUnsaved(id) }} aria-label={m.app_save()} title={m.app_save()} onClick={() => void editor.flushRow(id)}>
                             <DiskIcon />
+                          </button>
+                          <button type="button" class="link-button is-icon is-reset" classList={{ 'action-slot-hidden': !isUnsaved(id) }} disabled={editor.savingRows[id]} aria-label={m.tracking_reset()} title={m.tracking_reset()} onClick={() => resetEntry(entry)}>
+                            <ResetIcon />
                           </button>
                         </div>
                       </td>

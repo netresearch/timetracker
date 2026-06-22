@@ -408,6 +408,24 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     return { ...draft }
   }
 
+  // Discard a row's entire unsaved state and restore it to its underlying (DB)
+  // values: drop the draft + field hints + any blocking row error, and close an
+  // open editor on THIS row. overlayRow then falls back to the original row, so
+  // every cell re-renders to its saved value reactively — no refetch (nothing
+  // changed server-side). Unlike takeDraft (which hands the draft to a modal and
+  // leaves rowErrors), this is the "throw away my edits" path. savingRows is left
+  // untouched: never reset a row mid-save (the caller gates the UI on it).
+  function resetRow(id: number): void {
+    if (editCell()?.rowId === id) {
+      setEditCell(null)
+    }
+    setDrafts(produce((store) => { delete store[id] }))
+    setFieldHints(produce((store) => { delete store[id] }))
+    setRowErrors(produce((store) => { delete store[id] }))
+    originalRows.delete(id)
+    seedChar = undefined
+  }
+
   async function flushRow(id: number): Promise<void> {
     const draft = drafts[id]
     const row = rowById(id)
@@ -529,6 +547,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     commitCell,
     cancelCell,
     takeDraft,
+    resetRow,
     flushRow,
     // Set a sibling field on an existing draft (e.g. after a ticket→project map).
     setDraftField: (id: number, colKey: string, value: FormValues[string]): void => {
