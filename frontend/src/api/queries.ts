@@ -45,6 +45,9 @@ export function holidaysQuery(year: number, month: number) {
 export interface NamedOption {
   id: number
   label: string
+  /** Bookable flag where the source carries one (e.g. customers); undefined means
+   *  "always bookable" (sources with no active concept). Drives the active-only picker. */
+  active?: boolean
 }
 
 // Reference dropdown sources (customers/projects/users/teams/presets/ticket
@@ -64,7 +67,14 @@ export function optionSourceKey(entity: string): readonly [string] {
   return [`all-${entity}`] as const
 }
 
-type OptionRow = Record<string, { id: number; name?: string; username?: string }>
+type OptionRow = Record<string, { id: number; name?: string; username?: string; active?: boolean | number | string }>
+
+// The backend serializes `active` via a PHP (bool) cast → JSON true/false, but be
+// defensive about drivers/serializers that emit 1/0 or "1"/"0": treat only the
+// explicit falsy forms as inactive, everything else (incl. absent) as bookable.
+function coerceActive(raw: unknown): boolean {
+  return raw !== false && raw !== 0 && raw !== '0' && raw !== 'false'
+}
 
 function optionSourceQuery(
   entity: string,
@@ -79,7 +89,7 @@ function optionSourceQuery(
       records
         .map((record) => record?.[rowKey])
         .filter((inner): inner is NonNullable<typeof inner> => inner != null)
-        .map((inner) => ({ id: inner.id, label: String(inner[nameField] ?? '') })),
+        .map((inner) => ({ id: inner.id, label: String(inner[nameField] ?? ''), active: inner.active === undefined ? undefined : coerceActive(inner.active) })),
     staleTime: REFERENCE_STALE_TIME,
   })
 }
@@ -160,6 +170,7 @@ export interface TrackingProject {
   id: number
   name: string
   customer: number
+  active: boolean
   jiraId: string
   ticketSystem: number
 }
@@ -176,6 +187,8 @@ export function trackingProjectsQuery() {
           id: Number(project.id ?? 0),
           name: String(project.name ?? ''),
           customer: Number(project.customer ?? 0),
+          // Default to bookable unless the backend explicitly says inactive.
+          active: coerceActive(project.active),
           jiraId: String(project.jiraId ?? project.jira_id ?? ''),
           ticketSystem: Number(project.ticket_system ?? project.ticketSystem ?? 0),
         })),

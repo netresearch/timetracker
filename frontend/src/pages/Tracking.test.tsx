@@ -608,4 +608,50 @@ describe('Tracking (Worklog grid)', () => {
 
     unmount()
   })
+
+  it('the picker offers only active customers (inactive ones are hidden)', async () => {
+    mockTracking({
+      entries: [{ entry: DEFAULT_ENTRY }],
+      customers: [
+        { customer: { id: 1, name: 'ACME', active: true } },
+        { customer: { id: 7, name: 'OldCo', active: false } },
+      ],
+      projects: [{ project: { id: 4, name: 'Site', customer: 1, active: true } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    // Add opens the customer picker on the new row.
+    fireEvent.click(getByRole('button', { name: 'Add entry' }))
+    await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
+    const labels = [...document.querySelectorAll('.combobox-content .combobox-item')].map((el) => el.textContent ?? '')
+    expect(labels.some((label) => label.includes('ACME'))).toBe(true)
+    expect(labels.some((label) => label.includes('OldCo'))).toBe(false)
+
+    unmount()
+  })
+
+  it('keeps an existing entry\'s deactivated project selectable in its picker', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 1, project: 9 } }],
+      customers: [{ customer: { id: 1, name: 'ACME', active: true } }],
+      projects: [
+        { project: { id: 4, name: 'Site', customer: 1, active: true } },
+        { project: { id: 9, name: 'Legacy', customer: 1, active: false } }, // the entry's now-inactive project
+      ],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    // The existing entry's project picker shows active projects PLUS its current (inactive) one.
+    editCell(container, 'project')
+    await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
+    const labels = [...document.querySelectorAll('.combobox-content .combobox-item')].map((el) => el.textContent ?? '')
+    expect(labels.some((label) => label.includes('Site'))).toBe(true)
+    expect(labels.some((label) => label.includes('Legacy'))).toBe(true)
+
+    unmount()
+  })
 })
