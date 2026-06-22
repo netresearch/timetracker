@@ -423,7 +423,13 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     // lose the cell. Run the move AFTER that teardown so focus lands where we put it.
     const fromType = config.fieldFor(colKey)?.type
     if (fromType === 'select' || fromType === 'multiselect') {
-      requestAnimationFrame(advance)
+      // Skip if the grid was torn down (route change) before the frame fires, so we
+      // never drive focus into a stale/unmounted grid (moveHandle is nulled on dispose).
+      requestAnimationFrame(() => {
+        if (moveHandle !== null) {
+          advance()
+        }
+      })
     } else {
       advance()
     }

@@ -115,6 +115,12 @@ export function ChipSelect(props: {
   })
 
   const onInputKeyDown = (event: KeyboardEvent): void => {
+    // Any non-Enter key starts a fresh interaction, so a prior open-Enter that didn't
+    // select (empty list / no highlight) can't leak its "guide" intent into a later
+    // click pick — typing or arrowing first clears it.
+    if (event.key !== 'Enter') {
+      committedByEnter = false
+    }
     // The listbox owns Arrow/Enter while open; the cell owns Tab (always), Enter when
     // the list is closed, and Backspace to drop the last chip when the filter is empty.
     // Escape with the list open is handled in onOpenChange (zag consumes it first);
