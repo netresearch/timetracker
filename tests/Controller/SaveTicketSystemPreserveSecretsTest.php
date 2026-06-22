@@ -57,6 +57,24 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
         $em->flush();
     }
 
+    /**
+     * Re-fetch ticket system 1 from a cleared manager (so it reflects the saved
+     * row, not the in-memory one mutated during the request).
+     */
+    private function refetchTicketSystem(): TicketSystem
+    {
+        $container = $this->client->getContainer();
+        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
+        $doctrine = $container->get('doctrine');
+        $em = $doctrine->getManager();
+        $em->clear();
+
+        $ticketSystem = $em->getRepository(TicketSystem::class)->find(1);
+        self::assertInstanceOf(TicketSystem::class, $ticketSystem);
+
+        return $ticketSystem;
+    }
+
     public function testBlankCredentialsKeepStoredValuesAndOtherFieldsUpdate(): void
     {
         $this->logInSession('unittest');
@@ -79,14 +97,7 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
             self::assertStringNotContainsString($secret, $body, 'save response leaked a credential');
         }
 
-        $container = $this->client->getContainer();
-        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
-        $doctrine = $container->get('doctrine');
-        $em = $doctrine->getManager();
-        $em->clear();
-
-        $ticketSystem = $em->getRepository(TicketSystem::class)->find(1);
-        self::assertInstanceOf(TicketSystem::class, $ticketSystem);
+        $ticketSystem = $this->refetchTicketSystem();
 
         // Non-secret fields updated as submitted.
         self::assertSame('testSystemRenamed', $ticketSystem->getName());
@@ -116,14 +127,7 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
         ], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
 
-        $container = $this->client->getContainer();
-        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
-        $doctrine = $container->get('doctrine');
-        $em = $doctrine->getManager();
-        $em->clear();
-
-        $ticketSystem = $em->getRepository(TicketSystem::class)->find(1);
-        self::assertInstanceOf(TicketSystem::class, $ticketSystem);
+        $ticketSystem = $this->refetchTicketSystem();
 
         // Supplied credentials overwrite; untouched ones keep their stored value.
         self::assertSame('rotated-password', $ticketSystem->getPassword());
@@ -149,14 +153,7 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
         ], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
 
-        $container = $this->client->getContainer();
-        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
-        $doctrine = $container->get('doctrine');
-        $em = $doctrine->getManager();
-        $em->clear();
-
-        $ticketSystem = $em->getRepository(TicketSystem::class)->find(1);
-        self::assertInstanceOf(TicketSystem::class, $ticketSystem);
+        $ticketSystem = $this->refetchTicketSystem();
 
         self::assertSame('CLOUD', $ticketSystem->getDeploymentTypeRaw());
         self::assertSame('mapped-client-id', $ticketSystem->getOauth2ClientId());
