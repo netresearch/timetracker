@@ -693,9 +693,11 @@ export default function Tracking() {
       <Show when={pageError() !== ''}>
         <p class="form-status is-error" role="alert">{pageError()}</p>
       </Show>
-      {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue). */}
+      {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue).
+          Purely visual: aria-hidden so AT users aren't told twice — the polite
+          live region above already announces the save. */}
       <Show when={savedNotice() !== ''}>
-        <p class="form-status is-ok" role="status">{savedNotice()}</p>
+        <p class="form-status is-ok" aria-hidden="true">{savedNotice()}</p>
       </Show>
 
       <div class="tracking-toolbar">
