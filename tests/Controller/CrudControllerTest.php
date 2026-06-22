@@ -22,6 +22,47 @@ use function json_encode;
  */
 final class CrudControllerTest extends AbstractWebTestCase
 {
+    public function testGetAction(): void
+    {
+        // Default login is the unittest admin user (id 1), who owns entry 1.
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/tracking/entry/1');
+
+        $this->assertStatusCode(200);
+        // Native v5 Entry::toArray() shape: no *_id-suffixed keys, date as d/m/Y.
+        $this->assertJsonStructure([
+            'data' => [
+                'id' => 1,
+                'date' => '30/01/1000',
+                'start' => '08:00',
+                'end' => '08:50',
+                'user' => 1,
+                'customer' => 1,
+                'project' => 1,
+                'activity' => 1,
+                'ticket' => 'testGetLastEntriesAction',
+                'durationMinutes' => 50,
+            ],
+        ]);
+    }
+
+    public function testGetActionNoEntry(): void
+    {
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/tracking/entry/9999');
+
+        $this->assertStatusCode(404);
+        $this->assertJsonStructure(['message' => 'Kein Eintrag für ID.']);
+    }
+
+    public function testGetActionNotAllowed(): void
+    {
+        // 'developer' maps to user 2, a DEV who does not own entry 1.
+        $this->logInSession('developer');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/tracking/entry/1');
+
+        $this->assertStatusCode(403);
+        $this->assertJsonStructure(['message' => 'Sie sind nicht berechtigt, diesen Eintrag anzuzeigen.']);
+    }
+
     public function testSaveAction(): void
     {
         $parameter = [
