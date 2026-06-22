@@ -52,6 +52,10 @@ class User implements UserInterface
     #[ORM\Column(name: 'show_future', type: 'boolean', nullable: false, options: ['default' => 1])]
     protected bool $showFuture = true;
 
+    /** Minimum entry duration in minutes — a new entry's end pre-fills to start + this. */
+    #[ORM\Column(name: 'min_entry_duration', type: 'integer', nullable: false, options: ['default' => 5])]
+    protected int $minEntryDuration = 5;
+
     /**
      * @var Collection<int, Team>
      */
@@ -222,6 +226,19 @@ class User implements UserInterface
         return $this;
     }
 
+    public function getMinEntryDuration(): int
+    {
+        return $this->minEntryDuration;
+    }
+
+    public function setMinEntryDuration(int $minEntryDuration): static
+    {
+        // Clamp to a sane range; 0 disables the end pre-fill, default is 5.
+        $this->minEntryDuration = max(0, min(1440, $minEntryDuration));
+
+        return $this;
+    }
+
     /**
      * Reset teams.
      *
@@ -298,7 +315,7 @@ class User implements UserInterface
      * Returns user settings for API responses.
      * Note: Boolean settings are returned as integers (0/1) for frontend compatibility.
      *
-     * @return array{show_empty_line: int, suggest_time: int, show_future: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>}
+     * @return array{show_empty_line: int, suggest_time: int, show_future: int, min_entry_duration: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>}
      */
     public function getSettings(): array
     {
@@ -306,6 +323,7 @@ class User implements UserInterface
             'show_empty_line' => (int) $this->getShowEmptyLine(),
             'suggest_time' => (int) $this->getSuggestTime(),
             'show_future' => (int) $this->getShowFuture(),
+            'min_entry_duration' => $this->getMinEntryDuration(),
             'user_name' => $this->getUsername() ?? '',
             'user_id' => $this->getId() ?? 0,
             'type' => $this->getType()->value,

@@ -40,6 +40,7 @@ CREATE TABLE `users` (
   `show_empty_line` tinyint(1) NOT NULL DEFAULT '0',
   `suggest_time` tinyint(1) NOT NULL DEFAULT '1',
   `show_future` tinyint(1) NOT NULL DEFAULT '1',
+  `min_entry_duration` int(11) NOT NULL DEFAULT 5,
   `locale` char(2) NOT NULL DEFAULT 'de',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)

@@ -76,6 +76,19 @@ function nowHi(): string {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
+// Add minutes to an H:i time, capped at 23:59 (a single entry can't cross midnight).
+function addMinutes(hi: string, mins: number): string {
+  const [hh, mm] = hi.split(':')
+  const h = Number(hh)
+  const m = Number(mm)
+  if (Number.isNaN(h) || Number.isNaN(m)) {
+    return ''
+  }
+  const total = Math.min(h * 60 + m + mins, 23 * 60 + 59)
+
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 // The editable fields drive the in-cell editor; duration is server-derived.
 const FIELDS: FieldDef[] = [
   { name: 'date', label: () => m.tracking_col_date(), type: 'date', required: true },
@@ -283,20 +296,26 @@ export default function Tracking() {
 
       return field !== undefined && INLINE_TYPES.has(field.type)
     },
-    seedDraft: (entry) => ({
-      id: num(entry.id),
-      date: toIsoDate(str(entry.date)),
-      // An empty start (a fresh row) prefills with the suggested start so the
-      // editor opens on a sensible value — but only when the user's suggest-time
-      // preference is on (mirrors addEntry; respects the opt-out).
-      start: str(entry.start) || (appConfig().suggestTime ? suggestedStart() : ''),
-      end: str(entry.end),
-      ticket: str(entry.ticket),
-      customer: num(entry.customer),
-      project: num(entry.project),
-      activity: num(entry.activity),
-      description: str(entry.description),
-    }),
+    seedDraft: (entry) => {
+      // A fresh row prefills start with the suggested start, then end with start +
+      // the per-user minimum (minEntryDuration minutes) — so a new entry opens with a
+      // sensible default span. Both respect the suggest-time opt-out; a 0 minimum (or
+      // an already-set value) leaves end blank.
+      const start = str(entry.start) || (appConfig().suggestTime ? suggestedStart() : '')
+      const minMinutes = appConfig().minEntryDuration
+
+      return {
+        id: num(entry.id),
+        date: toIsoDate(str(entry.date)),
+        start,
+        end: str(entry.end) || (start !== '' && appConfig().suggestTime && minMinutes > 0 ? addMinutes(start, minMinutes) : ''),
+        ticket: str(entry.ticket),
+        customer: num(entry.customer),
+        project: num(entry.project),
+        activity: num(entry.activity),
+        description: str(entry.description),
+      }
+    },
     saveRow: async (draft, entry) => {
       const start = parseTime(str(draft.start))
       const end = parseTime(str(draft.end))

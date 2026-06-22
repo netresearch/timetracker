@@ -654,4 +654,26 @@ describe('Tracking (Worklog grid)', () => {
 
     unmount()
   })
+
+  it('Add pre-fills the end time to start + the configured minimum (suggest-time on)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      const now = new Date()
+      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+      // Latest entry from today ends 10:30 → start inherits 10:30 → end = 10:30 + 15 = 10:45.
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
+      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('10:45')
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
 })

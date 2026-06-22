@@ -58,6 +58,8 @@
   "settings_show_empty_line": "Immer leere Zeile anzeigen",
   "settings_suggest_time": "Zeit vorschlagen",
   "settings_show_future": "Zukunft anzeigen",
+  "settings_min_entry_duration": "Minimale Eintragsdauer (Minuten)",
+  "settings_min_entry_duration_hint": "Die Endzeit eines neuen Eintrags wird auf Startzeit plus diese Minuten vorbelegt. 0 deaktiviert dies.",
   "settings_grid_enter": "Beim Bearbeiten einer Tabellenzelle springt Enter…",
   "settings_grid_enter_hint": "Wirkt sofort. Tab springt immer zur nächsten Zelle.",
   "settings_dateformat": "Datumsformat",

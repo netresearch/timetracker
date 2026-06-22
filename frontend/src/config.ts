@@ -7,6 +7,8 @@ export interface AppConfig {
   showEmptyLine: boolean
   suggestTime: boolean
   showFuture: boolean
+  /** Minutes a new entry's end pre-fills past its start (0 disables; default 5). */
+  minEntryDuration: number
   logoutUrl: string
   legacyUrl: string
   /** CSRF token for the 'authenticate' intention — stateless, so it stays valid

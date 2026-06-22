@@ -51,6 +51,7 @@ final class SaveSettingsAction extends BaseController
         $user->setShowEmptyLine((bool) $request->request->get('show_empty_line'));
         $user->setSuggestTime((bool) $request->request->get('suggest_time'));
         $user->setShowFuture((bool) $request->request->get('show_future'));
+        $user->setMinEntryDuration((int) $request->request->get('min_entry_duration', 5));
 
         $normalized = $this->localizationService->normalizeLocale((string) $request->request->get('locale'));
         $user->setLocale($normalized);
