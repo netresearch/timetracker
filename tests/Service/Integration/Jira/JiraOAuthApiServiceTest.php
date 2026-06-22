@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Entity\UserTicketsystem;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraOAuthApiService;
+use App\Service\Security\TokenEncryptionService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use ReflectionClass;
 use Symfony\Component\Routing\RouterInterface;
+use Tests\Traits\TokenEncryptionTestTrait;
 use Throwable;
 
 use function assert;
@@ -41,11 +43,14 @@ use function json_encode;
 #[AllowMockObjectsWithoutExpectations]
 final class JiraOAuthApiServiceTest extends TestCase
 {
+    use TokenEncryptionTestTrait;
+
     private User&Stub $user;
     private TicketSystem&Stub $ticketSystem;
     private ManagerRegistry&Stub $managerRegistry;
     private RouterInterface&Stub $router;
     private EntityManagerInterface&Stub $entityManager;
+    private TokenEncryptionService $tokenEncryptionService;
 
     protected function setUp(): void
     {
@@ -54,6 +59,8 @@ final class JiraOAuthApiServiceTest extends TestCase
         $this->managerRegistry = self::createStub(ManagerRegistry::class);
         $this->router = self::createStub(RouterInterface::class);
         $this->entityManager = self::createStub(EntityManagerInterface::class);
+
+        $this->tokenEncryptionService = $this->createTokenEncryptionService();
 
         $this->ticketSystem->method('getUrl')->willReturn('https://jira.example.com');
         $this->ticketSystem->method('getId')->willReturn(1);
@@ -179,6 +186,78 @@ final class JiraOAuthApiServiceTest extends TestCase
         $method = $reflection->getMethod('getToken');
 
         self::assertSame('my_token', $method->invoke($service));
+    }
+
+    public function testGetTokenSecretDecryptsEncryptedStoredValue(): void
+    {
+        $this->user->method('getTicketSystemAccessTokenSecret')
+            ->willReturn($this->tokenEncryptionService->encryptToken('my_secret'));
+
+        $service = $this->createService();
+
+        $reflection = new ReflectionClass($service);
+        $method = $reflection->getMethod('getTokenSecret');
+
+        self::assertSame('my_secret', $method->invoke($service));
+    }
+
+    public function testGetTokenDecryptsEncryptedStoredValue(): void
+    {
+        $this->user->method('getTicketSystemAccessToken')
+            ->willReturn($this->tokenEncryptionService->encryptToken('my_token'));
+
+        $service = $this->createService();
+
+        $reflection = new ReflectionClass($service);
+        $method = $reflection->getMethod('getToken');
+
+        self::assertSame('my_token', $method->invoke($service));
+    }
+
+    public function testStoreTokenEncryptsBeforePersistingAndReturnsPlaintext(): void
+    {
+        $capturedSecret = null;
+        $capturedToken = null;
+        $userTicketSystem = $this->createMock(UserTicketsystem::class);
+        $userTicketSystem->method('setUser')->willReturnSelf();
+        $userTicketSystem->method('setTicketSystem')->willReturnSelf();
+        $userTicketSystem->method('setTokenSecret')
+            ->willReturnCallback(static function (string $value) use (&$capturedSecret, $userTicketSystem): UserTicketsystem {
+                $capturedSecret = $value;
+
+                return $userTicketSystem;
+            });
+        $userTicketSystem->method('setAccessToken')
+            ->willReturnCallback(static function (string $value) use (&$capturedToken, $userTicketSystem): UserTicketsystem {
+                $capturedToken = $value;
+
+                return $userTicketSystem;
+            });
+        $userTicketSystem->method('setAvoidConnection')->willReturnSelf();
+
+        $repository = self::createStub(EntityRepository::class);
+        $repository->method('findOneBy')->willReturn($userTicketSystem);
+        $this->managerRegistry->method('getRepository')->willReturn($repository);
+        $this->managerRegistry->method('getManager')->willReturn($this->entityManager);
+
+        $service = $this->createService();
+        $reflection = new ReflectionClass($service);
+        $method = $reflection->getMethod('storeToken');
+
+        /** @var array{oauth_token_secret: string, oauth_token: string} $result */
+        $result = $method->invoke($service, 'plain_secret', 'plain_token', false);
+
+        // Persisted values are encrypted (not the plaintext) and decrypt back to the input.
+        self::assertIsString($capturedSecret);
+        self::assertNotSame('plain_secret', $capturedSecret);
+        self::assertSame('plain_secret', $this->tokenEncryptionService->decryptToken($capturedSecret));
+        self::assertIsString($capturedToken);
+        self::assertNotSame('plain_token', $capturedToken);
+        self::assertSame('plain_token', $this->tokenEncryptionService->decryptToken($capturedToken));
+
+        // The return value stays plaintext for an immediate post-store request.
+        self::assertSame('plain_secret', $result['oauth_token_secret']);
+        self::assertSame('plain_token', $result['oauth_token']);
     }
 
     // ==================== OAuth consumer tests ====================
@@ -714,6 +793,7 @@ final class JiraOAuthApiServiceTest extends TestCase
             $this->ticketSystem,
             $this->managerRegistry,
             $this->router,
+            $this->tokenEncryptionService,
         );
     }
 
@@ -749,16 +829,18 @@ final class JiraOAuthApiServiceTest extends TestCase
         $ticketSystem = $this->ticketSystem;
         $managerRegistry = $this->managerRegistry;
         $router = $this->router;
+        $tokenEncryptionService = $this->tokenEncryptionService;
 
-        return new class($user, $ticketSystem, $managerRegistry, $router, $client) extends JiraOAuthApiService {
+        return new class($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService, $client) extends JiraOAuthApiService {
             public function __construct(
                 User $user,
                 TicketSystem $ticketSystem,
                 ManagerRegistry $managerRegistry,
                 RouterInterface $router,
+                TokenEncryptionService $tokenEncryptionService,
                 private Client $mockClient,
             ) {
-                parent::__construct($user, $ticketSystem, $managerRegistry, $router);
+                parent::__construct($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService);
             }
 
             protected function getClient(string $tokenMode = 'user', ?string $oAuthToken = null): Client

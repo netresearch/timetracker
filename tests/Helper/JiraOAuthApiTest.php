@@ -18,6 +18,7 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Tests\Traits\TokenEncryptionTestTrait;
 
 use function assert;
 
@@ -40,6 +41,8 @@ interface JiraOAuthApiTestProxy
 #[AllowMockObjectsWithoutExpectations]
 final class JiraOAuthApiTest extends TestCase
 {
+    use TokenEncryptionTestTrait;
+
     /**
      * @return JiraOAuthApi&JiraOAuthApiTestProxy
      */
@@ -84,10 +87,12 @@ final class JiraOAuthApiTest extends TestCase
         };
 
         // Subclass to expose getResponse and return fake client
-        return new class($mock, $ticketSystem, $registry, $router, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
-            public function __construct(\App\Entity\User $user, \App\Entity\TicketSystem $ticketSystem, \Doctrine\Persistence\ManagerRegistry $managerRegistry, \Symfony\Component\Routing\RouterInterface $router, private mixed $client)
+        $tokenEncryptionService = $this->createTokenEncryptionService();
+
+        return new class($mock, $ticketSystem, $registry, $router, $tokenEncryptionService, $fakeClient) extends JiraOAuthApi implements JiraOAuthApiTestProxy {
+            public function __construct(\App\Entity\User $user, \App\Entity\TicketSystem $ticketSystem, \Doctrine\Persistence\ManagerRegistry $managerRegistry, \Symfony\Component\Routing\RouterInterface $router, \App\Service\Security\TokenEncryptionService $tokenEncryptionService, private mixed $client)
             {
-                parent::__construct($user, $ticketSystem, $managerRegistry, $router);
+                parent::__construct($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService);
             }
 
             protected function getClient(string $tokenMode = 'user', ?string $oAuthToken = null): \GuzzleHttp\Client

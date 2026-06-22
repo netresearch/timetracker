@@ -21,6 +21,7 @@ use App\Repository\UserRepository;
 use App\Service\ExportService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService as JiraOAuthApi;
+use App\Service\Security\TokenEncryptionService;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
@@ -28,6 +29,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Component\Routing\RouterInterface;
+use Tests\Traits\TokenEncryptionTestTrait;
 
 use function array_key_exists;
 
@@ -39,6 +41,8 @@ use function array_key_exists;
 #[CoversClass(ExportService::class)]
 final class ExportServiceTest extends TestCase
 {
+    use TokenEncryptionTestTrait;
+
     // ==================== Helper Methods ====================
 
     /**
@@ -111,12 +115,14 @@ final class ExportServiceTest extends TestCase
         $ticketSystem = new TicketSystem();
 
         // Create a stub JiraOAuthApi
-        $jiraApi = new class($user, $ticketSystem, $doctrine, $router, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue, $throwException) extends JiraOAuthApi {
+        $tokenEncryptionService = $this->createTokenEncryptionService();
+        $jiraApi = new class($user, $ticketSystem, $doctrine, $router, $tokenEncryptionService, $searchTickets, $jiraLabelsByIssue, $jiraSummariesByIssue, $throwException) extends JiraOAuthApi {
             public function __construct(
                 User $user,
                 TicketSystem $ticketSystem,
                 ManagerRegistry $managerRegistry,
                 RouterInterface $router,
+                TokenEncryptionService $tokenEncryptionService,
                 /** @var array<int, string> */
                 private readonly array $keys,
                 /** @var array<string, array<int, string>> */
@@ -125,7 +131,7 @@ final class ExportServiceTest extends TestCase
                 private array $summaries,
                 private bool $shouldThrow,
             ) {
-                parent::__construct($user, $ticketSystem, $managerRegistry, $router);
+                parent::__construct($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService);
             }
 
             /** @param array<int, string> $fields */

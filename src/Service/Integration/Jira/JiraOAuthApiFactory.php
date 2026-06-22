@@ -11,6 +11,7 @@ namespace App\Service\Integration\Jira;
 
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Service\Security\TokenEncryptionService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -21,15 +22,18 @@ class JiraOAuthApiFactory
 
     public RouterInterface $router;
 
+    public TokenEncryptionService $tokenEncryptionService;
+
     #[Required]
-    public function setDependencies(ManagerRegistry $managerRegistry, RouterInterface $router): void
+    public function setDependencies(ManagerRegistry $managerRegistry, RouterInterface $router, TokenEncryptionService $tokenEncryptionService): void
     {
         $this->managerRegistry = $managerRegistry;
         $this->router = $router;
+        $this->tokenEncryptionService = $tokenEncryptionService;
     }
 
     public function create(User $user, TicketSystem $ticketSystem): JiraOAuthApiService
     {
-        return new JiraOAuthApiService($user, $ticketSystem, $this->managerRegistry, $this->router);
+        return new JiraOAuthApiService($user, $ticketSystem, $this->managerRegistry, $this->router, $this->tokenEncryptionService);
     }
 }
