@@ -151,7 +151,11 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     }
     cell.parentElement?.setAttribute('aria-current', 'true')
     if (focus) {
-      cell.focus()
+      // preventScroll: the browser's default focus-scroll jumps the viewport on
+      // every arrow keystroke (jarring in the tall 35-day view); do one controlled
+      // 'nearest' scroll instead, which only moves when the cell is off-screen.
+      cell.focus({ preventScroll: true })
+      cell.scrollIntoView({ block: 'nearest' })
     }
   }
 

@@ -343,11 +343,12 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   }
 
   // Enter on an INCOMPLETE row jumps to the next field that still needs input (a
-  // required/invalid cell) and opens its editor — a guided fill flow. Cyclic in the
-  // row's column order, so it also reaches a required cell to the LEFT of the one
-  // just committed (e.g. Add opens on customer, then loops back for date/start/end).
-  // Returns false when nothing required remains — Enter then follows the stay/down
-  // preference. A no-op when the host provides no invalidFields.
+  // required/invalid cell) and opens its editor — a guided fill flow. Forward-only
+  // in the row's column order: it advances to the next required cell to the RIGHT of
+  // the one just committed and never wraps back to an earlier cell (which would feel
+  // like the cursor jumping backwards). Returns false when nothing required remains
+  // to the right — Enter then follows the stay/down preference. A no-op when the
+  // host provides no invalidFields.
   function moveToNextRequired(rowId: number, fromColKey: string): boolean {
     if (config.invalidFields === undefined || tableEl === undefined) {
       return false
@@ -364,8 +365,8 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     const colKeys = Array.from(tableEl.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`))
       .map((td) => td.getAttribute('data-col-key'))
     const from = colKeys.indexOf(fromColKey)
-    for (let step = 1; step <= colKeys.length; step++) {
-      const colKey = colKeys[(from + step) % colKeys.length]
+    for (let next = from + 1; next < colKeys.length; next++) {
+      const colKey = colKeys[next]
       if (colKey != null && invalid.has(colKey) && config.isInlineEditable(colKey)) {
         moveHandle?.focusCell(rowId, colKey)
         beginEdit(rowId, colKey)

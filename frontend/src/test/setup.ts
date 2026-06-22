@@ -58,6 +58,12 @@ class ResizeObserverStub implements ResizeObserver {
 
 window.ResizeObserver ??= ResizeObserverStub
 
+// jsdom doesn't implement scrollIntoView; gridNav calls it after focusing a cell
+// (a no-op here — jsdom never lays out, so there is nothing to scroll into view).
+HTMLElement.prototype.scrollIntoView ??= function scrollIntoView(): void {
+  /* no-op: jsdom does not lay out elements */
+}
+
 window.APP_CONFIG = {
   locale: 'en',
   userId: 1,
