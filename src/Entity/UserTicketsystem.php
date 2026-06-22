@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Model\Base;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use SensitiveParameter;
 
@@ -46,6 +47,18 @@ class UserTicketsystem extends Base
      */
     #[ORM\Column(name: 'tokensecret', type: 'text')]
     protected $tokenSecret;
+
+    /**
+     * Encrypted OAuth2 refresh token (Cloud only; rotates on every refresh).
+     */
+    #[ORM\Column(name: 'refresh_token', type: 'text', nullable: true)]
+    protected ?string $refreshToken = null;
+
+    /**
+     * Absolute expiry of the OAuth2 access token (Cloud only).
+     */
+    #[ORM\Column(name: 'token_expires_at', type: 'datetime_immutable', nullable: true)]
+    protected ?DateTimeImmutable $tokenExpiresAt = null;
 
     #[ORM\Column(name: 'avoidconnection', type: 'boolean', options: ['default' => false])]
     protected bool $avoidConnection = false;
@@ -121,6 +134,36 @@ class UserTicketsystem extends Base
     public function setTokenSecret(#[SensitiveParameter] string $tokenSecret): static
     {
         $this->tokenSecret = $tokenSecret;
+
+        return $this;
+    }
+
+    public function getRefreshToken(): ?string
+    {
+        return $this->refreshToken;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setRefreshToken(#[SensitiveParameter] ?string $refreshToken): static
+    {
+        $this->refreshToken = $refreshToken;
+
+        return $this;
+    }
+
+    public function getTokenExpiresAt(): ?DateTimeImmutable
+    {
+        return $this->tokenExpiresAt;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setTokenExpiresAt(?DateTimeImmutable $tokenExpiresAt): static
+    {
+        $this->tokenExpiresAt = $tokenExpiresAt;
 
         return $this;
     }

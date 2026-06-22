@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Entity;
 
 use App\Entity\TicketSystem;
+use App\Enum\DeploymentType;
 use App\Enum\TicketSystemType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -50,7 +51,11 @@ final class TicketSystemTest extends TestCase
             ->setPublicKey('pub')
             ->setPrivateKey('priv')
             ->setOauthConsumerKey('ck')
-            ->setOauthConsumerSecret('cs');
+            ->setOauthConsumerSecret('cs')
+            ->setOauth2ClientId('c2id')
+            ->setOauth2ClientSecret('c2secret')
+            ->setCloudId('cloud-123')
+            ->setDeploymentType(DeploymentType::CLOUD);
 
         $safe = $ticketSystem->toSafeArray();
 
@@ -67,6 +72,34 @@ final class TicketSystemTest extends TestCase
         self::assertNotContains('s3cr3t', $safe);
         self::assertNotContains('priv', $safe);
         self::assertNotContains('cs', $safe);
+    }
+
+    public function testToSafeArrayStripsOauth2ClientSecretInBothSpellings(): void
+    {
+        $ticketSystem = new TicketSystem();
+        $ticketSystem->setName('Jira Cloud')
+            ->setUrl('https://acme.atlassian.net')
+            ->setLogin('svc')
+            ->setPassword('pw')
+            ->setOauth2ClientId('client-id-abc')
+            ->setOauth2ClientSecret('client-secret-xyz')
+            ->setCloudId('11111111-2222-3333-4444-555555555555')
+            ->setDeploymentType(DeploymentType::CLOUD);
+
+        $safe = $ticketSystem->toSafeArray();
+
+        // The OAuth2 client secret is stripped in both spellings.
+        self::assertArrayNotHasKey('oauth2ClientSecret', $safe);
+        self::assertArrayNotHasKey('oauth2_client_secret', $safe);
+        self::assertNotContains('client-secret-xyz', $safe);
+
+        // The non-secret OAuth2/deployment/cloud fields survive (both spellings).
+        self::assertSame('client-id-abc', $safe['oauth2ClientId']);
+        self::assertSame('client-id-abc', $safe['oauth2_client_id']);
+        self::assertSame('CLOUD', $safe['deploymentType']);
+        self::assertSame('CLOUD', $safe['deployment_type']);
+        self::assertSame('11111111-2222-3333-4444-555555555555', $safe['cloudId']);
+        self::assertSame('11111111-2222-3333-4444-555555555555', $safe['cloud_id']);
     }
 
     // ==================== BookTime tests ====================
@@ -241,5 +274,56 @@ final class TicketSystemTest extends TestCase
 
         self::assertSame($ticketSystem, $result);
         self::assertSame('consumer-secret-456', $ticketSystem->getOauthConsumerSecret());
+    }
+
+    // ==================== DeploymentType tests ====================
+
+    public function testDeploymentTypeIsServerByDefault(): void
+    {
+        $ticketSystem = new TicketSystem();
+
+        self::assertSame(DeploymentType::SERVER, $ticketSystem->getDeploymentType());
+        self::assertSame('SERVER', $ticketSystem->getDeploymentTypeRaw());
+    }
+
+    public function testSetDeploymentTypeWithEnumReturnsFluentInterface(): void
+    {
+        $ticketSystem = new TicketSystem();
+
+        $result = $ticketSystem->setDeploymentType(DeploymentType::CLOUD);
+
+        self::assertSame($ticketSystem, $result);
+        self::assertSame(DeploymentType::CLOUD, $ticketSystem->getDeploymentType());
+        self::assertSame('CLOUD', $ticketSystem->getDeploymentTypeRaw());
+    }
+
+    public function testSetDeploymentTypeWithStringFallsBackToServerForUnknown(): void
+    {
+        $ticketSystem = new TicketSystem();
+
+        $result = $ticketSystem->setDeploymentType('CUSTOM');
+
+        self::assertSame($ticketSystem, $result);
+        self::assertSame(DeploymentType::SERVER, $ticketSystem->getDeploymentType());
+        self::assertSame('CUSTOM', $ticketSystem->getDeploymentTypeRaw());
+    }
+
+    // ===== Nullable string accessors (oauth2 client id/secret, cloud id) =====
+
+    public function testNullableStringAccessorsDefaultToNullAndRoundTrip(): void
+    {
+        $ticketSystem = new TicketSystem();
+
+        self::assertNull($ticketSystem->getOauth2ClientId());
+        self::assertNull($ticketSystem->getOauth2ClientSecret());
+        self::assertNull($ticketSystem->getCloudId());
+
+        self::assertSame($ticketSystem, $ticketSystem->setOauth2ClientId('client-id-123'));
+        self::assertSame($ticketSystem, $ticketSystem->setOauth2ClientSecret('client-secret-456'));
+        self::assertSame($ticketSystem, $ticketSystem->setCloudId('cloud-789'));
+
+        self::assertSame('client-id-123', $ticketSystem->getOauth2ClientId());
+        self::assertSame('client-secret-456', $ticketSystem->getOauth2ClientSecret());
+        self::assertSame('cloud-789', $ticketSystem->getCloudId());
     }
 }
