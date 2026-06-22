@@ -1487,6 +1487,97 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
 
+  /tracking/entry/{id}:
+    get:
+      summary: Get a single entry by id
+      tags:
+        - Entries
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: The id of the entry
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '401':
+          description: Error Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '403':
+          description: Forbidden — the entry belongs to another user and the requester is not an admin/PL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+              example:
+                message: You are not allowed to view this entry.
+        '404':
+          description: No entry for id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      date:
+                        type: string
+                        description: Day in d/m/Y format
+                        example: "15/01/2024"
+                      start:
+                        type: string
+                        example: "08:00"
+                      end:
+                        type: string
+                        example: "08:50"
+                      user:
+                        type: integer
+                        nullable: true
+                      customer:
+                        type: integer
+                        nullable: true
+                      project:
+                        type: integer
+                        nullable: true
+                      activity:
+                        type: integer
+                        nullable: true
+                      description:
+                        type: string
+                      ticket:
+                        type: string
+                      duration:
+                        type: string
+                        description: The duration in hh:mm format
+                        example: "00:50"
+                      durationMinutes:
+                        type: integer
+                        example: 50
+                      class:
+                        type: integer
+                        description: Day-rendering class (daybreak/pause/overlap/plain)
+                      worklog:
+                        type: integer
+                        nullable: true
+                        description: ID of the Jira work log entry
+                      extTicket:
+                        type: string
+                        nullable: true
+                        description: Original external Jira key of mirrored entries
+
   /preset/delete:
     post:
       summary: Delete a preset
