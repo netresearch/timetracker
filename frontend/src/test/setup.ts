@@ -69,4 +69,6 @@ window.APP_CONFIG = {
   showFuture: false,
   logoutUrl: '/logout',
   legacyUrl: '/',
+  csrfToken: 'test-csrf-token',
+  loginPath: '/login',
 }

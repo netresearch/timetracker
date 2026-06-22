@@ -1819,6 +1819,52 @@ th[aria-sort='descending'] .th-sort-glyph {
   padding: 0;
 }
 
+/* ---- Session-expired re-login overlay (SessionExpiredOverlay) ----
+   Sits ABOVE the server-rendered header (z-index:10000) so it covers the whole
+   page. The backdrop desaturates the page behind it — "grayed out but still
+   readable" — and blocks interaction with everything underneath. */
+.session-backdrop {
+  background: rgba(110, 110, 110, 0.28);
+  -webkit-backdrop-filter: grayscale(0.85) brightness(0.95);
+  backdrop-filter: grayscale(0.85) brightness(0.95);
+  z-index: 10010;
+}
+
+.session-positioner {
+  align-items: center;
+  z-index: 10011;
+}
+
+.session-card {
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 24rem;
+}
+
+.session-title {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.session-desc {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.session-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.session-fallback {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .multiselect {
   border: 1px solid var(--color-border);
   border-radius: 8px;

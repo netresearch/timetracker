@@ -1,6 +1,8 @@
+import { setSessionExpired } from '../lib/session'
+
 export class SessionExpiredError extends Error {
   constructor() {
-    super('Session expired — redirecting to login')
+    super('Session expired — re-login required')
     this.name = 'SessionExpiredError'
   }
 }
@@ -21,16 +23,26 @@ export function apiErrorMessage(error: unknown, fallback: string): string {
   return error instanceof ApiError ? error.message : fallback
 }
 
-function redirectToLogin(): never {
-  window.location.assign('/login')
+// Raise the app-wide session-expired state — the shell shows an in-place re-login
+// overlay over the dimmed page — instead of navigating to /login. A full redirect
+// would unmount the SPA and discard the user's in-progress work (issue #408). The
+// throw still rejects the in-flight call so callers don't proceed on null data and
+// the query retry guard (App.tsx) halts retries while the overlay is up.
+function raiseSessionExpired(): never {
+  setSessionExpired(true)
   throw new SessionExpiredError()
 }
 
-// The backend answers expired sessions with a 302 to /login (HTML) instead of
-// a 401 — fetch follows the redirect silently, so we detect the login page by
-// its URL/content type and send the user there for a full page login.
+// A lost session surfaces two ways: the firewall 302s an expired data request to
+// /login (HTML) — fetch follows it silently, detected here by the landed-on URL —
+// or an endpoint answers 401 directly (BaseController::getFailedLoginResponse,
+// "You need to login"). Both mean the same thing: re-login required.
 function landedOnLogin(response: Response): boolean {
   return response.redirected && new URL(response.url).pathname.startsWith('/login')
+}
+
+function sessionLost(response: Response): boolean {
+  return landedOnLogin(response) || response.status === 401
 }
 
 export async function getJson<T>(
@@ -48,8 +60,8 @@ export async function getJson<T>(
   })
 
   const contentType = response.headers.get('content-type') ?? ''
-  if (landedOnLogin(response) || (response.ok && !contentType.includes('json'))) {
-    redirectToLogin()
+  if (sessionLost(response) || (response.ok && !contentType.includes('json'))) {
+    raiseSessionExpired()
   }
 
   if (!response.ok) {
@@ -81,8 +93,8 @@ export async function postForm(
     body,
   })
 
-  if (landedOnLogin(response)) {
-    redirectToLogin()
+  if (sessionLost(response)) {
+    raiseSessionExpired()
   }
 
   const text = await response.text()
@@ -111,8 +123,8 @@ export async function postJson<T = unknown>(
     body: JSON.stringify(payload),
   })
 
-  if (landedOnLogin(response)) {
-    redirectToLogin()
+  if (sessionLost(response)) {
+    raiseSessionExpired()
   }
 
   const text = await response.text()

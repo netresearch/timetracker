@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { sessionExpired, setSessionExpired } from '../lib/session'
 import { ApiError, apiErrorMessage, getJson, postForm, postJson, SessionExpiredError } from './client'
 
 interface FakeResponse {
@@ -32,6 +33,7 @@ describe('api/client', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+    setSessionExpired(false) // reset the app-wide signal between tests
   })
 
   describe('getJson', () => {
@@ -52,14 +54,22 @@ describe('api/client', () => {
       await expect(getJson('/x')).rejects.toMatchObject({ name: 'ApiError', status: 500 })
     })
 
-    it('redirects to login when an ok response is not JSON (session expired)', async () => {
+    it('raises session-expired (no navigation) when an ok response is not JSON', async () => {
       mockFetch({ status: 200, contentType: 'text/html' })
       await expect(getJson('/x')).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(sessionExpired()).toBe(true)
     })
 
-    it('redirects to login when the request was redirected to /login', async () => {
+    it('raises session-expired when the request was redirected to /login', async () => {
       mockFetch({ status: 200, redirected: true, url: 'http://localhost/login', contentType: 'application/json' })
       await expect(getJson('/x')).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(sessionExpired()).toBe(true)
+    })
+
+    it('raises session-expired on a bare 401 (You need to login)', async () => {
+      mockFetch({ ok: false, status: 401 })
+      await expect(getJson('/x')).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(sessionExpired()).toBe(true)
     })
   })
 
@@ -83,6 +93,12 @@ describe('api/client', () => {
     it('falls back to a status message when the error body is empty', async () => {
       mockFetch({ ok: false, status: 500, body: '' })
       await expect(postForm('/p', {})).rejects.toMatchObject({ message: '/p: HTTP 500' })
+    })
+
+    it('raises session-expired on a 401 (not a generic ApiError)', async () => {
+      mockFetch({ ok: false, status: 401, body: 'You need to login.' })
+      await expect(postForm('/p', {})).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(sessionExpired()).toBe(true)
     })
   })
 
@@ -110,6 +126,12 @@ describe('api/client', () => {
     it('surfaces a plain-text non-ok body verbatim', async () => {
       mockFetch({ ok: false, status: 422, body: 'business rule violated' })
       await expect(postJson('/s', {})).rejects.toMatchObject({ message: 'business rule violated' })
+    })
+
+    it('raises session-expired on a 401 (not a generic ApiError)', async () => {
+      mockFetch({ ok: false, status: 401, body: 'You need to login.' })
+      await expect(postJson('/s', {})).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(sessionExpired()).toBe(true)
     })
   })
 
