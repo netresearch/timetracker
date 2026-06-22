@@ -59,7 +59,7 @@ function renderRoute(route: RouteOptions): JSX.Element {
 
   return (
     <MemoryRouter history={history}>
-      <Route path={route.path ?? route.initialPath} component={route.component} />
+      <Route path={route.path ?? route.initialPath.split('?')[0]} component={route.component} />
     </MemoryRouter>
   )
 }
