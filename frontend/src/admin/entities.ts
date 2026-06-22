@@ -288,19 +288,29 @@ export function adminEntities(): EntityDescriptor[] {
         { name: 'privateKey', label: () => m.admin_f_private_key(), type: 'textarea' },
         { name: 'oauthConsumerKey', label: () => m.admin_f_oauth_key(), type: 'text' },
         { name: 'oauthConsumerSecret', label: () => m.admin_f_oauth_secret(), type: 'textarea' },
+        {
+          name: 'deploymentType', label: () => m.admin_f_deployment_type(), type: 'select', stringValue: true,
+          staticOptions: [
+            { value: 'SERVER', label: () => 'SERVER' }, { value: 'CLOUD', label: () => 'CLOUD' },
+          ],
+        },
+        { name: 'oauth2ClientId', label: () => m.admin_f_oauth2_client_id(), type: 'text' },
+        { name: 'oauth2ClientSecret', label: () => m.admin_f_oauth2_client_secret(), type: 'text' },
       ],
       rowLabel: (row) => str(row.name),
       // Credentials are not returned by the list (server-side filtered), so the
       // form opens them blank; the backend keeps the stored value when a field
       // is submitted blank (see SaveTicketSystemAction preserve-on-blank).
       toForm: (row) => row === null
-        ? { id: 0, name: '', type: 'JIRA', bookTime: false, url: '', ticketUrl: '', login: '', password: '', publicKey: '', privateKey: '', oauthConsumerKey: '', oauthConsumerSecret: '' }
+        ? { id: 0, name: '', type: 'JIRA', bookTime: false, url: '', ticketUrl: '', login: '', password: '', publicKey: '', privateKey: '', oauthConsumerKey: '', oauthConsumerSecret: '', deploymentType: 'SERVER', oauth2ClientId: '', oauth2ClientSecret: '' }
         : {
             id: num(row.id), name: str(row.name), type: str(pick(row, 'type')) || 'JIRA',
             bookTime: bool(pick(row, 'bookTime', 'book_time')),
             url: str(row.url), ticketUrl: str(pick(row, 'ticketUrl', 'ticket_url')),
             login: str(row.login), password: '', publicKey: '', privateKey: '',
             oauthConsumerKey: '', oauthConsumerSecret: '',
+            deploymentType: str(pick(row, 'deploymentType', 'deployment_type')) || 'SERVER',
+            oauth2ClientId: '', oauth2ClientSecret: '',
           },
       toPayload: (v) => ({ ...v }),
     },
