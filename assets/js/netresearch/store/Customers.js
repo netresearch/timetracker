@@ -14,6 +14,10 @@ Ext.define('Netresearch.store.Customers', {
             record: 'customer'
         }
     },
+    sorters: [{
+        property: 'name',
+        direction:'ASC'
+    }],
 
     /* Update customersData */
     reloadFromServer: function(callback) {
@@ -52,5 +56,6 @@ Ext.define('Netresearch.store.Customers', {
         }
 
         this.loadRecords(newData, {"append": false});
+        this.sort();
     }
 });
