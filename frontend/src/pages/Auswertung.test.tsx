@@ -1,9 +1,8 @@
-import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
-import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { fireEvent, render, waitFor } from '@solidjs/testing-library'
+import { fireEvent, waitFor } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { renderWithProviders } from '../test/renderWithProviders'
 import Auswertung from './Auswertung'
 
 const getJson = vi.fn()
@@ -36,17 +35,9 @@ function mockEndpoints() {
 }
 
 function renderPage() {
-  const history = createMemoryHistory()
-  history.set({ value: '/auswertung' })
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  return render(() => (
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter history={history}>
-        <Route path="/auswertung" component={Auswertung} />
-      </MemoryRouter>
-    </QueryClientProvider>
-  ))
+  return renderWithProviders(undefined, {
+    route: { initialPath: '/auswertung', component: Auswertung },
+  })
 }
 
 afterEach(() => getJson.mockReset())

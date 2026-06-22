@@ -1,10 +1,9 @@
-import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
-import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@solidjs/testing-library'
+import { cleanup, fireEvent, screen, waitFor, within } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import { ApiError } from '../api/client'
+import { renderWithProviders } from '../test/renderWithProviders'
 import Admin from './Admin'
 
 const getJson = vi.fn()
@@ -51,17 +50,9 @@ function mockEndpoints() {
 }
 
 function renderAdmin(path = '/admin') {
-  const history = createMemoryHistory()
-  history.set({ value: path })
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  return render(() => (
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter history={history}>
-        <Route path="/admin/:entity?" component={Admin} />
-      </MemoryRouter>
-    </QueryClientProvider>
-  ))
+  return renderWithProviders(undefined, {
+    route: { initialPath: path, path: '/admin/:entity?', component: Admin },
+  })
 }
 
 // Renders the customer grid (customer 1 has team 2) with the given team

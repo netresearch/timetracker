@@ -1,8 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@solidjs/testing-library'
+import { cleanup, fireEvent, screen, waitFor, within } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { renderWithProviders } from '../test/renderWithProviders'
 import Tracking from './Tracking'
 
 const getJson = vi.fn()
@@ -69,13 +69,7 @@ function mockApi(): void {
 }
 
 function renderTracking() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  return render(() => (
-    <QueryClientProvider client={queryClient}>
-      <Tracking />
-    </QueryClientProvider>
-  ))
+  return renderWithProviders(() => <Tracking />)
 }
 
 afterEach(() => {

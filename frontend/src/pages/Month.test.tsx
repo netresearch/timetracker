@@ -1,10 +1,9 @@
-import { createMemoryHistory, MemoryRouter, Route } from '@solidjs/router'
-import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { fireEvent, render, waitFor } from '@solidjs/testing-library'
+import { fireEvent, waitFor } from '@solidjs/testing-library'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import type { HolidayRecord, WorktimeRecord } from '../api/queries'
+import { renderWithProviders } from '../test/renderWithProviders'
 import Month, { resolveDayTokens } from './Month'
 
 // One booking in the past, one in the future (Fri 2026-06-19) relative to the
@@ -25,17 +24,9 @@ vi.mock('../api/client', () => ({
 }))
 
 function renderMonth() {
-  const history = createMemoryHistory()
-  history.set({ value: '/month?year=2026&month=6' })
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  return render(() => (
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter history={history}>
-        <Route path="/month" component={Month} />
-      </MemoryRouter>
-    </QueryClientProvider>
-  ))
+  return renderWithProviders(undefined, {
+    route: { initialPath: '/month?year=2026&month=6', path: '/month', component: Month },
+  })
 }
 
 describe('Month page', () => {
