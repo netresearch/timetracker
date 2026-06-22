@@ -256,14 +256,21 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   }
   const isDirty = rowDirty
 
+  // Drop a row's draft + field-hints + original-row snapshot — the teardown
+  // shared by save-success, modal take-over, reset, and the clean-up of an
+  // unchanged draft. (rowErrors is cleared separately, only where it applies.)
+  function clearDraftState(id: number): void {
+    setDrafts(produce((store) => { delete store[id] }))
+    setFieldHints(produce((store) => { delete store[id] }))
+    originalRows.delete(id)
+  }
+
   // Drop a draft that ended up identical to its original row (opened a cell and
   // left without changing it, or edited a value back) so the row shows no dirty
   // state and never triggers a no-op save.
   function discardIfClean(id: number): void {
     if (drafts[id] !== undefined && !rowDirty(id)) {
-      setDrafts(produce((store) => { delete store[id] }))
-      setFieldHints(produce((store) => { delete store[id] }))
-      originalRows.delete(id)
+      clearDraftState(id)
     }
   }
 
@@ -401,9 +408,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     if (editCell()?.rowId === id) {
       setEditCell(null)
     }
-    setDrafts(produce((store) => { delete store[id] }))
-    setFieldHints(produce((store) => { delete store[id] }))
-    originalRows.delete(id)
+    clearDraftState(id)
 
     return { ...draft }
   }
@@ -419,10 +424,14 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     if (editCell()?.rowId === id) {
       setEditCell(null)
     }
-    setDrafts(produce((store) => { delete store[id] }))
-    setFieldHints(produce((store) => { delete store[id] }))
+    clearDraftState(id)
     setRowErrors(produce((store) => { delete store[id] }))
-    originalRows.delete(id)
+    // Forget the row as last-focused — a reset that REMOVES the row (a new row
+    // dropped by the host) would otherwise leave a row-leave flush pointed at a
+    // gone id (harmless via the rowById guard, but avoid the dangling reference).
+    if (lastFocusedRowId === id) {
+      lastFocusedRowId = null
+    }
     seedChar = undefined
   }
 
@@ -451,9 +460,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       // Refetch has the saved values now, so dropping the draft shows no flash —
       // but only when nothing changed since (else the newer edits would be lost).
       if (drafts[id] !== undefined && JSON.stringify({ ...drafts[id] }) === sentJson) {
-        setDrafts(produce((store) => { delete store[id] }))
-        setFieldHints(produce((store) => { delete store[id] }))
-        originalRows.delete(id)
+        clearDraftState(id)
       }
       config.onSaved?.()
     } catch (caught) {

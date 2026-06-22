@@ -54,13 +54,18 @@ const DEFAULT_ENTRY = {
   duration: '1:30', durationMinutes: 90, class: 8, worklog: null, extTicket: null,
 }
 
-function mockApi() {
+// mockApi with a custom entries list (the customer/project/activity seed is shared).
+function mockApiWith(entries: unknown[]): void {
   mockTracking({
-    entries: [{ entry: DEFAULT_ENTRY }],
+    entries,
     customers: [{ customer: { id: 1, name: 'ACME' } }],
     projects: [{ project: { id: 4, name: 'Site' } }],
     activities: [{ activity: { id: 5, name: 'Dev' } }],
   })
+}
+
+function mockApi(): void {
+  mockApiWith([{ entry: DEFAULT_ENTRY }])
 }
 
 function renderTracking() {
@@ -499,12 +504,7 @@ describe('Tracking (Worklog grid)', () => {
     try {
       const now = new Date()
       const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
-      mockTracking({
-        entries: [{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }],
-        customers: [{ customer: { id: 1, name: 'ACME' } }],
-        projects: [{ project: { id: 4, name: 'Site' } }],
-        activities: [{ activity: { id: 5, name: 'Dev' } }],
-      })
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
       const { getByRole, container, unmount } = renderTracking()
       await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
@@ -521,12 +521,7 @@ describe('Tracking (Worklog grid)', () => {
   it('Add starts at the current time when the latest entry is from a prior day (suggest-time on)', async () => {
     window.APP_CONFIG!.suggestTime = true
     try {
-      mockTracking({
-        entries: [{ entry: { ...DEFAULT_ENTRY, date: '01/01/2020', end: '10:30', class: 0 } }],
-        customers: [{ customer: { id: 1, name: 'ACME' } }],
-        projects: [{ project: { id: 4, name: 'Site' } }],
-        activities: [{ activity: { id: 5, name: 'Dev' } }],
-      })
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: '01/01/2020', end: '10:30', class: 0 } }])
       const { getByRole, container, unmount } = renderTracking()
       await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
@@ -582,12 +577,7 @@ describe('Tracking (Worklog grid)', () => {
 
   it('reset reverts an edited existing row to its DB value without saving', async () => {
     // An incomplete row (no customer) won't auto-save, so the edit stays pending.
-    mockTracking({
-      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 0, class: 0 } }],
-      customers: [{ customer: { id: 1, name: 'ACME' } }],
-      projects: [{ project: { id: 4, name: 'Site' } }],
-      activities: [{ activity: { id: 5, name: 'Dev' } }],
-    })
+    mockApiWith([{ entry: { ...DEFAULT_ENTRY, customer: 0, class: 0 } }])
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
 
