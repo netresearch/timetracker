@@ -58,6 +58,8 @@
   "settings_show_empty_line": "Always show an empty line",
   "settings_suggest_time": "Suggest time",
   "settings_show_future": "Show future",
+  "settings_min_entry_duration": "Minimum entry duration (minutes)",
+  "settings_min_entry_duration_hint": "A new entry's end pre-fills to its start plus this many minutes. 0 disables it.",
   "settings_grid_enter": "When editing a table cell, Enter…",
   "settings_grid_enter_hint": "Applies immediately. Tab always moves to the next cell.",
   "settings_dateformat": "Date format",

@@ -67,6 +67,7 @@ window.APP_CONFIG = {
   showEmptyLine: false,
   suggestTime: false,
   showFuture: false,
+  minEntryDuration: 5,
   logoutUrl: '/logout',
   legacyUrl: '/',
   csrfToken: 'test-csrf-token',

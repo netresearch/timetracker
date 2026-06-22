@@ -79,6 +79,7 @@ export default function Settings() {
         show_empty_line: data.get('show_empty_line') ? 1 : 0,
         suggest_time: data.get('suggest_time') ? 1 : 0,
         show_future: data.get('show_future') ? 1 : 0,
+        min_entry_duration: Number(data.get('min_entry_duration') ?? config.minEntryDuration),
       })
       const result = JSON.parse(body) as SaveResponse
       if (!result.success) {
@@ -126,6 +127,13 @@ export default function Settings() {
             </label>
           )}
         </For>
+
+        {/* Server setting: a new entry's end pre-fills to start + this many minutes. */}
+        <label class="field">
+          <span>{m.settings_min_entry_duration()}</span>
+          <input type="number" name="min_entry_duration" min="0" max="1440" step="5" value={config.minEntryDuration} />
+          <small class="field-hint">{m.settings_min_entry_duration_hint()}</small>
+        </label>
 
         {/* Client-side UI preference — applies instantly, not part of the Save. */}
         <label class="field">
