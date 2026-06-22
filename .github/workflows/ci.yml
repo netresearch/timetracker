@@ -422,10 +422,13 @@ jobs:
     needs: [setup, frontend, lint, test-unit, test-integration, e2e]
     steps:
       - name: Verify all jobs succeeded
+        # Pass the results through env (never interpolate ${{ }} into the shell —
+        # that would be a script-injection sink).
+        env:
+          RESULTS: ${{ join(needs.*.result, ',') }}
         run: |
-          results='${{ join(needs.*.result, ',') }}'
-          echo "Upstream job results: $results"
-          case "$results" in
+          echo "Upstream job results: $RESULTS"
+          case "$RESULTS" in
             *failure*|*cancelled*)
               echo "::error::A CI job failed or was cancelled."
               exit 1
