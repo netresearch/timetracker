@@ -155,8 +155,14 @@ export function trackingEntriesQuery(days: number) {
         .sort((a, b) => {
           const ka = entrySortKey(a)
           const kb = entrySortKey(b)
+          if (ka !== kb) {
+            return ka < kb ? 1 : -1
+          }
 
-          return ka < kb ? 1 : ka > kb ? -1 : 0
+          // Same date+start: order by id descending so [0] is deterministically
+          // the most recently created entry — the one "latest" (suggest-start,
+          // Prolong-last, Continue, the Prolong icon's latest-only gate) means.
+          return Number(b.id ?? 0) - Number(a.id ?? 0)
         }),
     // Keep the current rows visible while switching the days range (no flicker).
     placeholderData: keepPreviousData,
