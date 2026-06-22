@@ -41,6 +41,7 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
       // authenticator answer with JSON instead of a 302 (it keys on isXmlHttpRequest).
       const response = await fetch(cfg.loginPath, {
         method: 'POST',
+        credentials: 'same-origin', // send + accept the session / CSRF cookies, like the API client
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'X-Requested-With': 'XMLHttpRequest',

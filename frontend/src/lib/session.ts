@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js'
+import { createSignal, untrack } from 'solid-js'
 
 /**
  * App-wide "the backend session is gone" state. A module-level signal is a
@@ -18,9 +18,13 @@ const POLL_MS = 60_000
  * redirect-to-login detection, and it lets us surface a SILENT expiry (the user
  * idle on a page) before they try to act. A failed/again-network probe must never
  * raise the overlay: a real expiry is still caught reactively on the next data call.
- * Safe to run even while the overlay is up — setSessionExpired(true) is idempotent.
  */
 async function probeSession(): Promise<void> {
+  // Skip while the overlay is already up — no point re-probing a known-expired
+  // session. untrack() reads the value imperatively (this isn't a reactive scope).
+  if (untrack(sessionExpired)) {
+    return
+  }
   try {
     const response = await fetch('/status/check', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
     if (!response.ok) {

@@ -1824,7 +1824,7 @@ th[aria-sort='descending'] .th-sort-glyph {
    page. The backdrop desaturates the page behind it — "grayed out but still
    readable" — and blocks interaction with everything underneath. */
 .session-backdrop {
-  background: rgba(110, 110, 110, 0.28);
+  background-color: rgba(110, 110, 110, 0.28);
   -webkit-backdrop-filter: grayscale(0.85) brightness(0.95);
   backdrop-filter: grayscale(0.85) brightness(0.95);
   z-index: 10010;
