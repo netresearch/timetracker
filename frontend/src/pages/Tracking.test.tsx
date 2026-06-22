@@ -54,13 +54,18 @@ const DEFAULT_ENTRY = {
   duration: '1:30', durationMinutes: 90, class: 8, worklog: null, extTicket: null,
 }
 
-function mockApi() {
+// mockApi with a custom entries list (the customer/project/activity seed is shared).
+function mockApiWith(entries: unknown[]): void {
   mockTracking({
-    entries: [{ entry: DEFAULT_ENTRY }],
+    entries,
     customers: [{ customer: { id: 1, name: 'ACME' } }],
     projects: [{ project: { id: 4, name: 'Site' } }],
     activities: [{ activity: { id: 5, name: 'Dev' } }],
   })
+}
+
+function mockApi(): void {
+  mockApiWith([{ entry: DEFAULT_ENTRY }])
 }
 
 function renderTracking() {
@@ -490,6 +495,116 @@ describe('Tracking (Worklog grid)', () => {
     // The bulk-entry form (portalled dialog) appears without leaving the grid.
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText(/Bulk entry/i)).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('Add inherits the latest end only when the latest entry is from today (suggest-time on)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    try {
+      const now = new Date()
+      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      // The latest entry is from today → the new row's start inherits its end.
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+    }
+  })
+
+  it('Add starts at the current time when the latest entry is from a prior day (suggest-time on)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    try {
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: '01/01/2020', end: '10:30', class: 0 } }])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      // A fresh day must NOT inherit the prior day's end — it starts at the current time.
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toMatch(/^\d{2}:\d{2}$/))
+      expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).not.toBe('10:30')
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+    }
+  })
+
+  it('shows the save + reset actions on an unsaved new row, but not on a clean saved row', async () => {
+    mockApi()
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    // The saved, untouched row keeps both unsaved actions in their reserved (hidden) slots.
+    const savedRow = container.querySelector('tbody tr.tracking-row')!
+    expect(savedRow.querySelector('.is-unsaved')!.classList.contains('action-slot-hidden')).toBe(true)
+    expect(savedRow.querySelector('.is-reset')!.classList.contains('action-slot-hidden')).toBe(true)
+
+    fireEvent.click(getByRole('button', { name: 'Add entry' }))
+    // The new row is prepended; its save + reset actions are visible immediately.
+    const newRow = container.querySelector('tbody tr.tracking-row')!
+    expect(newRow.classList.contains('is-new')).toBe(true)
+    expect(newRow.querySelector('.is-unsaved')!.classList.contains('action-slot-hidden')).toBe(false)
+    expect(newRow.querySelector('.is-reset')!.classList.contains('action-slot-hidden')).toBe(false)
+
+    unmount()
+  })
+
+  it('reset removes an unsaved new row without calling delete', async () => {
+    mockApi()
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+    const rowCount = (): number => container.querySelectorAll('tbody tr.tracking-row').length
+    const initial = rowCount()
+
+    fireEvent.click(getByRole('button', { name: 'Add entry' }))
+    expect(rowCount()).toBe(initial + 1)
+
+    // Discarding the new row drops it client-side — no /tracking/delete with a temp id.
+    fireEvent.click(container.querySelector<HTMLElement>('tbody tr.tracking-row .is-reset')!)
+
+    await waitFor(() => expect(rowCount()).toBe(initial))
+    expect(postForm).not.toHaveBeenCalledWith('/tracking/delete', expect.anything())
+
+    unmount()
+  })
+
+  it('reset reverts an edited existing row to its DB value without saving', async () => {
+    // An incomplete row (no customer) won't auto-save, so the edit stays pending.
+    mockApiWith([{ entry: { ...DEFAULT_ENTRY, customer: 0, class: 0 } }])
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    const descEditor = editCell(container, 'description')
+    fireEvent.input(descEditor, { target: { value: 'changed' } })
+    fireEvent.keyDown(descEditor, { key: 'Enter' })
+    await waitFor(() => expect(getByRole('gridcell', { name: 'changed' })).toBeInTheDocument())
+
+    // Reset throws the edit away: the cell shows the saved value and nothing is POSTed.
+    fireEvent.click(container.querySelector<HTMLElement>('tbody tr.tracking-row .is-reset')!)
+
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+    expect(postJson).not.toHaveBeenCalledWith('/tracking/save', expect.anything())
+
+    unmount()
+  })
+
+  it('the refresh toolbar button refetches the entries', async () => {
+    mockApi()
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+    const entryFetches = (): number => getJson.mock.calls.filter((args) => String(args[0]).startsWith('/getData/days/')).length
+    const before = entryFetches()
+
+    fireEvent.click(getByRole('button', { name: 'Refresh' }))
+
+    await waitFor(() => expect(entryFetches()).toBeGreaterThan(before))
 
     unmount()
   })

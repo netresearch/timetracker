@@ -54,4 +54,28 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await expect(ticketEditor).toBeVisible();
     await expect(ticketEditor).toHaveValue(stamp);
   });
+
+  test('the toolbar refresh button refetches the entries', async ({ page }) => {
+    const refetch = page.waitForResponse((r) => /\/getData\/days\/\d+/.test(r.url()) && r.request().method() === 'GET');
+    await page.getByRole('button', { name: /^(Refresh|Aktualisieren)$/ }).click();
+    await refetch;
+  });
+
+  test('a new row shows the unsaved save + reset actions, and reset discards it', async ({ page }) => {
+    const before = await page.locator('tr.tracking-row').count();
+    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+    const row = page.locator('tr.tracking-row.is-new').first();
+    await expect(row).toBeVisible();
+
+    // A brand-new row is unsaved by definition: both the force-save and reset
+    // actions show immediately, before any edit.
+    await expect(row.locator('.is-unsaved')).toBeVisible();
+    await expect(row.locator('.is-reset')).toBeVisible();
+
+    // Close the auto-opened customer editor so the reset click isn't racing the combobox.
+    await page.keyboard.press('Escape');
+    // Reset discards the unsaved new row (client-side; no /tracking/delete for a temp id).
+    await row.locator('.is-reset').click();
+    await expect(page.locator('tr.tracking-row')).toHaveCount(before);
+  });
 });

@@ -1745,6 +1745,12 @@ th[aria-sort='descending'] .th-sort-glyph {
   color: var(--color-warning-text);
 }
 
+/* The reset (discard) action sits beside the disk button; a muted tone marks it
+   as the secondary "throw away edits" choice next to the highlighted save. */
+.link-button.is-reset {
+  color: var(--color-text-muted);
+}
+
 /* The disk button keeps its slot reserved (it's the last action) and only
    toggles visibility, so showing/hiding it never shifts the other action icons.
    visibility:hidden also drops it from the tab order and the a11y tree. */

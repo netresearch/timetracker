@@ -55,3 +55,13 @@ export function ProlongIcon(): JSX.Element {
 export function InfoIcon(): JSX.Element {
   return <Icon><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 7.5h.01" /></Icon>
 }
+
+// Refresh: a circular arrow — reload the worklog entries.
+export function RefreshIcon(): JSX.Element {
+  return <Icon><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 4v5h-5" /></Icon>
+}
+
+// Reset: an undo arrow — discard a row's unsaved edits / restore the DB state.
+export function ResetIcon(): JSX.Element {
+  return <Icon><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-1" /></Icon>
+}
