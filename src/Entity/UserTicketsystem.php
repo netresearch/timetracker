@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Model\Base;
-use DateTimeInterface;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use SensitiveParameter;
 
@@ -57,8 +57,8 @@ class UserTicketsystem extends Base
     /**
      * Absolute expiry of the OAuth2 access token (Cloud only).
      */
-    #[ORM\Column(name: 'token_expires_at', type: 'datetime', nullable: true)]
-    protected ?DateTimeInterface $tokenExpiresAt = null;
+    #[ORM\Column(name: 'token_expires_at', type: 'datetime_immutable', nullable: true)]
+    protected ?DateTimeImmutable $tokenExpiresAt = null;
 
     #[ORM\Column(name: 'avoidconnection', type: 'boolean', options: ['default' => false])]
     protected bool $avoidConnection = false;
@@ -153,7 +153,7 @@ class UserTicketsystem extends Base
         return $this;
     }
 
-    public function getTokenExpiresAt(): ?DateTimeInterface
+    public function getTokenExpiresAt(): ?DateTimeImmutable
     {
         return $this->tokenExpiresAt;
     }
@@ -161,7 +161,7 @@ class UserTicketsystem extends Base
     /**
      * @return $this
      */
-    public function setTokenExpiresAt(?DateTimeInterface $tokenExpiresAt): static
+    public function setTokenExpiresAt(?DateTimeImmutable $tokenExpiresAt): static
     {
         $this->tokenExpiresAt = $tokenExpiresAt;
 

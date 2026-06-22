@@ -308,60 +308,22 @@ final class TicketSystemTest extends TestCase
         self::assertSame('CUSTOM', $ticketSystem->getDeploymentTypeRaw());
     }
 
-    // ==================== Oauth2ClientId tests ====================
+    // ===== Nullable string accessors (oauth2 client id/secret, cloud id) =====
 
-    public function testOauth2ClientIdIsNullByDefault(): void
+    public function testNullableStringAccessorsDefaultToNullAndRoundTrip(): void
     {
         $ticketSystem = new TicketSystem();
 
         self::assertNull($ticketSystem->getOauth2ClientId());
-    }
-
-    public function testSetOauth2ClientIdReturnsFluentInterface(): void
-    {
-        $ticketSystem = new TicketSystem();
-
-        $result = $ticketSystem->setOauth2ClientId('client-id-123');
-
-        self::assertSame($ticketSystem, $result);
-        self::assertSame('client-id-123', $ticketSystem->getOauth2ClientId());
-    }
-
-    // ==================== Oauth2ClientSecret tests ====================
-
-    public function testOauth2ClientSecretIsNullByDefault(): void
-    {
-        $ticketSystem = new TicketSystem();
-
         self::assertNull($ticketSystem->getOauth2ClientSecret());
-    }
-
-    public function testSetOauth2ClientSecretReturnsFluentInterface(): void
-    {
-        $ticketSystem = new TicketSystem();
-
-        $result = $ticketSystem->setOauth2ClientSecret('client-secret-456');
-
-        self::assertSame($ticketSystem, $result);
-        self::assertSame('client-secret-456', $ticketSystem->getOauth2ClientSecret());
-    }
-
-    // ==================== CloudId tests ====================
-
-    public function testCloudIdIsNullByDefault(): void
-    {
-        $ticketSystem = new TicketSystem();
-
         self::assertNull($ticketSystem->getCloudId());
-    }
 
-    public function testSetCloudIdReturnsFluentInterface(): void
-    {
-        $ticketSystem = new TicketSystem();
+        self::assertSame($ticketSystem, $ticketSystem->setOauth2ClientId('client-id-123'));
+        self::assertSame($ticketSystem, $ticketSystem->setOauth2ClientSecret('client-secret-456'));
+        self::assertSame($ticketSystem, $ticketSystem->setCloudId('cloud-789'));
 
-        $result = $ticketSystem->setCloudId('cloud-789');
-
-        self::assertSame($ticketSystem, $result);
+        self::assertSame('client-id-123', $ticketSystem->getOauth2ClientId());
+        self::assertSame('client-secret-456', $ticketSystem->getOauth2ClientSecret());
         self::assertSame('cloud-789', $ticketSystem->getCloudId());
     }
 }

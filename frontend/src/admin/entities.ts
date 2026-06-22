@@ -310,7 +310,7 @@ export function adminEntities(): EntityDescriptor[] {
             login: str(row.login), password: '', publicKey: '', privateKey: '',
             oauthConsumerKey: '', oauthConsumerSecret: '',
             deploymentType: str(pick(row, 'deploymentType', 'deployment_type')) || 'SERVER',
-            oauth2ClientId: '', oauth2ClientSecret: '',
+            oauth2ClientId: str(pick(row, 'oauth2ClientId', 'oauth2_client_id')), oauth2ClientSecret: '',
           },
       toPayload: (v) => ({ ...v }),
     },

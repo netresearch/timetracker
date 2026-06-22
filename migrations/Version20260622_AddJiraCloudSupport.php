@@ -50,6 +50,12 @@ final class Version20260622_AddJiraCloudSupport extends AbstractMigration
             DROP oauth2_client_secret,
             DROP cloud_id');
 
+        // Cloud rows may have written a NULL tokensecret while this migration was
+        // applied (it relaxed the column to nullable); blank those before restoring
+        // the NOT NULL constraint so the rollback can't fail. The column reverts to
+        // TEXT NOT NULL — the state left by Version20250901_EncryptTokenFields, the
+        // migration immediately preceding this one — not the original VARCHAR(50).
+        $this->addSql("UPDATE users_ticket_systems SET tokensecret = '' WHERE tokensecret IS NULL");
         $this->addSql('ALTER TABLE users_ticket_systems
             DROP refresh_token,
             DROP token_expires_at,
