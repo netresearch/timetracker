@@ -118,7 +118,12 @@ final class SaveEntryAction extends BaseTrackingController
             return $populateError;
         }
 
-        if (!$project->getActive()) {
+        // Only block an inactive project when it is newly assigned or changed — an
+        // existing entry that KEEPS its (since-deactivated) project must still save,
+        // so editing its other fields (start/end/description) never fails. The UI
+        // also hides inactive projects from the picker, so a fresh pick is active.
+        $projectChanged = !$previousEntry instanceof Entry || $previousEntry->getProjectId() !== $project->getId();
+        if ($projectChanged && !$project->getActive()) {
             return new Error('Project is no longer active.', Response::HTTP_BAD_REQUEST);
         }
 

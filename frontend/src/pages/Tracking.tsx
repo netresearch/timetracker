@@ -188,31 +188,50 @@ export default function Tracking() {
   const activityLabels = createMemo(() => toLabelMap(activities.data))
   const labelFrom = (map: Map<number, string>, id: number): string => (id > 0 ? (map.get(id) ?? String(id)) : '')
 
+  // The PICKER offers only bookable (active) customers/projects, plus the row's
+  // CURRENT value even if it's since been deactivated — so editing an existing
+  // entry whose customer/project was deactivated keeps it visible/selectable and
+  // never silently drops it. Activities have no active concept.
   const optionLookup: OptionLookup = (source: OptionSource) => {
+    const cell = editor.editCell()
+    const currentOf = (field: string): number => (cell !== null ? num(editor.draftValue(cell.rowId, field)) : 0)
+    const bookable = <T extends { id: number; active?: boolean }>(list: T[], keepId: number): T[] =>
+      list.filter((option) => option.active !== false || option.id === keepId)
+
     switch (source) {
       case 'customers':
-        return customers.data ?? []
+        return bookable(customers.data ?? [], currentOf('customer'))
       case 'activities':
         return activities.data ?? []
       case 'projects': {
         // Cascade: while editing, show only the projects for the row's customer
         // (prod has ~1000 projects, so an unfiltered list is unusable).
-        const cell = editor.editCell()
-        const customerId = cell !== null ? num(editor.draftValue(cell.rowId, 'customer')) : 0
+        const customerId = currentOf('customer')
         const list = projects.data ?? []
         const scoped = customerId > 0 ? list.filter((project) => project.customer === customerId) : list
 
-        return scoped.map((project) => ({ id: project.id, label: project.name }))
+        return bookable(scoped, currentOf('project')).map((project) => ({ id: project.id, label: project.name }))
       }
       default:
         return []
     }
   }
 
-  // Read-mode chip labels resolve against the FULL option set: the cascade in
-  // optionLookup narrows only the OPEN editor's project list — it must never
-  // mislabel another row's project chip while a customer is being edited.
-  const readOptionLookup: OptionLookup = (source: OptionSource) => (source === 'projects' ? allProjectOptions() : optionLookup(source))
+  // Read-mode chip labels resolve against the FULL option set (incl. inactive), so
+  // an existing entry's deactivated customer/project still renders its name — the
+  // active-only filtering above applies ONLY to the open editor's picker.
+  const readOptionLookup: OptionLookup = (source: OptionSource) => {
+    switch (source) {
+      case 'projects':
+        return allProjectOptions()
+      case 'customers':
+        return customers.data ?? []
+      case 'activities':
+        return activities.data ?? []
+      default:
+        return []
+    }
+  }
 
   // Suggested start for a fresh row / empty start cell: continue from the latest
   // entry's end ONLY if that entry is from TODAY; otherwise a fresh day starts at
