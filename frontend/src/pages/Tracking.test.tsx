@@ -80,6 +80,9 @@ function renderTracking() {
 
 afterEach(() => {
   cleanup() // unmount even after a throwing test, so a body-portalled combobox + body-inert can't leak into the next test
+  // The day range now persists to localStorage — clear it so a range change in
+  // one test doesn't leak into the next (which expects the DEFAULT_DAYS range).
+  localStorage.clear()
   getJson.mockReset()
   postJson.mockReset()
   postForm.mockReset()

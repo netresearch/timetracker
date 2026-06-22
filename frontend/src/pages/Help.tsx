@@ -28,6 +28,8 @@ const GRID_SHORTCUTS: Shortcut[] = [
   { keys: 'Enter / Tab / Esc', label: () => m.help_sc_commit_cell() },
   { keys: 'Tab / Shift + Tab', label: () => m.help_sc_cell_controls() },
   { keys: 'Esc', label: () => m.help_sc_leave_cell() },
+  { keys: 'Ctrl + C', label: () => m.help_sc_copy_cell() },
+  { keys: 'Ctrl + V', label: () => m.help_sc_paste_cell() },
   { keys: '↓', label: () => m.help_sc_search_table() },
   { keys: 'Esc', label: () => m.help_sc_search_clear() },
 ]
@@ -77,6 +79,7 @@ export default function Help() {
           <li>{m.help_usage_edit()}</li>
           <li>{m.help_usage_delete()}</li>
           <li>{m.help_usage_focus()}</li>
+          <li>{m.help_usage_autosave()}</li>
         </ul>
       </section>
 

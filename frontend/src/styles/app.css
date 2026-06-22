@@ -1101,11 +1101,25 @@ kbd {
   margin: 0;
 }
 
+/* The empty-state actions (Add + widen-range) sit on one row. */
+.tracking-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 /* Inline-edit / keyboard discoverability hint above the grid. */
 .tracking-hint {
   color: var(--color-text-muted);
   font-size: 0.85rem;
   margin: 0 0 var(--space-3);
+}
+
+/* In-flight refetch cue (refresh / range change): the previous rows stay visible
+   (keepPreviousData), so a subtle dim is the only signal the data is updating. */
+.tracking-table.is-fetching {
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
 }
 
 /* Row-colour legend: a small swatch (the same border colour) + its label. */

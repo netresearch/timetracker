@@ -11,6 +11,7 @@ import { formatMinutes } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
+import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { PageDialog } from '../components/PageDialog'
@@ -23,6 +24,8 @@ void gridNav
 
 const DAYS_OPTIONS = [1, 3, 7, 35] as const
 const DEFAULT_DAYS = 3
+// Widen target for the range-aware empty state (the largest preset window).
+const WIDEN_DAYS = 35
 const ENTRIES_KEY = 'tracking-entries'
 
 // Server-computed EntryClass → row modifier, mirroring the ExtJS row borders.
@@ -160,7 +163,8 @@ function RowAction(props: { label: string; danger?: boolean; onClick: () => void
  */
 export default function Tracking() {
   const queryClient = useQueryClient()
-  const [days, setDays] = createSignal<number>(DEFAULT_DAYS)
+  // The day range persists across remounts/logins (client-side, like the theme).
+  const [days, setDays] = createSignal<number>(getTrackingDays(DAYS_OPTIONS, DEFAULT_DAYS))
   const entries = useQuery(() => trackingEntriesQuery(days()))
   const customers = useQuery(trackingCustomersQuery)
   const projects = useQuery(trackingProjectsQuery)
@@ -182,6 +186,17 @@ export default function Tracking() {
   }
   // Assertive in-page error for delete/prolong/info failures (replaces window.alert).
   const [pageError, setPageError] = createSignal('')
+
+  // Visible, auto-dismissing save confirmation (mirrors AdminCrudShell.flashNotice):
+  // the polite live region above tells AT users; sighted users get a brief toast.
+  const [savedNotice, setSavedNotice] = createSignal('')
+  let noticeTimer: ReturnType<typeof setTimeout> | undefined
+  function flashNotice(message: string): void {
+    setSavedNotice(message)
+    clearTimeout(noticeTimer)
+    noticeTimer = setTimeout(() => setSavedNotice(''), 3000)
+  }
+  onCleanup(() => clearTimeout(noticeTimer))
 
   // Unsaved new rows (Add/Continue) carry a temporary negative id and render
   // above the fetched entries; they save as creates and drop on success.
@@ -341,9 +356,9 @@ export default function Tracking() {
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
     },
     onCommit: handleCommit,
-    // Announce every successful save (auto, force, or row-leave) — the only
-    // confirmation a screen-reader/low-vision user gets that the row persisted.
-    onSaved: () => announce(m.tracking_saved()),
+    // Confirm every successful save (auto, force, or row-leave): announce to AT
+    // users via the live region AND flash a brief visible toast for sighted users.
+    onSaved: () => { announce(m.tracking_saved()); flashNotice(m.tracking_saved()) },
     saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
     // Required for a bookable entry — the row auto-saves once all are valid.
     invalidFields: (draft) => {
@@ -455,6 +470,14 @@ export default function Tracking() {
     const active = activeEntry()
 
     return active !== undefined && num(active.id) > 0 ? active : (entries.data ?? [])[0]
+  }
+
+  // The most recent saved entry (entries are returned newest-first) — the only
+  // row whose end Prolong may rewrite to now without corrupting an older span.
+  const isLatestEntry = (entry: TrackingEntry): boolean => {
+    const latest = (entries.data ?? [])[0]
+
+    return latest !== undefined && num(latest.id) === num(entry.id)
   }
 
   // Alt+I: per-customer/project/activity/ticket totals for the cursor row (or
@@ -578,12 +601,20 @@ export default function Tracking() {
     // ISO; the untouched row's is d/m/Y).
     const merged = editor.overlayRow(base)
     const date = str(merged.date).includes('-') ? str(merged.date) : toIsoDate(str(merged.date))
+    const start = parseTime(str(merged.start)) ?? str(merged.start)
+    // Prolong sets the end to "now", which only makes sense once now is at/after the
+    // entry's start. On a not-yet-started (e.g. future-dated) entry that would write a
+    // backward span — abort rather than save a meaningless edit with the old end.
+    if (nowHi() < start) {
+      return
+    }
+    const end = nowHi()
     try {
       await postJson('/tracking/save', savePayload({
         id: num(base.id),
         date,
-        start: parseTime(str(merged.start)) ?? str(merged.start),
-        end: nowHi(),
+        start,
+        end,
         ticket: merged.ticket,
         description: merged.description,
         customer: merged.customer,
@@ -597,6 +628,12 @@ export default function Tracking() {
     } catch (caught) {
       setPageError(apiErrorMessage(caught, m.app_load_error()))
     }
+  }
+
+  // Change the day range and persist the choice (so it survives a remount/login).
+  function applyDays(value: number): void {
+    setDays(value)
+    setTrackingDays(value)
   }
 
   const exportHref = (): string => `/export/${days()}`
@@ -627,6 +664,9 @@ export default function Tracking() {
         break
       case 'p':
         event.preventDefault()
+        // Prolong always targets the latest entry (not the cursor row): it rewrites
+        // the end to "now", which would corrupt an older focused entry. Unlike
+        // Continue/Info, this action mutates, so it stays latest-only.
         void prolongLast()
         break
       case 'r':
@@ -659,6 +699,12 @@ export default function Tracking() {
       <Show when={pageError() !== ''}>
         <p class="form-status is-error" role="alert">{pageError()}</p>
       </Show>
+      {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue).
+          Purely visual: aria-hidden so AT users aren't told twice — the polite
+          live region above already announces the save. */}
+      <Show when={savedNotice() !== ''}>
+        <p class="form-status is-ok" aria-hidden="true">{savedNotice()}</p>
+      </Show>
 
       <div class="tracking-toolbar">
         <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
@@ -679,7 +725,7 @@ export default function Tracking() {
           <span>{m.tracking_days_label()}</span>
           <select
             value={String(days())}
-            onChange={(event) => setDays(Number(event.currentTarget.value))}
+            onChange={(event) => applyDays(Number(event.currentTarget.value))}
           >
             <For each={DAYS_OPTIONS}>
               {(option) => <option value={String(option)}>{option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}</option>}
@@ -699,6 +745,11 @@ export default function Tracking() {
         <div class="table-scroll">
           <table
             class="data-table tracking-table"
+            classList={{ 'is-fetching': entries.isFetching }}
+            // A refetch (refresh / range change) keeps the previous rows visible
+            // (keepPreviousData) — aria-busy + a subtle dim are the only in-flight
+            // cue a sighted user gets, since the first-load spinner won't fire.
+            aria-busy={entries.isFetching ? 'true' : undefined}
             ref={(el) => { editor.setTableEl(el); tableEl = el }}
             onFocusIn={editor.onTableFocusIn}
             onFocusOut={editor.onTableFocusOut}
@@ -795,7 +846,12 @@ export default function Tracking() {
                           {/* Per-row Continue / Prolong / Info — only for saved entries. */}
                           <Show when={id > 0}>
                             <RowAction label={m.tracking_continue()} onClick={() => continueEntry(entry)}><ContinueIcon /></RowAction>
-                            <RowAction label={m.tracking_prolong()} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
+                            {/* Prolong rewrites the row's end to now — only meaningful on the
+                                LATEST entry; on an older row it would silently overwrite a past
+                                end with the current time, so it's hidden there. */}
+                            <Show when={isLatestEntry(entry)}>
+                              <RowAction label={m.tracking_prolong()} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
+                            </Show>
                             <RowAction label={m.tracking_info()} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
                           </Show>
                           <RowAction label={m.admin_delete()} danger onClick={() => setPendingDelete(entry)}><TrashIcon /></RowAction>
@@ -834,8 +890,15 @@ export default function Tracking() {
         </Show>
         <Show when={rows().length === 0 && !entries.isLoading}>
           <div class="tracking-empty">
-            <p>{m.tracking_empty()}</p>
-            <button type="button" class="primary-button" onClick={() => addEntry()}>{m.tracking_empty_cta()}</button>
+            {/* Range-aware: an empty N-day window is not "you have no entries ever",
+                so name the window and offer to widen it (rather than only "add"). */}
+            <p>{m.tracking_empty_range({ count: String(days()) })}</p>
+            <div class="tracking-empty-actions">
+              <button type="button" class="primary-button" onClick={() => addEntry()}>{m.tracking_empty_cta()}</button>
+              <Show when={days() < WIDEN_DAYS}>
+                <button type="button" class="action-button" onClick={() => applyDays(WIDEN_DAYS)}>{m.tracking_empty_widen({ count: String(WIDEN_DAYS) })}</button>
+              </Show>
+            </div>
           </div>
         </Show>
 
