@@ -22,6 +22,7 @@ use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Repository\EntryRepository;
+use App\Service\Security\TokenEncryptionService;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
@@ -67,6 +68,7 @@ class JiraOAuthApiService
         protected TicketSystem $ticketSystem,
         protected ManagerRegistry $managerRegistry,
         RouterInterface $router,
+        protected TokenEncryptionService $tokenEncryptionService,
     ) {
         $this->oAuthCallbackUrl = $router->generate('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
@@ -657,17 +659,20 @@ class JiraOAuthApiService
                 ->setTicketSystem($this->ticketSystem);
         }
 
-        $userTicketSystem->setTokenSecret($tokenSecret)
-            ->setAccessToken($accessToken)
+        // Encrypt at rest (AES-256-GCM); reads decrypt in getToken()/getTokenSecret().
+        $userTicketSystem->setTokenSecret($this->tokenEncryptionService->encryptToken($tokenSecret))
+            ->setAccessToken($this->tokenEncryptionService->encryptToken($accessToken))
             ->setAvoidConnection($avoidConnection);
 
         $objectManager = $this->managerRegistry->getManager();
         $objectManager->persist($userTicketSystem);
         $objectManager->flush();
 
+        // Return the plaintext the caller passed in, not the encrypted stored value,
+        // so an immediate post-store request still uses a usable token.
         return [
-            'oauth_token_secret' => $userTicketSystem->getTokenSecret(),
-            'oauth_token' => $userTicketSystem->getAccessToken(),
+            'oauth_token_secret' => $tokenSecret,
+            'oauth_token' => $accessToken,
         ];
     }
 
@@ -678,12 +683,29 @@ class JiraOAuthApiService
 
     protected function getTokenSecret(): string
     {
-        return $this->user->getTicketSystemAccessTokenSecret($this->ticketSystem) ?? '';
+        return $this->decryptStored($this->user->getTicketSystemAccessTokenSecret($this->ticketSystem) ?? '');
     }
 
     protected function getToken(): string
     {
-        return $this->user->getTicketSystemAccessToken($this->ticketSystem) ?? '';
+        return $this->decryptStored($this->user->getTicketSystemAccessToken($this->ticketSystem) ?? '');
+    }
+
+    /**
+     * Decrypts a stored OAuth token, transparently passing through legacy
+     * unencrypted values written before encryption-at-rest was added.
+     */
+    private function decryptStored(string $stored): string
+    {
+        if ('' === $stored) {
+            return '';
+        }
+
+        try {
+            return $this->tokenEncryptionService->decryptToken($stored);
+        } catch (Exception) {
+            return $stored;
+        }
     }
 
     protected function getJiraApiUrl(): string

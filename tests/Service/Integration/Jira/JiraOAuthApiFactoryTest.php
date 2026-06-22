@@ -12,6 +12,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\RouterInterface;
+use Tests\Traits\TokenEncryptionTestTrait;
 
 /**
  * Unit tests for JiraOAuthApiFactory.
@@ -21,16 +22,20 @@ use Symfony\Component\Routing\RouterInterface;
 #[CoversClass(JiraOAuthApiFactory::class)]
 final class JiraOAuthApiFactoryTest extends TestCase
 {
+    use TokenEncryptionTestTrait;
+
     public function testSetDependenciesStoresDependencies(): void
     {
         $factory = new JiraOAuthApiFactory();
         $managerRegistry = self::createStub(ManagerRegistry::class);
         $router = self::createStub(RouterInterface::class);
+        $tokenEncryptionService = $this->createTokenEncryptionService();
 
-        $factory->setDependencies($managerRegistry, $router);
+        $factory->setDependencies($managerRegistry, $router, $tokenEncryptionService);
 
         self::assertSame($managerRegistry, $factory->managerRegistry);
         self::assertSame($router, $factory->router);
+        self::assertSame($tokenEncryptionService, $factory->tokenEncryptionService);
     }
 
     public function testCreateReturnsJiraOAuthApiService(): void
@@ -42,7 +47,7 @@ final class JiraOAuthApiFactoryTest extends TestCase
         $factory = new JiraOAuthApiFactory();
         $managerRegistry = self::createStub(ManagerRegistry::class);
         $router = self::createStub(RouterInterface::class);
-        $factory->setDependencies($managerRegistry, $router);
+        $factory->setDependencies($managerRegistry, $router, $this->createTokenEncryptionService());
 
         $user = self::createStub(User::class);
         $ticketSystem = self::createStub(TicketSystem::class);
