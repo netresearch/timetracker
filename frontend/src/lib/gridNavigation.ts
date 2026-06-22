@@ -315,6 +315,24 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     const [r, c] = currentPos()
     const lastRow = table.rows.length - 1 // live count, no per-keystroke allocation
 
+    // Clipboard from a focused cell (non-edit mode): Ctrl/Cmd+C copies the cell's
+    // text; Ctrl/Cmd+V opens the editor seeded with the clipboard text.
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) {
+      const lower = event.key.toLowerCase()
+      if (lower === 'c') {
+        event.preventDefault()
+        copyCellText(cell)
+
+        return
+      }
+      if (lower === 'v' && options.onActivate !== undefined) {
+        event.preventDefault()
+        void pasteIntoCell(cell)
+
+        return
+      }
+    }
+
     switch (event.key) {
       case 'ArrowRight':
         focusAt(r, c + 1)
@@ -419,42 +437,42 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     }
   }
 
-  // Spreadsheet-style clipboard. With a cell (not one of its controls) focused
-  // and nothing selected, Ctrl/Cmd+C copies the cell's text and Ctrl/Cmd+V pastes
-  // into it by opening the editor seeded with the pasted text (like typing the
-  // string). The inline editor owns the clipboard while a cell is being edited.
-  function focusedCell(): Cell | null {
-    const el = document.activeElement
-    if (el instanceof HTMLElement && (el.tagName === 'TD' || el.tagName === 'TH') && table.contains(el) && !el.hasAttribute('data-inline-editing')) {
-      return el as Cell
-    }
+  // Spreadsheet clipboard from a FOCUSED CELL (non-edit mode). The copy/paste DOM
+  // events only fire on an editable element or a text selection, so a focused cell
+  // never receives them — Ctrl/Cmd+C/V are driven from the keystroke (see onKeydown)
+  // via the async clipboard API, with an execCommand fallback for copy in non-secure
+  // contexts. In edit mode the focused input handles copy/paste natively.
+  function copyCellText(cell: Cell): void {
+    const text = (cell.textContent ?? '').trim()
+    if (navigator.clipboard?.writeText !== undefined) {
+      void navigator.clipboard.writeText(text)
 
-    return null
+      return
+    }
+    const area = document.createElement('textarea')
+    area.value = text
+    area.style.cssText = 'position:fixed;top:0;opacity:0'
+    document.body.appendChild(area)
+    area.select()
+    try { document.execCommand('copy') } catch { /* best effort */ }
+    area.remove()
+    cell.focus()
   }
 
-  function onCopy(event: ClipboardEvent): void {
-    if ((window.getSelection()?.toString() ?? '') !== '') {
-      return // a real text selection copies normally
+  async function pasteIntoCell(cell: Cell): Promise<void> {
+    if (navigator.clipboard?.readText === undefined) {
+      return // no async clipboard (non-secure context) → can't read the clipboard
     }
-    const cell = focusedCell()
-    if (cell !== null && event.clipboardData) {
-      event.clipboardData.setData('text/plain', (cell.textContent ?? '').trim())
-      event.preventDefault()
-    }
-  }
-
-  function onPaste(event: ClipboardEvent): void {
-    const cell = focusedCell()
-    const text = event.clipboardData?.getData('text/plain') ?? ''
-    if (cell !== null && text !== '' && options.onActivate?.(cell, 'type', text) === true) {
-      event.preventDefault()
-    }
+    try {
+      const text = await navigator.clipboard.readText()
+      if (text !== '') {
+        options.onActivate?.(cell, 'type', text)
+      }
+    } catch { /* permission denied / empty clipboard */ }
   }
 
   table.addEventListener('keydown', onKeydown)
   table.addEventListener('focusin', onFocusin)
-  table.addEventListener('copy', onCopy)
-  table.addEventListener('paste', onPaste)
 
   // Hand the inline-edit owner a roving handle so it can move the active cell
   // (after committing an edit) through setActive — the single writer of the
@@ -474,8 +492,6 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     dispose: () => {
       table.removeEventListener('keydown', onKeydown)
       table.removeEventListener('focusin', onFocusin)
-      table.removeEventListener('copy', onCopy)
-      table.removeEventListener('paste', onPaste)
       options.moveRef?.(null)
     },
   }

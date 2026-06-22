@@ -123,7 +123,7 @@ describe('enableGridNavigation', () => {
     cleanup()
   })
 
-  it('Ctrl+C copies the focused cell text; paste seeds the editor (onActivate type)', () => {
+  it('Ctrl+C writes the focused cell text; Ctrl+V reads the clipboard to seed the editor', async () => {
     grid.cleanup()
     document.body.innerHTML = '<table class="data-table"><tbody><tr><td data-col-key="a" data-row-id="1">Gamma</td></tr></tbody></table>'
     const table = document.querySelector('table') as HTMLTableElement
@@ -132,24 +132,26 @@ describe('enableGridNavigation', () => {
     const cell = table.querySelector('td') as HTMLElement
     cell.focus()
 
-    // jsdom has no DataTransfer — stub clipboardData on a plain event.
-    const clip = (type: string, text = ''): Event => {
-      const store: Record<string, string> = { 'text/plain': text }
-      const event = new Event(type, { bubbles: true, cancelable: true })
-      Object.defineProperty(event, 'clipboardData', {
-        value: { getData: (t: string) => store[t] ?? '', setData: (t: string, v: string) => { store[t] = v } },
-      })
+    // A focused, non-editable cell never receives copy/paste events — the grid drives
+    // them off the keystroke through the async clipboard API. Mock it here.
+    const writeText = vi.fn(() => Promise.resolve())
+    const readText = vi.fn(() => Promise.resolve('hello world'))
+    const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText, readText }, configurable: true })
 
-      return event
-    }
+    key(cell, 'c', { ctrlKey: true })
+    expect(writeText).toHaveBeenCalledWith('Gamma')
 
-    const copyEvent = clip('copy')
-    cell.dispatchEvent(copyEvent)
-    expect((copyEvent as unknown as { clipboardData: DataTransfer }).clipboardData.getData('text/plain')).toBe('Gamma')
-    expect(copyEvent.defaultPrevented).toBe(true)
-
-    cell.dispatchEvent(clip('paste', 'hello world'))
+    key(cell, 'v', { ctrlKey: true })
+    await Promise.resolve()
+    await Promise.resolve()
     expect(onActivate).toHaveBeenCalledWith(cell, 'type', 'hello world')
+
+    if (original) {
+      Object.defineProperty(navigator, 'clipboard', original)
+    } else {
+      Reflect.deleteProperty(navigator, 'clipboard')
+    }
     cleanup()
   })
 
