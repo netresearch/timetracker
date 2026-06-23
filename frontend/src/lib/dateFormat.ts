@@ -6,9 +6,11 @@ import { appConfig } from '../config'
  * User preference for how dates render in the UI. Client-side only (localStorage),
  * like the grid Enter-behavior and theme — it carries no data semantics, so it
  * never touches the server settings. The WIRE format, the sort key, and the inline
- * date EDITOR all stay ISO yyyy-mm-dd; this preference applies only at the
- * read-only display leaves (the worklog/eval date cells), so no display→ISO parser
- * is ever introduced on the save path. Signal-backed so open grids reformat live.
+ * date EDITOR stays ISO yyyy-mm-dd. Display formatting applies at the read-only
+ * grid leaves; modal FORM date fields additionally round-trip through
+ * parseUserDate() below, which accepts the active display format OR ISO and
+ * always validates back to ISO for the save path. Signal-backed so open grids
+ * reformat live.
  */
 export type DateFormatMode = 'iso' | 'auto' | 'custom'
 
@@ -169,4 +171,102 @@ export function setDateFormat(pref: DateFormatPref): void {
 /** Format an ISO yyyy-mm-dd date with the current preference (reactive). */
 export function formatUserDate(iso: string): string {
   return formatWith(iso, dateFormat())
+}
+
+const isFieldToken = (token: Token): token is Extract<Token, { field: 'y' | 'm' | 'd' }> => 'field' in token
+
+/** The order the y/m/d fields appear in the active display format (first
+ *  occurrence of each), or null when the format is plain ISO (only ISO input is
+ *  then accepted) or doesn't carry all three fields. */
+function fieldOrder(pref: DateFormatPref): ('y' | 'm' | 'd')[] | null {
+  if (pref.mode === 'iso') {
+    return null
+  }
+  if (pref.mode === 'custom') {
+    const seen: ('y' | 'm' | 'd')[] = []
+    for (const token of tokenize(pref.pattern)) {
+      if (isFieldToken(token) && !seen.includes(token.field)) {
+        seen.push(token.field)
+      }
+    }
+
+    return seen.length === 3 ? seen : null
+  }
+
+  // 'auto' — read the field order the locale renders (de → d,m,y; en → m,d,y).
+  try {
+    const parts = new Intl.DateTimeFormat(appConfig().locale, { year: 'numeric', month: '2-digit', day: '2-digit' })
+      .formatToParts(new Date(Date.UTC(2001, 11, 25)))
+    const order = parts
+      .filter((part) => part.type === 'year' || part.type === 'month' || part.type === 'day')
+      .map((part) => (part.type === 'year' ? 'y' : part.type === 'month' ? 'm' : 'd') as 'y' | 'm' | 'd')
+
+    return order.length === 3 ? order : ['y', 'm', 'd']
+  } catch {
+    return ['y', 'm', 'd']
+  }
+}
+
+/** True when iso (a yyyy-mm-dd string) names a real calendar date (rejects 2026-02-30). */
+function isRealIsoDate(iso: string): boolean {
+  const [year, month, day] = iso.split('-').map(Number)
+  const date = new Date(Date.UTC(year!, month! - 1, day!))
+
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month! - 1 && date.getUTCDate() === day
+}
+
+/**
+ * Parse a user-typed date (in the active display format, or ISO) back to ISO
+ * yyyy-mm-dd for the save path. Returns '' for blank input, or null when the
+ * value can't be understood as a date. ISO yyyy-mm-dd is ALWAYS accepted as a
+ * fallback regardless of the active preference, so the canonical form (or a
+ * paste) always works.
+ */
+export function parseUserDate(input: string, pref: DateFormatPref = dateFormat()): string | null {
+  const raw = input.trim()
+  if (raw === '') {
+    return ''
+  }
+  if (ISO_SHAPE.test(raw)) {
+    return isRealIsoDate(raw) ? raw : null
+  }
+
+  const order = fieldOrder(pref)
+  if (order === null) {
+    return null // ISO-only format and the input wasn't ISO
+  }
+
+  // Numeric groups left-to-right. `\d+` is linear (no backtracking → no ReDoS).
+  const groups = raw.match(/\d+/g)
+  if (groups === null || groups.length < 3) {
+    return null
+  }
+  const part: Record<'y' | 'm' | 'd', string> = { y: '', m: '', d: '' }
+  order.forEach((field, index) => {
+    part[field] = groups[index]!
+  })
+
+  let year = part.y
+  if (year.length === 2) {
+    year = String(2000 + Number(year)) // 2-digit year → 20YY
+  }
+  if (!/^\d{4}$/.test(year)) {
+    return null
+  }
+  const iso = `${year}-${part.m.padStart(2, '0')}-${part.d.padStart(2, '0')}`
+
+  return ISO_SHAPE.test(iso) && isRealIsoDate(iso) ? iso : null
+}
+
+/** A placeholder hint for a date input in the active format (e.g. "DD.MM.YYYY",
+ *  a locale sample, or "YYYY-MM-DD"). */
+export function dateFormatPlaceholder(pref: DateFormatPref = dateFormat()): string {
+  if (pref.mode === 'custom' && validatePattern(pref.pattern).ok) {
+    return pref.pattern
+  }
+  if (pref.mode === 'auto') {
+    return formatAuto('2026-12-31') // a sample so the order/separators are obvious
+  }
+
+  return 'YYYY-MM-DD'
 }

@@ -620,6 +620,13 @@ main {
   outline-offset: -1px;
 }
 
+/* Date field whose typed value couldn't be parsed (in the user's date format or ISO). */
+.field input.date-field[aria-invalid='true'] {
+  border-color: var(--color-danger, #c0392b);
+  outline: 2px solid var(--color-danger, #c0392b);
+  outline-offset: -1px;
+}
+
 .field-row {
   display: grid;
   gap: 1.1rem;

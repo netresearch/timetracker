@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { AppConfig } from '../config'
-import { formatUserDate, formatWith, setDateFormat, validatePattern } from './dateFormat'
+import { dateFormatPlaceholder, formatUserDate, formatWith, parseUserDate, setDateFormat, validatePattern } from './dateFormat'
 
 const ISO = '2026-06-19'
 
@@ -72,6 +72,50 @@ describe('dateFormat', () => {
       expect(formatUserDate(ISO)).toBe('19.06.2026')
       setDateFormat({ mode: 'iso', pattern: 'DD.MM.YYYY' })
       expect(formatUserDate(ISO)).toBe(ISO)
+    })
+  })
+
+  describe('parseUserDate (form save path)', () => {
+    beforeEach(() => {
+      window.APP_CONFIG = { ...appConfigStub }
+    })
+
+    const custom = { mode: 'custom', pattern: 'DD.MM.YYYY' } as const
+
+    it('parses the configured custom format back to ISO', () => {
+      expect(parseUserDate('19.06.2026', custom)).toBe(ISO)
+    })
+    it('pads single-digit day/month', () => {
+      expect(parseUserDate('5.6.2026', custom)).toBe('2026-06-05')
+    })
+    it('expands a 2-digit year to 20YY', () => {
+      expect(parseUserDate('19.06.26', { mode: 'custom', pattern: 'DD.MM.YY' })).toBe(ISO)
+    })
+    it('ALWAYS accepts ISO as a fallback, whatever the format', () => {
+      expect(parseUserDate('2026-06-19', custom)).toBe(ISO)
+      expect(parseUserDate('2026-06-19', { mode: 'iso', pattern: '' })).toBe(ISO)
+    })
+    it('auto mode parses the locale order (de → d.m.y)', () => {
+      expect(parseUserDate('19.06.2026', { mode: 'auto', pattern: '' })).toBe(ISO)
+    })
+    it('blank input parses to empty (clears an optional date)', () => {
+      expect(parseUserDate('   ', custom)).toBe('')
+    })
+    it('rejects an impossible date (Feb 30)', () => {
+      expect(parseUserDate('30.02.2026', custom)).toBeNull()
+    })
+    it('rejects garbage and a non-ISO string in iso mode', () => {
+      expect(parseUserDate('not a date', custom)).toBeNull()
+      expect(parseUserDate('19.06.2026', { mode: 'iso', pattern: '' })).toBeNull()
+    })
+  })
+
+  describe('dateFormatPlaceholder', () => {
+    it('shows the pattern for custom, YYYY-MM-DD for iso, a sample for auto', () => {
+      window.APP_CONFIG = { ...appConfigStub }
+      expect(dateFormatPlaceholder({ mode: 'custom', pattern: 'DD.MM.YYYY' })).toBe('DD.MM.YYYY')
+      expect(dateFormatPlaceholder({ mode: 'iso', pattern: '' })).toBe('YYYY-MM-DD')
+      expect(dateFormatPlaceholder({ mode: 'auto', pattern: '' })).toMatch(/\d/)
     })
   })
 })
