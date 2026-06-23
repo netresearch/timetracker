@@ -501,6 +501,13 @@ const entryManager = new TimeEntryManager(apiClient);
 
 ## Testing Requirements
 
+### Fast inner loop
+
+For quick feedback while developing, use these watch/no-DB loops instead of the full suite:
+
+- `make test-unit` — runs the PHP unit suite without a database (fast feedback on pure logic).
+- `cd frontend && bun run test:watch` — runs the SolidJS frontend tests (Vitest) in watch mode.
+
 ### Test Coverage Requirements
 
 | Component | Minimum Coverage | Target Coverage |
