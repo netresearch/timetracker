@@ -118,7 +118,7 @@
     "test:fast": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit --do-not-cache-result && APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=controller --do-not-cache-result",
     "test:coverage": "APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
     "test:coverage-text": "APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-text",
-    "perf:export": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --group=performance",
+    "perf:export": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance",
     "perf:unit": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance-unit",
     "perf:integration": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance-integration",
     "perf:benchmark": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=600 tests/Performance/PerformanceBenchmarkRunner.php",
