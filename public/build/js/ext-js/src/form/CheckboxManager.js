@@ -1,0 +1,1 @@
+Ext.define("Ext.form.CheckboxManager",{extend:"Ext.util.MixedCollection",singleton:!0,getByName:function(e){return this.filterBy(function(t){return t.name==e})},getWithValue:function(e,t){return this.filterBy(function(n){return n.name==e&&n.inputValue==t})},getChecked:function(e){return this.filterBy(function(t){return t.name==e&&t.checked})}});

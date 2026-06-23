@@ -1,0 +1,1 @@
+Ext.define("Netresearch.store.AdminCustomers",{extend:"Ext.data.Store",requires:["Netresearch.model.Customer"],autoLoad:!1,sortOnLoad:!0,model:"Netresearch.model.Customer",proxy:{type:"ajax",url:url+"getAllCustomers",reader:{type:"json",record:"customer"}},sorters:[{property:"name",direction:"ASC"}]});

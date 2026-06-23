@@ -1,0 +1,1 @@
+xdescribe("Ext.core.DomHelper",function(){xdescribe("useDom = false",function(){beforeEach(function(){Ext.core.DomHelper.useDom=!1})}),xdescribe("useDom = true",function(){beforeEach(function(){Ext.core.DomHelper.useDom=!1}),afterEach(function(){Ext.core.DomHelper.useDom=!0})})});

@@ -1,0 +1,1 @@
+Ext.define("Ext.menu.Separator",{extend:"Ext.menu.Item",alias:"widget.menuseparator",canActivate:!1,focusable:!1,hideOnClick:!1,plain:!0,separatorCls:Ext.baseCSSPrefix+"menu-item-separator",text:"&#160;",beforeRender:function(e,a){var t=this;t.callParent(),t.addCls(t.separatorCls)}});
