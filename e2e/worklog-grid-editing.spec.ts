@@ -99,6 +99,10 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
 
     const arrowEnter = async (): Promise<void> => {
       await expect(page.locator('.combobox-input').first()).toBeVisible();
+      // Wait for the option list to populate before navigating it — under shard load
+      // ArrowDown can fire before the (async) options arrive, highlighting nothing, so
+      // Enter then picks nothing and the guide never advances to the next field.
+      await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
       await page.keyboard.press('ArrowDown'); // highlight an option
       await page.keyboard.press('Enter'); // Enter-driven pick guides to the next required field
     };
