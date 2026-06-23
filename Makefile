@@ -214,13 +214,7 @@ e2e-install:
 # Coverage (Xdebug coverage mode)
 coverage: prepare-test-sql
 	@echo "Running test coverage with Xdebug..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G bin/phpunit --coverage-html var/coverage
-	@echo "Coverage HTML: var/coverage/index.html"
-
-# Traditional coverage (sequential, Xdebug coverage mode)
-coverage-sequential: prepare-test-sql
-	@echo "Running sequential test coverage with Xdebug..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage -e PHP_MEMORY_LIMIT=2G -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:
