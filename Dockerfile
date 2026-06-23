@@ -176,7 +176,7 @@ RUN pecl install xdebug-${XDEBUG_VERSION} \
 # `php -d pcov.enabled=1`.
 RUN pecl install pcov-${PCOV_VERSION} \
     && docker-php-ext-enable pcov \
-    && echo 'pcov.enabled=0' > /usr/local/etc/php/conf.d/pcov.ini
+    && echo 'pcov.enabled=0' >> /usr/local/etc/php/conf.d/docker-php-ext-pcov.ini
 
 COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
 

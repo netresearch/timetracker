@@ -130,7 +130,7 @@ target "app-e2e" {
   target   = "e2e"
   tags = compact([
     "${REGISTRY}/${IMAGE_NAME}:e2e",
-    notequal("", GIT_SHA) ? "${REGISTRY}/${IMAGE_NAME}:e2e-${GIT_SHA}" : "",
+    GIT_SHA != "" ? "${REGISTRY}/${IMAGE_NAME}:e2e-${GIT_SHA}" : "",
   ])
 }
 
