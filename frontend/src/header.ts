@@ -383,10 +383,15 @@ export function hideAccessHints(): void {
  *  page — so the `?` glyph means one thing whether typed or clicked. The link's
  *  href still points at /help, so it degrades gracefully if JS never loads. */
 export function handleHelpClick(event: MouseEvent): void {
-  const help = (event.target as HTMLElement | null)?.closest<HTMLElement>('.app-header [data-nav="help"]')
-  if (help) {
-    event.preventDefault()
-    setShortcutsHelpOpen(true)
+  // event.target can be a non-Element (document/window) in edge cases, and those
+  // have no closest() — guard before calling it.
+  const target = event.target
+  if (target instanceof Element) {
+    const help = target.closest<HTMLElement>('.app-header [data-nav="help"]')
+    if (help) {
+      event.preventDefault()
+      setShortcutsHelpOpen(true)
+    }
   }
 }
 

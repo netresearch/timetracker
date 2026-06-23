@@ -1,6 +1,5 @@
 import { Dialog } from '@ark-ui/solid/dialog'
 import { A } from '@solidjs/router'
-import { Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
 import { GLOBAL_SHORTCUTS, GRID_SHORTCUTS, TRACKING_SHORTCUTS } from '../lib/shortcuts'
@@ -19,29 +18,27 @@ export function ShortcutsDialog() {
   }
 
   return (
-    <Show when={shortcutsHelpOpen()}>
-      <Dialog.Root open onOpenChange={(details) => { if (!details.open) close() }} lazyMount unmountOnExit>
-        <Portal>
-          <Dialog.Backdrop class="modal-backdrop" />
-          <Dialog.Positioner class="modal-positioner shortcuts-positioner">
-            <Dialog.Content class="shortcuts-dialog" aria-label={m.help_shortcuts()}>
-              <header class="shortcuts-dialog-head">
-                <h2 class="shortcuts-dialog-title">{m.help_shortcuts()}</h2>
-                <button type="button" class="shortcuts-dialog-close" aria-label={m.kbd_hint_dismiss()} onClick={close}>✕</button>
-              </header>
-              <p class="help-intro">{m.help_shortcuts_intro()}</p>
-              <div class="shortcut-tables">
-                <ShortcutTable caption={m.help_shortcuts_global()} rows={GLOBAL_SHORTCUTS} />
-                <ShortcutTable caption={m.help_shortcuts_grid()} rows={GRID_SHORTCUTS} />
-                <ShortcutTable caption={m.help_shortcuts_tracking()} rows={TRACKING_SHORTCUTS} />
-              </div>
-              <footer class="shortcuts-dialog-foot">
-                <A href="/help" class="shortcuts-full-help" onClick={close}>{m.help_full()} →</A>
-              </footer>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
-    </Show>
+    <Dialog.Root open={shortcutsHelpOpen()} onOpenChange={(details) => { if (!details.open) close() }} lazyMount unmountOnExit>
+      <Portal>
+        <Dialog.Backdrop class="modal-backdrop" />
+        <Dialog.Positioner class="modal-positioner shortcuts-positioner">
+          <Dialog.Content class="shortcuts-dialog" aria-label={m.help_shortcuts()}>
+            <header class="shortcuts-dialog-head">
+              <h2 class="shortcuts-dialog-title">{m.help_shortcuts()}</h2>
+              <button type="button" class="shortcuts-dialog-close" aria-label={m.kbd_hint_dismiss()} onClick={close}>✕</button>
+            </header>
+            <p class="help-intro">{m.help_shortcuts_intro()}</p>
+            <div class="shortcut-tables">
+              <ShortcutTable caption={m.help_shortcuts_global()} rows={GLOBAL_SHORTCUTS} />
+              <ShortcutTable caption={m.help_shortcuts_grid()} rows={GRID_SHORTCUTS} />
+              <ShortcutTable caption={m.help_shortcuts_tracking()} rows={TRACKING_SHORTCUTS} />
+            </div>
+            <footer class="shortcuts-dialog-foot">
+              <A href="/help" class="shortcuts-full-help" onClick={close}>{m.help_full()} →</A>
+            </footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }
