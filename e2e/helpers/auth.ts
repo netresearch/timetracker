@@ -26,12 +26,26 @@ export async function login(
   await page.addInitScript(() => {
     window.localStorage.setItem('tt-kbd-hint-seen', '1');
   });
-  await page.goto('/login');
-  await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
-  await page.locator('input[name="_username"]').fill(username);
-  await page.locator('input[name="_password"]').fill(password);
-  await page.locator('#form-submit').click();
-  await expect(page).toHaveURL('/', { timeout: 15000 });
+  // Under concurrent CI-shard load the auth round-trip (10 shards hitting one LDAP +
+  // one MariaDB) occasionally fails and re-renders the login form, leaving us on
+  // /login — the long-standing parallel-login flake. Retry the submit a couple of
+  // times so a transient failure doesn't sink the whole spec.
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    await page.goto('/login');
+    await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
+    await page.locator('input[name="_username"]').fill(username);
+    await page.locator('input[name="_password"]').fill(password);
+    await page.locator('#form-submit').click();
+    try {
+      await expect(page).toHaveURL('/', { timeout: 10000 });
+
+      return;
+    } catch (error) {
+      if (attempt === 3) {
+        throw error;
+      }
+    }
+  }
 }
 
 /**
