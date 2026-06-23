@@ -65,6 +65,7 @@ Ext.define('Netresearch.widget.Tracking', {
     _checkFieldsTitle: 'Please check customer, project and activity.',
     _errorTitle: 'Error',
     _successTitle: 'Success',
+    _deprecationNoticeHtml: '⚠ This “Time Tracking” view is being retired soon — please switch to the new <strong>Worklog</strong> tab. Found a problem? <a href="https://github.com/netresearch/timetracker/issues" target="_blank" rel="noopener">Report it on the GitHub project</a>.',
 
     /* Initialize tracking widget */
     initComponent: function () {
@@ -82,6 +83,14 @@ Ext.define('Netresearch.widget.Tracking', {
 
         const config = {
             title: this._tabTitle,
+            /* Deprecation notice: this legacy ExtJS view is being replaced by the
+               SolidJS "Worklog" tab. Docked above the toolbar so it is always visible. */
+            dockedItems: [{
+                xtype: 'component',
+                dock: 'top',
+                cls: 'tracking-deprecation-banner',
+                html: this._deprecationNoticeHtml
+            }],
             autoRender: true,
             store: entryStore,
             stateful: false,
@@ -1396,6 +1405,7 @@ function NetresearchWidgetTrackingLoadSettings(settingsData) {
     if (settingsData?.['locale'] == 'de') {
         Ext.apply(Netresearch.widget.Tracking.prototype, {
             _tabTitle: 'Zeiterfassung',
+            _deprecationNoticeHtml: '⚠ Diese „Zeiterfassung“ wird demnächst entfernt — bitte wechseln Sie zum neuen <strong>Worklog</strong>-Tab. Probleme bitte <a href="https://github.com/netresearch/timetracker/issues" target="_blank" rel="noopener">im GitHub-Projekt melden</a>.',
             _dateTitle: 'Datum',
             _startTitle: 'Start',
             _endTitle: 'Ende',

@@ -45,3 +45,24 @@ header {
         }
     }
 }
+
+// Deprecation banner on the legacy ExtJS "Time Tracking" tab — nudges users to
+// the new SolidJS "Worklog" view. Goes away together with the ExtJS UI.
+.tracking-deprecation-banner {
+    padding: 8px 14px;
+    background-color: #fff4ce;
+    border-bottom: 1px solid #e0c97f;
+    color: #5c4a00;
+    font-size: 13px;
+    line-height: 1.45;
+
+    a {
+        color: #0b66c3;
+        font-weight: 600;
+        text-decoration: underline;
+
+        &:hover {
+            text-decoration: none;
+        }
+    }
+}
