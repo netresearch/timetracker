@@ -744,7 +744,7 @@ function FieldControl(props: {
         <label class="field">
           <span>{props.field.label()}</span>
           <DateField
-            value={String(text() ?? '')}
+            value={text()}
             onChange={(iso) => props.setField(props.field.name, iso)}
             required={props.field.required}
             disabled={disabled()}

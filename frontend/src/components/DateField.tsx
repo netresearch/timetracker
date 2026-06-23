@@ -47,7 +47,9 @@ export function DateField(props: DateFieldProps) {
       return
     }
     setInvalid(false)
-    props.onChange(iso)
+    if (iso !== props.value) {
+      props.onChange(iso)
+    }
     setText(formatIso(iso))
   }
 
@@ -59,7 +61,6 @@ export function DateField(props: DateFieldProps) {
       id={props.id}
       type="text"
       class="date-field"
-      inputmode="numeric"
       autocomplete="off"
       required={props.required}
       disabled={props.disabled}
@@ -71,7 +72,6 @@ export function DateField(props: DateFieldProps) {
         setInvalid(false)
       }}
       onChange={commit}
-      onBlur={commit}
     />
   )
 }
