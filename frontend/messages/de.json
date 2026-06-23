@@ -305,6 +305,7 @@
   "admin_f_offer": "Angebot",
   "admin_f_cost_center": "Kostenstelle",
   "admin_f_billing": "Abrechnung",
+  "admin_f_hours": "Stunden (Mo–So)",
   "admin_f_estimation": "Geschätzte Dauer",
   "admin_f_internal_jira_key": "Interner JIRA-Projektschlüssel",
   "admin_f_internal_jira_system": "Internes JIRA-Ticket-System",

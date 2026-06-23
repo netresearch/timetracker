@@ -73,6 +73,36 @@ describe('admin entity descriptors', () => {
     expect(customerCol.render?.({ customer: 0 }, lookup)).toBe('')
   })
 
+  it('user locale column shows the language endonym (unknown code passes through)', () => {
+    const locale = col(byKey('users'), 'locale')
+    expect(locale.render?.({ locale: 'de' }, noOptions)).toBe('Deutsch')
+    expect(locale.render?.({ locale: 'en' }, noOptions)).toBe('English')
+    expect(locale.render?.({ locale: 'xx' }, noOptions)).toBe('xx')
+  })
+
+  it('contract hours column summarises working hours Mon→Sun', () => {
+    const hours = col(byKey('contracts'), 'hours_summary')
+    // entity keys are JS getDay()-indexed (hours_0 = Sunday); shown Mon→Sun.
+    expect(hours.render?.({ hours_1: 8, hours_2: 8, hours_3: 8, hours_4: 8, hours_5: 8, hours_6: 0, hours_0: 0 }, noOptions))
+      .toBe('8 / 8 / 8 / 8 / 8 / 0 / 0')
+    expect(hours.render?.({ hours_1: 8.5 }, noOptions)).toBe('8.5 / 0 / 0 / 0 / 0 / 0 / 0')
+  })
+
+  it('project billing column maps the method code to a label (out-of-range blanks)', () => {
+    const billing = col(byKey('projects'), 'billing')
+    expect(billing.render?.({ billing: 0 }, noOptions)).toBeTruthy()
+    expect(billing.render?.({ billing: 1 }, noOptions)).not.toBe(billing.render?.({ billing: 0 }, noOptions))
+    expect(billing.render?.({ billing: 99 }, noOptions)).toBe('')
+  })
+
+  it('project lead column resolves the user id→label, blanks on 0', () => {
+    const lead = col(byKey('projects'), 'project_lead')
+    const users: OptionLookup = (source) => (source === 'users' ? [{ id: 5, label: 'Alice' }] : [])
+    expect(lead.render?.({ project_lead: 5 }, users)).toBe('Alice')
+    expect(lead.render?.({ projectLead: 5 }, users)).toBe('Alice') // camelCase key also resolves (Base::toArray emits both)
+    expect(lead.render?.({ project_lead: 0 }, users)).toBe('')
+  })
+
   it('holidays are immutable (not editable) and delete by day, not id', () => {
     const holidays = byKey('holidays')
     expect(holidays.editable).toBe(false)
