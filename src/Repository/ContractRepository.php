@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Contract;
+use App\Entity\User;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -66,5 +68,31 @@ class ContractRepository extends ServiceEntityRepository
         }
 
         return $data;
+    }
+
+    /**
+     * Find the user's contract that is valid on the given date.
+     *
+     * A contract is valid on a date when it has started on or before that date
+     * and either has no end date or ends on or after it
+     * (start <= date AND (end IS NULL OR end >= date)). When several contracts
+     * overlap the date (which the admin save flow tries to prevent), the
+     * latest-starting one wins.
+     */
+    public function findValidContract(User $user, DateTimeInterface $date): ?Contract
+    {
+        /** @var Contract|null $contract */
+        $contract = $this->createQueryBuilder('contract')
+            ->andWhere('contract.user = :user')
+            ->andWhere('contract.start <= :date')
+            ->andWhere('contract.end IS NULL OR contract.end >= :date')
+            ->setParameter('user', $user)
+            ->setParameter('date', $date)
+            ->orderBy('contract.start', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $contract;
     }
 }

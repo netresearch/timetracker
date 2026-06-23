@@ -1,26 +1,28 @@
-// Expected working hours per weekday. Like the previous stats UI this is a
-// client-side setting (per browser) until a backend settings API exists;
-// the storage shape is a map of JS weekday (1 = Monday … 5 = Friday) → hours.
-const STORAGE_KEY = 'timetracker-hours-per-weekday'
-const DEFAULT_HOURS_PER_DAY = 8
+import type { ContractHoursRecord } from '../api/queries'
 
-export function hoursPerWeekday(weekday: number): number {
-  // window.localStorage explicitly: Node >= 22 exposes a global localStorage
-  // that shadows the DOM one under test runners.
-  const stored = window.localStorage.getItem(STORAGE_KEY)
-  if (stored !== null) {
-    try {
-      const parsed: unknown = JSON.parse(stored)
-      if (typeof parsed === 'object' && parsed !== null) {
-        const hours = (parsed as Record<string, unknown>)[String(weekday)]
-        if (typeof hours === 'number' && Number.isFinite(hours)) {
-          return hours
-        }
-      }
-    } catch {
-      // Malformed storage falls back to the default below.
+// Expected working hours per weekday come from the current user's contract
+// (GET /getContractHours), keyed hours_0 (Sunday) … hours_6 (Saturday) to match
+// JS Date.getDay(). The previous client-side localStorage stopgap was never
+// wired to a settings UI, so it is gone: the contract is the single source of
+// truth, with a uniform 8h fallback when no contract value applies.
+export const DEFAULT_HOURS_PER_DAY = 8
+
+/**
+ * Build a `hoursPerWeekday(weekday)` lookup from a contract-hours record.
+ *
+ * `weekday` is the JS `Date.getDay()` value (0 = Sunday … 6 = Saturday), which
+ * maps 1:1 onto the contract's `hours_<weekday>` field. A missing record (the
+ * query hasn't resolved yet) or a non-finite value falls back to 8h, matching
+ * the backend's all-8 default for users without a contract.
+ */
+export function contractHoursPerWeekday(record: ContractHoursRecord | undefined): (weekday: number) => number {
+  return (weekday: number): number => {
+    if (record === undefined) {
+      return DEFAULT_HOURS_PER_DAY
     }
-  }
 
-  return DEFAULT_HOURS_PER_DAY
+    const hours: unknown = record[`hours_${weekday}` as keyof ContractHoursRecord]
+
+    return typeof hours === 'number' && Number.isFinite(hours) ? hours : DEFAULT_HOURS_PER_DAY
+  }
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
+import type { ContractHoursRecord } from '../api/queries'
 import { computeMonth, type ComputeMonthInput, isoWeek, summarize } from './month'
+import { contractHoursPerWeekday } from './settings'
 
 const WEEKEND = { saturday: 'Saturday', sunday: 'Sunday' }
 
@@ -121,6 +123,26 @@ describe('computeMonth', () => {
     )
 
     expect(days[4]?.expected).toBe(240)
+    expect(days[3]?.expected).toBe(480)
+  })
+
+  it('derives expected from a contract-hours record (half-day Fridays)', () => {
+    // hours_0 = Sunday … hours_6 = Saturday; 4h Fridays via hours_5.
+    const contract: ContractHoursRecord = {
+      hours_0: 0, hours_1: 8, hours_2: 8, hours_3: 8, hours_4: 8, hours_5: 4, hours_6: 0,
+    }
+    const { days } = computeMonth(input({ hoursPerWeekday: contractHoursPerWeekday(contract) }))
+
+    // 2026-06-04 is a Thursday (8h), 2026-06-05 is a Friday (4h).
+    expect(days[3]?.expected).toBe(480)
+    expect(days[4]?.expected).toBe(240)
+  })
+
+  it('uses the 8h fallback when no contract record is available', () => {
+    const { days } = computeMonth(input({ hoursPerWeekday: contractHoursPerWeekday(undefined) }))
+
+    // Every working day defaults to 8h (480 min); 2026-06-01 is a Monday.
+    expect(days[0]?.expected).toBe(480)
     expect(days[3]?.expected).toBe(480)
   })
 })
