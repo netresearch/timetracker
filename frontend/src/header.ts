@@ -3,6 +3,7 @@
 // polling against the same element IDs the ExtJS shell uses.
 import { getJson } from './api/client'
 import type { AppConfig } from './config'
+import { setPaletteOpen } from './lib/commandPalette'
 
 interface TimeSummary {
   today: { duration: number }
@@ -104,6 +105,15 @@ export function handleShortcut(event: KeyboardEvent): void {
     // modifier shortcuts (Alt+A would re-open/clobber the form, Alt+1–7 would
     // navigate away without dismissing the dialog) reach controls behind it.
     if (document.querySelector('[role="dialog"][data-state="open"]') !== null) {
+      return
+    }
+
+    // Ctrl/⌘+K opens the command palette. A deliberate chord, so it fires even
+    // while focus is in a field — it doesn't interfere with text entry.
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'k') {
+      event.preventDefault()
+      setPaletteOpen(true)
+
       return
     }
 
