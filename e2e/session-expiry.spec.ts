@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+import { deleteEntry } from './helpers/api';
 import { login } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
-import { createWorklogEntry } from './helpers/worklog';
+import { createWorklogEntry, rowByStamp } from './helpers/worklog';
 
 /**
  * Issue #408: a lost backend session must NOT bounce the user to a separate login
@@ -20,6 +21,14 @@ test.describe('Session expiry — in-place re-login overlay', () => {
     await goToWorklogPage(page);
     const stamp = await createWorklogEntry(page);
     await expect(page.getByRole('gridcell', { name: stamp })).toBeVisible();
+
+    // Clean up the entry we just created BEFORE dropping the session — afterwards
+    // the cleared cookies leave no valid session, so a teardown delete would no-op
+    // and the row would leak into the shared db-e2e on every run. Best-effort.
+    const createdId = await rowByStamp(page, stamp).locator('[data-row-id]').first().getAttribute('data-row-id');
+    if (createdId != null) {
+      await deleteEntry(page, Number(createdId)).catch(() => undefined);
+    }
 
     // Drop the session (and remember-me) — a data request now has no session.
     await context.clearCookies();

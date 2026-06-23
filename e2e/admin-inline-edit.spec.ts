@@ -1,5 +1,46 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { login } from './helpers/auth';
+
+const ADD = /^(Hinzufügen|Add)$/i;
+const SAVE = /^(Speichern|Save)$/i;
+const EDIT = /^(Bearbeiten|Edit)$/i;
+const DELETE = /^(Löschen|Delete)$/i;
+
+/** A throwaway Customers row to mutate, by name. */
+function adminRow(page: Page, name: string) {
+  return page.locator('table.admin-table tbody tr').filter({ hasText: name });
+}
+
+/**
+ * Create a self-contained, server-valid throwaway customer via the Add modal
+ * (marked Global so it needs no team), mirroring admin/admin-ui.spec.ts, and
+ * return its name. Mutating inline-edit tests operate on THIS row, never the
+ * shared seed rows, so re-runs stay idempotent and leave no residue.
+ */
+async function createThrowawayCustomer(page: Page): Promise<string> {
+  const name = `E2EInline_${Date.now()}`;
+  await page.locator('.admin-crud-toolbar button.primary-button').filter({ hasText: ADD }).click();
+  const form = page.locator('.modal form.stack-form');
+  await expect(form).toBeVisible();
+  await form.locator('.field input[type="text"]').first().fill(name);
+  await form.locator('.field-check').filter({ hasText: /^Global$/ }).locator('input[type="checkbox"]').check();
+  await form.locator('button[type="submit"]').filter({ hasText: SAVE }).click();
+  await expect(page.locator('.modal')).toHaveCount(0);
+  await expect(adminRow(page, name)).toHaveCount(1);
+  return name;
+}
+
+/** Best-effort delete of the throwaway customer (native confirm), for finally blocks. */
+async function deleteThrowawayCustomer(page: Page, name: string): Promise<void> {
+  try {
+    page.once('dialog', (dialog) => dialog.accept());
+    await adminRow(page, name).getByRole('button', { name: DELETE }).click();
+    await expect(adminRow(page, name)).toHaveCount(0);
+  } catch {
+    // Swallow — a mid-test failure may leave the page in a state where delete
+    // can't complete; never mask the original failure with a cleanup error.
+  }
+}
 
 /**
  * Inline (spreadsheet-style) cell editing on the SolidJS Administration tables.
@@ -15,30 +56,37 @@ test.describe('Admin inline cell editing', () => {
   });
 
   test('edits a cell in place and persists it on row-leave', async ({ page }) => {
-    const cell = page.locator('td[data-col-key="name"]').first();
-    const original = ((await cell.textContent()) ?? '').trim();
-    const updated = `${original}-E2E`;
+    // Mutate a throwaway customer we create + delete, not a shared seed row.
+    const name = await createThrowawayCustomer(page);
+    const updated = `${name}-edited`;
+    try {
+      const cell = adminRow(page, name).locator('td[data-col-key="name"]').first();
+      await cell.focus();
+      await page.keyboard.press('Enter');
+      const editor = page.locator('td[data-inline-editing] input.inline-editor').first();
+      await expect(editor).toBeVisible();
+      await editor.fill(updated);
 
-    await cell.focus();
-    await page.keyboard.press('Enter');
-    const editor = page.locator('td[data-inline-editing] input.inline-editor').first();
-    await expect(editor).toBeVisible();
-    await editor.fill(updated);
+      // Enter commits and (by default) stays in the cell; leaving the row — here by
+      // focusing the filter box — saves the whole entity.
+      await page.keyboard.press('Enter');
+      await expect(page.locator('td[data-inline-editing]')).toHaveCount(0); // editor closed, still on the cell
+      const saved = page.waitForResponse((r) => /\/customer\/save$/.test(r.url()) && r.request().method() === 'POST');
+      await page.locator('input.admin-filter').focus();
+      await saved;
 
-    // Enter commits and (by default) stays in the cell; leaving the row — here by
-    // focusing the filter box — saves the whole entity.
-    await page.keyboard.press('Enter');
-    await expect(page.locator('td[data-inline-editing]')).toHaveCount(0); // editor closed, still on the cell
-    const saved = page.waitForResponse((r) => /\/customer\/save$/.test(r.url()) && r.request().method() === 'POST');
-    await page.locator('input.admin-filter').focus();
-    await saved;
-
-    // The edit survives a full reload (it was persisted, not just optimistic).
-    // exact: the row's selection checkbox is labelled "Select <name>", so a
-    // substring match would also hit the selection cell.
-    await page.reload();
-    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
-    await expect(page.getByRole('gridcell', { name: updated, exact: true })).toBeVisible();
+      // The edit survives a full reload (it was persisted, not just optimistic).
+      // exact: the row's selection checkbox is labelled "Select <name>", so a
+      // substring match would also hit the selection cell.
+      await page.reload();
+      await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+      await expect(page.getByRole('gridcell', { name: updated, exact: true })).toBeVisible();
+    } finally {
+      // The row carries `updated` on success, or `name` if the rename never landed
+      // (mid-test failure); whichever is present, delete it best-effort.
+      await deleteThrowawayCustomer(page, updated);
+      await deleteThrowawayCustomer(page, name);
+    }
   });
 
   test('opens an editor by typing and cancels with Escape', async ({ page }) => {
@@ -113,20 +161,34 @@ test.describe('Admin inline cell editing', () => {
   });
 
   test('the Edit button opens the modal seeded with the in-progress inline value', async ({ page }) => {
-    const row = page.locator('table.admin-table tbody tr').first();
-    await row.locator('td[data-col-key="name"]').focus();
-    await page.keyboard.press('Enter');
-    const editor = page.locator('td[data-inline-editing] input.inline-editor').first();
-    await expect(editor).toBeVisible();
-    await editor.fill('Inline-Draft-X');
+    // The complete row auto-saves in the background, so drive a throwaway customer
+    // we create + delete — never a shared seed row.
+    const name = await createThrowawayCustomer(page);
+    const draft = `${name}-draft`;
+    try {
+      const row = adminRow(page, name);
+      await row.locator('td[data-col-key="name"]').focus();
+      await page.keyboard.press('Enter');
+      const editor = page.locator('td[data-inline-editing] input.inline-editor').first();
+      await expect(editor).toBeVisible();
+      await editor.fill(draft);
 
-    // Clicking Edit commits the in-progress value and opens the modal seeded from
-    // it (the complete row also auto-saves in the background), so the modal shows
-    // the edit, not stale list data. Target Edit by name — the cell also has the
-    // Delete and the (reserved) disk force-save button, so .first() could be the
-    // wrong control.
-    await row.getByRole('button', { name: /^(Bearbeiten|Edit)$/i }).click();
-    await expect(page.locator('.modal input[type="text"]').first()).toHaveValue('Inline-Draft-X');
+      // Clicking Edit commits the in-progress value and opens the modal seeded from
+      // it (the complete row also auto-saves in the background), so the modal shows
+      // the edit, not stale list data. Target Edit by name — the cell also has the
+      // Delete and the (reserved) disk force-save button, so .first() could be the
+      // wrong control.
+      await row.getByRole('button', { name: EDIT }).click();
+      await expect(page.locator('.modal input[type="text"]').first()).toHaveValue(draft);
+    } finally {
+      // Close the modal (Escape-dismissible) so the row's Delete icon is clickable,
+      // then delete: the background auto-save may have renamed the row to `draft`,
+      // so cover both names best-effort.
+      await page.keyboard.press('Escape').catch(() => undefined);
+      await expect(page.locator('.modal')).toHaveCount(0).catch(() => undefined);
+      await deleteThrowawayCustomer(page, draft);
+      await deleteThrowawayCustomer(page, name);
+    }
   });
 
   test('opening and closing the editor neither resizes the cell nor moves its border', async ({ page }) => {
