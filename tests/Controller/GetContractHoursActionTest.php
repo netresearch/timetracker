@@ -92,6 +92,10 @@ final class GetContractHoursActionTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
         // Before contract 1 starts (2020-01-01): no contract is valid on 2019-12-01.
+        // This also pins the query's parenthesization: were the
+        // `end IS NULL OR end >= :date` clause not grouped, the dangling OR would
+        // match contract 1 (ends 2020-01-31 >= 2019-12-01) and return its hours
+        // instead of the 8h fallback asserted below.
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_GET,
             '/getContractHours',
@@ -104,5 +108,27 @@ final class GetContractHoursActionTest extends AbstractWebTestCase
 
         self::assertEquals(8, $json['hours_1']);
         self::assertEquals(8, $json['hours_6']);
+    }
+
+    public function testClampsAMalformedYearInsteadOfErroring(): void
+    {
+        $this->logInSession('unittest');
+        // A non-numeric (or negative / out-of-range) year casts to an int that
+        // would make sprintf() build a date string new DateTime() rejects. The
+        // guard clamps it to the current year, so the request succeeds with a
+        // complete, numeric payload rather than a 500.
+        $this->client->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+            '/getContractHours',
+            ['year' => 'not-a-year', 'month' => 1],
+        );
+
+        $response = $this->client->getResponse();
+        self::assertTrue($response->isSuccessful());
+        $json = $this->getJsonResponse($response);
+
+        foreach (['hours_0', 'hours_1', 'hours_2', 'hours_3', 'hours_4', 'hours_5', 'hours_6'] as $key) {
+            self::assertIsNumeric($json[$key], $key . ' should be present and numeric');
+        }
     }
 }

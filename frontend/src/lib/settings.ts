@@ -17,7 +17,9 @@ export const DEFAULT_HOURS_PER_DAY = 8
  */
 export function contractHoursPerWeekday(record: ContractHoursRecord | undefined): (weekday: number) => number {
   return (weekday: number): number => {
-    if (record === undefined) {
+    // == null guards both undefined (query unresolved) and a null the API could
+    // hand back, either of which means "no contract value applies".
+    if (record == null) {
       return DEFAULT_HOURS_PER_DAY
     }
 

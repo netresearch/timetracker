@@ -16,7 +16,6 @@ use App\Model\JsonResponse;
 use App\Repository\ContractRepository;
 use DateTime;
 use Exception;
-use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -40,8 +39,7 @@ final class GetContractHoursAction extends BaseController
     private const float DEFAULT_HOURS = 8.0;
 
     /**
-     * @throws BadRequestException When query parameters are malformed
-     * @throws Exception           When date construction fails
+     * @throws Exception When date construction fails
      */
     #[Route(path: '/getContractHours', name: '_getContractHours_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
@@ -54,7 +52,13 @@ final class GetContractHoursAction extends BaseController
         $year = $request->query->get('year');
         $month = $request->query->get('month');
 
+        // Non-numeric params cast to 0, and a negative or out-of-range year/month
+        // would make the sprintf() below build a string new DateTime() rejects.
+        // Clamp both to a sane range, falling back to the current year/month.
         $filterYear = null !== $year ? (int) $year : (int) date('Y');
+        if ($filterYear < 1000 || $filterYear > 9999) {
+            $filterYear = (int) date('Y');
+        }
         $filterMonth = null !== $month ? (int) $month : (int) date('n');
         if ($filterMonth < 1 || $filterMonth > 12) {
             $filterMonth = (int) date('n');
