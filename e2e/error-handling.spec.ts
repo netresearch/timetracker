@@ -1,17 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import { waitForGrid } from './helpers/grid';
-import { displayDateToIso } from './helpers/date';
 import { clickHeaderNav } from './helpers/navigation';
 
 /**
- * E2E tests for error handling and notifications.
+ * E2E tests for the backend error/contract behaviour of the JSON API and the
+ * session firewall.
  *
- * Tests verify that:
- * - API errors are properly displayed
- * - Validation errors show meaningful messages
- * - Success notifications appear after operations
- * - Network errors are handled gracefully
+ * Each test asserts a real, observable contract:
+ * - invalid payloads are rejected with a 4xx
+ * - unknown routes 404
+ * - a successful settings save shows the inline success status (SolidJS UI)
+ * - a request with no session is rejected / redirected to login
+ * - an authenticated same-origin POST needs no CSRF token (SameSite=Lax)
  */
 
 test.describe('API Error Handling', () => {
@@ -34,7 +35,6 @@ test.describe('API Error Handling', () => {
 
     // Should return validation error
     expect(response.status()).toBeGreaterThanOrEqual(400);
-    console.log('Invalid save response status:', response.status());
   });
 
   test('should handle 404 Not Found errors', async ({ page }) => {
@@ -44,121 +44,36 @@ test.describe('API Error Handling', () => {
     expect(response.status()).toBe(404);
   });
 
-  test('should handle validation errors in entry save', async ({ page }) => {
-    // Get existing entry template
-    const getResponse = await page.request.get('/getData');
-    const entries = await getResponse.json();
-
-    if (entries.length === 0) return;
-
-    const template = entries[0].entry;
-    const isoDate = displayDateToIso(template.date);
-
-    // Try to save with end before start (invalid)
+  test('rejects an entry whose end precedes its start', async ({ page }) => {
+    // Re-auth as i.myself (type=ADMIN) so the booking clears the customer/project
+    // access + active-project checks and the request actually reaches the time
+    // validation. Otherwise a 400 from an inactive project (project 2 is inactive)
+    // or a missing-access error would make this pass for the WRONG reason.
+    // customer 1 / project 1 is the seed's one active, bookable triple; the date
+    // sits inside the frozen-clock window.
+    // The block's beforeEach already authenticated as `developer`; drop that
+    // session so the login form is shown again, then sign in as i.myself (ADMIN).
+    await page.context().clearCookies();
+    await login(page, 'i.myself', 'myself123');
     const response = await page.request.post('/tracking/save', {
       headers: { 'Content-Type': 'application/json' },
       data: {
-        date: isoDate,
+        date: '2024-01-15',
         start: '18:00',
         end: '08:00', // End before start
-        customer: template.customer,
-        project: template.project,
-        activity: template.activity,
+        customer: 1,
+        project: 1,
+        activity: 1,
         description: 'Invalid entry test',
       },
     });
-
-    console.log('Invalid time range response:', response.status());
-
-    if (!response.ok()) {
-      const errorData = await response.json().catch(() => ({}));
-      console.log('Validation error:', errorData);
-    }
-  });
-
-  test('should handle overlapping time entries', async ({ page }) => {
-    // Get existing entries
-    const getResponse = await page.request.get('/getData');
-    const entries = await getResponse.json();
-
-    if (entries.length === 0) return;
-
-    const template = entries[0].entry;
-    const isoDate = displayDateToIso(template.date);
-
-    // Try to create an entry that overlaps with existing
-    const response = await page.request.post('/tracking/save', {
-      headers: { 'Content-Type': 'application/json' },
-      data: {
-        date: isoDate,
-        start: template.start, // Same start time as existing
-        end: template.end,
-        customer: template.customer,
-        project: template.project,
-        activity: template.activity,
-        description: 'Overlap test',
-      },
-    });
-
-    console.log('Overlap entry response:', response.status());
-  });
-});
-
-test.describe('UI Error Display', () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page);
-    await waitForGrid(page);
-  });
-
-  test('should show error message for failed API calls', async ({ page }) => {
-    // Intercept and force an error
-    await page.route('**/getData', (route) => {
-      route.fulfill({
-        status: 500,
-        body: JSON.stringify({ error: 'Internal Server Error' }),
-      });
-    });
-
-    // Trigger a reload
-    await page.reload();
-
-    // Wait for potential error message
-    await page.waitForTimeout(2000);
-
-    // Check for error indicators
-    const hasErrorBox = await page.locator('.x-message-box, .x-window').isVisible().catch(() => false);
-    const hasErrorClass = await page.locator('.x-form-invalid, .error').isVisible().catch(() => false);
-
-    console.log(`Error box visible: ${hasErrorBox}, Error class visible: ${hasErrorClass}`);
-
-    // Clear route interception
-    await page.unroute('**/getData');
-  });
-
-  test('should display form validation errors', async ({ page }) => {
-    // Click add to create new entry
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
-    await addButton.click();
-    await page.waitForTimeout(500);
-
-    // Try to save without filling required fields by pressing Tab through fields
-    for (let i = 0; i < 10; i++) {
-      await page.keyboard.press('Tab');
-      await page.waitForTimeout(100);
-    }
-
-    // Press Enter to try to save
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
-
-    // Look for validation indicators
-    const invalidFields = page.locator('.x-form-invalid');
-    const invalidCount = await invalidFields.count();
-
-    console.log(`Invalid field indicators: ${invalidCount}`);
-
-    // Cancel the edit
-    await page.keyboard.press('Escape');
+    // The only remaining rejection path for this valid, active, bookable triple is
+    // the start<end guard (422 "Start time must be before end time"), so assert
+    // that specific message — otherwise an unrelated 4xx (inactive project, missing
+    // access) would let the test pass for the wrong reason.
+    const body = await response.text();
+    expect(response.status(), body).toBe(422);
+    expect(body).toMatch(/before end time/i);
   });
 });
 
@@ -183,152 +98,59 @@ test.describe('Success Notifications', () => {
     // The SolidJS page shows an inline success status on a successful save.
     await expect(page.locator('.form-status.is-ok')).toBeVisible({ timeout: 10000 });
   });
-
-  test('should show success notification after entry delete', async ({ page }) => {
-    // Get entries
-    const getResponse = await page.request.get('/getData');
-    const entries = await getResponse.json();
-
-    if (entries.length === 0) return;
-
-    const template = entries[0].entry;
-    const isoDate = displayDateToIso(template.date);
-
-    // Create a test entry to delete
-    const createResponse = await page.request.post('/tracking/save', {
-      headers: { 'Content-Type': 'application/json' },
-      data: {
-        date: isoDate,
-        start: '07:00',
-        end: '07:30',
-        customer: template.customer,
-        project: template.project,
-        activity: template.activity,
-        description: 'Entry to delete for notification test',
-      },
-    });
-
-    if (!createResponse.ok()) return;
-
-    const created = await createResponse.json();
-
-    // Reload to see the new entry
-    await page.reload();
-    await waitForGrid(page);
-
-    // Right-click on first row to open context menu
-    const firstRow = page.locator('.x-grid-row, .x-grid-item').first();
-    await firstRow.click({ button: 'right' });
-
-    await page.waitForTimeout(300);
-
-    // Look for delete option
-    const deleteOption = page.locator('.x-menu-item').filter({ hasText: /Delete|Löschen/i }).first();
-
-    if (await deleteOption.isVisible()) {
-      await deleteOption.click();
-      await page.waitForTimeout(500);
-
-      // Confirm delete if dialog appears
-      const confirmButton = page.locator('.x-btn').filter({ hasText: /Yes|Ja|OK/i }).first();
-      if (await confirmButton.isVisible()) {
-        await confirmButton.click();
-        await page.waitForTimeout(500);
-      }
-    }
-
-    // Clean up via API if still exists
-    await page.request.post('/tracking/delete', {
-      form: { id: created.result.id },
-    }).catch(() => {});
-  });
-});
-
-test.describe('Network Error Handling', () => {
-  test('should handle network timeout gracefully', async ({ page }) => {
-    await login(page);
-    await waitForGrid(page);
-
-    // Intercept requests and add delay
-    await page.route('**/getData', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      await route.continue();
-    });
-
-    // Trigger request
-    await page.reload();
-
-    // Should eventually load
-    await waitForGrid(page);
-
-    // Clear route
-    await page.unroute('**/getData');
-  });
-
-  test('should handle offline scenario', async ({ page }) => {
-    await login(page);
-    await waitForGrid(page);
-
-    // Simulate offline
-    await page.context().setOffline(true);
-
-    // Try an action
-    const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
-    await addButton.click();
-    await page.waitForTimeout(500);
-
-    // Try to save (should fail gracefully)
-    await page.keyboard.press('Tab');
-    await page.keyboard.type('09:00');
-    await page.keyboard.press('Tab');
-
-    // Go back online
-    await page.context().setOffline(false);
-
-    // Cancel
-    await page.keyboard.press('Escape');
-  });
 });
 
 test.describe('Session Handling', () => {
-  test('should redirect to login when session expires', async ({ page }) => {
+  test('should reject API requests once the session is cleared', async ({ page }) => {
     await login(page);
     await waitForGrid(page);
 
     // Clear cookies to simulate session expiry
     await page.context().clearCookies();
 
-    // Try to access a protected API
-    const response = await page.request.get('/getData');
+    // A protected API with no session must not return data — the firewall
+    // 302-redirects it to /login (verified). maxRedirects:0 captures that 3xx
+    // rather than following it to the 200 login-page HTML.
+    const response = await page.request.get('/getData', { maxRedirects: 0 });
+    expect(response.status()).toBeGreaterThanOrEqual(300);
+    expect(response.status()).toBeLessThan(400);
 
-    // Should redirect to login or return 401/403
-    console.log('Response after session clear:', response.status());
-
-    // Navigate to main page - should redirect to login
+    // Navigating to the main page redirects to the login form.
     await page.goto('/');
     await page.waitForURL(/\/login/, { timeout: 10000 });
   });
 
-  test('should handle CSRF token validation', async ({ page }) => {
-    await login(page);
+  test('the authenticated JSON API accepts a same-origin POST without a CSRF token (SameSite=Lax is the CSRF protection)', async ({
+    page,
+  }) => {
+    await login(page, 'i.myself', 'myself123');
 
-    // Try to make a POST without valid CSRF token
+    // config/packages/framework.yaml sets cookie_samesite: lax, so the session
+    // cookie is NOT sent on cross-site POSTs — that is the CSRF defence. The
+    // authenticated same-origin JSON API therefore (by design) carries no
+    // per-request CSRF token: a same-origin POST with a valid session succeeds.
     const response = await page.request.post('/tracking/save', {
       headers: {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
       },
       data: {
-        date: '2026-01-14', // ISO format
+        date: '2024-01-15', // ISO format, matches the frozen-clock seed window
         start: '09:00',
         end: '10:00',
-        customer: 1,
-        project: 1,
+        customer: 1, // i.myself is type=ADMIN, so it may book any customer
+        project: 1, // "Das Kuchenbacken" — the seed's one active project (under customer 1)
         activity: 1,
-        description: 'CSRF test',
+        description: 'same-origin POST without CSRF token',
       },
     });
 
-    console.log('POST without CSRF response:', response.status());
+    expect(response.status()).toBe(200);
+
+    // Clean up the entry this test created so the shared db-e2e doesn't accrue it.
+    const created = await response.json();
+    if (created?.result?.id) {
+      await page.request.post('/tracking/delete', { form: { id: created.result.id } });
+    }
   });
 });
