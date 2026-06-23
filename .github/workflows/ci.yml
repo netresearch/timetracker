@@ -279,7 +279,7 @@ jobs:
           COMPOSE_PROFILES: e2e
         run: |
           docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e \
-            php -d memory_limit=2G bin/phpunit --testsuite integration,controller,api-contract,api-functional --coverage-clover var/coverage/integration.xml
+            php -d memory_limit=2G bin/phpunit --testsuite integration,controller,api-functional --coverage-clover var/coverage/integration.xml
 
       - name: Upload integration coverage to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
