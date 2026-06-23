@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { login, loginIsolated } from './helpers/auth';
+import { loginAs, loginIsolated } from './helpers/auth';
 import { goToWorklogPage, goToAuswertungPage, goToAdminPage, hideDebugToolbar } from './helpers/navigation';
 
 /**
@@ -60,8 +60,9 @@ test.describe('Accessibility (axe-core, WCAG 2.1 AA, serious/critical)', () => {
 
   test('/ui/admin has no serious/critical a11y violations', async ({ page }) => {
     // The admin page is ROLE_ADMIN-only; the per-worker 'developer' isolation slot
-    // can't reach it, so log in explicitly as the admin user (i.myself).
-    await login(page, 'i.myself', 'myself123');
+    // can't reach it, so log in explicitly as the admin user. loginAs pulls the
+    // password from TEST_USERS (env-var-backed, no credential literal in the spec).
+    await loginAs(page, 'myself');
     await goToAdminPage(page);
     await expectNoSeriousA11y(page, 'section.admin-page');
   });
