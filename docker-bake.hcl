@@ -31,6 +31,10 @@ variable "XDEBUG_VERSION" {
   default = "3.5.3"
 }
 
+variable "PCOV_VERSION" {
+  default = "1.0.12"
+}
+
 
 # =============================================================================
 # IMAGE METADATA
@@ -48,6 +52,12 @@ variable "TAG" {
   default = "latest"
 }
 
+# Git commit SHA, passed by CI to produce an immutable e2e-<sha> tag.
+# Empty by default (local builds get only the floating :e2e tag).
+variable "GIT_SHA" {
+  default = ""
+}
+
 # =============================================================================
 # COMMON BUILD SETTINGS (inherited by all targets)
 # =============================================================================
@@ -60,6 +70,7 @@ target "_common" {
     NODE_VERSION   = NODE_VERSION
     COMPOSER_IMAGE = COMPOSER_IMAGE
     XDEBUG_VERSION = XDEBUG_VERSION
+    PCOV_VERSION   = PCOV_VERSION
   }
 }
 
@@ -117,9 +128,10 @@ target "app-tools" {
 target "app-e2e" {
   inherits = ["_common"]
   target   = "e2e"
-  tags = [
+  tags = compact([
     "${REGISTRY}/${IMAGE_NAME}:e2e",
-  ]
+    notequal("", GIT_SHA) ? "${REGISTRY}/${IMAGE_NAME}:e2e-${GIT_SHA}" : "",
+  ])
 }
 
 # =============================================================================

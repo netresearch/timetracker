@@ -23,7 +23,7 @@ jobs:
       - name: Pull or build E2E image
         run: |
           # Try to pull pre-built image, fall back to building
-          docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+          docker pull ghcr.io/netresearch/timetracker:e2e-${{ github.sha }} || docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
       - name: Prepare directories
         run: |
@@ -121,7 +121,7 @@ jobs:
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Pull E2E image
-        run: docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+        run: docker pull ghcr.io/netresearch/timetracker:e2e-${{ github.sha }} || docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
       - name: Download dependencies
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -197,7 +197,7 @@ jobs:
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Pull E2E image
-        run: docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+        run: docker pull ghcr.io/netresearch/timetracker:e2e-${{ github.sha }} || docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
       - name: Download dependencies
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -247,7 +247,7 @@ jobs:
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Pull E2E image
-        run: docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+        run: docker pull ghcr.io/netresearch/timetracker:e2e-${{ github.sha }} || docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
       - name: Download dependencies
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -313,7 +313,7 @@ jobs:
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Pull E2E image
-        run: docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+        run: docker pull ghcr.io/netresearch/timetracker:e2e-${{ github.sha }} || docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
       - name: Download dependencies
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

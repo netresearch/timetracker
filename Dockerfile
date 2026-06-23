@@ -152,6 +152,7 @@ USER app
 FROM deps AS dev
 
 ARG XDEBUG_VERSION
+ARG PCOV_VERSION
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 
@@ -168,6 +169,14 @@ RUN set -ex \
 # Install Xdebug (debugging and coverage driver; enable coverage via XDEBUG_MODE=coverage)
 RUN pecl install xdebug-${XDEBUG_VERSION} \
     && docker-php-ext-enable xdebug
+
+# Install pcov as a faster coverage driver, ALONGSIDE Xdebug (does not replace it).
+# Inert by default (pcov.enabled=0) so it never collides with the e2e job's
+# Xdebug-based coverage path (public/coverage.php). Activate per-run via
+# `php -d pcov.enabled=1`.
+RUN pecl install pcov-${PCOV_VERSION} \
+    && docker-php-ext-enable pcov \
+    && echo 'pcov.enabled=0' > /usr/local/etc/php/conf.d/pcov.ini
 
 COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
 
