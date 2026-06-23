@@ -305,6 +305,7 @@
   "admin_f_offer": "Offer",
   "admin_f_cost_center": "Cost center",
   "admin_f_billing": "Billing",
+  "admin_f_hours": "Hours (Mon–Sun)",
   "admin_f_estimation": "Estimated duration",
   "admin_f_internal_jira_key": "Internal JIRA project key",
   "admin_f_internal_jira_system": "Internal JIRA ticket system",

@@ -30,6 +30,25 @@ function pick(row: Row, ...keys: string[]): unknown {
 
 const bool: (v: unknown) => boolean = Boolean
 
+/** Language endonyms for the user `locale` column (mirrors the form's options). */
+const LOCALE_NAMES: Record<string, string> = { de: 'Deutsch', en: 'English', es: 'Español', fr: 'Français', ru: 'Русский' }
+function localeLabel(value: unknown): string {
+  const code = str(value)
+
+  return LOCALE_NAMES[code] ?? code
+}
+
+/** Per-day working hours in week order (Mon→Sun), compact, for the contract list.
+ *  Contract keys are JS getDay()-indexed, so hours_0 is Sunday. */
+function hoursSummary(row: Row): string {
+  return [1, 2, 3, 4, 5, 6, 0].map((day) => String(Number(row[`hours_${day}`] ?? 0))).join(' / ')
+}
+
+/** Billing method (0/1/2) → its label, for the project list. */
+function billingLabel(value: unknown): string {
+  return [m.admin_billing_none(), m.admin_billing_tm(), m.admin_billing_fp()][Number(value ?? 0)] ?? ''
+}
+
 export function adminEntities(): EntityDescriptor[] {
   return [
     {
@@ -70,6 +89,10 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'jiraId', label: () => m.admin_f_jira_id() },
         { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
         { key: 'global', label: () => m.admin_f_global(), render: (row) => mark(row.global), align: 'center', boolean: true },
+        { key: 'project_lead', label: () => m.admin_f_project_lead(), render: (row, o) => rel('users')(row, 'project_lead', o) },
+        { key: 'technical_lead', label: () => m.admin_f_technical_lead(), render: (row, o) => rel('users')(row, 'technical_lead', o) },
+        { key: 'ticket_system', label: () => m.admin_f_ticket_system(), render: (row, o) => rel('ticketSystems')(row, 'ticket_system', o) },
+        { key: 'billing', label: () => m.admin_f_billing(), render: (row) => billingLabel(row.billing) },
         // View-only: auto-synced from the ticket system (no matching field → read-only).
         { key: 'subtickets', label: () => m.admin_f_subtickets() },
       ],
@@ -139,6 +162,7 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'username', label: () => m.admin_f_username() },
         { key: 'abbr', label: () => m.admin_f_abbr() },
         { key: 'type', label: () => m.admin_f_type() },
+        { key: 'locale', label: () => m.admin_f_language(), render: (row) => localeLabel(row.locale) },
         { key: 'teams', label: () => m.admin_f_teams(), render: (row, o) => ((row.teams as number[]) ?? []).map((id) => o('teams').find((t) => t.id === id)?.label ?? id).join(', ') },
       ],
       fields: [
@@ -348,6 +372,7 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'user_id', label: () => m.admin_f_username(), render: (row, o) => rel('users')(row, 'user_id', o) },
         { key: 'start', label: () => m.admin_f_start() },
         { key: 'end', label: () => m.admin_f_end() },
+        { key: 'hours_summary', label: () => m.admin_f_hours(), render: (row) => hoursSummary(row) },
       ],
       fields: [
         { name: 'user_id', label: () => m.admin_f_username(), type: 'select', source: 'users', required: true },
