@@ -5,6 +5,7 @@ import { Portal } from 'solid-js/web'
 
 import { appConfig, canBill, hasRole } from '../config'
 import { paletteOpen, registeredCommands, setPaletteOpen, type Command } from '../lib/commandPalette'
+import { setShortcutsHelpOpen } from '../lib/shortcutsHelp'
 import { m } from '../paraglide/messages.js'
 
 /**
@@ -55,6 +56,7 @@ export function CommandPalette() {
     list.push(
       { id: 'nav-settings', group: nav, label: () => m.settings_title(), run: () => go('/settings') },
       { id: 'nav-help', group: nav, label: () => m.help_title(), run: () => go('/help') },
+      { id: 'shortcuts', group: app, label: () => m.cmd_shortcuts(), shortcut: '?', run: () => setShortcutsHelpOpen(true) },
       { id: 'theme', group: app, label: () => m.cmd_theme(), run: () => clickById('theme-cycle') },
       { id: 'density', group: app, label: () => m.cmd_density(), run: () => clickById('density-toggle') },
       { id: 'logout', group: app, label: () => m.cmd_logout(), run: () => window.location.assign(appConfig().logoutUrl) },
