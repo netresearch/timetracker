@@ -7,9 +7,18 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * the cell, optionally filtering, and clicking the first option.
  */
 
-/** A successful POST to the worklog save endpoint (used to await an auto-save). */
-const isSaveResponse = (r: { url(): string; request(): { method(): string } }): boolean =>
-  /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST';
+/**
+ * A SUCCESSFUL (HTTP 200) POST to the worklog save endpoint. Picking the three
+ * required relations one by one fires a partial auto-save after each, so the
+ * endpoint answers 422 (incomplete) twice before the final 200 — matching on the
+ * method alone would resolve on the first 422 and let the helper return while the
+ * real save (and its reconciling refetch) is still in flight.
+ */
+const isSaveResponse = (r: { url(): string; status(): number; request(): { method(): string } }): boolean =>
+  /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST' && r.status() === 200;
+
+/** The reconciling GET the grid issues after a save lands (invalidate → refetch). */
+const isEntriesRefetch = (r: { url(): string }): boolean => /\/getData\/days\//.test(r.url());
 
 export async function openTextEditor(page: Page, row: Locator, colKey: string): Promise<Locator> {
   await row.locator(`td[data-col-key="${colKey}"]`).focus();
@@ -81,26 +90,34 @@ export async function createWorklogEntry(page: Page): Promise<string> {
   // relations and therefore can't auto-save — so nothing saves mid-helper and the
   // .is-new row never detaches under us (the historic tracking-grid flake). Fixed
   // early times, *overriding* the suggest-time default that starts entries at "now"
-  // and marches +minDuration each one, keep every entry at 08:00–09:00: no drift
-  // toward midnight (which saturated the day into invalid spans), and "now" is always
-  // past the start so Prolong/Continue are valid.
+  // and marches +minDuration each one, give a stable, non-drifting span. The window
+  // sits at the very start of the day so the wall-clock "now" is ALWAYS at or past
+  // the start (Prolong rewrites the end to "now" and aborts when now < start) — a
+  // later fixed start (e.g. 08:00) would silently no-op Prolong for any run before
+  // that hour, the time-of-day flake the earlier 08:00–09:00 span hid.
   const start = await openTextEditor(page, row, 'start');
-  await start.fill('08:00');
+  await start.fill('00:00');
   await page.keyboard.press('Enter');
   const end = await openTextEditor(page, row, 'end');
-  await end.fill('09:00');
+  await end.fill('00:15');
   await page.keyboard.press('Enter');
   const description = await openTextEditor(page, row, 'description');
   await description.fill(stamp);
   await page.keyboard.press('Enter');
 
-  // Complete the three required relations; the last one validates the row and fires a
-  // single save carrying every field set above.
+  // Complete the three required relations; the last one validates the row and fires
+  // the save (HTTP 200) carrying every field set above. Wait for that 200 AND the
+  // reconciling GET refetch the grid issues afterwards, so the row's <tr> has been
+  // rebuilt from the authoritative server list before we hand back — a caller that
+  // immediately opens an editor then can't have the cell detached under it by a
+  // late-landing refetch (the historic boundingBox-null flake).
   const saved = page.waitForResponse(isSaveResponse);
+  const refetched = page.waitForResponse(isEntriesRefetch);
   await pickFirstOption(page, row, 'customer');
   await pickFirstOption(page, row, 'project');
   await pickFirstOption(page, row, 'activity');
   await saved;
+  await refetched;
 
   await expect(rowByStamp(page, stamp)).toBeVisible();
   return stamp;
