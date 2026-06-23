@@ -244,6 +244,10 @@ COPY --from=deps --chown=app:app /var/www/html/var /var/www/html/var
 # Copy healthcheck script
 COPY --chmod=755 docker/php/healthcheck.sh /usr/local/bin/healthcheck
 
+# Copy the production entrypoint — applies pending DB migrations on start so a
+# new image deployed over an existing database self-migrates (AUTO_MIGRATE=0 opts out)
+COPY --chmod=755 docker/php/docker-entrypoint.sh /usr/local/bin/app-entrypoint
+
 # Update CA certificates during build (requires root, done before USER switch)
 RUN update-ca-certificates 2>/dev/null || true
 
@@ -258,5 +262,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 
 EXPOSE 9000
 
-ENTRYPOINT ["docker-php-entrypoint"]
+ENTRYPOINT ["/usr/local/bin/app-entrypoint"]
 CMD ["php-fpm"]

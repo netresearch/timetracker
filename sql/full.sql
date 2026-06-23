@@ -322,6 +322,29 @@ CREATE TABLE `contracts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Arbeitsvertrag: Stunden pro Woche/Tag';
 
 
+--
+-- Tabellenstruktur für Tabelle `doctrine_migration_versions`
+--
+CREATE TABLE `doctrine_migration_versions` (
+  `version` varchar(191) NOT NULL,
+  `executed_at` datetime DEFAULT NULL,
+  `execution_time` int(11) DEFAULT NULL,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Record every migration shipped with this dump as already applied, so a fresh
+-- install never re-creates the schema above and an upgrade runs only migrations
+-- added after this release.
+--
+INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_time`) VALUES
+('DoctrineMigrations\\Version20250901_AddPerformanceIndexes', '2025-09-01 00:00:00', 0),
+('DoctrineMigrations\\Version20250901_EncryptTokenFields',    '2025-09-01 00:00:00', 0),
+('DoctrineMigrations\\Version20260612_FixHolidaysSchema',     '2026-06-12 00:00:00', 0),
+('DoctrineMigrations\\Version20260622_AddMinEntryDuration',   '2026-06-22 00:00:00', 0),
+('DoctrineMigrations\\Version20260622_AddJiraCloudSupport',   '2026-06-22 00:00:00', 0);
+
+
 -- EXPORT-VIEWS ---------------------------------------------------------------------------
 
 CREATE VIEW `v_Datenexport` AS
