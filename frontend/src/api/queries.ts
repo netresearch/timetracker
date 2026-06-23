@@ -42,6 +42,27 @@ export function holidaysQuery(year: number, month: number) {
   }
 }
 
+// Response shape of GET /getContractHours (GetContractHoursAction): the current
+// user's per-weekday contract hours for the queried month, keyed hours_0 (Sunday)
+// … hours_6 (Saturday) to match JS Date.getDay(). The backend already falls back
+// to 8h per day when the user has no contract for that month.
+export interface ContractHoursRecord {
+  hours_0: number
+  hours_1: number
+  hours_2: number
+  hours_3: number
+  hours_4: number
+  hours_5: number
+  hours_6: number
+}
+
+export function contractHoursQuery(year: number, month: number) {
+  return {
+    queryKey: ['contract-hours', year, month] as const,
+    queryFn: () => getJson<ContractHoursRecord>('/getContractHours', { year, month }),
+  }
+}
+
 export interface NamedOption {
   id: number
   label: string

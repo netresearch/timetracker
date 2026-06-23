@@ -2,11 +2,11 @@ import { A, useSearchParams } from '@solidjs/router'
 import { useQueries, useQuery } from '@tanstack/solid-query'
 import { createMemo, For, Index, Match, Show, Switch } from 'solid-js'
 
-import { holidaysQuery, type HolidayRecord, monthTimesQuery, type WorktimeRecord } from '../api/queries'
+import { contractHoursQuery, type ContractHoursRecord, holidaysQuery, type HolidayRecord, monthTimesQuery, type WorktimeRecord } from '../api/queries'
 import { appConfig } from '../config'
 import { formatDay, formatMinutes, formatMonthTitle, isoDate } from '../lib/format'
 import { computeMonth, type DayRow, isoWeek, type MonthSummary, summarize } from '../lib/month'
-import { hoursPerWeekday } from '../lib/settings'
+import { contractHoursPerWeekday } from '../lib/settings'
 import { m } from '../paraglide/messages.js'
 
 interface MonthTarget {
@@ -261,6 +261,7 @@ export default function Month() {
 
   const times = useQuery(() => monthTimesQuery(target().year, target().month, config.userId))
   const holidays = useQuery(() => holidaysQuery(target().year, target().month))
+  const contractHours = useQuery(() => contractHoursQuery(target().year, target().month))
 
   const holidayMap = (records: HolidayRecord[]) => new Map(records.map((record) => [record.holiday.date, record.holiday.name]))
   const weekendLabels = () => ({ saturday: m.month_saturday(), sunday: m.month_sunday() })
@@ -268,7 +269,8 @@ export default function Month() {
   const report = createMemo(() => {
     const timesData = times.data
     const holidaysData = holidays.data
-    if (timesData === undefined || holidaysData === undefined) {
+    const contractData = contractHours.data
+    if (timesData === undefined || holidaysData === undefined || contractData === undefined) {
       return null
     }
 
@@ -277,7 +279,7 @@ export default function Month() {
       month: target().month,
       entries: timesData,
       holidays: holidayMap(holidaysData),
-      hoursPerWeekday,
+      hoursPerWeekday: contractHoursPerWeekday(contractData),
       today: new Date(),
       weekendLabels: weekendLabels(),
     })
@@ -296,6 +298,12 @@ export default function Month() {
 
     return { queries: Array.from({ length: 12 }, (_, i) => ({ ...holidaysQuery(year, i + 1), enabled })) }
   })
+  const yearContractHours = useQueries(() => {
+    const enabled = yearMode()
+    const year = target().year
+
+    return { queries: Array.from({ length: 12 }, (_, i) => ({ ...contractHoursQuery(year, i + 1), enabled })) }
+  })
   const yearDays = createMemo<DayRow[] | null>(() => {
     if (!yearMode()) {
       return null
@@ -304,7 +312,8 @@ export default function Month() {
     for (let i = 0; i < 12; i++) {
       const t = yearTimes[i]?.data as WorktimeRecord[] | undefined
       const h = yearHolidays[i]?.data as HolidayRecord[] | undefined
-      if (t === undefined || h === undefined) {
+      const c = yearContractHours[i]?.data as ContractHoursRecord | undefined
+      if (t === undefined || h === undefined || c === undefined) {
         return null
       }
       days.push(...computeMonth({
@@ -312,7 +321,7 @@ export default function Month() {
         month: i + 1,
         entries: t,
         holidays: holidayMap(h),
-        hoursPerWeekday,
+        hoursPerWeekday: contractHoursPerWeekday(c),
         today: new Date(),
         weekendLabels: weekendLabels(),
       }).days)
@@ -380,8 +389,8 @@ export default function Month() {
 
   const isLoading = createMemo(() => (scope() === 'year' ? yearDays() === null || report() === null : report() === null))
   const isError = createMemo(() =>
-    times.isError || holidays.isError
-    || (scope() === 'year' && (yearTimes.some((q) => q.isError) || yearHolidays.some((q) => q.isError))),
+    times.isError || holidays.isError || contractHours.isError
+    || (scope() === 'year' && (yearTimes.some((q) => q.isError) || yearHolidays.some((q) => q.isError) || yearContractHours.some((q) => q.isError))),
   )
 
   return (
@@ -458,6 +467,7 @@ export default function Month() {
             onClick={() => {
               times.refetch()
               holidays.refetch()
+              contractHours.refetch()
             }}
           >
             {m.app_retry()}
