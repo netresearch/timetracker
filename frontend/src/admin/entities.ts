@@ -28,6 +28,16 @@ function pick(row: Row, ...keys: string[]): unknown {
   return undefined
 }
 
+/** Like rel(), but resolves the id via pick() so both snake_case and camelCase
+ *  payload keys (Base::toArray emits both) work for relation grid columns. */
+function relPick(source: OptionSource, ...keys: string[]) {
+  return (row: Row, options: OptionLookup): string => {
+    const id = Number(pick(row, ...keys) ?? 0)
+
+    return id > 0 ? (options(source).find((option) => option.id === id)?.label ?? String(id)) : ''
+  }
+}
+
 const bool: (v: unknown) => boolean = Boolean
 
 /** Language endonyms for the user `locale` column (mirrors the form's options). */
@@ -89,9 +99,9 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'jiraId', label: () => m.admin_f_jira_id() },
         { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
         { key: 'global', label: () => m.admin_f_global(), render: (row) => mark(row.global), align: 'center', boolean: true },
-        { key: 'project_lead', label: () => m.admin_f_project_lead(), render: (row, o) => rel('users')(row, 'project_lead', o) },
-        { key: 'technical_lead', label: () => m.admin_f_technical_lead(), render: (row, o) => rel('users')(row, 'technical_lead', o) },
-        { key: 'ticket_system', label: () => m.admin_f_ticket_system(), render: (row, o) => rel('ticketSystems')(row, 'ticket_system', o) },
+        { key: 'project_lead', label: () => m.admin_f_project_lead(), render: (row, o) => relPick('users', 'project_lead', 'projectLead')(row, o) },
+        { key: 'technical_lead', label: () => m.admin_f_technical_lead(), render: (row, o) => relPick('users', 'technical_lead', 'technicalLead')(row, o) },
+        { key: 'ticket_system', label: () => m.admin_f_ticket_system(), render: (row, o) => relPick('ticketSystems', 'ticket_system', 'ticketSystem')(row, o) },
         { key: 'billing', label: () => m.admin_f_billing(), render: (row) => billingLabel(row.billing) },
         // View-only: auto-synced from the ticket system (no matching field → read-only).
         { key: 'subtickets', label: () => m.admin_f_subtickets() },

@@ -99,6 +99,7 @@ describe('admin entity descriptors', () => {
     const lead = col(byKey('projects'), 'project_lead')
     const users: OptionLookup = (source) => (source === 'users' ? [{ id: 5, label: 'Alice' }] : [])
     expect(lead.render?.({ project_lead: 5 }, users)).toBe('Alice')
+    expect(lead.render?.({ projectLead: 5 }, users)).toBe('Alice') // camelCase key also resolves (Base::toArray emits both)
     expect(lead.render?.({ project_lead: 0 }, users)).toBe('')
   })
 
