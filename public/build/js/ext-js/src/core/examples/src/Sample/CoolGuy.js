@@ -1,0 +1,1 @@
+Ext.define("Sample.CoolGuy",{extend:"Sample.Person",mixins:{guitar:"Sample.ability.CanPlayGuitar",sing:"Sample.ability.CanSing"},constructor:function(){return this.config.knownSongs.push("Love Me or Die"),this.callParent(arguments)},sing:function(){return alert("Ahem..."),this.mixins.sing.sing.apply(this,arguments)}});

@@ -1,0 +1,1 @@
+Ext.define("Sample.ability.CanPlayGuitar",{canPlayGuitar:!0,playGuitar:function(){return alert(this.getName()+" is playing guitar"),this}});

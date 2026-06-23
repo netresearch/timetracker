@@ -35,7 +35,6 @@ var/coverage*
 coverage
 public/bundles
 public/uploads
-public/build
 public/build-ui
 
 # Test files

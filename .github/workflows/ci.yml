@@ -43,11 +43,8 @@ jobs:
         run: |
           docker compose run --rm app-e2e npm install --legacy-peer-deps
 
-      - name: Build legacy ExtJS assets (Encore)
-        env:
-          COMPOSE_PROFILES: e2e
-        run: |
-          docker compose run --rm app-e2e npm run build
+      # Legacy ExtJS assets (public/build) are committed static — the Encore
+      # build is retired (ExtJS is being removed), so no build step here.
 
       - name: Build SolidJS UI assets (Vite)
         env:

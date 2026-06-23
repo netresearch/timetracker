@@ -1,0 +1,1 @@
+Ext.define("Netresearch.store.AdminTeams",{extend:"Ext.data.Store",requires:["Netresearch.model.Team"],autoLoad:!1,model:"Netresearch.model.Team",proxy:{type:"ajax",url:url+"getAllTeams",reader:{type:"json",record:"team"}}});

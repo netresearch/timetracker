@@ -126,9 +126,9 @@ ENV APP_ENV=prod
 RUN composer dump-autoload --optimize --classmap-authoritative \
     && composer run-script post-install-cmd --no-interaction || true
 
-# Build frontend assets (legacy ExtJS via Encore, new SolidJS UI via Vite)
-RUN npm run build \
-    && bun run --cwd frontend build
+# Build the new SolidJS UI (Vite). The legacy ExtJS assets (public/build) are
+# committed static — the Encore build is retired (ExtJS is being removed).
+RUN bun run --cwd frontend build
 
 # Create var directories
 RUN mkdir -p var/log var/cache \

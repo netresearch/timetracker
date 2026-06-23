@@ -1,0 +1,1 @@
+Ext.define("Sample.HumanResource",{requires:"Sample.Developer",singleton:!0,developers:[],recruit:function(e){return e.canCode("JavaScript")?this.developers.push(e):alert(e.getName()+" doesn't know JavaScript, no point recruiting!"),this},getDevelopersCount:function(){return this.developers.length}});

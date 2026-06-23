@@ -1,0 +1,1 @@
+Ext.define("Ext.AbstractPlugin",{disabled:!1,constructor:function(t){this.initialConfig=t,Ext.apply(this,t)},clone:function(){return new this.self(this.initialConfig)},getCmp:function(){return this.cmp},init:Ext.emptyFn,destroy:Ext.emptyFn,enable:function(){this.disabled=!1},disable:function(){this.disabled=!0}});

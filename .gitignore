@@ -19,7 +19,6 @@
 .php_cs.cache
 ###> symfony/webpack-encore-bundle ###
 /node_modules/
-/public/build/
 /public/build-ui/
 npm-debug.log
 yarn-error.log

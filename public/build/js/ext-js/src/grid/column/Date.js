@@ -1,0 +1,1 @@
+Ext.define("Ext.grid.column.Date",{extend:"Ext.grid.column.Column",alias:["widget.datecolumn"],requires:["Ext.Date"],alternateClassName:"Ext.grid.DateColumn",initComponent:function(){this.format||(this.format=Ext.Date.defaultFormat),this.callParent(arguments)},defaultRenderer:function(t){return Ext.util.Format.date(t,this.format)}});

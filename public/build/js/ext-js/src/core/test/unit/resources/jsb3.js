@@ -1,0 +1,1 @@
+function jsbToTestLib(e,s){for(var f=[],i=0;i<s.files.length;i++)s.files[i]&&f.push({type:"js",src:e+s.files[i].path+s.files[i].name});return f}

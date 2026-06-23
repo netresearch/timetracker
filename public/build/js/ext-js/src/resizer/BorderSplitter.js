@@ -1,0 +1,1 @@
+Ext.define("Ext.resizer.BorderSplitter",{extend:"Ext.resizer.Splitter",uses:["Ext.resizer.BorderSplitterTracker"],alias:"widget.bordersplitter",collapseTarget:null,getTrackerConfig:function(){var r=this.callParent();return r.xclass="Ext.resizer.BorderSplitterTracker",r}});

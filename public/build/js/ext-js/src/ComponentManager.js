@@ -1,0 +1,1 @@
+Ext.define("Ext.ComponentManager",{extend:"Ext.AbstractManager",alternateClassName:"Ext.ComponentMgr",singleton:!0,typeName:"xtype",create:function(t,e){return"string"==typeof t?Ext.widget(t):t.isComponent?t:Ext.widget(t.xtype||e,t)},registerType:function(t,e){this.types[t]=e,e[this.typeName]=t,e.prototype[this.typeName]=t}});

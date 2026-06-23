@@ -1,0 +1,1 @@
+Ext.define("Ext.data.ResultSet",{loaded:!0,count:0,total:0,success:!1,constructor:function(t){Ext.apply(this,t),this.totalRecords=this.total,void 0===t.count&&(this.count=this.records.length)}});
