@@ -7,6 +7,19 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * the cell, optionally filtering, and clicking the first option.
  */
 
+/**
+ * A SUCCESSFUL (HTTP 200) POST to the worklog save endpoint. Picking the three
+ * required relations one by one fires a partial auto-save after each, so the
+ * endpoint answers 422 (incomplete) twice before the final 200 — matching on the
+ * method alone would resolve on the first 422 and let the helper return while the
+ * real save (and its reconciling refetch) is still in flight.
+ */
+const isSaveResponse = (r: { url(): string; status(): number; request(): { method(): string } }): boolean =>
+  /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST' && r.status() === 200;
+
+/** The reconciling GET the grid issues after a save lands (invalidate → refetch). */
+const isEntriesRefetch = (r: { url(): string }): boolean => /\/getData\/days\//.test(r.url());
+
 export async function openTextEditor(page: Page, row: Locator, colKey: string): Promise<Locator> {
   await row.locator(`td[data-col-key="${colKey}"]`).focus();
   await page.keyboard.press('Enter');
@@ -33,6 +46,46 @@ export function rowByStamp(page: Page, stamp: string): Locator {
   return page.locator('tr.tracking-row').filter({ hasText: stamp }).first();
 }
 
+/**
+ * Delete every e2e-stamped entry the current user can see, via the same plain
+ * form-POST the app uses (session cookie, same-origin → CSRF origin check passes).
+ * Call it in an afterEach so the shared db-e2e doesn't accumulate the fixed-time
+ * entries these tests create — left to pile up they overlap at the same fixed time
+ * and confuse cell-focus + clipboard targeting (the no-teardown pollution the testing
+ * review flagged). Best-effort: a failed delete is swallowed, never failing the test.
+ */
+export async function cleanupWorklogEntries(page: Page): Promise<void> {
+  // A test may have ended on another page (e.g. Settings); the cleanup reads the
+  // grid DOM, so return to the worklog first or it would silently delete nothing
+  // and leave the shared DB polluted.
+  if (!page.url().includes('/ui/tracking')) {
+    await page.goto('/ui/tracking').catch(() => undefined);
+    await page.locator('table.tracking-table').first().waitFor({ timeout: 5000 }).catch(() => undefined);
+  }
+  await page
+    .evaluate(async () => {
+      const ids = new Set<string>();
+      document.querySelectorAll('tr.tracking-row').forEach((tr) => {
+        if (tr.textContent?.includes('e2e-') === true) {
+          const id = tr.querySelector('[data-row-id]')?.getAttribute('data-row-id');
+          if (id != null && Number.isInteger(Number(id)) && Number(id) > 0) ids.add(id);
+        }
+      });
+      // Independent best-effort deletes — fire them concurrently.
+      await Promise.all(
+        Array.from(ids).map((id) =>
+          fetch('/tracking/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin',
+            body: `id=${encodeURIComponent(id)}`,
+          }).catch(() => undefined),
+        ),
+      );
+    })
+    .catch(() => undefined);
+}
+
 /** Create one entry dated today and return its unique description stamp. */
 export async function createWorklogEntry(page: Page): Promise<string> {
   const stamp = `e2e-${Date.now()}`;
@@ -40,26 +93,42 @@ export async function createWorklogEntry(page: Page): Promise<string> {
   const row = page.locator('tr.tracking-row.is-new').first();
   await expect(row).toBeVisible();
 
-  // Add opens the customer combobox; pick the first bookable customer, then its
-  // first (cascade-filtered) project, then the first activity.
-  await pickFirstOption(page, row, 'customer', true);
-  await pickFirstOption(page, row, 'project');
-  await pickFirstOption(page, row, 'activity');
+  // Add opens the customer combobox; close it so we can set the plain fields first.
+  await page.keyboard.press('Escape');
 
+  // Set explicit start/end/description while the row still lacks its required
+  // relations and therefore can't auto-save — so nothing saves mid-helper and the
+  // .is-new row never detaches under us (the historic tracking-grid flake). Fixed
+  // early times, *overriding* the suggest-time default that starts entries at "now"
+  // and marches +minDuration each one, give a stable, non-drifting span. The window
+  // sits at the very start of the day so the wall-clock "now" is ALWAYS at or past
+  // the start (Prolong rewrites the end to "now" and aborts when now < start) — a
+  // later fixed start (e.g. 08:00) would silently no-op Prolong for any run before
+  // that hour, the time-of-day flake the earlier 08:00–09:00 span hid.
+  const start = await openTextEditor(page, row, 'start');
+  await start.fill('00:00');
+  await page.keyboard.press('Enter');
+  const end = await openTextEditor(page, row, 'end');
+  await end.fill('00:15');
+  await page.keyboard.press('Enter');
   const description = await openTextEditor(page, row, 'description');
   await description.fill(stamp);
   await page.keyboard.press('Enter');
 
-  const start = await openTextEditor(page, row, 'start');
-  await start.fill('08:00');
-  await page.keyboard.press('Enter');
-
-  const saved = page.waitForResponse((r) => /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST');
-  const end = await openTextEditor(page, row, 'end');
-  await end.fill('09:00');
-  await page.keyboard.press('Enter');
+  // Complete the three required relations; the last one validates the row and fires
+  // the save (HTTP 200) carrying every field set above. Wait for that 200 AND the
+  // reconciling GET refetch the grid issues afterwards, so the row's <tr> has been
+  // rebuilt from the authoritative server list before we hand back — a caller that
+  // immediately opens an editor then can't have the cell detached under it by a
+  // late-landing refetch (the historic boundingBox-null flake).
+  const saved = page.waitForResponse(isSaveResponse);
+  const refetched = page.waitForResponse(isEntriesRefetch);
+  await pickFirstOption(page, row, 'customer');
+  await pickFirstOption(page, row, 'project');
+  await pickFirstOption(page, row, 'activity');
   await saved;
+  await refetched;
 
-  await expect(page.getByRole('gridcell', { name: stamp })).toBeVisible();
+  await expect(rowByStamp(page, stamp)).toBeVisible();
   return stamp;
 }

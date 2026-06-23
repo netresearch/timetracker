@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { login } from './helpers/auth';
+import { loginIsolated } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
-import { createWorklogEntry, openTextEditor, rowByStamp } from './helpers/worklog';
+import { cleanupWorklogEntries, createWorklogEntry, openTextEditor, rowByStamp } from './helpers/worklog';
 
 /**
  * End-to-end coverage of the SolidJS Worklog CRUD journey (create / edit / save /
@@ -11,17 +11,25 @@ import { createWorklogEntry, openTextEditor, rowByStamp } from './helpers/worklo
  * default day range.
  */
 
-const isSave = (r: { url(): string; request(): { method(): string } }): boolean =>
-  /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST';
-const isDelete = (r: { url(): string; request(): { method(): string } }): boolean =>
-  /\/tracking\/delete$/.test(r.url()) && r.request().method() === 'POST';
+// Accept either a Playwright Request (from page.on('request')) or a Response (from
+// waitForResponse): a Request exposes method() directly; a Response only via request().
+type HttpLike = { url(): string; method(): string } | { url(): string; request(): { method(): string } };
+const reqMethod = (r: HttpLike): string => ('method' in r ? r.method() : r.request().method());
+const isSave = (r: HttpLike): boolean =>
+  /\/tracking\/save$/.test(r.url()) && reqMethod(r) === 'POST';
+const isDelete = (r: HttpLike): boolean =>
+  /\/tracking\/delete$/.test(r.url()) && reqMethod(r) === 'POST';
 
 const createEntry = createWorklogEntry;
 
 test.describe('Worklog CRUD', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    await loginIsolated(page);
     await goToWorklogPage(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await cleanupWorklogEntries(page);
   });
 
   test('create → edit → delete journey, with a polite save announcement', async ({ page }) => {
@@ -107,7 +115,10 @@ test.describe('Worklog CRUD', () => {
     await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
 
     // The single-select editor overlays the cell — opening it must not widen the
-    // column (the no-reflow contract the native-select editor used to uphold).
+    // column (the no-reflow contract the native-select editor used to uphold). Wait
+    // for the cell to settle into edit mode before measuring, so a transient re-render
+    // during the combobox open doesn't yield a null box.
+    await expect(cell).toHaveAttribute('data-inline-editing', '');
     const during = await cell.boundingBox();
     expect(Math.abs(during!.width - before!.width)).toBeLessThanOrEqual(1);
 

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { login } from './helpers/auth';
+import { loginIsolated } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
-import { createWorklogEntry, rowByStamp } from './helpers/worklog';
+import { cleanupWorklogEntries, createWorklogEntry, rowByStamp } from './helpers/worklog';
 
 /**
  * The client-side date-format preference (Settings → ISO / Automatic / Custom).
@@ -10,8 +10,12 @@ import { createWorklogEntry, rowByStamp } from './helpers/worklog';
  */
 test.describe('Date-format preference', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
+    await loginIsolated(page);
     await goToWorklogPage(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await cleanupWorklogEntries(page);
   });
 
   test('a custom pattern reformats the worklog date cells, but editing stays ISO', async ({ page }) => {

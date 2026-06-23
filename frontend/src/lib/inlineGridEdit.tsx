@@ -325,11 +325,18 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   // and stopping at the row edge. Reads document.activeElement because the grid's
   // move handle is the single writer of focus + the roving tabindex.
   function moveAndEdit(direction: 'left' | 'right'): void {
+    // Track the roving tab stop (the single td[tabindex="0"] that setActive owns), NOT
+    // document.activeElement: committing a text editor unmounts its <input> and drops
+    // focus to <body>, so reading activeElement would see "no move" and bail at the
+    // first step. The roving cell is always current, so the walk stays reliable even
+    // while focus is momentarily on <body>; beginEdit's editor re-grabs focus on mount.
+    const rovingCell = (): HTMLElement | null =>
+      tableEl?.querySelector<HTMLElement>('td[tabindex="0"], th[tabindex="0"]') ?? null
     for (let i = 0; i < 30; i++) {
-      const before = document.activeElement
+      const before = rovingCell()
       moveHandle?.move(direction)
-      const cell = document.activeElement
-      if (!(cell instanceof HTMLElement) || cell === before) {
+      const cell = rovingCell()
+      if (cell === null || cell === before) {
         return // clamped at the row edge — no editable cell that way
       }
       const colKey = cell.getAttribute('data-col-key')

@@ -1,4 +1,4 @@
-import { expect, Page } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 
 /**
  * Test credentials, defaulting to the values seeded in docker/ldap/dev-users.ldif
@@ -26,12 +26,26 @@ export async function login(
   await page.addInitScript(() => {
     window.localStorage.setItem('tt-kbd-hint-seen', '1');
   });
-  await page.goto('/login');
-  await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
-  await page.locator('input[name="_username"]').fill(username);
-  await page.locator('input[name="_password"]').fill(password);
-  await page.locator('#form-submit').click();
-  await expect(page).toHaveURL('/', { timeout: 15000 });
+  // Under concurrent CI-shard load the auth round-trip (10 shards hitting one LDAP +
+  // one MariaDB) occasionally fails and re-renders the login form, leaving us on
+  // /login — the long-standing parallel-login flake. Retry the submit a couple of
+  // times so a transient failure doesn't sink the whole spec.
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    await page.goto('/login');
+    await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
+    await page.locator('input[name="_username"]').fill(username);
+    await page.locator('input[name="_password"]').fill(password);
+    await page.locator('#form-submit').click();
+    try {
+      await expect(page).toHaveURL('/', { timeout: 10000 });
+
+      return;
+    } catch (error) {
+      if (attempt === 3) {
+        throw error;
+      }
+    }
+  }
 }
 
 /**
@@ -43,6 +57,26 @@ export async function loginAs(
 ): Promise<void> {
   const user = TEST_USERS[userKey];
   await login(page, user.username, user.password);
+}
+
+/**
+ * Per-worker users for specs that create/mutate worklog data. Both exist in the
+ * e2e DB *and* in LDAP *and* can book the global "Freizeit" customer. (unittest is
+ * in LDAP but absent from the e2e DB, so it can't be used here.)
+ */
+const ISOLATION_USERS = ['developer', 'myself'] as const;
+
+/**
+ * Log in as a user chosen by the running worker's slot, so specs that create
+ * worklog entries never share a backend account with a *concurrently* running
+ * spec — and therefore never see each other's rows. `parallelIndex` is the worker
+ * slot [0..workers-1]; two tests with the same slot never run at the same time, so
+ * concurrent specs always get distinct users for up to ISOLATION_USERS.length
+ * workers. CI runs exactly 2 workers, matching the two available users.
+ */
+export async function loginIsolated(page: Page): Promise<void> {
+  const userKey = ISOLATION_USERS[test.info().parallelIndex % ISOLATION_USERS.length];
+  await loginAs(page, userKey);
 }
 
 /**
