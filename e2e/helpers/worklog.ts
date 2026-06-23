@@ -50,28 +50,38 @@ export function rowByStamp(page: Page, stamp: string): Locator {
  * Delete every e2e-stamped entry the current user can see, via the same plain
  * form-POST the app uses (session cookie, same-origin → CSRF origin check passes).
  * Call it in an afterEach so the shared db-e2e doesn't accumulate the fixed-time
- * entries these tests create — left to pile up they overlap at 08:00–09:00 and
- * confuse cell-focus + clipboard targeting (the no-teardown pollution the testing
+ * entries these tests create — left to pile up they overlap at the same fixed time
+ * and confuse cell-focus + clipboard targeting (the no-teardown pollution the testing
  * review flagged). Best-effort: a failed delete is swallowed, never failing the test.
  */
 export async function cleanupWorklogEntries(page: Page): Promise<void> {
+  // A test may have ended on another page (e.g. Settings); the cleanup reads the
+  // grid DOM, so return to the worklog first or it would silently delete nothing
+  // and leave the shared DB polluted.
+  if (!page.url().includes('/ui/tracking')) {
+    await page.goto('/ui/tracking').catch(() => undefined);
+    await page.locator('table.tracking-table').first().waitFor({ timeout: 5000 }).catch(() => undefined);
+  }
   await page
     .evaluate(async () => {
       const ids = new Set<string>();
       document.querySelectorAll('tr.tracking-row').forEach((tr) => {
         if (tr.textContent?.includes('e2e-') === true) {
           const id = tr.querySelector('[data-row-id]')?.getAttribute('data-row-id');
-          if (id != null && Number(id) > 0) ids.add(id);
+          if (id != null && Number.isInteger(Number(id)) && Number(id) > 0) ids.add(id);
         }
       });
-      for (const id of ids) {
-        await fetch('/tracking/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          credentials: 'same-origin',
-          body: `id=${encodeURIComponent(id)}`,
-        }).catch(() => undefined);
-      }
+      // Independent best-effort deletes — fire them concurrently.
+      await Promise.all(
+        Array.from(ids).map((id) =>
+          fetch('/tracking/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin',
+            body: `id=${encodeURIComponent(id)}`,
+          }).catch(() => undefined),
+        ),
+      );
     })
     .catch(() => undefined);
 }
