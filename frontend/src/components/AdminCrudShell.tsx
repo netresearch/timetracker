@@ -8,6 +8,7 @@ import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INL
 import { ChipSelect } from '../lib/chipSelect'
 import { gridNav } from '../lib/gridNavigation'
 import { DiskIcon, DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
+import { DateField } from './DateField'
 import { PageDialog } from './PageDialog'
 import { m } from '../paraglide/messages.js'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
@@ -739,11 +740,22 @@ function FieldControl(props: {
           <textarea disabled={disabled()} value={text()} onInput={(e) => props.setField(props.field.name, e.currentTarget.value)} />
         </label>
       </Match>
+      <Match when={props.field.type === 'date'}>
+        <label class="field">
+          <span>{props.field.label()}</span>
+          <DateField
+            value={text()}
+            onChange={(iso) => props.setField(props.field.name, iso)}
+            required={props.field.required}
+            disabled={disabled()}
+          />
+        </label>
+      </Match>
       <Match when={true}>
         <label class="field">
           <span>{props.field.label()}</span>
           <input
-            type={props.field.type === 'number' ? 'number' : props.field.type === 'date' ? 'date' : 'text'}
+            type={props.field.type === 'number' ? 'number' : 'text'}
             required={props.field.required}
             disabled={disabled()}
             value={text()}

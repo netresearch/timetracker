@@ -103,9 +103,13 @@ describe('Bulk entry form', () => {
     const select = container.querySelector('select') as HTMLSelectElement
     select.value = '3'
     fireEvent.input(select)
-    const dates = container.querySelectorAll<HTMLInputElement>('input[type=date]')
+    // The date fields are now format-aware text inputs (DateField); ISO is always
+    // accepted, and the parsed value commits on change/blur, not on every keystroke.
+    const dates = container.querySelectorAll<HTMLInputElement>('input.date-field')
     fireEvent.input(dates[0]!, { target: { value: '2026-06-01' } })
+    fireEvent.change(dates[0]!)
     fireEvent.input(dates[1]!, { target: { value: '2026-06-05' } })
+    fireEvent.change(dates[1]!)
 
     fireEvent.submit(getByRole('button', { name: /Create entries/i }).closest('form') as HTMLFormElement)
 

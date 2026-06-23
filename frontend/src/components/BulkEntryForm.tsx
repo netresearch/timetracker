@@ -3,6 +3,7 @@ import { createSignal, For, Show } from 'solid-js'
 
 import { apiErrorMessage, postForm } from '../api/client'
 import { presetsQuery } from '../api/queries'
+import { DateField } from './DateField'
 import { m } from '../paraglide/messages.js'
 
 type Status =
@@ -103,11 +104,11 @@ export function BulkEntryForm(props: { onSaved?: () => void }) {
         <div class="field-row">
           <label class="field">
             <span>{m.extras_start_date()}</span>
-            <input type="date" value={startDate()} onInput={(e) => setStartDate(e.currentTarget.value)} />
+            <DateField value={startDate()} onChange={setStartDate} />
           </label>
           <label class="field">
             <span>{m.extras_end_date()}</span>
-            <input type="date" value={endDate()} onInput={(e) => setEndDate(e.currentTarget.value)} />
+            <DateField value={endDate()} onChange={setEndDate} />
           </label>
         </div>
 
