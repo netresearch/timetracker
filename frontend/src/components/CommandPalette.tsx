@@ -1,6 +1,6 @@
 import { Dialog } from '@ark-ui/solid/dialog'
 import { useNavigate } from '@solidjs/router'
-import { createMemo, createSignal, For, Show } from 'solid-js'
+import { createEffect, createMemo, createSignal, For, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
 import { appConfig, canBill, hasRole } from '../config'
@@ -25,10 +25,14 @@ export function CommandPalette() {
   }
   const go = (path: string): void => {
     navigate(path)
-    close()
   }
   const clickById = (id: string): void => {
     document.getElementById(id)?.click()
+  }
+  // Run a command, then always close — so every command (including page-registered
+  // ones whose run() doesn't close) leaves no lingering overlay or focus trap.
+  const runCommand = (command: Command): void => {
+    command.run()
     close()
   }
 
@@ -74,8 +78,17 @@ export function CommandPalette() {
 
   const clampActive = (index: number): number => Math.max(0, Math.min(index, results().length - 1))
 
+  // Keep the highlighted row visible while arrow-navigating a list that overflows.
+  createEffect(() => {
+    const command = results()[active()]
+    if (command) document.getElementById(`command-${command.id}`)?.scrollIntoView({ block: 'nearest' })
+  })
+
   const onInputKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === 'ArrowDown') {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault()
+      close()
+    } else if (event.key === 'ArrowDown') {
       event.preventDefault()
       setActive((index) => clampActive(index + 1))
     } else if (event.key === 'ArrowUp') {
@@ -83,7 +96,8 @@ export function CommandPalette() {
       setActive((index) => clampActive(index - 1))
     } else if (event.key === 'Enter') {
       event.preventDefault()
-      results()[active()]?.run()
+      const command = results()[active()]
+      if (command) runCommand(command)
     }
   }
 
@@ -117,7 +131,7 @@ export function CommandPalette() {
                       aria-selected={index() === active()}
                       class={index() === active() ? 'command-item is-active' : 'command-item'}
                       onMouseEnter={() => setActive(index())}
-                      onMouseDown={(event) => { event.preventDefault(); command.run() }}
+                      onMouseDown={(event) => { event.preventDefault(); runCommand(command) }}
                     >
                       <span class="command-label">{command.label()}</span>
                       <span class="command-group">{command.group()}</span>

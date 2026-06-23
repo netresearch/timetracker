@@ -52,6 +52,8 @@ describe('CommandPalette', () => {
     expect(themeItem).not.toBeNull()
     fireEvent.mouseDown(themeItem!)
     expect(onClick).toHaveBeenCalled()
+    // runCommand always closes the palette after running — no lingering overlay.
+    await waitFor(() => expect(screen.queryByRole('combobox')).toBeNull())
 
     themeButton.remove()
   })
