@@ -31,10 +31,6 @@ variable "XDEBUG_VERSION" {
   default = "3.5.3"
 }
 
-variable "PCOV_VERSION" {
-  default = "1.0.12"
-}
-
 
 # =============================================================================
 # IMAGE METADATA
@@ -70,7 +66,6 @@ target "_common" {
     NODE_VERSION   = NODE_VERSION
     COMPOSER_IMAGE = COMPOSER_IMAGE
     XDEBUG_VERSION = XDEBUG_VERSION
-    PCOV_VERSION   = PCOV_VERSION
   }
 }
 
