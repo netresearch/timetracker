@@ -38,4 +38,35 @@ class PresetRepository extends ServiceEntityRepository
 
         return $data;
     }
+
+    /**
+     * Presets the given user may use: those whose customer is global or belongs
+     * to one of the user's teams. Mirrors CustomerRepository::getCustomersByUser
+     * so bulk entry never exposes presets tied to team-restricted customers the
+     * user cannot otherwise see. Admins use getAllPresets() for management.
+     *
+     * @return array<int, array{preset: array<string, mixed>}>
+     */
+    public function getPresetsByUser(int $userId): array
+    {
+        /** @var Preset[] $presets */
+        $presets = $this->createQueryBuilder('preset')
+            ->leftJoin('preset.customer', 'customer')
+            ->leftJoin('customer.teams', 'team')
+            ->leftJoin('team.users', 'user')
+            ->andWhere('customer.global = 1')
+            ->orWhere('user.id = :userId')
+            ->setParameter('userId', $userId)
+            ->orderBy('preset.name', 'ASC')
+            ->distinct()
+            ->getQuery()
+            ->getResult();
+
+        $data = [];
+        foreach ($presets as $preset) {
+            $data[] = ['preset' => $preset->toArray()];
+        }
+
+        return $data;
+    }
 }
