@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { formatDays, formatDuration, handleShortcut, hideAccessHints, showAccessHints } from './header'
+import { formatDays, formatDuration, handleHelpClick, handleShortcut, hideAccessHints, showAccessHints } from './header'
+import { setShortcutsHelpOpen, shortcutsHelpOpen } from './lib/shortcutsHelp'
 
 describe('formatDuration', () => {
   it('formats minutes as H:MM like the ExtJS header', () => {
@@ -29,6 +30,7 @@ describe('formatDays', () => {
 describe('handleShortcut', () => {
   afterEach(() => {
     document.body.innerHTML = ''
+    setShortcutsHelpOpen(false)
     vi.restoreAllMocks()
   })
 
@@ -79,13 +81,21 @@ describe('handleShortcut', () => {
     expect(clicked).toHaveBeenCalled()
   })
 
-  it('? activates the Help nav link', () => {
+  it('? opens the keyboard-shortcuts overlay', () => {
     setup()
-    const help = document.querySelector('a[data-nav="help"]') as HTMLAnchorElement
-    const clicked = vi.fn()
-    help.addEventListener('click', clicked)
+    setShortcutsHelpOpen(false)
     press({ key: '?' })
-    expect(clicked).toHaveBeenCalled()
+    expect(shortcutsHelpOpen()).toBe(true)
+  })
+
+  it('clicking a header Help link opens the overlay instead of navigating', () => {
+    setup()
+    setShortcutsHelpOpen(false)
+    document.addEventListener('click', handleHelpClick)
+    const help = document.querySelector('a[data-nav="help"]') as HTMLAnchorElement
+    help.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+    expect(shortcutsHelpOpen()).toBe(true)
+    document.removeEventListener('click', handleHelpClick)
   })
 
   it('Alt+A clicks the page add button', () => {

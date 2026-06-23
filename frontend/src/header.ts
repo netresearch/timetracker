@@ -4,6 +4,7 @@
 import { getJson } from './api/client'
 import type { AppConfig } from './config'
 import { setPaletteOpen } from './lib/commandPalette'
+import { setShortcutsHelpOpen } from './lib/shortcutsHelp'
 
 interface TimeSummary {
   today: { duration: number }
@@ -154,13 +155,11 @@ export function handleShortcut(event: KeyboardEvent): void {
     // Single-character shortcut: only outside fields and without modifiers, so it
     // can't fire while typing text (WCAG 2.1.4 mitigation).
     if (event.key === '?' && !inField && !event.altKey && !event.ctrlKey && !event.metaKey) {
-      // Help moved out of .main-nav into the header icon group, so match by
-      // data-nav across the whole header rather than scoping to .main-nav.
-      const help = document.querySelector<HTMLAnchorElement>('.app-header a[data-nav="help"]')
-      if (help !== null) {
-        event.preventDefault()
-        help.click()
-      }
+      // Open the keyboard-shortcuts cheat-sheet in place (a quick dismissible
+      // overlay) rather than navigating away to the full /help page — that page
+      // still lives under the header's Help link and the command palette.
+      event.preventDefault()
+      setShortcutsHelpOpen(true)
 
       return
     }
@@ -379,12 +378,34 @@ export function hideAccessHints(): void {
   document.body.classList.remove('show-access-keys')
 }
 
+/** The header "Help" affordance (icon + the "More" drawer link) opens the same
+ *  shortcuts overlay as the `?` key, rather than navigating to the full /help
+ *  page — so the `?` glyph means one thing whether typed or clicked. The link's
+ *  href still points at /help, so it degrades gracefully if JS never loads. */
+export function handleHelpClick(event: MouseEvent): void {
+  // event.target can be a non-Element (document/window) in edge cases, and those
+  // have no closest() — guard before calling it.
+  const target = event.target
+  if (target instanceof Element) {
+    const help = target.closest<HTMLElement>('.app-header [data-nav="help"]')
+    if (help) {
+      event.preventDefault()
+      setShortcutsHelpOpen(true)
+    }
+  }
+}
+
 function initShortcuts(): void {
   if (shortcutsWired) {
     return
   }
   shortcutsWired = true
   document.addEventListener('keydown', handleShortcut)
+  // Delegated so it survives the priority-overflow re-parenting of nav links.
+  // Capture phase so our preventDefault lands before the SolidJS Router's own
+  // bubble-phase anchor handler — which otherwise client-navigates to /ui/help
+  // (it skips a click once defaultPrevented).
+  document.addEventListener('click', handleHelpClick, true)
   // Alt-hold shows the shortcut badges; Alt-up (or losing the window — so a
   // missed keyup can't strand them) hides them.
   document.addEventListener('keydown', (event) => {

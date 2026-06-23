@@ -2142,3 +2142,61 @@ th[aria-sort='descending'] .th-sort-glyph {
   list-style: none;
   text-align: center;
 }
+
+/* Keyboard-shortcuts cheat-sheet (?) — a dismissible quick-reference overlay.
+   Reuses .help-intro + .shortcut-table(s) from the /help page. */
+.shortcuts-positioner {
+  align-items: flex-start;
+  padding-top: 8vh;
+}
+
+.shortcuts-dialog {
+  width: min(760px, 94vw);
+  max-height: 80vh;
+  padding: 1.1rem 1.35rem 1.4rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 35%);
+  overflow-y: auto;
+}
+
+.shortcuts-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shortcuts-dialog-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.shortcuts-dialog-close {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shortcuts-dialog-close:hover {
+  background: var(--color-accent-soft);
+  color: inherit;
+}
+
+.shortcuts-dialog-foot {
+  margin-top: 1rem;
+  text-align: right;
+}
+
+.shortcuts-full-help {
+  font-size: 0.9rem;
+}
