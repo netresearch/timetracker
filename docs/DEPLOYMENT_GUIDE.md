@@ -1003,6 +1003,21 @@ stderr_logfile=/var/log/supervisor/timetracker-scheduler-error.log
 
 ## Database Setup & Migration
 
+> **Migrations run automatically on container start.** The production image's
+> entrypoint applies any pending Doctrine migrations before PHP-FPM starts, so
+> deploying a new image over an existing database self-migrates — no manual
+> `doctrine:migrations:migrate` step is needed. It is idempotent (a no-op once the
+> schema is current) and fails the container start loudly if a migration fails,
+> so a bad migration aborts the deploy instead of serving a half-migrated schema.
+>
+> - Disable with `AUTO_MIGRATE=0` (e.g. read-only replicas, or when you apply
+>   migrations out-of-band).
+> - `sql/full.sql` ships the migration-version records, so a **fresh** install is
+>   recognised as already up to date and never re-creates its own schema.
+> - A database created **before** migration tracking (tables present but no
+>   `doctrine_migration_versions` rows) is baselined automatically from the live
+>   schema on first start, then only the genuinely-missing migrations run.
+
 ### Database Initialization
 
 ```bash
