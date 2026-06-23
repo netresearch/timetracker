@@ -1,4 +1,4 @@
-import { keepPreviousData } from '@tanstack/solid-query'
+import { keepPreviousData, type QueryClient } from '@tanstack/solid-query'
 
 import { getJson } from './client'
 import { dmyToIso } from '../lib/timeParse'
@@ -129,6 +129,75 @@ export interface TrackingEntry {
 
 interface TrackingEntryRow {
   entry: TrackingEntry
+}
+
+// The cache key prefix the work-log grid (and every save/delete/refresh) keys on;
+// the per-range query appends the day count. Exported so the page invalidates and
+// seeds the same key.
+export const ENTRIES_KEY = 'tracking-entries'
+
+// The /tracking/save response envelope: the persisted entry, with date as 'd/m/Y'
+// and start/end as 'H:i' (already the cache row shape), so it can seed the cache
+// directly. ticket/description/extTicket are present only when non-empty.
+export interface SavedEntryResult {
+  result: {
+    id: number
+    date: string
+    start: string
+    end: string
+    user: number
+    customer: number
+    project: number
+    activity: number
+    duration: string
+    durationMinutes: number
+    class: number
+    ticket?: string
+    description?: string
+    extTicket?: string
+  }
+}
+
+// Build a cache row from a save response. A created entry must land in entries.data
+// the instant its save returns 200 — not on a follow-up refetch — so it survives a
+// session-expiry (issue #408) or any other error on that refetch.
+function savedEntryToRow(saved: SavedEntryResult['result']): TrackingEntryRow {
+  return {
+    entry: {
+      id: saved.id,
+      date: saved.date,
+      start: saved.start,
+      end: saved.end,
+      user: saved.user,
+      customer: saved.customer,
+      project: saved.project,
+      activity: saved.activity,
+      description: saved.description ?? '',
+      ticket: saved.ticket ?? '',
+      duration: saved.duration,
+      durationMinutes: saved.durationMinutes,
+      class: saved.class,
+      worklog: null,
+      extTicket: saved.extTicket ?? null,
+    },
+  }
+}
+
+// Upsert a just-saved entry into every cached entries range (keyed by ENTRIES_KEY)
+// so the grid shows it immediately and keeps it even if the reconciling refetch
+// fails. The save response is authoritative for the saved row; neighbour rows
+// (re-classed server-side) are reconciled by the follow-up invalidate, but losing
+// that refetch must never drop the user's just-saved work.
+export function upsertSavedEntry(queryClient: QueryClient, saved: SavedEntryResult['result']): void {
+  const row = savedEntryToRow(saved)
+  queryClient.setQueriesData<TrackingEntryRow[]>({ queryKey: [ENTRIES_KEY] }, (existing) => {
+    if (existing === undefined) {
+      return existing
+    }
+    const without = existing.filter((candidate) => candidate?.entry?.id !== saved.id)
+
+    return [...without, row]
+  })
 }
 
 // A chronological sort key from the row format: date is 'd/m/Y', so reorder it

@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage, postForm, postJson } from '../api/client'
-import { activitiesQuery, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, type NamedOption, type SummaryScope, type TrackingEntry } from '../api/queries'
+import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, upsertSavedEntry, type NamedOption, type SavedEntryResult, type SummaryScope, type TrackingEntry } from '../api/queries'
 import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { num, str } from '../lib/coerce'
@@ -26,7 +26,6 @@ const DAYS_OPTIONS = [1, 3, 7, 35] as const
 const DEFAULT_DAYS = 3
 // Widen target for the range-aware empty state (the largest preset window).
 const WIDEN_DAYS = 35
-const ENTRIES_KEY = 'tracking-entries'
 
 // Server-computed EntryClass → row modifier, mirroring the ExtJS row borders.
 const CLASS_ROW: Record<number, string> = { 2: 'is-daybreak', 4: 'is-pause', 8: 'is-overlap' }
@@ -338,7 +337,7 @@ export default function Tracking() {
         throw new Error(m.tracking_invalid_time())
       }
       const isNew = num(entry.id) <= 0
-      await postJson('/tracking/save', savePayload({
+      const saved = await postJson<SavedEntryResult>('/tracking/save', savePayload({
         id: num(entry.id),
         date: str(draft.date),
         start,
@@ -350,6 +349,12 @@ export default function Tracking() {
         activity: draft.activity,
         extTicket: entry.extTicket, // preserve the mirrored-entry key (not editable inline)
       }))
+      // Land the saved entry in the cache from the 200 itself, so it's in the grid
+      // BEFORE — and independent of — the reconciling refetch below. A new row drops
+      // from newRows here; without the upsert, a refetch that errors (session expiry,
+      // issue #408) would leave the entry in neither newRows nor entries.data and the
+      // user's just-saved work would vanish.
+      upsertSavedEntry(queryClient, saved.result)
       if (isNew) {
         setNewRows((list) => list.filter((row) => num(row.id) !== num(entry.id)))
       }
@@ -610,7 +615,7 @@ export default function Tracking() {
     }
     const end = nowHi()
     try {
-      await postJson('/tracking/save', savePayload({
+      const saved = await postJson<SavedEntryResult>('/tracking/save', savePayload({
         id: num(base.id),
         date,
         start,
@@ -622,6 +627,7 @@ export default function Tracking() {
         activity: merged.activity,
         extTicket: base.extTicket,
       }))
+      upsertSavedEntry(queryClient, saved.result) // keep the prolonged row if the refetch fails
       editor.takeDraft(num(base.id)) // the draft is now persisted — clear it
       await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
       announce(m.tracking_prolonged())
