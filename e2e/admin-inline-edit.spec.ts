@@ -18,7 +18,9 @@ function adminRow(page: Page, name: string) {
  * shared seed rows, so re-runs stay idempotent and leave no residue.
  */
 async function createThrowawayCustomer(page: Page): Promise<string> {
-  const name = `E2EInline_${Date.now()}`;
+  // Date.now() alone can collide when parallel workers create a row in the same
+  // millisecond (a unique-name DB violation); a random suffix makes it collision-safe.
+  const name = `E2EInline_${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
   await page.locator('.admin-crud-toolbar button.primary-button').filter({ hasText: ADD }).click();
   const form = page.locator('.modal form.stack-form');
   await expect(form).toBeVisible();
@@ -33,9 +35,15 @@ async function createThrowawayCustomer(page: Page): Promise<string> {
 /** Best-effort delete of the throwaway customer (native confirm), for finally blocks. */
 async function deleteThrowawayCustomer(page: Page, name: string): Promise<void> {
   try {
+    const row = adminRow(page, name);
+    // Of the two names passed across a finally block (pre/post rename), only one
+    // row actually exists — skip the missing one instead of letting its delete
+    // button locator wait out the full timeout (a ~30s stall on every run). Bound
+    // the click for the same reason; the row is present, so it resolves at once.
+    if ((await row.count()) === 0) return;
     page.once('dialog', (dialog) => dialog.accept());
-    await adminRow(page, name).getByRole('button', { name: DELETE }).click();
-    await expect(adminRow(page, name)).toHaveCount(0);
+    await row.getByRole('button', { name: DELETE }).click({ timeout: 2000 });
+    await expect(row).toHaveCount(0);
   } catch {
     // Swallow — a mid-test failure may leave the page in a state where delete
     // can't complete; never mask the original failure with a cleanup error.
