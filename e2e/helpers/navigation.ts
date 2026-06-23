@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
 /**
  * Tab names in the ExtJS shell.
@@ -44,7 +44,10 @@ export async function goToTab(page: Page, tabName: RegExp | string): Promise<voi
   // Find and click the tab - use .x-tab specifically to avoid matching inner button
   const tab = page.locator('.x-tab').filter({ hasText: tabName }).first();
   await tab.click();
-  await page.waitForTimeout(500);
+  // Web-first: wait for the tab to become active rather than sleeping. Best-effort
+  // — some callers (e.g. goToTrackingTab) then wait on the grid; for the charts tab
+  // the active class is the only readiness signal available.
+  await expect(tab).toHaveClass(/x-tab-active/, { timeout: 5000 }).catch(() => undefined);
 }
 
 /**

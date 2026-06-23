@@ -218,8 +218,8 @@ test.describe('Settings Effectiveness', () => {
       const firstRow = page.locator('.x-grid-row, .x-grid-item').first();
       await firstRow.dblclick();
 
-      // Wait a moment for the edit to process
-      await page.waitForTimeout(1000);
+      // Wait (web-first) for the inline editor to open rather than sleeping.
+      await page.waitForSelector('.x-editor', { state: 'visible', timeout: 5000 }).catch(() => {});
 
       // Press Tab to move through fields and potentially trigger save
       await page.keyboard.press('Tab');

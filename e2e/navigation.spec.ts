@@ -245,14 +245,13 @@ test.describe('Grid Column Headers', () => {
 
     if ((await dateHeader.count()) > 0) {
       await dateHeader.click();
-      await page.waitForTimeout(500);
 
-      // Check for sort indicator
-      const hasSortIndicator =
-        (await page.locator('.x-column-header-sort-ASC').count()) > 0 ||
-        (await page.locator('.x-column-header-sort-DESC').count()) > 0;
-
-      console.log(`Sort indicator present: ${hasSortIndicator}`);
+      // Web-first: wait for the sort indicator to render (either direction)
+      // instead of sleeping, then assert the click actually sorted the column.
+      const sortIndicator = page.locator(
+        '.x-column-header-sort-ASC, .x-column-header-sort-DESC'
+      );
+      await expect(sortIndicator.first()).toBeVisible({ timeout: 5000 });
     }
   });
 });
