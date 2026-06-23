@@ -13,17 +13,17 @@ function setRoles(roles: string[]) {
 }
 
 describe('config role helpers', () => {
-  it('plain user: no billing, no bulk entry, not admin', () => {
+  it('plain user: no billing, but may bulk-enter, not admin', () => {
     setRoles(['ROLE_USER'])
     expect(hasRole('ROLE_ADMIN')).toBe(false)
     expect(canBill()).toBe(false)
-    expect(canBulkEnter()).toBe(false)
+    expect(canBulkEnter()).toBe(true)
   })
 
-  it('project lead: may bill, may not bulk-enter', () => {
+  it('project lead: may bill and bulk-enter', () => {
     setRoles(['ROLE_USER', 'ROLE_PL'])
     expect(canBill()).toBe(true)
-    expect(canBulkEnter()).toBe(false)
+    expect(canBulkEnter()).toBe(true)
   })
 
   it('admin: may bill and bulk-enter', () => {

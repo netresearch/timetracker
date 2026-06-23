@@ -44,7 +44,9 @@ export function canBill(): boolean {
   return hasRole('ROLE_PL') || hasRole('ROLE_ADMIN')
 }
 
-/** Bulk entry depends on presets, which are ROLE_ADMIN-only. */
+/** Bulk entry is a user feature: every authenticated user may use it, and the
+ *  presets it relies on are a shared, user-readable template source (see
+ *  GetPresetsAction / GET /getAllPresets). */
 export function canBulkEnter(): boolean {
-  return hasRole('ROLE_ADMIN')
+  return hasRole('ROLE_USER')
 }

@@ -21,8 +21,12 @@ use function assert;
 
 final class GetPresetsAction extends BaseController
 {
+    // Presets are a shared, read-only template source the bulk-entry feature
+    // (available to every authenticated user) needs — so reading the list is not
+    // admin-gated. Creating/editing/deleting presets stays admin-only via the
+    // dedicated Save/Delete actions.
     #[Route(path: '/getAllPresets', name: '_getAllPresets_attr', methods: ['GET'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(): Response|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Preset::class);

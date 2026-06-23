@@ -344,6 +344,20 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
     }
 
     /**
+     * Test that a non-admin (DEV) user CAN read the preset list. Bulk entry is a
+     * user feature whose presets are shared, user-readable templates, so reading
+     * /getAllPresets must not be admin-gated (creating/deleting presets stays so).
+     */
+    public function testGetPresetsActionWithDev(): void
+    {
+        $this->logInSession('developer'); // DEV user
+
+        $this->client->request('GET', '/getAllPresets');
+
+        $this->assertStatusCode(200);
+    }
+
+    /**
      * Test that PL users can delete contracts.
      */
     public function testDeleteContractActionWithPl(): void
