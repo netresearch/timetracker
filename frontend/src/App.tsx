@@ -5,6 +5,7 @@ import { createEffect, createMemo, createSignal, onCleanup, onMount, Show, type 
 import { Dynamic, Portal } from 'solid-js/web'
 
 import { SessionExpiredError } from './api/client'
+import { CommandPalette } from './components/CommandPalette'
 import { SessionExpiredOverlay } from './components/SessionExpiredOverlay'
 import { appConfig, canBill, hasRole } from './config'
 import { sessionExpired, setSessionExpired, startSessionMonitor } from './lib/session'
@@ -199,6 +200,7 @@ function Layout(props: ParentProps) {
       <Show when={sessionExpired()}>
         <SessionExpiredOverlay onSuccess={() => { setSessionExpired(false); void queryClient.invalidateQueries() }} />
       </Show>
+      <CommandPalette />
     </QueryClientProvider>
   )
 }

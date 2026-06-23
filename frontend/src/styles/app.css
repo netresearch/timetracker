@@ -2069,3 +2069,76 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='compact'] .action-button.is-icon {
   min-width: 30px;
 }
+
+/* Command palette (Ctrl/⌘+K) — a searchable list of every action. */
+.command-positioner {
+  align-items: flex-start;
+  padding-top: 12vh;
+}
+
+.command-palette {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 92vw);
+  max-height: 70vh;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 35%);
+  overflow: hidden;
+}
+
+.command-input {
+  padding: 0.9rem 1.1rem;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.05rem;
+  outline: none;
+}
+
+.command-list {
+  margin: 0;
+  padding: 0.4rem;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.command-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.command-item.is-active {
+  background: var(--color-accent-soft);
+}
+
+.command-label {
+  flex: 1;
+}
+
+.command-group {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.command-kbd {
+  padding: 0 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+.command-empty {
+  padding: 0.9rem;
+  color: var(--color-text-muted);
+  list-style: none;
+  text-align: center;
+}

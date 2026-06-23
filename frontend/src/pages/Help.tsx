@@ -10,6 +10,7 @@ interface Shortcut {
 
 // App-wide shortcuts handled in the SolidJS shell (frontend/src/header.ts).
 const GLOBAL_SHORTCUTS: Shortcut[] = [
+  { keys: 'Ctrl / ⌘ + K', label: () => m.help_sc_palette() },
   { keys: 'Alt + 1…7', label: () => m.help_sc_tabs() },
   { keys: 'Alt + A', label: () => m.help_sc_add() },
   { keys: '↑ ↓ ← →', label: () => m.help_sc_arrow_nav() },

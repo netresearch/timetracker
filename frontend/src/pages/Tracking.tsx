@@ -11,6 +11,7 @@ import { formatMinutes } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
+import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
@@ -694,6 +695,22 @@ export default function Tracking() {
 
   onMount(() => document.addEventListener('keydown', onGridShortcut))
   onCleanup(() => document.removeEventListener('keydown', onGridShortcut))
+
+  // Surface the worklog actions in the Ctrl/⌘+K command palette while this page
+  // is mounted — the discoverable home for every action (no shortcut to memorise).
+  const wl = (): string => m.cmd_group_worklog()
+  onCleanup(registerCommands([
+    { id: 'wl-add', group: wl, label: () => m.help_sc_add(), shortcut: 'Alt+A', run: () => addEntry() },
+    { id: 'wl-continue', group: wl, label: () => m.help_sc_continue(), shortcut: 'Alt+C', run: () => continueEntry() },
+    { id: 'wl-prolong', group: wl, label: () => m.help_sc_prolong(), shortcut: 'Alt+P', run: () => void prolongLast() },
+    { id: 'wl-info', group: wl, label: () => m.help_sc_info(), shortcut: 'Alt+I', run: () => void showInfo() },
+    { id: 'wl-refresh', group: wl, label: () => m.help_sc_refresh(), shortcut: 'Alt+R', run: () => refreshEntries() },
+    { id: 'wl-export', group: wl, label: () => m.help_sc_export(), shortcut: 'Alt+X', run: () => window.location.assign(exportHref()) },
+    ...(canBulkEnter() ? [{ id: 'wl-bulk', group: wl, label: () => m.cmd_bulk(), run: () => setBulkOpen(true) }] : []),
+    { id: 'wl-days-today', group: wl, label: () => m.cmd_days_today(), run: () => applyDays(1) },
+    { id: 'wl-days-week', group: wl, label: () => m.cmd_days_week(), run: () => applyDays(7) },
+    { id: 'wl-days-5weeks', group: wl, label: () => m.cmd_days_5weeks(), run: () => applyDays(35) },
+  ]))
 
   return (
     <section class="tracking">
