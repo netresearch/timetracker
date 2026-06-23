@@ -129,6 +129,11 @@ export async function createWorklogEntry(page: Page): Promise<string> {
   await saved;
   await refetched;
 
-  await expect(rowByStamp(page, stamp)).toBeVisible();
+  // The grid rebuilds this <tr> from the post-save refetch, then SolidJS may
+  // re-reconcile it once more as the authoritative list settles. Under CI
+  // 2-worker contention that save→refetch→render path can outlast Playwright's
+  // default 5s expect timeout — the historic shard-9 worklog-crud flake — so
+  // give the row the same 15s the page's other readiness waits use.
+  await expect(rowByStamp(page, stamp)).toBeVisible({ timeout: 15000 });
   return stamp;
 }
