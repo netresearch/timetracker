@@ -9,6 +9,10 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use App\Entity\Customer;
+use App\Entity\Preset;
+use App\Entity\Team;
+use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Tests\AbstractWebTestCase;
 
@@ -355,6 +359,47 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $this->client->request('GET', '/getAllPresets');
 
         $this->assertStatusCode(200);
+    }
+
+    /**
+     * A non-admin user must only receive presets for customers they may access:
+     * a preset tied to a team-restricted customer they do not belong to is
+     * filtered out (the information-disclosure guard), while a preset on a global
+     * customer stays visible.
+     */
+    public function testGetPresetsActionFiltersPresetsByUserAccess(): void
+    {
+        $manager = self::getContainer()->get('doctrine')->getManager();
+        assert($manager instanceof EntityManagerInterface);
+
+        $team = new Team()->setName('Team Without Developer');
+        $globalCustomer = new Customer()->setName('Preset Global Co')->setActive(true)->setGlobal(true);
+        $restrictedCustomer = new Customer()->setName('Preset Restricted Co')->setActive(true)->setGlobal(false);
+        $restrictedCustomer->addTeam($team);
+
+        $visiblePreset = new Preset()->setName('VisibleGlobalPreset')->setCustomer($globalCustomer)->setDescription('visible');
+        $hiddenPreset = new Preset()->setName('HiddenRestrictedPreset')->setCustomer($restrictedCustomer)->setDescription('hidden');
+
+        foreach ([$team, $globalCustomer, $restrictedCustomer, $visiblePreset, $hiddenPreset] as $entity) {
+            $manager->persist($entity);
+        }
+
+        $manager->flush();
+
+        $this->logInSession('developer'); // DEV user, member of no team
+
+        $this->client->request('GET', '/getAllPresets');
+        $this->assertStatusCode(200);
+
+        $names = [];
+        foreach ($this->getJsonResponse($this->client->getResponse()) as $item) {
+            if (is_array($item) && is_array($item['preset'] ?? null)) {
+                $names[] = $item['preset']['name'] ?? null;
+            }
+        }
+
+        self::assertContains('VisibleGlobalPreset', $names, 'a global-customer preset must stay visible to any user');
+        self::assertNotContains('HiddenRestrictedPreset', $names, 'a preset for a team-restricted customer the user cannot access must be filtered out');
     }
 
     /**
