@@ -27,14 +27,32 @@ use const JSON_THROW_ON_ERROR;
  */
 final class ResponseFormatTest extends AbstractWebTestCase
 {
-    // =========================================================================
-    // Customer Response Format
-    // =========================================================================
-
-    public function testCustomerJsonStructure(): void
-    {
+    /**
+     * Log in, GET a list endpoint, and assert the shape of the first wrapped row.
+     *
+     * Asserts 200, decodes the body, requires it non-empty, then checks that the
+     * first item wraps its payload under $wrapperKey and that each named key is
+     * present on the payload with the expected type.
+     *
+     * @param array<int, string> $stringKeys  keys whose value must be a string
+     * @param array<int, string> $boolKeys    keys whose value must be a bool
+     * @param array<int, string> $intKeys     keys whose value must be an int
+     * @param array<int, string> $arrayKeys   keys whose value must be an array
+     * @param array<int, string> $numericKeys keys whose value must be numeric (int|float)
+     * @param array<int, string> $presentKeys keys that must merely be present
+     */
+    private function assertListEndpoint(
+        string $path,
+        string $wrapperKey,
+        array $stringKeys = [],
+        array $boolKeys = [],
+        array $intKeys = [],
+        array $arrayKeys = [],
+        array $numericKeys = [],
+        array $presentKeys = [],
+    ): void {
         $this->logInSession('unittest');
-        $this->client->request(Request::METHOD_GET, '/getAllCustomers');
+        $this->client->request(Request::METHOD_GET, $path);
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
         $decoded = $this->getJsonResponse($this->client->getResponse());
@@ -42,27 +60,45 @@ final class ResponseFormatTest extends AbstractWebTestCase
 
         $first = $decoded[0];
         self::assertIsArray($first);
-        self::assertArrayHasKey('customer', $first);
+        self::assertArrayHasKey($wrapperKey, $first);
 
-        $customer = $first['customer'];
-        self::assertIsArray($customer);
-        self::assertArrayHasKey('id', $customer);
-        self::assertArrayHasKey('name', $customer);
-        self::assertArrayHasKey('active', $customer);
-        self::assertArrayHasKey('global', $customer);
-        self::assertArrayHasKey('teams', $customer);
+        $payload = $first[$wrapperKey];
+        self::assertIsArray($payload);
 
-        self::assertIsInt($customer['id']);
-        self::assertIsString($customer['name']);
-        self::assertIsBool($customer['active']);
-        self::assertIsBool($customer['global']);
-        self::assertIsArray($customer['teams']);
+        foreach ([...$stringKeys, ...$boolKeys, ...$intKeys, ...$arrayKeys, ...$numericKeys, ...$presentKeys] as $key) {
+            self::assertArrayHasKey($key, $payload);
+        }
+
+        foreach ($stringKeys as $key) {
+            self::assertIsString($payload[$key]);
+        }
+
+        foreach ($boolKeys as $key) {
+            self::assertIsBool($payload[$key]);
+        }
+
+        foreach ($intKeys as $key) {
+            self::assertIsInt($payload[$key]);
+        }
+
+        foreach ($arrayKeys as $key) {
+            self::assertIsArray($payload[$key]);
+        }
+
+        foreach ($numericKeys as $key) {
+            self::assertIsNumeric($payload[$key]);
+        }
     }
 
-    public function testCustomerListResponseFormat(): void
+    /**
+     * Log in, GET a list endpoint, and assert every wrapped row carries id+name.
+     *
+     * @return array<mixed, mixed> the decoded list, for callers needing the rows
+     */
+    private function assertWrappedListHasIdName(string $path, string $wrapperKey): array
     {
         $this->logInSession('unittest');
-        $this->client->request(Request::METHOD_GET, '/getAllCustomers');
+        $this->client->request(Request::METHOD_GET, $path);
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
         $decoded = $this->getJsonResponse($this->client->getResponse());
@@ -70,11 +106,54 @@ final class ResponseFormatTest extends AbstractWebTestCase
 
         foreach ($decoded as $item) {
             self::assertIsArray($item);
-            self::assertArrayHasKey('customer', $item);
-            self::assertIsArray($item['customer']);
-            self::assertArrayHasKey('id', $item['customer']);
-            self::assertArrayHasKey('name', $item['customer']);
+            self::assertArrayHasKey($wrapperKey, $item);
+            self::assertIsArray($item[$wrapperKey]);
+            self::assertArrayHasKey('id', $item[$wrapperKey]);
+            self::assertArrayHasKey('name', $item[$wrapperKey]);
         }
+
+        return $decoded;
+    }
+
+    /**
+     * Find the first positive integer id under $wrapperKey in a wrapped list.
+     *
+     * @param array<mixed, mixed> $list rows shaped like [['<wrapperKey>' => ['id' => int, ...]], ...]
+     */
+    private function firstIdInWrappedList(array $list, string $wrapperKey): ?int
+    {
+        foreach ($list as $item) {
+            self::assertIsArray($item);
+            self::assertArrayHasKey($wrapperKey, $item);
+            self::assertIsArray($item[$wrapperKey]);
+            $id = $item[$wrapperKey]['id'] ?? 0;
+            if (is_int($id) && $id > 0) {
+                return $id;
+            }
+        }
+
+        return null;
+    }
+
+    // =========================================================================
+    // Customer Response Format
+    // =========================================================================
+
+    public function testCustomerJsonStructure(): void
+    {
+        $this->assertListEndpoint(
+            '/getAllCustomers',
+            'customer',
+            stringKeys: ['name'],
+            boolKeys: ['active', 'global'],
+            intKeys: ['id'],
+            arrayKeys: ['teams'],
+        );
+    }
+
+    public function testCustomerListResponseFormat(): void
+    {
+        $this->assertWrappedListHasIdName('/getAllCustomers', 'customer');
     }
 
     // =========================================================================
@@ -83,47 +162,19 @@ final class ResponseFormatTest extends AbstractWebTestCase
 
     public function testProjectJsonStructure(): void
     {
-        $this->logInSession('unittest');
-        $this->client->request(Request::METHOD_GET, '/getAllProjects');
-        self::assertSame(200, $this->client->getResponse()->getStatusCode());
-
-        $decoded = $this->getJsonResponse($this->client->getResponse());
-        self::assertNotEmpty($decoded);
-
-        $first = $decoded[0];
-        self::assertIsArray($first);
-        self::assertArrayHasKey('project', $first);
-
-        $project = $first['project'];
-        self::assertIsArray($project);
-        self::assertArrayHasKey('id', $project);
-        self::assertArrayHasKey('name', $project);
-        self::assertArrayHasKey('active', $project);
-        self::assertArrayHasKey('global', $project);
-        self::assertArrayHasKey('customer', $project);
-
-        self::assertIsInt($project['id']);
-        self::assertIsString($project['name']);
-        self::assertIsBool($project['active']);
-        self::assertIsBool($project['global']);
+        $this->assertListEndpoint(
+            '/getAllProjects',
+            'project',
+            stringKeys: ['name'],
+            boolKeys: ['active', 'global'],
+            intKeys: ['id'],
+            presentKeys: ['customer'],
+        );
     }
 
     public function testProjectListResponseFormat(): void
     {
-        $this->logInSession('unittest');
-        $this->client->request(Request::METHOD_GET, '/getAllProjects');
-        self::assertSame(200, $this->client->getResponse()->getStatusCode());
-
-        $decoded = $this->getJsonResponse($this->client->getResponse());
-        self::assertNotEmpty($decoded);
-
-        foreach ($decoded as $item) {
-            self::assertIsArray($item);
-            self::assertArrayHasKey('project', $item);
-            self::assertIsArray($item['project']);
-            self::assertArrayHasKey('id', $item['project']);
-            self::assertArrayHasKey('name', $item['project']);
-        }
+        $this->assertWrappedListHasIdName('/getAllProjects', 'project');
     }
 
     // =========================================================================
@@ -132,28 +183,14 @@ final class ResponseFormatTest extends AbstractWebTestCase
 
     public function testActivityJsonStructure(): void
     {
-        $this->logInSession('unittest');
-        $this->client->request(Request::METHOD_GET, '/getActivities');
-        self::assertSame(200, $this->client->getResponse()->getStatusCode());
-
-        $decoded = $this->getJsonResponse($this->client->getResponse());
-        self::assertNotEmpty($decoded);
-
-        $first = $decoded[0];
-        self::assertIsArray($first);
-        self::assertArrayHasKey('activity', $first);
-
-        $activity = $first['activity'];
-        self::assertIsArray($activity);
-        self::assertArrayHasKey('id', $activity);
-        self::assertArrayHasKey('name', $activity);
-        self::assertArrayHasKey('needsTicket', $activity);
-        self::assertArrayHasKey('factor', $activity);
-
-        self::assertIsInt($activity['id']);
-        self::assertIsString($activity['name']);
-        self::assertIsBool($activity['needsTicket']);
-        self::assertIsNumeric($activity['factor']); // int or float in JSON
+        $this->assertListEndpoint(
+            '/getActivities',
+            'activity',
+            stringKeys: ['name'],
+            boolKeys: ['needsTicket'],
+            intKeys: ['id'],
+            numericKeys: ['factor'], // int or float in JSON
+        );
     }
 
     // =========================================================================
@@ -162,28 +199,12 @@ final class ResponseFormatTest extends AbstractWebTestCase
 
     public function testUserJsonStructure(): void
     {
-        $this->logInSession('unittest');
-        $this->client->request(Request::METHOD_GET, '/getAllUsers');
-        self::assertSame(200, $this->client->getResponse()->getStatusCode());
-
-        $decoded = $this->getJsonResponse($this->client->getResponse());
-        self::assertNotEmpty($decoded);
-
-        $first = $decoded[0];
-        self::assertIsArray($first);
-        self::assertArrayHasKey('user', $first);
-
-        $user = $first['user'];
-        self::assertIsArray($user);
-        self::assertArrayHasKey('id', $user);
-        self::assertArrayHasKey('username', $user);
-        self::assertArrayHasKey('abbr', $user);
-        self::assertArrayHasKey('type', $user);
-
-        self::assertIsInt($user['id']);
-        self::assertIsString($user['username']);
-        self::assertIsString($user['abbr']);
-        self::assertIsString($user['type']);
+        $this->assertListEndpoint(
+            '/getAllUsers',
+            'user',
+            stringKeys: ['username', 'abbr', 'type'],
+            intKeys: ['id'],
+        );
     }
 
     // =========================================================================
@@ -192,24 +213,12 @@ final class ResponseFormatTest extends AbstractWebTestCase
 
     public function testTeamJsonStructure(): void
     {
-        $this->logInSession('unittest');
-        $this->client->request(Request::METHOD_GET, '/getAllTeams');
-        self::assertSame(200, $this->client->getResponse()->getStatusCode());
-
-        $decoded = $this->getJsonResponse($this->client->getResponse());
-        self::assertNotEmpty($decoded);
-
-        $first = $decoded[0];
-        self::assertIsArray($first);
-        self::assertArrayHasKey('team', $first);
-
-        $team = $first['team'];
-        self::assertIsArray($team);
-        self::assertArrayHasKey('id', $team);
-        self::assertArrayHasKey('name', $team);
-
-        self::assertIsInt($team['id']);
-        self::assertIsString($team['name']);
+        $this->assertListEndpoint(
+            '/getAllTeams',
+            'team',
+            stringKeys: ['name'],
+            intKeys: ['id'],
+        );
     }
 
     // =========================================================================
@@ -243,23 +252,9 @@ final class ResponseFormatTest extends AbstractWebTestCase
 
     public function testCustomerSaveResponseFormat(): void
     {
-        $this->logInSession('unittest');
-
         // A customer needs a team unless it is global.
-        $this->client->request(Request::METHOD_GET, '/getAllTeams');
-        $teams = $this->getJsonResponse($this->client->getResponse());
-
-        $teamId = null;
-        foreach ($teams as $item) {
-            self::assertIsArray($item);
-            self::assertArrayHasKey('team', $item);
-            self::assertIsArray($item['team']);
-            $id = $item['team']['id'] ?? 0;
-            if (is_int($id) && $id > 0) {
-                $teamId = $id;
-                break;
-            }
-        }
+        $teams = $this->assertWrappedListHasIdName('/getAllTeams', 'team');
+        $teamId = $this->firstIdInWrappedList($teams, 'team');
 
         $this->client->request(
             Request::METHOD_POST,
@@ -293,23 +288,9 @@ final class ResponseFormatTest extends AbstractWebTestCase
 
     public function testProjectSaveResponseFormat(): void
     {
-        $this->logInSession('unittest');
-
         // Pick an existing customer to attach the project to.
-        $this->client->request(Request::METHOD_GET, '/getAllCustomers');
-        $customers = $this->getJsonResponse($this->client->getResponse());
-
-        $customerId = null;
-        foreach ($customers as $item) {
-            self::assertIsArray($item);
-            self::assertArrayHasKey('customer', $item);
-            self::assertIsArray($item['customer']);
-            $id = $item['customer']['id'] ?? 0;
-            if (is_int($id) && $id > 0) {
-                $customerId = $id;
-                break;
-            }
-        }
+        $customers = $this->assertWrappedListHasIdName('/getAllCustomers', 'customer');
+        $customerId = $this->firstIdInWrappedList($customers, 'customer');
         self::assertNotNull($customerId, 'Seed must contain at least one customer');
 
         $this->client->request(
