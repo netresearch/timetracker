@@ -756,7 +756,7 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         self::assertNotEmpty($entries, 'Seed must contain at least one entry with a ticket');
 
         $ticket = $entries[0]->getTicket();
-        assert('' !== $ticket);
+        self::assertNotEmpty($ticket, 'Ticket must not be empty');
 
         $result = $this->repository->getActivitiesWithTime($ticket);
 
@@ -786,7 +786,7 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         self::assertNotEmpty($entries, 'Seed must contain at least one entry with a ticket');
 
         $ticket = $entries[0]->getTicket();
-        assert('' !== $ticket);
+        self::assertNotEmpty($ticket, 'Ticket must not be empty');
 
         $result = $this->repository->getUsersWithTime($ticket);
 

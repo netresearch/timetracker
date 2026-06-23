@@ -255,6 +255,7 @@ final class ResponseFormatTest extends AbstractWebTestCase
         // A customer needs a team unless it is global.
         $teams = $this->assertWrappedListHasIdName('/getAllTeams', 'team');
         $teamId = $this->firstIdInWrappedList($teams, 'team');
+        self::assertNotNull($teamId, 'Seed must contain at least one team');
 
         $this->client->request(
             Request::METHOD_POST,
@@ -263,10 +264,10 @@ final class ResponseFormatTest extends AbstractWebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'name' => 'Format Test Customer ' . uniqid(),
+                'name' => 'Format Test Customer ' . bin2hex(random_bytes(8)),
                 'active' => true,
-                'global' => null === $teamId,
-                'teams' => null !== $teamId ? [$teamId] : [],
+                'global' => false,
+                'teams' => [$teamId],
             ], JSON_THROW_ON_ERROR),
         );
 
@@ -300,7 +301,7 @@ final class ResponseFormatTest extends AbstractWebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-                'name' => 'Format Test Project ' . uniqid(),
+                'name' => 'Format Test Project ' . bin2hex(random_bytes(8)),
                 'customer' => $customerId,
                 'active' => true,
                 'global' => false,
