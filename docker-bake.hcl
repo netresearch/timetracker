@@ -48,6 +48,12 @@ variable "TAG" {
   default = "latest"
 }
 
+# Git commit SHA, passed by CI to produce an immutable e2e-<sha> tag.
+# Empty by default (local builds get only the floating :e2e tag).
+variable "GIT_SHA" {
+  default = ""
+}
+
 # =============================================================================
 # COMMON BUILD SETTINGS (inherited by all targets)
 # =============================================================================
@@ -117,9 +123,10 @@ target "app-tools" {
 target "app-e2e" {
   inherits = ["_common"]
   target   = "e2e"
-  tags = [
+  tags = compact([
     "${REGISTRY}/${IMAGE_NAME}:e2e",
-  ]
+    GIT_SHA != "" ? "${REGISTRY}/${IMAGE_NAME}:e2e-${GIT_SHA}" : "",
+  ])
 }
 
 # =============================================================================
