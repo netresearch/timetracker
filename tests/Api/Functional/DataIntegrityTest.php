@@ -101,10 +101,7 @@ final class DataIntegrityTest extends AbstractWebTestCase
         // Get all teams
         $this->client->request(Request::METHOD_GET, '/getAllTeams');
         $teamsResponse = $this->client->getResponse();
-
-        if (200 !== $teamsResponse->getStatusCode()) {
-            self::markTestSkipped('Teams endpoint not available');
-        }
+        self::assertSame(200, $teamsResponse->getStatusCode(), '/getAllTeams must be reachable for ADMIN');
 
         $teams = $this->getJsonResponse($teamsResponse);
         /** @var list<int> $teamIds */
@@ -196,10 +193,7 @@ final class DataIntegrityTest extends AbstractWebTestCase
         // Get all teams
         $this->client->request(Request::METHOD_GET, '/getAllTeams');
         $teamsResponse = $this->client->getResponse();
-
-        if (200 !== $teamsResponse->getStatusCode()) {
-            self::markTestSkipped('Teams endpoint not available');
-        }
+        self::assertSame(200, $teamsResponse->getStatusCode(), '/getAllTeams must be reachable for ADMIN');
 
         $teams = $this->getJsonResponse($teamsResponse);
 
@@ -256,10 +250,7 @@ final class DataIntegrityTest extends AbstractWebTestCase
         // Get presets
         $this->client->request(Request::METHOD_GET, '/getAllPresets');
         $presetsResponse = $this->client->getResponse();
-
-        if (200 !== $presetsResponse->getStatusCode()) {
-            self::markTestSkipped('Presets endpoint not available');
-        }
+        self::assertSame(200, $presetsResponse->getStatusCode(), '/getAllPresets must be reachable for ADMIN');
 
         $presets = $this->getJsonResponse($presetsResponse);
 
@@ -313,10 +304,7 @@ final class DataIntegrityTest extends AbstractWebTestCase
         // Get contracts
         $this->client->request(Request::METHOD_GET, '/getContracts');
         $contractsResponse = $this->client->getResponse();
-
-        if (200 !== $contractsResponse->getStatusCode()) {
-            self::markTestSkipped('Contracts endpoint not available');
-        }
+        self::assertSame(200, $contractsResponse->getStatusCode(), '/getContracts must be reachable for ADMIN');
 
         $contracts = $this->getJsonResponse($contractsResponse);
 

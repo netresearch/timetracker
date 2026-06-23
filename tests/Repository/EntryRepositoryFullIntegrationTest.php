@@ -49,12 +49,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
     {
         // Get an existing entry ID
         $entries = $this->repository->findAll();
-        if ([] === $entries) {
-            self::markTestSkipped('No entries in database');
-        }
+        self::assertNotEmpty($entries, 'Seed must contain at least one entry');
 
         $existingEntry = $entries[0];
-        assert($existingEntry instanceof Entry);
         $entryId = $existingEntry->getId();
         assert(null !== $entryId);
 
@@ -159,9 +156,7 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
     public function testFindByIdsReturnsMatchingEntries(): void
     {
         $entries = $this->repository->findAll();
-        if (count($entries) < 2) {
-            self::markTestSkipped('Need at least 2 entries');
-        }
+        self::assertGreaterThanOrEqual(2, count($entries), 'Seed must contain at least two entries');
 
         $id0 = $entries[0]->getId();
         $id1 = $entries[1]->getId();
@@ -179,8 +174,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
     {
         $duration = $this->repository->getTotalDuration(['user' => $this->user]);
 
-        self::assertIsFloat($duration);
-        self::assertGreaterThanOrEqual(0.0, $duration);
+        // Seed (sql/unittest/002_testdata.sql) gives user 1 five entries:
+        // 50 + 170 + 14 + 25 + 25 = 284 minutes.
+        self::assertSame(284.0, $duration);
     }
 
     public function testGetTotalDurationReturnsZeroForNoMatches(): void
@@ -195,12 +191,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
     public function testExistsWithConditionsReturnsTrueWhenExists(): void
     {
         $entries = $this->repository->findAll();
-        if ([] === $entries) {
-            self::markTestSkipped('No entries in database');
-        }
+        self::assertNotEmpty($entries, 'Seed must contain at least one entry');
 
         $entry = $entries[0];
-        assert($entry instanceof Entry);
         $entryId = $entry->getId();
         assert(null !== $entryId);
 
@@ -396,12 +389,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         $customerRepo = self::getContainer()->get('doctrine')->getRepository(Customer::class);
         $customers = $customerRepo->findAll();
 
-        if ([] === $customers) {
-            self::markTestSkipped('No customers in database');
-        }
+        self::assertNotEmpty($customers, 'Seed must contain at least one customer');
 
         $customer = $customers[0];
-        assert($customer instanceof Customer);
         $customerId = $customer->getId();
         assert(null !== $customerId);
 
@@ -419,12 +409,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         $projectRepo = self::getContainer()->get('doctrine')->getRepository(Project::class);
         $projects = $projectRepo->findAll();
 
-        if ([] === $projects) {
-            self::markTestSkipped('No projects in database');
-        }
+        self::assertNotEmpty($projects, 'Seed must contain at least one project');
 
         $project = $projects[0];
-        assert($project instanceof Project);
         $projectId = $project->getId();
         assert(null !== $projectId);
 
@@ -442,12 +429,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         $activityRepo = self::getContainer()->get('doctrine')->getRepository(Activity::class);
         $activities = $activityRepo->findAll();
 
-        if ([] === $activities) {
-            self::markTestSkipped('No activities in database');
-        }
+        self::assertNotEmpty($activities, 'Seed must contain at least one activity');
 
         $activity = $activities[0];
-        assert($activity instanceof Activity);
         $activityId = $activity->getId();
         assert(null !== $activityId);
 
@@ -529,9 +513,7 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         $customerRepo = self::getContainer()->get('doctrine')->getRepository(Customer::class);
         $customers = $customerRepo->findAll();
 
-        if ([] === $customers) {
-            self::markTestSkipped('No customers in database');
-        }
+        self::assertNotEmpty($customers, 'Seed must contain at least one customer');
 
         // Pass object instead of ID
         $query = $this->repository->queryByFilterArray([
@@ -561,12 +543,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
     public function testFindOverlappingEntriesExcludesSpecifiedId(): void
     {
         $entries = $this->repository->findAll();
-        if ([] === $entries) {
-            self::markTestSkipped('No entries in database');
-        }
+        self::assertNotEmpty($entries, 'Seed must contain at least one entry');
 
         $entry = $entries[0];
-        assert($entry instanceof Entry);
         $entryUser = $entry->getUser();
         assert(null !== $entryUser);
         $entryId = $entry->getId();
@@ -647,12 +626,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         $projectRepo = self::getContainer()->get('doctrine')->getRepository(Project::class);
         $projects = $projectRepo->findAll();
 
-        if ([] === $projects) {
-            self::markTestSkipped('No projects in database');
-        }
+        self::assertNotEmpty($projects, 'Seed must contain at least one project');
 
         $project = $projects[0];
-        assert($project instanceof Project);
         $projectId = $project->getId();
         assert(null !== $projectId);
 
@@ -667,12 +643,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         $customerRepo = self::getContainer()->get('doctrine')->getRepository(Customer::class);
         $customers = $customerRepo->findAll();
 
-        if ([] === $customers) {
-            self::markTestSkipped('No customers in database');
-        }
+        self::assertNotEmpty($customers, 'Seed must contain at least one customer');
 
         $customer = $customers[0];
-        assert($customer instanceof Customer);
         $customerId = $customer->getId();
         assert(null !== $customerId);
 
@@ -780,12 +753,10 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
             ->getQuery()
             ->getResult();
 
-        if ([] === $entries) {
-            self::markTestSkipped('No entries with tickets in database');
-        }
+        self::assertNotEmpty($entries, 'Seed must contain at least one entry with a ticket');
 
         $ticket = $entries[0]->getTicket();
-        assert(null !== $ticket && '' !== $ticket);
+        assert('' !== $ticket);
 
         $result = $this->repository->getActivitiesWithTime($ticket);
 
@@ -812,12 +783,10 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
             ->getQuery()
             ->getResult();
 
-        if ([] === $entries) {
-            self::markTestSkipped('No entries with tickets in database');
-        }
+        self::assertNotEmpty($entries, 'Seed must contain at least one entry with a ticket');
 
         $ticket = $entries[0]->getTicket();
-        assert(null !== $ticket && '' !== $ticket);
+        assert('' !== $ticket);
 
         $result = $this->repository->getUsersWithTime($ticket);
 
@@ -852,12 +821,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
     public function testGetEntrySummaryReturnsDataForValidEntry(): void
     {
         $entries = $this->repository->findAll();
-        if ([] === $entries) {
-            self::markTestSkipped('No entries in database');
-        }
+        self::assertNotEmpty($entries, 'Seed must contain at least one entry');
 
         $entry = $entries[0];
-        assert($entry instanceof Entry);
         $entryId = $entry->getId();
         $userId = $this->user->getId();
         assert(null !== $entryId && null !== $userId);
@@ -909,12 +875,9 @@ final class EntryRepositoryFullIntegrationTest extends AbstractWebTestCase
         $customerRepo = self::getContainer()->get('doctrine')->getRepository(Customer::class);
         $customers = $customerRepo->findAll();
 
-        if ([] === $customers) {
-            self::markTestSkipped('No customers in database');
-        }
+        self::assertNotEmpty($customers, 'Seed must contain at least one customer');
 
         $customer = $customers[0];
-        assert($customer instanceof Customer);
         $customerId = $customer->getId();
         assert(null !== $customerId);
 
