@@ -50,7 +50,10 @@ function setBadge(loggedIn: boolean, userName: string): void {
   })
 }
 
-async function updateWorktime(): Promise<void> {
+// Exported so the SolidJS worklog can refresh the header's today/week/month
+// totals right after it saves, edits or deletes an entry — otherwise the header
+// sums (loaded once on init) go stale until a full page reload (#446).
+export async function updateWorktime(): Promise<void> {
   try {
     const summary = await getJson<TimeSummary>('/getTimeSummary')
     setText('worktime-day', formatDuration(summary.today.duration))
