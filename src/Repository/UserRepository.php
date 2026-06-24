@@ -89,7 +89,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string, teams: array<int, int>}}>
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string, teams: array<int, int>, last_activity: string|null}}>
      */
     public function getAllUsers(): array
     {

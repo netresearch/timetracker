@@ -68,10 +68,10 @@ class CustomerRepository extends ServiceEntityRepository
     /**
      * Returns an array of all available customers.
      *
-     * @return array<int, array{customer: array{id:int, name:string, active:bool, global:bool, teams: array<int, int>}}>
+     * @return array<int, array{customer: array{id:int, name:string, active:bool, global:bool, teams: array<int, int>, last_activity: string|null}}>
      */
     /**
-     * @return array<int, array{customer: array{id:int, name:string, active:bool, global:bool, teams: array<int, int>}}>
+     * @return array<int, array{customer: array{id:int, name:string, active:bool, global:bool, teams: array<int, int>, last_activity: string|null}}>
      */
     public function getAllCustomers(): array
     {

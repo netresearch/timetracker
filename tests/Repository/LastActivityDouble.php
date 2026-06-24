@@ -15,8 +15,6 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * Concrete user of LastActivityTrait so its public method can be unit-tested (and
  * statically typed) without standing up a full Doctrine repository.
- *
- * @internal
  */
 final class LastActivityDouble
 {
