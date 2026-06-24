@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS `customers`;
 DROP TABLE IF EXISTS `teams`;
 DROP TABLE IF EXISTS `users`;
 DROP TABLE IF EXISTS `activities`;
+-- accounts was removed (Version20260624_RemoveAccountEntity); drop any leftover.
 DROP TABLE IF EXISTS `accounts`;
 DROP TABLE IF EXISTS `holidays`;
 
@@ -76,16 +77,6 @@ CREATE TABLE `teams_users`
 ALTER TABLE `teams_users`
   ADD CONSTRAINT `teams_users_ifbk1` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`),
   ADD CONSTRAINT `teams_users_ifbk2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-
---
--- Tabellenstruktur für Tabelle `accounts`
---
-CREATE TABLE `accounts` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 
 --
@@ -218,7 +209,6 @@ CREATE TABLE `entries` (
   `end` time NOT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `project_id` int(11) DEFAULT NULL,
-  `account_id` int(11) DEFAULT NULL,
   `activity_id` int(11) DEFAULT NULL,
   `ticket` varchar(32) NOT NULL,
   `worklog_id` int(11) DEFAULT NULL,
@@ -231,7 +221,6 @@ CREATE TABLE `entries` (
   PRIMARY KEY (`id`),
   KEY (`project_id`),
   KEY (`user_id`),
-  KEY (`account_id`),
   KEY (`activity_id`),
   KEY (`customer_id`),
   KEY `idx_entries_user_day` (`user_id`, `day` DESC),
@@ -249,7 +238,6 @@ CREATE TABLE `entries` (
 ALTER TABLE `entries`
   ADD CONSTRAINT `entries_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`),
   ADD CONSTRAINT `entries_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `entries_ibfk_3` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`),
   ADD CONSTRAINT `entries_ibfk_4` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`),
   ADD CONSTRAINT `entries_ibfk_5` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`);
 
@@ -342,7 +330,8 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20250901_EncryptTokenFields',    '2025-09-01 00:00:00', 0),
 ('DoctrineMigrations\\Version20260612_FixHolidaysSchema',     '2026-06-12 00:00:00', 0),
 ('DoctrineMigrations\\Version20260622_AddMinEntryDuration',   '2026-06-22 00:00:00', 0),
-('DoctrineMigrations\\Version20260622_AddJiraCloudSupport',   '2026-06-22 00:00:00', 0);
+('DoctrineMigrations\\Version20260622_AddJiraCloudSupport',   '2026-06-22 00:00:00', 0),
+('DoctrineMigrations\\Version20260624_RemoveAccountEntity',   '2026-06-24 00:00:00', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------

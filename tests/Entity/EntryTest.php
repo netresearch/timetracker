@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace Tests\Entity;
 
-use App\Entity\Account;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
@@ -34,16 +33,6 @@ final class EntryTest extends TestCase
     public function testGetterSetter(): void
     {
         $entry = new Entry();
-
-        // test account
-        self::assertNull($entry->getAccount());
-        self::assertSame(0, $entry->getAccountId());
-        $account = new Account();
-        $account->setId(6);
-
-        $entry->setAccount($account);
-        self::assertSame($account, $entry->getAccount());
-        self::assertSame(6, $entry->getAccountId());
 
         // test duration
         $entry->setDuration(95);

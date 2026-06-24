@@ -31,7 +31,7 @@ final class GetAllHolidaysAction extends BaseController
         $connection = $this->doctrineRegistry->getConnection();
         $rows = $connection->fetchAllAssociative('SELECT day, name FROM holidays ORDER BY day ASC');
 
-        // Row-wrapped to match the other admin list endpoints ({customer:…}, {account:…}).
+        // Row-wrapped to match the other admin list endpoints ({customer:…}, {project:…}).
         // Holidays have no numeric id; the day (as Ymd) is a stable synthetic id that lets
         // the admin grid track selection/rows, while `day` drives the keyed delete.
         $data = [];

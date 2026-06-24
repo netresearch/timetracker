@@ -98,17 +98,17 @@ INSERT INTO `presets` (`id`, `name`, `customer_id`, `project_id`, `activity_id`,
 -- Using fixed date 2024-01-15 (Monday) for deterministic E2E tests
 -- Server and browser time should be frozen to this date via APP_FROZEN_TIME
 --
-INSERT INTO `entries` (`id`, `day`, `start`, `end`, `customer_id`, `project_id`, `account_id`, `activity_id`, `ticket`, `worklog_id`, `description`, `duration`, `user_id`, `class`, `synced_to_ticketsystem`, `internal_jira_ticket_original_key`) VALUES
-(1,    '2024-01-15',  '08:00:00',   '08:50:00',     3,             1,            NULL,         3,             'SA-1',   NULL,         'Angriff auf Google',      50,        1,       1,                        0,                                   ''),
-(2,    '2024-01-15',  '09:00:00',   '10:00:00',     3,             1,            NULL,         3,             'SA-2',   NULL,         'Angriff auf die NSA',     60,        1,       1,                        0,                                   ''),
-(3,    '2024-01-15',  '07:30:00',   '08:00:00',     1,             2,            NULL,         2,             'LK-12',  NULL,         'Lebkuchen kneten und in den Ofen schieben',   30,                       1,                                   2,  0,      ''),
-(4,    '2024-01-15',  '08:50:00',   '09:00:00',     1,             2,            NULL,         2,             'LK-12',  NULL,         'Lebkuchen aus dem Ofen holen',   10,          1,                        1,                                   0,  ''),
-(5,    '2024-01-15',  '10:00:00',   '10:30:00',     2,             4,            NULL,         4,             '',       NULL,         'Powernap',    30, 1,   1,        0,           ''),
-(6,    '2024-01-15',  '10:30:00',   '12:00:00',     1,             5,            NULL,         2,             'BS-40',  NULL,         'Kuchenboden kneten',   90,       1,           1, 0,      ''),
-(7,    '2024-01-15',  '12:30:00',   '15:10:00',     3,             7,            NULL,         3,             'PHR-23', NULL,         'Captain Crunch tracken',         160,         1, 4,      0,      ''),
+INSERT INTO `entries` (`id`, `day`, `start`, `end`, `customer_id`, `project_id`, `activity_id`, `ticket`, `worklog_id`, `description`, `duration`, `user_id`, `class`, `synced_to_ticketsystem`, `internal_jira_ticket_original_key`) VALUES
+(1, '2024-01-15', '08:00:00', '08:50:00', 3, 1, 3, 'SA-1', NULL, 'Angriff auf Google', 50, 1, 1, 0, ''),
+(2, '2024-01-15', '09:00:00', '10:00:00', 3, 1, 3, 'SA-2', NULL, 'Angriff auf die NSA', 60, 1, 1, 0, ''),
+(3, '2024-01-15', '07:30:00', '08:00:00', 1, 2, 2, 'LK-12', NULL, 'Lebkuchen kneten und in den Ofen schieben', 30, 1, 2, 0, ''),
+(4, '2024-01-15', '08:50:00', '09:00:00', 1, 2, 2, 'LK-12', NULL, 'Lebkuchen aus dem Ofen holen', 10, 1, 1, 0, ''),
+(5, '2024-01-15', '10:00:00', '10:30:00', 2, 4, 4, '', NULL, 'Powernap', 30, 1, 1, 0, ''),
+(6, '2024-01-15', '10:30:00', '12:00:00', 1, 5, 2, 'BS-40', NULL, 'Kuchenboden kneten', 90, 1, 1, 0, ''),
+(7, '2024-01-15', '12:30:00', '15:10:00', 3, 7, 3, 'PHR-23', NULL, 'Captain Crunch tracken', 160, 1, 4, 0, ''),
 -- Additional entries for January 2026 to test export with current year
-(8,    '2026-01-05',  '09:00:00',   '12:00:00',     1,             2,            NULL,         1,             'LK-50',  NULL,         'Lebkuchen für 2026',             180,         1, 1,      0,      ''),
-(9,    '2026-01-05',  '13:00:00',   '17:00:00',     3,             1,            NULL,         3,             'SA-100', NULL,         'Server hardening 2026',          240,         1, 1,      0,      ''),
-(10,   '2026-01-10',  '08:00:00',   '10:00:00',     1,             5,            NULL,         2,             'BS-99',  NULL,         'Neuer Bienenstich',              120,         1, 1,      0,      ''),
-(11,   '2026-01-10',  '10:30:00',   '12:30:00',     2,             4,            NULL,         4,             '',       NULL,         'Ausruhen',                       120,         1, 1,      0,      ''),
-(12,   '2026-01-15',  '09:00:00',   '11:00:00',     3,             7,            NULL,         3,             'PHR-50', NULL,         'Phreaking session',              120,         1, 1,      0,      '');
+(8, '2026-01-05', '09:00:00', '12:00:00', 1, 2, 1, 'LK-50', NULL, 'Lebkuchen für 2026', 180, 1, 1, 0, ''),
+(9, '2026-01-05', '13:00:00', '17:00:00', 3, 1, 3, 'SA-100', NULL, 'Server hardening 2026', 240, 1, 1, 0, ''),
+(10, '2026-01-10', '08:00:00', '10:00:00', 1, 5, 2, 'BS-99', NULL, 'Neuer Bienenstich', 120, 1, 1, 0, ''),
+(11, '2026-01-10', '10:30:00', '12:30:00', 2, 4, 4, '', NULL, 'Ausruhen', 120, 1, 1, 0, ''),
+(12, '2026-01-15', '09:00:00', '11:00:00', 3, 7, 3, 'PHR-50', NULL, 'Phreaking session', 120, 1, 1, 0, '');
