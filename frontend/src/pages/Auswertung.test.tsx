@@ -92,6 +92,39 @@ describe('Auswertung', () => {
     unmount()
   })
 
+  it('sorts the detail table chronologically by ISO date, not display text', async () => {
+    getJson.mockImplementation((path: string) => {
+      if (path === '/interpretation/time')
+        return Promise.resolve([{ id: null, name: '26-06-24', day: '24.06.', hours: 4, quota: '100.00%' }])
+      if (path === '/interpretation/entries')
+        return Promise.resolve([
+          { entry: { id: 1, date: '01/07/2026', ticket: 'JUL-01', description: 'b', duration: '2:00', quota: '' } },
+          { entry: { id: 2, date: '24/06/2026', ticket: 'JUN-24', description: 'a', duration: '8:00', quota: '' } },
+        ])
+      if (path.startsWith('/interpretation/')) return Promise.resolve([{ id: 1, name: 'ACME', hours: 8, quota: '80.00%' }])
+
+      return Promise.resolve([])
+    })
+    const { getByRole, container, unmount } = renderPage()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'JUL-01' })).toBeInTheDocument())
+
+    const firstTicket = () => container.querySelector('.data-table tbody tr:first-child td:nth-child(2)')?.textContent
+    // Backend order keeps JUL-01 first until we sort.
+    expect(firstTicket()).toBe('JUL-01')
+
+    // Ascending by date → the earlier calendar day (24 Jun) leads, proving the
+    // sort keys on the ISO date, not the localized "01.07." display string (which
+    // a naive string sort would order before "24.06.").
+    fireEvent.click(getByRole('button', { name: 'Date' }))
+    await waitFor(() => expect(firstTicket()).toBe('JUN-24'))
+
+    // A second click flips to descending.
+    fireEvent.click(getByRole('button', { name: 'Date' }))
+    await waitFor(() => expect(firstTicket()).toBe('JUL-01'))
+
+    unmount()
+  })
+
   it('has no automatically detectable accessibility violations', async () => {
     mockEndpoints()
     const { container, getByRole, unmount } = renderPage()
