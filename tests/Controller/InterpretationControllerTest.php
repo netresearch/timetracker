@@ -74,24 +74,80 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             'dateend' => '1000-01-30',  // opt
         ];
 
+        // 1000-01-29/30 fall before any contract (the fixtures start 2020), so
+        // each day's "expected" Soll comes from the 5×8h default. Both are
+        // weekdays (Wed/Thu) → 8h.
         $expectedJson = [
             [
                 'name' => '00-01-29',
                 'day' => '29.01.',
                 'hours' => 0.23333333333333334,
                 'quota' => '5.98%',
+                'expected' => 8,
             ],
             [
                 'name' => '00-01-30',
                 'day' => '30.01.',
                 'hours' => 3.6666666666666665,
                 'quota' => '94.02%',
+                'expected' => 8,
             ],
         ];
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/time', $parameter);
         $this->assertStatusCode(200);
         $this->assertJsonStructure($expectedJson, $this->getJsonResponse($this->client->getResponse()));
+    }
+
+    public function testGroupByWorktimeZeroesExpectedOnAHoliday(): void
+    {
+        // 1000-01-29 (Wed) carries user-1 fixture bookings; marking it a public
+        // holiday must drop that day's Soll to 0, matching /ui/month, while
+        // 1000-01-30 (Thu, no holiday, before any contract) keeps the 8h default.
+        self::assertNotNull($this->connection);
+        $this->connection->insert('holidays', ['day' => '1000-01-29', 'name' => 'Test Holiday']);
+
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/time', [
+            'user' => 1,
+            'datestart' => '1000-01-29',
+            'dateend' => '1000-01-30',
+        ]);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure([
+            ['name' => '00-01-29', 'expected' => 0],
+            ['name' => '00-01-30', 'expected' => 8],
+        ], $this->getJsonResponse($this->client->getResponse()));
+    }
+
+    public function testGroupByWorktimeDerivesExpectedFromTheContract(): void
+    {
+        // A contract covering the year-1000 fixture bookings: Wed (hours_3) = 5,
+        // Thu (hours_4) = 6. The per-day Soll must come from the contract weekday
+        // columns, not the 5x8h default.
+        self::assertNotNull($this->connection);
+        $this->connection->insert('contracts', [
+            'user_id' => 1,
+            'start' => '1000-01-01',
+            'end' => '1000-12-31',
+            'hours_0' => 0,
+            'hours_1' => 0,
+            'hours_2' => 0,
+            'hours_3' => 5,
+            'hours_4' => 6,
+            'hours_5' => 0,
+            'hours_6' => 0,
+        ]);
+
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/time', [
+            'user' => 1,
+            'datestart' => '1000-01-29',
+            'dateend' => '1000-01-30',
+        ]);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure([
+            ['name' => '00-01-29', 'expected' => 5],
+            ['name' => '00-01-30', 'expected' => 6],
+        ], $this->getJsonResponse($this->client->getResponse()));
     }
 
     public function testGroupByActivityAction(): void

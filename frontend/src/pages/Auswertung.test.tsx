@@ -21,7 +21,7 @@ function mockEndpoints() {
         { id: 2, name: 'Globex', hours: 2, quota: '20.00%' },
       ])
     if (path === '/interpretation/time')
-      return Promise.resolve([{ id: null, name: '26-06-01', day: '01.06.', hours: 4, quota: '100.00%' }])
+      return Promise.resolve([{ id: null, name: '26-06-01', day: '01.06.', hours: 4, quota: '100.00%', expected: 8 }])
     if (path === '/interpretation/entries')
       return Promise.resolve([
         { entry: { id: 5, date: '01/06/2026', ticket: 'ABC-1', description: 'work', duration: '8:00', quota: '100.00%' } },
@@ -95,7 +95,7 @@ describe('Auswertung', () => {
   it('sorts the detail table chronologically by ISO date, not display text', async () => {
     getJson.mockImplementation((path: string) => {
       if (path === '/interpretation/time')
-        return Promise.resolve([{ id: null, name: '26-06-24', day: '24.06.', hours: 4, quota: '100.00%' }])
+        return Promise.resolve([{ id: null, name: '26-06-24', day: '24.06.', hours: 4, quota: '100.00%', expected: 8 }])
       if (path === '/interpretation/entries')
         return Promise.resolve([
           { entry: { id: 1, date: '01/07/2026', ticket: 'JUL-01', description: 'b', duration: '2:00', quota: '' } },

@@ -988,6 +988,44 @@ kbd {
   z-index: 0;
 }
 
+/* "Effort by day" only: the per-day contract Soll overlaid on each bar. The
+   colour is reinforced by the Soll marker and the printed Soll so the over/
+   under state never depends on colour alone (WCAG 1.4.1). */
+.effort-bar.is-over {
+  background: var(--color-success-bg);
+}
+
+.effort-bar.is-under {
+  background: var(--color-warning-bg);
+}
+
+/* The Soll extent, drawn faintly behind a short (under-target) bar so the
+   shortfall reads as the gap from the bar's end to the marker. */
+.effort-bar-ghost {
+  border: 1px dashed var(--color-border);
+  border-radius: 4px;
+  inset: 3px auto 3px 0;
+  position: absolute;
+  z-index: 0;
+}
+
+/* A crisp vertical tick at the Soll (target) position on the bar track. */
+.effort-soll-marker {
+  background: var(--color-accent);
+  inset: 1px auto 1px 0;
+  margin-left: -1px;
+  position: absolute;
+  width: 2px;
+  z-index: 1;
+}
+
+/* The Soll printed next to the worked time — the non-colour cue. */
+.effort-target {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
 .effort-bar-label {
   overflow: hidden;
   position: relative;

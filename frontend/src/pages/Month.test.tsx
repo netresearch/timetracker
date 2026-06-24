@@ -9,8 +9,8 @@ import Month, { resolveDayTokens } from './Month'
 // One booking in the past, one in the future (Fri 2026-06-19) relative to the
 // frozen "today" — the until-today summary must ignore the future one.
 const times: WorktimeRecord[] = [
-  { id: null, name: '26-06-01', day: '01.06.', hours: 8, quota: '50%' },
-  { id: null, name: '26-06-19', day: '19.06.', hours: 8, quota: '50%' },
+  { id: null, name: '26-06-01', day: '01.06.', hours: 8, quota: '50%', expected: 8 },
+  { id: null, name: '26-06-19', day: '19.06.', hours: 8, quota: '50%', expected: 8 },
 ]
 const holidays: HolidayRecord[] = [
   { holiday: { name: 'Pfingstmontag', date: '2026-06-01' } },

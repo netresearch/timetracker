@@ -70,7 +70,7 @@ final class GetContractHoursActionTest extends AbstractWebTestCase
         self::assertEqualsWithDelta(0.5, $json['hours_6'], 0.0001);
     }
 
-    public function testFallsBackToEightHoursWhenUserHasNoContract(): void
+    public function testFallsBackToFiveByEightHoursWhenUserHasNoContract(): void
     {
         $this->logInSession('noContract');
         $this->client->request(
@@ -83,19 +83,23 @@ final class GetContractHoursActionTest extends AbstractWebTestCase
         self::assertTrue($response->isSuccessful());
         $json = $this->getJsonResponse($response);
 
-        foreach (['hours_0', 'hours_1', 'hours_2', 'hours_3', 'hours_4', 'hours_5', 'hours_6'] as $key) {
+        // 5×8h default: 8h Mon–Fri, 0 on the weekend (hours_0 = Sunday, hours_6 = Saturday).
+        self::assertEquals(0, $json['hours_0'], 'Sunday should default to 0');
+        foreach (['hours_1', 'hours_2', 'hours_3', 'hours_4', 'hours_5'] as $key) {
             self::assertEquals(8, $json[$key], $key . ' should default to 8');
         }
+
+        self::assertEquals(0, $json['hours_6'], 'Saturday should default to 0');
     }
 
-    public function testFallsBackToEightHoursForAMonthBeforeAnyContract(): void
+    public function testFallsBackToFiveByEightHoursForAMonthBeforeAnyContract(): void
     {
         $this->logInSession('unittest');
         // Before contract 1 starts (2020-01-01): no contract is valid on 2019-12-01.
         // This also pins the query's parenthesization: were the
         // `end IS NULL OR end >= :date` clause not grouped, the dangling OR would
         // match contract 1 (ends 2020-01-31 >= 2019-12-01) and return its hours
-        // instead of the 8h fallback asserted below.
+        // instead of the 5×8h fallback asserted below.
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_GET,
             '/getContractHours',
@@ -106,8 +110,8 @@ final class GetContractHoursActionTest extends AbstractWebTestCase
         self::assertTrue($response->isSuccessful());
         $json = $this->getJsonResponse($response);
 
-        self::assertEquals(8, $json['hours_1']);
-        self::assertEquals(8, $json['hours_6']);
+        self::assertEquals(8, $json['hours_1'], 'Monday should default to 8');
+        self::assertEquals(0, $json['hours_6'], 'Saturday should default to 0');
     }
 
     public function testClampsAMalformedYearInsteadOfErroring(): void

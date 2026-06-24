@@ -206,6 +206,7 @@
   "auswertung_label": "Name",
   "auswertung_hours": "Stunden",
   "auswertung_share": "Anteil",
+  "auswertung_of_target": "/ {target} Soll",
   "auswertung_all": "Alle",
   "auswertung_date_start": "Datum von",
   "auswertung_date_end": "Datum bis",
