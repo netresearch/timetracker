@@ -89,7 +89,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string, teams: array<int, int>, last_activity: string|null}}>
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string, teams: array<int, int>, active: bool, last_activity: string|null}}>
      */
     public function getAllUsers(): array
     {
@@ -119,6 +119,7 @@ class UserRepository extends ServiceEntityRepository
                 'abbr' => (string) $user->getAbbr(),
                 'locale' => $user->getLocale(),
                 'teams' => $teams,
+                'active' => $user->getActive(),
                 'last_activity' => $lastActivity[(int) $user->getId()] ?? null,
             ]];
         }

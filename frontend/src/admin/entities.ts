@@ -117,8 +117,8 @@ export function adminEntities(): EntityDescriptor[] {
         { name: 'additionalInformationFromExternal', label: () => m.admin_f_ext_info(), type: 'checkbox' },
         { name: 'active', label: () => m.admin_f_active(), type: 'checkbox' },
         { name: 'global', label: () => m.admin_f_global(), type: 'checkbox' },
-        { name: 'project_lead', label: () => m.admin_f_project_lead(), type: 'select', source: 'users' },
-        { name: 'technical_lead', label: () => m.admin_f_technical_lead(), type: 'select', source: 'users' },
+        { name: 'project_lead', label: () => m.admin_f_project_lead(), type: 'select', source: 'users', activeOnly: true },
+        { name: 'technical_lead', label: () => m.admin_f_technical_lead(), type: 'select', source: 'users', activeOnly: true },
         { name: 'offer', label: () => m.admin_f_offer(), type: 'text' },
         { name: 'cost_center', label: () => m.admin_f_cost_center(), type: 'text' },
         {
@@ -176,10 +176,12 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'type', label: () => m.admin_f_type() },
         { key: 'locale', label: () => m.admin_f_language(), render: (row) => localeLabel(row.locale) },
         { key: 'teams', label: () => m.admin_f_teams(), render: (row, o) => ((row.teams as number[]) ?? []).map((id) => o('teams').find((t) => t.id === id)?.label ?? id).join(', ') },
+        { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
         { key: 'last_activity', label: () => m.admin_f_last_activity() },
       ],
       fields: [
         { name: 'username', label: () => m.admin_f_username(), type: 'text', required: true },
+        { name: 'active', label: () => m.admin_f_active(), type: 'checkbox' },
         { name: 'abbr', label: () => m.admin_f_abbr(), type: 'text', required: true },
         {
           name: 'locale', label: () => m.admin_f_language(), type: 'select', stringValue: true,
@@ -201,11 +203,11 @@ export function adminEntities(): EntityDescriptor[] {
       ],
       rowLabel: (row) => str(row.username),
       toForm: (row) => row === null
-        ? { id: 0, username: '', abbr: '', locale: 'de', type: 'DEV', teams: [] }
-        : { id: num(row.id), username: str(row.username), abbr: str(row.abbr), locale: str(row.locale) || 'de', type: str(row.type) || 'DEV', teams: (row.teams as number[]) ?? [] },
+        ? { id: 0, username: '', abbr: '', locale: 'de', type: 'DEV', active: true, teams: [] }
+        : { id: num(row.id), username: str(row.username), abbr: str(row.abbr), locale: str(row.locale) || 'de', type: str(row.type) || 'DEV', active: bool(row.active), teams: (row.teams as number[]) ?? [] },
       // locale/type are string selects; the shell stores select values as numbers,
       // so re-stringify here before sending.
-      toPayload: (v) => ({ id: v.id, username: v.username, abbr: v.abbr, locale: v.locale, type: v.type, teams: v.teams }),
+      toPayload: (v) => ({ id: v.id, username: v.username, abbr: v.abbr, locale: v.locale, type: v.type, active: v.active, teams: v.teams }),
     },
     {
       key: 'teams',

@@ -34,7 +34,7 @@ function mockEndpoints() {
       case '/getAllTeams':
         return Promise.resolve([{ team: { id: 2, name: 'Backend', lead_user_id: 3 } }])
       case '/getAllUsers':
-        return Promise.resolve([{ user: { id: 3, username: 'jdoe', abbr: 'JD', type: 'DEV', teams: [2] } }])
+        return Promise.resolve([{ user: { id: 3, username: 'jdoe', abbr: 'JD', type: 'DEV', active: true, teams: [2] } }])
       case '/getAllProjects':
         return Promise.resolve([{ project: { id: 4, name: 'Site', customer: 1, jiraId: 'ABC', active: true, global: false } }])
       case '/getActivities':

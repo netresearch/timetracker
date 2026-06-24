@@ -121,4 +121,24 @@ describe('admin entity descriptors', () => {
       expect(col(byKey(key), 'last_activity').render).toBeUndefined()
     }
   })
+
+  it('users have an active (boolean dot) column and the form toggles it', () => {
+    const active = col(byKey('users'), 'active')
+    expect(active.boolean).toBe(true)
+    expect(active.render?.({ active: true }, noOptions)).toBe('✓')
+    expect(active.render?.({ active: false }, noOptions)).toBe('—')
+    const users = byKey('users')
+    expect(users.fields.find((f) => f.name === 'active')?.type).toBe('checkbox')
+    // New users default to active; the row value round-trips.
+    expect(users.toForm(null)).toMatchObject({ active: true })
+    expect(users.toForm({ id: 9, username: 'ex', active: false })).toMatchObject({ active: false })
+    expect(users.toPayload({ id: 9, username: 'ex', abbr: 'EX', locale: 'de', type: 'DEV', active: false, teams: [1] })).toMatchObject({ active: false })
+  })
+
+  it('project lead selects offer only active users (activeOnly)', () => {
+    const projects = byKey('projects')
+    for (const name of ['project_lead', 'technical_lead']) {
+      expect(projects.fields.find((f) => f.name === name)?.activeOnly).toBe(true)
+    }
+  })
 })

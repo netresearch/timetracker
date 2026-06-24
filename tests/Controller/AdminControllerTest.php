@@ -245,6 +245,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'abbr' => 'NPL',
                     'locale' => 'de',
                     'teams' => [2], // User 2 is in team 2
+                    'active' => true,
                     'last_activity' => '2020-02-08',
                 ],
             ],
@@ -256,6 +257,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'abbr' => 'IMY',
                     'locale' => 'de',
                     'teams' => [], // User 3 has no teams in current test data
+                    'active' => true,
                     'last_activity' => '0500-01-31',
                 ],
             ],
@@ -267,6 +269,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'abbr' => 'NCO',
                     'locale' => 'de',
                     'teams' => [], // User 5 has no teams
+                    'active' => true,
                     'last_activity' => null,
                 ],
             ],
@@ -278,6 +281,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'abbr' => 'NPL',
                     'locale' => 'de',
                     'teams' => [], // User 4 has no teams
+                    'active' => true,
                     'last_activity' => null,
                 ],
             ],
@@ -289,6 +293,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'abbr' => 'UTE',
                     'locale' => 'de',
                     'teams' => [1], // User 1 is in team 1
+                    'active' => true,
                     'last_activity' => '2023-10-24',
                 ],
             ],

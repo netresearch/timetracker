@@ -64,6 +64,7 @@
             <file>tests/Repository/OptimizedEntryRepositoryCacheTest.php</file>
             <!-- Security unit tests (not RememberMeRedirectTest) -->
             <file>tests/Security/LdapAuthenticatorTest.php</file>
+            <file>tests/Security/UserCheckerTest.php</file>
         </testsuite>
         <!-- Integration tests requiring database -->
         <testsuite name="integration">
