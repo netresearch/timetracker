@@ -26,6 +26,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
 use function assert;
+use function is_string;
 
 final class GroupByWorktimeAction extends BaseInterpretationController
 {
