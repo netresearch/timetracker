@@ -4,6 +4,7 @@ import { createMemo, createSignal, For, Show } from 'solid-js'
 import {
   activitiesQuery,
   customersQuery,
+  type EntryRecord,
   groupQuery,
   type GroupRow,
   hasInterpretationCriteria,
@@ -85,6 +86,23 @@ const GROUPS: { group: InterpretationGroup; title: () => string }[] = [
   { group: 'user', title: () => m.auswertung_by_user() },
 ]
 
+type EntrySortKey = 'date' | 'ticket' | 'description' | 'hours'
+
+// Comparable key per column. Date sorts by ISO (chronological), not the
+// localized display string; hours sorts numerically over the "H:MM" duration.
+function entrySortValue(record: EntryRecord, key: EntrySortKey): string {
+  switch (key) {
+    case 'date':
+      return dmyToIso(record.entry.date ?? '') ?? record.entry.date ?? ''
+    case 'ticket':
+      return record.entry.ticket
+    case 'description':
+      return record.entry.description
+    case 'hours':
+      return record.entry.duration
+  }
+}
+
 function toEffortRows(rows: GroupRow[] | undefined): EffortRow[] {
   return (rows ?? []).map((row) => ({
     label: row.name,
@@ -152,6 +170,36 @@ export default function Auswertung() {
       quota: row.quota,
     })),
   )
+
+  // Sortable detail table: clicking a header cycles none → asc → desc → none.
+  const [entrySort, setEntrySort] = createSignal<{ key: EntrySortKey; dir: 'asc' | 'desc' } | null>(null)
+  const toggleEntrySort = (key: EntrySortKey) =>
+    setEntrySort((current) =>
+      current?.key !== key ? { key, dir: 'asc' } : current.dir === 'asc' ? { key, dir: 'desc' } : null,
+    )
+  const entryAriaSort = (key: EntrySortKey): 'ascending' | 'descending' | 'none' => {
+    const current = entrySort()
+
+    return current?.key === key ? (current.dir === 'asc' ? 'ascending' : 'descending') : 'none'
+  }
+  const entrySortGlyph = (key: EntrySortKey): string => {
+    const current = entrySort()
+
+    return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : '⇅'
+  }
+  const sortedEntries = createMemo<EntryRecord[]>(() => {
+    const data = entries.data ?? []
+    const current = entrySort()
+    if (!current) {
+      return data
+    }
+    const factor = current.dir === 'asc' ? 1 : -1
+
+    return [...data].sort(
+      (a, b) =>
+        factor * entrySortValue(a, current.key).localeCompare(entrySortValue(b, current.key), undefined, { numeric: true }),
+    )
+  })
 
   return (
     <section class="auswertung">
@@ -242,23 +290,43 @@ export default function Auswertung() {
         <section class="effort-chart">
           <h2>{m.auswertung_last_entries()}</h2>
           <QueryBoundary query={entries}>
-            <div class="table-scroll">
+            <div class="table-scroll is-scrollable">
               {/* Read-only grid: arrow-navigated internally, entered/left via
                   Tab. No onExit arrow-bridge to the filter bar — its date/select
                   controls own the arrow keys, so an arrow bridge there would be a
                   one-directional trap (the search↔grid arrow chain only fits the
                   Admin page's single search field). */}
-              <table class="data-table" use:gridNav={{ items: () => entries.data ?? [], readonly: true }}>
+              <table class="data-table" use:gridNav={{ items: () => sortedEntries(), readonly: true }}>
                 <thead>
                   <tr>
-                    <th scope="col">{m.auswertung_date()}</th>
-                    <th scope="col">{m.auswertung_ticket()}</th>
-                    <th scope="col">{m.auswertung_description()}</th>
-                    <th scope="col" class="numeric">{m.auswertung_hours()}</th>
+                    <th scope="col" aria-sort={entryAriaSort('date')}>
+                      <button type="button" class="th-sort" onClick={() => toggleEntrySort('date')}>
+                        <span>{m.auswertung_date()}</span>
+                        <span class="th-sort-glyph" aria-hidden="true">{entrySortGlyph('date')}</span>
+                      </button>
+                    </th>
+                    <th scope="col" aria-sort={entryAriaSort('ticket')}>
+                      <button type="button" class="th-sort" onClick={() => toggleEntrySort('ticket')}>
+                        <span>{m.auswertung_ticket()}</span>
+                        <span class="th-sort-glyph" aria-hidden="true">{entrySortGlyph('ticket')}</span>
+                      </button>
+                    </th>
+                    <th scope="col" aria-sort={entryAriaSort('description')}>
+                      <button type="button" class="th-sort" onClick={() => toggleEntrySort('description')}>
+                        <span>{m.auswertung_description()}</span>
+                        <span class="th-sort-glyph" aria-hidden="true">{entrySortGlyph('description')}</span>
+                      </button>
+                    </th>
+                    <th scope="col" class="numeric" aria-sort={entryAriaSort('hours')}>
+                      <button type="button" class="th-sort" onClick={() => toggleEntrySort('hours')}>
+                        <span>{m.auswertung_hours()}</span>
+                        <span class="th-sort-glyph" aria-hidden="true">{entrySortGlyph('hours')}</span>
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <For each={entries.data}>
+                  <For each={sortedEntries()}>
                     {(record) => (
                       <tr>
                         <td>{formatUserDate(dmyToIso(record.entry.date ?? '') ?? record.entry.date ?? '')}</td>
