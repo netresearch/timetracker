@@ -139,13 +139,14 @@ function displayDate(value: string): string {
 
 // One icon button in the row-actions cell — same shape for Continue/Prolong/Info/
 // Delete (label drives both the accessible name and the hover tooltip).
-function RowAction(props: { label: string; danger?: boolean; onClick: () => void; children: JSX.Element }): JSX.Element {
+function RowAction(props: { label: string; danger?: boolean; keyshortcut?: string; onClick: () => void; children: JSX.Element }): JSX.Element {
   return (
     <button
       type="button"
       class="link-button is-icon"
       classList={{ 'is-danger': props.danger }}
       aria-label={props.label}
+      aria-keyshortcuts={props.keyshortcut}
       title={props.label}
       onClick={() => props.onClick()}
     >
@@ -696,6 +697,11 @@ export default function Tracking() {
   onMount(() => document.addEventListener('keydown', onGridShortcut))
   onCleanup(() => document.removeEventListener('keydown', onGridShortcut))
 
+  // A row's Alt-shortcut hint is only truthful while no cell is being edited:
+  // onGridShortcut() ignores Alt+C/P/I during editing, so advertising the
+  // shortcut then (aria-keyshortcuts + the Alt overlay badge) would mislead.
+  const rowShortcut = (key: string): string | undefined => (editor.editCell() === null ? key : undefined)
+
   // Surface the worklog actions in the Ctrl/⌘+K command palette while this page
   // is mounted — the discoverable home for every action (no shortcut to memorise).
   const wl = (): string => m.cmd_group_worklog()
@@ -868,14 +874,14 @@ export default function Tracking() {
                         <div class="row-actions">
                           {/* Per-row Continue / Prolong / Info — only for saved entries. */}
                           <Show when={id > 0}>
-                            <RowAction label={m.tracking_continue()} onClick={() => continueEntry(entry)}><ContinueIcon /></RowAction>
+                            <RowAction label={m.tracking_continue()} keyshortcut={rowShortcut('Alt+C')} onClick={() => continueEntry(entry)}><ContinueIcon /></RowAction>
                             {/* Prolong rewrites the row's end to now — only meaningful on the
                                 LATEST entry; on an older row it would silently overwrite a past
                                 end with the current time, so it's hidden there. */}
                             <Show when={isLatestEntry(entry)}>
-                              <RowAction label={m.tracking_prolong()} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
+                              <RowAction label={m.tracking_prolong()} keyshortcut={rowShortcut('Alt+P')} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
                             </Show>
-                            <RowAction label={m.tracking_info()} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
+                            <RowAction label={m.tracking_info()} keyshortcut={rowShortcut('Alt+I')} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
                           </Show>
                           <RowAction label={m.admin_delete()} danger onClick={() => setPendingDelete(entry)}><TrashIcon /></RowAction>
                           {/* Force-save and discard (reset) share the unsaved cue: both show while the
