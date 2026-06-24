@@ -3,7 +3,7 @@ import { createComputed, createMemo, createSignal, For, Match, onCleanup, Show, 
 import { createStore, reconcile } from 'solid-js/store'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
-import { optionSourceKey } from '../api/queries'
+import { coerceActive, optionSourceKey } from '../api/queries'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { gridNav } from '../lib/gridNavigation'
@@ -693,7 +693,7 @@ function FieldControl(props: {
 
     return props
       .options(props.field.source)
-      .filter((option) => option.active !== false || option.id === current)
+      .filter((option) => coerceActive(option.active) || option.id === current)
       .map((option) => ({ value: option.id, label: option.label }))
   })
 
