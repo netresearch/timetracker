@@ -73,6 +73,7 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'teams', label: () => m.admin_f_teams(), render: (row, o) => ((row.teams as number[]) ?? []).map((id) => o('teams').find((t) => t.id === id)?.label ?? id).join(', ') },
         { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
         { key: 'global', label: () => m.admin_f_global(), render: (row) => mark(row.global), align: 'center', boolean: true },
+        { key: 'last_activity', label: () => m.admin_f_last_activity() },
       ],
       fields: [
         { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
@@ -105,6 +106,7 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'billing', label: () => m.admin_f_billing(), render: (row) => billingLabel(row.billing) },
         // View-only: auto-synced from the ticket system (no matching field → read-only).
         { key: 'subtickets', label: () => m.admin_f_subtickets() },
+        { key: 'last_activity', label: () => m.admin_f_last_activity() },
       ],
       fields: [
         { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
@@ -174,6 +176,7 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'type', label: () => m.admin_f_type() },
         { key: 'locale', label: () => m.admin_f_language(), render: (row) => localeLabel(row.locale) },
         { key: 'teams', label: () => m.admin_f_teams(), render: (row, o) => ((row.teams as number[]) ?? []).map((id) => o('teams').find((t) => t.id === id)?.label ?? id).join(', ') },
+        { key: 'last_activity', label: () => m.admin_f_last_activity() },
       ],
       fields: [
         { name: 'username', label: () => m.admin_f_username(), type: 'text', required: true },

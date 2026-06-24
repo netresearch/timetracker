@@ -18,6 +18,8 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class CustomerRepository extends ServiceEntityRepository
 {
+    use LastActivityTrait;
+
     public function __construct(ManagerRegistry $managerRegistry)
     {
         parent::__construct($managerRegistry, Customer::class);
@@ -79,6 +81,8 @@ class CustomerRepository extends ServiceEntityRepository
             ['name' => 'ASC'],
         );
 
+        $lastActivity = $this->lastActivityBy('customer_id');
+
         $data = [];
         foreach ($customers as $customer) {
             $teams = [];
@@ -92,6 +96,7 @@ class CustomerRepository extends ServiceEntityRepository
                 'active' => (bool) $customer->getActive(),
                 'global' => (bool) $customer->getGlobal(),
                 'teams' => $teams,
+                'last_activity' => $lastActivity[(int) $customer->getId()] ?? null,
             ]];
         }
 
