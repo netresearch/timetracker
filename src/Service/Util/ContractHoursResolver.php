@@ -58,9 +58,15 @@ final class ContractHoursResolver
      */
     public function validContract(array $contracts, DateTimeInterface $date): ?Contract
     {
+        // Compare on the 'Y-m-d' date only, mirroring the SQL DATE comparison.
+        // A direct DateTimeInterface comparison would include the time, so a
+        // contract ending 2020-01-31 00:00:00 would wrongly exclude an entry
+        // dated 2020-01-31 08:30:00.
+        $dateKey = $date->format('Y-m-d');
         foreach ($contracts as $contract) {
             $end = $contract->getEnd();
-            if ($contract->getStart() <= $date && (!$end instanceof DateTimeInterface || $end >= $date)) {
+            $endKey = $end instanceof DateTimeInterface ? $end->format('Y-m-d') : null;
+            if ($contract->getStart()->format('Y-m-d') <= $dateKey && (null === $endKey || $endKey >= $dateKey)) {
                 return $contract;
             }
         }
