@@ -1193,6 +1193,18 @@ kbd {
 .tracking-legend-item.is-pause::before { background: var(--color-class-pause); }
 .tracking-legend-item.is-overlap::before { background: var(--color-class-overlap); }
 
+/* Icon legend items carry an inline icon instead of a colour swatch. */
+.tracking-legend-icon {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.tracking-legend-icon svg {
+  height: 1rem;
+  width: 1rem;
+}
+
 /* Wrapper carrying list semantics for the selected chips without taking part in
    the flex layout (so chips + the add button keep their single wrapping flow). */
 .tag-list {

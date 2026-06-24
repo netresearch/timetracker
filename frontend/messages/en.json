@@ -200,6 +200,7 @@
   "tracking_date_format_hint": "Date format: YYYY-MM-DD",
   "tracking_edit_hint": "Double-click a cell — or focus it and press Enter — to edit. Tab within a row reaches its actions; Alt+C / Alt+P / Alt+I act on the current row. A completed row saves automatically; the disk icon force-saves an unsaved row and the reset icon discards it.",
   "tracking_legend_title": "Row colour key",
+  "tracking_legend_icons": "Icons",
   "auswertung_title": "Evaluation",
   "auswertung_no_data": "No data found.",
   "auswertung_label": "Name",

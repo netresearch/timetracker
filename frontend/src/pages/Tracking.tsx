@@ -934,6 +934,17 @@ export default function Tracking() {
             <span class="tracking-legend-item is-pause">{m.tracking_class_pause()}</span>
             <span class="tracking-legend-item is-overlap">{m.tracking_class_overlap()}</span>
           </p>
+          {/* Row-action icon key — the icons in the Actions column are also discoverable
+              by hover/keyboard, but listing them here aids at-a-glance recognition. */}
+          <p class="tracking-legend tracking-legend-icons">
+            <span class="visually-hidden">{m.tracking_legend_icons()}: </span>
+            <span class="tracking-legend-icon"><ContinueIcon /> {m.tracking_continue()}</span>
+            <span class="tracking-legend-icon"><ProlongIcon /> {m.tracking_prolong()}</span>
+            <span class="tracking-legend-icon"><InfoIcon /> {m.tracking_info()}</span>
+            <span class="tracking-legend-icon"><TrashIcon /> {m.admin_delete()}</span>
+            <span class="tracking-legend-icon"><DiskIcon /> {m.app_save()}</span>
+            <span class="tracking-legend-icon"><ResetIcon /> {m.tracking_reset()}</span>
+          </p>
         </Show>
       </Show>
 
