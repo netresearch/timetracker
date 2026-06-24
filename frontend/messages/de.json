@@ -200,6 +200,7 @@
   "tracking_date_format_hint": "Datumsformat: JJJJ-MM-TT",
   "tracking_edit_hint": "Zum Bearbeiten eine Zelle doppelklicken — oder fokussieren und Enter drücken. Tab innerhalb einer Zeile erreicht deren Aktionen; Alt+C / Alt+P / Alt+I wirken auf die aktuelle Zeile. Eine vollständige Zeile wird automatisch gespeichert; das Disketten-Symbol erzwingt das Speichern, das Zurücksetzen-Symbol verwirft die Änderungen.",
   "tracking_legend_title": "Legende der Zeilenfarben",
+  "tracking_legend_icons": "Symbole",
   "auswertung_title": "Auswertung",
   "auswertung_no_data": "Keine Daten gefunden.",
   "auswertung_label": "Name",
