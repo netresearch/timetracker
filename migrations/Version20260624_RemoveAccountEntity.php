@@ -30,15 +30,19 @@ final class Version20260624_RemoveAccountEntity extends AbstractMigration
     public function up(Schema $schema): void
     {
         // The FK name varies by how the schema was created (entries_ibfk_3 from the
-        // seed SQL, or a Doctrine-generated FK_… name) — discover it rather than assume.
-        $fk = $this->connection->fetchOne(
-            "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
-             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'entries'
-               AND COLUMN_NAME = 'account_id' AND REFERENCED_TABLE_NAME = 'accounts'
-             LIMIT 1"
-        );
-        if (is_string($fk) && '' !== $fk) {
-            $this->addSql(sprintf('ALTER TABLE entries DROP FOREIGN KEY `%s`', $fk));
+        // seed SQL, or a Doctrine-generated name) — discover it via the schema object
+        // (platform-agnostic, dry-run safe) rather than a raw information_schema query.
+        $fkName = null;
+        if ($schema->hasTable('entries')) {
+            foreach ($schema->getTable('entries')->getForeignKeys() as $foreignKey) {
+                if ('accounts' === $foreignKey->getForeignTableName() && in_array('account_id', $foreignKey->getLocalColumns(), true)) {
+                    $fkName = $foreignKey->getName();
+                    break;
+                }
+            }
+        }
+        if (null !== $fkName) {
+            $this->addSql(sprintf('ALTER TABLE entries DROP FOREIGN KEY %s', $fkName));
         }
 
         $this->addSql('ALTER TABLE entries DROP COLUMN account_id');
