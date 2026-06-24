@@ -44,7 +44,6 @@
             <!-- Exclude integration tests that require external services -->
             <exclude>tests/Service/Ldap/LdapClientServiceIntegrationTest.php</exclude>
             <!-- Entity unit tests (not *DatabaseTest) -->
-            <file>tests/Entity/AccountTest.php</file>
             <file>tests/Entity/ActivityTest.php</file>
             <file>tests/Entity/CustomerTest.php</file>
             <file>tests/Entity/EntryTest.php</file>
@@ -68,7 +67,6 @@
         </testsuite>
         <!-- Integration tests requiring database -->
         <testsuite name="integration">
-            <file>tests/Entity/AccountDatabaseTest.php</file>
             <file>tests/Entity/ActivityDatabaseTest.php</file>
             <file>tests/Entity/CustomerDatabaseTest.php</file>
             <file>tests/Entity/HolidayDatabaseTest.php</file>

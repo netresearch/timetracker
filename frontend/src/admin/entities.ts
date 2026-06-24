@@ -226,23 +226,6 @@ export function adminEntities(): EntityDescriptor[] {
       toPayload: (v) => ({ id: v.id, name: v.name, lead_user_id: v.lead_user_id }),
     },
     {
-      key: 'accounts',
-      title: () => m.admin_e_accounts(),
-      listEndpoint: '/getAllAccounts',
-      rowKey: 'account',
-      saveEndpoint: '/account/save',
-      deleteEndpoint: '/account/delete',
-      columns: [
-        { key: 'name', label: () => m.admin_f_name() },
-      ],
-      fields: [
-        { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
-      ],
-      rowLabel: (row) => str(row.name),
-      toForm: (row) => row === null ? { id: 0, name: '' } : { id: num(row.id), name: str(row.name) },
-      toPayload: (v) => ({ id: v.id, name: v.name }),
-    },
-    {
       key: 'holidays',
       title: () => m.admin_e_holidays(),
       listEndpoint: '/getAllHolidays',

@@ -1,7 +1,6 @@
 SET
   FOREIGN_KEY_CHECKS = 0;
 
-TRUNCATE TABLE `accounts`;
 
 TRUNCATE TABLE `activities`;
 
@@ -296,7 +295,6 @@ INSERT INTO
     `end`,
     `customer_id`,
     `project_id`,
-    `account_id`,
     `activity_id`,
     `ticket`,
     `worklog_id`,
@@ -315,7 +313,6 @@ VALUES
     '08:50:00',
     1,
     1,
-    NULL,
     1,
     'testGetLastEntriesAction',
     NULL,
@@ -333,7 +330,6 @@ VALUES
     '12:50:00',
     1,
     1,
-    NULL,
     1,
     'testGetLastEntriesAction',
     NULL,
@@ -351,7 +347,6 @@ VALUES
     '13:14:00',
     1,
     1,
-    NULL,
     1,
     'testGroupByWorktimeAction',
     NULL,
@@ -369,7 +364,6 @@ VALUES
     '13:25:00',
     1,
     1,
-    NULL,
     1,
     'testGetDataAction',
     NULL,
@@ -387,7 +381,6 @@ VALUES
     '14:25:00',
     1,
     1,
-    NULL,
     1,
     'testGetDataAction',
     NULL,
@@ -405,7 +398,6 @@ VALUES
     '14:50:00',
     1,
     1,
-    NULL,
     1,
     'testGroupByActivityAction',
     NULL,
@@ -423,7 +415,6 @@ VALUES
     '14:20:00',
     1,
     1,
-    NULL,
     1,
     'testGroupByActivityAction',
     NULL,
@@ -442,7 +433,6 @@ VALUES
     '14:30:00',
     1,
     1,
-    NULL,
     1,
     'testGetDataActionForParameter',
     NULL,

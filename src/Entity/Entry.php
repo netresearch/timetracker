@@ -86,10 +86,6 @@ class Entry extends Base
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     protected ?User $user = null;
 
-    #[ORM\ManyToOne(targetEntity: Account::class, inversedBy: 'entries')]
-    #[ORM\JoinColumn(name: 'account_id', referencedColumnName: 'id')]
-    protected ?Account $account = null;
-
     #[ORM\ManyToOne(targetEntity: Activity::class, inversedBy: 'entriesRelation')]
     #[ORM\JoinColumn(name: 'activity_id', referencedColumnName: 'id')]
     protected ?Activity $activity = null;
@@ -212,16 +208,6 @@ class Entry extends Base
         $project = $this->getProject();
         if ($project instanceof Project) {
             return $project->getId() ?? 0;
-        }
-
-        return 0;
-    }
-
-    public function getAccountId(): ?int
-    {
-        $account = $this->getAccount();
-        if ($account instanceof Account) {
-            return $account->getId();
         }
 
         return 0;
@@ -419,18 +405,6 @@ class Entry extends Base
     public function getUser(): ?User
     {
         return $this->user;
-    }
-
-    public function setAccount(Account $account): static
-    {
-        $this->account = $account;
-
-        return $this;
-    }
-
-    public function getAccount(): ?Account
-    {
-        return $this->account;
     }
 
     public function setActivity(Activity $activity): static
