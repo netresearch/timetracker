@@ -612,6 +612,14 @@ main {
   font-size: 0.9rem;
 }
 
+/* Checkbox + its ⓘ help, kept outside the <label> so the help icon neither
+   toggles the box nor pollutes the label's text. */
+.field-check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 /* All text-like inputs, selects and textareas in a field share the same
    recognisable box (checkboxes/radios keep their native look in .field-check). */
 .field input:not([type='checkbox']):not([type='radio']),

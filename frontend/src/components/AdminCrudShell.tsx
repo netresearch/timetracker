@@ -676,14 +676,29 @@ export function AdminCrudShell(props: {
   )
 }
 
-/** A field's label plus an optional ⓘ tooltip (hover title + AT aria-label). */
+/** The optional ⓘ tooltip (hover title + AT aria-label). preventDefault keeps a
+ *  click inside a <label> from toggling/focusing the field's own control. */
+function FieldHelp(props: { field: FieldDef }) {
+  return (
+    <Show when={props.field.help !== undefined}>
+      <span
+        class="field-help"
+        tabindex="0"
+        role="note"
+        aria-label={props.field.help?.()}
+        title={props.field.help?.()}
+        onClick={(event) => { event.preventDefault(); event.stopPropagation() }}
+      >ⓘ</span>
+    </Show>
+  )
+}
+
+/** A field's label plus its optional ⓘ tooltip, for the non-checkbox label span. */
 function FieldLabel(props: { field: FieldDef }) {
   return (
     <span class="field-label">
       {props.field.label()}
-      <Show when={props.field.help !== undefined}>
-        <span class="field-help" tabindex="0" role="note" aria-label={props.field.help?.()} title={props.field.help?.()}>ⓘ</span>
-      </Show>
+      <FieldHelp field={props.field} />
     </span>
   )
 }
@@ -726,10 +741,13 @@ function FieldControl(props: {
   return (
     <Switch>
       <Match when={props.field.type === 'checkbox'}>
-        <label class="field-check">
-          <input type="checkbox" checked={Boolean(value())} onInput={(e) => props.setField(props.field.name, e.currentTarget.checked)} />
-          <FieldLabel field={props.field} />
-        </label>
+        <div class="field-check-row">
+          <label class="field-check">
+            <input type="checkbox" checked={Boolean(value())} onInput={(e) => props.setField(props.field.name, e.currentTarget.checked)} />
+            <span>{props.field.label()}</span>
+          </label>
+          <FieldHelp field={props.field} />
+        </div>
       </Match>
       <Match when={props.field.type === 'multiselect'}>
         <fieldset class="field multiselect">
