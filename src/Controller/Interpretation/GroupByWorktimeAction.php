@@ -17,6 +17,7 @@ use App\Repository\ContractRepository;
 use App\Service\Util\ContractHoursResolver;
 use App\Service\Util\TimeCalculationService;
 use DateTimeInterface;
+use Doctrine\DBAL\Connection;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -75,15 +76,16 @@ final class GroupByWorktimeAction extends BaseInterpretationController
 
             $key = $day->format('y-m-d');
             if (!isset($times[$key])) {
-                $expected = $this->contractHoursResolver->weekdayHours(
-                    $this->contractHoursResolver->validContract($contracts, $day),
-                    (int) $day->format('w'),
-                );
-                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'hours' => 0.0, 'minutes' => 0.0, 'quota' => 0, 'expected' => $expected];
+                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'date' => $day, 'hours' => 0.0, 'minutes' => 0.0, 'quota' => 0, 'expected' => 0.0];
             }
 
             $times[$key]['minutes'] += $entry->getDuration();
         }
+
+        // The per-day "expected" (Soll) is 0 on a public holiday (matching the
+        // /ui/month calendar), otherwise the contract's hours for that weekday
+        // (5×8h default when no contract applies).
+        $holidayDates = $this->loadHolidayDates($times);
 
         $totalMinutes = 0.0;
         foreach ($times as $t) {
@@ -92,10 +94,18 @@ final class GroupByWorktimeAction extends BaseInterpretationController
 
         foreach ($times as &$time) {
             $minutes = $time['minutes'];
+            $date = $time['date'];
             $time['hours'] = $minutes / 60.0;
-            unset($time['minutes']);
+            $time['expected'] = isset($holidayDates[$date->format('Y-m-d')])
+                ? 0.0
+                : $this->contractHoursResolver->weekdayHours(
+                    $this->contractHoursResolver->validContract($contracts, $date),
+                    (int) $date->format('w'),
+                );
+            unset($time['minutes'], $time['date']);
             $time['quota'] = $this->timeCalculationService->formatQuota($minutes, $totalMinutes);
         }
+        unset($time);
 
         usort($times, $this->sortByName(...));
         $prepared = array_map(static fn (array $t): array => [
@@ -105,5 +115,39 @@ final class GroupByWorktimeAction extends BaseInterpretationController
         $prepared = array_reverse($prepared);
 
         return new JsonResponse($prepared);
+    }
+
+    /**
+     * Public-holiday dates ('Y-m-d' => true) spanning the booked days, queried
+     * once so the per-day Soll can drop to 0 on a holiday (matching /ui/month).
+     *
+     * @param array<string, array{date: DateTimeInterface, ...}> $times
+     *
+     * @return array<string, true>
+     */
+    private function loadHolidayDates(array $times): array
+    {
+        if ([] === $times) {
+            return [];
+        }
+
+        $dates = array_map(static fn (array $time): string => $time['date']->format('Y-m-d'), $times);
+
+        /** @var Connection $connection */
+        $connection = $this->managerRegistry->getConnection();
+        $rows = $connection->fetchFirstColumn(
+            'SELECT day FROM holidays WHERE day BETWEEN ? AND ?',
+            [min($dates), max($dates)],
+        );
+
+        $holidays = [];
+        foreach ($rows as $row) {
+            // A DATE column comes back as a 'Y-m-d' string; ignore anything else.
+            if (is_string($row)) {
+                $holidays[substr($row, 0, 10)] = true;
+            }
+        }
+
+        return $holidays;
     }
 }

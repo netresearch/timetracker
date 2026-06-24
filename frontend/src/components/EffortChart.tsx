@@ -50,7 +50,12 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
           <tbody>
             <For each={props.rows}>
               {(row) => {
-                const under = (): boolean => row.target != null && row.minutes < row.target
+                // A 0 Soll (weekend / public holiday / contract gap) is "no
+                // boundary for this day": skip the over/under colour, the marker
+                // and the printed Soll so a worked weekend reads as a neutral
+                // bar, not a misleading green "over target 0:00".
+                const hasTarget = (): boolean => row.target != null && row.target > 0
+                const under = (): boolean => hasTarget() && row.minutes < (row.target ?? 0)
 
                 return (
                   <tr>
@@ -60,18 +65,18 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
                       </Show>
                       <span
                         class="effort-bar"
-                        classList={{ 'is-over': row.target != null && row.minutes >= row.target, 'is-under': under() }}
+                        classList={{ 'is-over': hasTarget() && row.minutes >= (row.target ?? 0), 'is-under': under() }}
                         aria-hidden="true"
                         style={{ width: pct(row.minutes) }}
                       />
-                      <Show when={row.target != null}>
+                      <Show when={hasTarget()}>
                         <span class="effort-soll-marker" aria-hidden="true" style={{ left: pct(row.target ?? 0) }} />
                       </Show>
                       <span class="effort-bar-label">{row.label}</span>
                     </th>
                     <td class="numeric">
                       {formatMinutes(row.minutes)}
-                      <Show when={row.target != null}>
+                      <Show when={hasTarget()}>
                         <small class="effort-target">{m.auswertung_of_target({ target: formatMinutes(row.target ?? 0) })}</small>
                       </Show>
                     </td>

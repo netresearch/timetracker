@@ -105,6 +105,30 @@ describe('EffortChart', () => {
       unmount()
     })
 
+    it('treats a zero Soll (worked weekend/holiday) as a neutral bar, not green over', () => {
+      // expected=0 reaches the chart as target:0 (Auswertung always sets target).
+      const zeroRow: EffortRow = { label: 'Sat', minutes: 120, quota: '100.00%', target: 0 }
+      const { container, unmount } = render(() => <EffortChart title="Effort by day" rows={[zeroRow]} />)
+
+      // No contract boundary for the day → no colour, marker, ghost or Soll text.
+      expect(container.querySelector('.effort-bar.is-over')).toBeNull()
+      expect(container.querySelector('.effort-bar.is-under')).toBeNull()
+      expect(container.querySelector('.effort-soll-marker')).toBeNull()
+      expect(container.querySelector('.effort-bar-ghost')).toBeNull()
+      expect(container.querySelector('.effort-target')).toBeNull()
+      unmount()
+    })
+
+    it('classifies worked-exactly-Soll as over (not under) with no ghost', () => {
+      const exactRow: EffortRow = { label: 'Wed', minutes: 480, quota: '100.00%', target: 480 }
+      const { container, unmount } = render(() => <EffortChart title="Effort by day" rows={[exactRow]} />)
+
+      expect(container.querySelector('.effort-bar.is-over')).not.toBeNull()
+      expect(container.querySelector('.effort-bar.is-under')).toBeNull()
+      expect(container.querySelector('.effort-bar-ghost')).toBeNull()
+      unmount()
+    })
+
     it('stays axe-clean with the Soll overlay', async () => {
       const { container, unmount } = render(() => <EffortChart title="Effort by day" rows={dayRows} />)
 
