@@ -206,6 +206,7 @@
   "auswertung_label": "Name",
   "auswertung_hours": "Hours",
   "auswertung_share": "Share",
+  "auswertung_of_target": "/ {target} target",
   "auswertung_all": "All",
   "auswertung_date_start": "From",
   "auswertung_date_end": "To",

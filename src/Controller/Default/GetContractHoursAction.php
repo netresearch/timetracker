@@ -14,6 +14,7 @@ use App\Entity\Contract;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Repository\ContractRepository;
+use App\Service\Util\ContractHoursResolver;
 use DateTime;
 use Exception;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -21,6 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Service\Attribute\Required;
 
 use function assert;
 use function sprintf;
@@ -30,13 +32,18 @@ use function sprintf;
  *
  * Drives the /ui/month "expected" column: each weekday's expected time comes
  * from the contract valid in the queried month (hours_0 = Sunday … hours_6 =
- * Saturday, matching JS Date.getDay()), with an all-8 default when the user has
- * no contract for that month.
+ * Saturday, matching JS Date.getDay()), with a 5×8h default (8h Mon–Fri, 0 at
+ * the weekend) when the user has no contract for that month.
  */
 final class GetContractHoursAction extends BaseController
 {
-    /** Default daily hours when the user has no contract covering the month. */
-    private const float DEFAULT_HOURS = 8.0;
+    private ContractHoursResolver $contractHoursResolver;
+
+    #[Required]
+    public function setContractHoursResolver(ContractHoursResolver $contractHoursResolver): void
+    {
+        $this->contractHoursResolver = $contractHoursResolver;
+    }
 
     /**
      * @throws Exception When date construction fails
@@ -81,26 +88,14 @@ final class GetContractHoursAction extends BaseController
      */
     private function buildHours(?Contract $contract): array
     {
-        if (!$contract instanceof Contract) {
-            return [
-                'hours_0' => self::DEFAULT_HOURS,
-                'hours_1' => self::DEFAULT_HOURS,
-                'hours_2' => self::DEFAULT_HOURS,
-                'hours_3' => self::DEFAULT_HOURS,
-                'hours_4' => self::DEFAULT_HOURS,
-                'hours_5' => self::DEFAULT_HOURS,
-                'hours_6' => self::DEFAULT_HOURS,
-            ];
-        }
-
         return [
-            'hours_0' => (float) $contract->getHours0(),
-            'hours_1' => (float) $contract->getHours1(),
-            'hours_2' => (float) $contract->getHours2(),
-            'hours_3' => (float) $contract->getHours3(),
-            'hours_4' => (float) $contract->getHours4(),
-            'hours_5' => (float) $contract->getHours5(),
-            'hours_6' => (float) $contract->getHours6(),
+            'hours_0' => $this->contractHoursResolver->weekdayHours($contract, 0),
+            'hours_1' => $this->contractHoursResolver->weekdayHours($contract, 1),
+            'hours_2' => $this->contractHoursResolver->weekdayHours($contract, 2),
+            'hours_3' => $this->contractHoursResolver->weekdayHours($contract, 3),
+            'hours_4' => $this->contractHoursResolver->weekdayHours($contract, 4),
+            'hours_5' => $this->contractHoursResolver->weekdayHours($contract, 5),
+            'hours_6' => $this->contractHoursResolver->weekdayHours($contract, 6),
         ];
     }
 }

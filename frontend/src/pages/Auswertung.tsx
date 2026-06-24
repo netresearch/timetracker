@@ -168,6 +168,7 @@ export default function Auswertung() {
       label: row.day,
       minutes: Math.round(row.hours * 60),
       quota: row.quota,
+      target: Math.round(row.expected * 60),
     })),
   )
 

@@ -74,18 +74,23 @@ final class InterpretationControllerTest extends AbstractWebTestCase
             'dateend' => '1000-01-30',  // opt
         ];
 
+        // 1000-01-29/30 fall before any contract (the fixtures start 2020), so
+        // each day's "expected" Soll comes from the 5×8h default. Both are
+        // weekdays (Wed/Thu) → 8h.
         $expectedJson = [
             [
                 'name' => '00-01-29',
                 'day' => '29.01.',
                 'hours' => 0.23333333333333334,
                 'quota' => '5.98%',
+                'expected' => 8,
             ],
             [
                 'name' => '00-01-30',
                 'day' => '30.01.',
                 'hours' => 3.6666666666666665,
                 'quota' => '94.02%',
+                'expected' => 8,
             ],
         ];
 

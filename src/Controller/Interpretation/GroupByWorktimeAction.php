@@ -9,9 +9,12 @@ declare(strict_types=1);
 
 namespace App\Controller\Interpretation;
 
+use App\Entity\Contract;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
+use App\Repository\ContractRepository;
+use App\Service\Util\ContractHoursResolver;
 use App\Service\Util\TimeCalculationService;
 use DateTimeInterface;
 use Exception;
@@ -21,14 +24,24 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
+use function assert;
+
 final class GroupByWorktimeAction extends BaseInterpretationController
 {
     private TimeCalculationService $timeCalculationService;
+
+    private ContractHoursResolver $contractHoursResolver;
 
     #[Required]
     public function setTimeCalculationService(TimeCalculationService $timeCalculationService): void
     {
         $this->timeCalculationService = $timeCalculationService;
+    }
+
+    #[Required]
+    public function setContractHoursResolver(ContractHoursResolver $contractHoursResolver): void
+    {
+        $this->contractHoursResolver = $contractHoursResolver;
     }
 
     #[Route(path: '/interpretation/time', name: 'interpretation_time_attr', methods: ['GET'])]
@@ -47,6 +60,12 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             return $response;
         }
 
+        // Load the user's contracts once; the per-day "expected" (Soll) is then
+        // resolved in PHP (validContract + weekdayHours) without a query per day.
+        $contractRepository = $this->managerRegistry->getRepository(Contract::class);
+        assert($contractRepository instanceof ContractRepository);
+        $contracts = $contractRepository->findBy(['user' => $currentUser], ['start' => 'DESC']);
+
         $times = [];
         foreach ($entries as $entry) {
             $day = $entry->getDay();
@@ -56,7 +75,11 @@ final class GroupByWorktimeAction extends BaseInterpretationController
 
             $key = $day->format('y-m-d');
             if (!isset($times[$key])) {
-                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'hours' => 0.0, 'minutes' => 0.0, 'quota' => 0];
+                $expected = $this->contractHoursResolver->weekdayHours(
+                    $this->contractHoursResolver->validContract($contracts, $day),
+                    (int) $day->format('w'),
+                );
+                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'hours' => 0.0, 'minutes' => 0.0, 'quota' => 0, 'expected' => $expected];
             }
 
             $times[$key]['minutes'] += $entry->getDuration();
@@ -76,7 +99,7 @@ final class GroupByWorktimeAction extends BaseInterpretationController
 
         usort($times, $this->sortByName(...));
         $prepared = array_map(static fn (array $t): array => [
-            'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => $t['hours'], 'quota' => $t['quota'],
+            'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => $t['hours'], 'quota' => $t['quota'], 'expected' => $t['expected'],
         ], $times);
 
         $prepared = array_reverse($prepared);

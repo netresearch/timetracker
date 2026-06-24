@@ -52,4 +52,64 @@ describe('EffortChart', () => {
     expect(await axe(container)).toHaveNoViolations()
     unmount()
   })
+
+  describe('contract Soll (target)', () => {
+    // Mon over Soll (8:30 vs 8:00), Tue under (4:00 vs 8:00).
+    const dayRows: EffortRow[] = [
+      { label: 'Mon', minutes: 510, quota: '40.00%', target: 480 },
+      { label: 'Tue', minutes: 240, quota: '20.00%', target: 480 },
+    ]
+
+    it('scales bars to the larger of worked-or-target and marks over/under', () => {
+      const { container, unmount } = render(() => <EffortChart title="Effort by day" rows={dayRows} />)
+      const bars = [...container.querySelectorAll<HTMLElement>('.effort-bar')]
+
+      // max = max(510, 480, 240, 480) = 510 → Mon fills the track, Tue is 240/510.
+      expect(bars[0]?.style.width).toBe('100%')
+      expect(bars[1]?.style.width).toBe(`${(240 / 510) * 100}%`)
+      expect(bars[0]?.classList.contains('is-over')).toBe(true)
+      expect(bars[1]?.classList.contains('is-under')).toBe(true)
+
+      // A Soll marker per row, positioned at target/max.
+      const markers = [...container.querySelectorAll<HTMLElement>('.effort-soll-marker')]
+      expect(markers).toHaveLength(2)
+      expect(markers[0]?.style.left).toBe(`${(480 / 510) * 100}%`)
+      unmount()
+    })
+
+    it('shows a ghost bar only for under-target rows', () => {
+      const { container, unmount } = render(() => <EffortChart title="Effort by day" rows={dayRows} />)
+      const ghosts = [...container.querySelectorAll<HTMLElement>('.effort-bar-ghost')]
+
+      // Only Tue (under) gets a ghost, spanning the full Soll extent.
+      expect(ghosts).toHaveLength(1)
+      expect(ghosts[0]?.style.width).toBe(`${(480 / 510) * 100}%`)
+      unmount()
+    })
+
+    it('prints the Soll next to the worked time as a non-colour cue', () => {
+      const underRow: EffortRow = { label: 'Tue', minutes: 240, quota: '20.00%', target: 480 }
+      const { container, unmount } = render(() => <EffortChart title="Effort by day" rows={[underRow]} />)
+
+      expect(container.querySelector('.effort-target')?.textContent).toContain(formatMinutes(480))
+      unmount()
+    })
+
+    it('omits the Soll overlay entirely for target-less rows', () => {
+      const { container, unmount } = render(() => <EffortChart title="Effort by customer" rows={rows} />)
+
+      expect(container.querySelector('.effort-soll-marker')).toBeNull()
+      expect(container.querySelector('.effort-bar-ghost')).toBeNull()
+      expect(container.querySelector('.effort-bar.is-over')).toBeNull()
+      expect(container.querySelector('.effort-target')).toBeNull()
+      unmount()
+    })
+
+    it('stays axe-clean with the Soll overlay', async () => {
+      const { container, unmount } = render(() => <EffortChart title="Effort by day" rows={dayRows} />)
+
+      expect(await axe(container)).toHaveNoViolations()
+      unmount()
+    })
+  })
 })

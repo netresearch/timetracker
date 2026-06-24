@@ -7,6 +7,10 @@ export interface EffortRow {
   label: string
   minutes: number
   quota: string
+  /** Optional expected (Soll) minutes. When set, the bar gains a contract
+   *  boundary: a Soll marker, an over/under colour, and a ghost bar showing the
+   *  shortfall. Only the "Effort by day" chart provides it. */
+  target?: number
 }
 
 /**
@@ -14,11 +18,18 @@ export interface EffortRow {
  * inside each row. No charting library — the table is the source of truth for
  * screen readers, the bar is decorative (aria-hidden), and colours come from
  * the design tokens so it themes with light/dark automatically.
+ *
+ * When a row carries a `target` (the "Effort by day" chart), the bar also shows
+ * the contract Soll: coloured over/under, a Soll marker tick, a ghost bar for
+ * the shortfall, and the Soll printed next to the worked time (the non-colour,
+ * screen-reader-visible cue — WCAG 1.4.1).
  */
 export function EffortChart(props: { title: string; rows: EffortRow[] }) {
   // Memoize so the O(N) reduction runs once per rows change, not once per row
-  // on every reactive read inside the <For> below.
-  const max = createMemo(() => Math.max(1, ...props.rows.map((row) => row.minutes)))
+  // on every reactive read inside the <For> below. Bars scale to the larger of
+  // worked-or-target so a Soll marker beyond the worked time still fits.
+  const max = createMemo(() => Math.max(1, ...props.rows.map((row) => Math.max(row.minutes, row.target ?? 0))))
+  const pct = (minutes: number): string => `${(minutes / max()) * 100}%`
 
   return (
     <section class="effort-chart">
@@ -38,20 +49,36 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
           </thead>
           <tbody>
             <For each={props.rows}>
-              {(row) => (
-                <tr>
-                  <th scope="row" class="effort-bar-cell">
-                    <span
-                      class="effort-bar"
-                      aria-hidden="true"
-                      style={{ width: `${(row.minutes / max()) * 100}%` }}
-                    />
-                    <span class="effort-bar-label">{row.label}</span>
-                  </th>
-                  <td class="numeric">{formatMinutes(row.minutes)}</td>
-                  <td class="numeric">{row.quota}</td>
-                </tr>
-              )}
+              {(row) => {
+                const under = (): boolean => row.target != null && row.minutes < row.target
+
+                return (
+                  <tr>
+                    <th scope="row" class="effort-bar-cell">
+                      <Show when={under()}>
+                        <span class="effort-bar-ghost" aria-hidden="true" style={{ width: pct(row.target ?? 0) }} />
+                      </Show>
+                      <span
+                        class="effort-bar"
+                        classList={{ 'is-over': row.target != null && row.minutes >= row.target, 'is-under': under() }}
+                        aria-hidden="true"
+                        style={{ width: pct(row.minutes) }}
+                      />
+                      <Show when={row.target != null}>
+                        <span class="effort-soll-marker" aria-hidden="true" style={{ left: pct(row.target ?? 0) }} />
+                      </Show>
+                      <span class="effort-bar-label">{row.label}</span>
+                    </th>
+                    <td class="numeric">
+                      {formatMinutes(row.minutes)}
+                      <Show when={row.target != null}>
+                        <small class="effort-target">{m.auswertung_of_target({ target: formatMinutes(row.target ?? 0) })}</small>
+                      </Show>
+                    </td>
+                    <td class="numeric">{row.quota}</td>
+                  </tr>
+                )
+              }}
             </For>
           </tbody>
         </table>

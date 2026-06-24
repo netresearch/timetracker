@@ -11,6 +11,8 @@ export interface WorktimeRecord {
   day: string
   hours: number
   quota: string
+  /** Expected (Soll) hours for the day, from the contract or a 5×8h default. */
+  expected: number
 }
 
 // Response shape of GET /getHolidays (GetHolidaysAction) — ExtJS-style
