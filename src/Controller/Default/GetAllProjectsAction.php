@@ -47,10 +47,17 @@ final class GetAllProjectsAction extends BaseController
         /** @var array<int, Project> $result */
         $result = $customerId > 0 ? $objectRepository->findByCustomer($customerId) : $objectRepository->findAll();
 
+        // "Last activity" (date of the most recent booking) is for the admin overview,
+        // which lists every project unfiltered; skip the aggregate on the customer-filtered
+        // entry-form path, which doesn't show the column.
+        $lastActivity = $customerId > 0 ? [] : $objectRepository->lastActivityBy('project_id');
+
         $data = [];
         foreach ($result as $project) {
             if ($project instanceof Project) {
-                $data[] = ['project' => $project->toArray()];
+                $row = $project->toArray();
+                $row['last_activity'] = $lastActivity[(int) $project->getId()] ?? null;
+                $data[] = ['project' => $row];
             }
         }
 

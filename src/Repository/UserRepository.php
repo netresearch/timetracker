@@ -20,6 +20,8 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class UserRepository extends ServiceEntityRepository
 {
+    use LastActivityTrait;
+
     public function __construct(ManagerRegistry $managerRegistry)
     {
         parent::__construct($managerRegistry, User::class);
@@ -87,7 +89,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string, teams: array<int, int>}}>
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string, teams: array<int, int>, last_activity: string|null}}>
      */
     public function getAllUsers(): array
     {
@@ -96,6 +98,8 @@ class UserRepository extends ServiceEntityRepository
             [],
             ['username' => 'ASC'],
         );
+
+        $lastActivity = $this->lastActivityBy('user_id');
 
         $data = [];
         foreach ($users as $user) {
@@ -115,6 +119,7 @@ class UserRepository extends ServiceEntityRepository
                 'abbr' => (string) $user->getAbbr(),
                 'locale' => $user->getLocale(),
                 'teams' => $teams,
+                'last_activity' => $lastActivity[(int) $user->getId()] ?? null,
             ]];
         }
 

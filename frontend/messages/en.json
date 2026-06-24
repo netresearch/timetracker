@@ -310,6 +310,7 @@
   "admin_f_abbr": "Abbr",
   "admin_f_type": "Type",
   "admin_f_language": "Language",
+  "admin_f_last_activity": "Last activity",
   "admin_f_team_lead": "Team lead",
   "admin_f_jira_id": "Ticket prefix",
   "admin_f_jira_ticket": "Ticket number",

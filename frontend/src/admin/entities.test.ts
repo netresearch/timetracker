@@ -112,4 +112,13 @@ describe('admin entity descriptors', () => {
     expect(holidays.toForm(null)).toMatchObject({ day: '', name: '' })
     expect(holidays.toPayload({ id: 0, day: '2026-01-01', name: 'New Year' })).toEqual({ day: '2026-01-01', name: 'New Year' })
   })
+
+  it('customers, projects and users expose a last_activity column (raw ISO date, no custom render)', () => {
+    for (const key of ['customers', 'projects', 'users']) {
+      // col() throws if the column is missing. No render → the shell's cellText falls
+      // back to the raw row value (ISO date, which sorts chronologically) and blanks
+      // when the entity was never booked.
+      expect(col(byKey(key), 'last_activity').render).toBeUndefined()
+    }
+  })
 })

@@ -23,6 +23,8 @@ use function is_array;
  */
 class ProjectRepository extends ServiceEntityRepository
 {
+    use LastActivityTrait;
+
     public function __construct(ManagerRegistry $managerRegistry)
     {
         parent::__construct($managerRegistry, Project::class);

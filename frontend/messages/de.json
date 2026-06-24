@@ -310,6 +310,7 @@
   "admin_f_abbr": "Kürzel",
   "admin_f_type": "Typ",
   "admin_f_language": "Sprache",
+  "admin_f_last_activity": "Letzte Aktivität",
   "admin_f_team_lead": "Teamleiter",
   "admin_f_jira_id": "Ticket-Präfix",
   "admin_f_jira_ticket": "Ticketnummer",
