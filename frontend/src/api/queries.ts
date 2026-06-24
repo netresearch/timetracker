@@ -93,7 +93,10 @@ type OptionRow = Record<string, { id: number; name?: string; username?: string; 
 // The backend serializes `active` via a PHP (bool) cast → JSON true/false, but be
 // defensive about drivers/serializers that emit 1/0 or "1"/"0": treat only the
 // explicit falsy forms as inactive, everything else (incl. absent) as bookable.
-function coerceActive(raw: unknown): boolean {
+/** True unless the value is an explicit "off" form (false / 0 / '0' / 'false');
+ *  undefined → true ("no active concept"). Coerces the loose flags a PHP/Doctrine
+ *  backend may emit so active-only filters can't be bypassed by a stringified 0. */
+export function coerceActive(raw: unknown): boolean {
   return raw !== false && raw !== 0 && raw !== '0' && raw !== 'false'
 }
 

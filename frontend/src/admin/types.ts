@@ -30,6 +30,9 @@ export interface FieldDef {
   lockedOnEdit?: boolean
   /** A select whose option values are strings (e.g. locale, user type). */
   stringValue?: boolean
+  /** A select that offers only active options (hides deactivated users), while
+   *  keeping whatever is already assigned so an edit doesn't silently drop it. */
+  activeOnly?: boolean
 }
 
 export type FormValues = Record<string, string | number | boolean | number[]>

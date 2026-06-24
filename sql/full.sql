@@ -41,6 +41,7 @@ CREATE TABLE `users` (
   `show_empty_line` tinyint(1) NOT NULL DEFAULT '0',
   `suggest_time` tinyint(1) NOT NULL DEFAULT '1',
   `show_future` tinyint(1) NOT NULL DEFAULT '1',
+  `active` tinyint(1) NOT NULL DEFAULT '1',
   `min_entry_duration` int(11) NOT NULL DEFAULT 5,
   `locale` char(2) NOT NULL DEFAULT 'de',
   PRIMARY KEY (`id`),
@@ -331,7 +332,8 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20260612_FixHolidaysSchema',     '2026-06-12 00:00:00', 0),
 ('DoctrineMigrations\\Version20260622_AddMinEntryDuration',   '2026-06-22 00:00:00', 0),
 ('DoctrineMigrations\\Version20260622_AddJiraCloudSupport',   '2026-06-22 00:00:00', 0),
-('DoctrineMigrations\\Version20260624_RemoveAccountEntity',   '2026-06-24 00:00:00', 0);
+('DoctrineMigrations\\Version20260624_RemoveAccountEntity',   '2026-06-24 00:00:00', 0),
+('DoctrineMigrations\\Version20260624_AddUserActive',         '2026-06-24 00:00:01', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------

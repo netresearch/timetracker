@@ -3,7 +3,7 @@ import { createComputed, createMemo, createSignal, For, Match, onCleanup, Show, 
 import { createStore, reconcile } from 'solid-js/store'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
-import { optionSourceKey } from '../api/queries'
+import { coerceActive, optionSourceKey } from '../api/queries'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { gridNav } from '../lib/gridNavigation'
@@ -683,7 +683,19 @@ function FieldControl(props: {
   const disabled = () => props.editing && props.field.lockedOnEdit === true
   const text = () => String(value() ?? '')
 
-  const selectOptions = createMemo(() => fieldSelectOptions(props.field, props.options))
+  const selectOptions = createMemo(() => {
+    if (props.field.activeOnly !== true || props.field.source === undefined) {
+      return fieldSelectOptions(props.field, props.options)
+    }
+    // Hide deactivated users from assignment selects, but keep whatever is already
+    // assigned (a now-inactive lead) so editing the record doesn't silently drop it.
+    const current = value()
+
+    return props
+      .options(props.field.source)
+      .filter((option) => coerceActive(option.active) || option.id === current)
+      .map((option) => ({ value: option.id, label: option.label }))
+  })
 
   const toggleMulti = (optionValue: number, checked: boolean) => {
     const current = new Set((props.values[props.field.name] as number[] | undefined) ?? [])

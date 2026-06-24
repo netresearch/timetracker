@@ -21,6 +21,8 @@ security:
 
         main:
             provider: app_user_provider
+            # Refuse login for deactivated accounts (users.active = 0).
+            user_checker: App\Security\UserChecker
             lazy: true
             # Set entry point to form_login for multiple authenticators
             entry_point: form_login

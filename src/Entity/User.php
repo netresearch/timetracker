@@ -52,6 +52,10 @@ class User implements UserInterface
     #[ORM\Column(name: 'show_future', type: 'boolean', nullable: false, options: ['default' => 1])]
     protected bool $showFuture = true;
 
+    /** Deactivated users cannot log in and aren't offered for new lead assignments. */
+    #[ORM\Column(name: 'active', type: 'boolean', nullable: false, options: ['default' => 1])]
+    protected bool $active = true;
+
     /** Minimum entry duration in minutes — a new entry's end pre-fills to start + this. */
     #[ORM\Column(name: 'min_entry_duration', type: 'integer', nullable: false, options: ['default' => 5])]
     protected int $minEntryDuration = 5;
@@ -226,6 +230,18 @@ class User implements UserInterface
         return $this;
     }
 
+    public function getActive(): bool
+    {
+        return $this->active;
+    }
+
+    public function setActive(bool $active): static
+    {
+        $this->active = $active;
+
+        return $this;
+    }
+
     public function getMinEntryDuration(): int
     {
         return $this->minEntryDuration;
@@ -315,7 +331,7 @@ class User implements UserInterface
      * Returns user settings for API responses.
      * Note: Boolean settings are returned as integers (0/1) for frontend compatibility.
      *
-     * @return array{show_empty_line: int, suggest_time: int, show_future: int, min_entry_duration: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>}
+     * @return array{show_empty_line: int, suggest_time: int, show_future: int, active: bool, min_entry_duration: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>}
      */
     public function getSettings(): array
     {
@@ -323,6 +339,7 @@ class User implements UserInterface
             'show_empty_line' => (int) $this->getShowEmptyLine(),
             'suggest_time' => (int) $this->getSuggestTime(),
             'show_future' => (int) $this->getShowFuture(),
+            'active' => $this->getActive(),
             'min_entry_duration' => $this->getMinEntryDuration(),
             'user_name' => $this->getUsername() ?? '',
             'user_id' => $this->getId() ?? 0,

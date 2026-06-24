@@ -34,6 +34,7 @@ final readonly class UserSaveDto
         public string $abbr = '',
         public string $type = '',
         public string $locale = '',
+        public bool $active = true,
 
         /** @var list<int|string> */
         #[Map(if: false)]
@@ -55,6 +56,7 @@ final readonly class UserSaveDto
             abbr: (string) ($request->request->get('abbr') ?? ''),
             type: (string) ($request->request->get('type') ?? ''),
             locale: (string) ($request->request->get('locale') ?? ''),
+            active: $request->request->getBoolean('active', true),
             teams: array_values($teams),
         );
     }
