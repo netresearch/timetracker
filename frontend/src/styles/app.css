@@ -1860,6 +1860,17 @@ th[aria-sort='descending'] .th-sort-glyph {
   z-index: 6;
 }
 
+/* Worklog row-action badges (Alt+C/P/I) appear only on the row holding the
+   keyboard cursor (aria-current) — that's the row Alt+C/P/I act on. The toolbar
+   badges (Alt+A/R/X) are unaffected (not inside .tracking-row-actions). */
+.show-access-keys .tracking-row-actions [data-access-hint]::after {
+  display: none;
+}
+
+.show-access-keys tr[aria-current="true"] .tracking-row-actions [data-access-hint]::after {
+  display: inline-flex;
+}
+
 .modal-backdrop {
   background: rgba(0, 0, 0, 0.45);
   inset: 0;
