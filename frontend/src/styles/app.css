@@ -594,9 +594,14 @@ main {
 
 .field-help {
   margin-inline-start: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--color-text-muted);
+  font: inherit;
   font-weight: 400;
   font-size: 0.85rem;
+  line-height: 1;
   cursor: help;
 }
 

@@ -676,19 +676,13 @@ export function AdminCrudShell(props: {
   )
 }
 
-/** The optional ⓘ tooltip (hover title + AT aria-label). preventDefault keeps a
- *  click inside a <label> from toggling/focusing the field's own control. */
+/** The optional ⓘ tooltip (hover title + AT aria-label). A real <button> so it's
+ *  keyboard-focusable, and a click on it inside a <label> isn't forwarded to the
+ *  field's own control (no toggle/focus). */
 function FieldHelp(props: { field: FieldDef }) {
   return (
     <Show when={props.field.help !== undefined}>
-      <span
-        class="field-help"
-        tabindex="0"
-        role="note"
-        aria-label={props.field.help?.()}
-        title={props.field.help?.()}
-        onClick={(event) => { event.preventDefault(); event.stopPropagation() }}
-      >ⓘ</span>
+      <button type="button" class="field-help" aria-label={props.field.help?.()} title={props.field.help?.()}>ⓘ</button>
     </Show>
   )
 }
