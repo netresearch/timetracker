@@ -437,6 +437,10 @@ export function AdminCrudShell(props: {
         </div>
       </Show>
 
+      <Show when={props.descriptor.description !== undefined}>
+        <p class="admin-intro">{props.descriptor.description?.()}</p>
+      </Show>
+
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
         <div class="table-scroll">
           <table
@@ -672,6 +676,27 @@ export function AdminCrudShell(props: {
   )
 }
 
+/** The optional ⓘ tooltip (hover title + AT aria-label). A real <button> so it's
+ *  keyboard-focusable, and a click on it inside a <label> isn't forwarded to the
+ *  field's own control (no toggle/focus). */
+function FieldHelp(props: { field: FieldDef }) {
+  return (
+    <Show when={props.field.help !== undefined}>
+      <button type="button" class="field-help" aria-label={props.field.help?.()} title={props.field.help?.()}>ⓘ</button>
+    </Show>
+  )
+}
+
+/** A field's label plus its optional ⓘ tooltip, for the non-checkbox label span. */
+function FieldLabel(props: { field: FieldDef }) {
+  return (
+    <span class="field-label">
+      {props.field.label()}
+      <FieldHelp field={props.field} />
+    </span>
+  )
+}
+
 function FieldControl(props: {
   field: FieldDef
   values: FormValues
@@ -710,14 +735,17 @@ function FieldControl(props: {
   return (
     <Switch>
       <Match when={props.field.type === 'checkbox'}>
-        <label class="field-check">
-          <input type="checkbox" checked={Boolean(value())} onInput={(e) => props.setField(props.field.name, e.currentTarget.checked)} />
-          <span>{props.field.label()}</span>
-        </label>
+        <div class="field-check-row">
+          <label class="field-check">
+            <input type="checkbox" checked={Boolean(value())} onInput={(e) => props.setField(props.field.name, e.currentTarget.checked)} />
+            <span>{props.field.label()}</span>
+          </label>
+          <FieldHelp field={props.field} />
+        </div>
       </Match>
       <Match when={props.field.type === 'multiselect'}>
         <fieldset class="field multiselect">
-          <legend>{props.field.label()}</legend>
+          <legend><FieldLabel field={props.field} /></legend>
           <For each={selectOptions()}>
             {(option) => (
               <label class="field-check">
@@ -734,7 +762,7 @@ function FieldControl(props: {
       </Match>
       <Match when={props.field.type === 'select'}>
         <label class="field">
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
           <select
             required={props.field.required}
             disabled={disabled()}
@@ -748,13 +776,13 @@ function FieldControl(props: {
       </Match>
       <Match when={props.field.type === 'textarea'}>
         <label class="field">
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
           <textarea disabled={disabled()} value={text()} onInput={(e) => props.setField(props.field.name, e.currentTarget.value)} />
         </label>
       </Match>
       <Match when={props.field.type === 'date'}>
         <label class="field">
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
           <DateField
             value={text()}
             onChange={(iso) => props.setField(props.field.name, iso)}
@@ -765,7 +793,7 @@ function FieldControl(props: {
       </Match>
       <Match when={true}>
         <label class="field">
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
           <input
             type={props.field.type === 'number' ? 'number' : 'text'}
             required={props.field.required}

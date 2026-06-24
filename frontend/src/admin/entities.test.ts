@@ -141,4 +141,14 @@ describe('admin entity descriptors', () => {
       expect(projects.fields.find((f) => f.name === name)?.activeOnly).toBe(true)
     }
   })
+
+  it('every entity has an intro description and key fields carry help tooltips', () => {
+    for (const entity of entities) {
+      expect(entity.description?.()).toBeTruthy()
+    }
+    expect(byKey('projects').fields.find((f) => f.name === 'billing')?.help?.()).toBeTruthy()
+    expect(byKey('users').fields.find((f) => f.name === 'type')?.help?.()).toBeTruthy()
+    expect(byKey('activities').fields.find((f) => f.name === 'factor')?.help?.()).toBeTruthy()
+    expect(byKey('customers').fields.find((f) => f.name === 'global')?.help?.()).toBeTruthy()
+  })
 })

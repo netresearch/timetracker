@@ -592,6 +592,39 @@ main {
   font-weight: 600;
 }
 
+.field-help {
+  margin-inline-start: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-weight: 400;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: help;
+}
+
+.field-help:hover,
+.field-help:focus-visible {
+  color: var(--color-accent, #0a84ff);
+}
+
+.admin-intro {
+  margin: 0 0 0.75rem;
+  max-width: 70ch;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Checkbox + its ⓘ help, kept outside the <label> so the help icon neither
+   toggles the box nor pollutes the label's text. */
+.field-check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 /* All text-like inputs, selects and textareas in a field share the same
    recognisable box (checkboxes/radios keep their native look in .field-check). */
 .field input:not([type='checkbox']):not([type='radio']),
