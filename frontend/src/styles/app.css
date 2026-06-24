@@ -1193,6 +1193,11 @@ kbd {
 .tracking-legend-item.is-pause::before { background: var(--color-class-pause); }
 .tracking-legend-item.is-overlap::before { background: var(--color-class-overlap); }
 
+/* Tighter gap so the icon legend reads as one block with the colour legend. */
+.tracking-legend-icons {
+  margin-top: 0.4rem;
+}
+
 /* Icon legend items carry an inline icon instead of a colour swatch. */
 .tracking-legend-icon {
   align-items: center;
