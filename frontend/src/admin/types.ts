@@ -33,6 +33,8 @@ export interface FieldDef {
   /** A select that offers only active options (hides deactivated users), while
    *  keeping whatever is already assigned so an edit doesn't silently drop it. */
   activeOnly?: boolean
+  /** Optional explanatory tooltip shown as an ⓘ next to the field label. */
+  help?: () => string
 }
 
 export type FormValues = Record<string, string | number | boolean | number[]>
@@ -47,6 +49,8 @@ export interface EntityDescriptor {
   deleteEndpoint: string
   columns: ColumnDef[]
   fields: FieldDef[]
+  /** Optional one- or two-line intro shown above the grid, explaining the entity. */
+  description?: () => string
   /** A human label for a row, used in the delete confirmation. */
   rowLabel: (row: Record<string, unknown>) => string
   /** Map a list row's inner object to initial form values (add → {}). */

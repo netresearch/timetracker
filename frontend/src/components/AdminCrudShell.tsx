@@ -437,6 +437,10 @@ export function AdminCrudShell(props: {
         </div>
       </Show>
 
+      <Show when={props.descriptor.description !== undefined}>
+        <p class="admin-intro">{props.descriptor.description?.()}</p>
+      </Show>
+
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>
         <div class="table-scroll">
           <table
@@ -672,6 +676,18 @@ export function AdminCrudShell(props: {
   )
 }
 
+/** A field's label plus an optional ⓘ tooltip (hover title + AT aria-label). */
+function FieldLabel(props: { field: FieldDef }) {
+  return (
+    <span class="field-label">
+      {props.field.label()}
+      <Show when={props.field.help !== undefined}>
+        <span class="field-help" tabindex="0" role="note" aria-label={props.field.help?.()} title={props.field.help?.()}>ⓘ</span>
+      </Show>
+    </span>
+  )
+}
+
 function FieldControl(props: {
   field: FieldDef
   values: FormValues
@@ -712,12 +728,12 @@ function FieldControl(props: {
       <Match when={props.field.type === 'checkbox'}>
         <label class="field-check">
           <input type="checkbox" checked={Boolean(value())} onInput={(e) => props.setField(props.field.name, e.currentTarget.checked)} />
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
         </label>
       </Match>
       <Match when={props.field.type === 'multiselect'}>
         <fieldset class="field multiselect">
-          <legend>{props.field.label()}</legend>
+          <legend><FieldLabel field={props.field} /></legend>
           <For each={selectOptions()}>
             {(option) => (
               <label class="field-check">
@@ -734,7 +750,7 @@ function FieldControl(props: {
       </Match>
       <Match when={props.field.type === 'select'}>
         <label class="field">
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
           <select
             required={props.field.required}
             disabled={disabled()}
@@ -748,13 +764,13 @@ function FieldControl(props: {
       </Match>
       <Match when={props.field.type === 'textarea'}>
         <label class="field">
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
           <textarea disabled={disabled()} value={text()} onInput={(e) => props.setField(props.field.name, e.currentTarget.value)} />
         </label>
       </Match>
       <Match when={props.field.type === 'date'}>
         <label class="field">
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
           <DateField
             value={text()}
             onChange={(iso) => props.setField(props.field.name, iso)}
@@ -765,7 +781,7 @@ function FieldControl(props: {
       </Match>
       <Match when={true}>
         <label class="field">
-          <span>{props.field.label()}</span>
+          <FieldLabel field={props.field} />
           <input
             type={props.field.type === 'number' ? 'number' : 'text'}
             required={props.field.required}

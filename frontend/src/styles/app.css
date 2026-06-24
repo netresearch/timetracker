@@ -592,6 +592,26 @@ main {
   font-weight: 600;
 }
 
+.field-help {
+  margin-inline-start: 0.3rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  font-size: 0.85rem;
+  cursor: help;
+}
+
+.field-help:hover,
+.field-help:focus-visible {
+  color: var(--color-accent, #0a84ff);
+}
+
+.admin-intro {
+  margin: 0 0 0.75rem;
+  max-width: 70ch;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
 /* All text-like inputs, selects and textareas in a field share the same
    recognisable box (checkboxes/radios keep their native look in .field-check). */
 .field input:not([type='checkbox']):not([type='radio']),

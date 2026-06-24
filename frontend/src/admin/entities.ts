@@ -64,6 +64,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'customers',
       title: () => m.admin_e_customers(),
+      description: () => m.admin_desc_customers(),
       listEndpoint: '/getAllCustomers',
       rowKey: 'customer',
       saveEndpoint: '/customer/save',
@@ -78,7 +79,7 @@ export function adminEntities(): EntityDescriptor[] {
       fields: [
         { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
         { name: 'active', label: () => m.admin_f_active(), type: 'checkbox' },
-        { name: 'global', label: () => m.admin_f_global(), type: 'checkbox' },
+        { name: 'global', label: () => m.admin_f_global(), type: 'checkbox', help: () => m.admin_help_global() },
         { name: 'teams', label: () => m.admin_f_teams(), type: 'multiselect', source: 'teams' },
       ],
       rowLabel: (row) => str(row.name),
@@ -90,6 +91,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'projects',
       title: () => m.admin_e_projects(),
+      description: () => m.admin_desc_projects(),
       listEndpoint: '/getAllProjects',
       rowKey: 'project',
       saveEndpoint: '/project/save',
@@ -116,13 +118,13 @@ export function adminEntities(): EntityDescriptor[] {
         { name: 'jiraTicket', label: () => m.admin_f_jira_ticket(), type: 'text' },
         { name: 'additionalInformationFromExternal', label: () => m.admin_f_ext_info(), type: 'checkbox' },
         { name: 'active', label: () => m.admin_f_active(), type: 'checkbox' },
-        { name: 'global', label: () => m.admin_f_global(), type: 'checkbox' },
+        { name: 'global', label: () => m.admin_f_global(), type: 'checkbox', help: () => m.admin_help_global() },
         { name: 'project_lead', label: () => m.admin_f_project_lead(), type: 'select', source: 'users', activeOnly: true },
         { name: 'technical_lead', label: () => m.admin_f_technical_lead(), type: 'select', source: 'users', activeOnly: true },
         { name: 'offer', label: () => m.admin_f_offer(), type: 'text' },
         { name: 'cost_center', label: () => m.admin_f_cost_center(), type: 'text' },
         {
-          name: 'billing', label: () => m.admin_f_billing(), type: 'select',
+          name: 'billing', label: () => m.admin_f_billing(), type: 'select', help: () => m.admin_help_billing(),
           staticOptions: [
             { value: 0, label: () => m.admin_billing_none() },
             { value: 1, label: () => m.admin_billing_tm() },
@@ -166,6 +168,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'users',
       title: () => m.admin_e_users(),
+      description: () => m.admin_desc_users(),
       listEndpoint: '/getAllUsers',
       rowKey: 'user',
       saveEndpoint: '/user/save',
@@ -192,7 +195,7 @@ export function adminEntities(): EntityDescriptor[] {
           ],
         },
         {
-          name: 'type', label: () => m.admin_f_type(), type: 'select', stringValue: true,
+          name: 'type', label: () => m.admin_f_type(), type: 'select', stringValue: true, help: () => m.admin_help_user_type(),
           staticOptions: [
             { value: 'DEV', label: () => m.admin_type_dev() },
             { value: 'PL', label: () => m.admin_type_pl() },
@@ -212,6 +215,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'teams',
       title: () => m.admin_e_teams(),
+      description: () => m.admin_desc_teams(),
       listEndpoint: '/getAllTeams',
       rowKey: 'team',
       saveEndpoint: '/team/save',
@@ -233,6 +237,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'holidays',
       title: () => m.admin_e_holidays(),
+      description: () => m.admin_desc_holidays(),
       listEndpoint: '/getAllHolidays',
       rowKey: 'holiday',
       saveEndpoint: '/holiday/save',
@@ -256,6 +261,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'presets',
       title: () => m.admin_e_presets(),
+      description: () => m.admin_desc_presets(),
       listEndpoint: '/getAllPresets',
       rowKey: 'preset',
       saveEndpoint: '/preset/save',
@@ -283,6 +289,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'ticketsystems',
       title: () => m.admin_e_ticketsystems(),
+      description: () => m.admin_desc_ticketsystems(),
       listEndpoint: '/getTicketSystems',
       rowKey: 'ticketSystem',
       saveEndpoint: '/ticketsystem/save',
@@ -301,7 +308,7 @@ export function adminEntities(): EntityDescriptor[] {
             { value: 'JIRA', label: () => 'JIRA' }, { value: 'OTRS', label: () => 'OTRS' }, { value: 'FRESHDESK', label: () => 'FRESHDESK' },
           ],
         },
-        { name: 'bookTime', label: () => m.admin_f_book_time(), type: 'checkbox' },
+        { name: 'bookTime', label: () => m.admin_f_book_time(), type: 'checkbox', help: () => m.admin_help_book_time() },
         { name: 'url', label: () => m.admin_f_url(), type: 'text' },
         { name: 'ticketUrl', label: () => m.admin_f_ticket_url(), type: 'text' },
         { name: 'login', label: () => m.admin_f_login(), type: 'text' },
@@ -339,6 +346,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'activities',
       title: () => m.admin_e_activities(),
+      description: () => m.admin_desc_activities(),
       listEndpoint: '/getActivities',
       rowKey: 'activity',
       saveEndpoint: '/activity/save',
@@ -350,8 +358,8 @@ export function adminEntities(): EntityDescriptor[] {
       ],
       fields: [
         { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
-        { name: 'needsTicket', label: () => m.admin_f_needs_ticket(), type: 'checkbox' },
-        { name: 'factor', label: () => m.admin_f_factor(), type: 'number' },
+        { name: 'needsTicket', label: () => m.admin_f_needs_ticket(), type: 'checkbox', help: () => m.admin_help_needs_ticket() },
+        { name: 'factor', label: () => m.admin_f_factor(), type: 'number', help: () => m.admin_help_factor() },
       ],
       rowLabel: (row) => str(row.name),
       toForm: (row) => row === null
@@ -362,6 +370,7 @@ export function adminEntities(): EntityDescriptor[] {
     {
       key: 'contracts',
       title: () => m.admin_e_contracts(),
+      description: () => m.admin_desc_contracts(),
       listEndpoint: '/getContracts',
       rowKey: 'contract',
       saveEndpoint: '/contract/save',
