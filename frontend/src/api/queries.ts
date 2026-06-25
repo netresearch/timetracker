@@ -353,11 +353,19 @@ export interface GroupRow {
 
 export type InterpretationGroup = 'customer' | 'project' | 'ticket' | 'activity' | 'user'
 
-// The backend only accepts a query when at least one of customer/project/
-// user/ticket (or year+month) is set; otherwise it answers 406. Mirror that
-// so we don't fire requests that can only fail.
+// The backend only accepts a query when at least one real filter dimension is
+// set (customer/project/team/user/activity/ticket/description); otherwise it
+// answers 406. Mirror that so we don't fire requests that can only fail.
 export function hasInterpretationCriteria(filters: InterpretationFilters): boolean {
-  return filters.customer > 0 || filters.project > 0 || filters.user > 0 || filters.ticket.trim() !== ''
+  return (
+    filters.customer > 0 ||
+    filters.project > 0 ||
+    filters.team > 0 ||
+    filters.user > 0 ||
+    filters.activity > 0 ||
+    filters.ticket.trim() !== '' ||
+    filters.description.trim() !== ''
+  )
 }
 
 function filterParams(filters: InterpretationFilters): Record<string, string | number> {

@@ -242,7 +242,7 @@
   "range_last_7_days": "Last 7 days",
   "range_last_30_days": "Last 30 days",
   "range_last_12_months": "Last 12 months",
-  "auswertung_pick_filter": "Choose at least a customer, project, user or ticket.",
+  "auswertung_pick_filter": "Choose at least a customer, project, team, user, activity, ticket or description.",
   "auswertung_by_customer": "Effort by customer",
   "auswertung_by_project": "Effort by project",
   "auswertung_by_ticket": "Effort by ticket",
