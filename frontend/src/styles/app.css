@@ -1763,9 +1763,41 @@ th[aria-sort='descending'] .th-sort-glyph {
   pointer-events: none;
 }
 
+.admin-bulk-headline {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.7rem;
+  margin-right: auto;
+}
+
 .admin-bulk-count {
   font-weight: 700;
-  margin-right: auto;
+}
+
+/* The "select all N across pages" opt-in — kept next to the count, weighted so
+   it reads as the primary action of the selection headline. */
+.admin-bulk-selectall {
+  font-weight: 600;
+}
+
+/* Shell-level error (failed bulk action / save) — a full-width danger banner so
+   it can't be missed, unlike the former inline toolbar text. */
+.admin-error-banner {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger);
+  border-radius: 10px;
+  color: var(--color-danger-text);
+  font-weight: 600;
+  margin: 0 0 1rem;
+  padding: 0.7rem 1rem;
+}
+
+/* Inline cell warning marker (e.g. a duplicate abbreviation in the admin grid). */
+.cell-warn {
+  color: var(--color-warning-text);
+  cursor: help;
+  margin-left: 0.3rem;
 }
 
 /* Narrow leading selection column. */

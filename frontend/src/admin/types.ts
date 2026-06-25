@@ -14,6 +14,9 @@ export interface ColumnDef {
   /** Render the cell as an on/off indicator (green dot for true, empty for
    *  false) instead of text; `render` still supplies the sort key. */
   boolean?: boolean
+  /** Flag the cell with a warning marker (e.g. a duplicate abbreviation that
+   *  needs cleaning up). Display-only — does not affect sort/filter/CSV. */
+  warn?: (row: Record<string, unknown>) => boolean
 }
 
 export type FieldType = 'text' | 'number' | 'checkbox' | 'date' | 'select' | 'multiselect' | 'textarea'

@@ -204,8 +204,15 @@ export function AdminCrudShell(props: {
   const [selected, setSelected] = createStore<Record<number, boolean>>({})
   const selectedRows = createMemo<Row[]>(() => visibleRows().filter((row) => selected[Number(row.id)]))
   const selectedCount = createMemo(() => selectedRows().length)
-  // Header checkbox reflects/toggles the whole filtered set (across pages).
-  const allSelected = createMemo(() => visibleRows().length > 0 && selectedRows().length === visibleRows().length)
+  // Header checkbox reflects/toggles only the CURRENT PAGE — selecting hundreds
+  // of off-screen rows by accident (across pages) is a footgun. A "select all N"
+  // affordance (below) opts into the whole filtered set on demand.
+  const allSelected = createMemo(() => pagedRows().length > 0 && pagedRows().every((row) => selected[Number(row.id)]))
+  // Every filtered row (across all pages) is selected.
+  const allFilteredSelected = createMemo(() => visibleRows().length > 0 && visibleRows().every((row) => selected[Number(row.id)]))
+  // Offer the cross-page "select all N" only once the visible page is fully
+  // picked and there is more to select (the Gmail / Groups pattern).
+  const canSelectAllFiltered = createMemo(() => allSelected() && !allFilteredSelected() && visibleRows().length > pagedRows().length)
   const [bulkBusy, setBulkBusy] = createSignal(false)
   // `indeterminate` is a DOM property (no HTML attribute), so drive it via a ref
   // + a reactive computed rather than JSX.
@@ -218,12 +225,20 @@ export function AdminCrudShell(props: {
   })
 
   const toggleRow = (rowId: number, on: boolean) => setSelected(rowId, on)
-  // Shallow-merge only the currently-visible rows so selections of rows hidden by
-  // the filter/another page are preserved (selection persists across filtering).
+  // The header checkbox toggles only the current page; selections on other pages
+  // are preserved (selection persists across paging/filtering).
   function toggleAll(on: boolean) {
     const updates: Record<number, boolean> = {}
-    for (const row of visibleRows()) {
+    for (const row of pagedRows()) {
       updates[Number(row.id)] = on
+    }
+    setSelected(updates)
+  }
+  // Opt in to the whole filtered set (across pages) — the "select all N" action.
+  function selectAllFiltered() {
+    const updates: Record<number, boolean> = {}
+    for (const row of visibleRows()) {
+      updates[Number(row.id)] = true
     }
     setSelected(updates)
   }
@@ -373,9 +388,6 @@ export function AdminCrudShell(props: {
         <button type="button" class="primary-button" data-keyboard-add aria-keyshortcuts="Alt+A" onClick={() => openForm(null)}>
           {m.admin_add()}
         </button>
-        <Show when={error()}>
-          <span role="alert" class="form-status is-error">{error()}</span>
-        </Show>
         <Show when={notice()}>
           <span role="status" class="form-status is-ok">{notice()}</span>
         </Show>
@@ -424,9 +436,22 @@ export function AdminCrudShell(props: {
         </button>
       </div>
 
+      {/* Shell-level errors (e.g. a failed bulk action) as a prominent full-width
+          banner — the old inline toolbar text was easy to miss. */}
+      <Show when={error()}>
+        <p class="admin-error-banner" role="alert">{error()}</p>
+      </Show>
+
       <Show when={selectedCount() > 0}>
         <div class="admin-bulk-bar" role="region" aria-label={m.admin_bulk_actions()} aria-busy={bulkBusy() ? 'true' : undefined}>
-          <span class="admin-bulk-count" role="status" aria-live="polite">{m.admin_bulk_selected({ count: String(selectedCount()) })}</span>
+          <div class="admin-bulk-headline">
+            <span class="admin-bulk-count" role="status" aria-live="polite">{m.admin_bulk_selected({ count: String(selectedCount()) })}</span>
+            <Show when={canSelectAllFiltered()}>
+              <button type="button" class="link-button admin-bulk-selectall" onClick={() => selectAllFiltered()}>
+                {m.admin_bulk_select_all_filtered({ count: String(visibleRows().length) })}
+              </button>
+            </Show>
+          </div>
           <Show when={hasActiveField()}>
             <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(true)}>{m.admin_bulk_activate()}</button>
             <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(false)}>{m.admin_bulk_deactivate()}</button>
@@ -553,7 +578,14 @@ export function AdminCrudShell(props: {
                                   ? <BoolDot on={Boolean(editor.overlayRow(row)[col.key])} />
                                   : fieldType === 'select' || fieldType === 'multiselect'
                                     ? <ReadonlyChips values={chipValues(editor.overlayRow(row)[col.key])} options={fieldSelectOptions(fieldFor(col.key)!, props.options)} />
-                                    : displayText(row, col)
+                                    : (
+                                        <>
+                                          {displayText(row, col)}
+                                          <Show when={col.warn?.(editor.overlayRow(row)) ?? false}>
+                                            <span class="cell-warn" title={m.admin_abbr_duplicate()} aria-label={m.admin_abbr_duplicate()}>⚠</span>
+                                          </Show>
+                                        </>
+                                      )
                               }
                             >
                               <Show

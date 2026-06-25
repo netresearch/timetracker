@@ -175,7 +175,7 @@ export function adminEntities(): EntityDescriptor[] {
       deleteEndpoint: '/user/delete',
       columns: [
         { key: 'username', label: () => m.admin_f_username() },
-        { key: 'abbr', label: () => m.admin_f_abbr() },
+        { key: 'abbr', label: () => m.admin_f_abbr(), warn: (row) => Boolean(row.abbr_duplicate) },
         { key: 'type', label: () => m.admin_f_type() },
         { key: 'locale', label: () => m.admin_f_language(), render: (row) => localeLabel(row.locale) },
         { key: 'teams', label: () => m.admin_f_teams(), render: (row, o) => ((row.teams as number[]) ?? []).map((id) => o('teams').find((t) => t.id === id)?.label ?? id).join(', ') },

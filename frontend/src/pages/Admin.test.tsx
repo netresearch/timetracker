@@ -746,4 +746,28 @@ describe('Admin status page', () => {
 
     unmount()
   })
+
+  it('select-all picks only the current page, then offers selecting all matches (#6)', async () => {
+    // 51 users → two pages of 50. Selecting the header checkbox must pick only
+    // the visible page, with an explicit opt-in to select the whole filtered set.
+    const users = Array.from({ length: 51 }, (_unused, i) => ({
+      user: { id: i + 1, username: `user${String(i + 1).padStart(2, '0')}`, abbr: '', type: 'DEV', active: true, teams: [] },
+    }))
+    getJson.mockImplementation((path: string) => (path === '/getAllUsers' ? Promise.resolve(users) : Promise.resolve([])))
+    const { getByRole, getByText, queryByText, unmount } = renderAdmin('/admin/users')
+    await waitFor(() => expect(getByText('user01')).toBeInTheDocument())
+
+    const selectAll = getByRole('checkbox', { name: 'Select all rows' }) as HTMLInputElement
+    selectAll.checked = true
+    fireEvent.input(selectAll)
+    // Only the 50-row page is selected — not all 51 across pages.
+    await waitFor(() => expect(getByText('50 selected')).toBeInTheDocument())
+
+    // Opting in selects the whole filtered set; the offer then disappears.
+    fireEvent.click(getByText('Select all 51'))
+    await waitFor(() => expect(getByText('51 selected')).toBeInTheDocument())
+    expect(queryByText('Select all 51')).toBeNull()
+
+    unmount()
+  })
 })
