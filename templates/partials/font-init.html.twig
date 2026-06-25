@@ -1,0 +1,31 @@
+{# Applies the saved font preferences (body face + text size, ADR-014) before
+   first paint so the server-rendered header and the SPA content render with the
+   chosen font/size — no flash. Mirrors theme-init / density-init. The controls
+   live in the SolidJS Settings page (frontend/src/lib/fontPref.ts), which shares
+   these localStorage keys; this partial only applies them on load. #}
+<script>
+(function () {
+    var FONT_KEY = 'timetracker-font';
+    var SCALE_KEY = 'timetracker-font-scale';
+    try {
+        // Accessing localStorage can throw (private mode, sandbox, policy);
+        // this runs synchronously in <head>, so swallow and keep the defaults.
+        var font = window.localStorage.getItem(FONT_KEY);
+        if (font === 'system' || font === 'dyslexic') {
+            document.documentElement.setAttribute('data-font', font);
+        } else {
+            document.documentElement.removeAttribute('data-font');
+        }
+        // Allow-list the scales (must match the Settings options) so a stray
+        // value can't blow up the layout.
+        var scale = window.localStorage.getItem(SCALE_KEY);
+        if (scale === '1.15' || scale === '1.3') {
+            document.documentElement.style.setProperty('--font-scale', scale);
+        } else {
+            document.documentElement.style.removeProperty('--font-scale');
+        }
+    } catch (error) {
+        // Storage disabled/restricted — render with the default font and size.
+    }
+})();
+</script>

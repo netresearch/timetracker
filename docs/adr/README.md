@@ -14,6 +14,7 @@ This directory contains Architecture Decision Records (ADRs) that document key t
 | [ADR-006](ADR-006-testing-philosophy.md) | Testing Philosophy | ✅ Accepted | 2024-09-15 | 🟡 Medium |
 | [ADR-007](ADR-007-api-design-patterns.md) | API Design Patterns | ✅ Accepted | 2024-09-15 | 🟡 Medium |
 | [ADR-008](ADR-008-database-performance-optimization.md) | Database Performance Optimization | ✅ Accepted | 2024-09-15 | 🔴 High |
+| [ADR-014](ADR-014-typography-and-font-preferences.md) | Typography and Font Preferences | ✅ Accepted | 2026-06-25 | 🟡 Medium |
 
 ## ADR Format
 
