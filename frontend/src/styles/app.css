@@ -959,6 +959,16 @@ kbd {
   text-transform: uppercase;
 }
 
+/* Sortable headers carry their padding on the inner .th-sort button, so the
+   cell itself drops its padding; a solid background keeps the pinned header
+   opaque (matching the card) while the body scrolls in .is-scrollable. */
+.effort-table thead th:has(.th-sort) {
+  padding: 0;
+}
+.table-scroll.is-scrollable .effort-table thead th {
+  background: var(--color-surface);
+}
+
 .effort-table .numeric {
   font-variant-numeric: tabular-nums;
   text-align: right;

@@ -1,7 +1,9 @@
-import { createMemo, For, Show } from 'solid-js'
+import { createMemo, createSignal, For, Show } from 'solid-js'
 
 import { formatMinutes } from '../lib/format'
 import { m } from '../paraglide/messages.js'
+
+type SortKey = 'label' | 'hours' | 'share'
 
 export interface EffortRow {
   label: string
@@ -31,6 +33,38 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
   const max = createMemo(() => Math.max(1, ...props.rows.map((row) => Math.max(row.minutes, row.target ?? 0))))
   const pct = (minutes: number): string => `${(minutes / max()) * 100}%`
 
+  // Optional column sort. Default (null) keeps the server order — value-desc for
+  // the grouped charts, chronological for "by day". Clicking a header cycles
+  // none → asc → desc → none. Share is proportional to minutes, so the hours and
+  // share columns order identically.
+  const [sort, setSort] = createSignal<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
+  const toggleSort = (key: SortKey): void => {
+    setSort((current) => (current?.key !== key ? { key, dir: 'asc' } : current.dir === 'asc' ? { key, dir: 'desc' } : null))
+  }
+  const ariaSort = (key: SortKey): 'ascending' | 'descending' | 'none' => {
+    const current = sort()
+
+    return current?.key === key ? (current.dir === 'asc' ? 'ascending' : 'descending') : 'none'
+  }
+  const sortGlyph = (key: SortKey): string => {
+    const current = sort()
+
+    return current?.key === key ? (current.dir === 'asc' ? '▲' : '▼') : '⇅'
+  }
+  const sortedRows = createMemo<EffortRow[]>(() => {
+    const current = sort()
+    if (!current) {
+      return props.rows
+    }
+    const factor = current.dir === 'asc' ? 1 : -1
+
+    return [...props.rows].sort((a, b) =>
+      current.key === 'label'
+        ? factor * a.label.localeCompare(b.label, undefined, { numeric: true })
+        : factor * (a.minutes - b.minutes),
+    )
+  })
+
   return (
     <section class="effort-chart">
       <h2>{props.title}</h2>
@@ -38,17 +72,33 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
         when={props.rows.length > 0}
         fallback={<p class="effort-empty">{m.auswertung_no_data()}</p>}
       >
+        <div class="table-scroll is-scrollable">
         <table class="effort-table">
           <caption class="visually-hidden">{props.title}</caption>
           <thead>
             <tr>
-              <th scope="col">{m.auswertung_label()}</th>
-              <th scope="col" class="numeric">{m.auswertung_hours()}</th>
-              <th scope="col" class="numeric">{m.auswertung_share()}</th>
+              <th scope="col" aria-sort={ariaSort('label')}>
+                <button type="button" class="th-sort" onClick={() => toggleSort('label')}>
+                  <span>{m.auswertung_label()}</span>
+                  <span class="th-sort-glyph" aria-hidden="true">{sortGlyph('label')}</span>
+                </button>
+              </th>
+              <th scope="col" class="numeric" aria-sort={ariaSort('hours')}>
+                <button type="button" class="th-sort" onClick={() => toggleSort('hours')}>
+                  <span>{m.auswertung_hours()}</span>
+                  <span class="th-sort-glyph" aria-hidden="true">{sortGlyph('hours')}</span>
+                </button>
+              </th>
+              <th scope="col" class="numeric" aria-sort={ariaSort('share')}>
+                <button type="button" class="th-sort" onClick={() => toggleSort('share')}>
+                  <span>{m.auswertung_share()}</span>
+                  <span class="th-sort-glyph" aria-hidden="true">{sortGlyph('share')}</span>
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <For each={props.rows}>
+            <For each={sortedRows()}>
               {(row) => {
                 // A 0 Soll (weekend / public holiday / contract gap) is "no
                 // boundary for this day": skip the over/under colour, the marker
@@ -87,6 +137,7 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
             </For>
           </tbody>
         </table>
+        </div>
       </Show>
     </section>
   )
