@@ -48,6 +48,53 @@ final class SaveUserAbbrLengthTest extends AbstractWebTestCase
         $this->assertUserRejected('abbruser5', '');
     }
 
+    public function testGrandfathersAnUnchangedDuplicateAbbr(): void
+    {
+        // A legacy duplicate: give user 2 the same abbreviation as user 1. Re-
+        // saving user 1 with its UNCHANGED abbr (e.g. just deactivating) must
+        // succeed despite the collision — only a new/changed abbr is checked.
+        $connection = $this->connection;
+        self::assertNotNull($connection);
+        $row = $connection->fetchAssociative('SELECT username, abbr, type FROM users WHERE id = 1');
+        self::assertIsArray($row);
+        $connection->executeStatement('UPDATE users SET abbr = ? WHERE id = 2', [$row['abbr']]);
+
+        $this->logInSession('unittest');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', [
+            'id' => 1,
+            'username' => $row['username'],
+            'abbr' => $row['abbr'],
+            'teams' => ['1'],
+            'locale' => 'de',
+            'type' => $row['type'],
+            'active' => '0',
+        ], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(200);
+    }
+
+    public function testStillRejectsChangingToACollidingAbbr(): void
+    {
+        // Changing user 1's abbreviation to one another user already holds must
+        // still be rejected (the grandfathering only covers an unchanged abbr).
+        $connection = $this->connection;
+        self::assertNotNull($connection);
+        $connection->executeStatement("UPDATE users SET abbr = 'AA' WHERE id = 1");
+        $connection->executeStatement("UPDATE users SET abbr = 'ZZ' WHERE id = 3");
+        $row = $connection->fetchAssociative('SELECT username, type FROM users WHERE id = 1');
+        self::assertIsArray($row);
+
+        $this->logInSession('unittest');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/user/save', [
+            'id' => 1,
+            'username' => $row['username'],
+            'abbr' => 'ZZ',
+            'teams' => ['1'],
+            'locale' => 'de',
+            'type' => $row['type'],
+        ], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
+    }
+
     /**
      * @return array<mixed>
      */
