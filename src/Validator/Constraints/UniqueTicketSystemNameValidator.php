@@ -47,12 +47,14 @@ class UniqueTicketSystemNameValidator extends ConstraintValidator
         }
 
         $object = $this->context->getObject();
+        // TicketSystemSaveDto::$id is nullable, so narrow it explicitly before comparing.
+        $id = $object instanceof TicketSystemSaveDto ? $object->id : null;
 
         // Grandfather an unchanged name: re-saving an existing ticket system (e.g.
         // just toggling a flag) must not fail because a legacy duplicate shares the
         // name. Only a new or changed name is checked.
-        if ($object instanceof TicketSystemSaveDto && $object->id > 0) {
-            $current = $this->ticketSystemRepository->find($object->id);
+        if (null !== $id && $id > 0) {
+            $current = $this->ticketSystemRepository->find($id);
             if ($current instanceof TicketSystem && $current->getName() === $value) {
                 return;
             }
@@ -61,8 +63,7 @@ class UniqueTicketSystemNameValidator extends ConstraintValidator
         $existingSystem = $this->ticketSystemRepository->findOneBy(['name' => $value]);
 
         if (null !== $existingSystem) {
-            // Type-safe check for TicketSystemSaveDto
-            if ($object instanceof TicketSystemSaveDto && $object->id > 0 && $existingSystem->getId() === $object->id) {
+            if (null !== $id && $id > 0 && $existingSystem->getId() === $id) {
                 return;
                 // Same ticket system being updated
             }
