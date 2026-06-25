@@ -243,6 +243,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'username' => 'developer',
                     'type' => 'DEV',
                     'abbr' => 'NPL',
+                    'abbr_duplicate' => true,
                     'locale' => 'de',
                     'teams' => [2], // User 2 is in team 2
                     'active' => true,
@@ -255,6 +256,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'username' => 'i.myself',
                     'type' => 'ADMIN',
                     'abbr' => 'IMY',
+                    'abbr_duplicate' => false,
                     'locale' => 'de',
                     'teams' => [], // User 3 has no teams in current test data
                     'active' => true,
@@ -267,6 +269,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'username' => 'noContract',
                     'type' => 'ADMIN',
                     'abbr' => 'NCO',
+                    'abbr_duplicate' => false,
                     'locale' => 'de',
                     'teams' => [], // User 5 has no teams
                     'active' => true,
@@ -279,6 +282,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'username' => 'testGroupByActionUser',
                     'type' => 'DEV',
                     'abbr' => 'NPL',
+                    'abbr_duplicate' => true,
                     'locale' => 'de',
                     'teams' => [], // User 4 has no teams
                     'active' => true,
@@ -291,6 +295,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'username' => 'unittest',
                     'type' => 'ADMIN',
                     'abbr' => 'UTE',
+                    'abbr_duplicate' => false,
                     'locale' => 'de',
                     'teams' => [1], // User 1 is in team 1
                     'active' => true,

@@ -42,6 +42,19 @@ class UniqueUserAbbrValidator extends ConstraintValidator
         }
 
         $entityRepository = $this->entityManager->getRepository(User::class);
+
+        // Grandfather an unchanged abbreviation: editing an existing user (e.g.
+        // just toggling "active" in a bulk action) must not fail because a
+        // *different* legacy user already shares the abbreviation. Only a new or
+        // actually-changed abbreviation is checked for uniqueness, so existing
+        // duplicates coexist while no new collision can be introduced.
+        if ($userId > 0) {
+            $current = $entityRepository->find($userId);
+            if ($current instanceof User && $current->getAbbr() === $value) {
+                return;
+            }
+        }
+
         $queryBuilder = $entityRepository->createQueryBuilder('u')
             ->where('u.abbr = :abbr')
             ->setParameter('abbr', $value);

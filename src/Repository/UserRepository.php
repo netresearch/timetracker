@@ -89,7 +89,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string, teams: array<int, int>, active: bool, last_activity: string|null}}>
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, abbr_duplicate: bool, locale:string, teams: array<int, int>, active: bool, last_activity: string|null}}>
      */
     public function getAllUsers(): array
     {
@@ -100,6 +100,20 @@ class UserRepository extends ServiceEntityRepository
         );
 
         $lastActivity = $this->lastActivityBy('user_id');
+
+        // Count each non-empty abbreviation so the admin grid can flag the legacy
+        // duplicates that need cleaning up (the save validator grandfathers them).
+        $abbrCounts = [];
+        foreach ($users as $user) {
+            if (!$user instanceof User) {
+                continue;
+            }
+
+            $abbr = (string) $user->getAbbr();
+            if ('' !== $abbr) {
+                $abbrCounts[$abbr] = ($abbrCounts[$abbr] ?? 0) + 1;
+            }
+        }
 
         $data = [];
         foreach ($users as $user) {
@@ -112,11 +126,13 @@ class UserRepository extends ServiceEntityRepository
                 $teams[] = (int) $team->getId();
             }
 
+            $abbr = (string) $user->getAbbr();
             $data[] = ['user' => [
                 'id' => (int) $user->getId(),
                 'username' => (string) $user->getUsername(),
                 'type' => $user->getType()->value,
-                'abbr' => (string) $user->getAbbr(),
+                'abbr' => $abbr,
+                'abbr_duplicate' => ($abbrCounts[$abbr] ?? 0) > 1,
                 'locale' => $user->getLocale(),
                 'teams' => $teams,
                 'active' => $user->getActive(),
