@@ -180,10 +180,13 @@ export default function Tracking() {
   // Refetch the worklog grid AND refresh the server header's day/week/month
   // totals. The header loads those once on init, so without this they go stale
   // after a save / edit / delete (and the refresh button) until a full page
-  // reload (#446). updateWorktime swallows its own errors, so awaiting is safe.
+  // reload (#446). The two are independent (the mutation already hit the DB),
+  // so run them in parallel. updateWorktime swallows its own errors.
   const refreshWorklog = async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
-    await updateWorktime()
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] }),
+      updateWorktime(),
+    ])
   }
 
   // Polite live region: a screen reader gets no other confirmation that a row
