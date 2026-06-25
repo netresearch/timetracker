@@ -146,6 +146,11 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             return null;
         }
 
+        // The viewer filtering by their own id needs no extra lookup.
+        if ($filterUserId === $currentUser->getId()) {
+            return $currentUser;
+        }
+
         $user = $this->managerRegistry->getRepository(User::class)->find($filterUserId);
 
         return $user instanceof User ? $user : null;

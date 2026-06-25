@@ -965,8 +965,13 @@ kbd {
 .effort-table thead th:has(.th-sort) {
   padding: 0;
 }
+/* Right-align the numeric sort headers (Hours / Share) to match the right-
+   aligned numeric body cells, mirroring .data-table. */
+.effort-table th.numeric .th-sort {
+  justify-content: flex-end;
+}
 .table-scroll.is-scrollable .effort-table thead th {
-  background: var(--color-surface);
+  background-color: var(--color-surface);
 }
 
 .effort-table .numeric {
