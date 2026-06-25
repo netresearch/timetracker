@@ -1800,7 +1800,9 @@ th[aria-sort='descending'] .th-sort-glyph {
   white-space: nowrap;
 }
 
-/* Bulk-action bar shown when one or more rows are selected. */
+/* Bulk-action bar shown when one or more rows are selected. It sits INLINE in
+   the toolbar (between Add and the filter), so selecting rows doesn't add a row
+   that pushes the table down — hence no vertical margin. */
 .admin-bulk-bar {
   align-items: center;
   background: var(--color-accent-soft);
@@ -1809,8 +1811,7 @@ th[aria-sort='descending'] .th-sort-glyph {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  margin-bottom: 0.9rem;
-  padding: 0.5rem 0.9rem;
+  padding: 0.3rem 0.7rem;
 }
 
 .admin-bulk-bar[aria-busy='true'] {
@@ -1823,7 +1824,6 @@ th[aria-sort='descending'] .th-sort-glyph {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 0.7rem;
-  margin-right: auto;
 }
 
 .admin-bulk-count {

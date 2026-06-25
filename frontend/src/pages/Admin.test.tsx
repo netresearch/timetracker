@@ -788,7 +788,7 @@ describe('Admin status page', () => {
       user: { id: i + 1, username: `user${String(i + 1).padStart(2, '0')}`, abbr: '', type: 'DEV', active: true, teams: [] },
     }))
     getJson.mockImplementation((path: string) => (path === '/getAllUsers' ? Promise.resolve(users) : Promise.resolve([])))
-    const { getByRole, getByText, queryByText, unmount } = renderAdmin('/admin/users')
+    const { container, getByRole, getByText, queryByText, unmount } = renderAdmin('/admin/users')
     await waitFor(() => expect(getByText('user01')).toBeInTheDocument())
 
     const selectAll = getByRole('checkbox', { name: 'Select all rows' }) as HTMLInputElement
@@ -796,6 +796,8 @@ describe('Admin status page', () => {
     fireEvent.input(selectAll)
     // Only the 50-row page is selected — not all 51 across pages.
     await waitFor(() => expect(getByText('50 selected')).toBeInTheDocument())
+    // The bulk bar lives INSIDE the toolbar (inline), so it doesn't push the table down.
+    expect(container.querySelector('.admin-crud-toolbar .admin-bulk-bar')).not.toBeNull()
 
     // Opting in selects the whole filtered set; the offer then disappears.
     fireEvent.click(getByText('Select all 51'))

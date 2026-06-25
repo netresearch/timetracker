@@ -388,6 +388,27 @@ export function AdminCrudShell(props: {
         <button type="button" class="primary-button" data-keyboard-add aria-keyshortcuts="Alt+A" onClick={() => openForm(null)}>
           {m.admin_add()}
         </button>
+        {/* Bulk-action bar sits inline in the toolbar (between Add and the filter)
+            so selecting rows doesn't insert a new line that shoves the table down. */}
+        <Show when={selectedCount() > 0}>
+          <div class="admin-bulk-bar" role="region" aria-label={m.admin_bulk_actions()} aria-busy={bulkBusy() ? 'true' : undefined}>
+            <div class="admin-bulk-headline">
+              <span class="admin-bulk-count" role="status" aria-live="polite">{m.admin_bulk_selected({ count: String(selectedCount()) })}</span>
+              <Show when={canSelectAllFiltered()}>
+                <button type="button" class="link-button admin-bulk-selectall" onClick={() => selectAllFiltered()}>
+                  {m.admin_bulk_select_all_filtered({ count: String(visibleRows().length) })}
+                </button>
+              </Show>
+            </div>
+            <Show when={hasActiveField()}>
+              <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(true)}>{m.admin_bulk_activate()}</button>
+              <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(false)}>{m.admin_bulk_deactivate()}</button>
+            </Show>
+            <button type="button" class="action-button is-icon" disabled={bulkBusy()} aria-label={m.admin_bulk_export()} title={m.admin_bulk_export()} onClick={() => exportCsv(selectedRows())}><DownloadIcon /></button>
+            <button type="button" class="link-button is-icon is-danger" disabled={bulkBusy()} aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => bulkDelete()}><TrashIcon /></button>
+            <button type="button" class="link-button" disabled={bulkBusy()} onClick={() => clearSelection()}>{m.admin_bulk_clear()}</button>
+          </div>
+        </Show>
         <Show when={notice()}>
           <span role="status" class="form-status is-ok">{notice()}</span>
         </Show>
@@ -440,26 +461,6 @@ export function AdminCrudShell(props: {
           banner — the old inline toolbar text was easy to miss. */}
       <Show when={error()}>
         <p class="admin-error-banner" role="alert">{error()}</p>
-      </Show>
-
-      <Show when={selectedCount() > 0}>
-        <div class="admin-bulk-bar" role="region" aria-label={m.admin_bulk_actions()} aria-busy={bulkBusy() ? 'true' : undefined}>
-          <div class="admin-bulk-headline">
-            <span class="admin-bulk-count" role="status" aria-live="polite">{m.admin_bulk_selected({ count: String(selectedCount()) })}</span>
-            <Show when={canSelectAllFiltered()}>
-              <button type="button" class="link-button admin-bulk-selectall" onClick={() => selectAllFiltered()}>
-                {m.admin_bulk_select_all_filtered({ count: String(visibleRows().length) })}
-              </button>
-            </Show>
-          </div>
-          <Show when={hasActiveField()}>
-            <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(true)}>{m.admin_bulk_activate()}</button>
-            <button type="button" class="action-button" disabled={bulkBusy()} onClick={() => bulkSetActive(false)}>{m.admin_bulk_deactivate()}</button>
-          </Show>
-          <button type="button" class="action-button is-icon" disabled={bulkBusy()} aria-label={m.admin_bulk_export()} title={m.admin_bulk_export()} onClick={() => exportCsv(selectedRows())}><DownloadIcon /></button>
-          <button type="button" class="link-button is-icon is-danger" disabled={bulkBusy()} aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => bulkDelete()}><TrashIcon /></button>
-          <button type="button" class="link-button" disabled={bulkBusy()} onClick={() => clearSelection()}>{m.admin_bulk_clear()}</button>
-        </div>
       </Show>
 
       <Show when={props.descriptor.description !== undefined}>
