@@ -25,6 +25,24 @@
   src: url("../assets/fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2");
 }
 
+/* Optional dyslexia-friendly body face (ADR-014). Lazily fetched — the browser
+   only downloads these woff2 when :root[data-font="dyslexic"] is active. */
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("../assets/fonts/opendyslexic-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("../assets/fonts/opendyslexic-latin-700-normal.woff2") format("woff2");
+}
+
 /*
  * Semantic design tokens. Every text/background pair is chosen for WCAG 2.2
  * 1.4.6 (contrast enhanced, >= 7:1 for normal text) in BOTH color schemes —
@@ -35,6 +53,8 @@
 
   --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
   --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  /* User text-size preference (ADR-014); overridden on :root by font-init. */
+  --font-scale: 1;
 
   --color-bg: light-dark(#f6f8f9, #15181c);
   --color-surface: light-dark(#ffffff, #1d2127);
@@ -74,11 +94,20 @@
   color-scheme: dark;
 }
 
+/* User body-font preference (ADR-014); headings keep the brand display face. */
+:root[data-font='system'] {
+  --font-body: system-ui, sans-serif;
+}
+:root[data-font='dyslexic'] {
+  --font-body: "OpenDyslexic", system-ui, sans-serif;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 15px;
+  /* Base body size scaled by the user's text-size preference (ADR-014). */
+  font-size: calc(15px * var(--font-scale, 1));
   /* WCAG 1.4.8: generous line height. */
   line-height: 1.5;
   margin: 0;

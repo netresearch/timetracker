@@ -4,6 +4,7 @@ import { apiErrorMessage, postForm } from '../api/client'
 import { appConfig, type AppConfig } from '../config'
 import { dateFormat, setDateFormat, formatWith, validatePattern, type DateFormatMode } from '../lib/dateFormat'
 import { isoDate } from '../lib/format'
+import { getFontFamily, setFontFamily, getFontSize, setFontSize, type FontFamily, type FontSize } from '../lib/fontPref'
 import { getEnterBehavior, setEnterBehavior, type EnterBehavior } from '../lib/gridEditPref'
 import { m } from '../paraglide/messages.js'
 
@@ -18,6 +19,18 @@ const DATE_MODES: { value: DateFormatMode; label: () => string }[] = [
   { value: 'iso', label: () => m.settings_dateformat_iso() },
   { value: 'auto', label: () => m.settings_dateformat_auto() },
   { value: 'custom', label: () => m.settings_dateformat_custom() },
+]
+
+const FONT_FAMILIES: { value: FontFamily; label: () => string }[] = [
+  { value: 'default', label: () => m.settings_font_default() },
+  { value: 'system', label: () => m.settings_font_system() },
+  { value: 'dyslexic', label: () => m.settings_font_dyslexic() },
+]
+
+const FONT_SIZES: { value: FontSize; label: () => string }[] = [
+  { value: 'normal', label: () => m.settings_fontsize_normal() },
+  { value: 'large', label: () => m.settings_fontsize_large() },
+  { value: 'larger', label: () => m.settings_fontsize_larger() },
 ]
 
 interface SaveResponse {
@@ -45,6 +58,9 @@ type Status = { kind: 'idle' | 'saving' } | { kind: 'ok' } | { kind: 'error'; me
 export default function Settings() {
   const config = appConfig()
   const [enterPref, setEnterPref] = createSignal<EnterBehavior>(getEnterBehavior())
+  // Typography preferences (client-side; apply instantly to <html>).
+  const [fontFamily, setFontFamilySig] = createSignal<FontFamily>(getFontFamily())
+  const [fontSize, setFontSizeSig] = createSignal<FontSize>(getFontSize())
   // Date-format preference (client-side; applies instantly to open grids).
   const [dfMode, setDfMode] = createSignal<DateFormatMode>(dateFormat().mode)
   const [dfPattern, setDfPattern] = createSignal(dateFormat().pattern)
@@ -182,6 +198,41 @@ export default function Settings() {
               {m.settings_dateformat_preview()}: {dfPreview()}
             </Show>
           </small>
+        </label>
+
+        {/* Client-side typography preferences — apply instantly (ADR-014), not
+            part of the Save. Headings keep the brand display face. */}
+        <label class="field">
+          <span>{m.settings_font()}</span>
+          <select
+            value={fontFamily()}
+            onChange={(event) => {
+              const next = event.currentTarget.value as FontFamily
+              setFontFamilySig(next)
+              setFontFamily(next)
+            }}
+          >
+            <For each={FONT_FAMILIES}>
+              {(option) => <option value={option.value}>{option.label()}</option>}
+            </For>
+          </select>
+          <small class="field-hint">{m.settings_font_hint()}</small>
+        </label>
+
+        <label class="field">
+          <span>{m.settings_fontsize()}</span>
+          <select
+            value={fontSize()}
+            onChange={(event) => {
+              const next = event.currentTarget.value as FontSize
+              setFontSizeSig(next)
+              setFontSize(next)
+            }}
+          >
+            <For each={FONT_SIZES}>
+              {(option) => <option value={option.value}>{option.label()}</option>}
+            </For>
+          </select>
         </label>
 
         <div class="form-actions">
