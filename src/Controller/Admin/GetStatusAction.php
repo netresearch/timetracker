@@ -32,6 +32,9 @@ use const PHP_VERSION;
  */
 final class GetStatusAction extends BaseController
 {
+    /** Canonical GitHub project, used to build the provenance links. */
+    private const string REPOSITORY_URL = 'https://github.com/netresearch/timetracker';
+
     /** Composer packages worth surfacing (guarded — unknown ones are skipped). */
     private const array PACKAGES = [
         'symfony/framework-bundle',
@@ -67,6 +70,7 @@ final class GetStatusAction extends BaseController
                     ? InstalledVersions::getPrettyVersion('netresearch/timetracker')
                     : null,
             ],
+            'build' => $this->buildInfo(),
             'php' => [
                 'version' => PHP_VERSION,
                 'extensions' => array_values(array_filter(
@@ -93,6 +97,36 @@ final class GetStatusAction extends BaseController
     private function param(string $key): mixed
     {
         return $this->params->has($key) ? $this->params->get($key) : null;
+    }
+
+    /**
+     * Build provenance (commit, branch/tag, build date) baked into the image by
+     * docker bake, plus the matching GitHub links. Everything is null on a plain
+     * local build that wasn't given the APP_BUILD_* env, so the page degrades to
+     * "unknown" rather than inventing values.
+     *
+     * @return array<string, string|null>
+     */
+    private function buildInfo(): array
+    {
+        $env = static function (string $key): ?string {
+            $value = $_SERVER[$key] ?? $_ENV[$key] ?? null;
+
+            return is_string($value) && '' !== $value ? $value : null;
+        };
+
+        $revision = $env('APP_BUILD_REVISION');
+        $ref = $env('APP_BUILD_REF');
+
+        return [
+            'revision' => $revision,
+            'ref' => $ref,
+            'date' => $env('APP_BUILD_DATE'),
+            'repositoryUrl' => self::REPOSITORY_URL,
+            'commitUrl' => null !== $revision ? self::REPOSITORY_URL . '/commit/' . $revision : null,
+            'refUrl' => null !== $ref ? self::REPOSITORY_URL . '/tree/' . rawurlencode($ref) : null,
+            'releasesUrl' => self::REPOSITORY_URL . '/releases',
+        ];
     }
 
     /** @return array<string, string|null> */

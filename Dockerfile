@@ -254,6 +254,15 @@ RUN update-ca-certificates 2>/dev/null || true
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 
+# Build provenance, surfaced read-only on /ui/admin/status. Passed by CI (docker
+# bake) from the git metadata; empty on a plain local build.
+ARG APP_BUILD_REVISION=""
+ARG APP_BUILD_REF=""
+ARG APP_BUILD_DATE=""
+ENV APP_BUILD_REVISION=${APP_BUILD_REVISION}
+ENV APP_BUILD_REF=${APP_BUILD_REF}
+ENV APP_BUILD_DATE=${APP_BUILD_DATE}
+
 # Run as non-root user
 USER app
 
