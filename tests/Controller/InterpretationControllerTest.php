@@ -72,7 +72,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         // the guard but was never applied to the query). A unique ticket returns
         // exactly its one entry; a non-matching ticket returns none.
         self::assertNotNull($this->connection);
-        $ticket = 'FILT-' . substr(uniqid(), 0, 6);
+        $ticket = 'FILT-' . bin2hex(random_bytes(4));
         $this->connection->executeStatement(
             "INSERT INTO entries (day, start, end, customer_id, project_id, activity_id, description, ticket, duration, user_id, class, synced_to_ticketsystem, internal_jira_ticket_original_key)
              VALUES (CURDATE(), '08:00:00', '08:50:00', 1, 1, 1, 'x', :ticket, 50, 1, 1, 0, '')",

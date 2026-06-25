@@ -728,14 +728,19 @@ class EntryRepository extends ServiceEntityRepository
     {
         foreach (['ticket', 'description'] as $field) {
             $value = $arFilter[$field] ?? null;
-            if (!is_string($value) || '' === $value) {
+            if (!is_string($value)) {
+                continue;
+            }
+            if ('' === $value) {
                 continue;
             }
 
             // Escape LIKE wildcards so a literal % / _ in the search text matches
-            // itself instead of acting as a wildcard.
-            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
-            $queryBuilder->andWhere(sprintf('e.%s LIKE :%s', $field, $field))
+            // itself instead of acting as a wildcard. Use a '|' escape char and
+            // spell out ESCAPE explicitly — SQLite (used by the test suite) has no
+            // default LIKE escape character, unlike MySQL/MariaDB.
+            $escaped = str_replace(['|', '%', '_'], ['||', '|%', '|_'], $value);
+            $queryBuilder->andWhere(sprintf("e.%s LIKE :%s ESCAPE '|'", $field, $field))
                 ->setParameter($field, '%' . $escaped . '%');
         }
 
