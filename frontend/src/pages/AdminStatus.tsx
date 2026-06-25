@@ -106,7 +106,11 @@ async function fetchUpdateStatus(build: BuildInfo): Promise<UpdateStatus> {
     throw new Error(`github ${head.status}`)
   }
   const latest = String((await head.json()).sha)
-  if (!build.revision || latest === build.revision) {
+  // Both are normally full 40-char SHAs, but compare prefix-tolerantly so a
+  // short revision (or a short API sha) still matches rather than false-flagging.
+  const sameCommit =
+    Boolean(build.revision) && (latest === build.revision || latest.startsWith(build.revision!) || build.revision!.startsWith(latest))
+  if (!build.revision || sameCommit) {
     return { state: 'current', behind: null, compareUrl: null }
   }
 

@@ -110,7 +110,13 @@ final class GetStatusAction extends BaseController
     private function buildInfo(): array
     {
         $env = static function (string $key): ?string {
-            $value = $_SERVER[$key] ?? $_ENV[$key] ?? null;
+            // getenv() reads the real process environment regardless of PHP's
+            // variables_order (where the APP_BUILD_* Docker env land); fall back
+            // to the superglobals for SAPIs/setups that only populate those.
+            $value = getenv($key);
+            if (false === $value || '' === $value) {
+                $value = $_SERVER[$key] ?? $_ENV[$key] ?? null;
+            }
 
             return is_string($value) && '' !== $value ? $value : null;
         };
