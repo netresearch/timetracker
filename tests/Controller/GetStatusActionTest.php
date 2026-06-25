@@ -30,13 +30,21 @@ final class GetStatusActionTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         $json = $this->getJsonResponse($this->client->getResponse());
-        foreach (['app', 'php', 'symfony', 'packages', 'database', 'config'] as $section) {
+        foreach (['app', 'build', 'php', 'symfony', 'packages', 'database', 'config'] as $section) {
             self::assertArrayHasKey($section, $json);
         }
         self::assertIsArray($json['php']);
         self::assertIsArray($json['database']);
         self::assertSame(PHP_VERSION, $json['php']['version']);
         self::assertArrayHasKey('platform', $json['database']);
+
+        // Build provenance: the GitHub links are always present; the commit/ref
+        // are null in the test env (no APP_BUILD_* baked in) → no fabricated link.
+        self::assertIsArray($json['build']);
+        self::assertSame('https://github.com/netresearch/timetracker', $json['build']['repositoryUrl']);
+        self::assertSame('https://github.com/netresearch/timetracker/releases', $json['build']['releasesUrl']);
+        self::assertNull($json['build']['revision']);
+        self::assertNull($json['build']['commitUrl']);
 
         // Never leaks credentials: no password anywhere, no DB user key.
         self::assertStringNotContainsStringIgnoringCase('password', (string) json_encode($json));

@@ -54,6 +54,17 @@ variable "GIT_SHA" {
   default = ""
 }
 
+# Git ref (branch or tag) the production image was built from, surfaced on
+# /ui/admin/status. Passed by CI; empty on a plain local build.
+variable "GIT_REF" {
+  default = ""
+}
+
+# Build timestamp (ISO 8601), surfaced on /ui/admin/status. Passed by CI.
+variable "BUILD_DATE" {
+  default = ""
+}
+
 # =============================================================================
 # COMMON BUILD SETTINGS (inherited by all targets)
 # =============================================================================
@@ -91,6 +102,11 @@ target "docker-metadata-action" {
 target "app" {
   inherits = ["_common", "docker-metadata-action"]
   target   = "production"
+  args = {
+    APP_BUILD_REVISION = GIT_SHA
+    APP_BUILD_REF      = GIT_REF
+    APP_BUILD_DATE     = BUILD_DATE
+  }
   labels = {
     "org.opencontainers.image.title"       = "Netresearch TimeTracker"
     "org.opencontainers.image.description" = "Time tracking application"

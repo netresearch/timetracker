@@ -160,9 +160,9 @@ test.describe('Admin inline cell editing', () => {
 
   test('the Status sub-page shows read-only diagnostics', async ({ page }) => {
     await page.goto('/ui/admin/status');
-    // Six groups (app/php/symfony/db/packages/config). Assert on locale-independent
-    // data, not the translated headings: real version strings + the DB platform.
-    await expect(page.locator('.status-group')).toHaveCount(6);
+    // Seven groups (app/build/php/symfony/db/packages/config). Assert on locale-
+    // independent data, not the translated headings: real version strings + the DB platform.
+    await expect(page.locator('.status-group')).toHaveCount(7);
     // Bounded quantifiers (no unbounded backtracking): a dotted version string.
     await expect(page.locator('.status-page')).toContainText(/\d{1,4}\.\d{1,4}/);
     await expect(page.locator('.status-page')).toContainText(/MariaDB|MySQL/i);
