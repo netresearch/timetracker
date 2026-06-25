@@ -714,6 +714,7 @@ describe('Admin status page', () => {
       path === '/admin/status'
         ? Promise.resolve({
             app: { title: 'TT', env: 'test', debug: false, locale: 'en', version: null },
+            build: { revision: null, ref: null, date: null, repositoryUrl: 'https://github.com/netresearch/timetracker', commitUrl: null, refUrl: null, releasesUrl: 'https://github.com/netresearch/timetracker/releases' },
             php: { version: '8.5.0', extensions: ['intl', 'pdo_mysql'] },
             symfony: { kernel: '7.3.0' },
             packages: { 'doctrine/orm': '3.1.0' },
@@ -726,6 +727,9 @@ describe('Admin status page', () => {
 
     await waitFor(() => expect(getByText('8.5.0')).toBeInTheDocument())
     expect(getByRole('heading', { name: 'PHP' })).toBeInTheDocument()
+    // The build section renders; with no baked revision it reports a local build.
+    expect(getByRole('heading', { name: 'Build' })).toBeInTheDocument()
+    expect(getByText('Unknown (local build)')).toBeInTheDocument()
     expect(getByRole('heading', { name: 'Database' })).toBeInTheDocument()
     expect(getByText('MariaDBPlatform')).toBeInTheDocument()
     expect(getByText('11.4.2-MariaDB')).toBeInTheDocument()
@@ -745,6 +749,36 @@ describe('Admin status page', () => {
     await waitFor(() => expect(getByRole('alert')).toHaveTextContent(/status information/i))
 
     unmount()
+  })
+
+  it('flags an available update when the build is behind the latest commit', async () => {
+    // GitHub probe: latest main commit differs → behind, then the compare count.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ sha: 'newcommitsha000' }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ ahead_by: 3 }) })
+    vi.stubGlobal('fetch', fetchMock)
+    const repo = 'https://github.com/netresearch/timetracker'
+    getJson.mockImplementation((path: string) =>
+      path === '/admin/status'
+        ? Promise.resolve({
+            app: { title: 'TT', env: 'prod', debug: false, locale: 'en', version: '5.0.0' },
+            build: { revision: 'oldcommitsha000', ref: 'main', date: '2026-06-25T00:00:00Z', repositoryUrl: repo, commitUrl: `${repo}/commit/oldcommitsha000`, refUrl: `${repo}/tree/main`, releasesUrl: `${repo}/releases` },
+            php: { version: '8.5.0', extensions: [] },
+            symfony: { kernel: '7.3.0' },
+            packages: {},
+            database: { driver: 'mysql', platform: 'MariaDBPlatform', serverVersion: '11', host: 'db', port: '3306', name: 'tt' },
+            config: {},
+          })
+        : Promise.resolve([]),
+    )
+    const { getByText, unmount } = renderAdmin('/admin/status')
+
+    await waitFor(() => expect(getByText(/Update available/)).toBeInTheDocument())
+    expect(getByText(/3 commits behind/)).toBeInTheDocument()
+
+    unmount()
+    vi.unstubAllGlobals()
   })
 
   it('select-all picks only the current page, then offers selecting all matches (#6)', async () => {

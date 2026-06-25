@@ -1675,6 +1675,17 @@ th[aria-sort='descending'] .th-sort-glyph {
   overflow-wrap: anywhere;
 }
 
+/* Build-provenance update verdict on the status page. */
+.status-update {
+  font-weight: 600;
+}
+.status-update.is-current {
+  color: var(--color-success-text);
+}
+.status-update.is-behind {
+  color: var(--color-warning-text);
+}
+
 .admin-subnav {
   display: flex;
   flex-wrap: wrap;
