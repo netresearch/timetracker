@@ -111,6 +111,9 @@ const COLUMNS: { key: string; label: () => string; numeric?: boolean }[] = [
   { key: 'start', label: () => m.tracking_col_start(), numeric: true },
   { key: 'end', label: () => m.tracking_col_end(), numeric: true },
   { key: 'ticket', label: () => m.tracking_col_ticket() },
+  // Read-only: the external key the backend mirrored onto the internal Jira
+  // ticket (set during save, not user-editable) — so it isn't a FIELD.
+  { key: 'extTicket', label: () => m.tracking_col_ext_ticket() },
   { key: 'customer', label: () => m.tracking_col_customer() },
   { key: 'project', label: () => m.tracking_col_project() },
   { key: 'activity', label: () => m.tracking_col_activity() },
@@ -293,11 +296,17 @@ export default function Tracking() {
   // cell shows the fixed value immediately, not on the next refetch.
   function handleCommit(id: number, colKey: string, value: unknown): void {
     if (colKey === 'ticket') {
-      const prefix = str(value).toUpperCase().trim().split(/[-:]/)[0]
+      const prefix = str(value).toUpperCase().trim().split(/[-:]/)[0] ?? ''
       if (prefix === '') {
         return
       }
-      const project = (projects.data ?? []).find((candidate) => candidate.jiraId !== '' && candidate.jiraId.toUpperCase() === prefix)
+      // jiraId is a comma/space-separated list of allowed prefixes (the backend
+      // splits it the same way in validateTicketPrefix), so match membership —
+      // an exact === missed multi-prefix projects, so an external ticket like
+      // DHLSUP-1 derived the wrong/no project and the save was rejected (#453).
+      const project = (projects.data ?? []).find(
+        (candidate) => candidate.jiraId !== '' && candidate.jiraId.toUpperCase().split(/[\s,]+/).includes(prefix),
+      )
       if (project !== undefined) {
         editor.setDraftField(id, 'project', project.id)
         if (project.customer > 0) {
@@ -424,6 +433,8 @@ export default function Tracking() {
         return str(row.end)
       case 'ticket':
         return str(row.ticket)
+      case 'extTicket':
+        return str(row.extTicket)
       case 'customer':
         return labelFrom(customerLabels(), num(row.customer))
       case 'project':

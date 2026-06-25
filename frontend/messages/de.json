@@ -177,6 +177,7 @@
   "tracking_col_start": "Start",
   "tracking_col_end": "Ende",
   "tracking_col_ticket": "Ticket",
+  "tracking_col_ext_ticket": "Ext. Ticket",
   "tracking_col_customer": "Kunde",
   "tracking_col_project": "Projekt",
   "tracking_col_activity": "Tätigkeit",
