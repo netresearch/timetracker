@@ -66,6 +66,55 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         self::assertSame($testTicket, $ticketValue, 'Entry should have the requested ticket');
     }
 
+    public function testTicketFilterExcludesNonMatchingEntries(): void
+    {
+        // The ticket filter must actually narrow the result (it previously passed
+        // the guard but was never applied to the query). A unique ticket returns
+        // exactly its one entry; a non-matching ticket returns none.
+        self::assertNotNull($this->connection);
+        $ticket = 'FILT-' . bin2hex(random_bytes(4));
+        $this->connection->executeStatement(
+            "INSERT INTO entries (day, start, end, customer_id, project_id, activity_id, description, ticket, duration, user_id, class, synced_to_ticketsystem, internal_jira_ticket_original_key)
+             VALUES (CURDATE(), '08:00:00', '08:50:00', 1, 1, 1, 'x', :ticket, 50, 1, 1, 0, '')",
+            ['ticket' => $ticket],
+        );
+
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', ['ticket' => $ticket]);
+        $this->assertStatusCode(200);
+        $matching = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($matching);
+        self::assertCount(1, $matching);
+
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', ['ticket' => $ticket . 'ZZZ']);
+        $this->assertStatusCode(200);
+        $none = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($none);
+        self::assertCount(0, $none);
+    }
+
+    public function testTeamFilterScopesGroupByUserToTeamMembers(): void
+    {
+        // Team 1 holds user 1 (unittest), team 2 holds user 2 (developer). Grouping
+        // by user filtered to team 2 must include developer and exclude unittest.
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/user', ['team' => 2]);
+        $this->assertStatusCode(200);
+        $json = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($json);
+        $names = array_column($json, 'name');
+        self::assertContains('developer', $names);
+        self::assertNotContains('unittest', $names);
+    }
+
+    public function testActivityTeamDescriptionAreAcceptedAsStandaloneFilters(): void
+    {
+        // Each used to trip the "specify at least …" guard; now each is a valid
+        // standalone criterion (200, not 406).
+        foreach ([['activity' => '1'], ['team' => '1'], ['description' => 'Test']] as $params) {
+            $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', $params);
+            $this->assertStatusCode(200);
+        }
+    }
+
     public function testGroupByWorktimeAction(): void
     {
         $parameter = [

@@ -28,6 +28,7 @@
 "Please provide a valid preset name with at least 3 letters.": "Bitte gib einen Namen (mindestens 3 Zeichen) ein!"
 "Jira login failed!": "Jira-Login ist fehlgeschlagen!"
 "You need to specify at least customer, project, ticket, user or month and year.": "Bitte gib mindestens Kunde, Projekt, Ticket, Benutzer oder Monat und Jahr an."
+"You need to specify at least a customer, project, team, user, activity, ticket or description.": "Bitte gib mindestens Kunde, Projekt, Team, Benutzer, Tätigkeit, Ticket oder Beschreibung an."
 "This project is inactive and cannot be used for booking.": "Dieses Projekt ist inaktiv und darf nicht bebucht werden."
 "This customer is inactive and cannot be used for booking.": "Dieser Kunde ist inaktiv und darf nicht bebucht werden."
 "Please enter a token (min 3 chars)!": "Bitte gib ein Kürzel (mindestens 3 Zeichen) ein!"

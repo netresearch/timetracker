@@ -39,8 +39,14 @@ describe('hasInterpretationCriteria', () => {
     expect(hasInterpretationCriteria({ ...base, ticket: ' ABC-1 ' })).toBe(true)
   })
 
-  it('does not count team/activity/dates alone', () => {
-    expect(hasInterpretationCriteria({ ...base, team: 2, activity: 5, datestart: '2026-01-01' })).toBe(false)
+  it('counts team, activity and description as standalone criteria', () => {
+    expect(hasInterpretationCriteria({ ...base, team: 2 })).toBe(true)
+    expect(hasInterpretationCriteria({ ...base, activity: 5 })).toBe(true)
+    expect(hasInterpretationCriteria({ ...base, description: 'meeting' })).toBe(true)
+  })
+
+  it('does not count dates alone', () => {
+    expect(hasInterpretationCriteria({ ...base, datestart: '2026-01-01', dateend: '2026-01-31' })).toBe(false)
   })
 })
 

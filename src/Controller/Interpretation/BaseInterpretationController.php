@@ -100,8 +100,13 @@ abstract class BaseInterpretationController extends BaseController
             $arParams['dateend'] = $dateend->format('Y-m-d');
         }
 
-        if (null === $arParams['customer'] && null === $arParams['project'] && null === $arParams['user'] && null === $arParams['ticket']) {
-            throw new MissingSearchCriteriaException($this->translate('You need to specify at least customer, project, ticket, user or month and year.'));
+        $isSet = static fn (mixed $value): bool => null !== $value && '' !== $value && 0 !== $value && '0' !== $value;
+        if (
+            !$isSet($arParams['customer']) && !$isSet($arParams['project']) && !$isSet($arParams['user'])
+            && !$isSet($arParams['activity']) && !$isSet($arParams['team'])
+            && !$isSet($arParams['ticket']) && !$isSet($arParams['description'])
+        ) {
+            throw new MissingSearchCriteriaException($this->translate('You need to specify at least a customer, project, team, user, activity, ticket or description.'));
         }
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);

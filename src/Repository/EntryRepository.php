@@ -717,6 +717,41 @@ class EntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Interpretation filters the relation/date filters don't cover: a
+     * contains-search on the entry's own ticket/description columns, and a team
+     * filter scoping to entries booked by a member of that team (the entry's
+     * user is left-joined as `u` upstream).
+     *
+     * @param array<string, mixed> $arFilter
+     */
+    private function applyInterpretationExtraFilters(QueryBuilder $queryBuilder, array $arFilter): void
+    {
+        foreach (['ticket', 'description'] as $field) {
+            $value = $arFilter[$field] ?? null;
+            if (!is_string($value)) {
+                continue;
+            }
+            if ('' === $value) {
+                continue;
+            }
+
+            // Escape LIKE wildcards so a literal % / _ in the search text matches
+            // itself instead of acting as a wildcard. Use a '|' escape char and
+            // spell out ESCAPE explicitly — SQLite (used by the test suite) has no
+            // default LIKE escape character, unlike MySQL/MariaDB.
+            $escaped = str_replace(['|', '%', '_'], ['||', '|%', '|_'], $value);
+            $queryBuilder->andWhere(sprintf("e.%s LIKE :%s ESCAPE '|'", $field, $field))
+                ->setParameter($field, '%' . $escaped . '%');
+        }
+
+        $team = $arFilter['team'] ?? null;
+        if (is_numeric($team) && (int) $team > 0) {
+            $queryBuilder->andWhere(':team MEMBER OF u.teams')
+                ->setParameter('team', (int) $team);
+        }
+    }
+
+    /**
      * Applies pagination with safe casting.
      * Prefers 'start' (ExtJS offset) over calculating the offset from 'page'.
      *
@@ -1388,6 +1423,7 @@ class EntryRepository extends ServiceEntityRepository
         // Apply filters similar to queryByFilterArray but return results directly
         $this->applyRelationFilters($queryBuilder, $arFilter);
         $this->applyDateWindowFilters($queryBuilder, $arFilter);
+        $this->applyInterpretationExtraFilters($queryBuilder, $arFilter);
 
         // Apply limit if specified with safe casting
         if (isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults'])) {

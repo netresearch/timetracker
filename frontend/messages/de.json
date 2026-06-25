@@ -242,7 +242,7 @@
   "range_last_7_days": "Letzte 7 Tage",
   "range_last_30_days": "Letzte 30 Tage",
   "range_last_12_months": "Letzte 12 Monate",
-  "auswertung_pick_filter": "Mindestens Kunde, Projekt, Mitarbeiter oder Fall auswählen.",
+  "auswertung_pick_filter": "Mindestens Kunde, Projekt, Team, Mitarbeiter, Tätigkeit, Ticket oder Beschreibung auswählen.",
   "auswertung_by_customer": "Aufwand nach Kunden",
   "auswertung_by_project": "Aufwand nach Projekt",
   "auswertung_by_ticket": "Aufwand nach Fall",
