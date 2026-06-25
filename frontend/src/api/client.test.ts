@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { sessionExpired, setSessionExpired } from '../lib/session'
-import { ApiError, apiErrorMessage, getJson, postForm, postJson, SessionExpiredError } from './client'
+import { ApiError, apiErrorMessage, getJson, postForm, postJson, SessionExpiredError, ValidationError } from './client'
 
 interface FakeResponse {
   ok?: boolean
@@ -136,8 +136,12 @@ describe('api/client', () => {
   })
 
   describe('apiErrorMessage', () => {
-    it('returns the ApiError message, else the fallback', () => {
+    it('returns the ApiError or ValidationError message, else the fallback', () => {
       expect(apiErrorMessage(new ApiError(400, 'nope'), 'fb')).toBe('nope')
+      // A client-side ValidationError carries an already-localized, user-facing
+      // message and is surfaced verbatim (e.g. the start ≥ end check, #441).
+      expect(apiErrorMessage(new ValidationError('start before end'), 'fb')).toBe('start before end')
+      // A plain Error may be technical → fall back rather than leak it.
       expect(apiErrorMessage(new Error('other'), 'fb')).toBe('fb')
       expect(apiErrorMessage('weird', 'fb')).toBe('fb')
     })

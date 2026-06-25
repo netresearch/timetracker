@@ -12,6 +12,7 @@ const postForm = vi.fn()
 vi.mock('../api/client', () => ({
   SessionExpiredError: class extends Error {},
   ApiError: class extends Error {},
+  ValidationError: class extends Error {},
   apiErrorMessage: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
   getJson: (...args: unknown[]) => getJson(...args),
   postJson: (...args: unknown[]) => postJson(...args),
@@ -211,6 +212,49 @@ describe('Tracking (Worklog grid)', () => {
     ;(getByRole('combobox') as HTMLElement).focus()
 
     await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ start: '08:00' })))
+
+    unmount()
+  })
+
+  it('blocks a save with start >= end and shows a localized message, no round-trip (#441)', async () => {
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    // DEFAULT_ENTRY is 09:00–10:30; set end == start (09:00) and commit.
+    const editor = editCell(container, 'end')
+    fireEvent.input(editor, { target: { value: '09:00' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+
+    // Localized validation message shown — and crucially no /tracking/save round-
+    // trip (the old behaviour surfaced the backend's untranslated 422 instead).
+    await waitFor(() => expect(screen.getByText('Start time must be before end time.')).toBeInTheDocument())
+    expect(postJson).not.toHaveBeenCalledWith('/tracking/save', expect.anything())
+
+    unmount()
+  })
+
+  it('refreshes the header day/week/month totals after a save (#446)', async () => {
+    mockApi()
+    // A complete save response so the post-save upsert succeeds and the flow
+    // reaches the header refresh (an empty {} would throw in savedEntryToRow).
+    postJson.mockResolvedValue({
+      result: {
+        id: 1, date: '2026-06-16', start: '09:00', end: '10:30', user: 1,
+        customer: 1, project: 4, activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'XYZ-9',
+      },
+    })
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'xyz-9' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.anything()))
+    // The save also re-pulls the server header's totals (otherwise stale until F5).
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/getTimeSummary'))
 
     unmount()
   })

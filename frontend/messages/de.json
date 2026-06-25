@@ -177,6 +177,7 @@
   "tracking_class_pause": "Pause",
   "tracking_class_overlap": "Zeitüberschneidung",
   "tracking_invalid_time": "Bitte eine gültige Start- und Endzeit eingeben.",
+  "tracking_time_order": "Die Startzeit muss vor der Endzeit liegen.",
   "tracking_actions": "Aktionen",
   "tracking_add": "Eintrag hinzufügen",
   "tracking_continue": "Fortsetzen",

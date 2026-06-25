@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
 
-import { apiErrorMessage, postForm, postJson } from '../api/client'
+import { apiErrorMessage, postForm, postJson, ValidationError } from '../api/client'
 import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, upsertSavedEntry, type NamedOption, type SavedEntryResult, type SummaryScope, type TrackingEntry } from '../api/queries'
 import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
@@ -17,6 +17,7 @@ import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, 
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { PageDialog } from '../components/PageDialog'
 import { sessionExpired } from '../lib/session'
+import { updateWorktime } from '../header'
 import { dmyToIso, parseTime, toIsoDate } from '../lib/timeParse'
 import { m } from '../paraglide/messages.js'
 
@@ -175,6 +176,18 @@ export default function Tracking() {
   const [bulkOpen, setBulkOpen] = createSignal(false)
   // Confirmation dialog for a destructive delete (replaces window.confirm).
   const [pendingDelete, setPendingDelete] = createSignal<TrackingEntry | null>(null)
+
+  // Refetch the worklog grid AND refresh the server header's day/week/month
+  // totals. The header loads those once on init, so without this they go stale
+  // after a save / edit / delete (and the refresh button) until a full page
+  // reload (#446). The two are independent (the mutation already hit the DB),
+  // so run them in parallel. updateWorktime swallows its own errors.
+  const refreshWorklog = async (): Promise<void> => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] }),
+      updateWorktime(),
+    ])
+  }
 
   // Polite live region: a screen reader gets no other confirmation that a row
   // saved, deleted, or its end time changed (the row just mutates or vanishes).
@@ -336,7 +349,14 @@ export default function Tracking() {
       const start = parseTime(str(draft.start))
       const end = parseTime(str(draft.end))
       if (start === null || end === null) {
-        throw new Error(m.tracking_invalid_time())
+        throw new ValidationError(m.tracking_invalid_time())
+      }
+      // start/end are zero-padded "HH:mm", so a string compare orders them. The
+      // backend rejects start >= end too, but its message isn't localized (#441)
+      // and only fires after a round-trip — so catch it here, in the user's
+      // language, before the request.
+      if (start >= end) {
+        throw new ValidationError(m.tracking_time_order())
       }
       const isNew = num(entry.id) <= 0
       const saved = await postJson<SavedEntryResult>('/tracking/save', savePayload({
@@ -360,7 +380,7 @@ export default function Tracking() {
       if (isNew) {
         setNewRows((list) => list.filter((row) => num(row.id) !== num(entry.id)))
       }
-      await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+      await refreshWorklog()
     },
     onCommit: handleCommit,
     // Confirm every successful save (auto, force, or row-leave): announce to AT
@@ -519,7 +539,7 @@ export default function Tracking() {
       await postForm('/tracking/delete', { id: num(entry.id) })
       // Drop any pending inline draft for the now-deleted entry.
       editor.takeDraft(num(entry.id))
-      await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+      await refreshWorklog()
       announce(m.tracking_deleted())
       // The deleted row (and its trash button) left the DOM — restore cell focus
       // to the grid so keyboard users aren't dropped back to document start.
@@ -631,7 +651,7 @@ export default function Tracking() {
       }))
       upsertSavedEntry(queryClient, saved.result) // keep the prolonged row if the refetch fails
       editor.takeDraft(num(base.id)) // the draft is now persisted — clear it
-      await queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+      await refreshWorklog()
       announce(m.tracking_prolonged())
     } catch (caught) {
       setPageError(apiErrorMessage(caught, m.app_load_error()))
@@ -646,11 +666,11 @@ export default function Tracking() {
 
   const exportHref = (): string => `/export/${days()}`
 
-  // Reload the worklog entries (the Alt+R shortcut and the toolbar refresh button
-  // share this). Only the entries query is invalidated — the reference/option
-  // lookups carry a long staleTime and aren't force-refreshed on a routine reload.
+  // Reload the worklog entries and the header totals (the Alt+R shortcut and the
+  // toolbar refresh button share this). The reference/option lookups carry a long
+  // staleTime and aren't force-refreshed on a routine reload.
   function refreshEntries(): void {
-    void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
+    void refreshWorklog()
     announce(m.tracking_refreshed())
   }
 
@@ -984,7 +1004,7 @@ export default function Tracking() {
       {/* Bulk-created entries may fall outside the current days range;
           refetch so any that land in view appear. */}
       <PageDialog open={bulkOpen()} onClose={() => setBulkOpen(false)} title={m.extras_title()}>
-        <BulkEntryForm onSaved={() => void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })} />
+        <BulkEntryForm onSaved={() => void refreshWorklog()} />
       </PageDialog>
 
       {/* Accessible delete confirmation (replaces native window.confirm). */}

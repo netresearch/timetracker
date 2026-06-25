@@ -18,9 +18,20 @@ export class ApiError extends Error {
   }
 }
 
-/** The message from an ApiError, or a fallback for any other failure. */
+/** A client-side validation failure whose message is already a user-facing,
+ *  localized string (e.g. start ≥ end) and should be shown verbatim — unlike a
+ *  raw Error, whose message may be technical (and must fall back instead). */
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ValidationError'
+  }
+}
+
+/** The message from an ApiError or a client-side ValidationError (both already
+ *  user-facing), or a fallback for any other (possibly technical) failure. */
 export function apiErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof ApiError ? error.message : fallback
+  return error instanceof ApiError || error instanceof ValidationError ? error.message : fallback
 }
 
 // Raise the app-wide session-expired state — the shell shows an in-place re-login
