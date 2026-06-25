@@ -225,6 +225,8 @@ CREATE TABLE `entries` (
   KEY (`activity_id`),
   KEY (`customer_id`),
   KEY `idx_entries_user_day` (`user_id`, `day` DESC),
+  KEY `idx_entries_customer_day` (`customer_id`, `day` DESC),
+  KEY `idx_entries_project_day` (`project_id`, `day` DESC),
   KEY `idx_entries_day` (`day`),
   KEY `idx_entries_ticket` (`ticket`),
   KEY `idx_entries_user_project` (`user_id`, `project_id`),
@@ -333,7 +335,8 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20260622_AddMinEntryDuration',   '2026-06-22 00:00:00', 0),
 ('DoctrineMigrations\\Version20260622_AddJiraCloudSupport',   '2026-06-22 00:00:00', 0),
 ('DoctrineMigrations\\Version20260624_RemoveAccountEntity',   '2026-06-24 00:00:00', 0),
-('DoctrineMigrations\\Version20260624_AddUserActive',         '2026-06-24 00:00:01', 0);
+('DoctrineMigrations\\Version20260624_AddUserActive',         '2026-06-24 00:00:01', 0),
+('DoctrineMigrations\\Version20260625_AddEntriesActivityIndexes', '2026-06-25 00:00:00', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------
