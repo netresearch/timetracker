@@ -105,6 +105,10 @@ class UserRepository extends ServiceEntityRepository
         // duplicates that need cleaning up (the save validator grandfathers them).
         $abbrCounts = [];
         foreach ($users as $user) {
+            if (!$user instanceof User) {
+                continue;
+            }
+
             $abbr = (string) $user->getAbbr();
             if ('' !== $abbr) {
                 $abbrCounts[$abbr] = ($abbrCounts[$abbr] ?? 0) + 1;
