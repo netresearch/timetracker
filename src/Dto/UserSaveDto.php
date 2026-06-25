@@ -12,6 +12,7 @@ namespace App\Dto;
 use App\Entity\User;
 use App\Validator\Constraints\UniqueUserAbbr;
 use App\Validator\Constraints\UniqueUsername;
+use App\Validator\Constraints\ValidUserAbbr;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
@@ -28,8 +29,7 @@ final readonly class UserSaveDto
         #[Assert\Length(min: 3, minMessage: 'Please provide a valid user name with at least 3 letters.')]
         #[UniqueUsername]
         public string $username = '',
-        #[Assert\NotBlank(message: 'Please provide a valid user name abbreviation with 1 to 3 characters.')]
-        #[Assert\Length(max: 3, maxMessage: 'Please provide a valid user name abbreviation with 1 to 3 characters.')]
+        #[ValidUserAbbr]
         #[UniqueUserAbbr]
         public string $abbr = '',
         public string $type = '',
