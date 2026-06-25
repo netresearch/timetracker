@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Validator\Constraints;
 
 use App\Dto\ProjectSaveDto;
+use App\Entity\Project;
 use App\Repository\ProjectRepository;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -45,6 +46,17 @@ class UniqueProjectNameForCustomerValidator extends ConstraintValidator
 
         if ('' === $name || '0' === $name || null === $customerId) {
             return; // Other validators will handle these
+        }
+
+        // Grandfather an unchanged name+customer: re-saving an existing project
+        // (e.g. just toggling "active") must not fail because a legacy duplicate
+        // shares the name for this customer. Only a new or changed name/customer
+        // is checked, so existing duplicates coexist while no new one is created.
+        if ($projectId > 0) {
+            $current = $this->projectRepository->find($projectId);
+            if ($current instanceof Project && $current->getName() === $name && $current->getCustomer()?->getId() === $customerId) {
+                return;
+            }
         }
 
         // Check if a project with this name already exists for this customer

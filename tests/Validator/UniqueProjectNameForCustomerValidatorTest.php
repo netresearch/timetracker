@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Validator;
 
 use App\Dto\ProjectSaveDto;
+use App\Entity\Customer;
 use App\Entity\Project;
 use App\Repository\ProjectRepository;
 use App\Validator\Constraints\UniqueProjectNameForCustomer;
@@ -119,6 +120,49 @@ final class UniqueProjectNameForCustomerValidatorTest extends TestCase
 
         $dto = new ProjectSaveDto(id: 10, name: 'Conflicting Name', customer: 1);
         $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
+    }
+
+    public function testValidateGrandfathersAnUnchangedNameDespiteALegacyDuplicate(): void
+    {
+        // Re-saving project 5 with its UNCHANGED name+customer (e.g. just toggling
+        // active) must pass even if a different project shares the name — the
+        // uniqueness lookup is skipped entirely.
+        $this->repository->expects(self::once())->method('find')->with(5)
+            ->willReturn($this->stubProject(5, 'Existing Project', 1));
+        $this->repository->expects(self::never())->method('findOneBy');
+        $this->context->expects(self::never())->method('buildViolation');
+
+        $dto = new ProjectSaveDto(id: 5, name: 'Existing Project', customer: 1);
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
+    }
+
+    public function testValidateStillRejectsChangingToACollidingName(): void
+    {
+        // Changing project 5's name to one another project (id 8) already holds is
+        // still rejected — the grandfather only covers an unchanged name.
+        $this->repository->expects(self::once())->method('find')->with(5)
+            ->willReturn($this->stubProject(5, 'Old Name', 1));
+        $other = self::createStub(Project::class);
+        $other->method('getId')->willReturn(8);
+        $this->repository->expects(self::once())->method('findOneBy')
+            ->with(['name' => 'Taken Name', 'customer' => 1])
+            ->willReturn($other);
+        $this->expectSingleViolation();
+
+        $dto = new ProjectSaveDto(id: 5, name: 'Taken Name', customer: 1);
+        $this->validator->validateInContext($dto, new UniqueProjectNameForCustomer(), $this->context);
+    }
+
+    private function stubProject(int $id, string $name, int $customerId): Project
+    {
+        $customer = self::createStub(Customer::class);
+        $customer->method('getId')->willReturn($customerId);
+        $project = self::createStub(Project::class);
+        $project->method('getId')->willReturn($id);
+        $project->method('getName')->willReturn($name);
+        $project->method('getCustomer')->willReturn($customer);
+
+        return $project;
     }
 
     /**

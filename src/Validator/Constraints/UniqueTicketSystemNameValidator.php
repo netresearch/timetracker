@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Validator\Constraints;
 
 use App\Dto\TicketSystemSaveDto;
+use App\Entity\TicketSystem;
 use App\Repository\TicketSystemRepository;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -45,12 +46,21 @@ class UniqueTicketSystemNameValidator extends ConstraintValidator
             return; // Let other validators handle non-string values
         }
 
+        $object = $this->context->getObject();
+
+        // Grandfather an unchanged name: re-saving an existing ticket system (e.g.
+        // just toggling a flag) must not fail because a legacy duplicate shares the
+        // name. Only a new or changed name is checked.
+        if ($object instanceof TicketSystemSaveDto && $object->id > 0) {
+            $current = $this->ticketSystemRepository->find($object->id);
+            if ($current instanceof TicketSystem && $current->getName() === $value) {
+                return;
+            }
+        }
+
         $existingSystem = $this->ticketSystemRepository->findOneBy(['name' => $value]);
 
         if (null !== $existingSystem) {
-            // Check if we're updating an existing ticket system
-            $object = $this->context->getObject();
-
             // Type-safe check for TicketSystemSaveDto
             if ($object instanceof TicketSystemSaveDto && $object->id > 0 && $existingSystem->getId() === $object->id) {
                 return;
