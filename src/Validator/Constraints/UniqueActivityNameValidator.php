@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Validator\Constraints;
 
 use App\Dto\ActivitySaveDto;
+use App\Entity\Activity;
 use App\Repository\ActivityRepository;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -46,12 +47,21 @@ class UniqueActivityNameValidator extends ConstraintValidator
             return; // Let other validators handle non-string values
         }
 
+        $object = $this->context->getObject();
+
+        // Grandfather an unchanged name: re-saving an existing activity (e.g. just
+        // toggling a flag) must not fail because a legacy duplicate shares the
+        // name. Only a new or changed name is checked.
+        if ($object instanceof ActivitySaveDto && $object->id > 0) {
+            $current = $this->activityRepository->find($object->id);
+            if ($current instanceof Activity && $current->getName() === $value) {
+                return;
+            }
+        }
+
         $existingActivity = $this->activityRepository->findOneBy(['name' => $value]);
 
         if (null !== $existingActivity) {
-            // Check if we're updating an existing activity
-            $object = $this->context->getObject();
-
             // Type-safe check for ActivitySaveDto
             if ($object instanceof ActivitySaveDto && $object->id > 0 && $existingActivity->getId() === $object->id) {
                 return;

@@ -48,6 +48,17 @@ class UniqueCustomerNameValidator extends ConstraintValidator
         }
 
         $entityRepository = $this->entityManager->getRepository(Customer::class);
+
+        // Grandfather an unchanged name: re-saving an existing customer (e.g. just
+        // toggling "active") must not fail because a legacy duplicate shares the
+        // name. Only a new or changed name is checked.
+        if ($customerId > 0) {
+            $current = $entityRepository->find($customerId);
+            if ($current instanceof Customer && $current->getName() === $value) {
+                return;
+            }
+        }
+
         $queryBuilder = $entityRepository->createQueryBuilder('c')
             ->where('c.name = :name')
             ->setParameter('name', $value);

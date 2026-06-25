@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Validator\Constraints;
 
 use App\Dto\TeamSaveDto;
+use App\Entity\Team;
 use App\Repository\TeamRepository;
 use Exception;
 use Symfony\Component\Validator\Constraint;
@@ -45,12 +46,21 @@ class UniqueTeamNameValidator extends ConstraintValidator
             return; // Let other validators handle non-string values
         }
 
+        $object = $this->context->getObject();
+
+        // Grandfather an unchanged name: re-saving an existing team (e.g. just
+        // toggling a flag) must not fail because a legacy duplicate shares the
+        // name. Only a new or changed name is checked.
+        if ($object instanceof TeamSaveDto && $object->id > 0) {
+            $current = $this->teamRepository->find($object->id);
+            if ($current instanceof Team && $current->getName() === $value) {
+                return;
+            }
+        }
+
         $existingTeam = $this->teamRepository->findOneBy(['name' => $value]);
 
         if (null !== $existingTeam) {
-            // Check if we're updating an existing team
-            $object = $this->context->getObject();
-
             // Type-safe check for TeamSaveDto
             if ($object instanceof TeamSaveDto && $object->id > 0 && $existingTeam->getId() === $object->id) {
                 return;
