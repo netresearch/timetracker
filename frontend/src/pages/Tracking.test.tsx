@@ -301,6 +301,43 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('derives the project from a ticket whose prefix is one of several in jiraId (#453)', async () => {
+    // jiraId is a comma-separated prefix list; an external ticket like DHLSUP-…
+    // must still resolve the project (an exact jiraId === prefix match missed it,
+    // so the wrong/no project was sent and the save was rejected as invalid).
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 0, project: 0, ticket: '', class: 0 } }],
+      customers: [{ customer: { id: 7, name: 'DHL' } }],
+      projects: [{ project: { id: 9, name: 'DHL Support', customer: 7, jiraId: 'SA, DHLSUP' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'dhlsup-1067002' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    ;(getByRole('combobox') as HTMLElement).focus()
+
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ ticket: 'DHLSUP-1067002', project: 9, customer: 7 })),
+    )
+
+    unmount()
+  })
+
+  it('shows the external ticket the backend mirrored, in its own column (#453)', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, ticket: 'OPSDHL-2881', extTicket: 'DHLSUP-1067002', customer: 1, project: 4 } }],
+    })
+    const { getByRole, unmount } = renderTracking()
+
+    await waitFor(() => expect(getByRole('gridcell', { name: 'DHLSUP-1067002' })).toBeInTheDocument())
+
+    unmount()
+  })
+
   it('filters the project dropdown by the row customer (cascade)', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, customer: 7, project: 9, ticket: '', class: 0 } }],
