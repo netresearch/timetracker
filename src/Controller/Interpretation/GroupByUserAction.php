@@ -37,8 +37,10 @@ final class GroupByUserAction extends BaseInterpretationController
         #[CurrentUser]
         User $currentUser,
     ): ModelResponse|JsonResponse {
-        $request->query->set('user', $currentUser->getId());
-
+        // Group by whatever the filter selects — not a hardcoded "me". getEntries()
+        // still applies the per-user visibility scope (a DEV only ever sees their
+        // own entries), so a privileged user gets the real per-user breakdown
+        // while a DEV still only sees themselves.
         try {
             $entries = $this->getEntries($request, $currentUser);
         } catch (Exception $exception) {

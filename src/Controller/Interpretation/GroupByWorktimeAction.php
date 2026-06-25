@@ -11,6 +11,7 @@ namespace App\Controller\Interpretation;
 
 use App\Entity\Contract;
 use App\Entity\User;
+use App\Enum\UserType;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Repository\ContractRepository;
@@ -62,11 +63,16 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             return $response;
         }
 
-        // Load the user's contracts once; the per-day "expected" (Soll) is then
-        // resolved in PHP (validContract + weekdayHours) without a query per day.
+        // The per-day Soll is a single user's contract. When the data spans
+        // several users (a privileged user grouping everyone), there is no single
+        // contract to compare against, so no Soll is sent. Load the resolved
+        // user's contracts once; the daily Soll is then resolved in PHP.
+        $sollUser = $this->resolveSollUser($request, $currentUser);
         $contractRepository = $this->managerRegistry->getRepository(Contract::class);
         assert($contractRepository instanceof ContractRepository);
-        $contracts = $contractRepository->findBy(['user' => $currentUser], ['start' => 'DESC']);
+        $contracts = $sollUser instanceof User
+            ? $contractRepository->findBy(['user' => $sollUser], ['start' => 'DESC'])
+            : [];
 
         $times = [];
         foreach ($entries as $entry) {
@@ -83,10 +89,11 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             $times[$key]['minutes'] += $entry->getDuration();
         }
 
-        // The per-day "expected" (Soll) is 0 on a public holiday (matching the
-        // /ui/month calendar), otherwise the contract's hours for that weekday
-        // (5×8h default when no contract applies).
-        $holidayDates = $this->loadHolidayDates($times);
+        // For a single user, the per-day Soll is 0 on a public holiday (matching
+        // the /ui/month calendar), otherwise the contract's hours for that weekday
+        // (5×8h default when no contract applies). For a multi-user query it stays
+        // 0 throughout, which the chart renders as a plain bar with no Soll.
+        $holidayDates = $sollUser instanceof User ? $this->loadHolidayDates($times) : [];
 
         $totalMinutes = 0.0;
         foreach ($times as $t) {
@@ -97,12 +104,15 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             $minutes = $time['minutes'];
             $date = $time['date'];
             $time['hours'] = $minutes / 60.0;
-            $time['expected'] = isset($holidayDates[$date->format('Y-m-d')])
-                ? 0.0
-                : $this->contractHoursResolver->weekdayHours(
+            if (!$sollUser instanceof User || isset($holidayDates[$date->format('Y-m-d')])) {
+                $time['expected'] = 0.0;
+            } else {
+                $time['expected'] = $this->contractHoursResolver->weekdayHours(
                     $this->contractHoursResolver->validContract($contracts, $date),
                     (int) $date->format('w'),
                 );
+            }
+
             unset($time['minutes'], $time['date']);
             $time['quota'] = $this->timeCalculationService->formatQuota($minutes, $totalMinutes);
         }
@@ -116,6 +126,34 @@ final class GroupByWorktimeAction extends BaseInterpretationController
         $prepared = array_reverse($prepared);
 
         return new JsonResponse($prepared);
+    }
+
+    /**
+     * The single user whose contract drives the per-day Soll, or null when the
+     * data spans several users (then no Soll is shown). A DEV only ever sees their
+     * own entries (getEntries scopes them via visibility_user), so for a DEV it is
+     * always themselves; a privileged user gets a Soll only when the filter
+     * narrows to exactly one user.
+     */
+    private function resolveSollUser(Request $request, User $currentUser): ?User
+    {
+        if (UserType::DEV === $currentUser->getType()) {
+            return $currentUser;
+        }
+
+        $filterUserId = $request->query->getInt('user');
+        if ($filterUserId <= 0) {
+            return null;
+        }
+
+        // The viewer filtering by their own id needs no extra lookup.
+        if ($filterUserId === $currentUser->getId()) {
+            return $currentUser;
+        }
+
+        $user = $this->managerRegistry->getRepository(User::class)->find($filterUserId);
+
+        return $user instanceof User ? $user : null;
     }
 
     /**

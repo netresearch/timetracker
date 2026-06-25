@@ -150,6 +150,70 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         ], $this->getJsonResponse($this->client->getResponse()));
     }
 
+    public function testGroupByWorktimeSollFollowsTheFilteredUserNotTheViewer(): void
+    {
+        // 2020-01-06 is a Monday. The filtered user 2 (developer) has hours_1 = 2;
+        // the ADMIN viewer (user 1) has hours_1 = 1 — so a Soll of 2 proves the
+        // per-day Soll follows the FILTERED user's contract, not the viewer's.
+        self::assertNotNull($this->connection);
+        $this->connection->executeStatement(
+            "INSERT INTO entries (day, start, end, customer_id, project_id, activity_id, description, ticket, duration, user_id, class, synced_to_ticketsystem, internal_jira_ticket_original_key)
+             VALUES ('2020-01-06', '08:00:00', '10:00:00', 1, 1, 1, 'mon', 'MON-1', 120, 2, 1, 0, '')",
+        );
+
+        $this->logInSession('unittest');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/time', [
+            'user' => 2,
+            'datestart' => '2020-01-06',
+            'dateend' => '2020-01-06',
+        ]);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure([
+            ['name' => '20-01-06', 'expected' => 2],
+        ], $this->getJsonResponse($this->client->getResponse()));
+    }
+
+    public function testGroupByWorktimeSendsNoSollForAMultiUserQuery(): void
+    {
+        // Two users booked the same Monday (2020-03-16) under customer 1; querying
+        // that customer for that day (no single user) spans several contracts, so
+        // the Soll is 0 — and 0 on a weekday (not a weekend) proves it is the
+        // multi-user case, not a weekend zero.
+        self::assertNotNull($this->connection);
+        foreach ([2, 3] as $uid) {
+            $this->connection->executeStatement(
+                "INSERT INTO entries (day, start, end, customer_id, project_id, activity_id, description, ticket, duration, user_id, class, synced_to_ticketsystem, internal_jira_ticket_original_key)
+                 VALUES ('2020-03-16', '08:00:00', '09:00:00', 1, 1, 1, 'm', '', 60, :uid, 1, 0, '')",
+                ['uid' => $uid],
+            );
+        }
+
+        $this->logInSession('unittest');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/time', [
+            'customer' => 1,
+            'datestart' => '2020-03-16',
+            'dateend' => '2020-03-16',
+        ]);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure([
+            ['name' => '20-03-16', 'expected' => 0],
+        ], $this->getJsonResponse($this->client->getResponse()));
+    }
+
+    public function testGroupByUserRespectsTheUserFilterNotTheViewer(): void
+    {
+        // An ADMIN filtering user=2 must get developer's breakdown — the action no
+        // longer forces the grouping back to the current user.
+        $this->logInSession('unittest');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/user', [
+            'user' => 2,
+        ]);
+        $this->assertStatusCode(200);
+        $this->assertJsonStructure([
+            ['id' => 2, 'name' => 'developer'],
+        ], $this->getJsonResponse($this->client->getResponse()));
+    }
+
     public function testGroupByActivityAction(): void
     {
         $parameter = [

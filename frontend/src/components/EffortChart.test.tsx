@@ -1,4 +1,4 @@
-import { render } from '@solidjs/testing-library'
+import { fireEvent, render } from '@solidjs/testing-library'
 import { describe, expect, it } from 'vitest'
 import { axe } from 'vitest-axe'
 
@@ -17,6 +17,26 @@ describe('EffortChart', () => {
     const bars = [...container.querySelectorAll<HTMLElement>('.effort-bar')]
 
     expect(bars.map((bar) => bar.style.width)).toEqual(['100%', '50%', '0%'])
+    unmount()
+  })
+
+  it('sorts rows by a clicked column header (none → asc → desc)', () => {
+    const data: EffortRow[] = [
+      { label: 'Alpha', minutes: 60, quota: '50.00%' },
+      { label: 'Beta', minutes: 30, quota: '25.00%' },
+      { label: 'Gamma', minutes: 90, quota: '75.00%' },
+    ]
+    const { getByRole, container, unmount } = render(() => <EffortChart title="Effort" rows={data} />)
+    const firstLabel = (): string | undefined => container.querySelector('.effort-bar-label')?.textContent ?? undefined
+
+    // Default keeps the server order.
+    expect(firstLabel()).toBe('Alpha')
+    // Ascending by Hours → the smallest (Beta, 30) leads.
+    fireEvent.click(getByRole('button', { name: 'Hours' }))
+    expect(firstLabel()).toBe('Beta')
+    // A second click flips to descending → the largest (Gamma, 90) leads.
+    fireEvent.click(getByRole('button', { name: 'Hours' }))
+    expect(firstLabel()).toBe('Gamma')
     unmount()
   })
 
