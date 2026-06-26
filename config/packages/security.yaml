@@ -69,6 +69,10 @@ security:
         - { path: ^/status/check, roles: PUBLIC_ACCESS }
         - { path: ^/status/page, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
+        # Profiler/web-debug-toolbar routes exist only in the `profiling` env,
+        # where the `dev` firewall is narrowed so these fall through to `main`;
+        # lock them to admins. Inert in dev/test/prod (no such routes/firewall match).
+        - { path: ^/_(profiler|wdt), roles: ROLE_ADMIN }
         - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 
         # Uncomment to restrict access to paths starting with /_internal to only localhost

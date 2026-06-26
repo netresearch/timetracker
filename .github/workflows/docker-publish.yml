@@ -85,3 +85,18 @@ jobs:
           set: |
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max,ignore-error=true
+
+      # Prod-like image with the Symfony profiler (admin-gated). Published for
+      # operators to switch to on demand — never the default deployment.
+      - name: Build and push profiling image
+        uses: docker/bake-action@6614cfa25eff9a0b2b2697efb0b6159e7680d584 # v7.2.0
+        env:
+          GIT_SHA: ${{ github.sha }}
+        with:
+          source: .
+          targets: app-profiling
+          files: docker-bake.hcl
+          push: ${{ github.event_name != 'pull_request' }}
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max,ignore-error=true

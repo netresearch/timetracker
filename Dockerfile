@@ -273,3 +273,48 @@ EXPOSE 9000
 
 ENTRYPOINT ["/usr/local/bin/app-entrypoint"]
 CMD ["php-fpm"]
+
+# =============================================================================
+# PROFILING - Prod-like image WITH the Symfony profiler (admin-gated).
+# Never the default deployment: an operator switches the server to :profiling
+# on demand to capture production profiling data, then switches back. Built on
+# `deps` (no Xdebug — Xdebug would skew the very timings we measure).
+# =============================================================================
+FROM deps AS profiling
+
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+
+ENV CAPTAINHOOK_DISABLE=true
+ENV APP_ENV=profiling
+ENV APP_DEBUG=0
+
+# Add dev dependencies (web-profiler-bundle, debug-bundle, stopwatch) on top of
+# the prod vendor tree, keep an optimized authoritative autoloader, and warm the
+# profiling cache (APCu is built into the base image).
+RUN composer install --ignore-platform-req=php --no-scripts \
+    && composer dump-autoload --optimize --classmap-authoritative \
+    && php bin/console cache:clear --no-debug \
+    && php bin/console cache:warmup --no-debug \
+    && chown -R app:app var/
+
+COPY --chmod=755 docker/php/healthcheck.sh /usr/local/bin/healthcheck
+COPY --chmod=755 docker/php/docker-entrypoint.sh /usr/local/bin/app-entrypoint
+
+RUN update-ca-certificates 2>/dev/null || true
+
+ARG APP_BUILD_REVISION=""
+ARG APP_BUILD_REF=""
+ARG APP_BUILD_DATE=""
+ENV APP_BUILD_REVISION=${APP_BUILD_REVISION}
+ENV APP_BUILD_REF=${APP_BUILD_REF}
+ENV APP_BUILD_DATE=${APP_BUILD_DATE}
+
+USER app
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD /usr/local/bin/healthcheck
+
+EXPOSE 9000
+
+ENTRYPOINT ["/usr/local/bin/app-entrypoint"]
+CMD ["php-fpm"]
