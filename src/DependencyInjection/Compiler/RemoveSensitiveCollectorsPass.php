@@ -13,9 +13,12 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
- * Removes the profiler data collectors that can surface env/secret data
- * (dump, config). Registered from Kernel::build() in the `profiling` env only,
- * so the kept panels are DB/Time/Memory/Request/Routing/Events/Logs/Cache.
+ * Strips the profiler data collectors that can surface env/secret data (dump,
+ * config) by removing their `data_collector` tag — they vanish from the profiler
+ * and stop collecting, while their service definitions stay intact so anything
+ * referencing them (e.g. the VarDumper listener) still resolves. Registered from
+ * Kernel::build() in the `profiling` env, BEFORE Symfony's ProfilerPass reads the
+ * tags. Kept panels: DB/Time/Memory/Request/Routing/Events/Logs/Cache.
  */
 final class RemoveSensitiveCollectorsPass implements CompilerPassInterface
 {
@@ -28,7 +31,7 @@ final class RemoveSensitiveCollectorsPass implements CompilerPassInterface
     {
         foreach (self::SENSITIVE_COLLECTORS as $id) {
             if ($container->hasDefinition($id)) {
-                $container->removeDefinition($id);
+                $container->getDefinition($id)->clearTag('data_collector');
             }
         }
     }

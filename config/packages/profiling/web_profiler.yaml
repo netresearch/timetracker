@@ -1,0 +1,10 @@
+framework:
+    profiler:
+        enabled: true
+        # Dormant: nothing is collected unless ProfilerAdminGateSubscriber
+        # calls Profiler::enable() for an admin request.
+        collect: false
+
+web_profiler:
+    toolbar: true
+    intercept_redirects: false

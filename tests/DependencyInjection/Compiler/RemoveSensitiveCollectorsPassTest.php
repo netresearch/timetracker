@@ -21,18 +21,21 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 #[CoversClass(RemoveSensitiveCollectorsPass::class)]
 final class RemoveSensitiveCollectorsPassTest extends TestCase
 {
-    public function testRemovesDumpAndConfigCollectorsButKeepsOthers(): void
+    public function testUntagsDumpAndConfigCollectorsButKeepsOthers(): void
     {
         $container = new ContainerBuilder();
-        $container->register('data_collector.dump', stdClass::class);
-        $container->register('data_collector.config', stdClass::class);
-        $container->register('data_collector.request', stdClass::class);
+        $container->register('data_collector.dump', stdClass::class)->addTag('data_collector');
+        $container->register('data_collector.config', stdClass::class)->addTag('data_collector');
+        $container->register('data_collector.request', stdClass::class)->addTag('data_collector');
 
         new RemoveSensitiveCollectorsPass()->process($container);
 
-        self::assertFalse($container->hasDefinition('data_collector.dump'));
-        self::assertFalse($container->hasDefinition('data_collector.config'));
-        self::assertTrue($container->hasDefinition('data_collector.request'));
+        // Tag removed → dropped from the profiler, no panel, no collection.
+        self::assertFalse($container->getDefinition('data_collector.dump')->hasTag('data_collector'));
+        self::assertFalse($container->getDefinition('data_collector.config')->hasTag('data_collector'));
+        self::assertTrue($container->getDefinition('data_collector.request')->hasTag('data_collector'));
+        // Definitions are kept so services that reference them still resolve.
+        self::assertTrue($container->hasDefinition('data_collector.dump'));
     }
 
     public function testIsANoOpWhenCollectorsAbsent(): void

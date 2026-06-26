@@ -1,0 +1,11 @@
+# Reuse the production ORM/cache setup so timings stay representative, then
+# turn on DBAL query profiling so the profiler's Database panel (queries,
+# timings, EXPLAIN) populates — kernel.debug is false in this env, so the base
+# `profiling: '%kernel.debug%'` would otherwise leave it empty.
+imports:
+    - { resource: ../prod/doctrine.yaml }
+
+doctrine:
+    dbal:
+        profiling: true
+        profiling_collect_backtrace: false

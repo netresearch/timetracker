@@ -12,6 +12,7 @@ namespace App;
 use App\DependencyInjection\Compiler\RemoveSensitiveCollectorsPass;
 use Override;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
@@ -58,9 +59,15 @@ class Kernel extends BaseKernel
     protected function build(ContainerBuilder $container): void
     {
         // The profiling image enables the web profiler; strip the data
-        // collectors that could surface env/secret data (dump, config).
+        // collectors that could surface env/secret data (dump, config). Priority
+        // 1000 runs this before Symfony's ProfilerPass (priority 0) reads the
+        // `data_collector` tags, so the untagged collectors are never registered.
         if ('profiling' === $this->environment) {
-            $container->addCompilerPass(new RemoveSensitiveCollectorsPass());
+            $container->addCompilerPass(
+                new RemoveSensitiveCollectorsPass(),
+                PassConfig::TYPE_BEFORE_OPTIMIZATION,
+                1000,
+            );
         }
     }
 }

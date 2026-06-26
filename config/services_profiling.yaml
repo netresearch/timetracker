@@ -1,0 +1,7 @@
+# Loaded only when APP_ENV=profiling (Symfony imports config/services_<env>.yaml).
+# The profiler service exists here (WebProfilerBundle is enabled for this env),
+# so the gate subscriber can autowire it.
+services:
+    App\EventSubscriber\ProfilerAdminGateSubscriber:
+        autowire: true
+        autoconfigure: true

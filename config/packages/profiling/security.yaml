@@ -1,0 +1,7 @@
+# The shared `dev` firewall is `security: false` and matches ^/_(profiler|wdt).
+# Narrow it to assets in this env so the profiler paths fall through to the
+# `main` (authenticated) firewall, where the access_control rule applies.
+security:
+    firewalls:
+        dev:
+            pattern: ^/(css|images|js)/

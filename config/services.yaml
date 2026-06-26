@@ -43,6 +43,9 @@ services:
         exclude:
             - '../src/Entity/'
             - '../src/Kernel.php'
+            # Registered only in the profiling env (config/services_profiling.yaml),
+            # where the `profiler` service it depends on exists.
+            - '../src/EventSubscriber/ProfilerAdminGateSubscriber.php'
             - '../src/Service/Integration/Jira/JiraHttpClientService.php'
             - '../src/Service/Integration/Jira/JiraWorkLogService.php'
             - '../src/Service/Integration/Jira/JiraTicketService.php'
