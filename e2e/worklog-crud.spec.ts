@@ -94,7 +94,11 @@ test.describe('Worklog CRUD', () => {
 
   test('changing the days range refetches, and the CSV export anchor matches it', async ({ page }) => {
     const refetched = page.waitForResponse((r) => /\/getData\/days\/35\b/.test(r.url()));
-    await page.locator('.tracking-days select').selectOption('35');
+    // The day range is a freetext combobox now: type a value and commit on blur,
+    // which fires the native change handler (applyDays).
+    const days = page.locator('.tracking-days-input');
+    await days.fill('35');
+    await days.blur();
     await refetched;
 
     await expect(page.getByRole('link', { name: /Export CSV|CSV-Export/i })).toHaveAttribute('href', '/export/35');
