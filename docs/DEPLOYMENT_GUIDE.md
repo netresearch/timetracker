@@ -2084,6 +2084,37 @@ For ongoing support:
 
 ---
 
+## Production Profiling (admin-gated profiler image)
+
+The pipeline builds a second image, `ghcr.io/netresearch/timetracker:profiling`,
+alongside `:production`. It is **prod-like** (`APP_ENV=profiling`, debug off,
+optimized) but ships the Symfony web profiler, exposed **only to admins**. It is
+**never the default deployment** — switch to it on demand to capture real
+production profiling data for an issue report, then switch back.
+
+**To profile a production request:**
+
+1. Pull the profiling image: `docker pull ghcr.io/netresearch/timetracker:profiling`.
+2. Switch the running container to the `:profiling` tag (compose image override /
+   hot-deploy), same DB and env as production. The image self-migrates like
+   `:production`, so a switch over an already-migrated DB is a no-op.
+3. Reproduce the slow action **while logged in as an admin**. On full-page loads
+   the web-debug-toolbar appears; each SPA/XHR call (e.g. `/getAllCustomers`)
+   carries an `X-Debug-Token` — open `/_profiler/{token}?panel=db` for its
+   queries, timings, and `EXPLAIN`.
+4. Capture what you need (screenshots / the `/_profiler` token) for the report.
+5. **Switch the tag back to `:production`.**
+
+**Security notes:**
+- Non-admins see nothing on this image: the profiler never collects for them and
+  `/_profiler` / `/_wdt` return 403 (locked to `ROLE_ADMIN`).
+- The dump and config profiler panels are removed to limit secret exposure; the
+  login route is never profiled.
+- Collected profiles live in the container's cache dir and vanish when it is
+  swapped back. Keep the profiling image deployed only as long as needed.
+
+---
+
 **Last Updated**: 2025-01-20  
 **Deployment Version**: v4.1  
 **Support**: Create a GitHub issue or contact DevOps team
