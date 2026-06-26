@@ -145,6 +145,17 @@ target "app-e2e" {
   ])
 }
 
+# Profiling image (prod-like + Symfony profiler, admin-gated). Built by CI,
+# never the default deployment — operators switch to :profiling on demand.
+target "app-profiling" {
+  inherits = ["_common"]
+  target   = "profiling"
+  tags = compact([
+    "${REGISTRY}/${IMAGE_NAME}:profiling",
+    GIT_SHA != "" ? "${REGISTRY}/${IMAGE_NAME}:profiling-${GIT_SHA}" : "",
+  ])
+}
+
 # =============================================================================
 # BUILD GROUPS
 # =============================================================================
@@ -156,7 +167,7 @@ group "default" {
 
 # All application images (for local development)
 group "all" {
-  targets = ["app", "app-dev", "app-tools", "app-e2e"]
+  targets = ["app", "app-dev", "app-tools", "app-e2e", "app-profiling"]
 }
 
 # CI images (production + e2e for all CI jobs)
