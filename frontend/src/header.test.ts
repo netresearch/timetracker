@@ -5,7 +5,12 @@ import type { AppConfig } from './config'
 import { formatDays, formatDuration, handleHelpClick, handleShortcut, hideAccessHints, refreshLoginStatus, showAccessHints } from './header'
 import { setShortcutsHelpOpen, shortcutsHelpOpen } from './lib/shortcutsHelp'
 
-vi.mock('./api/client', () => ({ getJson: vi.fn() }))
+// Preserve the module's other exports (SessionExpiredError, postJson, …) and stub
+// only getJson, so anything else loaded during the run keeps working.
+vi.mock('./api/client', async () => ({
+  ...await vi.importActual<typeof import('./api/client')>('./api/client'),
+  getJson: vi.fn(),
+}))
 
 describe('formatDuration', () => {
   it('formats minutes as H:MM like the ExtJS header', () => {
