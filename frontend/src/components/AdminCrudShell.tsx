@@ -409,6 +409,12 @@ export function AdminCrudShell(props: {
             <button type="button" class="link-button" disabled={bulkBusy()} onClick={() => clearSelection()}>{m.admin_bulk_clear()}</button>
           </div>
         </Show>
+        {/* The entity help shares the bulk bar's slot (right after Add) and steps
+            aside the moment a selection turns the bulk bar on — so it never adds a
+            line that shoves the table down. */}
+        <Show when={selectedCount() === 0 && props.descriptor.description !== undefined}>
+          <p class="admin-intro">{props.descriptor.description?.()}</p>
+        </Show>
         <Show when={notice()}>
           <span role="status" class="form-status is-ok">{notice()}</span>
         </Show>
@@ -461,10 +467,6 @@ export function AdminCrudShell(props: {
           banner — the old inline toolbar text was easy to miss. */}
       <Show when={error()}>
         <p class="admin-error-banner" role="alert">{error()}</p>
-      </Show>
-
-      <Show when={props.descriptor.description !== undefined}>
-        <p class="admin-intro">{props.descriptor.description?.()}</p>
       </Show>
 
       <Show when={!list.isError} fallback={<p role="alert">{m.app_load_error()}</p>}>

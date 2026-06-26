@@ -169,6 +169,7 @@
   "tracking_days_label": "Show",
   "tracking_days_option": "Last {count} days",
   "tracking_days_option_one": "Last day",
+  "tracking_days_unit": "days",
   "tracking_empty": "No entries in this period.",
   "tracking_empty_range": "No entries in the last {count} days.",
   "tracking_empty_cta": "Add your first entry.",

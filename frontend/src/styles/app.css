@@ -639,11 +639,14 @@ main {
   color: var(--color-accent, #0a84ff);
 }
 
+/* Entity help, inline in the toolbar (it shares the bulk bar's slot). No vertical
+   margin — the toolbar's gap spaces it; max-width keeps it from crowding out the
+   right-aligned filter on wide rows. */
 .admin-intro {
-  margin: 0 0 0.75rem;
-  max-width: 70ch;
+  margin: 0;
+  max-width: 60ch;
   color: var(--color-text-muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 /* Checkbox + its ⓘ help, kept outside the <label> so the help icon neither
@@ -1205,10 +1208,11 @@ kbd {
   gap: 0.5rem;
 }
 
-/* The days-range select must use the theme tokens (like .field select) — an
-   unstyled native select renders a light box in dark mode. color-scheme keeps
-   the option popup legible in both themes. */
-.tracking-days select {
+/* The days-range combobox must use the theme tokens (like .field select) — an
+   unstyled native control renders a light box in dark mode. color-scheme keeps
+   the datalist popup legible in both themes. Narrow: it holds a number, not a
+   sentence. */
+.tracking-days-input {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -1217,12 +1221,17 @@ kbd {
   font: inherit;
   min-height: 44px; /* match the 44px touch-target the rest of the toolbar commits to */
   padding: 0 0.4rem;
+  width: 4.5rem;
 }
 
-.tracking-days select:focus-visible {
+.tracking-days-input:focus-visible {
   border-color: var(--color-accent);
   outline: 2px solid var(--color-accent);
   outline-offset: -1px;
+}
+
+.tracking-days-unit {
+  color: var(--color-text-muted);
 }
 
 .tracking-empty {
@@ -1245,11 +1254,15 @@ kbd {
   gap: var(--space-3);
 }
 
-/* Inline-edit / keyboard discoverability hint above the grid. */
+/* Inline-edit / keyboard discoverability hint — now the last item in the tool
+   line. No bottom margin (the toolbar's gap spaces it); it grows to fill the row
+   and wraps onto its own line when the toolbar runs out of width. */
 .tracking-hint {
   color: var(--color-text-muted);
+  flex: 1 1 18rem;
   font-size: 0.85rem;
-  margin: 0 0 var(--space-3);
+  margin: 0;
+  min-width: 16rem;
 }
 
 /* In-flight refetch cue (refresh / range change): the previous rows stay visible
@@ -2259,7 +2272,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='compact'] .link-button,
 :root[data-density='compact'] .action-button,
 :root[data-density='compact'] .admin-subnav-link,
-:root[data-density='compact'] .tracking-days select {
+:root[data-density='compact'] .tracking-days-input {
   min-height: 30px;
 }
 

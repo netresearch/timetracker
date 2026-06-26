@@ -26,6 +26,9 @@ void gridNav
 
 const DAYS_OPTIONS = [1, 3, 7, 35] as const
 const DEFAULT_DAYS = 3
+// The freetext day-range accepts any whole number, capped at a year so a stray
+// keystroke (or a stale localStorage value) can't ask the grid for everything.
+const MAX_DAYS = 366
 // Widen target for the range-aware empty state (the largest preset window).
 const WIDEN_DAYS = 35
 
@@ -169,7 +172,7 @@ function RowAction(props: { label: string; danger?: boolean; keyshortcut?: strin
 export default function Tracking() {
   const queryClient = useQueryClient()
   // The day range persists across remounts/logins (client-side, like the theme).
-  const [days, setDays] = createSignal<number>(getTrackingDays(DAYS_OPTIONS, DEFAULT_DAYS))
+  const [days, setDays] = createSignal<number>(Math.min(getTrackingDays(DEFAULT_DAYS), MAX_DAYS))
   const entries = useQuery(() => trackingEntriesQuery(days()))
   const customers = useQuery(trackingCustomersQuery)
   const projects = useQuery(trackingProjectsQuery)
@@ -670,9 +673,15 @@ export default function Tracking() {
   }
 
   // Change the day range and persist the choice (so it survives a remount/login).
+  // Whole numbers only, floored at one day and capped at MAX_DAYS — the freetext
+  // input lets a user type anything, so the clamp lives here, the single setter.
   function applyDays(value: number): void {
-    setDays(value)
-    setTrackingDays(value)
+    const clamped = Math.min(Math.max(1, Math.trunc(value)), MAX_DAYS)
+    if (!Number.isFinite(clamped)) {
+      return
+    }
+    setDays(clamped)
+    setTrackingDays(clamped)
   }
 
   const exportHref = (): string => `/export/${days()}`
@@ -781,22 +790,41 @@ export default function Tracking() {
         {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
             still act on the keyboard-cursor row via the global shortcut handler. */}
         <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
+        {/* Freetext combobox: the presets are suggestions in the datalist, but the
+            user can type any whole number of days (applyDays clamps + persists).
+            A text input with `list` is a combobox (role) — not a numeric
+            spinbutton — so the datalist dropdown stays a one-tap pick. */}
         <label class="tracking-days">
           <span>{m.tracking_days_label()}</span>
-          <select
+          <input
+            type="text"
+            inputmode="numeric"
+            class="tracking-days-input"
+            list="tracking-days-options"
             value={String(days())}
-            onChange={(event) => applyDays(Number(event.currentTarget.value))}
-          >
+            onChange={(event) => {
+              const typed = Number(event.currentTarget.value.trim())
+              if (Number.isFinite(typed) && typed >= 1) {
+                applyDays(typed)
+              }
+              // Re-sync the field to the effective (clamped) value, reverting any
+              // invalid or out-of-range entry rather than leaving it on screen.
+              event.currentTarget.value = String(days())
+            }}
+          />
+          <datalist id="tracking-days-options">
             <For each={DAYS_OPTIONS}>
-              {(option) => <option value={String(option)}>{option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}</option>}
+              {(option) => <option value={String(option)} label={option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })} />}
             </For>
-          </select>
+          </datalist>
+          <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
         </label>
-      </div>
 
-      {/* Inline-edit + keyboard discoverability (the only on-screen cue otherwise
-          is a hover text-cursor on editable cells). */}
-      <p class="tracking-hint">{m.tracking_edit_hint()}</p>
+        {/* Inline-edit + keyboard discoverability hint — last in the tool line, so
+            the only otherwise-on-screen cue (a hover text-cursor on editable cells)
+            gets a written explanation without a separate band above the grid. */}
+        <p class="tracking-hint">{m.tracking_edit_hint()}</p>
+      </div>
 
       {/* A session-expiry refetch errors too, but the overlay owns that — keep the
           last-good grid (and the user's drafts) visible+dimmed behind it, not a
