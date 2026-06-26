@@ -170,6 +170,32 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('accepts a freetext (non-preset) day range and refetches it', async () => {
+    mockApi()
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    fireEvent.change(getByRole('combobox'), { target: { value: '14' } })
+
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/getData/days/14'))
+
+    unmount()
+  })
+
+  it('clamps an out-of-range day entry to a year and re-syncs the field', async () => {
+    mockApi()
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    const combo = getByRole('combobox') as HTMLInputElement
+    fireEvent.change(combo, { target: { value: '9999' } })
+
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/getData/days/366'))
+    expect(combo.value).toBe('366')
+
+    unmount()
+  })
+
   it('has no automatically detectable accessibility violations', async () => {
     mockApi()
     const { container, getByRole, unmount } = renderTracking()

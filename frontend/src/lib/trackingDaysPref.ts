@@ -5,12 +5,14 @@
 
 const STORAGE_KEY = 'tt-tracking-days'
 
-export function getTrackingDays(allowed: readonly number[], fallback: number): number {
+export function getTrackingDays(fallback: number): number {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw !== null) {
       const value = Number(raw)
-      if (allowed.includes(value)) {
+      // The range is freetext now (any whole number ≥ 1), so validate the shape
+      // rather than membership in a fixed preset list. The caller caps the upper end.
+      if (Number.isInteger(value) && value >= 1) {
         return value
       }
     }
