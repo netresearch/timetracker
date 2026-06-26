@@ -10,7 +10,7 @@ import { SessionExpiredOverlay } from './components/SessionExpiredOverlay'
 import { ShortcutsDialog } from './components/ShortcutsDialog'
 import { appConfig, canBill, hasRole } from './config'
 import { sessionExpired, setSessionExpired, startSessionMonitor } from './lib/session'
-import { initHeaderDynamics } from './header'
+import { initHeaderDynamics, refreshLoginStatus } from './header'
 import { syncNav } from './nav'
 import { m } from './paraglide/messages.js'
 import Admin from './pages/Admin'
@@ -199,7 +199,7 @@ function Layout(props: ParentProps) {
       {/* Lost backend session → dim+lock the page and re-login in place; on success
           refetch (the stale 302'd data) and resume — drafts survive (no unmount). */}
       <Show when={sessionExpired()}>
-        <SessionExpiredOverlay onSuccess={() => { setSessionExpired(false); void queryClient.invalidateQueries() }} />
+        <SessionExpiredOverlay onSuccess={() => { setSessionExpired(false); void queryClient.invalidateQueries(); void refreshLoginStatus(appConfig()) }} />
       </Show>
       <CommandPalette />
       <ShortcutsDialog />

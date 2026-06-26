@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { formatDays, formatDuration, handleHelpClick, handleShortcut, hideAccessHints, showAccessHints } from './header'
+import { getJson } from './api/client'
+import type { AppConfig } from './config'
+import { formatDays, formatDuration, handleHelpClick, handleShortcut, hideAccessHints, refreshLoginStatus, showAccessHints } from './header'
 import { setShortcutsHelpOpen, shortcutsHelpOpen } from './lib/shortcutsHelp'
+
+vi.mock('./api/client', () => ({ getJson: vi.fn() }))
 
 describe('formatDuration', () => {
   it('formats minutes as H:MM like the ExtJS header', () => {
@@ -363,5 +367,54 @@ describe('handleShortcut', () => {
     } finally {
       document.removeEventListener('keydown', handleShortcut)
     }
+  })
+})
+
+describe('refreshLoginStatus', () => {
+  const config = { userName: 'Ada Lovelace' } as AppConfig
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+  })
+
+  /** Render a badge in the logged-out (red) state, as the poll leaves it after a
+   *  silent logout. */
+  function redBadge(): HTMLElement {
+    document.body.innerHTML = `
+      <span class="js-user-badge status_inactive"><span class="js-user-name"></span></span>`
+
+    return document.querySelector<HTMLElement>('.js-user-badge')!
+  }
+
+  it('repaints the badge green with the user name when the session is restored', async () => {
+    const badge = redBadge()
+    vi.mocked(getJson).mockResolvedValue({ loginStatus: true })
+
+    await refreshLoginStatus(config)
+
+    expect(badge.classList.contains('status_active')).toBe(true)
+    expect(badge.classList.contains('status_inactive')).toBe(false)
+    expect(badge.querySelector('.js-user-name')?.textContent).toBe('Ada Lovelace')
+  })
+
+  it('leaves the badge red when the check still reports logged out', async () => {
+    const badge = redBadge()
+    vi.mocked(getJson).mockResolvedValue({ loginStatus: false })
+
+    await refreshLoginStatus(config)
+
+    expect(badge.classList.contains('status_inactive')).toBe(true)
+    expect(badge.classList.contains('status_active')).toBe(false)
+  })
+
+  it('leaves the badge red when the check fails', async () => {
+    const badge = redBadge()
+    vi.mocked(getJson).mockRejectedValue(new Error('network'))
+
+    await refreshLoginStatus(config)
+
+    expect(badge.classList.contains('status_inactive')).toBe(true)
+    expect(badge.classList.contains('status_active')).toBe(false)
   })
 })
