@@ -424,19 +424,31 @@ function initShortcuts(): void {
   window.addEventListener('blur', hideAccessHints)
 }
 
+/** One-shot `/status/check` → repaint the header badge. Shared by the poll loop
+ *  and the re-login refresh below; never reschedules a timer itself. */
+async function fetchLoginStatus(config: AppConfig): Promise<void> {
+  try {
+    const status = await getJson<{ loginStatus: boolean }>('/status/check')
+    setBadge(status.loginStatus, status.loginStatus ? config.userName : '')
+  } catch {
+    setBadge(false, '')
+  }
+}
+
+// Exported so the in-place re-login overlay can repaint the badge the instant the
+// session is restored — otherwise it stays red until the next poll tick (up to
+// STATUS_POLL_INTERVAL_MS later), since the overlay's success path only clears
+// the session-expired signal and refetches data (#446 follow-up).
+export function refreshLoginStatus(config: AppConfig): Promise<void> {
+  return fetchLoginStatus(config)
+}
+
 function pollLoginStatus(config: AppConfig): void {
-  void getJson<{ loginStatus: boolean }>('/status/check')
-    .then((status) => {
-      setBadge(status.loginStatus, status.loginStatus ? config.userName : '')
-    })
-    .catch(() => {
-      setBadge(false, '')
-    })
-    .finally(() => {
-      setTimeout(() => {
-        pollLoginStatus(config)
-      }, STATUS_POLL_INTERVAL_MS)
-    })
+  void fetchLoginStatus(config).finally(() => {
+    setTimeout(() => {
+      pollLoginStatus(config)
+    }, STATUS_POLL_INTERVAL_MS)
+  })
 }
 
 export function initHeaderDynamics(config: AppConfig): void {
