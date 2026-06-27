@@ -1,4 +1,5 @@
 {
+  "name": "timetracker",
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@babel/core": "^8.0.1",
