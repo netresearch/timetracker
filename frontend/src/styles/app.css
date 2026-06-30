@@ -592,6 +592,15 @@ main {
   max-width: 44rem;
 }
 
+/* Opening orientation line at the top of the Help page — sets the mental model
+   before the reference sections. Slightly larger than body text, not muted. */
+.help-lead {
+  /* em so the lead scales with the user's text-size preference, like body prose. */
+  font-size: 1.05em;
+  line-height: 1.5;
+  margin: 0 0 1.2rem;
+}
+
 .form-page h2,
 .help-page h2 {
   font-family: var(--font-display);
@@ -839,6 +848,51 @@ main {
 
 .help-section li {
   margin: 0.3rem 0;
+}
+
+/* Sub-heading inside a help section (e.g. "Row colours" / "Action icons"). */
+.help-subheading {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin: 1.1rem 0 0.5rem;
+}
+
+.help-subheading:first-of-type {
+  margin-top: 0.6rem;
+}
+
+/* Reference list: a term (colour swatch / icon + label, or a control name) in the
+   left column, its explanation in the right. Collapses to one column on narrow
+   screens so the description never gets crushed. */
+.help-legend {
+  display: grid;
+  gap: 0.6rem 0;
+  margin: 0;
+}
+
+.help-legend-row {
+  display: grid;
+  /* em (not rem) so the term column scales with the user's text-size preference
+     (--font-scale is applied to body), keeping long terms from clipping. */
+  grid-template-columns: minmax(7em, 13em) 1fr;
+  gap: 0.2em 1.2em;
+  align-items: baseline;
+}
+
+.help-legend-row dt {
+  margin: 0;
+  font-weight: 600;
+}
+
+.help-legend-row dd {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 540px) {
+  .help-legend-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .shortcut-tables {
