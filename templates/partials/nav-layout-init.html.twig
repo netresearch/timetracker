@@ -1,0 +1,23 @@
+{# Framework-neutral navigation-layout preference shared by the SolidJS /ui shell.
+   Applies the saved choice before first paint (no flash) so the header renders as
+   the top bar (default) or the left sidebar straight away. The layout itself is
+   pure CSS keyed on data-nav-layout (see frontend app.css); there is no header
+   toggle — the switch lives on the Settings page (lib/navLayoutPref.ts), which
+   shares this localStorage key. Single source of truth for the boot-time apply. #}
+<script>
+(function () {
+    var KEY = 'timetracker-nav-layout';
+    function read() {
+        try {
+            return window.localStorage.getItem(KEY) === 'side' ? 'side' : 'top';
+        } catch (error) {
+            return 'top';
+        }
+    }
+    if (read() === 'side') {
+        document.documentElement.setAttribute('data-nav-layout', 'side');
+    } else {
+        document.documentElement.removeAttribute('data-nav-layout');
+    }
+})();
+</script>

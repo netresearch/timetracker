@@ -1,24 +1,27 @@
-{# Framework-neutral display-density toggle shared by BOTH shells (ExtJS + the
+{# Framework-neutral display-density control shared by BOTH shells (ExtJS + the
    SolidJS /ui shell). Applies the saved preference before first paint (no flash)
-   and wires the two-state toggle button rendered in the shared header. Comfort
-   (default) keeps the roomy spacing; Compact tightens padding and uses the full
-   width — both stay within WCAG 2.2 AA target sizes. Single source of truth;
-   neither shell needs framework-specific density code. #}
+   and wires the single-button density cycle rendered in the shared header.
+   Comfort (default) keeps the roomy spacing; Compact tightens padding and uses
+   the full width; Ultra-compact tightens further and hides ambient help text and
+   legends for a maximum-density view — all stay within WCAG 2.2 AA target sizes.
+   Single source of truth; neither shell needs framework-specific density code. #}
 <script>
 (function () {
     var KEY = 'timetracker-density';
+    var ORDER = ['comfort', 'compact', 'ultra-compact'];
     function read() {
         try {
-            return window.localStorage.getItem(KEY) === 'compact' ? 'compact' : 'comfort';
+            var value = window.localStorage.getItem(KEY);
+            return value === 'compact' || value === 'ultra-compact' ? value : 'comfort';
         } catch (error) {
             return 'comfort';
         }
     }
     function apply(pref) {
-        if (pref === 'compact') {
-            document.documentElement.setAttribute('data-density', 'compact');
-        } else {
+        if (pref === 'comfort') {
             document.documentElement.removeAttribute('data-density');
+        } else {
+            document.documentElement.setAttribute('data-density', pref);
         }
     }
     // Apply immediately (still in <head>) so the first paint matches the choice.
@@ -26,16 +29,17 @@
 
     var LABELS = {
         comfort: {{ ('Comfortable spacing'|trans)|json_encode|raw }},
-        compact: {{ ('Compact spacing'|trans)|json_encode|raw }}
+        compact: {{ ('Compact spacing'|trans)|json_encode|raw }},
+        'ultra-compact': {{ ('Ultra-compact spacing'|trans)|json_encode|raw }}
     };
     var SWITCH_TO = {{ ('Switch to'|trans)|json_encode|raw }};
 
     function store(pref) {
         try {
-            if (pref === 'compact') {
-                window.localStorage.setItem(KEY, 'compact');
-            } else {
+            if (pref === 'comfort') {
                 window.localStorage.removeItem(KEY);
+            } else {
+                window.localStorage.setItem(KEY, pref);
             }
         } catch (error) {
             // Storage disabled/restricted — apply for this session only.
@@ -49,8 +53,11 @@
         }
         var icons = button.querySelectorAll('[data-density-icon]');
         function mark(pref) {
-            var next = pref === 'compact' ? 'comfort' : 'compact';
-            button.setAttribute('aria-pressed', pref === 'compact' ? 'true' : 'false');
+            var next = ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length];
+            // A single cycle button has three states, so aria-pressed cannot
+            // encode it — keep the current mode and the next action in the
+            // accessible name instead (WCAG 4.1.2).
+            button.removeAttribute('aria-pressed');
             button.setAttribute('aria-label', LABELS[pref] + ' — ' + SWITCH_TO + ' ' + LABELS[next]);
             button.setAttribute('title', LABELS[pref]);
             icons.forEach(function (icon) {
@@ -63,7 +70,8 @@
         }
         mark(read());
         button.addEventListener('click', function () {
-            var next = read() === 'compact' ? 'comfort' : 'compact';
+            var current = read();
+            var next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
             store(next);
             apply(next);
             mark(next);

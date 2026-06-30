@@ -294,6 +294,11 @@
         if (typeof collapseMq.addEventListener === 'function') {
             collapseMq.addEventListener('change', layout);
         }
+        // The Settings page can switch between the top bar and the left sidebar
+        // (data-nav-layout). That row↔column flip invalidates the width-based fold,
+        // so re-measure: in sidebar mode the column never overflows horizontally,
+        // so restore() leaves every item in its natural slot.
+        window.addEventListener('tt:layout-change', layout);
         layout();
     });
 })();
