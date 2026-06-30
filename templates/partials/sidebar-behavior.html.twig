@@ -1,0 +1,115 @@
+{# Left-sidebar collapse + resize behaviour (framework-neutral, shared by the
+   SolidJS /ui shell). The saved width / collapsed state are applied before first
+   paint by partials/nav-layout-init; this wires the interactive controls and
+   persists changes. All controls are CSS-hidden outside the left-sidebar layout,
+   so the handlers are inert in the top-bar layout. #}
+<script>
+(function () {
+    var root = document.documentElement;
+    var MIN_WIDTH = 150;
+    var MAX_WIDTH = 460;
+    var STEP = 16;
+
+    function persist(key, value) {
+        try {
+            if (value === null) {
+                window.localStorage.removeItem(key);
+            } else {
+                window.localStorage.setItem(key, value);
+            }
+        } catch (error) {
+            // Storage disabled/restricted — applied for this session only.
+        }
+    }
+
+    function currentWidth() {
+        var raw = parseInt(getComputedStyle(root).getPropertyValue('--sidebar-width'), 10);
+        if (!raw) {
+            var header = document.getElementById('page-header');
+            raw = header ? Math.round(header.getBoundingClientRect().width) : 208;
+        }
+        return raw;
+    }
+
+    function setWidth(px) {
+        var width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(px)));
+        root.style.setProperty('--sidebar-width', width + 'px');
+        var handle = document.getElementById('sidebar-resize');
+        if (handle) { handle.setAttribute('aria-valuenow', String(width)); }
+        return width;
+    }
+
+    function setCollapsed(collapsed, focusEl) {
+        if (collapsed) {
+            root.setAttribute('data-sidebar-collapsed', 'true');
+        } else {
+            root.removeAttribute('data-sidebar-collapsed');
+        }
+        persist('timetracker-sidebar-collapsed', collapsed ? '1' : null);
+        var expanded = collapsed ? 'false' : 'true';
+        var collapseBtn = document.getElementById('sidebar-collapse');
+        var reopenBtn = document.getElementById('sidebar-reopen');
+        if (collapseBtn) { collapseBtn.setAttribute('aria-expanded', expanded); }
+        if (reopenBtn) { reopenBtn.setAttribute('aria-expanded', expanded); }
+        if (focusEl) {
+            // The just-hidden control loses focus; move it to the still-visible one.
+            window.requestAnimationFrame(function () { focusEl.focus(); });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var collapseBtn = document.getElementById('sidebar-collapse');
+        var reopenBtn = document.getElementById('sidebar-reopen');
+        var handle = document.getElementById('sidebar-resize');
+
+        // Sync the controls' aria-expanded with the pre-paint collapsed state.
+        var collapsedNow = root.getAttribute('data-sidebar-collapsed') === 'true';
+        if (collapseBtn) { collapseBtn.setAttribute('aria-expanded', collapsedNow ? 'false' : 'true'); }
+        if (reopenBtn) { reopenBtn.setAttribute('aria-expanded', collapsedNow ? 'false' : 'true'); }
+
+        if (collapseBtn) {
+            collapseBtn.addEventListener('click', function () { setCollapsed(true, reopenBtn); });
+        }
+        if (reopenBtn) {
+            reopenBtn.addEventListener('click', function () { setCollapsed(false, collapseBtn); });
+        }
+
+        if (handle) {
+            // Announce the resizable range + current value to assistive tech
+            // (WAI-ARIA separator pattern for a focusable splitter).
+            handle.setAttribute('aria-valuemin', String(MIN_WIDTH));
+            handle.setAttribute('aria-valuemax', String(MAX_WIDTH));
+            handle.setAttribute('aria-valuenow', String(currentWidth()));
+            var dragging = false;
+            handle.addEventListener('pointerdown', function (event) {
+                dragging = true;
+                try { handle.setPointerCapture(event.pointerId); } catch (error) { /* older engines */ }
+                document.body.style.userSelect = 'none';
+                document.body.style.cursor = 'ew-resize';
+                event.preventDefault();
+            });
+            handle.addEventListener('pointermove', function (event) {
+                if (dragging) { setWidth(event.clientX); }
+            });
+            var endDrag = function (event) {
+                if (!dragging) { return; }
+                dragging = false;
+                try { handle.releasePointerCapture(event.pointerId); } catch (error) { /* ignore */ }
+                document.body.style.userSelect = '';
+                document.body.style.cursor = '';
+                persist('timetracker-sidebar-width', String(currentWidth()));
+            };
+            handle.addEventListener('pointerup', endDrag);
+            handle.addEventListener('pointercancel', endDrag);
+            // Keyboard resize for the focusable separator (WCAG 2.1.1).
+            handle.addEventListener('keydown', function (event) {
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    var width = setWidth(currentWidth() + (event.key === 'ArrowRight' ? STEP : -STEP));
+                    persist('timetracker-sidebar-width', String(width));
+                }
+            });
+        }
+    });
+})();
+</script>

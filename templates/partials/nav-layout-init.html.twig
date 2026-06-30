@@ -1,23 +1,29 @@
 {# Framework-neutral navigation-layout preference shared by the SolidJS /ui shell.
    Applies the saved choice before first paint (no flash) so the header renders as
-   the top bar (default) or the left sidebar straight away. The layout itself is
-   pure CSS keyed on data-nav-layout (see frontend app.css); there is no header
-   toggle — the switch lives on the Settings page (lib/navLayoutPref.ts), which
-   shares this localStorage key. Single source of truth for the boot-time apply. #}
+   the top bar (default) or the left sidebar straight away, at the saved width and
+   collapsed state. The layout itself is pure CSS keyed on data-nav-layout /
+   data-sidebar-collapsed / --sidebar-width (see frontend app.css). The top-bar↔
+   sidebar switch lives on the Settings page (lib/navLayoutPref.ts); the collapse
+   and resize controls live in the sidebar itself (partials/sidebar-behavior).
+   All three share their localStorage keys with this boot-time apply. #}
 <script>
 (function () {
-    var KEY = 'timetracker-nav-layout';
-    function read() {
-        try {
-            return window.localStorage.getItem(KEY) === 'side' ? 'side' : 'top';
-        } catch (error) {
-            return 'top';
+    var root = document.documentElement;
+    try {
+        if (window.localStorage.getItem('timetracker-nav-layout') === 'side') {
+            root.setAttribute('data-nav-layout', 'side');
+        } else {
+            root.removeAttribute('data-nav-layout');
         }
-    }
-    if (read() === 'side') {
-        document.documentElement.setAttribute('data-nav-layout', 'side');
-    } else {
-        document.documentElement.removeAttribute('data-nav-layout');
+        var width = window.localStorage.getItem('timetracker-sidebar-width');
+        if (width && /^[0-9]{2,3}$/.test(width)) {
+            root.style.setProperty('--sidebar-width', width + 'px');
+        }
+        if (window.localStorage.getItem('timetracker-sidebar-collapsed') === '1') {
+            root.setAttribute('data-sidebar-collapsed', 'true');
+        }
+    } catch (error) {
+        // Storage disabled/restricted — fall back to the top-bar default.
     }
 })();
 </script>
