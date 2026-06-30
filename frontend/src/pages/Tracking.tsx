@@ -815,11 +815,7 @@ export default function Tracking() {
               type="text"
               inputmode="numeric"
               class="tracking-days-input"
-              role="combobox"
               aria-labelledby="tracking-days-lbl"
-              aria-expanded={daysMenuOpen()}
-              aria-controls="tracking-days-menu"
-              aria-haspopup="listbox"
               value={String(days())}
               onChange={(event) => {
                 const typed = Number(event.currentTarget.value.trim())
@@ -846,14 +842,15 @@ export default function Tracking() {
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
             </button>
             <Show when={daysMenuOpen()}>
-              <ul class="days-combo-menu" id="tracking-days-menu" role="listbox" aria-label={m.tracking_days_label()}>
+              <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
                 <For each={DAYS_OPTIONS}>
                   {(option) => (
-                    <li role="option" aria-selected={days() === option}>
+                    <li>
                       <button
                         type="button"
                         class="days-combo-option"
                         classList={{ 'is-active': days() === option }}
+                        aria-current={days() === option ? 'true' : undefined}
                         onClick={() => { applyDays(option); setDaysMenuOpen(false) }}
                       >
                         {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
