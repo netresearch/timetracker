@@ -1,22 +1,21 @@
 import { createSignal } from 'solid-js'
 
-// A one-shot hand-off so the left-sidebar admin menu's per-entity "+" can open the
+// A reactive hand-off so the left-sidebar admin menu's per-entity "+" can open the
 // add form on a page it doesn't own. The "+" records the target entity and
-// navigates to /ui/admin/<key>; AdminCrudShell (which remounts per entity) reads
-// and clears this on mount and opens its create form. Null = no pending request.
-const [pending, setPending] = createSignal<string | null>(null)
+// navigates to /ui/admin/<key>; AdminCrudShell observes this reactively (not just
+// on mount) and opens its create form when the value matches its entity — so it
+// also works when you are already on that entity's page and the shell does not
+// remount. Null = no pending request.
+const [pendingAdd, setPendingAdd] = createSignal<string | null>(null)
 
-/** Request that the given entity's add form open once its shell mounts. */
+export { pendingAdd }
+
+/** Request that the given entity's add form open. */
 export function requestAdd(entityKey: string): void {
-  setPending(entityKey)
+  setPendingAdd(entityKey)
 }
 
-/** Read and clear the pending entity (returns null if none / mismatch caller). */
-export function takePendingAdd(): string | null {
-  const value = pending()
-  if (value !== null) {
-    setPending(null)
-  }
-
-  return value
+/** Clear the pending request (called by the shell once it has handled it). */
+export function clearPendingAdd(): void {
+  setPendingAdd(null)
 }

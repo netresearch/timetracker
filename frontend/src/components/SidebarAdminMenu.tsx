@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from '@solidjs/router'
-import { For, Show } from 'solid-js'
+import { createSignal, For, onMount, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
 import { adminEntities } from '../admin/entities'
@@ -21,18 +21,18 @@ import { m } from '../paraglide/messages.js'
  * switcher lives in exactly one place per layout.
  */
 export function SidebarAdminMenu() {
-  // Admin-only, and only when the shared header actually exposed the slot. Both
-  // are fixed for the session, so a render-once guard is fine — expressed as a
-  // <Show> to satisfy solid/components-return-once.
-  const slot = document.getElementById('sidebar-admin-slot')
+  // Resolve the Twig-rendered slot after mount (not during setup) so we never race
+  // the server-rendered header element. Admin-only; both are fixed for the session.
+  const [slot, setSlot] = createSignal<HTMLElement | null>(null)
+  onMount(() => setSlot(document.getElementById('sidebar-admin-slot')))
   const entities = adminEntities()
   const navigate = useNavigate()
   const location = useLocation()
   const activeKey = (): string | undefined => location.pathname.match(/\/admin\/([^/?]+)/)?.[1]
 
   return (
-    <Show when={slot !== null && hasRole('ROLE_ADMIN')}>
-      <Portal mount={slot!}>
+    <Show when={slot() !== null && hasRole('ROLE_ADMIN')}>
+      <Portal mount={slot()!}>
         <ul class="sidebar-admin-menu">
         <For each={entities}>
           {(entity) => (

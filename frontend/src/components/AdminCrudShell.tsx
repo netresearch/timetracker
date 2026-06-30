@@ -1,5 +1,5 @@
 import { useQueryClient, useQuery } from '@tanstack/solid-query'
-import { createComputed, createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js'
+import { createComputed, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
 import { createStore, reconcile } from 'solid-js/store'
 
 import { apiErrorMessage, getJson, postJson } from '../api/client'
@@ -11,7 +11,7 @@ import { DiskIcon, DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
 import { DateField } from './DateField'
 import { PageDialog } from './PageDialog'
 import { m } from '../paraglide/messages.js'
-import { takePendingAdd } from '../admin/pendingAdd'
+import { clearPendingAdd, pendingAdd } from '../admin/pendingAdd'
 import type { ColumnDef, EntityDescriptor, FieldDef, FormValues, OptionLookup } from '../admin/types'
 
 type Row = Record<string, unknown>
@@ -347,10 +347,14 @@ export function AdminCrudShell(props: {
 
   // The sidebar admin menu's "+" navigates here and asks (once) for the add form.
   // The shell remounts per entity (keyed), so this fires for the right entity.
-  onMount(() => {
-    if (takePendingAdd() === props.descriptor.key) {
-      // Defer one frame: toggling the dialog open synchronously during the
-      // shell's own mount tick races the dialog machine's init and no-ops.
+  // The sidebar admin menu's "+" hands its entity here. Observe it reactively so
+  // it fires both when the shell mounts (cross-entity navigation) AND when the
+  // value changes while already mounted (clicking "+" for the current entity,
+  // which does not remount the shell). Defer one frame: toggling the dialog open
+  // synchronously during the shell's own mount tick races the dialog machine.
+  createComputed(() => {
+    if (pendingAdd() === props.descriptor.key) {
+      clearPendingAdd()
       requestAnimationFrame(() => openForm(null))
     }
   })
