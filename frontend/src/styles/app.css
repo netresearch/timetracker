@@ -595,7 +595,8 @@ main {
 /* Opening orientation line at the top of the Help page — sets the mental model
    before the reference sections. Slightly larger than body text, not muted. */
 .help-lead {
-  font-size: 1.05rem;
+  /* em so the lead scales with the user's text-size preference, like body prose. */
+  font-size: 1.05em;
   line-height: 1.5;
   margin: 0 0 1.2rem;
 }
@@ -871,8 +872,10 @@ main {
 
 .help-legend-row {
   display: grid;
-  grid-template-columns: minmax(7rem, 13rem) 1fr;
-  gap: 0.2rem 1.2rem;
+  /* em (not rem) so the term column scales with the user's text-size preference
+     (--font-scale is applied to body), keeping long terms from clipping. */
+  grid-template-columns: minmax(7em, 13em) 1fr;
+  gap: 0.2em 1.2em;
   align-items: baseline;
 }
 
