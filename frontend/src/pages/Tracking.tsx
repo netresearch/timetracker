@@ -144,6 +144,16 @@ function displayDate(value: string): string {
   return formatUserDate(dmyToIso(value) ?? value)
 }
 
+// Three widths of the same date so the responsive table can shrink the Date
+// column purely in CSS: full (the user's preferred format), then MM-DD, then DD.
+function dateParts(value: string): { full: string; mid: string; short: string } {
+  const full = displayDate(value)
+  const iso = dmyToIso(value) ?? value
+  const parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+
+  return parts ? { full, mid: `${parts[2]}-${parts[3]}`, short: parts[3]! } : { full, mid: full, short: full }
+}
+
 // One icon button in the row-actions cell — same shape for Continue/Prolong/Info/
 // Delete (label drives both the accessible name and the hover tooltip).
 function RowAction(props: { label: string; danger?: boolean; keyshortcut?: string; onClick: () => void; children: JSX.Element }): JSX.Element {
@@ -250,6 +260,9 @@ export default function Tracking() {
   // The grid's move handle — used to restore cell focus after a row is deleted.
   let gridHandle: GridMoveHandle | null = null
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
+  // The External-ticket column is read-only and often empty; when no visible row
+  // has one it becomes a hide candidate for the responsive (narrow) table.
+  const hasExtTicket = createMemo<boolean>(() => rows().some((row) => str(row.extTicket) !== ''))
   const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
 
   // id→label maps, rebuilt only when the option list changes, so resolving a
@@ -498,9 +511,14 @@ export default function Tracking() {
         : <a class="ticket-link" href={ticketUrlFor(ticket, num(row.project))} target="_blank" rel="noopener noreferrer">{ticket}</a>
     }
     if (colKey === 'date') {
+      const parts = dateParts(str(editor.overlayRow(entry).date))
+
       return (
         <>
-          {displayCell(entry, 'date')}
+          {/* Three widths; the responsive table CSS shows exactly one per column width. */}
+          <span class="dt dt-full">{parts.full}</span>
+          <span class="dt dt-mid">{parts.mid}</span>
+          <span class="dt dt-short">{parts.short}</span>
           <Show when={classLabel(entry.class) !== ''}>
             <span class="visually-hidden"> ({classLabel(entry.class)})</span>
           </Show>
@@ -903,7 +921,7 @@ export default function Tracking() {
         <div class="table-scroll">
           <table
             class="data-table tracking-table"
-            classList={{ 'is-fetching': entries.isFetching }}
+            classList={{ 'is-fetching': entries.isFetching, 'no-extticket': !hasExtTicket() }}
             // A refetch (refresh / range change) keeps the previous rows visible
             // (keepPreviousData) — aria-busy + a subtle dim are the only in-flight
             // cue a sighted user gets, since the first-load spinner won't fire.
@@ -924,8 +942,8 @@ export default function Tracking() {
           >
             <thead>
               <tr>
-                <For each={COLUMNS}>{(col) => <th scope="col" classList={{ numeric: col.numeric }}>{col.label()}</th>}</For>
-                <th scope="col">{m.tracking_actions()}</th>
+                <For each={COLUMNS}>{(col) => <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>{col.label()}</th>}</For>
+                <th scope="col" data-col-key="actions">{m.tracking_actions()}</th>
               </tr>
             </thead>
             <tbody>
@@ -999,7 +1017,7 @@ export default function Tracking() {
                       </For>
                       {/* data-row-id (no data-col-key → not inline-editable) keeps focus
                           "inside the row" so clicking Delete isn't read as a row-leave. */}
-                      <td class="tracking-row-actions" data-row-id={String(id)}>
+                      <td class="tracking-row-actions" data-col-key="actions" data-row-id={String(id)}>
                         <div class="row-actions">
                           {/* Per-row Continue / Prolong / Info — only for saved entries. */}
                           <Show when={id > 0}>

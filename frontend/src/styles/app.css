@@ -1140,6 +1140,53 @@ kbd {
 /* Lets wide tables scroll sideways on narrow screens instead of overflowing. */
 .table-scroll {
   overflow-x: auto;
+  /* A query container so the worklog table can adapt to the available width
+     (window AND sidebar width) — see the responsive rules below. Horizontal
+     scroll remains the safety net once everything has been thinned. */
+  container-type: inline-size;
+}
+
+/* ── Responsive worklog table ─────────────────────────────────────────────────
+   As the available width shrinks, thin the table out (instead of scrolling) in
+   this priority order: Date YYYY-MM-DD → MM-DD → DD; hide an empty Ext. Ticket
+   column; hide Actions; hide Duration; then shrink Project + Description. All
+   rules are scoped to .tracking-table so the shared admin/summary tables (same
+   .table-scroll container, same data-col-key attributes) are untouched. */
+.tracking-table .dt-mid,
+.tracking-table .dt-short {
+  display: none;
+}
+
+@container (max-width: 1040px) {
+  .tracking-table .dt-full { display: none; }
+  .tracking-table .dt-mid { display: inline; }
+}
+
+@container (max-width: 920px) {
+  .tracking-table .dt-mid { display: none; }
+  .tracking-table .dt-short { display: inline; }
+}
+
+@container (max-width: 860px) {
+  .tracking-table.no-extticket [data-col-key='extTicket'] { display: none; }
+}
+
+@container (max-width: 780px) {
+  .tracking-table [data-col-key='actions'] { display: none; }
+}
+
+@container (max-width: 680px) {
+  .tracking-table [data-col-key='duration'] { display: none; }
+}
+
+@container (max-width: 580px) {
+  .tracking-table [data-col-key='project'],
+  .tracking-table [data-col-key='description'] {
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /* A long detail list scrolls inside its own box instead of stretching the page;

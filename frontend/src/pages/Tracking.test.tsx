@@ -524,7 +524,9 @@ describe('Tracking (Worklog grid)', () => {
     await waitFor(() => expect(getByRole('gridcell', { name: 'Newest' })).toBeInTheDocument())
 
     // Dates render in ISO (yyyy-mm-dd), one consistent format everywhere.
-    const dates = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"]')).map((td) => td.textContent)
+    // The date cell renders three responsive widths (full / MM-DD / DD); read the
+    // full-date span rather than the whole cell's concatenated text.
+    const dates = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-full')).map((el) => el.textContent)
     expect(dates).toEqual(['2026-06-16', '2026-06-15', '2026-06-14'])
 
     unmount()
