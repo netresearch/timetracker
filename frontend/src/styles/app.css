@@ -1359,7 +1359,7 @@ kbd {
 }
 
 /* The currently-applied range. */
-.days-combo-option[aria-selected='true'] {
+.days-combo-option[aria-current] {
   font-weight: 600;
 }
 
