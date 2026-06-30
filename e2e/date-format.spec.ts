@@ -20,10 +20,10 @@ test.describe('Date-format preference', () => {
 
   test('a custom pattern reformats the worklog date cells, but editing stays ISO', async ({ page }) => {
     const stamp = await createWorklogEntry(page);
-    // (the date cell also carries a visually-hidden row-class label, hence the
-    // optional suffix in the matchers)
-    await expect(rowByStamp(page, stamp).locator('td[data-col-key="date"]'))
-      .toHaveText(/^\d{4}-\d{2}-\d{2}( \(.+\))?$/); // ISO by default
+    // The date cell renders three responsive widths (full / MM-DD / DD) plus a
+    // visually-hidden row-class label; assert on the full-date span only.
+    await expect(rowByStamp(page, stamp).locator('td[data-col-key="date"] .dt-full'))
+      .toHaveText(/^\d{4}-\d{2}-\d{2}$/); // ISO by default
 
     // Switch to a custom DD.MM.YYYY pattern.
     await page.goto('/ui/settings');
@@ -36,7 +36,7 @@ test.describe('Date-format preference', () => {
     await page.goto('/ui/tracking');
     await page.waitForSelector('table.tracking-table');
     const dateCell = rowByStamp(page, stamp).locator('td[data-col-key="date"]');
-    await expect(dateCell).toHaveText(/^\d{2}\.\d{2}\.\d{4}( \(.+\))?$/);
+    await expect(dateCell.locator('.dt-full')).toHaveText(/^\d{2}\.\d{2}\.\d{4}$/);
 
     // ... but opening its editor shows the ISO value (edit/wire format unchanged).
     await dateCell.focus();
