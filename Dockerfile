@@ -100,9 +100,11 @@ RUN set -ex \
 # Bun is the package manager of the new SolidJS frontend (frontend/)
 COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
 
-# Copy dependency manifests first (better cache)
+# Copy dependency manifests first (better cache). Root npm deps are now just
+# Playwright + axe for e2e (the webpack-encore toolchain was removed), so the
+# legacy peer-deps workaround is no longer needed.
 COPY --chown=app:app package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
 # Root-owned and read-only for the runtime user (docker:S6504); the deps
 # stage builds as root, so bun needs no ownership change here.

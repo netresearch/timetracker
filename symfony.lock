@@ -329,24 +329,5 @@
             "config/packages/test/web_profiler.yaml",
             "config/routes/dev/web_profiler.yaml"
         ]
-    },
-    "symfony/webpack-encore-bundle": {
-        "version": "1.17",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "1.9",
-            "ref": "06f92cd7b9e7df74ed637075678da31e85a28dd9"
-        },
-        "files": [
-            "assets/app.js",
-            "assets/bootstrap.js",
-            "assets/controllers.json",
-            "assets/controllers/hello_controller.js",
-            "assets/styles/app.css",
-            "config/packages/webpack_encore.yaml",
-            "package.json",
-            "webpack.config.js"
-        ]
     }
 }
