@@ -37,25 +37,27 @@
 
         <nav class="main-nav" aria-label="{{ 'Main navigation'|trans }}">
             {# Worklog (SolidJS) is the time-tracking grid. Active state is refined
-               client-side via data-nav (nav.ts). #}
+               client-side via data-nav (nav.ts). Each link carries an icon shown in
+               the left-sidebar layout (and alone when the sidebar is collapsed to a
+               rail); the label + title keep it accessible. #}
             <a class="main-nav-link{% if active == 'tracking' %} is-active{% endif %}"
                {% if active == 'tracking' %}aria-current="page"{% endif %}
-               data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}">{{ 'Worklog'|trans }}</a>
+               data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}" title="{{ 'Worklog'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg><span class="nav-label">{{ 'Worklog'|trans }}</span></a>
             <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
                {% if active == 'month' %}aria-current="page"{% endif %}
-               data-nav="month" href="{{ monthPath }}">{{ 'Overview'|trans }}</a>
+               data-nav="month" href="{{ monthPath }}" title="{{ 'Overview'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M3.5 9h17M8 2.5v4M16 2.5v4"/></svg><span class="nav-label">{{ 'Overview'|trans }}</span></a>
             <a class="main-nav-link{% if active == 'auswertung' %} is-active{% endif %}"
                {% if active == 'auswertung' %}aria-current="page"{% endif %}
-               data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
+               data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}" title="{{ 'Evaluation'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21h16"/><path d="M6 21V11M12 21V5M18 21v-7"/></svg><span class="nav-label">{{ 'Evaluation'|trans }}</span></a>
             {% if canBill %}
                 <a class="main-nav-link{% if active == 'billing' %} is-active{% endif %}"
                    {% if active == 'billing' %}aria-current="page"{% endif %}
-                   data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
+                   data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}" title="{{ 'Billing'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v18l2-1.2L10 21l2-1.2L14 21l2-1.2L18 21V3l-2 1.2L14 3l-2 1.2L10 3 8 4.2 6 3z"/><path d="M9 8.5h6M9 12.5h6"/></svg><span class="nav-label">{{ 'Billing'|trans }}</span></a>
             {% endif %}
             {% if isAdmin %}
                 <a class="main-nav-link{% if active == 'admin' %} is-active{% endif %}"
                    {% if active == 'admin' %}aria-current="page"{% endif %}
-                   data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}">{{ 'Administration'|trans }}</a>
+                   data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}" title="{{ 'Administration'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></svg><span class="nav-label">{{ 'Administration'|trans }}</span></a>
                 {# The SolidJS SidebarAdminMenu portals the admin entity sub-items
                    (each with a "+") into this slot; CSS shows it only in the
                    left-sidebar layout. Empty in the top bar. #}

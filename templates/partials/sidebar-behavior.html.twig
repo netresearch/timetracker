@@ -67,11 +67,17 @@
         if (collapseBtn) { collapseBtn.setAttribute('aria-expanded', collapsedNow ? 'false' : 'true'); }
         if (reopenBtn) { reopenBtn.setAttribute('aria-expanded', collapsedNow ? 'false' : 'true'); }
 
+        // The collapse toggle flips both ways — the sidebar stays visible as a
+        // narrow icon rail when collapsed, so there is no separate reopen step.
         if (collapseBtn) {
-            collapseBtn.addEventListener('click', function () { setCollapsed(true, reopenBtn); });
+            collapseBtn.addEventListener('click', function () {
+                setCollapsed(root.getAttribute('data-sidebar-collapsed') !== 'true');
+            });
         }
+        // The floating reopen button is retained as a no-op fallback (CSS-hidden in
+        // the icon-rail design) for older saved states.
         if (reopenBtn) {
-            reopenBtn.addEventListener('click', function () { setCollapsed(false, collapseBtn); });
+            reopenBtn.addEventListener('click', function () { setCollapsed(false); });
         }
 
         if (handle) {
