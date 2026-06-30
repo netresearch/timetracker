@@ -173,6 +173,29 @@ export default function Tracking() {
   const queryClient = useQueryClient()
   // The day range persists across remounts/logins (client-side, like the theme).
   const [days, setDays] = createSignal<number>(Math.min(getTrackingDays(DEFAULT_DAYS), MAX_DAYS))
+  // Preset-range combobox: the menu always lists every preset (unlike a native
+  // datalist, which filters by the typed value and forced the user to clear the
+  // field to pick another range). Free typing still applies a custom day count.
+  const [daysMenuOpen, setDaysMenuOpen] = createSignal(false)
+  // Active option for keyboard navigation (aria-activedescendant), -1 = none.
+  const [daysActiveIdx, setDaysActiveIdx] = createSignal(-1)
+  let daysComboRef: HTMLDivElement | undefined
+  const openDaysMenu = (): void => {
+    const current = DAYS_OPTIONS.indexOf(days() as (typeof DAYS_OPTIONS)[number])
+    setDaysActiveIdx(Math.max(0, current))
+    setDaysMenuOpen(true)
+  }
+  const closeDaysMenu = (): void => { setDaysMenuOpen(false); setDaysActiveIdx(-1) }
+  const chooseDays = (value: number): void => { applyDays(value); closeDaysMenu() }
+  onMount(() => {
+    const onDocPointer = (event: PointerEvent): void => {
+      if (daysComboRef !== undefined && !daysComboRef.contains(event.target as Node)) {
+        closeDaysMenu()
+      }
+    }
+    document.addEventListener('pointerdown', onDocPointer)
+    onCleanup(() => document.removeEventListener('pointerdown', onDocPointer))
+  })
   const entries = useQuery(() => trackingEntriesQuery(days()))
   const customers = useQuery(trackingCustomersQuery)
   const projects = useQuery(trackingProjectsQuery)
@@ -790,35 +813,82 @@ export default function Tracking() {
         {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
             still act on the keyboard-cursor row via the global shortcut handler. */}
         <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
-        {/* Freetext combobox: the presets are suggestions in the datalist, but the
-            user can type any whole number of days (applyDays clamps + persists).
-            A text input with `list` is a combobox (role) — not a numeric
-            spinbutton — so the datalist dropdown stays a one-tap pick. */}
-        <label class="tracking-days">
-          <span>{m.tracking_days_label()}</span>
-          <input
-            type="text"
-            inputmode="numeric"
-            class="tracking-days-input"
-            list="tracking-days-options"
-            value={String(days())}
-            onChange={(event) => {
-              const typed = Number(event.currentTarget.value.trim())
-              if (Number.isFinite(typed) && typed >= 1) {
-                applyDays(typed)
-              }
-              // Re-sync the field to the effective (clamped) value, reverting any
-              // invalid or out-of-range entry rather than leaving it on screen.
-              event.currentTarget.value = String(days())
-            }}
-          />
-          <datalist id="tracking-days-options">
-            <For each={DAYS_OPTIONS}>
-              {(option) => <option value={String(option)} label={option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })} />}
-            </For>
-          </datalist>
+        {/* Freetext + always-full preset menu: type any whole number of days
+            (applyDays clamps + persists), or pick a preset — the menu always lists
+            ALL presets regardless of what's typed, so switching ranges never needs
+            clearing the field first. */}
+        <div class="tracking-days">
+          <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
+          <div class="days-combo" ref={(el) => { daysComboRef = el }}>
+            <input
+              type="text"
+              inputmode="numeric"
+              class="tracking-days-input"
+              role="combobox"
+              aria-labelledby="tracking-days-lbl"
+              aria-expanded={daysMenuOpen()}
+              aria-controls="tracking-days-menu"
+              value={String(days())}
+              onChange={(event) => {
+                const typed = Number(event.currentTarget.value.trim())
+                if (Number.isFinite(typed) && typed >= 1) {
+                  applyDays(typed)
+                }
+                // Re-sync to the effective (clamped) value, reverting invalid input.
+                event.currentTarget.value = String(days())
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault()
+                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.min(DAYS_OPTIONS.length - 1, i + 1)) }
+                  else { openDaysMenu() }
+                } else if (event.key === 'ArrowUp') {
+                  event.preventDefault()
+                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
+                } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
+                  event.preventDefault()
+                  chooseDays(DAYS_OPTIONS[daysActiveIdx()]!)
+                } else if (event.key === 'Escape' && daysMenuOpen()) {
+                  event.preventDefault()
+                  closeDaysMenu()
+                }
+              }}
+            />
+            <button
+              type="button"
+              class="days-combo-toggle"
+              tabindex="-1"
+              aria-label={m.tracking_days_presets()}
+              aria-expanded={daysMenuOpen()}
+              aria-controls="tracking-days-menu"
+              onClick={() => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+            <Show when={daysMenuOpen()}>
+              <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
+                <For each={DAYS_OPTIONS}>
+                  {(option, index) => (
+                    <li>
+                      <button
+                        type="button"
+                        class="days-combo-option"
+                        tabindex="-1"
+                        classList={{ 'is-active': index() === daysActiveIdx() }}
+                        aria-current={days() === option ? 'true' : undefined}
+                        onClick={() => chooseDays(option)}
+                        onPointerEnter={() => setDaysActiveIdx(index())}
+                      >
+                        {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
+                      </button>
+                    </li>
+                  )}
+                </For>
+              </ul>
+            </Show>
+          </div>
           <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
-        </label>
+        </div>
 
         {/* Inline-edit + keyboard discoverability hint — last in the tool line, so
             the only otherwise-on-screen cue (a hover text-cursor on editable cells)
