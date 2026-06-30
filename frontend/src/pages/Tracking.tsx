@@ -177,11 +177,20 @@ export default function Tracking() {
   // datalist, which filters by the typed value and forced the user to clear the
   // field to pick another range). Free typing still applies a custom day count.
   const [daysMenuOpen, setDaysMenuOpen] = createSignal(false)
+  // Active option for keyboard navigation (aria-activedescendant), -1 = none.
+  const [daysActiveIdx, setDaysActiveIdx] = createSignal(-1)
   let daysComboRef: HTMLDivElement | undefined
+  const openDaysMenu = (): void => {
+    const current = DAYS_OPTIONS.indexOf(days() as (typeof DAYS_OPTIONS)[number])
+    setDaysActiveIdx(current >= 0 ? current : 0)
+    setDaysMenuOpen(true)
+  }
+  const closeDaysMenu = (): void => { setDaysMenuOpen(false); setDaysActiveIdx(-1) }
+  const chooseDays = (value: number): void => { applyDays(value); closeDaysMenu() }
   onMount(() => {
     const onDocPointer = (event: PointerEvent): void => {
       if (daysComboRef !== undefined && !daysComboRef.contains(event.target as Node)) {
-        setDaysMenuOpen(false)
+        closeDaysMenu()
       }
     }
     document.addEventListener('pointerdown', onDocPointer)
@@ -815,7 +824,12 @@ export default function Tracking() {
               type="text"
               inputmode="numeric"
               class="tracking-days-input"
+              role="combobox"
               aria-labelledby="tracking-days-lbl"
+              aria-expanded={daysMenuOpen()}
+              aria-controls="tracking-days-menu"
+              aria-haspopup="listbox"
+              aria-activedescendant={daysMenuOpen() && daysActiveIdx() >= 0 ? `days-opt-${DAYS_OPTIONS[daysActiveIdx()]}` : undefined}
               value={String(days())}
               onChange={(event) => {
                 const typed = Number(event.currentTarget.value.trim())
@@ -826,8 +840,20 @@ export default function Tracking() {
                 event.currentTarget.value = String(days())
               }}
               onKeyDown={(event) => {
-                if (event.key === 'ArrowDown') { event.preventDefault(); setDaysMenuOpen(true) }
-                else if (event.key === 'Escape') { setDaysMenuOpen(false) }
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault()
+                  if (!daysMenuOpen()) { openDaysMenu() }
+                  else { setDaysActiveIdx((i) => Math.min(DAYS_OPTIONS.length - 1, i + 1)) }
+                } else if (event.key === 'ArrowUp') {
+                  event.preventDefault()
+                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
+                } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
+                  event.preventDefault()
+                  chooseDays(DAYS_OPTIONS[daysActiveIdx()]!)
+                } else if (event.key === 'Escape' && daysMenuOpen()) {
+                  event.preventDefault()
+                  closeDaysMenu()
+                }
               }}
             />
             <button
@@ -837,24 +863,24 @@ export default function Tracking() {
               aria-label={m.tracking_days_presets()}
               aria-expanded={daysMenuOpen()}
               aria-controls="tracking-days-menu"
-              onClick={() => setDaysMenuOpen((open) => !open)}
+              onClick={() => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }}
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
             </button>
             <Show when={daysMenuOpen()}>
-              <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
+              <ul class="days-combo-menu" id="tracking-days-menu" role="listbox" aria-label={m.tracking_days_label()}>
                 <For each={DAYS_OPTIONS}>
-                  {(option) => (
-                    <li>
-                      <button
-                        type="button"
-                        class="days-combo-option"
-                        classList={{ 'is-active': days() === option }}
-                        aria-current={days() === option ? 'true' : undefined}
-                        onClick={() => { applyDays(option); setDaysMenuOpen(false) }}
-                      >
-                        {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
-                      </button>
+                  {(option, index) => (
+                    <li
+                      class="days-combo-option"
+                      id={`days-opt-${option}`}
+                      role="option"
+                      aria-selected={days() === option}
+                      classList={{ 'is-active': index() === daysActiveIdx() }}
+                      onClick={() => chooseDays(option)}
+                      onPointerEnter={() => setDaysActiveIdx(index())}
+                    >
+                      {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
                     </li>
                   )}
                 </For>

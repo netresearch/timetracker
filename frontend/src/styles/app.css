@@ -1353,13 +1353,13 @@ kbd {
 }
 
 .days-combo-option:hover,
-.days-combo-option:focus-visible {
+.days-combo-option.is-active {
   background: var(--color-accent-soft);
   color: var(--color-accent);
 }
 
-.days-combo-option.is-active {
-  color: var(--color-accent);
+/* The currently-applied range. */
+.days-combo-option[aria-selected='true'] {
   font-weight: 600;
 }
 
