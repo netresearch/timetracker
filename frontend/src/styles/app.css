@@ -2431,6 +2431,11 @@ th[aria-sort='descending'] .th-sort-glyph {
   display: contents;
 }
 
+/* The admin entity sub-menu only exists in the left-sidebar layout. */
+#sidebar-admin-slot {
+  display: none;
+}
+
 .sidebar-reopen {
   position: fixed;
   top: 8px;
@@ -2656,6 +2661,87 @@ th[aria-sort='descending'] .th-sort-glyph {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  /* Collapsed: reserve a left rail so the floating reopen button never overlaps
+     the page content (e.g. the Worklog "Add" button or the admin tabs). */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #app {
+    margin-left: 3.25rem;
+  }
+
+  /* ── Admin entity sub-menu (portaled under the Administration nav link) ────── */
+  :root[data-nav-layout='side'] #sidebar-admin-slot {
+    display: block;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-menu {
+    list-style: none;
+    margin: 2px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-item {
+    display: flex;
+    align-items: stretch;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-link {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    /* indented under "Administration" (gutter + room for the active edge bar) */
+    padding: 5px 6px 5px calc(var(--sidebar-gutter) + 14px);
+    border-left: 4px solid transparent;
+    color: var(--color-text-muted);
+    font-size: 0.86em;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-link:hover {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-item.is-active .sidebar-admin-link {
+    color: var(--color-accent);
+    border-left-color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-add {
+    flex: 0 0 auto;
+    width: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-add:hover,
+  :root[data-nav-layout='side'] .sidebar-admin-add:focus-visible {
+    color: var(--color-accent);
+    background: var(--color-accent-soft);
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-add svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* The entity switcher now lives in the sidebar — drop the in-page tab bar so
+     the main area is the table only. */
+  :root[data-nav-layout='side'] .admin-subnav {
+    display: none;
   }
 }
 
