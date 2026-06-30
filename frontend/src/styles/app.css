@@ -1170,6 +1170,12 @@ kbd {
   text-align: left;
   text-transform: uppercase;
   white-space: nowrap;
+  /* Pin the header so columns stay labelled while the table scrolls — against the
+     page (the top bar scrolls away) or inside a .is-scrollable box. The
+     accent-soft token is an opaque tint, so scrolled rows don't bleed through. */
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 /* Sortable headers carry their padding on the inner button so the whole cell
@@ -2411,6 +2417,41 @@ th[aria-sort='descending'] .th-sort-glyph {
   display: none;
 }
 
+/* Sidebar chrome (collapse / resize / reopen) is hidden by default — it only
+   applies in the left-sidebar layout (shown in the media query below). */
+.sidebar-collapse,
+.sidebar-resize,
+.sidebar-reopen {
+  display: none;
+}
+
+/* In the top bar the control group is transparent to layout (its children flow as
+   direct header items); the sidebar reflows it into a horizontal control bar. */
+.header-controls {
+  display: contents;
+}
+
+.sidebar-reopen {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 50;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.12);
+}
+
+.sidebar-reopen:hover,
+.sidebar-reopen:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 /* ── Left-sidebar navigation ──────────────────────────────────────────────────
    Opt-in via Settings → data-nav-layout='side' on <html>. Reflows the SAME shared
    header markup (#page-header) into a fixed left column — no markup duplication.
@@ -2426,8 +2467,8 @@ th[aria-sort='descending'] .th-sort-glyph {
   }
 
   :root[data-nav-layout='side'] #page-header {
-    flex: 0 0 13rem;
-    width: 13rem;
+    flex: 0 0 var(--sidebar-width, 13rem);
+    width: var(--sidebar-width, 13rem);
     height: 100vh;
     position: sticky;
     top: 0;
@@ -2445,6 +2486,7 @@ th[aria-sort='descending'] .th-sort-glyph {
   /* The flex spacer (flex:1) now grows vertically, pushing the worktime badges,
      the icon controls and the account block to the bottom of the column. */
   :root[data-nav-layout='side'] .app-header {
+    --sidebar-gutter: 12px;
     flex-direction: column;
     align-items: stretch;
     min-height: 100vh;
@@ -2467,23 +2509,46 @@ th[aria-sort='descending'] .th-sort-glyph {
     width: 100%;
     justify-content: flex-start;
     border-bottom: none;
-    border-left: 3px solid transparent;
+    border-left: 4px solid transparent;
+    /* align the label with the shared 12px gutter (4px of it is the edge bar) */
+    padding-left: calc(var(--sidebar-gutter) - 4px);
+    padding-right: var(--sidebar-gutter);
   }
 
+  /* Active item: pair the edge bar with a soft fill + accent label so it reads
+     clearly, not just a thin stripe. */
   :root[data-nav-layout='side'] .main-nav-link.is-active,
   :root[data-nav-layout='side'] .main-nav-link[aria-current='page'] {
     border-bottom-color: transparent;
     border-left-color: var(--color-accent, #00707f);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
   }
 
   :root[data-nav-layout='side'] .nav-more {
     display: none;
   }
 
+  /* The worktime block opens the bottom footer cluster — a hairline divider makes
+     the flexible gap above the nav read as intentional, not a load failure. */
+  :root[data-nav-layout='side'] .header-worktime {
+    border-top: 1px solid var(--color-border);
+    padding-top: 0.5rem;
+  }
+
   :root[data-nav-layout='side'] .header-worktime .worktime-list {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding-inline: var(--sidebar-gutter);
+  }
+
+  /* Flatten each badge to a left-aligned label / right-aligned value row. */
+  :root[data-nav-layout='side'] .worktime-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   /* The narrow column is a scroll container (overflow-y), which would reveal the
@@ -2495,6 +2560,102 @@ th[aria-sort='descending'] .th-sort-glyph {
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+
+  /* Collapse toggle — sits at the top of the column next to the logo. */
+  :root[data-nav-layout='side'] .header-logo {
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding-inline: var(--sidebar-gutter);
+  }
+
+  :root[data-nav-layout='side'] .sidebar-collapse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  /* Horizontal control bar (settings / help / theme / density) at the column foot. */
+  :root[data-nav-layout='side'] .header-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding-inline: var(--sidebar-gutter);
+  }
+
+  /* Uniform 32×32 hit targets so all four controls align and fit on one row. */
+  :root[data-nav-layout='side'] .header-controls .header-icon-link,
+  :root[data-nav-layout='side'] .header-controls .theme-cycle {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  :root[data-nav-layout='side'] .header-account {
+    padding-inline: var(--sidebar-gutter);
+  }
+
+  :root[data-nav-layout='side'] .sidebar-collapse:hover,
+  :root[data-nav-layout='side'] .sidebar-collapse:focus-visible {
+    border-color: var(--color-border);
+    background: var(--color-accent-soft);
+  }
+
+  /* Resize handle — a thin grabbable strip tracking the column's right edge. */
+  :root[data-nav-layout='side'] .sidebar-resize {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width, 13rem);
+    width: 8px;
+    height: 100vh;
+    margin-left: -4px;
+    z-index: 40;
+    background: transparent;
+    cursor: ew-resize;
+    touch-action: none;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-resize::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 3px;
+    width: 2px;
+    height: 100%;
+    /* A faint resting line marks the draggable edge; it brightens on hover/focus. */
+    background: var(--color-border);
+    transition: background 0.15s ease;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-resize:hover::before,
+  :root[data-nav-layout='side'] .sidebar-resize:focus-visible::before {
+    background: var(--color-accent);
+  }
+
+  /* Collapsed: hide the column and its handle, surface the reopen button. */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #page-header,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-resize {
+    display: none;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-reopen {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
