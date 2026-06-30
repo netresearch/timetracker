@@ -29,9 +29,13 @@ export function SidebarAdminMenu() {
   const navigate = useNavigate()
   const location = useLocation()
   const activeKey = (): string | undefined => location.pathname.match(/\/admin\/([^/?]+)/)?.[1]
+  // Only expand the entity list while you're in Administration — like a normal
+  // disclosure. This keeps the sidebar short elsewhere (the always-expanded list
+  // overflowed the column and pushed the main nav / worktime out of view).
+  const onAdmin = (): boolean => /^\/admin(\/|$)/.test(location.pathname.replace(/^\/ui/, ''))
 
   return (
-    <Show when={slot() !== null && hasRole('ROLE_ADMIN')}>
+    <Show when={slot() !== null && hasRole('ROLE_ADMIN') && onAdmin()}>
       <Portal mount={slot()!}>
         <ul class="sidebar-admin-menu">
         <For each={entities}>

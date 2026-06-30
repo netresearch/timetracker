@@ -2436,6 +2436,12 @@ th[aria-sort='descending'] .th-sort-glyph {
   display: none;
 }
 
+/* Nav-item icons show only in the left-sidebar layout; the top bar stays
+   text-only (icons would crowd the horizontal row). */
+.nav-ico {
+  display: none;
+}
+
 .sidebar-reopen {
   position: fixed;
   top: 8px;
@@ -2512,12 +2518,22 @@ th[aria-sort='descending'] .th-sort-glyph {
   /* Active indicator moves from the bottom underline to a left edge bar. */
   :root[data-nav-layout='side'] .main-nav-link {
     width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     justify-content: flex-start;
     border-bottom: none;
     border-left: 4px solid transparent;
-    /* align the label with the shared 12px gutter (4px of it is the edge bar) */
+    /* align the icon with the shared 12px gutter (4px of it is the edge bar) */
     padding-left: calc(var(--sidebar-gutter) - 4px);
     padding-right: var(--sidebar-gutter);
+  }
+
+  :root[data-nav-layout='side'] .nav-ico {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
   }
 
   /* Active item: pair the edge bar with a soft fill + accent label so it reads
@@ -2651,22 +2667,45 @@ th[aria-sort='descending'] .th-sort-glyph {
     background: var(--color-accent);
   }
 
-  /* Collapsed: hide the column and its handle, surface the reopen button. */
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #page-header,
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-resize {
+  /* Collapsed = a narrow icon rail (not hidden). Labels, worktime, the admin
+     sub-menu and the username hide; the nav/control icons remain. The resize
+     handle is dropped (a fixed rail isn't resizable) and the floating reopen
+     button is unused — the collapse toggle itself expands the rail again. */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #page-header {
+    flex: 0 0 3.5rem;
+    width: 3.5rem;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .nav-label,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-worktime,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-admin-slot,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .user-name,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #logo,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-resize,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-reopen {
     display: none;
   }
 
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-reopen {
-    display: inline-flex;
-    align-items: center;
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-logo,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-account {
     justify-content: center;
+    padding-inline: 0;
   }
 
-  /* Collapsed: reserve a left rail so the floating reopen button never overlaps
-     the page content (e.g. the Worklog "Add" button or the admin tabs). */
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #app {
-    margin-left: 3.25rem;
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .main-nav-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-controls {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  /* The collapse chevron now points outward (it expands the rail). */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-collapse svg {
+    transform: scaleX(-1);
   }
 
   /* ── Admin entity sub-menu (portaled under the Administration nav link) ────── */
