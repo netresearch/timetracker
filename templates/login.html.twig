@@ -8,9 +8,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ apptitle }}</title>
         <meta name="robots" content="noindex,nofollow">
-        {# Flag that a login is in progress, so the next app shell returns the user
-           to their last-opened /ui view (last-view.html.twig). #}
-        {% include 'partials/last-view.html.twig' with {mode: 'mark'} %}
         {# Apply the saved light/dark preference before first paint (shared with the app). #}
         {% include 'partials/theme-init.html.twig' %}
         {{ vite_entry_link_tags('login') }}

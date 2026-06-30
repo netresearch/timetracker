@@ -1,11 +1,8 @@
 import { ShortcutTable } from '../components/ShortcutTable'
-import { appConfig } from '../config'
 import { GLOBAL_SHORTCUTS, GRID_SHORTCUTS, TRACKING_SHORTCUTS } from '../lib/shortcuts'
 import { m } from '../paraglide/messages.js'
 
 export default function Help() {
-  const config = appConfig()
-
   return (
     <section class="help-page">
 
@@ -39,7 +36,7 @@ export default function Help() {
             </a>
           </li>
           <li>
-            <a href={config.legacyUrl + 'api.yml'} target="_blank" rel="noopener noreferrer">
+            <a href="/api.yml" target="_blank" rel="noopener noreferrer">
               {m.help_link_api()}
             </a>
           </li>

@@ -19,11 +19,6 @@
    local clock in Month.tsx) instead of server-computed dates, so they never
    skew with the server timezone. #}
 {% set monthPath = path('ui_spa', {'path': 'month'}) %}
-{# Remember the last-opened view (client-side) so login returns the user to it
-   (see the redirect in index.html.twig). Runs on both shells on load; the SPA
-   also updates it on client-side route changes (frontend/src/App.tsx). This is
-   the soft opt-in for the parallel ExtJS/SolidJS work-log grids. #}
-<script>try { localStorage.setItem('tt:lastView', location.pathname); } catch (e) {}</script>
 <div id="page-header" class="page-header">
     <a href="#main-content" class="skip-link">{{ 'Skip to main content'|trans }}</a>
     {% if globalConfig.header_url is defined and globalConfig.header_url %}

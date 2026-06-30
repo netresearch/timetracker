@@ -136,14 +136,6 @@ function Layout(props: ParentProps) {
     const modal = isModal()
     const title = routeTitle()
     syncNav(location.pathname)
-    // Last-view memory (soft opt-in for the parallel work-log grids): the shared
-    // header writes this on full page loads; mirror it on SPA client-side
-    // navigation so the next login returns the user to the view they left.
-    try {
-      localStorage.setItem('tt:lastView', location.pathname)
-    } catch {
-      // localStorage unavailable (private mode) — skip.
-    }
     // WCAG 2.4.2: every route is a "page" and needs its own document title.
     document.title = `${title} – ${appConfig().appTitle}`
     // Remember the last full page so a modal renders it behind and returns to it.
