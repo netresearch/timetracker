@@ -1,0 +1,11 @@
+# The pentatrion/vite-bundle data collector is active in every env, but its
+# web-debug-toolbar block links to the `_profiler_vite` route, which the bundle
+# only registers under `when@dev`. In the profiling env the toolbar therefore
+# 500s ("route _profiler_vite does not exist") even though the profiler pages
+# render fine. Register the route here so the full toolbar works (mirrors how
+# the bundle wires it in dev). Covered by the ^/_(profiler|wdt) ROLE_ADMIN
+# access_control rule.
+_profiler_vite:
+    path: /_profiler/vite
+    defaults:
+        _controller: Pentatrion\ViteBundle\Controller\ProfilerController::info
