@@ -32,7 +32,7 @@ export function SidebarAdminMenu() {
   // Only expand the entity list while you're in Administration — like a normal
   // disclosure. This keeps the sidebar short elsewhere (the always-expanded list
   // overflowed the column and pushed the main nav / worktime out of view).
-  const onAdmin = (): boolean => location.pathname.replace(/^\/ui/, '').startsWith('/admin')
+  const onAdmin = (): boolean => /^\/admin(\/|$)/.test(location.pathname.replace(/^\/ui/, ''))
 
   return (
     <Show when={slot() !== null && hasRole('ROLE_ADMIN') && onAdmin()}>

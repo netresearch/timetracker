@@ -9,6 +9,11 @@
     var MIN_WIDTH = 150;
     var MAX_WIDTH = 460;
     var STEP = 16;
+    // The collapse toggle stays visible in the icon rail and flips meaning, so its
+    // accessible name must follow the state. Captured from the rendered (localized)
+    // labels on the collapse + reopen buttons at init.
+    var collapseLabel = null;
+    var expandLabel = null;
 
     function persist(key, value) {
         try {
@@ -49,7 +54,15 @@
         var expanded = collapsed ? 'false' : 'true';
         var collapseBtn = document.getElementById('sidebar-collapse');
         var reopenBtn = document.getElementById('sidebar-reopen');
-        if (collapseBtn) { collapseBtn.setAttribute('aria-expanded', expanded); }
+        if (collapseBtn) {
+            collapseBtn.setAttribute('aria-expanded', expanded);
+            // It expands when collapsed, collapses when expanded — keep the name honest.
+            var label = collapsed ? expandLabel : collapseLabel;
+            if (label) {
+                collapseBtn.setAttribute('aria-label', label);
+                collapseBtn.setAttribute('title', label);
+            }
+        }
         if (reopenBtn) { reopenBtn.setAttribute('aria-expanded', expanded); }
         if (focusEl) {
             // The just-hidden control loses focus; move it to the still-visible one.
@@ -62,9 +75,18 @@
         var reopenBtn = document.getElementById('sidebar-reopen');
         var handle = document.getElementById('sidebar-resize');
 
-        // Sync the controls' aria-expanded with the pre-paint collapsed state.
+        // Capture the localized labels, then sync aria-expanded + the collapse
+        // button's name with the pre-paint collapsed state.
+        if (collapseBtn) { collapseLabel = collapseBtn.getAttribute('aria-label'); }
+        if (reopenBtn) { expandLabel = reopenBtn.getAttribute('aria-label'); }
         var collapsedNow = root.getAttribute('data-sidebar-collapsed') === 'true';
-        if (collapseBtn) { collapseBtn.setAttribute('aria-expanded', collapsedNow ? 'false' : 'true'); }
+        if (collapseBtn) {
+            collapseBtn.setAttribute('aria-expanded', collapsedNow ? 'false' : 'true');
+            if (collapsedNow && expandLabel) {
+                collapseBtn.setAttribute('aria-label', expandLabel);
+                collapseBtn.setAttribute('title', expandLabel);
+            }
+        }
         if (reopenBtn) { reopenBtn.setAttribute('aria-expanded', collapsedNow ? 'false' : 'true'); }
 
         // The collapse toggle flips both ways — the sidebar stays visible as a
