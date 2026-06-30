@@ -75,7 +75,6 @@ window.APP_CONFIG = {
   showFuture: false,
   minEntryDuration: 5,
   logoutUrl: '/logout',
-  legacyUrl: '/',
   csrfToken: 'test-csrf-token',
   loginPath: '/login',
 }

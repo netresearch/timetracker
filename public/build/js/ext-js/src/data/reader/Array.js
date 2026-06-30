@@ -1,1 +1,0 @@
-Ext.define("Ext.data.reader.Array",{extend:"Ext.data.reader.Json",alternateClassName:"Ext.data.ArrayReader",alias:"reader.array",totalProperty:void 0,successProperty:void 0,createFieldAccessExpression:function(a,e,r){var t,n=null==a.mapping?a.originalIndex:a.mapping;return"function"==typeof n?t=e+".mapping("+r+", this)":(isNaN(n)&&(n='"'+n+'"'),t=r+"["+n+"]"),t}});

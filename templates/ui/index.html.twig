@@ -5,9 +5,6 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        {# Already in the SPA after a login — clear the restore flag so a later click
-           on "Time tracking" (→ /) doesn't bounce back here (last-view.html.twig). #}
-        {% include 'partials/last-view.html.twig' with {mode: 'consume'} %}
         <title>{{ apptitle }}</title>
         <link rel="stylesheet" href="{{ asset('build/css/header.css') }}">
         {% include 'partials/theme-init.html.twig' %}
@@ -29,7 +26,6 @@
                 'showFuture': settings.show_future == 1,
                 'minEntryDuration': settings.min_entry_duration,
                 'logoutUrl': url('_logout'),
-                'legacyUrl': url('_start'),
                 'csrfToken': csrf_token('authenticate'),
                 'loginPath': path('_login'),
             }|json_encode(jsonHexFlags)|raw }};

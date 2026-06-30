@@ -167,17 +167,6 @@ final class ProjectCrudTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
     }
 
-    public function testProjectStructure(): void
-    {
-        $this->logInSession('unittest');
-
-        $this->client->request(Request::METHOD_GET, '/getProjectStructure');
-        $this->assertStatusCode(200);
-
-        $structure = $this->getJsonResponse($this->client->getResponse());
-        self::assertIsArray($structure);
-    }
-
     public function testProjectRequiresCustomer(): void
     {
         $this->logInSession('unittest');

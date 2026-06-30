@@ -22,7 +22,7 @@ async function loginWithFrozenClock(page: import('@playwright/test').Page, usern
   await page.locator('input[name="_username"]').fill(username);
   await page.locator('input[name="_password"]').fill(password);
   await page.locator('#form-submit').click();
-  await expect(page).toHaveURL('/', { timeout: 15000 });
+  await expect(page).toHaveURL(/\/ui\//, { timeout: 15000 });
 }
 
 // Helper to navigate to the SolidJS settings page and wait for the form
@@ -31,26 +31,20 @@ async function goToSettingsPage(page: import('@playwright/test').Page) {
   await page.waitForSelector('form.stack-form', { timeout: 15000 });
 }
 
-// The ExtJS tracking grid loads its data behind a masking spinner; clicking
-// "Add" before the mask clears is a no-op, which left the row-prefill tests
-// flaky under CI load (the awaited cell never appeared). Wait for the grid
-// container AND the load mask to clear before interacting.
+// Wait for the SolidJS worklog grid to render before interacting.
 async function waitForTrackingGridReady(page: import('@playwright/test').Page) {
-  await page.waitForSelector('.x-grid', { timeout: 15000 });
-  await page.waitForSelector('.x-mask', { state: 'hidden', timeout: 10000 }).catch(() => {});
+  await page.waitForSelector('table.tracking-table[role="grid"]', { timeout: 15000 });
 }
 
-// Click the grid's "Add" toolbar button and wait for the freshly inserted row
-// to render, returning its third cell (the start-time column).
+// Click the worklog "Add entry" button and wait for the freshly inserted row to
+// render, returning its start-time cell.
 async function addRowAndGetStartCell(page: import('@playwright/test').Page) {
-  const addButton = page.locator('.x-btn').filter({ hasText: /Add|Neuer Eintrag/i }).first();
-  await expect(addButton).toBeVisible();
-  await addButton.click();
+  await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
 
-  const firstRow = page.locator('.x-grid-row, .x-grid-item').first();
-  await expect(firstRow).toBeVisible({ timeout: 10000 });
+  const newRow = page.locator('tr.tracking-row.is-new').first();
+  await expect(newRow).toBeVisible({ timeout: 10000 });
 
-  return firstRow.locator('.x-grid-cell').nth(2);
+  return newRow.locator('td[data-col-key="start"]');
 }
 
 // Helper to set a checkbox setting's checked state (no-op if already in state)
@@ -177,7 +171,7 @@ test.describe('Settings Effectiveness', () => {
     // Enable suggest_time via the API, then exercise the ExtJS tracking grid
     await applySettingsApi(page, { show_empty_line: 0, suggest_time: 1, show_future: 0 });
 
-    await page.goto('/');
+    await page.goto('/ui/tracking');
     await waitForTrackingGridReady(page);
 
     const startCell = await addRowAndGetStartCell(page);
@@ -192,7 +186,7 @@ test.describe('Settings Effectiveness', () => {
     // Disable suggest_time via the API
     await applySettingsApi(page, { show_empty_line: 0, suggest_time: 0, show_future: 0 });
 
-    await page.goto('/');
+    await page.goto('/ui/tracking');
     await waitForTrackingGridReady(page);
 
     const startCell = await addRowAndGetStartCell(page);
@@ -201,35 +195,9 @@ test.describe('Settings Effectiveness', () => {
     await expect(startCell).toHaveText(/^(\s*|00:00)$/, { timeout: 10000 });
   });
 
-  test('show_empty_line should add empty row after editing first row', async ({ page }) => {
-    // Enable show_empty_line via the API
-    await applySettingsApi(page, { show_empty_line: 1, suggest_time: 0, show_future: 0 });
-
-    await page.goto('/');
-    await waitForTrackingGridReady(page);
-
-    // Get initial row count
-    const initialRowCount = await page.locator('.x-grid-row, .x-grid-item').count();
-    console.log(`Initial row count: ${initialRowCount}`);
-
-    // If there are saved entries, editing the first one should trigger adding an empty line
-    if (initialRowCount > 0) {
-      // Double-click on first row to edit it
-      const firstRow = page.locator('.x-grid-row, .x-grid-item').first();
-      await firstRow.dblclick();
-
-      // Wait a moment for the edit to process
-      await page.waitForTimeout(1000);
-
-      // Press Tab to move through fields and potentially trigger save
-      await page.keyboard.press('Tab');
-      await page.keyboard.press('Tab');
-      await page.keyboard.press('Escape'); // Cancel edit
-
-      // Check if an empty row was added
-      // Note: This feature only triggers when editing a saved entry in row 0
-    }
-  });
+  // Note: show_empty_line is a persisted preference (covered by the save test
+  // above) with no SolidJS worklog-grid effect — it was an ExtJS-only behavior,
+  // so there is nothing to assert against the grid here.
 });
 
 test.describe('Settings API', () => {

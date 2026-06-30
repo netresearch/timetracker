@@ -1,1 +1,0 @@
-Ext.dom.Element.override({initDD:function(t,i,n){var r=new Ext.dd.DD(Ext.id(this.dom),t,i);return Ext.apply(r,n)},initDDProxy:function(t,i,n){var r=new Ext.dd.DDProxy(Ext.id(this.dom),t,i);return Ext.apply(r,n)},initDDTarget:function(t,i,n){var r=new Ext.dd.DDTarget(Ext.id(this.dom),t,i);return Ext.apply(r,n)}});

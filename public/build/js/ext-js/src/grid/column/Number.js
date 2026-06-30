@@ -1,1 +1,0 @@
-Ext.define("Ext.grid.column.Number",{extend:"Ext.grid.column.Column",alias:["widget.numbercolumn"],requires:["Ext.util.Format"],alternateClassName:"Ext.grid.NumberColumn",format:"0,000.00",defaultRenderer:function(t){return Ext.util.Format.number(t,this.format)}});

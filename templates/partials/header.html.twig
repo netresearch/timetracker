@@ -19,11 +19,6 @@
    local clock in Month.tsx) instead of server-computed dates, so they never
    skew with the server timezone. #}
 {% set monthPath = path('ui_spa', {'path': 'month'}) %}
-{# Remember the last-opened view (client-side) so login returns the user to it
-   (see the redirect in index.html.twig). Runs on both shells on load; the SPA
-   also updates it on client-side route changes (frontend/src/App.tsx). This is
-   the soft opt-in for the parallel ExtJS/SolidJS work-log grids. #}
-<script>try { localStorage.setItem('tt:lastView', location.pathname); } catch (e) {}</script>
 <div id="page-header" class="page-header">
     <a href="#main-content" class="skip-link">{{ 'Skip to main content'|trans }}</a>
     {% if globalConfig.header_url is defined and globalConfig.header_url %}
@@ -35,12 +30,10 @@
         </div>
 
         <nav class="main-nav" aria-label="{{ 'Main navigation'|trans }}">
+            {# Worklog (SolidJS) is the time-tracking grid. Active state is refined
+               client-side via data-nav (nav.ts). #}
             <a class="main-nav-link{% if active == 'tracking' %} is-active{% endif %}"
                {% if active == 'tracking' %}aria-current="page"{% endif %}
-               href="{{ url('_start') }}">{{ 'Time tracking'|trans }}</a>
-            {# New SolidJS work-log grid, runs alongside the ExtJS one above.
-               Active state is refined client-side via data-nav (nav.ts). #}
-            <a class="main-nav-link"
                data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}">{{ 'Worklog'|trans }}</a>
             <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
                {% if active == 'month' %}aria-current="page"{% endif %}
@@ -146,8 +139,7 @@
        bar's Month badge, which remains visible on mobile). #}
     <div class="mobile-drawer" id="nav-drawer" hidden>
         <nav class="drawer-nav" aria-label="{{ 'Main navigation'|trans }}">
-            <a class="drawer-link{% if active == 'tracking' %} is-active{% endif %}" href="{{ url('_start') }}">{{ 'Time tracking'|trans }}</a>
-            <a class="drawer-link" data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}">{{ 'Worklog'|trans }}</a>
+            <a class="drawer-link{% if active == 'tracking' %} is-active{% endif %}" data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}">{{ 'Worklog'|trans }}</a>
             <a class="drawer-link{% if active == 'month' %} is-active{% endif %}" data-nav="month" href="{{ monthPath }}">{{ 'Overview'|trans }}</a>
             <a class="drawer-link{% if active == 'auswertung' %} is-active{% endif %}" data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
             {% if canBill %}

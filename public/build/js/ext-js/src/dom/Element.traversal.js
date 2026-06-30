@@ -1,1 +1,0 @@
-Ext.dom.Element.override({select:function(e){return Ext.dom.Element.select(e,!1,this.dom)}});

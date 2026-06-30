@@ -10,7 +10,6 @@ export interface AppConfig {
   /** Minutes a new entry's end pre-fills past its start (0 disables; default 5). */
   minEntryDuration: number
   logoutUrl: string
-  legacyUrl: string
   /** CSRF token for the 'authenticate' intention — stateless, so it stays valid
    *  across a session that expires while the SPA is open (re-login overlay). */
   csrfToken: string

@@ -1,1 +1,0 @@
-Ext.define("Ext.form.action.StandardSubmit",{extend:"Ext.form.action.Submit",alias:"formaction.standardsubmit",doSubmit:function(){var t=this.buildForm();t.submit(),Ext.removeNode(t)}});

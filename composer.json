@@ -93,8 +93,7 @@
     "symfony/debug-bundle": "^8.1",
     "symfony/maker-bundle": "^1.64",
     "symfony/phpunit-bridge": "^8.1",
-    "symfony/web-profiler-bundle": "^8.1",
-    "symfony/webpack-encore-bundle": "^2.3"
+    "symfony/web-profiler-bundle": "^8.1"
   },
   "scripts": {
     "auto-scripts": {

@@ -1,1 +1,0 @@
-Ext.define("Sample.CTO",{extend:"Sample.Developer",statics:{averageIQ:140},constructor:function(e){this.callParent(arguments),this.isSuperGeek=!0},hireNewDeveloperLike:function(e){return e.clone()},clone:function(){var e=new(this.statics())(this.config);return alert(Ext.getClassName(this.callParent())),e}});

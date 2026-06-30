@@ -17,13 +17,12 @@
 /repomix-output.txt
 /coverage-report
 .php_cs.cache
-###> symfony/webpack-encore-bundle ###
+# Node + built frontend (the webpack-encore recipe used to own these; kept
+# standalone after its removal so the SolidJS/Vite + Playwright workflow stays ignored)
 /node_modules/
 /public/build-ui/
 npm-debug.log
 yarn-error.log
-###< symfony/webpack-encore-bundle ###
-
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php

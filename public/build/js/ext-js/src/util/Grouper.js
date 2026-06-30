@@ -1,1 +1,0 @@
-Ext.define("Ext.util.Grouper",{extend:"Ext.util.Sorter",isGrouper:!0,getGroupString:function(t){return t.get(this.property)}});
