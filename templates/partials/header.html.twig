@@ -56,6 +56,10 @@
                 <a class="main-nav-link{% if active == 'admin' %} is-active{% endif %}"
                    {% if active == 'admin' %}aria-current="page"{% endif %}
                    data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}">{{ 'Administration'|trans }}</a>
+                {# The SolidJS SidebarAdminMenu portals the admin entity sub-items
+                   (each with a "+") into this slot; CSS shows it only in the
+                   left-sidebar layout. Empty in the top bar. #}
+                <div id="sidebar-admin-slot"></div>
             {% endif %}
 
             {# Overflow disclosure — empty until the priority-overflow script

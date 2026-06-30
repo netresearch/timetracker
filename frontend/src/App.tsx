@@ -8,6 +8,7 @@ import { SessionExpiredError } from './api/client'
 import { CommandPalette } from './components/CommandPalette'
 import { SessionExpiredOverlay } from './components/SessionExpiredOverlay'
 import { ShortcutsDialog } from './components/ShortcutsDialog'
+import { SidebarAdminMenu } from './components/SidebarAdminMenu'
 import { appConfig, canBill, hasRole } from './config'
 import { sessionExpired, setSessionExpired, startSessionMonitor } from './lib/session'
 import { initHeaderDynamics, refreshLoginStatus } from './header'
@@ -195,6 +196,7 @@ function Layout(props: ParentProps) {
       </Show>
       <CommandPalette />
       <ShortcutsDialog />
+      <SidebarAdminMenu />
     </QueryClientProvider>
   )
 }
