@@ -8,22 +8,25 @@ import { hasRole } from '../config'
 import { PlusIcon } from '../lib/icons'
 import { m } from '../paraglide/messages.js'
 
-// Inner SVG markup per admin entity, so each sub-item carries a recognisable icon
-// (consistent with the main nav). Keyed by entity key; a generic dot is the fallback.
-const ADMIN_ICON: Record<string, string> = {
-  customers: '<path d="M4 21V6l8-3 8 3v15"/><path d="M4 21h16M9 9h.01M9 13h.01M15 9h.01M15 13h.01"/>',
-  projects: '<path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>',
-  users: '<circle cx="12" cy="8" r="3.2"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',
-  teams: '<circle cx="9" cy="9" r="2.8"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.5a3 3 0 0 1 0 5.4M20.5 19a5.5 5.5 0 0 0-3.5-5.1"/>',
-  holidays: '<circle cx="12" cy="12" r="3.6"/><path d="M12 2.5v2M12 19.5v2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4"/>',
-  presets: '<path d="M6.5 3.5h11v17l-5.5-3.6-5.5 3.6z"/>',
-  ticketsystems: '<path d="M3.5 10.5 10.5 3.5l10 10-7 7z"/><circle cx="8" cy="8" r="1.3"/>',
-  activities: '<path d="M3 12h4l2.5 6 4-13 2.5 7H21"/>',
-  contracts: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h5"/>',
-  status: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/>',
+// A recognisable icon per admin entity (consistent with the main nav). Each entry
+// returns the inner SVG as JSX — no innerHTML. Keyed by entity key; generic dot
+// is the fallback.
+const ADMIN_ICON: Record<string, () => JSX.Element> = {
+  customers: () => <><path d="M4 21V6l8-3 8 3v15" /><path d="M4 21h16M9 9h.01M9 13h.01M15 9h.01M15 13h.01" /></>,
+  projects: () => <path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />,
+  users: () => <><circle cx="12" cy="8" r="3.2" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></>,
+  teams: () => <><circle cx="9" cy="9" r="2.8" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 6.5a3 3 0 0 1 0 5.4M20.5 19a5.5 5.5 0 0 0-3.5-5.1" /></>,
+  holidays: () => <><circle cx="12" cy="12" r="3.6" /><path d="M12 2.5v2M12 19.5v2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4" /></>,
+  presets: () => <path d="M6.5 3.5h11v17l-5.5-3.6-5.5 3.6z" />,
+  ticketsystems: () => <><path d="M3.5 10.5 10.5 3.5l10 10-7 7z" /><circle cx="8" cy="8" r="1.3" /></>,
+  activities: () => <path d="M3 12h4l2.5 6 4-13 2.5 7H21" />,
+  contracts: () => <><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h5" /></>,
+  status: () => <><circle cx="12" cy="12" r="9" /><path d="M12 8v4.5M12 16h.01" /></>,
 }
 
 function adminIco(key: string): JSX.Element {
+  const inner = ADMIN_ICON[key] ?? (() => <circle cx="12" cy="12" r="3" />)
+
   return (
     <svg
       class="sidebar-admin-ico"
@@ -34,9 +37,9 @@ function adminIco(key: string): JSX.Element {
       stroke-linecap="round"
       stroke-linejoin="round"
       aria-hidden="true"
-      // eslint-disable-next-line solid/no-innerhtml
-      innerHTML={ADMIN_ICON[key] ?? '<circle cx="12" cy="12" r="3"/>'}
-    />
+    >
+      {inner()}
+    </svg>
   )
 }
 
