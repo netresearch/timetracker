@@ -1,1 +1,0 @@
-Ext.define("Ext.fx.target.CompositeSprite",{extend:"Ext.fx.target.Sprite",getAttr:function(t,e){var r,i,n=[],g=[].concat(this.target.items),o=g.length;for(r=0;r<o;r++)i=g[r],n.push([i,null!=e?e:this.getFromPrim(i,t)]);return n}});

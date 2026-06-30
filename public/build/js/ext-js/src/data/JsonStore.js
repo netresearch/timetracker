@@ -1,1 +1,0 @@
-Ext.define("Ext.data.JsonStore",{extend:"Ext.data.Store",alias:"store.json",requires:["Ext.data.proxy.Ajax","Ext.data.reader.Json","Ext.data.writer.Json"],constructor:function(t){t=Ext.apply({proxy:{type:"ajax",reader:"json",writer:"json"}},t),this.callParent([t])}});

@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Project;
-use App\Service\TypeSafety\ArrayTypeHelper;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -38,124 +37,6 @@ class ProjectRepository extends ServiceEntityRepository
         $result = $this->find($id);
 
         return $result instanceof Project ? $result : null;
-    }
-
-    /**
-     * Returns an array structure with keys of customer IDs and an "all" key.
-     * Values are arrays of associative project arrays (id, name, jiraId, active).
-     *
-     * @param array<int, array{customer: array{id:int}}|array<string, mixed>> $customers
-     *
-     * @return array<int|string, list<array<string, mixed>>>
-     */
-    public function getProjectStructure(int $userId, array $customers): array
-    {
-        /** @var array<int, Project> $globalProjects */
-        $globalProjects = $this->findBy(['global' => 1]);
-        $userProjects = $this->getProjectsByUser($userId);
-
-        $projects = [];
-        foreach ($customers as $customer) {
-            $customerData = $customer['customer'] ?? null;
-            if (!is_array($customerData)) {
-                continue;
-            }
-
-            /** @var array<string, mixed> $customerData */
-            $customerId = ArrayTypeHelper::getInt($customerData, 'id');
-            if (null === $customerId) {
-                continue;
-            }
-
-            $this->appendCustomerProjects($projects, $customerId, $userProjects, $globalProjects);
-        }
-
-        $this->appendAllProjects($projects, $userProjects, $globalProjects);
-
-        foreach ($projects as &$project) {
-            // Both branches construct arrays; phpstan knows they are arrays
-            usort($project, static fn (array $a, array $b): int => strcmp(
-                ArrayTypeHelper::getString($a, 'name') ?? '',
-                ArrayTypeHelper::getString($b, 'name') ?? '',
-            ));
-        }
-
-        return $projects;
-    }
-
-    /**
-     * Appends the user's projects of the given customer and all global projects
-     * to the per-customer project list.
-     *
-     * @param array<int|string, list<array<string, mixed>>>    $projects
-     * @param array<int, array{project: array<string, mixed>}> $userProjects
-     * @param array<int, Project>                              $globalProjects
-     */
-    private function appendCustomerProjects(array &$projects, int $customerId, array $userProjects, array $globalProjects): void
-    {
-        foreach ($userProjects as $userProject) {
-            $up = $userProject['project'] ?? null;
-            if (is_array($up) && ($customerId === ArrayTypeHelper::getInt($up, 'customer'))) {
-                $projects[$customerId][] = [
-                    'id' => ArrayTypeHelper::getInt($up, 'id', 0) ?? 0,
-                    'name' => ArrayTypeHelper::getString($up, 'name', '') ?? '',
-                    'jiraId' => ArrayTypeHelper::getString($up, 'jiraId'),
-                    'active' => (bool) ($up['active'] ?? false),
-                ];
-            }
-        }
-
-        foreach ($globalProjects as $globalProject) {
-            if ($globalProject instanceof Project) {
-                $projects[$customerId][] = [
-                    'id' => $globalProject->getId(),
-                    'name' => $globalProject->getName(),
-                    'jiraId' => $globalProject->getJiraId(),
-                    'active' => $globalProject->getActive(),
-                ];
-            }
-        }
-    }
-
-    /**
-     * Appends all user and global projects to the "all" key.
-     *
-     * @param array<int|string, list<array<string, mixed>>>    $projects
-     * @param array<int, array{project: array<string, mixed>}> $userProjects
-     * @param array<int, Project>                              $globalProjects
-     */
-    private function appendAllProjects(array &$projects, array $userProjects, array $globalProjects): void
-    {
-        foreach ($userProjects as $userProject) {
-            $up = $userProject['project'] ?? null;
-            if (is_array($up)) {
-                $projects['all'][] = [
-                    'id' => ArrayTypeHelper::getInt($up, 'id', 0),
-                    'name' => ArrayTypeHelper::getString($up, 'name', ''),
-                    'active' => (bool) ($up['active'] ?? false),
-                    'customer' => ArrayTypeHelper::getInt($up, 'customer', 0),
-                    'global' => (bool) ($up['global'] ?? false),
-                    'jiraId' => ArrayTypeHelper::getString($up, 'jiraId'),
-                    'jira_id' => ArrayTypeHelper::getString($up, 'jiraId'),
-                    'subtickets' => [],
-                    'entries' => [],
-                    'projectLead' => $up['projectLead'] ?? null,
-                    'project_lead' => $up['projectLead'] ?? null,
-                    'technicalLead' => $up['technicalLead'] ?? null,
-                    'technical_lead' => $up['technicalLead'] ?? null,
-                ];
-            }
-        }
-
-        foreach ($globalProjects as $globalProject) {
-            if ($globalProject instanceof Project) {
-                $projects['all'][] = [
-                    'id' => (int) $globalProject->getId(),
-                    'name' => $globalProject->getName(),
-                    'jiraId' => $globalProject->getJiraId(),
-                ];
-            }
-        }
     }
 
     /**

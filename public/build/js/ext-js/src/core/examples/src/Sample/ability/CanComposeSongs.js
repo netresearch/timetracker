@@ -1,1 +1,0 @@
-Ext.define("Sample.ability.CanComposeSongs",{canComposeSongs:!0,composeSongs:function(){return alert(this.getName()+" is composing songs"),this}});

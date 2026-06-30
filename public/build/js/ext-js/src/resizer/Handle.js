@@ -1,1 +1,0 @@
-Ext.define("Ext.resizer.Handle",{extend:"Ext.Component",handleCls:"",baseHandleCls:Ext.baseCSSPrefix+"resizable-handle",region:"",beforeRender:function(){var e=this;e.callParent(),e.addCls(e.baseHandleCls,e.baseHandleCls+"-"+e.region,e.handleCls)},onRender:function(){this.callParent(arguments),this.el.unselectable()}});

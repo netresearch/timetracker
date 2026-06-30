@@ -1,1 +1,0 @@
-Ext.define("Ext.Ajax",{extend:"Ext.data.Connection",singleton:!0,autoAbort:!1});
