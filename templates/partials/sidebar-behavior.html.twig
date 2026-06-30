@@ -34,6 +34,8 @@
     function setWidth(px) {
         var width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(px)));
         root.style.setProperty('--sidebar-width', width + 'px');
+        var handle = document.getElementById('sidebar-resize');
+        if (handle) { handle.setAttribute('aria-valuenow', String(width)); }
         return width;
     }
 
@@ -73,6 +75,11 @@
         }
 
         if (handle) {
+            // Announce the resizable range + current value to assistive tech
+            // (WAI-ARIA separator pattern for a focusable splitter).
+            handle.setAttribute('aria-valuemin', String(MIN_WIDTH));
+            handle.setAttribute('aria-valuemax', String(MAX_WIDTH));
+            handle.setAttribute('aria-valuenow', String(currentWidth()));
             var dragging = false;
             handle.addEventListener('pointerdown', function (event) {
                 dragging = true;

@@ -2467,8 +2467,8 @@ th[aria-sort='descending'] .th-sort-glyph {
   }
 
   :root[data-nav-layout='side'] #page-header {
-    flex: 0 0 var(--sidebar-width, 13rem);
-    width: var(--sidebar-width, 13rem);
+    flex: 0 0 var(--sidebar-width, 13em);
+    width: var(--sidebar-width, 13em);
     height: 100vh;
     position: sticky;
     top: 0;
@@ -2619,7 +2619,7 @@ th[aria-sort='descending'] .th-sort-glyph {
     display: block;
     position: fixed;
     top: 0;
-    left: var(--sidebar-width, 13rem);
+    left: var(--sidebar-width, 13em);
     width: 8px;
     height: 100vh;
     margin-left: -4px;
