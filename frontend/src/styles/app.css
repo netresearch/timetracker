@@ -2227,45 +2227,58 @@ th[aria-sort='descending'] .th-sort-glyph {
 }
 
 /* ── Display density ─────────────────────────────────────────────────────────
-   Compact (opt-in via the header toggle → data-density on <html>) tightens the
-   data-dense surfaces and uses the full viewport width; Comfort (default) is
-   unchanged. Every interactive target stays ≥24×24px (WCAG 2.2 AA 2.5.8) — the
-   denser controls clamp at 30px, never below. See density-init.html.twig. */
-:root[data-density='compact'] main {
+   Two opt-in steps below Comfort (default), set via the header cycle →
+   data-density on <html>. Compact tightens the data-dense surfaces and uses the
+   full viewport width; Ultra-compact tightens further, compacts the header and
+   strips ambient help text / legends (see the dedicated block lower down).
+   Rules shared by both steps list both attribute values; Ultra-compact-only
+   overrides follow. Every interactive target stays ≥24×24px (WCAG 2.2 AA 2.5.8)
+   — the denser controls clamp at 30px (Compact) / 26px (Ultra), never below.
+   See density-init.html.twig. */
+:root[data-density='compact'] main,
+:root[data-density='ultra-compact'] main {
   max-width: none;
   padding: 0.5rem 1rem;
 }
 
-:root[data-density='compact'] .admin-page {
+:root[data-density='compact'] .admin-page,
+:root[data-density='ultra-compact'] .admin-page {
   max-width: none;
 }
 
-:root[data-density='compact'] .data-table thead th {
+:root[data-density='compact'] .data-table thead th,
+:root[data-density='ultra-compact'] .data-table thead th {
   padding: 0.3rem 0.6rem;
 }
 
 /* Sortable headers carry their padding on the inner button (the th stays at 0)
    so the whole cell is clickable — keep that in compact and shrink the button. */
-:root[data-density='compact'] .data-table thead th:has(.th-sort) {
+:root[data-density='compact'] .data-table thead th:has(.th-sort),
+:root[data-density='ultra-compact'] .data-table thead th:has(.th-sort) {
   padding: 0;
 }
 
-:root[data-density='compact'] .th-sort {
+:root[data-density='compact'] .th-sort,
+:root[data-density='ultra-compact'] .th-sort {
   padding: 0.3rem 0.6rem;
 }
 
-:root[data-density='compact'] .data-table tbody td {
+:root[data-density='compact'] .data-table tbody td,
+:root[data-density='ultra-compact'] .data-table tbody td {
   --cell-pad-y: 0.25rem;
   --cell-pad-x: 0.6rem;
 }
 
 :root[data-density='compact'] .tracking-toolbar,
-:root[data-density='compact'] .admin-crud-toolbar {
+:root[data-density='compact'] .admin-crud-toolbar,
+:root[data-density='ultra-compact'] .tracking-toolbar,
+:root[data-density='ultra-compact'] .admin-crud-toolbar {
   gap: 0.4rem;
   margin-bottom: 0.5rem;
 }
 
-:root[data-density='compact'] .admin-subnav {
+:root[data-density='compact'] .admin-subnav,
+:root[data-density='ultra-compact'] .admin-subnav {
   margin-bottom: 0.6rem;
 }
 
@@ -2279,6 +2292,156 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='compact'] .link-button.is-icon,
 :root[data-density='compact'] .action-button.is-icon {
   min-width: 30px;
+}
+
+/* ── Ultra-compact — even tighter than Compact, plus a compacted header and no
+   ambient helper UI. Shares Compact's full-width + structural rules above; this
+   block only goes further. Interactive targets clamp at 26px (≥24px AA). */
+:root[data-density='ultra-compact'] main {
+  padding: 0.25rem 0.6rem;
+}
+
+:root[data-density='ultra-compact'] .data-table thead th,
+:root[data-density='ultra-compact'] .th-sort {
+  padding: 0.15rem 0.4rem;
+}
+
+:root[data-density='ultra-compact'] .data-table tbody td {
+  --cell-pad-y: 0.15rem;
+  --cell-pad-x: 0.4rem;
+}
+
+:root[data-density='ultra-compact'] .tracking-toolbar,
+:root[data-density='ultra-compact'] .admin-crud-toolbar {
+  gap: 0.3rem;
+  margin-bottom: 0.35rem;
+}
+
+:root[data-density='ultra-compact'] .admin-subnav {
+  margin-bottom: 0.4rem;
+}
+
+:root[data-density='ultra-compact'] .link-button,
+:root[data-density='ultra-compact'] .action-button,
+:root[data-density='ultra-compact'] .admin-subnav-link,
+:root[data-density='ultra-compact'] .tracking-days-input {
+  min-height: 26px;
+}
+
+:root[data-density='ultra-compact'] .link-button.is-icon,
+:root[data-density='ultra-compact'] .action-button.is-icon {
+  min-width: 26px;
+}
+
+/* Header compaction — overrides the static header.css defaults (loaded first).
+   The nav links stay ≥24px tall. */
+:root[data-density='ultra-compact'] .app-header {
+  min-height: 44px;
+  padding: 2px 12px;
+  gap: 8px;
+}
+
+:root[data-density='ultra-compact'] .main-nav-link {
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+/* Strip ambient helper UI: context help, field hints, the ⓘ help buttons and the
+   worklog colour + icon legends (the icon legend also carries .tracking-legend).
+   The on-demand Help page and the keyboard-shortcuts dialog are unaffected. */
+:root[data-density='ultra-compact'] .tracking-hint,
+:root[data-density='ultra-compact'] .field-hint,
+:root[data-density='ultra-compact'] .field-help,
+:root[data-density='ultra-compact'] .admin-intro,
+:root[data-density='ultra-compact'] .tracking-legend {
+  display: none;
+}
+
+/* ── Left-sidebar navigation ──────────────────────────────────────────────────
+   Opt-in via Settings → data-nav-layout='side' on <html>. Reflows the SAME shared
+   header markup (#page-header) into a fixed left column — no markup duplication.
+   Applied from 601px up only; at the mobile breakpoint the header keeps its top
+   bar + hamburger drawer (header.css). The width-based "More" overflow is
+   meaningless in a vertical list, so it's hidden and the header script restores
+   every item on the switch (header-behavior.html.twig + lib/navLayoutPref.ts). */
+@media (min-width: 601px) {
+  :root[data-nav-layout='side'] body {
+    display: flex;
+    align-items: stretch;
+    min-height: 100vh;
+  }
+
+  :root[data-nav-layout='side'] #page-header {
+    flex: 0 0 13rem;
+    width: 13rem;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    /* A fixed-width column: keep an over-long username or translation from
+       promoting overflow-x to a horizontal scrollbar (it's clipped instead). */
+    overflow-x: hidden;
+  }
+
+  :root[data-nav-layout='side'] #app {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* The flex spacer (flex:1) now grows vertically, pushing the worktime badges,
+     the icon controls and the account block to the bottom of the column. */
+  :root[data-nav-layout='side'] .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 100vh;
+    gap: 0.35rem;
+  }
+
+  :root[data-nav-layout='side'] .header-logo {
+    justify-content: center;
+    padding: 0.25rem 0;
+  }
+
+  :root[data-nav-layout='side'] .main-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+
+  /* Active indicator moves from the bottom underline to a left edge bar. */
+  :root[data-nav-layout='side'] .main-nav-link {
+    width: 100%;
+    justify-content: flex-start;
+    border-bottom: none;
+    border-left: 3px solid transparent;
+  }
+
+  :root[data-nav-layout='side'] .main-nav-link.is-active,
+  :root[data-nav-layout='side'] .main-nav-link[aria-current='page'] {
+    border-bottom-color: transparent;
+    border-left-color: var(--color-accent, #00707f);
+  }
+
+  :root[data-nav-layout='side'] .nav-more {
+    display: none;
+  }
+
+  :root[data-nav-layout='side'] .header-worktime .worktime-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* The narrow column is a scroll container (overflow-y), which would reveal the
+     skip link's wrapped, negative-offset text at the top. Clip it to the standard
+     visually-hidden box while unfocused; :focus still reveals it (base header.css). */
+  :root[data-nav-layout='side'] .skip-link:not(:focus) {
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 /* Command palette (Ctrl/⌘+K) — a searchable list of every action. */

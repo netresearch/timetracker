@@ -6,6 +6,7 @@ import { dateFormat, setDateFormat, formatWith, validatePattern, type DateFormat
 import { isoDate } from '../lib/format'
 import { getFontFamily, setFontFamily, getFontSize, setFontSize, type FontFamily, type FontSize } from '../lib/fontPref'
 import { getEnterBehavior, setEnterBehavior, type EnterBehavior } from '../lib/gridEditPref'
+import { getNavLayout, setNavLayout, type NavLayout } from '../lib/navLayoutPref'
 import { m } from '../paraglide/messages.js'
 
 // Client-side-only UI preferences (localStorage, not the server settings).
@@ -31,6 +32,11 @@ const FONT_SIZES: { value: FontSize; label: () => string }[] = [
   { value: 'normal', label: () => m.settings_fontsize_normal() },
   { value: 'large', label: () => m.settings_fontsize_large() },
   { value: 'larger', label: () => m.settings_fontsize_larger() },
+]
+
+const NAV_LAYOUTS: { value: NavLayout; label: () => string }[] = [
+  { value: 'top', label: () => m.settings_layout_top() },
+  { value: 'side', label: () => m.settings_layout_side() },
 ]
 
 interface SaveResponse {
@@ -61,6 +67,8 @@ export default function Settings() {
   // Typography preferences (client-side; apply instantly to <html>).
   const [fontFamily, setFontFamilySig] = createSignal<FontFamily>(getFontFamily())
   const [fontSize, setFontSizeSig] = createSignal<FontSize>(getFontSize())
+  // Navigation-layout preference (client-side; applies instantly to <html>).
+  const [navLayout, setNavLayoutSig] = createSignal<NavLayout>(getNavLayout())
   // Date-format preference (client-side; applies instantly to open grids).
   const [dfMode, setDfMode] = createSignal<DateFormatMode>(dateFormat().mode)
   const [dfPattern, setDfPattern] = createSignal(dateFormat().pattern)
@@ -233,6 +241,25 @@ export default function Settings() {
               {(option) => <option value={option.value}>{option.label()}</option>}
             </For>
           </select>
+        </label>
+
+        {/* Client-side UI preference — applies instantly (no reload), not part of
+            the Save. Switches the header between the top bar and a left sidebar. */}
+        <label class="field">
+          <span>{m.settings_layout()}</span>
+          <select
+            value={navLayout()}
+            onChange={(event) => {
+              const next = event.currentTarget.value as NavLayout
+              setNavLayoutSig(next)
+              setNavLayout(next)
+            }}
+          >
+            <For each={NAV_LAYOUTS}>
+              {(option) => <option value={option.value}>{option.label()}</option>}
+            </For>
+          </select>
+          <small class="field-hint">{m.settings_layout_hint()}</small>
         </label>
 
         <div class="form-actions">
