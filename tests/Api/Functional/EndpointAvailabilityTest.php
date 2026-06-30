@@ -50,7 +50,6 @@ final class EndpointAvailabilityTest extends AbstractWebTestCase
 
             // Project endpoints
             'getAllProjects' => ['/getAllProjects'],
-            'getProjectStructure' => ['/getProjectStructure'],
 
             // Activity endpoints
             'getActivities' => ['/getActivities'],

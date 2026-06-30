@@ -22,35 +22,36 @@ use function is_array;
  */
 final class DefaultControllerTest extends AbstractWebTestCase
 {
-    public function testIndexAction(): void
+    public function testIndexRedirectsToSpaWorklog(): void
     {
+        // The ExtJS shell was removed; `/` (route _start) now redirects into the SPA.
         $this->logInSession();
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
-        $this->assertStatusCode(200);
-        $response = $this->client->getResponse()->getContent();
-        self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', $response);
+        $this->assertStatusCode(302);
+        $location = $this->client->getResponse()->headers->get('Location');
+        self::assertIsString($location);
+        self::assertStringContainsString('/ui/tracking', $location);
     }
 
-    public function testIndexActionNotAuthorized(): void
+    public function testIndexRedirectsForDefaultAuthenticatedUser(): void
     {
-        // In test environment, requests auto-authenticate with default user (unittest)
-        // This test verifies the application handles requests without explicit authentication
+        // In the test environment requests auto-authenticate with the default user,
+        // so `/` reaches the controller and redirects to the SPA worklog.
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
-        $this->assertStatusCode(200);
-        $response = $this->client->getResponse()->getContent();
-        self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', $response);
+        $this->assertStatusCode(302);
+        $location = $this->client->getResponse()->headers->get('Location');
+        self::assertIsString($location);
+        self::assertStringContainsString('/ui/tracking', $location);
     }
 
-    public function testIndexActionAsUserWithData(): void
+    public function testIndexRedirectsAsUserWithData(): void
     {
         $this->logInSession('unittest');
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
-        $this->assertStatusCode(200);
-        $response = $this->client->getResponse()->getContent();
-        self::assertIsString($response);
-        self::assertStringContainsString('TimeTracker', $response);
+        $this->assertStatusCode(302);
+        $location = $this->client->getResponse()->headers->get('Location');
+        self::assertIsString($location);
+        self::assertStringContainsString('/ui/tracking', $location);
     }
 
     public function testGetCustomersAction(): void
