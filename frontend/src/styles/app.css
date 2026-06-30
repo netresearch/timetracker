@@ -2378,6 +2378,9 @@ th[aria-sort='descending'] .th-sort-glyph {
     position: sticky;
     top: 0;
     overflow-y: auto;
+    /* A fixed-width column: keep an over-long username or translation from
+       promoting overflow-x to a horizontal scrollbar (it's clipped instead). */
+    overflow-x: hidden;
   }
 
   :root[data-nav-layout='side'] #app {
