@@ -150,8 +150,13 @@ function dateParts(value: string): { full: string; mid: string; short: string } 
   const full = displayDate(value)
   const iso = dmyToIso(value) ?? value
   const parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  const month = parts?.[2]
+  const day = parts?.[3]
+  if (month !== undefined && day !== undefined) {
+    return { full, mid: `${month}-${day}`, short: day }
+  }
 
-  return parts ? { full, mid: `${parts[2]}-${parts[3]}`, short: parts[3]! } : { full, mid: full, short: full }
+  return { full, mid: full, short: full }
 }
 
 // One icon button in the row-actions cell — same shape for Continue/Prolong/Info/
@@ -865,7 +870,8 @@ export default function Tracking() {
                   if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
                 } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
                   event.preventDefault()
-                  chooseDays(DAYS_OPTIONS[daysActiveIdx()]!)
+                  const option = DAYS_OPTIONS[daysActiveIdx()]
+                  if (option !== undefined) { chooseDays(option) }
                 } else if (event.key === 'Escape' && daysMenuOpen()) {
                   event.preventDefault()
                   closeDaysMenu()

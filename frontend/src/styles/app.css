@@ -1180,12 +1180,14 @@ kbd {
 }
 
 @container (max-width: 580px) {
+  /* Auto-layout tables don't honour ellipsis on a <td>, so cap the width and let
+     the text wrap (em scales with the text-size preference) — this shrinks the
+     two widest free-text columns rather than truncating unreliably. */
   .tracking-table [data-col-key='project'],
   .tracking-table [data-col-key='description'] {
-    max-width: 8rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-width: 10em;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 
