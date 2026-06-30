@@ -1294,6 +1294,75 @@ kbd {
   color: var(--color-text-muted);
 }
 
+/* Day-range combobox: freetext input + a toggle that opens a menu of all presets
+   (always the full list, never filtered by what's typed). */
+.days-combo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.days-combo-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-height: 44px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.days-combo-toggle:hover,
+.days-combo-toggle:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.days-combo-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  min-width: max(100%, 9rem);
+  white-space: nowrap;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.16);
+}
+
+.days-combo-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 12px;
+  min-height: 36px;
+}
+
+.days-combo-option:hover,
+.days-combo-option:focus-visible {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.days-combo-option.is-active {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
 .tracking-empty {
   align-items: flex-start;
   color: var(--color-text-muted, #666);
