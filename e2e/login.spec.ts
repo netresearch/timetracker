@@ -9,17 +9,14 @@ import { test, expect } from '@playwright/test';
  * - i.myself / myself123
  */
 
-// Helper to click the ExtJS login button
+// Helper to submit the login form (the native/SolidJS login button, #form-submit).
 async function clickLoginButton(page: import('@playwright/test').Page) {
-  // ExtJS button with id='form-submit' and text 'Login'
-  // The button structure is: <a id="form-submit-..."><span class="x-btn-inner">Login</span></a>
   await page.locator('#form-submit').click();
 }
 
 test.describe('Login Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    // Wait for ExtJS to initialize
     await page.waitForSelector('input[name="_username"]', { timeout: 10000 });
   });
 
@@ -60,7 +57,7 @@ test.describe('Login Page', () => {
     await clickLoginButton(page);
 
     // Should be redirected to main page
-    await expect(page).toHaveURL('/', { timeout: 15000 });
+    await expect(page).toHaveURL(/\/ui\//, { timeout: 15000 });
   });
 
   test('should login as unittest user', async ({ page }) => {
@@ -69,7 +66,7 @@ test.describe('Login Page', () => {
 
     await clickLoginButton(page);
 
-    await expect(page).toHaveURL('/', { timeout: 15000 });
+    await expect(page).toHaveURL(/\/ui\//, { timeout: 15000 });
   });
 });
 
@@ -81,7 +78,7 @@ test.describe('Logout', () => {
     await page.locator('input[name="_username"]').fill('developer');
     await page.locator('input[name="_password"]').fill('dev123');
     await clickLoginButton(page);
-    await expect(page).toHaveURL('/', { timeout: 15000 });
+    await expect(page).toHaveURL(/\/ui\//, { timeout: 15000 });
 
     // Wait for the app to fully load and show logout link
     await page.waitForSelector('.badge-logout', { timeout: 10000 });
@@ -115,10 +112,10 @@ test.describe('Protected Routes', () => {
     await page.locator('input[name="_username"]').fill('developer');
     await page.locator('input[name="_password"]').fill('dev123');
     await clickLoginButton(page);
-    await expect(page).toHaveURL('/', { timeout: 15000 });
+    await expect(page).toHaveURL(/\/ui\//, { timeout: 15000 });
 
-    // Now try to access the main page - should work
+    // The root now redirects into the SPA worklog for an authenticated user.
     await page.goto('/');
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL(/\/ui\//);
   });
 });

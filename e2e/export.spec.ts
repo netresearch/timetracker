@@ -35,7 +35,7 @@ async function loginWithFrozenClock(page: import('@playwright/test').Page, usern
   await page.locator('input[name="_username"]').fill(username);
   await page.locator('input[name="_password"]').fill(password);
   await page.locator('#form-submit').click();
-  await expect(page).toHaveURL('/', { timeout: 15000 });
+  await expect(page).toHaveURL(/\/ui\//, { timeout: 15000 });
 }
 
 test.describe('Controlling Export', () => {

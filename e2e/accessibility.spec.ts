@@ -21,7 +21,6 @@ import { goToWorklogPage, goToAuswertungPage, goToAdminPage, hideDebugToolbar } 
  * serious/critical WCAG-A/AA violations. We exclude two regions that are not part
  * of the shipped SolidJS code:
  *   - .sf-toolbar: the Symfony web debug toolbar APP_ENV=test injects; not shipped.
- *   - .x-grid: legacy ExtJS markup that runs alongside the SPA and is being removed.
  * Moderate/minor violations are intentionally not asserted on (this is a serious/
  * critical gate); the JSON summary is attached to the failure message so a real
  * regression names the rule, impact and node count.
@@ -30,8 +29,7 @@ async function expectNoSeriousA11y(page: Page, scopeSelector?: string): Promise<
   await hideDebugToolbar(page).catch(() => undefined); // APP_ENV=test injects .sf-toolbar
   let builder = new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .exclude('.sf-toolbar')   // Symfony web debug toolbar — not shipped code
-    .exclude('.x-grid');      // legacy ExtJS markup — being removed
+    .exclude('.sf-toolbar');  // Symfony web debug toolbar — not shipped code
   if (scopeSelector) builder = builder.include(scopeSelector);
   const { violations } = await builder.analyze();
   const serious = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
