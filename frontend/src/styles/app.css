@@ -2483,10 +2483,10 @@ th[aria-sort='descending'] .th-sort-glyph {
     height: 100vh;
     position: sticky;
     top: 0;
-    overflow-y: auto;
-    /* A fixed-width column: keep an over-long username or translation from
-       promoting overflow-x to a horizontal scrollbar (it's clipped instead). */
-    overflow-x: hidden;
+    /* The column itself never scrolls — only the nav region inside does (below),
+       so the logo and the footer (worktime/controls/account) stay pinned and the
+       main nav can never be scrolled out of view. */
+    overflow: hidden;
   }
 
   :root[data-nav-layout='side'] #app {
@@ -2494,25 +2494,46 @@ th[aria-sort='descending'] .th-sort-glyph {
     min-width: 0;
   }
 
-  /* The flex spacer (flex:1) now grows vertically, pushing the worktime badges,
-     the icon controls and the account block to the bottom of the column. */
+  /* Three zones: fixed logo (top), scrollable nav (middle, flex:1), pinned
+     footer (worktime/controls/account, bottom). Only the nav scrolls, so the
+     footer and the top of the nav are always visible regardless of window
+     height — the spacer is no longer needed. */
   :root[data-nav-layout='side'] .app-header {
     --sidebar-gutter: 12px;
     flex-direction: column;
     align-items: stretch;
-    min-height: 100vh;
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
     gap: 0.35rem;
   }
 
   :root[data-nav-layout='side'] .header-logo {
+    flex: 0 0 auto;
     justify-content: center;
     padding: 0.25rem 0;
   }
 
+  :root[data-nav-layout='side'] .header-spacer {
+    display: none;
+  }
+
+  /* Nav region: takes the free space and scrolls within itself if its own
+     content (e.g. the admin sub-menu) is taller than the column. */
   :root[data-nav-layout='side'] .main-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
     flex-direction: column;
     align-items: stretch;
     gap: 2px;
+  }
+
+  :root[data-nav-layout='side'] .header-worktime,
+  :root[data-nav-layout='side'] .header-controls,
+  :root[data-nav-layout='side'] .header-account {
+    flex: 0 0 auto;
   }
 
   /* Active indicator moves from the bottom underline to a left edge bar. */
@@ -2686,10 +2707,24 @@ th[aria-sort='descending'] .th-sort-glyph {
     display: none;
   }
 
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-logo,
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-account {
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-logo {
     justify-content: center;
     padding-inline: 0;
+  }
+
+  /* In the rail, stack the status dot above the logout icon (centred) and drop
+     the badge pill so it reads as a tidy footer rather than two crammed items. */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-account {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding-inline: 0;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .user-badge {
+    padding: 0;
+    background: none;
+    min-width: 0;
   }
 
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .main-nav-link {
@@ -2732,15 +2767,26 @@ th[aria-sort='descending'] .th-sort-glyph {
     min-width: 0;
     display: flex;
     align-items: center;
+    gap: 8px;
     /* indented under "Administration" (gutter + room for the active edge bar) */
-    padding: 5px 6px 5px calc(var(--sidebar-gutter) + 14px);
+    padding: 5px 6px 5px calc(var(--sidebar-gutter) + 10px);
     border-left: 4px solid transparent;
     color: var(--color-text-muted);
     font-size: 0.86em;
     text-decoration: none;
-    white-space: nowrap;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-ico {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+  }
+
+  :root[data-nav-layout='side'] .sidebar-admin-label {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   :root[data-nav-layout='side'] .sidebar-admin-link:hover {
