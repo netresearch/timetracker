@@ -2704,12 +2704,16 @@ th[aria-sort='descending'] .th-sort-glyph {
      data-nav-side='right' is set ALONGSIDE data-nav-layout='side', so the whole
      left-sidebar ruleset applies unchanged; these rules only mirror the
      directional bits: column on the right, resize handle on its left edge, and
-     the collapse chevron. (The worktime popover flips in header.ts.) */
-  :root[data-nav-side='right'] body {
+     the collapse chevron. (The worktime popover flips in header.ts.)
+     NB: the [data-nav-layout='side'] prefix is included for SPECIFICITY — the base
+     .sidebar-resize rule sets `left` and appears later in the file, so without the
+     extra attribute these overrides would lose on source order and the resize
+     handle would stay on the left (a stray vertical line). */
+  :root[data-nav-layout='side'][data-nav-side='right'] body {
     flex-direction: row-reverse;
   }
 
-  :root[data-nav-side='right'] .sidebar-resize {
+  :root[data-nav-layout='side'][data-nav-side='right'] .sidebar-resize {
     left: auto;
     right: var(--sidebar-width, 13em);
     margin-left: 0;
@@ -2718,11 +2722,11 @@ th[aria-sort='descending'] .th-sort-glyph {
 
   /* Chevron points toward the edge the rail collapses to: right when expanded on
      a right dock, back to left (inward) once collapsed. */
-  :root[data-nav-side='right'] .sidebar-collapse svg {
+  :root[data-nav-layout='side'][data-nav-side='right'] .sidebar-collapse svg {
     transform: scaleX(-1);
   }
 
-  :root[data-nav-side='right'][data-sidebar-collapsed='true'] .sidebar-collapse svg {
+  :root[data-nav-layout='side'][data-nav-side='right'][data-sidebar-collapsed='true'] .sidebar-collapse svg {
     transform: none;
   }
 
