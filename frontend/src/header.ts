@@ -185,7 +185,7 @@ function positionWorktimeDetail(): void {
  * its z-index. Moving it to <body> frees it; open/close is then a JS-toggled
  * class (mouse + keyboard) instead of the CSS :hover that needed a parent.
  */
-function wireWorktimeDetail(): void {
+export function wireWorktimeDetail(): void {
   const block = document.querySelector<HTMLElement>('.header-worktime')
   const popover = document.getElementById('worktime-detail')
   if (block === null || popover === null) {
@@ -201,12 +201,18 @@ function wireWorktimeDetail(): void {
     positionWorktimeDetail()
   }
   const close = (): void => popover.classList.remove('is-open')
+  // Stay open while EITHER hovered or focus is within the block (matching the old
+  // CSS ":hover OR :focus-within"); only close when neither holds — so a keyboard
+  // user who opened it via focus doesn't lose it by moving the mouse away.
   block.addEventListener('mouseenter', open)
-  block.addEventListener('mouseleave', close)
+  block.addEventListener('mouseleave', () => {
+    if (!block.contains(document.activeElement)) {
+      close()
+    }
+  })
   block.addEventListener('focusin', open)
   block.addEventListener('focusout', (event) => {
-    // Keep it open while focus moves between the block's own links.
-    if (!block.contains(event.relatedTarget as Node | null)) {
+    if (!block.contains(event.relatedTarget as Node | null) && !block.matches(':hover')) {
       close()
     }
   })
