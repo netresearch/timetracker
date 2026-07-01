@@ -72,7 +72,7 @@ symfony server:start
 ## Technology Stack
 
 - **Backend**: PHP 8.5, Symfony 8, Doctrine ORM 3
-- **Frontend**: ExtJS (legacy UI), Stimulus, SCSS, Webpack Encore
+- **Frontend**: SolidJS, TypeScript, Vite, Tailwind CSS
 - **Testing**: PHPUnit 12, Playwright (E2E), PHPStan Level 10, PHP-CS-Fixer, Rector
 - **Infrastructure**: Docker, GitHub Actions CI/CD
 

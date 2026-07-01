@@ -43,8 +43,8 @@ jobs:
         run: |
           docker compose run --rm app-e2e npm install --legacy-peer-deps
 
-      # Legacy ExtJS assets (public/build) are committed static — the Encore
-      # build is retired (ExtJS is being removed), so no build step here.
+      # public/build holds committed static assets (logo images) — the legacy
+      # Encore/ExtJS build was removed, so the only build step is Vite below.
 
       - name: Build SolidJS UI assets (Vite)
         env:
