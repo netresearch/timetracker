@@ -2555,8 +2555,16 @@ th[aria-sort='descending'] .th-sort-glyph {
 }
 
 :root[data-density='ultra-compact'] .data-table tbody td {
-  --cell-pad-y: 0.15rem;
-  --cell-pad-x: 0.4rem;
+  --cell-pad-y: 0.05rem;
+  --cell-pad-x: 0.3rem;
+}
+
+/* Row-class cue borders (daybreak / pause / overlap) — thinner in ultra-compact
+   so they don't dominate the tightened rows; still a visible redundant cue. */
+:root[data-density='ultra-compact'] .tracking-row.is-daybreak > td,
+:root[data-density='ultra-compact'] .tracking-row.is-pause > td,
+:root[data-density='ultra-compact'] .tracking-row.is-overlap > td {
+  border-bottom-width: 2px;
 }
 
 :root[data-density='ultra-compact'] .tracking-toolbar,
