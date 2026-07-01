@@ -801,6 +801,10 @@ main {
   left: 50%;
   transform: translateX(-50%);
   z-index: 200;
+  /* Transient, informational: never intercept clicks on the content beneath it,
+     and cap width so a long localized string can't overflow the viewport. */
+  pointer-events: none;
+  max-width: calc(100vw - 2rem);
   background: var(--color-success-bg);
   color: var(--color-success-text);
   border: 1px solid var(--color-success-text);
