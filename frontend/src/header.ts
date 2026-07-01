@@ -6,11 +6,19 @@ import type { AppConfig } from './config'
 import { setPaletteOpen } from './lib/commandPalette'
 import { setShortcutsHelpOpen } from './lib/shortcutsHelp'
 
-interface TimeSummary {
-  today: { duration: number }
-  week: { duration: number }
-  month: { duration: number }
+interface SummaryPeriod {
+  duration: number
+  /** Expected ("Soll") minutes through today; absent on older backends. */
+  target?: number
 }
+
+interface TimeSummary {
+  today: SummaryPeriod
+  week: SummaryPeriod
+  month: SummaryPeriod
+}
+
+type WorktimeStatus = 'ok' | 'under' | 'neutral'
 
 const STATUS_POLL_INTERVAL_MS = 90_000
 
@@ -31,6 +39,42 @@ export function formatDays(minutes: number): string {
   return `${days} PT`
 }
 
+/** Signed 'H:MM' balance for the IST/SOLL popover; uses a real minus (U+2212). */
+export function formatSignedDuration(minutes: number): string {
+  const sign = minutes > 0 ? '+' : minutes < 0 ? '−' : '±'
+  const abs = Math.abs(minutes)
+  const mins = String(abs % 60).padStart(2, '0')
+
+  return `${sign}${Math.floor(abs / 60)}:${mins}`
+}
+
+/**
+ * IST vs SOLL verdict for one period. No target (weekend/holiday, or an older
+ * backend that omits it) is 'neutral' — there is nothing to be over or under.
+ */
+export function worktimeStatus(duration: number, target: number | undefined): WorktimeStatus {
+  if (target === undefined || target <= 0) {
+    return 'neutral'
+  }
+
+  return duration >= target ? 'ok' : 'under'
+}
+
+/** Initials for the account avatar: 'sebastian.mendel' → 'SM', 'root' → 'RO'. */
+export function initialsFrom(name: string): string {
+  const parts = name.split(/[\s._-]+/).filter((part) => part !== '')
+  const first = parts[0]
+  if (first === undefined) {
+    return ''
+  }
+  if (parts.length === 1) {
+    return first.slice(0, 2).toUpperCase()
+  }
+  const last = parts[parts.length - 1] ?? first
+
+  return `${first[0] ?? ''}${last[0] ?? ''}`.toUpperCase()
+}
+
 function setText(id: string, text: string): void {
   const element = document.getElementById(id)
   if (element !== null) {
@@ -48,6 +92,70 @@ function setBadge(loggedIn: boolean, userName: string): void {
       name.textContent = userName
     }
   })
+  // The sidebar avatar shows the user's initials (hidden in the top bar via CSS).
+  const initials = initialsFrom(userName)
+  document.querySelectorAll('.js-user-initials').forEach((element) => {
+    element.textContent = initials
+  })
+}
+
+/**
+ * Paint one worktime total from IST vs SOLL: tint the sidebar badge (is-ok /
+ * is-under) and fill its row in the detail popover (IST / SOLL / signed Δ).
+ */
+function applyWorktimeStatus(period: string, data: SummaryPeriod): void {
+  const status = worktimeStatus(data.duration, data.target)
+  const item = document.querySelector(`.worktime-item[data-period="${period}"]`)
+  const row = document.querySelector(`.worktime-detail-row[data-period="${period}"]`)
+  for (const element of [item, row]) {
+    if (element !== null) {
+      element.classList.toggle('is-ok', status === 'ok')
+      element.classList.toggle('is-under', status === 'under')
+    }
+  }
+  if (row === null) {
+    return
+  }
+  const target = data.target ?? 0
+  const set = (selector: string, text: string): void => {
+    const cell = row.querySelector(selector)
+    if (cell !== null) {
+      cell.textContent = text
+    }
+  }
+  set('[data-wd="ist"]', formatDuration(data.duration))
+  set('[data-wd="soll"]', `/ ${formatDuration(target)}`)
+  set('[data-wd="delta"]', formatSignedDuration(data.duration - target))
+}
+
+/**
+ * Place the IST/SOLL popover next to the worktime block. It is position:fixed
+ * (the sidebar column is narrow and clips its overflow), so we compute the spot
+ * from the block's rect: above it in the expanded column, to its side in the
+ * collapsed rail. A no-op in the top bar, where the popover is display:none.
+ */
+function positionWorktimeDetail(): void {
+  const block = document.querySelector<HTMLElement>('.header-worktime')
+  const popover = document.getElementById('worktime-detail')
+  if (block === null || popover === null || getComputedStyle(popover).display === 'none') {
+    return
+  }
+
+  const gap = 8
+  const rect = block.getBoundingClientRect()
+  const width = popover.offsetWidth
+  const height = popover.offsetHeight
+  const collapsed = document.documentElement.getAttribute('data-sidebar-collapsed') === 'true'
+
+  // Rail: flank the block. Expanded column: sit above it, left edges aligned.
+  let left = collapsed ? rect.right + gap : rect.left
+  let top = collapsed ? rect.top : rect.top - height - gap
+
+  // Keep it within the viewport.
+  left = Math.max(gap, Math.min(left, window.innerWidth - width - gap))
+  top = Math.max(gap, Math.min(top, window.innerHeight - height - gap))
+  popover.style.left = `${Math.round(left)}px`
+  popover.style.top = `${Math.round(top)}px`
 }
 
 // Exported so the SolidJS worklog can refresh the header's today/week/month
@@ -64,6 +172,11 @@ export async function updateWorktime(): Promise<void> {
     if (month !== null) {
       month.title = formatDuration(summary.month.duration)
     }
+    // Tint each total by IST vs SOLL and fill the detail popover (sidebar only;
+    // the elements are absent/plain in the top bar, so this is a harmless no-op).
+    applyWorktimeStatus('today', summary.today)
+    applyWorktimeStatus('week', summary.week)
+    applyWorktimeStatus('month', summary.month)
   } catch {
     // Header sums are non-critical; leave the rendered defaults.
   }
@@ -462,6 +575,15 @@ export function initHeaderDynamics(config: AppConfig): void {
     link.setAttribute('aria-keyshortcuts', `Alt+${i + 1}`)
   })
   void updateWorktime()
+  // Position the IST/SOLL popover on demand (fixed-positioned to escape the
+  // sidebar column's clip). Hover and keyboard focus both open it (CSS); resize
+  // keeps an open one anchored.
+  const worktime = document.querySelector('.header-worktime')
+  if (worktime !== null) {
+    worktime.addEventListener('mouseenter', positionWorktimeDetail)
+    worktime.addEventListener('focusin', positionWorktimeDetail)
+    window.addEventListener('resize', positionWorktimeDetail)
+  }
   setTimeout(() => {
     pollLoginStatus(config)
   }, STATUS_POLL_INTERVAL_MS)

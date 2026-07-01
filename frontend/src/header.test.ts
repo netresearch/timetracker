@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { getJson } from './api/client'
 import type { AppConfig } from './config'
-import { formatDays, formatDuration, handleHelpClick, handleShortcut, hideAccessHints, refreshLoginStatus, showAccessHints } from './header'
+import { formatDays, formatDuration, formatSignedDuration, handleHelpClick, handleShortcut, hideAccessHints, initialsFrom, refreshLoginStatus, showAccessHints, updateWorktime, worktimeStatus } from './header'
 import { setShortcutsHelpOpen, shortcutsHelpOpen } from './lib/shortcutsHelp'
 
 // Preserve the module's other exports (SessionExpiredError, postJson, …) and stub
@@ -33,6 +33,97 @@ describe('formatDays', () => {
     expect(formatDays(480)).toBe('1 PT')
     expect(formatDays(720)).toBe('1.5 PT')
     expect(formatDays(8880)).toBe('18.5 PT')
+  })
+})
+
+describe('formatSignedDuration', () => {
+  it('signs the balance and uses a real minus sign', () => {
+    expect(formatSignedDuration(30)).toBe('+0:30')
+    expect(formatSignedDuration(-465)).toBe('−7:45')
+    expect(formatSignedDuration(0)).toBe('±0:00')
+  })
+})
+
+describe('worktimeStatus', () => {
+  it('is neutral without a target (weekend/holiday or older backend)', () => {
+    expect(worktimeStatus(120, undefined)).toBe('neutral')
+    expect(worktimeStatus(120, 0)).toBe('neutral')
+  })
+
+  it('is ok at or over target, under below it', () => {
+    expect(worktimeStatus(480, 480)).toBe('ok')
+    expect(worktimeStatus(500, 480)).toBe('ok')
+    expect(worktimeStatus(300, 480)).toBe('under')
+  })
+})
+
+describe('initialsFrom', () => {
+  it('takes first+last part initials, or the first two letters of a single part', () => {
+    expect(initialsFrom('sebastian.mendel')).toBe('SM')
+    expect(initialsFrom('Ada Lovelace')).toBe('AL')
+    expect(initialsFrom('root')).toBe('RO')
+    expect(initialsFrom('')).toBe('')
+  })
+})
+
+describe('updateWorktime', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+  })
+
+  function renderWorktime(): void {
+    document.body.innerHTML = `
+      <section class="header-worktime">
+        <dl class="worktime-list">
+          <div class="worktime-item" data-period="today"><dd><a id="worktime-day">0:00</a></dd></div>
+          <div class="worktime-item" data-period="week"><dd><a id="worktime-week">0:00</a></dd></div>
+          <div class="worktime-item worktime-item-month" data-period="month"><dd><a id="worktime-month">0 PT</a></dd></div>
+        </dl>
+        <div class="worktime-detail">
+          <div class="worktime-detail-row" data-period="today"><span data-wd="ist"></span><span data-wd="soll"></span><span data-wd="delta"></span></div>
+          <div class="worktime-detail-row" data-period="week"><span data-wd="ist"></span><span data-wd="soll"></span><span data-wd="delta"></span></div>
+          <div class="worktime-detail-row" data-period="month"><span data-wd="ist"></span><span data-wd="soll"></span><span data-wd="delta"></span></div>
+        </div>
+      </section>`
+  }
+
+  it('tints each total by IST vs SOLL and fills the detail popover', async () => {
+    renderWorktime()
+    vi.mocked(getJson).mockResolvedValue({
+      today: { duration: 450, target: 420 },
+      week: { duration: 1935, target: 2400 },
+      month: { duration: 5760, target: 9600 },
+    })
+
+    await updateWorktime()
+
+    const today = document.querySelector('.worktime-item[data-period="today"]')!
+    const week = document.querySelector('.worktime-item[data-period="week"]')!
+    expect(today.classList.contains('is-ok')).toBe(true)
+    expect(week.classList.contains('is-under')).toBe(true)
+
+    const row = document.querySelector('.worktime-detail-row[data-period="today"]')!
+    expect(row.classList.contains('is-ok')).toBe(true)
+    expect(row.querySelector('[data-wd="ist"]')?.textContent).toBe('7:30')
+    expect(row.querySelector('[data-wd="soll"]')?.textContent).toBe('/ 7:00')
+    expect(row.querySelector('[data-wd="delta"]')?.textContent).toBe('+0:30')
+  })
+
+  it('leaves a period neutral when the backend omits its target', async () => {
+    renderWorktime()
+    vi.mocked(getJson).mockResolvedValue({
+      today: { duration: 450 },
+      week: { duration: 1935 },
+      month: { duration: 5760 },
+    })
+
+    await updateWorktime()
+
+    const today = document.querySelector('.worktime-item[data-period="today"]')!
+    expect(today.classList.contains('is-ok')).toBe(false)
+    expect(today.classList.contains('is-under')).toBe(false)
+    expect(document.getElementById('worktime-day')?.textContent).toBe('7:30')
   })
 })
 

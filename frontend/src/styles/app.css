@@ -83,6 +83,12 @@
   --color-class-pause: #9aa0a6;
   --color-class-overlap: var(--color-danger);
 
+  /* Sidebar worktime IST-vs-SOLL status — reuse the success/warning text tokens
+     (AAA-contrast) so "at/over target" vs "under target" stays distinct from the
+     teal accent and matches the rest of the palette. */
+  --wt-ok: var(--color-success-text);
+  --wt-under: var(--color-warning-text);
+
   --space-3: 0.75rem;
 }
 
@@ -2554,6 +2560,22 @@ th[aria-sort='descending'] .th-sort-glyph {
   display: none;
 }
 
+/* The user avatar and the worktime IST/SOLL popover exist only in the sidebar.
+   In the top bar the avatar wrapper is display:contents so the status dot flows
+   as a direct badge child exactly as before, the initials never show, and the
+   popover is absent. Sidebar rules below opt each back in. */
+.user-avatar {
+  display: contents;
+}
+
+.user-initials {
+  display: none;
+}
+
+.worktime-detail {
+  display: none;
+}
+
 /* Nav-item icons show only in the left-sidebar layout; the top bar stays
    text-only (icons would crowd the horizontal row). */
 .nav-ico {
@@ -2624,6 +2646,10 @@ th[aria-sort='descending'] .th-sort-glyph {
     min-height: 0;
     overflow: hidden;
     gap: 0.35rem;
+    /* Drop the top-bar's 8px/16px padding: each zone (logo, nav, footer) carries
+       its own --sidebar-gutter, so the base padding would double the inset and
+       starve the already-narrow column (controls then wrap). */
+    padding: 0;
   }
 
   :root[data-nav-layout='side'] .header-logo {
@@ -2696,19 +2722,150 @@ th[aria-sort='descending'] .th-sort-glyph {
     padding-top: 0.5rem;
   }
 
+  /* Anchor for the IST/SOLL detail popover. */
+  :root[data-nav-layout='side'] .header-worktime {
+    position: relative;
+  }
+
+  /* Totals as one aligned ledger: three equal columns (label over value) split
+     by hairlines — no bolted-on grey pills, everything on the shared gutter. */
   :root[data-nav-layout='side'] .header-worktime .worktime-list {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    gap: 0;
     padding-inline: var(--sidebar-gutter);
   }
 
-  /* Flatten each badge to a left-aligned label / right-aligned value row. */
   :root[data-nav-layout='side'] .worktime-item {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 2px 4px;
+    background: none;
+    position: relative;
+    text-align: center;
+  }
+
+  :root[data-nav-layout='side'] .worktime-item + .worktime-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 15%;
+    bottom: 15%;
+    width: 1px;
+    background: var(--color-border);
+  }
+
+  :root[data-nav-layout='side'] .worktime-item dt {
+    font-size: 0.62em;
+    letter-spacing: 0.04em;
+  }
+
+  :root[data-nav-layout='side'] .worktime-item dd {
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  /* The value carries a thin status underline; is-ok / is-under are set per item
+     by header.ts from IST vs SOLL. Neutral (no target, e.g. weekend) stays plain. */
+  :root[data-nav-layout='side'] .worktime-item dd a {
+    display: inline-block;
+    border-bottom: 2px solid transparent;
+    padding-bottom: 1px;
+  }
+
+  :root[data-nav-layout='side'] .worktime-item.is-ok dd a {
+    color: var(--wt-ok);
+    border-bottom-color: color-mix(in srgb, var(--wt-ok) 55%, transparent);
+  }
+
+  :root[data-nav-layout='side'] .worktime-item.is-under dd a {
+    color: var(--wt-under);
+    border-bottom-color: color-mix(in srgb, var(--wt-under) 55%, transparent);
+  }
+
+  /* IST / SOLL / Δ breakdown — opens on hover or keyboard focus. The sidebar
+     column is narrow and clips its overflow, so the popover is position:fixed and
+     placed by header.ts (positionWorktimeDetail) next to the block; that also lets
+     it work identically in the collapsed rail and, later, a right-docked rail. */
+  :root[data-nav-layout='side'] .worktime-detail {
+    display: block;
+    position: fixed;
+    z-index: 60;
+    width: 210px;
+    max-width: calc(100vw - 24px);
+    padding: 8px 10px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.16);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    pointer-events: none;
+  }
+
+  :root[data-nav-layout='side'] .header-worktime:hover .worktime-detail,
+  :root[data-nav-layout='side'] .header-worktime:focus-within .worktime-detail {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  :root[data-nav-layout='side'] .worktime-detail-title {
+    margin: 0 0 5px;
+    font-size: 0.62em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: var(--color-text-muted);
+  }
+
+  :root[data-nav-layout='side'] .worktime-detail-row {
+    display: grid;
+    grid-template-columns: auto auto auto 1fr;
+    gap: 2px 7px;
     align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
+    padding: 3px 0;
+    font-size: 0.78em;
+  }
+
+  :root[data-nav-layout='side'] .worktime-detail-row + .worktime-detail-row {
+    border-top: 1px solid var(--color-border);
+  }
+
+  :root[data-nav-layout='side'] .worktime-detail .num {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  :root[data-nav-layout='side'] .wd-label,
+  :root[data-nav-layout='side'] .wd-soll {
+    color: var(--color-text-muted);
+  }
+
+  :root[data-nav-layout='side'] .wd-delta {
+    text-align: right;
+    font-weight: 700;
+  }
+
+  :root[data-nav-layout='side'] .worktime-detail-row.is-ok .wd-delta {
+    color: var(--wt-ok);
+  }
+
+  :root[data-nav-layout='side'] .worktime-detail-row.is-under .wd-delta {
+    color: var(--wt-under);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-nav-layout='side'] .worktime-detail {
+      transition: none;
+    }
   }
 
   /* The narrow column is a scroll container (overflow-y), which would reveal the
@@ -2744,28 +2901,100 @@ th[aria-sort='descending'] .th-sort-glyph {
     cursor: pointer;
   }
 
-  /* Horizontal control bar (settings / help / theme / density) at the column foot. */
+  /* Control strip (settings / help / theme / density) spread edge-to-edge like the
+     worktime ledger and account row above/below it — one consistent footer rhythm.
+     nowrap keeps all four on a single row down to the 150px min sidebar width. */
   :root[data-nav-layout='side'] .header-controls {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
+    justify-content: space-between;
     gap: 4px;
     padding-inline: var(--sidebar-gutter);
   }
 
-  /* Uniform 32×32 hit targets so all four controls align and fit on one row. */
+  /* Uniform hit targets: all four controls are the same borderless 34px icon
+     button (the theme/density cycles drop their top-bar box so the row reads as
+     one consistent strip, not two plain icons + two boxed ones). */
   :root[data-nav-layout='side'] .header-controls .header-icon-link,
   :root[data-nav-layout='side'] .header-controls .theme-cycle {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text-muted);
   }
 
+  :root[data-nav-layout='side'] .header-controls .header-icon-link:hover,
+  :root[data-nav-layout='side'] .header-controls .theme-cycle:hover,
+  :root[data-nav-layout='side'] .header-controls .header-icon-link.is-active {
+    background: var(--color-accent-soft);
+    color: var(--color-accent-text);
+  }
+
+  /* Account row: avatar (status ring) · name (truncates) · logout pinned right. */
   :root[data-nav-layout='side'] .header-account {
     padding-inline: var(--sidebar-gutter);
+    gap: 10px;
+  }
+
+  :root[data-nav-layout='side'] .user-badge {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 9px;
+    padding: 4px 0;
+    background: none;
+  }
+
+  :root[data-nav-layout='side'] .user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-text);
+    font-size: 0.72em;
+    font-weight: 700;
+  }
+
+  :root[data-nav-layout='side'] .user-initials {
+    display: block;
+    line-height: 1;
+  }
+
+  :root[data-nav-layout='side'] .user-avatar .status-indicator {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--color-surface);
+  }
+
+  :root[data-nav-layout='side'] .user-badge .user-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  :root[data-nav-layout='side'] .badge-logout {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
   }
 
   :root[data-nav-layout='side'] .sidebar-collapse:hover,
@@ -2815,13 +3044,60 @@ th[aria-sort='descending'] .th-sort-glyph {
     width: 3.5rem;
   }
 
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-worktime,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-admin-add,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .user-name,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #logo,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-resize,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-reopen {
     display: none;
+  }
+
+  /* Rail worktime: a compact colour-coded stack (Today over Week; Month and the
+     labels drop). Hovering/focusing it opens the same IST/SOLL popover, flown out
+     to the side of the rail rather than above the tiny block. */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-worktime {
+    padding: 5px 0;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-worktime .worktime-list {
+    flex-direction: column;
+    gap: 1px;
+    padding-inline: 0;
+    align-items: center;
+  }
+
+  /* Reset the expanded flex:1 columns to plain stacked lines (else they share the
+     tiny rail height and overlap). */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item {
+    flex: none;
+    padding: 0;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item dd {
+    line-height: 1.1;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item[data-period='today'] dd {
+    font-size: 0.74em;
+    font-weight: 700;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item + .worktime-item::before {
+    display: none;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item dt,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item-month {
+    display: none;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item dd a {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item[data-period='week'] dd {
+    font-size: 0.64em;
   }
 
   /* Labels are visually hidden (not display:none) in the rail so the icon-only
@@ -2876,8 +3152,12 @@ th[aria-sort='descending'] .th-sort-glyph {
     padding-right: 0;
   }
 
+  /* In the rail the four controls stack vertically (the row would overflow 3.5rem). */
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-controls {
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
     padding-inline: 0;
   }
 
