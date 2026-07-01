@@ -2815,14 +2815,39 @@ th[aria-sort='descending'] .th-sort-glyph {
     width: 3.5rem;
   }
 
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .nav-label,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-worktime,
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-admin-slot,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-admin-add,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .user-name,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #logo,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-resize,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-reopen {
     display: none;
+  }
+
+  /* Labels are visually hidden (not display:none) in the rail so the icon-only
+     nav/admin links keep their accessible name for screen readers. */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .nav-label,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-admin-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* Collapsed rail keeps the admin entity sub-menu as icon-only rows (labels and
+     the "+" hidden above); centre each icon and drop the edge bar so it isn't
+     offset — the active row is shown with a soft fill instead. */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-admin-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+    border-left: 0;
+  }
+
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-admin-item.is-active .sidebar-admin-link {
+    background: var(--color-accent-soft);
   }
 
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-logo {
