@@ -547,9 +547,6 @@ npm install
 
 #### Slow Test Execution
 ```bash
-# Use parallel test execution
-make test-parallel
-
 # Run only specific test suites
 composer test:unit              # Fast unit tests only
 composer test:controller        # API endpoint tests
