@@ -37,6 +37,7 @@ const FONT_SIZES: { value: FontSize; label: () => string }[] = [
 const NAV_LAYOUTS: { value: NavLayout; label: () => string }[] = [
   { value: 'top', label: () => m.settings_layout_top() },
   { value: 'side', label: () => m.settings_layout_side() },
+  { value: 'side-right', label: () => m.settings_layout_side_right() },
 ]
 
 interface SaveResponse {

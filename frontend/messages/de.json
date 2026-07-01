@@ -86,6 +86,7 @@
   "settings_layout_hint": "Wird sofort angewendet. Legt fest, wo das Menü sitzt.",
   "settings_layout_top": "Obere Leiste",
   "settings_layout_side": "Linke Seitenleiste",
+  "settings_layout_side_right": "Rechte Seitenleiste",
   "settings_saved": "Einstellungen gespeichert.",
   "settings_save_error": "Einstellungen konnten nicht gespeichert werden.",
   "extras_title": "Massen-Eintragung",

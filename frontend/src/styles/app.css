@@ -2700,6 +2700,32 @@ th[aria-sort='descending'] .th-sort-glyph {
     min-height: 100vh;
   }
 
+  /* ── Right-docked sidebar ─────────────────────────────────────────────────
+     data-nav-side='right' is set ALONGSIDE data-nav-layout='side', so the whole
+     left-sidebar ruleset applies unchanged; these rules only mirror the
+     directional bits: column on the right, resize handle on its left edge, and
+     the collapse chevron. (The worktime popover flips in header.ts.) */
+  :root[data-nav-side='right'] body {
+    flex-direction: row-reverse;
+  }
+
+  :root[data-nav-side='right'] .sidebar-resize {
+    left: auto;
+    right: var(--sidebar-width, 13em);
+    margin-left: 0;
+    margin-right: -4px;
+  }
+
+  /* Chevron points toward the edge the rail collapses to: right when expanded on
+     a right dock, back to left (inward) once collapsed. */
+  :root[data-nav-side='right'] .sidebar-collapse svg {
+    transform: scaleX(-1);
+  }
+
+  :root[data-nav-side='right'][data-sidebar-collapsed='true'] .sidebar-collapse svg {
+    transform: none;
+  }
+
   :root[data-nav-layout='side'] #page-header {
     flex: 0 0 var(--sidebar-width, 13em);
     width: var(--sidebar-width, 13em);

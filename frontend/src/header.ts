@@ -159,9 +159,16 @@ function positionWorktimeDetail(): void {
   const width = popover.offsetWidth
   const height = popover.offsetHeight
   const collapsed = document.documentElement.getAttribute('data-sidebar-collapsed') === 'true'
+  const rightDock = document.documentElement.getAttribute('data-nav-side') === 'right'
 
-  // Rail: flank the block. Expanded column: sit above it, left edges aligned.
-  let left = collapsed ? rect.right + gap : rect.left
+  // Rail: flank the block (right of a left rail, left of a right rail). Expanded
+  // column: sit above it, aligned to the block's near edge.
+  let left
+  if (collapsed) {
+    left = rightDock ? rect.left - width - gap : rect.right + gap
+  } else {
+    left = rightDock ? rect.right - width : rect.left
+  }
   let top = collapsed ? rect.top : rect.top - height - gap
 
   // Keep it within the viewport.

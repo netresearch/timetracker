@@ -10,10 +10,17 @@
 (function () {
     var root = document.documentElement;
     try {
-        if (window.localStorage.getItem('timetracker-nav-layout') === 'side') {
+        var navLayout = window.localStorage.getItem('timetracker-nav-layout');
+        if (navLayout === 'side' || navLayout === 'side-right') {
             root.setAttribute('data-nav-layout', 'side');
+            if (navLayout === 'side-right') {
+                root.setAttribute('data-nav-side', 'right');
+            } else {
+                root.removeAttribute('data-nav-side');
+            }
         } else {
             root.removeAttribute('data-nav-layout');
+            root.removeAttribute('data-nav-side');
         }
         var width = window.localStorage.getItem('timetracker-sidebar-width');
         if (width && /^[0-9]{2,3}$/.test(width)) {
