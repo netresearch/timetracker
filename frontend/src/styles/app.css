@@ -2939,8 +2939,10 @@ th[aria-sort='descending'] .th-sort-glyph {
     pointer-events: none;
   }
 
-  :root[data-nav-layout='side'] .header-worktime:hover .worktime-detail,
-  :root[data-nav-layout='side'] .header-worktime:focus-within .worktime-detail {
+  /* Shown via a JS-toggled class, not :hover — header.ts portals the popover to
+     <body> so it escapes the sticky sidebar's stacking context (else the resize
+     handle, a body-level fixed element, paints over it). */
+  :root[data-nav-layout='side'] .worktime-detail.is-open {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
