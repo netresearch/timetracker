@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Chrome defaults must precede the rest of this file: the header
+   compaction/sidebar rules below override them. */
+@import "./header.css";
 
 /* Self-hosted fonts (vendored woff2 from Fontsource, no third-party requests). */
 @font-face {
@@ -159,7 +162,8 @@ body {
 }
 
 /* The page chrome (skip link, header, main nav) is server-rendered and styled
- * by the shared build/css/header.css — see templates/partials/header.html.twig. */
+ * by styles/header.css (imported before this file) — see
+ * templates/partials/header.html.twig. */
 
 /* WCAG 2.5.5: interactive targets >= 44x44 CSS px. */
 .action-button,
@@ -2613,7 +2617,7 @@ th[aria-sort='descending'] .th-sort-glyph {
   width: 26px;
 }
 
-/* Header compaction — overrides the static header.css defaults (loaded first).
+/* Header compaction — overrides the header.css defaults (imported first).
    The nav links stay ≥24px tall. */
 :root[data-density='ultra-compact'] .app-header {
   min-height: 44px;
