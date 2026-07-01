@@ -818,7 +818,7 @@ export default function Tracking() {
           Purely visual: aria-hidden so AT users aren't told twice — the polite
           live region above already announces the save. */}
       <Show when={savedNotice() !== ''}>
-        <p class="form-status is-ok" aria-hidden="true">{savedNotice()}</p>
+        <p class="save-toast" aria-hidden="true">{savedNotice()}</p>
       </Show>
 
       <div class="tracking-toolbar">
