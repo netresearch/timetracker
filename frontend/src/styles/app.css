@@ -2780,11 +2780,15 @@ th[aria-sort='descending'] .th-sort-glyph {
 
   :root[data-nav-layout='side'] .worktime-item.is-ok dd a {
     color: var(--wt-ok);
+    /* Plain fallback first for browsers without color-mix() (docs/FAQ.md lists
+       Safari 14 / Chrome 90 / Firefox 88); the muted mix wins where supported. */
+    border-bottom-color: var(--wt-ok);
     border-bottom-color: color-mix(in srgb, var(--wt-ok) 55%, transparent);
   }
 
   :root[data-nav-layout='side'] .worktime-item.is-under dd a {
     color: var(--wt-under);
+    border-bottom-color: var(--wt-under);
     border-bottom-color: color-mix(in srgb, var(--wt-under) 55%, transparent);
   }
 
