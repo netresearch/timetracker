@@ -2817,12 +2817,21 @@ th[aria-sort='descending'] .th-sort-glyph {
 
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .nav-label,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-worktime,
-  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-admin-slot,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-admin-label,
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-admin-add,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .user-name,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #logo,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-resize,
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-reopen {
     display: none;
+  }
+
+  /* Collapsed rail keeps the admin entity sub-menu as icon-only rows (labels and
+     the "+" hidden above); centre each icon like the main nav. */
+  :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .sidebar-admin-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
   }
 
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .header-logo {
