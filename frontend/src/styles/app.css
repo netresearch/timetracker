@@ -2892,11 +2892,14 @@ th[aria-sort='descending'] .th-sort-glyph {
        still scales with the --font-scale text-size preference; capped to viewport. */
     width: max-content;
     max-width: calc(100vw - 24px);
-    padding: 8px 10px;
+    /* It's a transient hover/focus overlay, not sidebar chrome — render it
+       comfortably legible rather than shrunk to the 13px sidebar font. */
+    font-size: 0.92rem;
+    padding: 12px 15px;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 10px;
-    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.16);
+    border-radius: 12px;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22);
     opacity: 0;
     visibility: hidden;
     transform: translateY(4px);
@@ -2912,10 +2915,10 @@ th[aria-sort='descending'] .th-sort-glyph {
   }
 
   :root[data-nav-layout='side'] .worktime-detail-title {
-    margin: 0 0 5px;
-    font-size: 0.62em;
+    margin: 0 0 8px;
+    font-size: 0.66em;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.07em;
     font-weight: 700;
     color: var(--color-text-muted);
   }
@@ -2923,10 +2926,10 @@ th[aria-sort='descending'] .th-sort-glyph {
   :root[data-nav-layout='side'] .worktime-detail-row {
     display: grid;
     grid-template-columns: auto auto auto 1fr;
-    gap: 2px 7px;
+    gap: 3px 16px;
     align-items: baseline;
-    padding: 3px 0;
-    font-size: 0.78em;
+    padding: 6px 0;
+    font-size: 0.95em;
   }
 
   :root[data-nav-layout='side'] .worktime-detail-row + .worktime-detail-row {
@@ -2946,6 +2949,7 @@ th[aria-sort='descending'] .th-sort-glyph {
   :root[data-nav-layout='side'] .wd-delta {
     text-align: right;
     font-weight: 700;
+    font-size: 1.02em;
   }
 
   :root[data-nav-layout='side'] .worktime-detail-row.is-ok .wd-delta {
