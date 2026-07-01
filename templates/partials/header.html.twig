@@ -83,21 +83,36 @@
 
         <div class="header-spacer"></div>
 
-        <section class="header-worktime" aria-label="{{ 'Working time'|trans }}">
+        {# Worktime totals. In the sidebar the values are tinted by IST vs SOLL
+           (worked vs contract target through today) — header.ts adds is-ok /
+           is-under to each .worktime-item and fills the .worktime-detail popover,
+           which opens on hover/focus (expanded column and collapsed rail alike). #}
+        <section class="header-worktime" aria-label="{{ 'Working time'|trans }}" tabindex="-1">
             <dl class="worktime-list">
-                <div class="worktime-item worktime-item-link">
+                <div class="worktime-item worktime-item-link" data-period="today">
                     <dt>{{ 'Today'|trans }}</dt>
-                    <dd><a id="worktime-day" data-nav="month" href="{{ monthPath }}?days=today" aria-label="{{ 'Overview'|trans }}: {{ 'Today'|trans }}">0:00</a></dd>
+                    <dd><a id="worktime-day" data-nav="month" href="{{ monthPath }}?days=today" aria-label="{{ 'Overview'|trans }}: {{ 'Today'|trans }}" aria-describedby="worktime-detail">0:00</a></dd>
                 </div>
-                <div class="worktime-item worktime-item-link">
+                <div class="worktime-item worktime-item-link" data-period="week">
                     <dt>{{ 'Week'|trans }}</dt>
-                    <dd><a id="worktime-week" data-nav="month" href="{{ monthPath }}?days=current-week" aria-label="{{ 'Overview'|trans }}: {{ 'Week'|trans }}">0:00</a></dd>
+                    <dd><a id="worktime-week" data-nav="month" href="{{ monthPath }}?days=current-week" aria-label="{{ 'Overview'|trans }}: {{ 'Week'|trans }}" aria-describedby="worktime-detail">0:00</a></dd>
                 </div>
-                <div class="worktime-item worktime-item-link worktime-item-month">
+                <div class="worktime-item worktime-item-link worktime-item-month" data-period="month">
                     <dt>{{ 'Month'|trans }}</dt>
-                    <dd><a id="worktime-month" data-nav="month" href="{{ monthPath }}" aria-label="{{ 'Overview'|trans }}: {{ 'Month'|trans }}">0 PT</a></dd>
+                    <dd><a id="worktime-month" data-nav="month" href="{{ monthPath }}" aria-label="{{ 'Overview'|trans }}: {{ 'Month'|trans }}" aria-describedby="worktime-detail">0 PT</a></dd>
                 </div>
             </dl>
+            <div class="worktime-detail" id="worktime-detail" role="tooltip">
+                <p class="worktime-detail-title">{{ 'Actual vs. target'|trans }} · {{ 'Actual'|trans }} / {{ 'Target'|trans }}</p>
+                {% for period in ['today', 'week', 'month'] %}
+                    <div class="worktime-detail-row" data-period="{{ period }}">
+                        <span class="wd-label">{{ (period == 'today' ? 'Today' : (period == 'week' ? 'Week' : 'Month'))|trans }}</span>
+                        <span class="wd-ist num" data-wd="ist">–</span>
+                        <span class="wd-soll num" data-wd="soll">–</span>
+                        <span class="wd-delta num" data-wd="delta">–</span>
+                    </div>
+                {% endfor %}
+            </div>
         </section>
 
         {# Theme cycle — framework-neutral; wired by partials/theme-init.html.twig.
@@ -138,7 +153,12 @@
 
         <div class="header-account">
             <span id="user-badge" class="user-badge js-user-badge status_active" role="status" aria-live="polite" aria-label="{{ 'User status'|trans }}">
-                <span class="status-indicator" aria-hidden="true"></span>
+                {# Avatar shown only in the sidebar (app.css gates it); the status dot
+                   sits on it as a ring. header.ts fills the initials from the name. #}
+                <span class="user-avatar" aria-hidden="true">
+                    <span class="user-initials js-user-initials"></span>
+                    <span class="status-indicator" aria-hidden="true"></span>
+                </span>
                 <span class="user-name js-user-name">{{ settings.user_name }}</span>
             </span>
             <a href="{{ url('_logout') }}" class="badge-logout" aria-label="{{ 'Logout'|trans }}" title="{{ 'Logout'|trans }}"><svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></a>
