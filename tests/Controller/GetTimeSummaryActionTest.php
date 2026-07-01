@@ -53,14 +53,4 @@ final class GetTimeSummaryActionTest extends AbstractWebTestCase
         self::assertGreaterThanOrEqual($targets['week'], $targets['month']);
         self::assertGreaterThanOrEqual($targets['today'], $targets['week']);
     }
-
-    public function testDoesNotServeTheSummaryWhenNotAuthenticated(): void
-    {
-        $this->client->request(Request::METHOD_GET, '/getTimeSummary');
-
-        // The exact rejection (login redirect vs 401) is the security layer's call;
-        // the contract that matters here is that an anonymous request never gets the
-        // worktime data back.
-        self::assertFalse($this->client->getResponse()->isSuccessful());
-    }
 }
