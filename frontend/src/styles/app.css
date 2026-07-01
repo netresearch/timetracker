@@ -2857,7 +2857,8 @@ th[aria-sort='descending'] .th-sort-glyph {
      by header.ts from IST vs SOLL. Neutral (no target, e.g. weekend) stays plain. */
   :root[data-nav-layout='side'] .worktime-item dd a {
     display: inline-block;
-    font-size: 0.95rem;
+    /* em (not rem) so it scales with the --font-scale text-size preference (ADR-014). */
+    font-size: 1.05em;
     font-weight: 700;
     border-bottom: 2px solid transparent;
     padding-bottom: 1px;
@@ -2893,8 +2894,9 @@ th[aria-sort='descending'] .th-sort-glyph {
     width: max-content;
     max-width: calc(100vw - 24px);
     /* It's a transient hover/focus overlay, not sidebar chrome — render it
-       comfortably legible rather than shrunk to the 13px sidebar font. */
-    font-size: 0.92rem;
+       comfortably legible rather than shrunk to the 13px sidebar font. em (not
+       rem) so it still tracks the --font-scale text-size preference (ADR-014). */
+    font-size: 1.15em;
     padding: 12px 15px;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -3176,7 +3178,7 @@ th[aria-sort='descending'] .th-sort-glyph {
   }
 
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item[data-period='today'] dd a {
-    font-size: 0.82rem;
+    font-size: 0.94em;
   }
 
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item + .worktime-item::before {
@@ -3194,7 +3196,7 @@ th[aria-sort='descending'] .th-sort-glyph {
   }
 
   :root[data-nav-layout='side'][data-sidebar-collapsed='true'] .worktime-item[data-period='week'] dd a {
-    font-size: 0.7rem;
+    font-size: 0.8em;
     font-weight: 600;
   }
 
