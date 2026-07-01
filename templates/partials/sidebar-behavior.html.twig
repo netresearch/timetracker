@@ -120,8 +120,11 @@
                 if (dragging) {
                     // Right-docked: the handle is on the sidebar's LEFT edge, so the
                     // width grows as the pointer moves left → measure from the right.
+                    // clientWidth excludes the scrollbar, matching event.clientX's
+                    // client-area coordinate space (window.innerWidth would offset
+                    // the right-dock width by the scrollbar width).
                     var right = root.getAttribute('data-nav-side') === 'right';
-                    setWidth(right ? (window.innerWidth - event.clientX) : event.clientX);
+                    setWidth(right ? (document.documentElement.clientWidth - event.clientX) : event.clientX);
                 }
             });
             var endDrag = function (event) {
