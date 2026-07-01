@@ -399,7 +399,11 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     // edited back), drop the draft so the row stays clean — and refreshHints
     // then sees no draft and skips the (pointless) auto-save.
     discardIfClean(cell.rowId)
-    refreshHints(cell.rowId)
+    // A Tab move (left/right) stays in the same row and opens the next cell's
+    // editor; auto-saving now would refetch and remount that editor away (#481),
+    // so defer the save to row-leave. Every other commit auto-saves as before.
+    const staysInRowViaTab = direction === 'left' || direction === 'right'
+    refreshHints(cell.rowId, !staysInRowViaTab)
 
     // The post-commit move (all through the grid's setActive — the single
     // roving-tabindex writer). Enter (stay/down) on an incomplete row is guided to
@@ -446,7 +450,12 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   // After a commit: recompute the row's invalid-field hints and, when the row is
   // complete (no invalid fields), auto-save it quietly. Saving no longer depends
   // on leaving the row. A no-op when the host provides no invalidFields.
-  function refreshHints(id: number): void {
+  //
+  // autoSave is suppressed for a Tab move that keeps editing the SAME row: saveRow
+  // refetches, which remounts the rows and would unmount the editor Tab just opened
+  // on the next cell (#481 — "lose inline-edit mode on Tab"). The row still saves
+  // when focus leaves it (onTableFocusOut / row-leave) or on any non-Tab commit.
+  function refreshHints(id: number, autoSave = true): void {
     if (config.invalidFields === undefined) {
       return
     }
@@ -457,7 +466,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     }
     const invalid = config.invalidFields(draft, row)
     setFieldHints(id, invalid)
-    if (invalid.length === 0) {
+    if (autoSave && invalid.length === 0) {
       void flushRow(id)
     }
   }
