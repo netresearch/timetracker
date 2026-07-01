@@ -159,9 +159,16 @@ function positionWorktimeDetail(): void {
   const width = popover.offsetWidth
   const height = popover.offsetHeight
   const collapsed = document.documentElement.getAttribute('data-sidebar-collapsed') === 'true'
+  const rightDock = document.documentElement.getAttribute('data-nav-side') === 'right'
 
-  // Rail: flank the block. Expanded column: sit above it, left edges aligned.
-  let left = collapsed ? rect.right + gap : rect.left
+  // Rail: flank the block (right of a left rail, left of a right rail). Expanded
+  // column: sit above it, aligned to the block's near edge.
+  let left
+  if (collapsed) {
+    left = rightDock ? rect.left - width - gap : rect.right + gap
+  } else {
+    left = rightDock ? rect.right - width : rect.left
+  }
   let top = collapsed ? rect.top : rect.top - height - gap
 
   // Keep it within the viewport.
@@ -169,6 +176,51 @@ function positionWorktimeDetail(): void {
   top = Math.max(gap, Math.min(top, window.innerHeight - height - gap))
   popover.style.left = `${Math.round(left)}px`
   popover.style.top = `${Math.round(top)}px`
+}
+
+/**
+ * Portal the IST/SOLL popover to <body> and drive it from JS. The sidebar
+ * (#page-header) is position:sticky, which creates a stacking context, so a
+ * popover left inside it can't paint above the body-level resize handle no matter
+ * its z-index. Moving it to <body> frees it; open/close is then a JS-toggled
+ * class (mouse + keyboard) instead of the CSS :hover that needed a parent.
+ */
+export function wireWorktimeDetail(): void {
+  const block = document.querySelector<HTMLElement>('.header-worktime')
+  const popover = document.getElementById('worktime-detail')
+  if (block === null || popover === null) {
+    return
+  }
+  if (popover.parentElement !== document.body) {
+    document.body.appendChild(popover)
+  }
+  const open = (): void => {
+    // Add the class first: positionWorktimeDetail() bails while the popover is
+    // visibility:hidden, so it must be visible before we measure/place it.
+    popover.classList.add('is-open')
+    positionWorktimeDetail()
+  }
+  const close = (): void => popover.classList.remove('is-open')
+  // Stay open while EITHER hovered or focus is within the block (matching the old
+  // CSS ":hover OR :focus-within"); only close when neither holds — so a keyboard
+  // user who opened it via focus doesn't lose it by moving the mouse away.
+  block.addEventListener('mouseenter', open)
+  block.addEventListener('mouseleave', () => {
+    if (!block.contains(document.activeElement)) {
+      close()
+    }
+  })
+  block.addEventListener('focusin', open)
+  block.addEventListener('focusout', (event) => {
+    if (!block.contains(event.relatedTarget as Node | null) && !block.matches(':hover')) {
+      close()
+    }
+  })
+  window.addEventListener('resize', () => {
+    if (popover.classList.contains('is-open')) {
+      positionWorktimeDetail()
+    }
+  })
 }
 
 // Exported so the SolidJS worklog can refresh the header's today/week/month
@@ -588,15 +640,7 @@ export function initHeaderDynamics(config: AppConfig): void {
     link.setAttribute('aria-keyshortcuts', `Alt+${i + 1}`)
   })
   void updateWorktime()
-  // Position the IST/SOLL popover on demand (fixed-positioned to escape the
-  // sidebar column's clip). Hover and keyboard focus both open it (CSS); resize
-  // keeps an open one anchored.
-  const worktime = document.querySelector('.header-worktime')
-  if (worktime !== null) {
-    worktime.addEventListener('mouseenter', positionWorktimeDetail)
-    worktime.addEventListener('focusin', positionWorktimeDetail)
-    window.addEventListener('resize', positionWorktimeDetail)
-  }
+  wireWorktimeDetail()
   setTimeout(() => {
     pollLoginStatus(config)
   }, STATUS_POLL_INTERVAL_MS)

@@ -86,6 +86,7 @@
   "settings_layout_hint": "Applies immediately. Choose where the menu sits.",
   "settings_layout_top": "Top bar",
   "settings_layout_side": "Left sidebar",
+  "settings_layout_side_right": "Right sidebar",
   "settings_saved": "Settings saved.",
   "settings_save_error": "Settings could not be saved.",
   "extras_title": "Bulk entry",

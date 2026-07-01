@@ -2700,6 +2700,36 @@ th[aria-sort='descending'] .th-sort-glyph {
     min-height: 100vh;
   }
 
+  /* ── Right-docked sidebar ─────────────────────────────────────────────────
+     data-nav-side='right' is set ALONGSIDE data-nav-layout='side', so the whole
+     left-sidebar ruleset applies unchanged; these rules only mirror the
+     directional bits: column on the right, resize handle on its left edge, and
+     the collapse chevron. (The worktime popover flips in header.ts.)
+     NB: the [data-nav-layout='side'] prefix is included for SPECIFICITY — the base
+     .sidebar-resize rule sets `left` and appears later in the file, so without the
+     extra attribute these overrides would lose on source order and the resize
+     handle would stay on the left (a stray vertical line). */
+  :root[data-nav-layout='side'][data-nav-side='right'] body {
+    flex-direction: row-reverse;
+  }
+
+  :root[data-nav-layout='side'][data-nav-side='right'] .sidebar-resize {
+    left: auto;
+    right: var(--sidebar-width, 13em);
+    margin-left: 0;
+    margin-right: -4px;
+  }
+
+  /* Chevron points toward the edge the rail collapses to: right when expanded on
+     a right dock, back to left (inward) once collapsed. */
+  :root[data-nav-layout='side'][data-nav-side='right'] .sidebar-collapse svg {
+    transform: scaleX(-1);
+  }
+
+  :root[data-nav-layout='side'][data-nav-side='right'][data-sidebar-collapsed='true'] .sidebar-collapse svg {
+    transform: none;
+  }
+
   :root[data-nav-layout='side'] #page-header {
     flex: 0 0 var(--sidebar-width, 13em);
     width: var(--sidebar-width, 13em);
@@ -2909,8 +2939,10 @@ th[aria-sort='descending'] .th-sort-glyph {
     pointer-events: none;
   }
 
-  :root[data-nav-layout='side'] .header-worktime:hover .worktime-detail,
-  :root[data-nav-layout='side'] .header-worktime:focus-within .worktime-detail {
+  /* Shown via a JS-toggled class, not :hover — header.ts portals the popover to
+     <body> so it escapes the sticky sidebar's stacking context (else the resize
+     handle, a body-level fixed element, paints over it). */
+  :root[data-nav-layout='side'] .worktime-detail.is-open {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);

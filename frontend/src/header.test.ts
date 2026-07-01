@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { getJson } from './api/client'
 import type { AppConfig } from './config'
-import { formatDays, formatDuration, formatSignedDuration, handleHelpClick, handleShortcut, hideAccessHints, initialsFrom, refreshLoginStatus, showAccessHints, updateWorktime, worktimeStatus } from './header'
+import { formatDays, formatDuration, formatSignedDuration, handleHelpClick, handleShortcut, hideAccessHints, initialsFrom, refreshLoginStatus, showAccessHints, updateWorktime, wireWorktimeDetail, worktimeStatus } from './header'
 import { setShortcutsHelpOpen, shortcutsHelpOpen } from './lib/shortcutsHelp'
 
 // Preserve the module's other exports (SessionExpiredError, postJson, …) and stub
@@ -124,6 +124,48 @@ describe('updateWorktime', () => {
     expect(today.classList.contains('is-ok')).toBe(false)
     expect(today.classList.contains('is-under')).toBe(false)
     expect(document.getElementById('worktime-day')?.textContent).toBe('7:30')
+  })
+})
+
+describe('wireWorktimeDetail', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+  })
+
+  function renderWorktimeBlock(): void {
+    document.body.innerHTML = `
+      <section class="header-worktime" tabindex="-1">
+        <dl class="worktime-list"><div class="worktime-item" data-period="today"><dd><a id="worktime-day" href="#">0:00</a></dd></div></dl>
+        <div class="worktime-detail" id="worktime-detail" role="tooltip"></div>
+      </section>`
+  }
+
+  it('portals the popover to <body> and opens on hover', () => {
+    renderWorktimeBlock()
+    wireWorktimeDetail()
+    const block = document.querySelector<HTMLElement>('.header-worktime')!
+    const popover = document.getElementById('worktime-detail')!
+
+    expect(popover.parentElement).toBe(document.body) // escaped the sticky sidebar
+    block.dispatchEvent(new MouseEvent('mouseenter'))
+    expect(popover.classList.contains('is-open')).toBe(true)
+    block.dispatchEvent(new MouseEvent('mouseleave'))
+    expect(popover.classList.contains('is-open')).toBe(false)
+  })
+
+  it('stays open on mouseleave while a link inside still has focus (keyboard)', () => {
+    renderWorktimeBlock()
+    wireWorktimeDetail()
+    const block = document.querySelector<HTMLElement>('.header-worktime')!
+    const popover = document.getElementById('worktime-detail')!
+
+    document.getElementById('worktime-day')!.focus()
+    block.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+    expect(popover.classList.contains('is-open')).toBe(true)
+    // Mouse leaves, but focus is still within the block → must NOT close.
+    block.dispatchEvent(new MouseEvent('mouseleave'))
+    expect(popover.classList.contains('is-open')).toBe(true)
   })
 })
 

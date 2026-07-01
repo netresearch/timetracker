@@ -117,7 +117,15 @@
                 event.preventDefault();
             });
             handle.addEventListener('pointermove', function (event) {
-                if (dragging) { setWidth(event.clientX); }
+                if (dragging) {
+                    // Right-docked: the handle is on the sidebar's LEFT edge, so the
+                    // width grows as the pointer moves left → measure from the right.
+                    // clientWidth excludes the scrollbar, matching event.clientX's
+                    // client-area coordinate space (window.innerWidth would offset
+                    // the right-dock width by the scrollbar width).
+                    var right = root.getAttribute('data-nav-side') === 'right';
+                    setWidth(right ? (document.documentElement.clientWidth - event.clientX) : event.clientX);
+                }
             });
             var endDrag = function (event) {
                 if (!dragging) { return; }
@@ -133,7 +141,11 @@
             handle.addEventListener('keydown', function (event) {
                 if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
                     event.preventDefault();
-                    var width = setWidth(currentWidth() + (event.key === 'ArrowRight' ? STEP : -STEP));
+                    // Grow-key is Right for a left dock, Left for a right dock (the
+                    // key that moves toward the content area shrinks the sidebar).
+                    var right = root.getAttribute('data-nav-side') === 'right';
+                    var grow = right ? (event.key === 'ArrowLeft') : (event.key === 'ArrowRight');
+                    var width = setWidth(currentWidth() + (grow ? STEP : -STEP));
                     persist('timetracker-sidebar-width', String(width));
                 }
             });

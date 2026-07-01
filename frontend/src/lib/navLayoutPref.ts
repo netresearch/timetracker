@@ -6,14 +6,19 @@
 // data-nav-layout (see app.css); switching only flips the attribute and asks the
 // shared header script to re-run its priority-overflow pass.
 
-export type NavLayout = 'top' | 'side'
+// 'side-right' shares all the left-sidebar styling (data-nav-layout='side') and
+// only adds data-nav-side='right' for the mirroring rules (column on the right,
+// resize handle on its left edge, popover flying left) — so it reuses the whole
+// left-sidebar CSS instead of duplicating it.
+export type NavLayout = 'top' | 'side' | 'side-right'
 
 const KEY = 'timetracker-nav-layout'
 
 export function getNavLayout(): NavLayout {
   try {
-    if (localStorage.getItem(KEY) === 'side') {
-      return 'side'
+    const stored = localStorage.getItem(KEY)
+    if (stored === 'side' || stored === 'side-right') {
+      return stored
     }
   } catch {
     // localStorage unavailable (private mode) — fall through to the default.
@@ -24,17 +29,23 @@ export function getNavLayout(): NavLayout {
 
 function apply(layout: NavLayout): void {
   const root = document.documentElement
-  if (layout === 'side') {
+  if (layout === 'side' || layout === 'side-right') {
     root.setAttribute('data-nav-layout', 'side')
+    if (layout === 'side-right') {
+      root.setAttribute('data-nav-side', 'right')
+    } else {
+      root.removeAttribute('data-nav-side')
+    }
   } else {
     root.removeAttribute('data-nav-layout')
+    root.removeAttribute('data-nav-side')
   }
 }
 
 export function setNavLayout(value: NavLayout): void {
   try {
-    if (value === 'side') {
-      localStorage.setItem(KEY, 'side')
+    if (value === 'side' || value === 'side-right') {
+      localStorage.setItem(KEY, value)
     } else {
       localStorage.removeItem(KEY)
     }
