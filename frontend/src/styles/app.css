@@ -2796,7 +2796,9 @@ th[aria-sort='descending'] .th-sort-glyph {
     display: block;
     position: fixed;
     z-index: 60;
-    width: 210px;
+    /* em so it scales with the user's text-size preference (--font-scale), keeping
+       the IST/SOLL rows from wrapping when text is enlarged. */
+    width: 14em;
     max-width: calc(100vw - 24px);
     padding: 8px 10px;
     background: var(--color-surface);
@@ -2913,7 +2915,7 @@ th[aria-sort='descending'] .th-sort-glyph {
     padding-inline: var(--sidebar-gutter);
   }
 
-  /* Uniform hit targets: all four controls are the same borderless 34px icon
+  /* Uniform hit targets: all four controls are the same borderless 30px icon
      button (the theme/density cycles drop their top-bar box so the row reads as
      one consistent strip, not two plain icons + two boxed ones). */
   :root[data-nav-layout='side'] .header-controls .header-icon-link,

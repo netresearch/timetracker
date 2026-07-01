@@ -116,7 +116,6 @@ function applyWorktimeStatus(period: string, data: SummaryPeriod): void {
   if (row === null) {
     return
   }
-  const target = data.target ?? 0
   const set = (selector: string, text: string): void => {
     const cell = row.querySelector(selector)
     if (cell !== null) {
@@ -124,8 +123,16 @@ function applyWorktimeStatus(period: string, data: SummaryPeriod): void {
     }
   }
   set('[data-wd="ist"]', formatDuration(data.duration))
-  set('[data-wd="soll"]', `/ ${formatDuration(target)}`)
-  set('[data-wd="delta"]', formatSignedDuration(data.duration - target))
+  // No target (weekend/holiday, or an older backend that omits it): show the
+  // actual, but leave SOLL/Δ as placeholders rather than implying a 0:00 target.
+  if (data.target === undefined) {
+    set('[data-wd="soll"]', '–')
+    set('[data-wd="delta"]', '–')
+
+    return
+  }
+  set('[data-wd="soll"]', `/ ${formatDuration(data.target)}`)
+  set('[data-wd="delta"]', formatSignedDuration(data.duration - data.target))
 }
 
 /**
@@ -137,7 +144,13 @@ function applyWorktimeStatus(period: string, data: SummaryPeriod): void {
 function positionWorktimeDetail(): void {
   const block = document.querySelector<HTMLElement>('.header-worktime')
   const popover = document.getElementById('worktime-detail')
-  if (block === null || popover === null || getComputedStyle(popover).display === 'none') {
+  if (block === null || popover === null) {
+    return
+  }
+  // Skip the layout reads (getBoundingClientRect / offset*) while the popover is
+  // hidden — e.g. resize ticks when nothing is hovered — to avoid needless reflow.
+  const style = getComputedStyle(popover)
+  if (style.display === 'none' || style.visibility === 'hidden') {
     return
   }
 

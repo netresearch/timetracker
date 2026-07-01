@@ -99,7 +99,10 @@ final class GetTimeSummaryAction extends BaseController
     {
         $today = $this->clock->today();
         $startOfWeek = $this->mondayThisWeek($today);
-        $startOfMonth = $today->modify('first day of this month');
+        // modify() is well-defined here; the guard only satisfies the analyser
+        // (DateTimeImmutable::modify is typed to allow a false return).
+        $firstOfMonth = $today->modify('first day of this month');
+        $startOfMonth = false !== $firstOfMonth ? $firstOfMonth : $today;
 
         $contractRepository = $this->managerRegistry->getRepository(Contract::class);
         assert($contractRepository instanceof ContractRepository);

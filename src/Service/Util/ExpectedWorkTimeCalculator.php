@@ -42,8 +42,9 @@ final readonly class ExpectedWorkTimeCalculator
         DateTimeInterface $start,
         DateTimeInterface $end,
     ): int {
-        // Normalise to date-only midnights so the DatePeriod includes $end and a
-        // stray time component can't drop the last day.
+        // Normalise to date-only midnights so a stray time component can't drop the
+        // last day; INCLUDE_END_DATE then makes the range inclusive of $end without
+        // a modify('+1 day') that could theoretically return false.
         $from = DateTimeImmutable::createFromInterface($start)->setTime(0, 0);
         $to = DateTimeImmutable::createFromInterface($end)->setTime(0, 0);
         if ($to < $from) {
@@ -51,7 +52,7 @@ final readonly class ExpectedWorkTimeCalculator
         }
 
         $hours = 0.0;
-        $period = new DatePeriod($from, new DateInterval('P1D'), $to->modify('+1 day'));
+        $period = new DatePeriod($from, new DateInterval('P1D'), $to, DatePeriod::INCLUDE_END_DATE);
         foreach ($period as $day) {
             if (isset($holidayDates[$day->format('Y-m-d')])) {
                 continue;
