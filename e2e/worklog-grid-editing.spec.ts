@@ -43,6 +43,36 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await expect(page.locator('td[data-col-key="end"][data-inline-editing] input.inline-editor')).toBeVisible();
   });
 
+  // Regression for #481: editing an EXISTING, already-complete entry and pressing
+  // Tab used to drop inline-edit mode — the next cell showed briefly but was not
+  // typeable until re-opened. Cause: a valid change kept the row complete, so the
+  // commit auto-saved, and saveRow's refetch remounted the rows and unmounted the
+  // just-opened editor. (The Tab test above types an incomplete '9', so its row
+  // never auto-saved and it never hit this path.) Auto-save is now deferred for Tab.
+  test('Tab keeps inline-edit mode after a valid change to an existing entry (#481)', async ({ page }) => {
+    const stamp = await createWorklogEntry(page);
+    const row = rowByStamp(page, stamp);
+
+    // The reporter's flow: double-click a cell of a complete row and change it.
+    await row.locator('td[data-col-key="start"]').dblclick();
+    const startEditor = page.locator('td[data-col-key="start"][data-inline-editing] input.inline-editor');
+    await expect(startEditor).toBeVisible();
+    await expect(startEditor).toBeFocused();
+
+    // A real, VALID edit (00:05 is still before the 00:15 end) keeps the row
+    // complete — the exact condition that used to trigger the disruptive auto-save.
+    await startEditor.fill('00:05');
+    await page.keyboard.press('Tab');
+
+    // Edit mode must survive: the next editor is open, focused AND typeable (the
+    // bug left a dead cell that needed a second double-click).
+    const endEditor = page.locator('td[data-col-key="end"][data-inline-editing] input.inline-editor');
+    await expect(endEditor).toBeVisible();
+    await expect(endEditor).toBeFocused();
+    await endEditor.fill('00:20');
+    await expect(endEditor).toHaveValue('00:20');
+  });
+
   test('Ctrl+C copies the focused cell; Ctrl+V pastes into another, seeding the editor', async ({ page }) => {
     // Ctrl+C/V on a focused (non-edit) cell drive the async clipboard API, which needs
     // a secure context. CI serves the app over plain HTTP on a container hostname, so
