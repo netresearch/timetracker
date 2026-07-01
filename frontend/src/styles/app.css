@@ -796,6 +796,7 @@ main {
    into the page's top-left corner. */
 .save-toast {
   position: fixed;
+  margin: 0; /* reset the default <p> margin so it can't skew the fixed offset */
   bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
@@ -2518,6 +2519,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='compact'] .action-button.is-icon,
 :root[data-density='compact'] .primary-button.is-icon {
   min-width: 30px;
+  padding: 0; /* keep the icon-only button square (beats the .primary-button padding above) */
 }
 
 /* ── Ultra-compact — even tighter than Compact, plus a compacted header and no
@@ -2564,6 +2566,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='ultra-compact'] .action-button.is-icon,
 :root[data-density='ultra-compact'] .primary-button.is-icon {
   min-width: 26px;
+  padding: 0; /* keep the icon-only button square (beats the .primary-button padding above) */
 }
 
 /* Header compaction — overrides the static header.css defaults (loaded first).
