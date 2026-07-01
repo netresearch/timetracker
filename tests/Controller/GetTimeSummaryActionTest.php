@@ -36,7 +36,6 @@ final class GetTimeSummaryActionTest extends AbstractWebTestCase
         $json = $this->getJsonResponse($response);
         self::assertIsArray($json);
 
-        $targets = [];
         foreach (['today', 'week', 'month'] as $period) {
             self::assertArrayHasKey($period, $json);
             $data = $json[$period];
@@ -46,11 +45,10 @@ final class GetTimeSummaryActionTest extends AbstractWebTestCase
             self::assertIsNumeric($data['duration']);
             self::assertIsNumeric($data['target']);
             self::assertGreaterThanOrEqual(0, $data['target'], $period . ' target is never negative');
-            $targets[$period] = $data['target'];
         }
 
-        // SOLL accumulates over longer periods: month-to-date ≥ week-to-date ≥ today.
-        self::assertGreaterThanOrEqual($targets['week'], $targets['month']);
-        self::assertGreaterThanOrEqual($targets['today'], $targets['week']);
+        // NB: no month ≥ week ≥ today ordering — week-to-date (Mon→today) can exceed
+        // month-to-date early in a month, when the week reaches into the prior month
+        // (e.g. the 1st on a Wednesday: month = today only, week = Mon–Wed).
     }
 }

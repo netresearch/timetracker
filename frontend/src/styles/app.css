@@ -780,8 +780,43 @@ main {
   opacity: 0.6;
 }
 
+/* Icon-only primary action (e.g. the worklog Add "+"): a square target, not a
+   text-padded pill, so it matches the other toolbar icon buttons. */
+.primary-button.is-icon {
+  min-width: 44px;
+  padding: 0;
+}
+
 .form-status.is-ok {
   color: var(--color-success-text);
+}
+
+/* Auto-dismissing save confirmation for the worklog (the polite live region
+   handles AT). A fixed toast — NOT an inline .form-status, which dumped the text
+   into the page's top-left corner. */
+.save-toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-text);
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.16);
+  animation: save-toast-in 0.15s ease;
+}
+
+@keyframes save-toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .save-toast { animation: none; }
 }
 
 .form-status.is-error {
@@ -2469,12 +2504,19 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='compact'] .link-button,
 :root[data-density='compact'] .action-button,
 :root[data-density='compact'] .admin-subnav-link,
+:root[data-density='compact'] .primary-button,
+:root[data-density='compact'] .days-combo-toggle,
 :root[data-density='compact'] .tracking-days-input {
   min-height: 30px;
 }
 
+:root[data-density='compact'] .primary-button {
+  padding: 0 0.7rem;
+}
+
 :root[data-density='compact'] .link-button.is-icon,
-:root[data-density='compact'] .action-button.is-icon {
+:root[data-density='compact'] .action-button.is-icon,
+:root[data-density='compact'] .primary-button.is-icon {
   min-width: 30px;
 }
 
@@ -2508,12 +2550,19 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='ultra-compact'] .link-button,
 :root[data-density='ultra-compact'] .action-button,
 :root[data-density='ultra-compact'] .admin-subnav-link,
+:root[data-density='ultra-compact'] .primary-button,
+:root[data-density='ultra-compact'] .days-combo-toggle,
 :root[data-density='ultra-compact'] .tracking-days-input {
   min-height: 26px;
 }
 
+:root[data-density='ultra-compact'] .primary-button {
+  padding: 0 0.6rem;
+}
+
 :root[data-density='ultra-compact'] .link-button.is-icon,
-:root[data-density='ultra-compact'] .action-button.is-icon {
+:root[data-density='ultra-compact'] .action-button.is-icon,
+:root[data-density='ultra-compact'] .primary-button.is-icon {
   min-width: 26px;
 }
 
@@ -2800,9 +2849,10 @@ th[aria-sort='descending'] .th-sort-glyph {
     display: block;
     position: fixed;
     z-index: 60;
-    /* em so it scales with the user's text-size preference (--font-scale), keeping
-       the IST/SOLL rows from wrapping when text is enlarged. */
-    width: 14em;
+    /* Size to content so the signed-Δ column can't clip (a fixed em width was too
+       narrow at the sidebar's ~13px base font). Content is text (ch/em), so it
+       still scales with the --font-scale text-size preference; capped to viewport. */
+    width: max-content;
     max-width: calc(100vw - 24px);
     padding: 8px 10px;
     background: var(--color-surface);
