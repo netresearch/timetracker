@@ -243,6 +243,19 @@
                 return;
             }
             laying = true;
+            // The left-sidebar layout is a vertical column — the horizontal
+            // priority-overflow must NOT run there. Its width check ("does the
+            // content exceed the column width?") is always true for a narrow
+            // column, which would fold the nav links into "More" and collapse the
+            // worktime badges (making the nav appear to vanish). Restore
+            // everything to its natural place and bail.
+            if (document.documentElement.getAttribute('data-nav-layout') === 'side') {
+                restore();
+                moreWrap.hidden = true;
+                laying = false;
+
+                return;
+            }
             // The "More" button may be hidden below; if it currently holds focus,
             // we must hand focus back to the bar so it isn't lost to <body>.
             var moreHadFocus = moreWrap.contains(document.activeElement);
