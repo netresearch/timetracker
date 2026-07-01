@@ -1,6 +1,6 @@
-{# Shared page header + main navigation.
-   Rendered identically by the ExtJS shell (index.html.twig, adopted into the
-   viewport north region via contentEl) and the SolidJS shell (ui/index.html.twig).
+{# Page header + main navigation for the SolidJS /ui shell
+   (ui/index.html.twig). Server-rendered so the chrome paints before the
+   Vite bundle loads; frontend/src/header.ts and nav.ts hydrate it.
    Required context: globalConfig, settings, apptitle, active.
    `active` marks the current item server-side; SPA routes refine it client-side
    (frontend/src/nav.ts). settings.roles gates the role-restricted items.
@@ -9,9 +9,8 @@
    sit inline; secondary + role-gated items (Extras, Billing, Administration) plus
    Settings and Help fold into a "More" disclosure menu. Worktime badges, a
    single-button theme cycle and the user/logout cluster follow. Below 600px the
-   nav collapses behind a hamburger drawer. Behaviour is wired framework-neutrally
-   by partials/header-behavior.html.twig (menu/drawer) and theme-init.html.twig
-   (theme cycle), so it works on BOTH shells. #}
+   nav collapses behind a hamburger drawer. Menu/drawer behaviour is wired by
+   partials/header-behavior.html.twig, the theme cycle by theme-init.html.twig. #}
 {% set isAdmin = 'ROLE_ADMIN' in settings.roles %}
 {% set canBill = isAdmin or 'ROLE_PL' in settings.roles %}
 {# Each worktime badge deep-links to the Overview pre-scoped to that period.
@@ -115,7 +114,7 @@
             </div>
         </section>
 
-        {# Theme cycle — framework-neutral; wired by partials/theme-init.html.twig.
+        {# Theme cycle — wired by partials/theme-init.html.twig.
            One button cycling System → Light → Dark; JS shows the current mode's
            icon and keeps an accessible name in sync. #}
         {# Settings, Help, theme and density grouped so the left-sidebar layout can
@@ -139,7 +138,7 @@
             </button>
         </div>
 
-        {# Display-density cycle — framework-neutral; wired by partials/density-init.html.twig.
+        {# Display-density cycle — wired by partials/density-init.html.twig.
            One button cycling Comfortable → Compact → Ultra-compact; JS shows the
            current mode's icon and keeps an accessible name in sync. #}
         <div class="header-theme">

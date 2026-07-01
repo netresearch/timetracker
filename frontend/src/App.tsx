@@ -32,7 +32,7 @@ const queryClient = new QueryClient({
 })
 
 // The page chrome (header + main nav) is server-rendered by
-// templates/partials/header.html.twig, shared with the ExtJS shell;
+// templates/partials/header.html.twig so it paints before this bundle loads;
 // this layout animates it, syncs the active nav item, and hosts the route.
 // Route segment → page title. Drives the single <h1>, the #main-content
 // accessible name, the screen-reader route announcement, and document.title —

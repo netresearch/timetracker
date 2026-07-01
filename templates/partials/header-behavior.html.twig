@@ -1,13 +1,12 @@
-{# Framework-neutral header interactivity shared by BOTH shells (ExtJS and the
-   SolidJS /ui shell):
+{# Header interactivity for the server-rendered chrome (header.html.twig):
      - a priority-overflow nav: all nav items start in the bar; as the viewport
        narrows, items fold (from the end) into a "More" menu and the Today/Week
        (then Month) badges collapse, so the theme/user/logout cluster is never
        clipped. "More" is hidden whenever nothing has overflowed.
      - the "More" disclosure (hover- and click/keyboard-operable) and the mobile
        hamburger drawer.
-   Theme cycling lives in theme-init.html.twig. Idempotent — guarded so
-   re-includes (or a shell that renders the header twice) wire handlers once. #}
+   Theme cycling lives in theme-init.html.twig. Idempotent — guarded so an
+   accidental re-include wires handlers only once. #}
 <script>
 (function () {
     if (window.__ttHeaderBehaviorWired) {
@@ -54,8 +53,8 @@
         }
         function setBackgroundInert(on) {
             // Make the page content behind the open drawer inert (non-focusable,
-            // hidden from AT). #main-content exists only on the SolidJS shell;
-            // no-op elsewhere. The drawer's own Tab trap (below) covers the rest.
+            // hidden from AT). #main-content is the SPA main region (App.tsx);
+            // no-op before Solid mounts. The drawer's own Tab trap covers the rest.
             var bg = document.getElementById('main-content');
             if (bg !== null) {
                 bg.inert = on;

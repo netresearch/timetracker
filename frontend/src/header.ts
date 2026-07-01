@@ -1,6 +1,6 @@
-// Dynamics for the shared, server-rendered page header
+// Dynamics for the server-rendered page header
 // (templates/partials/header.html.twig): worktime sums and login-status
-// polling against the same element IDs the ExtJS shell uses.
+// polling against the header's element IDs.
 import { getJson } from './api/client'
 import type { AppConfig } from './config'
 import { setPaletteOpen } from './lib/commandPalette'

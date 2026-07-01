@@ -1,5 +1,5 @@
-// The main nav lives in the server-rendered shared header
-// (templates/partials/header.html.twig) and is identical on both shells.
+// The main nav lives in the server-rendered header
+// (templates/partials/header.html.twig).
 // Within the SPA, client-side routing changes the active item without a page
 // load, so we sync the `is-active`/`aria-current` state by the route's first
 // path segment against the links' data-nav attribute.

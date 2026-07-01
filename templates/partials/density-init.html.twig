@@ -1,10 +1,10 @@
-{# Framework-neutral display-density control shared by BOTH shells (ExtJS + the
-   SolidJS /ui shell). Applies the saved preference before first paint (no flash)
-   and wires the single-button density cycle rendered in the shared header.
+{# Display-density control, shared by the SolidJS /ui shell. Applies the saved
+   preference before first paint (no flash) and wires the single-button density
+   cycle rendered in the header (partials/header.html.twig).
    Comfort (default) keeps the roomy spacing; Compact tightens padding and uses
    the full width; Ultra-compact tightens further and hides ambient help text and
    legends for a maximum-density view — all stay within WCAG 2.2 AA target sizes.
-   Single source of truth; neither shell needs framework-specific density code. #}
+   Single source of truth — the Solid app ships no density code. #}
 <script>
 (function () {
     var KEY = 'timetracker-density';
