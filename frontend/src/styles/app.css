@@ -2526,6 +2526,11 @@ th[aria-sort='descending'] .th-sort-glyph {
   padding: 0; /* keep the icon-only button square (beats the .primary-button padding above) */
 }
 
+/* Match the day-range toggle's width to its shrunk height so it stays square. */
+:root[data-density='compact'] .days-combo-toggle {
+  width: 30px;
+}
+
 /* ── Ultra-compact — even tighter than Compact, plus a compacted header and no
    ambient helper UI. Shares Compact's full-width + structural rules above; this
    block only goes further. Interactive targets clamp at 26px (≥24px AA). */
@@ -2571,6 +2576,10 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='ultra-compact'] .primary-button.is-icon {
   min-width: 26px;
   padding: 0; /* keep the icon-only button square (beats the .primary-button padding above) */
+}
+
+:root[data-density='ultra-compact'] .days-combo-toggle {
+  width: 26px;
 }
 
 /* Header compaction — overrides the static header.css defaults (loaded first).
