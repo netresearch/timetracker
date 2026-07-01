@@ -1192,50 +1192,55 @@ kbd {
   container-type: inline-size;
 }
 
-/* ── Responsive worklog table ─────────────────────────────────────────────────
-   As the available width shrinks, thin the table out (instead of scrolling) in
-   this priority order: Date YYYY-MM-DD → MM-DD → DD; hide an empty Ext. Ticket
-   column; hide Actions; hide Duration; then shrink Project + Description. All
-   rules are scoped to .tracking-table so the shared admin/summary tables (same
-   .table-scroll container, same data-col-key attributes) are untouched. */
-.tracking-table .dt-mid,
-.tracking-table .dt-short {
-  display: none;
+/* ── Responsive worklog table — progressive, overflow-driven ──────────────────
+   Cells never wrap; a ResizeObserver in Tracking.tsx (fitTrackingTable) raises
+   .is-thin-N on the table the instant it would overflow its .table-scroll
+   container, so it thins BEFORE any content wraps — and keeps raising the level
+   until it fits. Priority order sheds the flexible free-text first and the
+   functional Actions column last: shorten Date → truncate Description → truncate
+   Project/Customer chips → truncate Description harder → shorten Date again →
+   truncate Description harder → hide empty Ext.Ticket → truncate Ticket →
+   truncate Description to the floor → hide Duration → truncate the chips to the
+   floor → hide Actions → hide Activity. Description (the widest, most elastic
+   column) absorbs most of the reduction, so a desktop keeps Actions and never
+   over-thins; Actions only drops on a genuinely cramped viewport.
+   Real ellipsis needs an inner box (.cell-trunc / .tag-label / .ticket-link) —
+   a bare <td> in an auto-layout table can't ellipsis. Horizontal scroll is the
+   final safety net AND the no-JS fallback. Scoped to .tracking-table so the
+   shared admin/summary tables are untouched. */
+.tracking-table td, .tracking-table th { white-space: nowrap; }
+.tracking-table .dt-mid, .tracking-table .dt-short { display: none; }
+.tracking-table .cell-trunc,
+.tracking-table [data-col-key='project'] .tag-label,
+.tracking-table [data-col-key='customer'] .tag-label,
+.tracking-table [data-col-key='activity'] .tag-label,
+.tracking-table .ticket-link {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
 }
 
-@container (max-width: 1040px) {
-  .tracking-table .dt-full { display: none; }
-  .tracking-table .dt-mid { display: inline; }
-}
-
-@container (max-width: 920px) {
-  .tracking-table .dt-mid { display: none; }
-  .tracking-table .dt-short { display: inline; }
-}
-
-@container (max-width: 860px) {
-  .tracking-table.no-extticket [data-col-key='extTicket'] { display: none; }
-}
-
-@container (max-width: 780px) {
-  .tracking-table [data-col-key='actions'] { display: none; }
-}
-
-@container (max-width: 680px) {
-  .tracking-table [data-col-key='duration'] { display: none; }
-}
-
-@container (max-width: 580px) {
-  /* Auto-layout tables don't honour ellipsis on a <td>, so cap the width and let
-     the text wrap (em scales with the text-size preference) — this shrinks the
-     two widest free-text columns rather than truncating unreliably. */
-  .tracking-table [data-col-key='project'],
-  .tracking-table [data-col-key='description'] {
-    max-width: 10em;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-}
+.tracking-table.is-thin-1 .dt-full { display: none; }
+.tracking-table.is-thin-1 .dt-mid { display: inline; }
+.tracking-table.is-thin-2 [data-col-key='description'] .cell-trunc { max-width: 30ch; }
+.tracking-table.is-thin-3 [data-col-key='description'] .cell-trunc { max-width: 22ch; }
+.tracking-table.is-thin-4 [data-col-key='project'] .tag-label { max-width: 18ch; }
+.tracking-table.is-thin-4 [data-col-key='customer'] .tag-label { max-width: 15ch; }
+.tracking-table.is-thin-5 [data-col-key='description'] .cell-trunc { max-width: 16ch; }
+.tracking-table.is-thin-6 .dt-mid { display: none; }
+.tracking-table.is-thin-6 .dt-short { display: inline; }
+.tracking-table.is-thin-7 [data-col-key='description'] .cell-trunc { max-width: 12ch; }
+.tracking-table.is-thin-8.no-extticket [data-col-key='extTicket'] { display: none; }
+.tracking-table.is-thin-9 [data-col-key='ticket'] .ticket-link { max-width: 10ch; }
+.tracking-table.is-thin-10 [data-col-key='description'] .cell-trunc { max-width: 9ch; }
+.tracking-table.is-thin-11 [data-col-key='duration'] { display: none; }
+.tracking-table.is-thin-12 [data-col-key='project'] .tag-label { max-width: 10ch; }
+.tracking-table.is-thin-12 [data-col-key='customer'] .tag-label { max-width: 11ch; }
+.tracking-table.is-thin-12 [data-col-key='activity'] .tag-label { max-width: 12ch; }
+.tracking-table.is-thin-13 [data-col-key='actions'] { display: none; }
+.tracking-table.is-thin-14 [data-col-key='activity'] { display: none; }
 
 /* A long detail list scrolls inside its own box instead of stretching the page;
    the header stays pinned so the columns remain labelled while scrolling. */

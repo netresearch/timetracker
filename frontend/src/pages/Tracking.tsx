@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
-import { createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from 'solid-js'
+import { createEffect, createMemo, createSignal, For, on, onCleanup, onMount, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage, postForm, postJson, ValidationError } from '../api/client'
 import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, upsertSavedEntry, type NamedOption, type SavedEntryResult, type SummaryScope, type TrackingEntry } from '../api/queries'
@@ -9,6 +9,7 @@ import { num, str } from '../lib/coerce'
 import { formatUserDate } from '../lib/dateFormat'
 import { formatMinutes } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
+import { smallestFittingLevel } from '../lib/fitLevel'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { registerCommands } from '../lib/commandPalette'
@@ -262,9 +263,71 @@ export default function Tracking() {
   let tempId = -1
   // The grid element, captured in its ref — read for the keyboard-cursor row.
   let tableEl: HTMLTableElement | undefined
+  // The scroll container — the responsive controller measures overflow against
+  // it. A signal (not a plain ref) so the observer effect below re-binds when
+  // the <Show>-wrapped table unmounts and remounts (e.g. after a load error
+  // clears), rather than staying bound to a detached element.
+  const [scrollEl, setScrollEl] = createSignal<HTMLDivElement>()
   // The grid's move handle — used to restore cell focus after a row is deleted.
   let gridHandle: GridMoveHandle | null = null
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
+
+  // Progressive responsive thinning: raise .is-thin-N on the table (each level
+  // shortens the date / truncates a column / hides a low-value column, in
+  // priority order — see app.css) until the table no longer overflows its scroll
+  // container. Cells are nowrap, so this fires BEFORE anything wraps. Width is
+  // monotonic in the level, so a binary search finds the minimal fitting level
+  // in ~4 reflows instead of a ~14-step linear scan. Re-run on container resize
+  // AND on row/content changes.
+  const MAX_THIN = 14
+  function applyThinLevel(table: HTMLElement, level: number): void {
+    for (let i = 1; i <= MAX_THIN; i++) {
+      table.classList.toggle('is-thin-' + i, i <= level)
+    }
+  }
+  function fitTrackingTable(): void {
+    const scroll = scrollEl()
+    const table = tableEl
+    if (scroll === undefined || table === undefined) {
+      return
+    }
+    // clientWidth is stable across the search (thinning changes only the table's
+    // own width), so read it once — the per-probe reflow is driven by scrollWidth.
+    const clientWidth = scroll.clientWidth
+    const level = smallestFittingLevel(MAX_THIN, (candidate) => {
+      applyThinLevel(table, candidate)
+      return scroll.scrollWidth > clientWidth + 1
+    })
+    applyThinLevel(table, level)
+  }
+  // Manage the ResizeObserver reactively: it (re)binds whenever the scroll
+  // element becomes available and disconnects when it goes away or remounts.
+  createEffect(() => {
+    const scroll = scrollEl()
+    if (scroll === undefined) {
+      return
+    }
+    fitTrackingTable()
+    const observer = new ResizeObserver(() => fitTrackingTable())
+    observer.observe(scroll)
+    onCleanup(() => observer.disconnect())
+  })
+  // Row/content changes alter the table's natural width without resizing the
+  // container, so re-fit after they render (rAF defers past the DOM update).
+  // Chip labels resolve asynchronously from the option queries — reading them
+  // here re-fits once the IDs become (wider) names, so the table doesn't stay
+  // stuck at a level computed before the labels loaded. Cancelling the frame on
+  // cleanup collapses rapid successive updates into one fit and prevents a
+  // post-unmount run.
+  createEffect(
+    on(
+      [rows, () => customers.data, () => projects.data, () => activities.data],
+      () => {
+        const rafId = requestAnimationFrame(fitTrackingTable)
+        onCleanup(() => cancelAnimationFrame(rafId))
+      },
+    ),
+  )
   // The External-ticket column is read-only and often empty; when no visible row
   // has one it becomes a hide candidate for the responsive (narrow) table.
   const hasExtTicket = createMemo<boolean>(() => rows().some((row) => str(row.extTicket) !== ''))
@@ -536,7 +599,9 @@ export default function Tracking() {
       return <ReadonlyChips values={chipValues((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey])} options={fieldSelectOptions(field, readOptionLookup)} />
     }
 
-    return displayCell(entry, colKey)
+    // A truncation box so the responsive thinning can ellipsis free-text columns
+    // (Description) — a bare <td> in an auto-layout table can't do text-overflow.
+    return <span class="cell-trunc">{displayCell(entry, colKey)}</span>
   }
 
   // The entry of the row holding the keyboard cursor (gridNav marks it
@@ -924,7 +989,7 @@ export default function Tracking() {
           last-good grid (and the user's drafts) visible+dimmed behind it, not a
           jarring "load error". A genuine error (session OK) still shows the fallback. */}
       <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
-        <div class="table-scroll">
+        <div class="table-scroll" ref={setScrollEl}>
           <table
             class="data-table tracking-table"
             classList={{ 'is-fetching': entries.isFetching, 'no-extticket': !hasExtTicket() }}
