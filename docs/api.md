@@ -23,7 +23,7 @@ This document provides comprehensive reference documentation for all API endpoin
 The TimeTracker application provides RESTful endpoints organized by functional domains:
 
 - **Entry Tracking**: `/tracking/*` - Time entry operations
-- **Administration**: `/admin/*` - Resource management (PL users only)
+- **Resource Management**: `/customer/*`, `/project/*`, `/activity/*`, `/team/*`, `/user/*`, `/preset/*`, `/contract/*`, `/ticketsystem/*`, `/holiday/*` - CRUD operations (require `ROLE_ADMIN`)
 - **Data Access**: `/get*` - Data retrieval operations
 - **Interpretation**: `/interpretation/*` - Reporting and analysis
 - **Status**: `/status/*` - System health checks
@@ -44,18 +44,34 @@ The TimeTracker application provides RESTful endpoints organized by functional d
 ## Authentication & Authorization
 
 ### Authentication Methods
-- **Session-based**: Cookie authentication via Symfony Security
-- **LDAP Integration**: Automatic user creation on successful LDAP authentication
+- **Form login**: `POST /login` is handled by `App\Security\LdapAuthenticator` (custom authenticator on the `main` firewall). Credentials are validated against LDAP; on success a local `User` is created/updated (see `App\Security\UserChecker`, which refuses deactivated accounts).
+- **Session-based**: Cookie session after login, plus optional "remember me" (30-day lifetime).
+- **CSRF**: Stateless CSRF protection is enabled (`config/packages/framework.yaml` → `csrf_protection.stateless_token_ids: ['authenticate', 'logout']`). The login form submits `_csrf_token`, validated against the `authenticate` token id (`CsrfTokenBadge('authenticate', …)`); logout is likewise CSRF-protected via the `logout` token id.
+- **Impersonation**: `switch_user` is enabled via the `simulateUserId` parameter for users holding `ROLE_ALLOWED_TO_SWITCH`.
 
 ### Authorization Levels
-- **Authenticated User**: Access to own data and basic operations
-- **Project Leader (PL)**: Administrative access to resource management
-- **Developer (DEV)**: Special access permissions for development operations
+User types are defined in `App\Enum\UserType` (`USER`, `DEV`, `PL`, `ADMIN`; `UNKNOWN` for unconfigured) and mapped to Symfony roles in `UserType::getRoles()`:
+
+| User type | Roles granted |
+|-----------|---------------|
+| `USER`, `DEV` | `ROLE_USER` |
+| `PL` | `ROLE_USER`, `ROLE_PL`, `ROLE_ADMIN` (PL carries `ROLE_ADMIN` for v4 compatibility) |
+| `ADMIN` | `ROLE_USER`, `ROLE_ADMIN` |
+
+Resource-management endpoints are guarded with `#[IsGranted('ROLE_ADMIN')]`, so both `PL` and `ADMIN` users can reach them. Regular endpoints use `#[IsGranted('IS_AUTHENTICATED_FULLY')]` (or `ROLE_USER`).
 
 ### Protected Endpoints
-All endpoints require authentication except:
-- `POST /login` - Authentication endpoint
+Access control (`config/packages/security.yaml`) grants `PUBLIC_ACCESS` to:
+- `GET /login` / `POST /login` - Login form and authentication
+- `GET /logout` - Logout (CSRF-protected)
 - `GET /status/check` - Health check (returns login status)
+- `GET /status/page` - Status page
+- Static assets under `/css`, `/js`, `/images`
+
+Paths under `/admin` require `ROLE_ADMIN`; every other path requires `IS_AUTHENTICATED_FULLY`.
+
+### Interactive API Documentation
+A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracker API"), with a bundled Swagger UI under `public/docs/swagger/`. The spec is not auto-generated from the controllers, so treat this document and the route attributes in `src/Controller/**` as the source of truth if the two diverge.
 
 ---
 
@@ -170,9 +186,21 @@ All endpoints require authentication except:
 
 ---
 
+### GET /tracking/entry/{id}
+**Purpose**: Fetch a single time entry by ID
+
+**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
+
+**Parameters**:
+- `id`: Entry ID (numeric, `requirements: ['id' => '\d+']`)
+
+**Authorization**: Users may fetch their own entries; leads (`ROLE_ADMIN`, which `PL` carries) may fetch any entry, otherwise a `403 Forbidden` is returned.
+
+---
+
 ## Administrative APIs
 
-*Note: All administrative endpoints require Project Leader (PL) authorization.*
+*Note: All administrative endpoints are guarded with `#[IsGranted('ROLE_ADMIN')]`. Both `PL` and `ADMIN` user types carry `ROLE_ADMIN` (see [Authorization Levels](#authorization-levels)).*
 
 ### Customer Management
 
@@ -197,7 +225,7 @@ All endpoints require authentication except:
 #### POST /customer/save
 **Purpose**: Create or update customer
 
-**Authentication**: Required (PL only)
+**Authentication**: Required (`ROLE_ADMIN`)
 
 **Request Body** (CustomerSaveDto):
 ```json
@@ -333,10 +361,13 @@ All endpoints require authentication except:
   {
     "id": 1,
     "username": "john.doe",
-    "email": "john@example.com",
-    "type": "DEV",              // UserType: DEV, PL
+    "type": "DEV",              // UserType value: USER, DEV, PL, ADMIN
+    "abbr": "JDO",
+    "abbr_duplicate": false,
+    "locale": "en",
+    "teams": [1, 2],
     "active": true,
-    "teams": [1, 2]
+    "last_activity": "2026-07-01 09:12:00"
   }
 ]
 ```
@@ -348,12 +379,12 @@ All endpoints require authentication except:
 ```json
 {
   "id": 0,
-  "username": "new.user",      // Required, unique
-  "email": "new@example.com",  // Required, valid email
-  "type": "DEV",               // Required: DEV or PL
-  "active": true,              // Required
-  "teams": [1, 2],             // Team assignments
-  "showFuture": false          // Show future dates in UI
+  "username": "new.user",      // Required, min 3 chars, unique (UniqueUsername)
+  "abbr": "NUS",               // 3-letter abbreviation (ValidUserAbbr, UniqueUserAbbr)
+  "type": "DEV",               // One of: USER, DEV, PL, ADMIN
+  "locale": "en",              // Locale preference
+  "active": true,              // Active flag (default true)
+  "teams": [1, 2]              // Team assignments (at least one required)
 }
 ```
 
@@ -479,12 +510,40 @@ All endpoints require authentication except:
 #### POST /ticketsystem/delete
 **Purpose**: Delete ticket system
 
+### Holiday Management
+
+#### GET /getAllHolidays
+**Purpose**: Retrieve all configured holidays
+
+**Authentication**: Required (`ROLE_ADMIN`)
+
+#### POST /holiday/save
+**Purpose**: Create or update a holiday
+
+**Request Body** (HolidaySaveDto):
+```json
+{
+  "day": "2026-01-01",   // Required, valid date
+  "name": "New Year"      // Required
+}
+```
+
+#### POST /holiday/delete
+**Purpose**: Delete a holiday
+
+**Request Body** (HolidayDeleteDto):
+```json
+{
+  "day": "2026-01-01"    // Required, valid date
+}
+```
+
 ### Synchronization Operations
 
 #### GET /syncentries/jira
 **Purpose**: Synchronize time entries with Jira
 
-**Authentication**: Required (PL only)
+**Authentication**: Required (`ROLE_ADMIN`)
 
 **Response (200 OK)**:
 ```json
@@ -511,10 +570,12 @@ All endpoints require authentication except:
 
 ## Data Retrieval APIs
 
-### GET /getData
+### GET|POST /getData
 **Purpose**: Retrieve user's time entries for recent days or filtered data
 
-**Authentication**: Required
+**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
+
+**Methods**: `GET` and `POST` (route `_getData_attr` allows both)
 
 **Query Parameters**:
 - `days`: Number of recent days (default: 3)
@@ -601,33 +662,6 @@ All endpoints require authentication except:
 ### GET /getAllProjects
 **Purpose**: Retrieve all projects (admin view)
 
-### GET /getProjectStructure
-**Purpose**: Retrieve hierarchical customer/project structure
-
-**Response (200 OK)**:
-```json
-{
-  "customers": [
-    {
-      "id": 1,
-      "name": "Customer Name",
-      "projects": [
-        {
-          "id": 10,
-          "name": "Project Name",
-          "activities": [
-            {
-              "id": 2,
-              "name": "Development"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-
 ### GET /getActivities
 **Purpose**: Retrieve activities accessible to current user
 
@@ -644,7 +678,7 @@ All endpoints require authentication except:
 ```
 
 ### GET /getUsers
-**Purpose**: Retrieve users in current user's teams
+**Purpose**: Retrieve all users (username-sorted, current user moved to the top)
 
 **Response (200 OK)**:
 ```json
@@ -652,8 +686,9 @@ All endpoints require authentication except:
   {
     "id": 1,
     "username": "john.doe",
-    "email": "john@example.com",
-    "active": true
+    "type": "DEV",
+    "abbr": "JDO",
+    "locale": "en"
   }
 ]
 ```
@@ -674,10 +709,17 @@ All endpoints require authentication except:
 }
 ```
 
-### GET /getSummary
+### GET /getContractHours
+**Purpose**: Retrieve the current user's contract hours (used by the bulk entry "use contract hours" option)
+
+**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
+
+### POST /getSummary
 **Purpose**: Generate time summary report
 
-**Method**: POST (legacy endpoint)
+**Method**: `POST` only (route `_getSummary_attr`, `methods: ['POST']`)
+
+**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
 
 **Response (200 OK)**:
 ```json
@@ -755,12 +797,14 @@ string, for use by the Greasemonkey userscript
 
 ## Interpretation & Reporting APIs
 
-*Note: All interpretation endpoints require Project Leader (PL) authorization.*
+*Note: Interpretation endpoints require authentication, not a specific role. The `/interpretation/allEntries` action uses `#[IsGranted('ROLE_USER')]`; the group-by actions use `#[IsGranted('IS_AUTHENTICATED_FULLY')]`. Visibility is scoped in code: in the group-by actions (`BaseInterpretationController::getEntries`) `DEV` users only see their own entries, and `allEntries` restricts results for users who are neither `ROLE_ADMIN` nor `PL`.*
 
 ### POST /interpretation/allEntries
 **Purpose**: Retrieve paginated entries with filtering
 
-**Authentication**: Required (PL only)
+**Authentication**: Required (`ROLE_USER`; non-admin/non-PL users are limited to their own entries)
+
+**Note**: Despite the `POST` method, filters are read from the query string (`#[MapQueryString] InterpretationFiltersDto`).
 
 **Query Parameters** (InterpretationFiltersDto):
 - `page`: Page number (default: 1)
@@ -810,7 +854,7 @@ string, for use by the Greasemonkey userscript
 ### GET /interpretation/entries
 **Purpose**: Get recent entries for interpretation
 
-**Authentication**: Required (PL only)
+**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
 
 **Query Parameters**:
 - `limit`: Number of entries (default: 50)
@@ -831,7 +875,7 @@ string, for use by the Greasemonkey userscript
 ### GET /interpretation/user
 **Purpose**: Group entries by user
 
-**Authentication**: Required (PL only)
+**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
 
 **Query Parameters**: Same as allEntries
 
@@ -922,30 +966,34 @@ string, for use by the Greasemonkey userscript
 
 **Response (200 OK)**: HTML status page
 
+### GET /admin/status
+**Purpose**: Administrative system/health status
+
+**Authentication**: Required (`ROLE_ADMIN`)
+
 ---
 
 ## Configuration APIs
 
 ### POST /settings/save
-**Purpose**: Save user preferences
+**Purpose**: Save the current user's preferences
 
-**Authentication**: Required
+**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
 
-**Request Body**:
-```json
-{
-  "locale": "en",               // Language preference
-  "showFuture": false,          // Show future dates
-  "theme": "light",             // UI theme
-  "timeFormat": "24h",          // Time display format
-  "dateFormat": "Y-m-d"         // Date display format
-}
-```
+**Form Data** (`application/x-www-form-urlencoded`):
+- `show_empty_line`: Show an empty entry row (0/1)
+- `suggest_time`: Suggest start/end times (0/1)
+- `show_future`: Show future dates (0/1)
+- `min_entry_duration`: Minimum entry duration in minutes (default 5)
+- `locale`: Language preference (normalized by `LocalizationService`)
 
 **Response (200 OK)**:
 ```json
 {
-  "message": "Settings saved successfully"
+  "success": true,
+  "settings": { },              // User::getSettings() snapshot
+  "locale": "en",
+  "message": "The configuration has been successfully saved."
 }
 ```
 
@@ -970,7 +1018,7 @@ Date,Start,End,Duration,Customer,Project,Activity,Description,Ticket
 ### GET /controlling/export
 **Purpose**: Administrative export with advanced filtering
 
-**Authentication**: Required (PL only)
+**Authentication**: Required (`ROLE_ADMIN`)
 
 **Query Parameters** (ExportQueryDto):
 - `userid`: User ID filter (0 = all users)
@@ -979,8 +1027,11 @@ Date,Start,End,Duration,Customer,Project,Activity,Description,Ticket
 - `project`: Project ID filter
 - `customer`: Customer ID filter
 - `billable`: Billable filter (0/1)
+- `tickettitles`: Include ticket titles (0/1)
 
-**Response (200 OK)**: CSV file with administrative data
+**Response (200 OK)**: Excel/CSV file with administrative data
+
+*A positional legacy route also exists: `GET /controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}`.*
 
 ---
 
@@ -992,20 +1043,23 @@ Date,Start,End,Duration,Customer,Project,Activity,Description,Ticket
 **Response (200 OK)**: HTML login page
 
 ### POST /login
-**Purpose**: Authenticate user
+**Purpose**: Authenticate user (handled by `App\Security\LdapAuthenticator`)
 
 **Form Data**:
 - `_username`: Username
 - `_password`: Password
+- `_csrf_token`: Stateless CSRF token (validated against the `authenticate` token id)
 
 **Response**:
-- `302 Found`: Redirect to dashboard on success
+- `302 Found`: Redirect to the start page on success
 - `200 OK`: Login form with error message on failure
 
-### GET /logout
-**Purpose**: Logout current user
+*The `_login`/`_logout` routes are defined in `config/routes.yaml` (no `#[Route]` attribute on `SecurityController`).*
 
-**Response (302 Found)**: Redirect to login page
+### GET /logout
+**Purpose**: Logout current user (intercepted by the firewall's logout handler; CSRF-protected via the `logout` token id, session invalidated)
+
+**Response (302 Found)**: Redirect to `/login`
 
 ### GET /jiraoauthcallback
 **Purpose**: Handle Jira OAuth callback
