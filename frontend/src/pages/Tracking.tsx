@@ -440,6 +440,11 @@ export default function Tracking() {
 
   const editor = createInlineGridEdit({
     rows,
+    // Add/Continue rows carry a temporary negative id until they're first saved.
+    // A "Continue" row is pre-filled from another entry, so its draft equals its
+    // seed — mark it new so a complete one still saves instead of being dropped
+    // as a no-op (#495).
+    isNewRow: (entry) => num(entry.id) <= 0,
     fieldFor: (colKey) => FIELD_BY_KEY.get(colKey),
     isInlineEditable: (colKey) => {
       const field = FIELD_BY_KEY.get(colKey)

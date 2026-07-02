@@ -829,4 +829,49 @@ describe('Tracking (Worklog grid)', () => {
       window.APP_CONFIG!.minEntryDuration = 5
     }
   })
+
+  it('Continue saves the pre-filled entry on commit even though nothing was edited (#495)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      const now = new Date()
+      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+      // A saved entry from today ending 10:30 → Continue seeds start 10:30, end 10:45.
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      postJson.mockResolvedValue({})
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      // Continue → a new row pre-filled with the source's customer/project/activity/
+      // ticket, start inherited (10:30) and end = start + 15 (10:45). Its draft equals
+      // its seed (nothing edited) — the case that used to be dropped as a no-op.
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const startInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="start"] input')
+        if (el === null) throw new Error('start editor not open on the Continue row')
+
+        return el
+      })
+      expect(startInput.value).toBe('10:30')
+
+      // Commit the start cell with its seeded value unchanged — the draft still
+      // equals its seed (the #495 case), and the complete new row must SAVE.
+      fireEvent.input(startInput, { target: { value: '10:30' } })
+      fireEvent.keyDown(startInput, { key: 'Enter' })
+
+
+      await waitFor(() =>
+        expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({
+          customer: 1, project: 4, activity: 5, ticket: 'ABC-1', start: '10:30', end: '10:45',
+        })),
+      )
+      // A brand-new entry carries no id in the save payload.
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.not.objectContaining({ id: expect.anything() }))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
 })
