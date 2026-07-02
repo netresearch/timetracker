@@ -56,7 +56,7 @@ jobs:
         run: echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Build and push production image
-        uses: docker/bake-action@6614cfa25eff9a0b2b2697efb0b6159e7680d584 # v7.2.0
+        uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b # v7.3.0
         env:
           GIT_SHA: ${{ github.sha }}
           GIT_REF: ${{ github.ref_name }}
@@ -74,7 +74,7 @@ jobs:
             *.cache-to=type=gha,mode=max,ignore-error=true
 
       - name: Build and push E2E image
-        uses: docker/bake-action@6614cfa25eff9a0b2b2697efb0b6159e7680d584 # v7.2.0
+        uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b # v7.3.0
         env:
           GIT_SHA: ${{ github.sha }}
         with:
@@ -89,7 +89,7 @@ jobs:
       # Prod-like image with the Symfony profiler (admin-gated). Published for
       # operators to switch to on demand — never the default deployment.
       - name: Build and push profiling image
-        uses: docker/bake-action@6614cfa25eff9a0b2b2697efb0b6159e7680d584 # v7.2.0
+        uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b # v7.3.0
         env:
           GIT_SHA: ${{ github.sha }}
         with:
