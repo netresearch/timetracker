@@ -89,7 +89,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, abbr_duplicate: bool, locale:string, teams: array<int, int>, active: bool, last_activity: string|null}}>
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, abbr_duplicate: bool, locale:string, teams: array<int, int>, active: bool, is_local: bool, last_activity: string|null}}>
      */
     public function getAllUsers(): array
     {
@@ -140,6 +140,9 @@ class UserRepository extends ServiceEntityRepository
                 'locale' => $user->getLocale(),
                 'teams' => $teams,
                 'active' => $user->getActive(),
+                // Whether this account authenticates by local password (true) or
+                // LDAP (false). Never the hash itself — only the derived flag.
+                'is_local' => $user->isLocalAccount(),
                 'last_activity' => $lastActivity[(int) $user->getId()] ?? null,
             ]];
         }

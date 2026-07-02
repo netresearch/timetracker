@@ -36,6 +36,21 @@ final readonly class UserSaveDto
         public string $locale = '',
         public bool $active = true,
 
+        /**
+         * New local password. Empty means "no change". Excluded from the automatic
+         * DTO→entity mapping (#[Map(if: false)]): a mapped plain value would be
+         * persisted unhashed — it is hashed explicitly in SaveUserAction.
+         */
+        #[Map(if: false)]
+        public string $password = '',
+
+        /**
+         * When true, revert the account to LDAP (clear the local password hash).
+         * Excluded from mapping; handled explicitly in SaveUserAction.
+         */
+        #[Map(if: false)]
+        public bool $clearPassword = false,
+
         /** @var list<int|string> */
         #[Map(if: false)]
         public array $teams = [],
@@ -57,6 +72,8 @@ final readonly class UserSaveDto
             type: (string) ($request->request->get('type') ?? ''),
             locale: (string) ($request->request->get('locale') ?? ''),
             active: $request->request->getBoolean('active', true),
+            password: (string) ($request->request->get('password') ?? ''),
+            clearPassword: $request->request->getBoolean('clearPassword'),
             teams: array_values($teams),
         );
     }
@@ -67,6 +84,20 @@ final readonly class UserSaveDto
         if ([] === $this->teams) {
             $executionContext->buildViolation('Every user must belong to at least one team')
                 ->atPath('teams')
+                ->addViolation();
+        }
+    }
+
+    /**
+     * A set password must clear a minimal length floor (basic hygiene; complexity
+     * policy is out of scope — see ADR-018). Skipped when clearing or unchanged.
+     */
+    #[Assert\Callback]
+    public function validatePassword(ExecutionContextInterface $executionContext): void
+    {
+        if (!$this->clearPassword && '' !== $this->password && mb_strlen($this->password) < 8) {
+            $executionContext->buildViolation('Password must be at least 8 characters.')
+                ->atPath('password')
                 ->addViolation();
         }
     }

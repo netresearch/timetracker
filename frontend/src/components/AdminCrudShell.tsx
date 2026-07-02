@@ -928,6 +928,19 @@ function FieldControl(props: {
           />
         </label>
       </Match>
+      <Match when={props.field.type === 'password'}>
+        <label class="field">
+          <FieldLabel field={props.field} />
+          <input
+            type="password"
+            autocomplete="new-password"
+            required={props.field.required}
+            disabled={disabled()}
+            value={text()}
+            onInput={(e) => props.setField(props.field.name, e.currentTarget.value)}
+          />
+        </label>
+      </Match>
       <Match when={true}>
         <label class="field">
           <FieldLabel field={props.field} />

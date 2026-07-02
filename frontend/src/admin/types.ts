@@ -19,7 +19,7 @@ export interface ColumnDef {
   warn?: (row: Record<string, unknown>) => boolean
 }
 
-export type FieldType = 'text' | 'number' | 'checkbox' | 'date' | 'select' | 'multiselect' | 'textarea'
+export type FieldType = 'text' | 'password' | 'number' | 'checkbox' | 'date' | 'select' | 'multiselect' | 'textarea'
 
 export interface FieldDef {
   name: string
