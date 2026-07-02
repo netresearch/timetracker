@@ -743,6 +743,47 @@ main {
   margin: -0.4rem 0 0;
 }
 
+/* ---- Settings: grouped preference cards ---- */
+
+/* Settings stacks two labeled cards — account-saved vs this-device — so the
+   different save semantics are visible in the page structure itself. */
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+/* Semantic grouping (fieldset + legend) without the fieldset chrome — the
+   surrounding card (.stack-form) draws the frame. min-width unsticks the
+   fieldset's min-content default so fields can shrink with the card. */
+.settings-group {
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+/* Section title, rendered by the fieldset's legend. The legend sits outside
+   the flex flow, so it spaces itself with a margin instead of the gap. */
+.settings-group > legend {
+  font-family: var(--font-display);
+  font-size: 1.15em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.3em;
+  padding: 0;
+}
+
+/* One-line answer to "when do these settings apply?", under the title. */
+.settings-section-hint {
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+  margin: 0;
+}
+
 .form-actions {
   align-items: center;
   display: flex;
@@ -2635,6 +2676,7 @@ th[aria-sort='descending'] .th-sort-glyph {
    The on-demand Help page and the keyboard-shortcuts dialog are unaffected. */
 :root[data-density='ultra-compact'] .tracking-hint,
 :root[data-density='ultra-compact'] .field-hint,
+:root[data-density='ultra-compact'] .settings-section-hint,
 :root[data-density='ultra-compact'] .field-help,
 :root[data-density='ultra-compact'] .admin-intro,
 :root[data-density='ultra-compact'] .tracking-legend {

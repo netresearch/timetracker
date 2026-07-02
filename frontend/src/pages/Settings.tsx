@@ -129,139 +129,43 @@ export default function Settings() {
   }
 
   return (
-    <section class="form-page">
+    <section class="form-page settings-page">
+      {/* Account settings — persisted server-side, applied on every device.
+          Only this card has (and needs) the Save button. */}
       <form class="stack-form" onSubmit={(event) => void onSubmit(event)}>
-        <label class="field">
-          <span>{m.settings_language()}</span>
-          <select name="locale">
-            <For each={LANGUAGES}>
-              {(lang) => (
-                <option value={lang.value} selected={lang.value === config.locale}>
-                  {lang.label}
-                </option>
-              )}
-            </For>
-          </select>
-        </label>
+        <fieldset class="settings-group">
+          <legend>{m.settings_section_account()}</legend>
+          <p class="settings-section-hint">{m.settings_section_account_hint()}</p>
 
-        <For each={BOOL_SETTINGS}>
-          {(setting) => (
-            <label class="field-check">
-              <input type="checkbox" name={setting.name} checked={setting.initial(config)} />
-              <span>{setting.label()}</span>
-            </label>
-          )}
-        </For>
+          <label class="field">
+            <span>{m.settings_language()}</span>
+            <select name="locale" value={config.locale}>
+              <For each={LANGUAGES}>
+                {(lang) => (
+                  <option value={lang.value}>
+                    {lang.label}
+                  </option>
+                )}
+              </For>
+            </select>
+          </label>
 
-        {/* Server setting: a new entry's end pre-fills to start + this many minutes. */}
-        <label class="field">
-          <span>{m.settings_min_entry_duration()}</span>
-          <input type="number" name="min_entry_duration" min="0" max="1440" step="5" value={config.minEntryDuration} />
-          <small class="field-hint">{m.settings_min_entry_duration_hint()}</small>
-        </label>
+          <For each={BOOL_SETTINGS}>
+            {(setting) => (
+              <label class="field-check">
+                <input type="checkbox" name={setting.name} checked={setting.initial(config)} />
+                <span>{setting.label()}</span>
+              </label>
+            )}
+          </For>
 
-        {/* Client-side UI preference — applies instantly, not part of the Save. */}
-        <label class="field">
-          <span>{m.settings_grid_enter()}</span>
-          <select
-            value={enterPref()}
-            onChange={(event) => {
-              const next = event.currentTarget.value as EnterBehavior
-              setEnterPref(next)
-              setEnterBehavior(next)
-            }}
-          >
-            <For each={ENTER_BEHAVIORS}>
-              {(option) => <option value={option.value}>{option.label()}</option>}
-            </For>
-          </select>
-          <small class="field-hint">{m.settings_grid_enter_hint()}</small>
-        </label>
-
-        {/* Client-side UI preference — applies instantly, not part of the Save.
-            Display-only: the wire format and the inline date editor stay ISO. */}
-        <label class="field">
-          <span>{m.settings_dateformat()}</span>
-          <select
-            value={dfMode()}
-            onChange={(event) => { setDfMode(event.currentTarget.value as DateFormatMode); commitDateFormat() }}
-          >
-            <For each={DATE_MODES}>
-              {(option) => <option value={option.value}>{option.label()}</option>}
-            </For>
-          </select>
-          <Show when={dfMode() === 'custom'}>
-            <input
-              type="text"
-              name="date_pattern"
-              maxLength={32}
-              value={dfPattern()}
-              aria-label={m.settings_dateformat_pattern()}
-              aria-invalid={dfInvalid() ? 'true' : undefined}
-              onInput={(event) => { setDfPattern(event.currentTarget.value); commitDateFormat() }}
-            />
-            <small class="field-hint">{m.settings_dateformat_pattern_hint()}</small>
-          </Show>
-          <small class="field-hint" aria-live="polite">
-            <Show when={!dfInvalid()} fallback={m.settings_dateformat_invalid()}>
-              {m.settings_dateformat_preview()}: {dfPreview()}
-            </Show>
-          </small>
-        </label>
-
-        {/* Client-side typography preferences — apply instantly (ADR-014), not
-            part of the Save. Headings keep the brand display face. */}
-        <label class="field">
-          <span>{m.settings_font()}</span>
-          <select
-            value={fontFamily()}
-            onChange={(event) => {
-              const next = event.currentTarget.value as FontFamily
-              setFontFamilySig(next)
-              setFontFamily(next)
-            }}
-          >
-            <For each={FONT_FAMILIES}>
-              {(option) => <option value={option.value}>{option.label()}</option>}
-            </For>
-          </select>
-          <small class="field-hint">{m.settings_font_hint()}</small>
-        </label>
-
-        <label class="field">
-          <span>{m.settings_fontsize()}</span>
-          <select
-            value={fontSize()}
-            onChange={(event) => {
-              const next = event.currentTarget.value as FontSize
-              setFontSizeSig(next)
-              setFontSize(next)
-            }}
-          >
-            <For each={FONT_SIZES}>
-              {(option) => <option value={option.value}>{option.label()}</option>}
-            </For>
-          </select>
-        </label>
-
-        {/* Client-side UI preference — applies instantly (no reload), not part of
-            the Save. Switches the header between the top bar and a left sidebar. */}
-        <label class="field">
-          <span>{m.settings_layout()}</span>
-          <select
-            value={navLayout()}
-            onChange={(event) => {
-              const next = event.currentTarget.value as NavLayout
-              setNavLayoutSig(next)
-              setNavLayout(next)
-            }}
-          >
-            <For each={NAV_LAYOUTS}>
-              {(option) => <option value={option.value}>{option.label()}</option>}
-            </For>
-          </select>
-          <small class="field-hint">{m.settings_layout_hint()}</small>
-        </label>
+          {/* Server setting: a new entry's end pre-fills to start + this many minutes. */}
+          <label class="field">
+            <span>{m.settings_min_entry_duration()}</span>
+            <input type="number" name="min_entry_duration" min="0" max="1440" step="5" value={config.minEntryDuration} />
+            <small class="field-hint">{m.settings_min_entry_duration_hint()}</small>
+          </label>
+        </fieldset>
 
         <div class="form-actions">
           <button type="submit" class="primary-button" disabled={status().kind === 'saving'}>
@@ -275,6 +179,118 @@ export default function Settings() {
           </Show>
         </div>
       </form>
+
+      {/* Device-local UI preferences — localStorage only, apply instantly.
+          Deliberately OUTSIDE the save form: nothing here is submitted. The
+          wrapper is a div (not a sectioning element): the accessible group
+          name comes from the fieldset's legend. */}
+      <div class="stack-form">
+        <fieldset class="settings-group">
+          <legend>{m.settings_section_device()}</legend>
+          <p class="settings-section-hint">{m.settings_section_device_hint()}</p>
+
+          <label class="field">
+            <span>{m.settings_grid_enter()}</span>
+            <select
+              value={enterPref()}
+              onChange={(event) => {
+                const next = event.currentTarget.value as EnterBehavior
+                setEnterPref(next)
+                setEnterBehavior(next)
+              }}
+            >
+              <For each={ENTER_BEHAVIORS}>
+                {(option) => <option value={option.value}>{option.label()}</option>}
+              </For>
+            </select>
+            <small class="field-hint">{m.settings_grid_enter_hint()}</small>
+          </label>
+
+          {/* Display-only: the wire format and the inline date editor stay ISO. */}
+          <label class="field">
+            <span>{m.settings_dateformat()}</span>
+            <select
+              value={dfMode()}
+              onChange={(event) => { setDfMode(event.currentTarget.value as DateFormatMode); commitDateFormat() }}
+            >
+              <For each={DATE_MODES}>
+                {(option) => <option value={option.value}>{option.label()}</option>}
+              </For>
+            </select>
+            <Show when={dfMode() === 'custom'}>
+              <input
+                type="text"
+                name="date_pattern"
+                maxLength={32}
+                value={dfPattern()}
+                aria-label={m.settings_dateformat_pattern()}
+                aria-invalid={dfInvalid() ? 'true' : undefined}
+                onInput={(event) => { setDfPattern(event.currentTarget.value); commitDateFormat() }}
+              />
+              <small class="field-hint">{m.settings_dateformat_pattern_hint()}</small>
+            </Show>
+            <small class="field-hint" aria-live="polite">
+              <Show when={!dfInvalid()} fallback={m.settings_dateformat_invalid()}>
+                {m.settings_dateformat_preview()}: {dfPreview()}
+              </Show>
+            </small>
+          </label>
+
+          {/* Typography preferences apply instantly to <html> (ADR-014).
+              Headings keep the brand display face. */}
+          <label class="field">
+            <span>{m.settings_font()}</span>
+            <select
+              value={fontFamily()}
+              onChange={(event) => {
+                const next = event.currentTarget.value as FontFamily
+                setFontFamilySig(next)
+                setFontFamily(next)
+              }}
+            >
+              <For each={FONT_FAMILIES}>
+                {(option) => <option value={option.value}>{option.label()}</option>}
+              </For>
+            </select>
+            <small class="field-hint">{m.settings_font_hint()}</small>
+          </label>
+
+          <label class="field">
+            <span>{m.settings_fontsize()}</span>
+            <select
+              value={fontSize()}
+              onChange={(event) => {
+                const next = event.currentTarget.value as FontSize
+                setFontSizeSig(next)
+                setFontSize(next)
+              }}
+            >
+              <For each={FONT_SIZES}>
+                {(option) => <option value={option.value}>{option.label()}</option>}
+              </For>
+            </select>
+          </label>
+
+          {/* Switches the header between the top bar and a left/right sidebar
+              without a reload. */}
+          <label class="field">
+            <span>{m.settings_layout()}</span>
+            <select
+              value={navLayout()}
+              onChange={(event) => {
+                const next = event.currentTarget.value as NavLayout
+                setNavLayoutSig(next)
+                setNavLayout(next)
+              }}
+            >
+              <For each={NAV_LAYOUTS}>
+                {(option) => <option value={option.value}>{option.label()}</option>}
+              </For>
+            </select>
+            <small class="field-hint">{m.settings_layout_hint()}</small>
+          </label>
+        </fieldset>
+      </div>
     </section>
   )
 }
