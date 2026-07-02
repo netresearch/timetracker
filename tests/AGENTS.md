@@ -25,7 +25,7 @@ Uses the Symfony test framework.
 
 ## Code style & conventions
 
-- Follow PSR-12 coding standard
+- Follow PER-CS + Symfony coding style (enforced by PHP-CS-Fixer)
 - Test classes: `*Test.php` suffix, extend appropriate base class
 - Test methods: `test*` prefix or `#[Test]` attribute
 - One assertion focus per test method

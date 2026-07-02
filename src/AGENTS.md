@@ -17,7 +17,7 @@ Uses Doctrine ORM 3, Twig templating, and PSR-12 coding standards.
 
 ## Build & tests (prefer file-scoped)
 
-- Typecheck a file: `bin/phpstan analyze src/Path/To/File.php --level=9`
+- Typecheck a file: `bin/phpstan analyze src/Path/To/File.php` (level 10 via phpstan.neon)
 - Format a file: `bin/php-cs-fixer fix src/Path/To/File.php`
 - Lint a file: `php -l src/Path/To/File.php`
 - Test a file: `bin/phpunit tests/Path/To/FileTest.php`
@@ -25,7 +25,7 @@ Uses Doctrine ORM 3, Twig templating, and PSR-12 coding standards.
 
 ## Code style & conventions
 
-- Follow PSR-12 coding standard
+- Follow PER-CS + Symfony coding style (enforced by PHP-CS-Fixer, see `.php-cs-fixer.dist.php`)
 - Use strict types: `declare(strict_types=1);`
 - Type hints: always use for parameters and return types
 - Naming: `camelCase` for methods, `PascalCase` for classes
@@ -53,8 +53,8 @@ Uses Doctrine ORM 3, Twig templating, and PSR-12 coding standards.
 ## PR/commit checklist
 
 - [ ] Tests pass: `composer test`
-- [ ] PHPStan Level 9 clean: `composer analyze`
-- [ ] PSR-12 compliant: `composer cs-check`
+- [ ] PHPStan level 10 clean: `composer analyze`
+- [ ] Code style clean (PER-CS + Symfony): `composer cs-check`
 - [ ] No deprecated functions used
 - [ ] Public methods have PHPDoc
 - [ ] Security: inputs validated, outputs escaped

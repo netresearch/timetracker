@@ -10,12 +10,12 @@ This file explains repo-wide conventions and where to find scoped rules.
 - Keep diffs small; add tests for new code paths
 - Ask first before: adding heavy deps, running full e2e suites, or repo-wide rewrites
 - Never commit secrets or sensitive data to the repository
-- PHP: PSR-12, strict types, typed parameters/returns
+- PHP: PER-CS + Symfony style (PHP-CS-Fixer), strict types, typed parameters/returns
 - Run commands via Docker Compose (`docker compose --profile dev exec app-dev ...`)
 
 ## Minimal pre-commit checks
 
-- Typecheck: `composer analyze` (PHPStan level 9)
+- Typecheck: `composer analyze` (PHPStan level 10)
 - Lint/format: `composer cs-check` / `composer cs-fix`
 - Tests: `composer test`
 
@@ -25,6 +25,8 @@ This file explains repo-wide conventions and where to find scoped rules.
 |------|---------|
 | [`src/AGENTS.md`](src/AGENTS.md) | PHP backend code patterns, Symfony conventions |
 | [`tests/AGENTS.md`](tests/AGENTS.md) | Testing patterns, PHPUnit, test database setup |
+| [`frontend/AGENTS.md`](frontend/AGENTS.md) | SolidJS SPA: bun commands, Solid 1.9 conventions, i18n, a11y |
+| [`e2e/AGENTS.md`](e2e/AGENTS.md) | Playwright e2e suite: stack, test users, frozen clock |
 
 ## When instructions conflict
 
