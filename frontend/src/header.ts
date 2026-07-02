@@ -273,7 +273,7 @@ let shortcutsWired = false
 /**
  * Keyboard shortcuts for the SolidJS shell (documented on the Help page):
  * Alt+1–7 switches to the n-th nav item, and `?` opens Help. The grid-specific
- * shortcuts (Alt+A/C/D/…) still live in the ExtJS tracking shell. Clicking the
+ * shortcuts (Alt+C/I/P/…) live in Tracking.onGridShortcut. Clicking the
  * nav link reuses the router's anchor interception and the role gating.
  */
 export function handleShortcut(event: KeyboardEvent): void {
@@ -372,7 +372,7 @@ export function handleShortcut(event: KeyboardEvent): void {
     // "More" overflow as a WAI-ARIA menu button: ArrowDown/ArrowUp on the button
     // opens the disclosure and moves focus to the first/last item (rather than the
     // bar item's usual "descend into page content"). Escape closes and returns to
-    // the button — handled framework-neutrally in header-behavior.html.twig.
+    // the button — handled in header-behavior.html.twig.
     if (active instanceof HTMLElement && active.matches('.nav-more-btn')
       && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
       event.preventDefault()

@@ -179,7 +179,7 @@ function RowAction(props: { label: string; danger?: boolean; keyshortcut?: strin
 }
 
 /**
- * The SolidJS work-log grid (/ui/tracking), running alongside the legacy ExtJS
+ * The SolidJS work-log grid (/ui/tracking), successor of the removed ExtJS
  * grid. Inline cell editing reuses the shared inline-grid controller; start/end
  * accept terse times (930, 9:30a) parsed to H:i; saving a row POSTs the whole
  * entry to /tracking/save and refetches (the server recomputes duration + the

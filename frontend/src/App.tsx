@@ -87,9 +87,9 @@ function PageDialog(props: { title: string; onClose: () => void; children: JSX.E
 function Layout(props: ParentProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  // Theming (apply + toggle) is handled framework-neutrally by the shared
-  // header (templates/partials/theme-init.html.twig), so it works on both the
-  // ExtJS and SolidJS shells and the SPA needs no theme code of its own.
+  // Theming (apply + toggle) is handled by the server-rendered header
+  // (templates/partials/theme-init.html.twig) so it applies before this
+  // bundle loads — the SPA needs no theme code of its own.
   let mainRef: HTMLElement | undefined
   let liveRef: HTMLElement | undefined
   let initialRoute = true
