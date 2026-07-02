@@ -770,17 +770,17 @@ main {
    the flex flow, so it spaces itself with a margin instead of the gap. */
 .settings-group > legend {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.15em;
   font-weight: 600;
   letter-spacing: -0.01em;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.3em;
   padding: 0;
 }
 
 /* One-line answer to "when do these settings apply?", under the title. */
 .settings-section-hint {
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.85em;
   margin: 0;
 }
 

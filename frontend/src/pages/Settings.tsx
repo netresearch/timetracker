@@ -139,10 +139,10 @@ export default function Settings() {
 
           <label class="field">
             <span>{m.settings_language()}</span>
-            <select name="locale">
+            <select name="locale" value={config.locale}>
               <For each={LANGUAGES}>
                 {(lang) => (
-                  <option value={lang.value} selected={lang.value === config.locale}>
+                  <option value={lang.value}>
                     {lang.label}
                   </option>
                 )}
@@ -181,8 +181,10 @@ export default function Settings() {
       </form>
 
       {/* Device-local UI preferences — localStorage only, apply instantly.
-          Deliberately OUTSIDE the save form: nothing here is submitted. */}
-      <section class="stack-form">
+          Deliberately OUTSIDE the save form: nothing here is submitted. The
+          wrapper is a div (not a sectioning element): the accessible group
+          name comes from the fieldset's legend. */}
+      <div class="stack-form">
         <fieldset class="settings-group">
           <legend>{m.settings_section_device()}</legend>
           <p class="settings-section-hint">{m.settings_section_device_hint()}</p>
@@ -288,7 +290,7 @@ export default function Settings() {
             <small class="field-hint">{m.settings_layout_hint()}</small>
           </label>
         </fieldset>
-      </section>
+      </div>
     </section>
   )
 }
