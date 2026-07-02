@@ -197,9 +197,10 @@ export function adminEntities(): EntityDescriptor[] {
         {
           name: 'type', label: () => m.admin_f_type(), type: 'select', stringValue: true, help: () => m.admin_help_user_type(),
           staticOptions: [
+            { value: 'USER', label: () => m.admin_type_user() },
             { value: 'DEV', label: () => m.admin_type_dev() },
             { value: 'PL', label: () => m.admin_type_pl() },
-            { value: 'CTL', label: () => m.admin_type_ctl() },
+            { value: 'ADMIN', label: () => m.admin_type_admin() },
           ],
         },
         { name: 'teams', label: () => m.admin_f_teams(), type: 'multiselect', source: 'teams', required: true },
