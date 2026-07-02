@@ -31,6 +31,10 @@ variable "XDEBUG_VERSION" {
   default = "3.5.3"
 }
 
+variable "APCU_VERSION" {
+  default = "5.1.28"
+}
+
 
 # =============================================================================
 # IMAGE METADATA
@@ -77,6 +81,7 @@ target "_common" {
     NODE_VERSION   = NODE_VERSION
     COMPOSER_IMAGE = COMPOSER_IMAGE
     XDEBUG_VERSION = XDEBUG_VERSION
+    APCU_VERSION   = APCU_VERSION
   }
 }
 

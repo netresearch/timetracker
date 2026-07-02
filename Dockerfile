@@ -55,21 +55,10 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /usr/share/doc/* /usr/share/man/*
 
-# Install APCu from source (PHP 8.5 compatibility)
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends git \
-    && git clone --depth 1 https://github.com/krakjoe/apcu.git /tmp/apcu \
-    && cd /tmp/apcu \
-    && phpize \
-    && ./configure --enable-apcu \
-    && make -j"$(nproc)" \
-    && make install \
-    && docker-php-ext-enable apcu \
-    && apt-get purge -y git \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Install APCu (pinned; backs the Symfony app cache — see config/packages/cache.yaml)
+ARG APCU_VERSION
+RUN pecl install apcu-${APCU_VERSION} \
+    && docker-php-ext-enable apcu
 
 COPY docker/php/apcu.ini /usr/local/etc/php/conf.d/
 
@@ -188,32 +177,7 @@ ENV APP_DEBUG=1
 # =============================================================================
 FROM dev AS e2e
 
-# Install Playwright system dependencies
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        # Playwright chromium dependencies
-        libnss3 \
-        libnspr4 \
-        libatk1.0-0 \
-        libatk-bridge2.0-0 \
-        libcups2 \
-        libdrm2 \
-        libdbus-1-3 \
-        libxkbcommon0 \
-        libatspi2.0-0 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxfixes3 \
-        libxrandr2 \
-        libgbm1 \
-        libasound2 \
-        libpango-1.0-0 \
-        libcairo2 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Playwright and browsers
+# Install Playwright + chromium including its canonical system dependencies
 RUN npx playwright install chromium --with-deps
 
 ENV APP_ENV=test

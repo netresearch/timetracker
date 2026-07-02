@@ -30,7 +30,9 @@
   },
   "require": {
     "php": "^8.5",
+    "ext-apcu": "*",
     "ext-date": "*",
+    "ext-intl": "*",
     "ext-json": "*",
     "ext-ldap": "*",
     "ext-mbstring": "*",
