@@ -93,7 +93,7 @@ or set them in a compose override. The relevant ones:
 | `APP_ENV` / `APP_DEBUG` | `prod` / `0` (baked into the image) | Override only via a compose override file |
 | `APP_SECRET` | **required** — `docker compose up` fails fast when unset (the repository `.env` supplies an insecure dev placeholder; replace it) | Symfony secret (CSRF, remember-me). Generate: `openssl rand -base64 32` |
 | `APP_ENCRYPTION_KEY` | falls back to `APP_SECRET` | Dedicated key for Jira OAuth token encryption at rest |
-| `DATABASE_URL` | `mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.1.2` | Doctrine DBAL connection |
+| `DATABASE_URL` | **required** — `docker compose up` fails fast when unset (the repository `.env` supplies a value matching the bundled `db` service) | Doctrine DBAL connection, e.g. `mysql://user:pass@db:3306/timetracker?serverVersion=mariadb-12.1.2&charset=utf8mb4` |
 | `SENTRY_DSN` | empty | Optional error tracking |
 | `APP_LOCALE` | `en` | Instance default locale (users pick their own in Settings) |
 | `APP_TITLE`, `APP_LOGO_URL`, `APP_HEADER_URL` | see `.env` | Branding |

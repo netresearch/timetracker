@@ -8,9 +8,9 @@ services:
     environment:
       - TRUSTED_PROXY_ALL
       - TRUSTED_PROXY_LIST
-      # non-nested default matching the db service's out-of-the-box credentials;
-      # set DATABASE_URL explicitly when you change DB_USER/DB_PASSWORD/DB_NAME
-      - DATABASE_URL=${DATABASE_URL:-mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.1.2&charset=utf8mb4}
+      # no in-file default (it would hardcode credentials); the repository
+      # .env supplies a value matching the bundled db service for local runs
+      - DATABASE_URL=${DATABASE_URL:?Set DATABASE_URL (see docs/DEPLOYMENT_GUIDE.md)}
       - APP_SECRET=${APP_SECRET:?Set APP_SECRET (e.g. openssl rand -base64 32) — the repo .env ships an insecure dev placeholder}
       - AUTO_MIGRATE=${AUTO_MIGRATE:-1}
       # bare passthrough: only set when exported — an empty string would defeat
