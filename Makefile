@@ -111,13 +111,13 @@ npm-install:
 	docker compose run --rm app-dev npm install --legacy-peer-deps
 
 npm-build:
-	docker compose run --rm app-dev npm run build
+	docker compose run --rm app-dev sh -c 'cd frontend && bun install --frozen-lockfile && bun run build'
 
 npm-dev:
-	docker compose run --rm app-dev npm run dev
+	docker compose run --rm app-dev sh -c 'cd frontend && bun run dev'
 
 npm-watch:
-	docker compose run --rm app-dev npm run watch
+	docker compose run --rm app-dev sh -c 'cd frontend && bun run dev'
 
 # All PHPUnit tests (default for developers)
 test: prepare-test-sql
@@ -171,7 +171,7 @@ e2e-up: bake-e2e
 	@echo "Starting E2E test stack (app-e2e, httpd-e2e, db, ldap-dev)..."
 	@if [ ! -f .env.test.local ]; then \
 		echo "Creating .env.test.local from template..."; \
-		cp .env.test.local.example .env.test.local 2>/dev/null || echo "# E2E test config - auto-generated\nDATABASE_URL=\"mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=8&charset=utf8mb4\"\nLDAP_HOST=\"ldap-dev\"\nLDAP_PORT=389\nLDAP_READUSER=\"cn=readuser,dc=dev,dc=local\"\nLDAP_READPASS=\"readuser\"\nLDAP_BASEDN=\"dc=dev,dc=local\"\nLDAP_USERNAMEFIELD=\"uid\"\nLDAP_USESSL=false\nLDAP_CREATE_USER=true" > .env.test.local; \
+		cp .env.test.local.example .env.test.local; \
 	fi
 	COMPOSE_PROFILES=e2e docker compose up -d
 	@echo "Waiting for E2E stack to be ready..."
