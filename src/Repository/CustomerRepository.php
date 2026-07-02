@@ -75,11 +75,15 @@ class CustomerRepository extends ServiceEntityRepository
      */
     public function getAllCustomers(): array
     {
+        // Fetch-join the teams relation: iterating getTeams() below would otherwise
+        // lazy-load one collection per customer (N+1 — the dominant cost of /getAllCustomers).
         /** @var Customer[] $customers */
-        $customers = $this->findBy(
-            [],
-            ['name' => 'ASC'],
-        );
+        $customers = $this->createQueryBuilder('customer')
+            ->leftJoin('customer.teams', 'team')
+            ->addSelect('team')
+            ->orderBy('customer.name', 'ASC')
+            ->getQuery()
+            ->getResult();
 
         $lastActivity = $this->lastActivityBy('customer_id');
 

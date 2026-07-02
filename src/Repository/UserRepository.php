@@ -93,11 +93,15 @@ class UserRepository extends ServiceEntityRepository
      */
     public function getAllUsers(): array
     {
+        // Fetch-join the teams relation: iterating getTeams() below would otherwise
+        // lazy-load one collection per user (N+1, same pattern as getAllCustomers).
         /** @var User[] $users */
-        $users = $this->findBy(
-            [],
-            ['username' => 'ASC'],
-        );
+        $users = $this->createQueryBuilder('user')
+            ->leftJoin('user.teams', 'team')
+            ->addSelect('team')
+            ->orderBy('user.username', 'ASC')
+            ->getQuery()
+            ->getResult();
 
         $lastActivity = $this->lastActivityBy('user_id');
 
