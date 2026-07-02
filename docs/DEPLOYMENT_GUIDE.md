@@ -80,16 +80,18 @@ The app is then reachable on `http://localhost:8765` (or `HTTP_PORT`).
 
 The production image ships an **empty `.env`** — all runtime configuration
 reaches the `app` container as real environment variables, which `compose.yml`
-passes through (host environment first, then the repository `.env` as the
-Compose substitution source). Export the variables you need before
-`docker compose up`, or set them in a compose override. The relevant ones:
+passes through. Compose substitutes them from the shell environment and from
+the `.env` file in the *Compose project directory* (usually this repository
+checkout; a different file can be given with `--env-file`), with the shell
+taking precedence. Export the variables you need before `docker compose up`,
+or set them in a compose override. The relevant ones:
 
 ### Application
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `APP_ENV` / `APP_DEBUG` | `prod` / `0` (baked into the image) | Override only via a compose override file |
-| `APP_SECRET` | insecure placeholder | Symfony secret (CSRF, remember-me). Generate: `openssl rand -base64 32` |
+| `APP_SECRET` | **required** — `docker compose up` fails fast when unset (the repository `.env` supplies an insecure dev placeholder; replace it) | Symfony secret (CSRF, remember-me). Generate: `openssl rand -base64 32` |
 | `APP_ENCRYPTION_KEY` | falls back to `APP_SECRET` | Dedicated key for Jira OAuth token encryption at rest |
 | `DATABASE_URL` | `mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.1.2` | Doctrine DBAL connection |
 | `SENTRY_DSN` | empty | Optional error tracking |
