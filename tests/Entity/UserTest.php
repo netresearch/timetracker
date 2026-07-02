@@ -15,6 +15,8 @@ use ReflectionProperty;
 
 use function strlen;
 
+use const PASSWORD_DEFAULT;
+
 /**
  * Unit tests for User entity.
  *
@@ -586,5 +588,92 @@ final class UserTest extends TestCase
         $result = $user->getContracts();
 
         self::assertCount(0, $result);
+    }
+
+    // ==================== TOTP two-factor (ADR-018 D2) ====================
+
+    public function testTotpDisabledByDefault(): void
+    {
+        $user = new User();
+
+        self::assertFalse($user->isTotpAuthenticationEnabled());
+        self::assertNull($user->getTotpAuthenticationConfiguration());
+        self::assertNull($user->getTotpSecret());
+    }
+
+    public function testSetTotpSecretEnablesTotpAndBuildsRfc6238Configuration(): void
+    {
+        $user = new User()->setUsername('jane');
+        $user->setTotpSecret('ENCRYPTED', 'JBSWY3DPEHPK3PXP');
+
+        self::assertTrue($user->isTotpAuthenticationEnabled());
+        self::assertSame('ENCRYPTED', $user->getTotpSecret(), 'the stored value stays the ciphertext');
+        self::assertSame('jane', $user->getTotpAuthenticationUsername());
+
+        $config = $user->getTotpAuthenticationConfiguration();
+        self::assertNotNull($config);
+        self::assertSame('JBSWY3DPEHPK3PXP', $config->getSecret(), 'the config exposes the DECRYPTED secret');
+        self::assertSame('sha1', $config->getAlgorithm());
+        self::assertSame(30, $config->getPeriod());
+        self::assertSame(6, $config->getDigits());
+    }
+
+    public function testPostLoadPlainSecretSetterEnablesTotpWithoutCiphertext(): void
+    {
+        // Mirrors UserTwoFactorSubscriber::postLoad: the plain secret alone (no
+        // ciphertext round-trip) is enough for scheb to challenge.
+        $user = new User();
+        $user->setTotpSecretPlain('JBSWY3DPEHPK3PXP');
+
+        self::assertTrue($user->isTotpAuthenticationEnabled());
+        self::assertSame('JBSWY3DPEHPK3PXP', $user->getTotpAuthenticationConfiguration()?->getSecret());
+    }
+
+    // ==================== Backup codes (ADR-018 D2) ====================
+
+    public function testBackupCodeVerifyAndSingleUseInvalidation(): void
+    {
+        $user = new User();
+        $hashes = [password_hash('code-one', PASSWORD_DEFAULT), password_hash('code-two', PASSWORD_DEFAULT)];
+        $user->setBackupCodes($hashes);
+
+        self::assertTrue($user->isBackupCode('code-one'));
+        self::assertTrue($user->isBackupCode('code-two'));
+        self::assertFalse($user->isBackupCode('wrong'));
+
+        // Consuming one code removes exactly that code; the other still works once.
+        $user->invalidateBackupCode('code-one');
+        self::assertFalse($user->isBackupCode('code-one'));
+        self::assertTrue($user->isBackupCode('code-two'));
+
+        $user->invalidateBackupCode('code-two');
+        self::assertSame([], $user->getBackupCodes());
+    }
+
+    public function testInvalidateUnknownBackupCodeIsANoOp(): void
+    {
+        $user = new User();
+        $user->setBackupCodes([password_hash('keep', PASSWORD_DEFAULT)]);
+
+        $user->invalidateBackupCode('nope');
+
+        self::assertTrue($user->isBackupCode('keep'));
+    }
+
+    public function testSerializationExcludesDecryptedTotpSecret(): void
+    {
+        // The stateful firewall serializes the User into the session — the
+        // decrypted secret must NOT go with it (encrypted-at-rest, ADR-018 D2).
+        $user = new User()->setUsername('jane');
+        $user->setTotpSecret('ENCRYPTED-CIPHERTEXT', 'PLAINSECRET');
+
+        // Full round-trip through the session store: the ciphertext survives, the
+        // decrypted plaintext does not (it is re-derived on the next provider
+        // refresh) — and the excluded field stays safely initialized (not a typed
+        // "must not be accessed before initialization" trap).
+        $restored = unserialize(serialize($user));
+        self::assertInstanceOf(User::class, $restored);
+        self::assertSame('ENCRYPTED-CIPHERTEXT', $restored->getTotpSecret());
+        self::assertFalse($restored->isTotpAuthenticationEnabled());
     }
 }

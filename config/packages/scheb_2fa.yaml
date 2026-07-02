@@ -1,0 +1,22 @@
+# Two-factor authentication (ADR-018 D2). TOTP + backup codes.
+# Reference: https://symfony.com/bundles/SchebTwoFactorBundle/6.x/configuration.html
+#
+# NOTE: the `main` firewall does NOT yet enable `two_factor` — enrolment and the
+# SPA challenge step land in a follow-up increment. Until then this config is
+# inert (no user has a totp_secret), so login is unchanged.
+scheb_two_factor:
+    security_tokens:
+        - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
+        - Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken
+
+    # RFC-6238 TOTP, compatible with Google Authenticator, Aegis, 1Password, etc.
+    # The issuer/label is what shows in the authenticator app. The per-code
+    # parameters (digits/period/algorithm) are supplied per user by
+    # User::getTotpAuthenticationConfiguration().
+    totp:
+        enabled: true
+        issuer: '%app_title%'
+
+    # One-time recovery codes for when the authenticator device is unavailable.
+    backup_codes:
+        enabled: true

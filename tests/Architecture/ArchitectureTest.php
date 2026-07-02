@@ -82,6 +82,10 @@ final class ArchitectureTest
                 Selector::inNamespace(self::NAMESPACE_MODEL),
                 Selector::inNamespace('Doctrine'),
                 Selector::inNamespace('Symfony'),
+                // scheb 2FA contract interfaces the User entity must implement
+                // (TotpTwoFactorInterface, BackupCodeInterface, TotpConfiguration)
+                // — a framework contract like Symfony's UserInterface. ADR-018 D2.
+                Selector::inNamespace('Scheb\TwoFactorBundle\Model'),
                 Selector::classname(self::CLASSNAME_EXCEPTION, true),
             )
             ->because('Entities stay data-centric: relations, ORM metadata, validation');

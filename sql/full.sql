@@ -45,6 +45,8 @@ CREATE TABLE `users` (
   `min_entry_duration` int(11) NOT NULL DEFAULT 5,
   `locale` char(2) NOT NULL DEFAULT 'de',
   `password` varchar(255) DEFAULT NULL,
+  `totp_secret` varchar(255) DEFAULT NULL,
+  `backup_codes` json DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
@@ -338,7 +340,8 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20260624_RemoveAccountEntity',   '2026-06-24 00:00:00', 0),
 ('DoctrineMigrations\\Version20260624_AddUserActive',         '2026-06-24 00:00:01', 0),
 ('DoctrineMigrations\\Version20260625_AddEntriesActivityIndexes', '2026-06-25 00:00:00', 0),
-('DoctrineMigrations\\Version20260702_AddUserPassword',       '2026-07-02 00:00:00', 0);
+('DoctrineMigrations\\Version20260702_AddUserPassword',       '2026-07-02 00:00:00', 0),
+('DoctrineMigrations\\Version20260702_AddUserTwoFactor',      '2026-07-02 00:00:01', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------
