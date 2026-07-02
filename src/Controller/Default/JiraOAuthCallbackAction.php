@@ -14,11 +14,9 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Model\Response;
-use App\Service\ClockInterface;
 use App\Service\Integration\Jira\CloudOAuthStateCodec;
 use App\Service\Integration\Jira\JiraCloudApiService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
-use App\Service\Security\TokenEncryptionService;
 use Exception;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -35,9 +33,7 @@ final class JiraOAuthCallbackAction extends BaseController
 {
     private JiraOAuthApiFactory $jiraOAuthApiFactory;
 
-    private TokenEncryptionService $tokenEncryptionService;
-
-    private ClockInterface $clock;
+    private CloudOAuthStateCodec $stateCodec;
 
     #[Required]
     public function setJiraApiFactory(JiraOAuthApiFactory $jiraOAuthApiFactory): void
@@ -46,10 +42,9 @@ final class JiraOAuthCallbackAction extends BaseController
     }
 
     #[Required]
-    public function setCloudStateDependencies(TokenEncryptionService $tokenEncryptionService, ClockInterface $clock): void
+    public function setStateCodec(CloudOAuthStateCodec $stateCodec): void
     {
-        $this->tokenEncryptionService = $tokenEncryptionService;
-        $this->clock = $clock;
+        $this->stateCodec = $stateCodec;
     }
 
     /**
@@ -82,8 +77,7 @@ final class JiraOAuthCallbackAction extends BaseController
     private function handleCloudCallback(Request $request, User $user, string $state): RedirectResponse|Response
     {
         try {
-            $codec = new CloudOAuthStateCodec($this->tokenEncryptionService, $this->clock);
-            $decoded = $codec->decode($state);
+            $decoded = $this->stateCodec->decode($state);
 
             if ($decoded['userId'] !== (int) $user->getId()) {
                 return new Response('OAuth state does not belong to the current user', \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN);

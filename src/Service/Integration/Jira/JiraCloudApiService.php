@@ -21,6 +21,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use JsonException;
+use Override;
 use SensitiveParameter;
 use Symfony\Component\Routing\RouterInterface;
 use Throwable;
@@ -99,6 +100,7 @@ class JiraCloudApiService extends JiraOAuthApiService
      *
      * @throws JiraApiException
      */
+    #[Override]
     public function fetchOAuthAccessToken(#[SensitiveParameter] string $oAuthRequestToken, #[SensitiveParameter] string $oAuthVerifier): void
     {
         throw new JiraApiException(sprintf('Ticket system "%s" is a Jira Cloud system; the OAuth 1.0a callback does not apply to it.', $this->ticketSystem->getName()), 400);
@@ -110,6 +112,7 @@ class JiraCloudApiService extends JiraOAuthApiService
      *
      * @param array<int, string> $fields
      */
+    #[Override]
     public function searchTicket(string $jql, array $fields, int $limit = 1): mixed
     {
         return $this->post(
@@ -128,6 +131,7 @@ class JiraCloudApiService extends JiraOAuthApiService
      *
      * @throws JiraApiException
      */
+    #[Override]
     protected function getClient(string $tokenMode = 'user', #[SensitiveParameter] ?string $oAuthToken = null): Client
     {
         $accessToken = $this->getValidAccessToken();
@@ -160,6 +164,7 @@ class JiraCloudApiService extends JiraOAuthApiService
      *
      * @throws JiraApiException
      */
+    #[Override]
     protected function getJiraApiUrl(): string
     {
         $cloudId = $this->ticketSystem->getCloudId();
@@ -174,6 +179,7 @@ class JiraCloudApiService extends JiraOAuthApiService
      * Cloud redirect URIs must match the registered callback exactly, so no
      * `?tsid=` may be appended — the ticket system rides in `state` instead.
      */
+    #[Override]
     protected function getOAuthCallbackUrl(): string
     {
         return $this->oAuthCallbackUrl;
@@ -185,10 +191,9 @@ class JiraCloudApiService extends JiraOAuthApiService
      *
      * @throws JiraApiUnauthorizedException
      * @throws JiraApiException
-     *
-     * @return never
      */
-    protected function throwUnauthorizedRedirect(?Throwable $throwable = null)
+    #[Override]
+    protected function throwUnauthorizedRedirect(?Throwable $throwable = null): never
     {
         $authorizeUrl = static::AUTH_BASE_URL . '/authorize?' . http_build_query([
             'audience' => 'api.atlassian.com',
@@ -328,10 +333,15 @@ class JiraCloudApiService extends JiraOAuthApiService
 
         if (is_array($resources)) {
             foreach ($resources as $resource) {
-                if (!is_array($resource) || !is_string($resource['id'] ?? null) || !is_string($resource['url'] ?? null)) {
+                if (!is_array($resource)) {
                     continue;
                 }
-
+                if (!is_string($resource['id'] ?? null)) {
+                    continue;
+                }
+                if (!is_string($resource['url'] ?? null)) {
+                    continue;
+                }
                 if (strtolower((string) parse_url($resource['url'], PHP_URL_HOST)) === $wantedHost) {
                     $this->ticketSystem->setCloudId($resource['id']);
                     $objectManager = $this->managerRegistry->getManager();
