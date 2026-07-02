@@ -143,6 +143,37 @@ class AdminControllerTest extends AbstractWebTestCase
         self::assertEqualsCanonicalizing([1, 2], $rows[0]['teams']);
     }
 
+    public function testGetAllUsersReturnsUserInTwoTeamsOnce(): void
+    {
+        // Same fetch-join dedup guard as for customers, on getAllUsers():
+        // a user in two teams must hydrate into ONE row with both team ids.
+        $this->client->request('POST', '/user/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
+            'id' => 0,
+            'username' => 'two.teams',
+            'abbr' => 'TTM',
+            'type' => 'DEV',
+            'locale' => 'de',
+            'teams' => [1, 2],
+        ]));
+        $this->assertStatusCode(200);
+
+        $this->client->request('GET', '/getAllUsers');
+        $this->assertStatusCode(200);
+
+        $rows = [];
+        foreach ($this->getJsonResponse($this->client->getResponse()) as $row) {
+            self::assertIsArray($row);
+            self::assertIsArray($row['user']);
+            if ('two.teams' === $row['user']['username']) {
+                $rows[] = $row['user'];
+            }
+        }
+
+        self::assertCount(1, $rows, 'User assigned to two teams must appear exactly once');
+        self::assertIsArray($rows[0]['teams']);
+        self::assertEqualsCanonicalizing([1, 2], $rows[0]['teams']);
+    }
+
     public function testGetCustomersActionWithNonPl(): void
     {
         // /getAllCustomers now requires ROLE_ADMIN after auth modernization
