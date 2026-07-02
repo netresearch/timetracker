@@ -1,5 +1,5 @@
 export interface AppConfig {
-  locale: 'en' | 'de'
+  locale: 'en' | 'de' | 'es' | 'fr' | 'ru'
   userId: number
   userName: string
   appTitle: string

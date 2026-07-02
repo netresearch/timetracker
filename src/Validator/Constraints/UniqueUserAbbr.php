@@ -15,7 +15,7 @@ use Symfony\Component\Validator\Constraint;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class UniqueUserAbbr extends Constraint
 {
-    public string $message = 'The user name abreviation provided already exists.';
+    public string $message = 'The user name abbreviation provided already exists.';
 
     public function __construct(
         ?string $message = null,

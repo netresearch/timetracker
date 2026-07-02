@@ -1,5 +1,5 @@
 export interface LoginConfig {
-  locale: 'en' | 'de'
+  locale: 'en' | 'de' | 'es' | 'fr' | 'ru'
   appTitle: string
   logoUrl: string
   /** CSRF token for the 'authenticate' intention (form_login, enable_csrf). */
