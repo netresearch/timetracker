@@ -118,6 +118,10 @@ git commit -m "test(service): add unit tests for EntryService"
 git commit -m "refactor(controller): extract validation logic to service"
 ```
 
+**Sign-off required (DCO):** every commit must carry a `Signed-off-by:`
+trailer matching the commit author — a [DCO](https://developercertificate.org/)
+check blocks PRs without it. Use `git commit --signoff` (or `-s`).
+
 ### 4. Development Process
 
 ```bash
