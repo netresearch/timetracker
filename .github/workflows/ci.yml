@@ -155,7 +155,7 @@ jobs:
         env:
           COMPOSE_PROFILES: e2e
         run: |
-          docker compose run --rm app-e2e php -d memory_limit=1G bin/phpstan analyze config/quality/phpat.php --no-progress
+          docker compose run --rm app-e2e php -d memory_limit=1G bin/phpstan analyze -c config/quality/phpat.neon --no-progress
 
       - name: Code style (PHP-CS-Fixer)
         env:

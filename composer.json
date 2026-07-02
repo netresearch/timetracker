@@ -105,7 +105,7 @@
     "cs-check": "php -d memory_limit=512M bin/php-cs-fixer fix --dry-run --diff",
     "cs-fix": "php -d memory_limit=512M bin/php-cs-fixer fix",
     "analyze": "php -d memory_limit=1G bin/phpstan analyze",
-    "analyze:arch": "php -d memory_limit=1G bin/phpstan analyze config/quality/phpat.php",
+    "analyze:arch": "php -d memory_limit=1G bin/phpstan analyze -c config/quality/phpat.neon",
     "rector": "rector process src --config=config/quality/rector.php",
     "test": "APP_ENV=test php -d memory_limit=512M bin/phpunit",
     "test:unit": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit",
