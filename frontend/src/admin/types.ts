@@ -71,6 +71,28 @@ export interface EntityDescriptor {
    * override for entities keyed by something other than a numeric id.
    */
   deletePayload?: (row: Record<string, unknown>) => Record<string, unknown>
+  /**
+   * Optional bulk import from a feed URL or an uploaded file — used by
+   * Holidays (iCal). Renders an Import button that opens a dialog and POSTs
+   * multipart (`url` and/or `file`) to `endpoint`, then refreshes the list.
+   * All labels live here so the shell component stays entity-agnostic.
+   */
+  importAction?: ImportAction
+}
+
+export interface ImportAction {
+  endpoint: string
+  /** Accept attribute for the file input, e.g. '.ics,text/calendar'. */
+  fileAccept: string
+  label: () => string
+  hint: () => string
+  urlLabel: () => string
+  fileLabel: () => string
+  busyLabel: () => string
+  needsInput: () => string
+  /** Success notice from the {imported, updated} counts the endpoint returns. */
+  done: (counts: { imported: number; updated: number }) => string
+  error: () => string
 }
 
 /** Resolves an OptionSource to its loaded options (for column renderers). */
