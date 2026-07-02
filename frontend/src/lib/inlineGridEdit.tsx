@@ -200,6 +200,11 @@ export interface InlineGridEditConfig<R extends object> {
    *  is complete and may auto-save). Drives the per-cell invalid hint and gates
    *  auto-save on completeness. Omit to disable auto-save (save on leave/force). */
   invalidFields?: (draft: FormValues, row: R) => string[]
+  /** Whether a row has never been persisted (e.g. a brand-new work-log row with a
+   *  temporary id). A new row's seed IS its content, so "draft equals seed" is not
+   *  a no-op — it must still save once complete (see #495). Omit for grids that
+   *  never create in-place new rows (the default: no row is treated as new). */
+  isNewRow?: (row: R) => boolean
 }
 
 /**
@@ -256,6 +261,22 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     return row !== undefined && JSON.stringify(draft) !== JSON.stringify(config.seedDraft(row))
   }
   const isDirty = rowDirty
+
+  // A never-persisted row whose draft is complete must still be saved even though
+  // it equals its seed — the seed IS its content (e.g. a "Continue" row pre-filled
+  // from another entry). Without this, such a row reads as a clean no-op and is
+  // silently discarded instead of saved (#495). An incomplete new row is NOT
+  // persisted here, so an abandoned blank row is dropped quietly rather than
+  // raising a validation error.
+  const isNewAndComplete = (id: number, row: R): boolean => {
+    if (config.isNewRow?.(row) !== true) {
+      return false
+    }
+    const draft = drafts[id]
+
+    return draft !== undefined
+      && (config.invalidFields === undefined || config.invalidFields(draft, row).length === 0)
+  }
 
   // Drop a row's draft + field-hints + original-row snapshot — the teardown
   // shared by save-success, modal take-over, reset, and the clean-up of an
@@ -397,8 +418,13 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     setEditCell(null)
     // If the net result equals the original row (no real change, or a value
     // edited back), drop the draft so the row stays clean — and refreshHints
-    // then sees no draft and skips the (pointless) auto-save.
-    discardIfClean(cell.rowId)
+    // then sees no draft and skips the (pointless) auto-save. A complete NEW row
+    // is the exception: its seed IS its content, so dropping it here would discard
+    // a pre-filled "Continue" entry instead of saving it (#495).
+    const committedRow = rowById(cell.rowId)
+    if (committedRow === undefined || !isNewAndComplete(cell.rowId, committedRow)) {
+      discardIfClean(cell.rowId)
+    }
     // A Tab move (left/right) stays in the same row and opens the next cell's
     // editor; auto-saving now would refetch and remount that editor away (#481),
     // so defer the save to row-leave. Every other commit auto-saves as before.
@@ -526,9 +552,10 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     if (draft === undefined || row === undefined || savingRows[id]) {
       return
     }
-    // Nothing actually changed (e.g. the row was only navigated through) — drop
-    // the no-op draft instead of POSTing an identical row.
-    if (!rowDirty(id)) {
+    // Nothing changed vs a fresh seed. For an EXISTING row that's a no-op — drop
+    // the draft instead of re-POSTing an identical row. A complete NEW row is the
+    // exception: its seed is its content, so it still needs persisting (#495).
+    if (!rowDirty(id) && !isNewAndComplete(id, row)) {
       discardIfClean(id)
 
       return
@@ -613,7 +640,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     for (const key of Object.keys(drafts)) {
       const id = Number(key)
       const row = rowById(id)
-      if (rowDirty(id) && row !== undefined && !savingRows[id]) {
+      if (row !== undefined && !savingRows[id] && (rowDirty(id) || isNewAndComplete(id, row))) {
         // Best-effort flush on unmount; the component is gone, so swallow a
         // failure (nowhere to surface it) rather than leak an unhandled rejection.
         void config.saveRow({ ...drafts[id]! }, row).catch(() => { /* discarded */ })
