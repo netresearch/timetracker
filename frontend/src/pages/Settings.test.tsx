@@ -10,7 +10,7 @@ afterEach(() => {
 })
 
 describe('Settings', () => {
-  it('only offers the locales the UI actually ships (de/en)', () => {
+  it('offers exactly the locales the UI ships translations for', () => {
     const { container, unmount } = render(() => <Settings />)
 
     // Target the locale select specifically (the page also has a client-side
@@ -18,11 +18,8 @@ describe('Settings', () => {
     const select = container.querySelector('select[name="locale"]') as HTMLSelectElement
     const values = Array.from(select.options).map((option) => option.value)
 
-    expect(values).toEqual(['de', 'en'])
-    // The previously offered but never-translated locales must be gone.
-    expect(values).not.toContain('es')
-    expect(values).not.toContain('fr')
-    expect(values).not.toContain('ru')
+    // Must mirror project.inlang/settings.json (paraglide-compiled catalogs).
+    expect(values).toEqual(['de', 'en', 'es', 'fr', 'ru'])
 
     unmount()
   })

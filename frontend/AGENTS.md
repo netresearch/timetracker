@@ -32,8 +32,8 @@ See [`README.md`](README.md) for the full stack description.
 
 ### i18n (Paraglide)
 
-- Messages live in `messages/en.json` and `messages/de.json` — every new
-  user-facing string needs BOTH
+- Messages live in `messages/{en,de,es,fr,ru}.json` — every new user-facing
+  string needs ALL five catalogs (identical key sets)
 - Compiled to `src/paraglide/` (via `bun run typecheck` or `i18n:compile`);
   never edit `src/paraglide/` by hand
 - Use `import { m } from '../paraglide/messages.js'` and `m.key()` in components
@@ -49,7 +49,7 @@ See [`README.md`](README.md) for the full stack description.
 - [ ] `bun run lint` clean
 - [ ] `bun run typecheck` clean
 - [ ] `bun run test` green
-- [ ] New strings present in both `messages/en.json` and `messages/de.json`
+- [ ] New strings present in all `messages/*.json` catalogs (en/de/es/fr/ru)
 - [ ] Accessibility upheld: WCAG 2.2 AA + documented AAA subset
       (7:1 contrast in BOTH color schemes, 44px targets, keyboard reachable)
 

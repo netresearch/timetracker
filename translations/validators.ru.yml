@@ -1,0 +1,3 @@
+# Symfony validator violations translate via the 'validators' domain.
+# Keys must match the exact message built in the DTO/entity constraints.
+"Every user must belong to at least one team": "Каждый пользователь должен принадлежать хотя бы одной команде."
