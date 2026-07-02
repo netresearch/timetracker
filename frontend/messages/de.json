@@ -375,7 +375,7 @@
   "admin_desc_contracts": "Arbeitsverträge mit Soll-Stunden je Wochentag, für die Soll/Ist-Auswertung.",
   "admin_help_global": "Globale Einträge stehen allen Teams zur Verfügung, nicht nur den zugeordneten.",
   "admin_help_billing": "Abrechnungsart: T&M (nach Aufwand), Festpreis oder keine.",
-  "admin_help_user_type": "Rolle: DEV (Entwickler), PL (Projektleiter), CTL (Controlling / Admin).",
+  "admin_help_user_type": "Rolle: USER/DEV (Zeiterfassung), PL (Projektleitung — derzeit inkl. Admin-Rechten), ADMIN (volle Administration).",
   "admin_help_factor": "Gewichtet die Dauer in Auswertungen (1,0 = normal).",
   "admin_help_needs_ticket": "Wenn aktiv, ist bei dieser Tätigkeit eine Ticket-Nummer Pflicht.",
   "admin_help_book_time": "Wenn aktiv, werden Buchungen in dieses Ticket-System zurückgeschrieben.",
