@@ -278,7 +278,7 @@ In the sidebar layout each panel also gets a quick-add "+" button.
 
 ## Settings
 
-![Settings dialog: an Account card (language, behavior toggles, minimum duration, Save) above a This-device card (display preferences)](images/settings.png)
+![Settings dialog: an Account card (language, behavior toggles, minimum duration, Save) above a This device card (display preferences)](images/settings.png)
 
 The ⚙ icon opens your personal settings, grouped into two labeled sections
 with different save semantics:
