@@ -145,8 +145,12 @@ the LDAP-outage escape hatch.
 `/user/save`, [`SaveUserAction`](../../src/Controller/Admin/SaveUserAction.php))
 gains an optional password block: *set/replace password* (input, hashed
 server-side in the DTO handler) and *clear password* (reverts the account to
-LDAP). No self-service password change/reset in this stage (no mailer; see Gaps) —
-password resets are an admin/CLI action.
+LDAP). Mapping caveat: the plain-text password from `UserSaveDto` must be
+**excluded from the automatic DTO→entity property mapping** in
+`SaveUserAction` — it is hashed via `UserPasswordHasherInterface` and set
+explicitly; a mapped plain value would be persisted as-is. No self-service
+password change/reset in this stage (no mailer; see Gaps) — password resets
+are an admin/CLI action.
 
 **Login throttling.** With offline-crackable local hashes in play, add Symfony's
 `login_throttling` to the `main` firewall (requires adding `symfony/rate-limiter`;
@@ -174,7 +178,10 @@ with the existing AES-256-GCM
 [`TokenEncryptionService`](../../src/Service/Security/TokenEncryptionService.php)
 ([ADR-011](ADR-011-security-architecture.md)) — and `backup_codes` storing
 **hashed** one-time codes (JSON array). `User` implements the bundle's
-`TwoFactorInterface`/`BackupCodeInterface`. MFA applies to both LDAP and local
+`TwoFactorInterface`/`BackupCodeInterface` — note that the bundle's documented
+reference implementation of `isBackupCode()` compares plain values
+(`in_array`); with hashed storage both `isBackupCode()` and
+`invalidateBackupCode()` must verify/strip via the hash instead. MFA applies to both LDAP and local
 accounts: the bundle intercepts at token level, independent of which primary
 credential check ran.
 
@@ -212,7 +219,9 @@ one row per registered passkey): credential id, public key, AAGUID, sign counter
 transports, backup-eligible/backed-up flags, `user_id` FK, label ("YubiKey 5",
 "MacBook Touch ID"), `created_at`/`last_used_at`. Plus
 `users.webauthn_user_handle` — a random, stable, non-PII 32-byte handle used as
-the WebAuthn user entity id (never the username or numeric id). The entity/
+the WebAuthn user entity id (never the username or numeric id), with a
+`UNIQUE` index: the usernameless assertion ceremony looks users up by handle,
+so the column must be both fast to query and collision-free. The entity/
 repository implement the bundle's credential-source repository contract (exact
 interface names to be confirmed against the bundle 5.3 docs during the
 implementing PR).
