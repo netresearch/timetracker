@@ -742,14 +742,13 @@ All endpoints require authentication except:
 ```
 
 ### GET /scripts/timeSummaryForJira
-**Purpose**: JavaScript integration for Jira time tracking
+**Purpose**: Returns this instance's ticket-time-summary base URL as a JSON
+string, for use by the Greasemonkey userscript
+(`public/scripts/timeSummaryForJira.js`).
 
 **Response (200 OK)**:
 ```json
-{
-  "script": "// JavaScript code for Jira integration",
-  "version": "1.0.0"
-}
+"https://timetracker.example.com/getTicketTimeSummary/"
 ```
 
 ---
@@ -1184,4 +1183,4 @@ const reportData = await report.json();
 
 ---
 
-This API reference provides comprehensive coverage of all TimeTracker endpoints. For specific implementation details, validation rules, and entity relationships, refer to the [DTO Documentation](./DTO_DOCUMENTATION.md) and [Controller Index](./CONTROLLER_INDEX.md).
+This API reference provides comprehensive coverage of all TimeTracker endpoints. For specific implementation details, validation rules, and entity relationships, refer to the [DTO Documentation](./DTO_DOCUMENTATION.md).

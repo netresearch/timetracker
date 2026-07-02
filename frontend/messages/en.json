@@ -146,8 +146,6 @@
   "help_sc_arrow_nav": "Move between the menu, sub-menu, search and table",
   "help_sc_add": "Add a new entry",
   "help_sc_continue": "Continue the selected/last entry",
-  "help_sc_delete": "Delete the selected/last entry",
-  "help_sc_edit": "Edit the selected/last entry",
   "help_sc_info": "Show info for the selected/last entry",
   "help_sc_prolong": "Prolong the last entry to the current time",
   "help_sc_refresh": "Refresh the view",

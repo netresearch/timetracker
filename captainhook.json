@@ -70,7 +70,7 @@
                 ]
             },
             {
-                "action": "php -d memory_limit=1G bin/phpstan analyze config/quality/phpat.php --no-progress",
+                "action": "php -d memory_limit=1G bin/phpstan analyze -c config/quality/phpat.neon --no-progress",
                 "options": {
                     "label": "PHPat: Architecture rules"
                 },

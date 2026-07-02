@@ -3,7 +3,6 @@
  *
  * The API returns dates in display format (d/m/Y) for the frontend to show.
  * When sending data back to the API, dates must be in ISO 8601 format (Y-m-d).
- * This mirrors what the ExtJS frontend does internally.
  */
 
 /**

@@ -27,7 +27,7 @@ jobs:
 
       - name: Prepare directories
         run: |
-          mkdir -p vendor var/cache var/log bin node_modules public/build
+          mkdir -p vendor var/cache var/log bin node_modules
           chmod -R 777 vendor var bin node_modules public
 
       - name: Install PHP dependencies
@@ -42,9 +42,6 @@ jobs:
           COMPOSE_PROFILES: e2e
         run: |
           docker compose run --rm app-e2e npm install --legacy-peer-deps
-
-      # Legacy ExtJS assets (public/build) are committed static — the Encore
-      # build is retired (ExtJS is being removed), so no build step here.
 
       - name: Build SolidJS UI assets (Vite)
         env:
@@ -66,7 +63,6 @@ jobs:
             vendor/
             bin/
             node_modules/
-            public/build/
             public/build-ui/
           retention-days: 1
 
@@ -159,7 +155,7 @@ jobs:
         env:
           COMPOSE_PROFILES: e2e
         run: |
-          docker compose run --rm app-e2e php -d memory_limit=1G bin/phpstan analyze config/quality/phpat.php --no-progress
+          docker compose run --rm app-e2e php -d memory_limit=1G bin/phpstan analyze -c config/quality/phpat.neon --no-progress
 
       - name: Code style (PHP-CS-Fixer)
         env:

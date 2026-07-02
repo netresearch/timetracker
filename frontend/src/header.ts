@@ -1,6 +1,6 @@
-// Dynamics for the shared, server-rendered page header
+// Dynamics for the server-rendered page header
 // (templates/partials/header.html.twig): worktime sums and login-status
-// polling against the same element IDs the ExtJS shell uses.
+// polling against the header's element IDs.
 import { getJson } from './api/client'
 import type { AppConfig } from './config'
 import { setPaletteOpen } from './lib/commandPalette'
@@ -22,7 +22,7 @@ type WorktimeStatus = 'ok' | 'under' | 'neutral'
 
 const STATUS_POLL_INTERVAL_MS = 90_000
 
-/** 'H:MM', optionally suffixed with person-days like the ExtJS header. */
+/** 'H:MM', optionally suffixed with person-days (PT). */
 export function formatDuration(minutes: number, inDays = false): string {
   const days = Math.floor((minutes / (60 * 8)) * 100) / 100
   const hours = Math.floor(minutes / 60)
@@ -273,7 +273,7 @@ let shortcutsWired = false
 /**
  * Keyboard shortcuts for the SolidJS shell (documented on the Help page):
  * Alt+1–7 switches to the n-th nav item, and `?` opens Help. The grid-specific
- * shortcuts (Alt+A/C/D/…) still live in the ExtJS tracking shell. Clicking the
+ * shortcuts (Alt+C/I/P/…) live in Tracking.onGridShortcut. Clicking the
  * nav link reuses the router's anchor interception and the role gating.
  */
 export function handleShortcut(event: KeyboardEvent): void {
@@ -322,7 +322,7 @@ export function handleShortcut(event: KeyboardEvent): void {
     }
 
     // Alt+A → add a new entry on pages that offer one (the Add button is tagged
-    // with data-keyboard-add), mirroring the ExtJS tracking grid's Alt+A.
+    // with data-keyboard-add).
     if (event.altKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyA') {
       const add = document.querySelector<HTMLElement>('#main-content [data-keyboard-add]')
       if (add !== null) {
@@ -372,7 +372,7 @@ export function handleShortcut(event: KeyboardEvent): void {
     // "More" overflow as a WAI-ARIA menu button: ArrowDown/ArrowUp on the button
     // opens the disclosure and moves focus to the first/last item (rather than the
     // bar item's usual "descend into page content"). Escape closes and returns to
-    // the button — handled framework-neutrally in header-behavior.html.twig.
+    // the button — handled in header-behavior.html.twig.
     if (active instanceof HTMLElement && active.matches('.nav-more-btn')
       && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
       event.preventDefault()

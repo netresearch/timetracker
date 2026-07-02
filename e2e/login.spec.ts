@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /**
  * E2E tests for the login flow.
  *
- * Test credentials are from docker/ldap/dev-users.ldif:
+ * Test credentials are from docker/ldap/users-only.ldif:
  * - developer / dev123
  * - unittest / test123
  * - i.myself / myself123

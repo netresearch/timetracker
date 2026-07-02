@@ -228,7 +228,7 @@ Yes, TimeTracker provides a REST API for:
 
 ### How do I get API access?
 1. Request API credentials from an administrator
-2. Refer to the [API Documentation](./API_USAGE_GUIDE.md)
+2. Refer to the [API Documentation](./api.md)
 3. Use OAuth 2.0 for authentication
 
 ### What integrations are available?
@@ -238,7 +238,7 @@ Yes, TimeTracker provides a REST API for:
 - Custom integrations via API
 
 ### Can I build my own integration?
-Yes, use the REST API to build custom integrations. See the [API Usage Guide](./API_USAGE_GUIDE.md) for details.
+Yes, use the REST API to build custom integrations. See the [API Usage Guide](./api.md) for details.
 
 ## 💡 Best Practices
 

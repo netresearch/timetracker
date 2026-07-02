@@ -1,0 +1,28 @@
+# Architecture rules (PHPat), run as a standalone PHPStan pass:
+#   bin/phpstan analyze -c config/quality/phpat.neon
+# The main phpstan.neon covers correctness at level 10; this pass only
+# extracts class relations from src/ and enforces the ArchitectureTest
+# rules. PHPat discovers rules exclusively through services tagged
+# `phpat.test` — without that registration it silently runs zero rules.
+parameters:
+    level: 0
+    paths:
+        - ../../src
+        # the rule class itself, so PHPStan's result cache invalidates on edits
+        - ../../tests/Architecture
+    tmpDir: ../../var/phpstan-phpat
+    # inline @phpstan-ignore markers in src target level-10 findings that
+    # never trigger in this level-0 pass
+    reportUnmatchedIgnoredErrors: false
+    treatPhpDocTypesAsCertain: false
+    phpat:
+        show_rule_names: true
+        # PHP built-ins (DateTime, Throwable, attributes, …) are not
+        # architecture — layer rules only govern App\* and vendor packages
+        ignore_built_in_classes: true
+
+services:
+    -
+        class: Tests\Architecture\ArchitectureTest
+        tags:
+            - phpat.test

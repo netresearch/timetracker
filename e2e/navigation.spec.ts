@@ -9,8 +9,8 @@ import {
 import { waitForGrid } from './helpers/grid';
 
 /**
- * E2E for header navigation and UI structure. The ExtJS shell was removed; the
- * app is a SolidJS SPA under /ui, and a successful login lands on /ui/tracking.
+ * E2E for header navigation and UI structure. The app is a SolidJS SPA under
+ * /ui; a successful login lands on /ui/tracking.
  */
 
 test.describe('Header Navigation', () => {
@@ -19,14 +19,12 @@ test.describe('Header Navigation', () => {
     await waitForGrid(page);
   });
 
-  test('shows the SPA nav links after login (no ExtJS tabs)', async ({ page }) => {
-    // Worklog, Overview, Evaluation are header nav links; there is no ExtJS tab bar.
+  test('shows the SPA nav links after login', async ({ page }) => {
+    // Worklog, Overview, Evaluation are header nav links.
     await expect(page.locator(NAV_LINKS.worklog).first()).toBeVisible();
     await expect(page.locator(NAV_LINKS.auswertung)).toBeVisible();
     // Settings is a header icon action (inline or folded into "More").
     await expect(page.locator(NAV_LINKS.settings)).toBeAttached();
-    // The legacy ExtJS tab bar is gone.
-    await expect(page.locator('.x-tab-bar, .x-tab')).toHaveCount(0);
   });
 
   test('navigates to Evaluation via the header nav link', async ({ page }) => {

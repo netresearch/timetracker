@@ -15,7 +15,7 @@ To run specific tests with coverage:
 docker compose run --rm -e APP_ENV=test app bin/phpunit --filter=StatusController --coverage-text
 
 # Test a specific test method
-docker compose run --rm -e APP_ENV=test app bin/phpunit --filter=testDeleteAction tests/Controller/CrudControllerTest.php
+docker compose run --rm -e APP_ENV=test app bin/phpunit --filter=testSaveAndDeleteWorkLog tests/Controller/CrudControllerTest.php
 ```
 
 ## Identifying Untested Code
@@ -23,7 +23,7 @@ docker compose run --rm -e APP_ENV=test app bin/phpunit --filter=testDeleteActio
 We use the `analyze-coverage.php` script to identify untested controller methods.
 
 ```bash
-docker compose run --rm app php analyze-coverage.php
+docker compose run --rm -e APP_ENV=test app-dev php tests/tools/analyze-coverage.php
 ```
 
 This will output all controller actions that don't have corresponding test methods.
@@ -32,8 +32,8 @@ This will output all controller actions that don't have corresponding test metho
 
 Based on analysis, focus on testing the following controller actions:
 
-1. CrudController (high priority - core functionality)
-   - deleteAction (added test)
+1. Tracking actions (high priority - core functionality)
+   - saveAndDeleteWorkLog (added test)
    - saveAction
    - bulkentryAction
 

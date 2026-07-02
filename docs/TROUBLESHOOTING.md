@@ -241,29 +241,18 @@ rm -rf /tmp/phpstan
 
 **Solution**:
 ```bash
-# Rebuild assets
-npm install
-npm run build
+# Rebuild assets (Vite, outputs to public/build-ui)
+cd frontend && bun install && bun run build
 
 # Install Symfony assets
 php bin/console assets:install --symlink
 
-# Check webpack config
-npm run dev-server
+# Dev server with HMR (source maps included)
+cd frontend && bun run dev
 
 # Clear browser cache
 # Chrome: Ctrl+Shift+R
 # Firefox: Ctrl+F5
-```
-
-#### JavaScript Errors
-**Diagnosis**:
-```javascript
-// Enable debug mode in webpack.config.js
-module.exports = {
-    mode: 'development',
-    devtool: 'source-map'
-};
 ```
 
 ### 8. Email/Notification Issues

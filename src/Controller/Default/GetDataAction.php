@@ -85,7 +85,7 @@ final class GetDataAction extends BaseController
 
         // Convert Entry entities to arrays for JSON serialization
         // Entry has protected properties that don't serialize with json_encode
-        // Wrap each entry in 'entry' key as expected by ExtJS reader (record: 'entry')
+        // Wrap each entry in an 'entry' key — the row-wrapped format the SPA unwraps
         $data = [];
         foreach ($entries as $entry) {
             $data[] = ['entry' => $entry->toArray()];

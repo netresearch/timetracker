@@ -32,14 +32,12 @@ export const GRID_SHORTCUTS: Shortcut[] = [
   { keys: 'Esc', label: () => m.help_sc_search_clear() },
 ]
 
-// Worklog grid accelerators — Alt+A/C/I/P/R/X work in both the SolidJS worklog
-// (Tracking.onGridShortcut) and the classic ExtJS grid; Alt+D/E are classic-only
-// (the SolidJS worklog deletes via Tab-to-trash and edits via Enter / F2).
+// Worklog grid accelerators, handled by Tracking.onGridShortcut (Alt+A via the
+// header's add shortcut). The worklog deletes via Tab-to-trash and edits via
+// Enter / F2, so there are no Alt+D/E accelerators.
 export const TRACKING_SHORTCUTS: Shortcut[] = [
   { keys: 'Alt + A', label: () => m.help_sc_add() },
   { keys: 'Alt + C', label: () => m.help_sc_continue() },
-  { keys: 'Alt + D', label: () => m.help_sc_delete() },
-  { keys: 'Alt + E', label: () => m.help_sc_edit() },
   { keys: 'Alt + I', label: () => m.help_sc_info() },
   { keys: 'Alt + P', label: () => m.help_sc_prolong() },
   { keys: 'Alt + R', label: () => m.help_sc_refresh() },

@@ -297,8 +297,8 @@ describe('Tracking (Worklog grid)', () => {
     const dialog = await screen.findByRole('dialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }))
 
-    // /tracking/delete is form-encoded (reads $request->request, shared with the
-    // ExtJS shell), so it goes out via postForm — not postJson.
+    // /tracking/delete is form-encoded (reads $request->request), so it goes
+    // out via postForm — not postJson.
     await waitFor(() => expect(postForm).toHaveBeenCalledWith('/tracking/delete', { id: 1 }))
 
     unmount()

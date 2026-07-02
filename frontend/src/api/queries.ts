@@ -15,8 +15,8 @@ export interface WorktimeRecord {
   expected: number
 }
 
-// Response shape of GET /getHolidays (GetHolidaysAction) — ExtJS-style
-// row wrapping, `date` formatted as 'YYYY-MM-DD'.
+// Response shape of GET /getHolidays (GetHolidaysAction) — row-wrapped
+// ([{<rowKey>: {...}}]), `date` formatted as 'YYYY-MM-DD'.
 export interface HolidayRecord {
   holiday: {
     name: string
@@ -74,7 +74,7 @@ export interface NamedOption {
 }
 
 // Reference dropdown sources (customers/projects/users/teams/presets/ticket
-// systems/activities) are ExtJS-style row-wrapped ([{<rowKey>: {id, name}}])
+// systems/activities) are row-wrapped ([{<rowKey>: {id, name}}])
 // and rarely change within a session, so they share a long staleTime to avoid
 // refetching on every window refocus.
 const REFERENCE_STALE_TIME = 5 * 60_000
@@ -132,7 +132,7 @@ export const activitiesQuery = optionSourceQuery('activities', '/getActivities',
 export const trackingCustomersQuery = optionSourceQuery('tracking-customers', '/getCustomers', 'customer')
 
 // ── Time-tracking work-log entries (the /ui/tracking grid) ───────────────────
-// GET /getData/days/{days} returns ExtJS-style row-wrapped entries; the grid
+// GET /getData/days/{days} returns row-wrapped entries; the grid
 // reads the unwrapped list. duration + class are server-derived — class drives
 // row styling (EntryClass: PLAIN=1, DAYBREAK=2, PAUSE=4, OVERLAP=8).
 export interface TrackingEntry {
@@ -240,7 +240,7 @@ export function trackingEntriesQuery(days: number) {
     queryKey: ['tracking-entries', days] as const,
     queryFn: () => getJson<TrackingEntryRow[]>(`/getData/days/${days}`),
     // Newest entry first. The backend (getEntriesByUser) returns day/start
-    // ASCending (shared with the legacy ExtJS grid + export), so the new grid
+    // ASCending (the export shares that order), so the grid
     // sorts client-side instead — which also makes [0] the latest entry, as
     // Add (suggest-start) / Prolong-last / Continue all assume.
     select: (rows: TrackingEntryRow[]): TrackingEntry[] =>

@@ -651,7 +651,7 @@ final class AuthenticationTest extends WebTestCase
 
 namespace Tests\Integration\JIRA;
 
-use App\Service\Integration\JiraWorklogService;
+use App\Service\Integration\Jira\JiraWorkLogService;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -662,7 +662,7 @@ use GuzzleHttp\HandlerStack;
 
 final class WorklogSyncTest extends KernelTestCase
 {
-    private JiraWorklogService $service;
+    private JiraWorkLogService $service;
     private MockHandler $mockHandler;
     
     protected function setUp(): void
@@ -673,7 +673,7 @@ final class WorklogSyncTest extends KernelTestCase
         $this->mockHandler = new MockHandler();
         $httpClient = new Client(['handler' => HandlerStack::create($this->mockHandler)]);
         
-        $this->service = new JiraWorklogService($httpClient);
+        $this->service = new JiraWorkLogService($httpClient);
     }
     
     /** @test */
@@ -1638,7 +1638,7 @@ jobs:
           file: var/coverage.xml
           
       - name: Run security audit
-        run: composer security-check
+        run: composer audit
         
       - name: Archive test results
         if: failure()
@@ -1810,5 +1810,5 @@ Access via: `var/test-dashboard.html`
 ---
 
 **Last Updated**: 2025-01-20  
-**Test Framework**: PHPUnit 12, Symfony Test Framework  
-**Questions**: See [Developer Setup](DEVELOPER_SETUP.md#troubleshooting) or create GitHub issue
+**Test Framework**: PHPUnit 13, Symfony Test Framework  
+**Questions**: See [Troubleshooting](TROUBLESHOOTING.md) or create GitHub issue

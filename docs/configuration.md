@@ -861,9 +861,9 @@ METRICS_ENABLED=true
 Your TimeTracker instance should now be properly configured for your environment.
 
 For additional help:
-- 📚 [Developer Setup Guide](DEVELOPER_SETUP.md)
-- 🔧 [API Usage Guide](API_USAGE_GUIDE.md)
-- 🛡️ [Security Implementation](SECURITY_IMPLEMENTATION_GUIDE.md)
+- 📚 [Development Guide](development.md)
+- 🔧 [API Documentation](api.md)
+- 🛡️ [Security Guide](security.md)
 
 ---
 

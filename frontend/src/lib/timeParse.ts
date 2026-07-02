@@ -1,7 +1,7 @@
 /**
- * Parse a terse time entry into 24-hour "H:i", mirroring the legacy ExtJS
- * work-log grid's flexible altFormats (g:ia | gi | Gi | H:i | ga | …) so users
- * can type times tersely. Returns null when the input can't be parsed.
+ * Parse a terse time entry into 24-hour "H:i", accepting flexible formats
+ * (g:ia | gi | Gi | H:i | ga | …) so users can type times tersely.
+ * Returns null when the input can't be parsed.
  *
  * Accepts e.g. 9:30, 09:30, 9.30, 9h30, 930, 0930, 9, 9:30am, 9:30a, 930p, 9p,
  * 12a (→ 00:00), 12p (→ 12:00).
@@ -62,7 +62,7 @@ export function parseTime(input: string): string | null {
 }
 
 /**
- * Convert a d/m/Y date string (the ExtJS list-row format) to Y-m-d (ISO), or
+ * Convert a d/m/Y date string (the /getData row format) to Y-m-d (ISO), or
  * null when it doesn't match. Shared by toIsoDate, the grid's displayDate, and
  * the entry sort key so the one regex lives in a single place.
  */
@@ -72,7 +72,7 @@ export function dmyToIso(value: string): string | null {
   return match !== null ? `${match[3]}-${match[2]}-${match[1]}` : null
 }
 
-/** ExtJS list rows carry the date as d/m/Y; the HTML date input needs Y-m-d. */
+/** /getData rows carry the date as d/m/Y; the HTML date input needs Y-m-d. */
 export function toIsoDate(displayDate: string): string {
   return dmyToIso(displayDate) ?? ''
 }

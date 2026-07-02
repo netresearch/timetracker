@@ -1,6 +1,8 @@
+# check=skip=InvalidDefaultArgInFrom
 # Netresearch TimeTracker - Dockerfile
 #
-# Build logic only - all versions defined in docker-bake.hcl
+# Build logic only - all versions defined in docker-bake.hcl (single source
+# of truth — hence the deliberately default-less ARGs and the lint skip above).
 # IMPORTANT: Always build with `docker bake`, never `docker build` directly
 #
 # Usage:
@@ -34,7 +36,6 @@ RUN set -ex \
     && apt-get install -y --no-install-recommends \
         libzip-dev \
         libpng-dev \
-        libxml2-dev \
         libldap2-dev \
         libjpeg62-turbo-dev \
         libfreetype6-dev \
@@ -48,28 +49,16 @@ RUN set -ex \
         pdo_mysql \
         ldap \
         zip \
-        xml \
         gd \
         intl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /usr/share/doc/* /usr/share/man/*
 
-# Install APCu from source (PHP 8.5 compatibility)
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends git \
-    && git clone --depth 1 https://github.com/krakjoe/apcu.git /tmp/apcu \
-    && cd /tmp/apcu \
-    && phpize \
-    && ./configure --enable-apcu \
-    && make -j"$(nproc)" \
-    && make install \
-    && docker-php-ext-enable apcu \
-    && apt-get purge -y git \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Install APCu (pinned; backs the Symfony app cache — see config/packages/cache.yaml)
+ARG APCU_VERSION
+RUN pecl install apcu-${APCU_VERSION} \
+    && docker-php-ext-enable apcu
 
 COPY docker/php/apcu.ini /usr/local/etc/php/conf.d/
 
@@ -100,9 +89,8 @@ RUN set -ex \
 # Bun is the package manager of the new SolidJS frontend (frontend/)
 COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
 
-# Copy dependency manifests first (better cache). Root npm deps are now just
-# Playwright + axe for e2e (the webpack-encore toolchain was removed), so the
-# legacy peer-deps workaround is no longer needed.
+# Copy dependency manifests first (better cache). Root npm deps are just
+# Playwright + axe for e2e.
 COPY --chown=app:app package.json package-lock.json ./
 RUN npm ci
 
@@ -128,8 +116,7 @@ ENV APP_ENV=prod
 RUN composer dump-autoload --optimize --classmap-authoritative \
     && composer run-script post-install-cmd --no-interaction || true
 
-# Build the new SolidJS UI (Vite). The legacy ExtJS assets (public/build) are
-# committed static — the Encore build is retired (ExtJS is being removed).
+# Build the SolidJS UI (Vite).
 RUN bun run --cwd frontend build
 
 # Create var directories
@@ -140,8 +127,6 @@ RUN mkdir -p var/log var/cache \
 # TOOLS - Lightweight image for CI/static analysis (no DB needed)
 # =============================================================================
 FROM deps AS tools
-
-COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 # Install dev dependencies for static analysis
 RUN composer install --ignore-platform-req=php
@@ -154,8 +139,6 @@ USER app
 FROM deps AS dev
 
 ARG XDEBUG_VERSION
-
-COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 # Install dev tools
 RUN set -ex \
@@ -194,32 +177,7 @@ ENV APP_DEBUG=1
 # =============================================================================
 FROM dev AS e2e
 
-# Install Playwright system dependencies
-RUN set -ex \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        # Playwright chromium dependencies
-        libnss3 \
-        libnspr4 \
-        libatk1.0-0 \
-        libatk-bridge2.0-0 \
-        libcups2 \
-        libdrm2 \
-        libdbus-1-3 \
-        libxkbcommon0 \
-        libatspi2.0-0 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxfixes3 \
-        libxrandr2 \
-        libgbm1 \
-        libasound2 \
-        libpango-1.0-0 \
-        libcairo2 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Playwright and browsers
+# Install Playwright + chromium including its canonical system dependencies
 RUN npx playwright install chromium --with-deps
 
 ENV APP_ENV=test
@@ -283,8 +241,6 @@ CMD ["php-fpm"]
 # `deps` (no Xdebug — Xdebug would skew the very timings we measure).
 # =============================================================================
 FROM deps AS profiling
-
-COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 ENV CAPTAINHOOK_DISABLE=true
 ENV APP_ENV=profiling

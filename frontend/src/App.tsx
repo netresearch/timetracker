@@ -32,7 +32,7 @@ const queryClient = new QueryClient({
 })
 
 // The page chrome (header + main nav) is server-rendered by
-// templates/partials/header.html.twig, shared with the ExtJS shell;
+// templates/partials/header.html.twig so it paints before this bundle loads;
 // this layout animates it, syncs the active nav item, and hosts the route.
 // Route segment → page title. Drives the single <h1>, the #main-content
 // accessible name, the screen-reader route announcement, and document.title —
@@ -87,9 +87,9 @@ function PageDialog(props: { title: string; onClose: () => void; children: JSX.E
 function Layout(props: ParentProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  // Theming (apply + toggle) is handled framework-neutrally by the shared
-  // header (templates/partials/theme-init.html.twig), so it works on both the
-  // ExtJS and SolidJS shells and the SPA needs no theme code of its own.
+  // Theming (apply + toggle) is handled by the server-rendered header
+  // (templates/partials/theme-init.html.twig) so it applies before this
+  // bundle loads — the SPA needs no theme code of its own.
   let mainRef: HTMLElement | undefined
   let liveRef: HTMLElement | undefined
   let initialRoute = true

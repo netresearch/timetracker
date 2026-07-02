@@ -1,14 +1,32 @@
 <!DOCTYPE HTML>
 <html lang="{{ app.request and app.request.locale ? app.request.locale : 'en' }}">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Access Denied - TimeTracker</title>
         <meta name="robots" content="noindex,nofollow" />
+        {% include 'partials/theme-init.html.twig' %}
+        {# Self-contained inline styles (no Vite bundle on error pages), using
+           the app's light-dark() palette so the page follows the saved theme. #}
         <style>
+            :root {
+                color-scheme: light dark;
+            }
+            :root[data-theme=light] {
+                color-scheme: light;
+            }
+            :root[data-theme=dark] {
+                color-scheme: dark;
+            }
             body {
-                background-color: #e0e0e0;
-                font-family: tahoma, arial, verdana, sans-serif;
-                font-size: 12px;
+                /* plain-color fallbacks precede light-dark() for browsers
+                   without support (docs/FAQ.md baseline) */
+                background-color: #e4e6e8;
+                background-color: light-dark(#e4e6e8, #171a1f);
+                color: #1f2937;
+                color: light-dark(#1f2937, #f1f2f4);
+                font-family: Arial, sans-serif;
+                font-size: 13px;
                 margin: 0;
                 padding: 0;
             }
@@ -18,19 +36,22 @@
                 left: 50%;
                 transform: translate(-50%, -50%);
                 background: #fff;
-                border: 1px solid #99bce8;
-                border-radius: 5px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                background: light-dark(#fff, #1d2127);
+                border: 1px solid #c3c8cd;
+                border: 1px solid light-dark(#c3c8cd, #3c434b);
+                border-radius: 10px;
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
                 width: 400px;
                 max-width: 90%;
             }
             .error-header {
-                background: linear-gradient(to bottom, #c4d8ed 0%, #a8c4e0 100%);
-                border-bottom: 1px solid #99bce8;
-                padding: 8px 10px;
-                font-weight: bold;
-                color: #15428b;
-                border-radius: 4px 4px 0 0;
+                border-bottom: 1px solid #c3c8cd;
+                border-bottom: 1px solid light-dark(#c3c8cd, #3c434b);
+                padding: 12px 16px;
+                font-weight: 600;
+                color: #00525c;
+                color: light-dark(#00525c, #6fd0dd);
+                border-radius: 10px 10px 0 0;
             }
             .error-body {
                 padding: 20px;
@@ -38,12 +59,12 @@
             }
             .error-icon {
                 font-size: 48px;
-                color: #c00;
+                color: #b00000;
+                color: light-dark(#b00000, #e0888c);
                 margin-bottom: 15px;
             }
             .error-message {
                 font-size: 14px;
-                color: #333;
                 margin-bottom: 20px;
                 line-height: 1.5;
             }
@@ -51,27 +72,48 @@
                 margin-top: 20px;
             }
             .btn {
-                display: inline-block;
-                padding: 6px 20px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 44px;
+                padding: 0 20px;
                 margin: 0 5px;
-                background: linear-gradient(to bottom, #f0f0f0 0%, #d4d4d4 100%);
-                border: 1px solid #b5b5b5;
-                border-radius: 3px;
-                color: #333;
+                background: transparent;
+                border: 1px solid #a9adb2;
+                border: 1px solid light-dark(#a9adb2, #3a414a);
+                border-radius: 8px;
+                color: #3a4047;
+                color: light-dark(#3a4047, #c4c9cf);
                 text-decoration: none;
-                font-size: 12px;
+                font-size: 13px;
                 cursor: pointer;
             }
-            .btn:hover {
-                background: linear-gradient(to bottom, #e8e8e8 0%, #c8c8c8 100%);
+            .btn:hover,
+            .btn:focus-visible {
+                background-color: rgba(0, 136, 154, 0.1);
+                background-color: light-dark(rgba(0, 136, 154, 0.1), rgba(111, 208, 221, 0.12));
+                color: #00525c;
+                color: light-dark(#00525c, #6fd0dd);
+            }
+            .btn:focus-visible {
+                outline: 2px solid #00889a;
+                outline: 2px solid light-dark(#00889a, #6fd0dd);
+                outline-offset: 1px;
             }
             .btn-primary {
-                background: linear-gradient(to bottom, #6fa0d2 0%, #4a7db3 100%);
-                border-color: #3b6a9e;
+                background: #00889a;
+                background: light-dark(#00889a, #0f3a40);
+                border-color: #00707f;
+                border-color: light-dark(#00707f, #6fd0dd);
                 color: #fff;
+                color: light-dark(#fff, #6fd0dd);
             }
-            .btn-primary:hover {
-                background: linear-gradient(to bottom, #5a90c5 0%, #3d6da3 100%);
+            .btn-primary:hover,
+            .btn-primary:focus-visible {
+                background: #00707f;
+                background: light-dark(#00707f, #14494f);
+                color: #fff;
+                color: light-dark(#fff, #6fd0dd);
             }
         </style>
     </head>

@@ -58,7 +58,7 @@ The application uses a role-based access control system:
 
 *   **RESTful API:** Provides programmatic access to TimeTracker data and functionality.
 *   **OpenAPI Documentation:** API is documented using OpenAPI v3 specification (`public/api.yml`), viewable via Swagger UI at `/docs/swagger/index.html`.
-*   **Service User Impersonation:** Designated service users can perform API actions on behalf of other users (configured via `SERVICE_USERS` in `.env`).
+*   **User Switching:** Admins with `ROLE_ALLOWED_TO_SWITCH` can impersonate another user via the `simulateUserId` parameter (Symfony `switch_user`).
 
 ## User Interface
 

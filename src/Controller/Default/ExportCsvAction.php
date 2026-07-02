@@ -46,7 +46,6 @@ final class ExportCsvAction extends BaseController
 
         $content = $this->renderView('export.csv.twig', [
             'entries' => $entries,
-            'labels' => null,
         ]);
 
         $filename = strtolower(str_replace(' ', '-', (string) $user->getUsername())) . '.csv';

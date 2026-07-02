@@ -51,9 +51,8 @@ async function deleteThrowawayCustomer(page: Page, name: string): Promise<void> 
 }
 
 /**
- * Inline (spreadsheet-style) cell editing on the SolidJS Administration tables.
- * The classic ExtJS tracking-grid editing lives in keyboard.spec.ts; this covers
- * the new in-cell editing built on the use:gridNav directive.
+ * Inline (spreadsheet-style) cell editing on the SolidJS Administration tables,
+ * built on the use:gridNav directive.
  */
 test.describe('Admin inline cell editing', () => {
   test.beforeEach(async ({ page }) => {

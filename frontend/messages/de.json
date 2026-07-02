@@ -146,8 +146,6 @@
   "help_sc_arrow_nav": "Zwischen Menü, Untermenü, Suche und Tabelle wechseln",
   "help_sc_add": "Neuen Eintrag anlegen",
   "help_sc_continue": "Ausgewählten/letzten Eintrag fortsetzen",
-  "help_sc_delete": "Ausgewählten/letzten Eintrag löschen",
-  "help_sc_edit": "Ausgewählten/letzten Eintrag bearbeiten",
   "help_sc_info": "Info zum ausgewählten/letzten Eintrag anzeigen",
   "help_sc_prolong": "Letzten Eintrag auf die aktuelle Zeit verlängern",
   "help_sc_refresh": "Ansicht aktualisieren",

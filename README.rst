@@ -365,7 +365,7 @@ It is possible to show the timetracker times in Jira cloud,
 even when not syncing the times into such an instance.
 
 To get it working, install the `Greasemonkey browser extension`__ and import
-the ``scripts/timeSummaryForJira`` script.
+the ``public/scripts/timeSummaryForJira.js`` script.
 
 Then visit a ticket detail page of a cloud-hosted Jira instance.
 The right sidebar will show a "Zeiten aus Timetracker laden" button.

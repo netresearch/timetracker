@@ -14,8 +14,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * The root route redirects into the SolidJS SPA — the legacy ExtJS shell was
- * removed. Kept as the named `_start` route so every "go home" flow (login
+ * The root route redirects into the SolidJS SPA.
+ * Kept as the named `_start` route so every "go home" flow (login
  * success, OAuth callback, the 403 page, the Jira time-summary macro) funnels
  * to the worklog at /ui/tracking. Anonymous requests never reach here: the
  * firewall redirects `/` to the login page first (access_control ^/).

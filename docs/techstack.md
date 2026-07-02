@@ -4,39 +4,48 @@ This document provides an overview of the technologies, frameworks, and tools us
 
 ## Backend
 
-*   **PHP:** Version `8.4`.
-*   **Symfony:** Version `7.3`.
+*   **PHP:** Version `8.5`.
+*   **Symfony:** Version `8.1`.
 *   **Doctrine:**
     *   **ORM 3:** (`doctrine/orm`, `doctrine/doctrine-bundle`) with PHP 8 attributes for metadata.
     *   **Migrations:** (`doctrine/doctrine-migrations-bundle`) for incremental schema changes.
-*   **Twig:** (`twig/twig`, `symfony/twig-bundle`) The template engine used for rendering HTML views.
+*   **Twig:** (`twig/twig`, `symfony/twig-bundle`) Renders the server-side templates (SPA shell, login, error pages, CSV export).
 *   **Monolog:** (`symfony/monolog-bundle`) Used for logging application events, errors, and debug information.
-*   **Guzzle:** (`guzzlehttp/guzzle`) A PHP HTTP client used for making external API requests.
-*   **Laminas LDAP:** (`laminas/laminas-ldap`) Used for interacting with LDAP directories (likely for authentication or user synchronization).
-*   **PHPSpreadsheet:** (`phpoffice/phpspreadsheet`) Used for reading and writing spreadsheet files (Excel, CSV, etc.).
-*   **Sentry:** (`sentry/sentry-symfony`) Used for real-time error tracking and monitoring.
+*   **Guzzle:** (`guzzlehttp/guzzle` + `guzzlehttp/oauth-subscriber`) HTTP client for the Jira integration (OAuth1).
+*   **Laminas LDAP:** (`laminas/laminas-ldap`) LDAP/Active Directory authentication.
+*   **PHPSpreadsheet:** (`phpoffice/phpspreadsheet`) XLSX export for controlling.
+*   **Sentry:** (`sentry/sentry-symfony`) Real-time error tracking and monitoring.
+*   **APCu:** In-memory backend of the Symfony app cache (see `docs/apcu-setup.md`).
 
 ## Frontend
 
-*   **Webpack Encore:** (`@symfony/webpack-encore`, `symfony/webpack-encore-bundle`) Integrates Webpack into the Symfony application for compiling, bundling, and versioning frontend assets (JavaScript, CSS, images).
-*   **Stimulus:** (`@hotwired/stimulus`, `@symfony/stimulus-bridge`) A modest JavaScript framework for connecting JavaScript components (controllers) to HTML elements using data attributes.
-*   **Sass/SCSS:** (`sass-loader`, `node-sass`, `sass`) A CSS preprocessor used for writing more maintainable and organized stylesheets.
-*   **Babel:** (`@babel/core`, `@babel/preset-env`) A JavaScript compiler used to transpile modern JavaScript (ES6+) into backward-compatible versions for older browsers.
-*   **Core-js:** (`core-js`) Provides polyfills for modern JavaScript features.
+The UI is a SolidJS single-page application in `frontend/`, served under `/ui`
+(see `frontend/README.md`):
+
+*   **SolidJS** 1.9 + **TypeScript** (strict)
+*   **Vite** 8 with `vite-plugin-symfony`, built into `public/build-ui`
+    (integrated via `pentatrion/vite-bundle`)
+*   **Tailwind CSS** 4 + own design tokens (CSS custom properties, `light-dark()`)
+*   **Ark UI** headless components
+*   **TanStack Solid Query** for server state
+*   **Paraglide JS** for i18n (DE/EN)
+*   **bun** as the frontend package manager and script runner
 
 ## Development & Tooling
 
-*   **Docker & Docker Compose:** Used to create containerized, reproducible development and production environments.
+*   **Docker & Docker Compose:** Containerized development, test and production environments (`docker-bake.hcl` holds all image/version pins).
 *   **Composer:** The dependency manager for PHP packages.
-*   **npm:** The dependency manager for Node.js packages (used for frontend build tools and libraries).
-*   **PHPUnit 12:** (`phpunit/phpunit`) The primary framework for unit, integration, and functional tests.
-*   **PHPStan:** (`phpstan/phpstan`) A static analysis tool for PHP, helping to find errors without running the code.
-*   **Psalm:** (`vimeo/psalm`) Another static analysis tool for PHP, focused on finding errors and improving code quality.
-*   **PHP_CodeSniffer:** (`squizlabs/php_codesniffer`) Checks PHP code against coding standards (e.g., PSR-12).
-*   **PHP-CS-Fixer:** (`php-cs-fixer/shim`) Automatically fixes PHP code style issues based on configured rules.
-*   **Rector:** (`rector/rector`) A tool for automated code refactoring and upgrades.
+*   **npm (repo root):** Only the Playwright e2e tooling.
+*   **PHPUnit 13:** (`phpunit/phpunit`) Unit, controller, and integration tests.
+*   **Playwright:** Browser e2e suite in `e2e/` (with `@axe-core/playwright` for a11y checks).
+*   **Vitest:** Frontend unit tests (jsdom).
+*   **PHPStan:** (`phpstan/phpstan`, level 10) Static analysis.
+*   **PHPat:** (`phpat/phpat`) Architecture rules on top of PHPStan.
+*   **PHP-CS-Fixer:** (`friendsofphp/php-cs-fixer`) Enforces the code style.
+*   **Rector:** (`rector/rector`) Automated refactoring and upgrades.
+*   **CaptainHook:** Git hooks running the quality gates before each commit.
 
 ## Infrastructure
 
-*   **Nginx:** (`nginx:alpine` Docker image) Used as the web server and reverse proxy, serving static assets and forwarding PHP requests to the application container (PHP-FPM).
-*   **MariaDB:** (`mariadb` Docker image) The relational database used to store application data.
+*   **Nginx:** (`nginx:alpine` Docker image) Web server and reverse proxy, serving static assets and forwarding PHP requests to the application container (PHP-FPM).
+*   **MariaDB:** (`mariadb:12.1` Docker image) The relational database used to store application data.

@@ -8,10 +8,10 @@ TimeTracker is a Symfony-based PHP application for project/customer-centric time
 
 **Technology Stack:**
 - Backend: PHP 8.5, Symfony 8, Doctrine ORM 3, Twig, Monolog
-- Frontend: Webpack Encore, Stimulus, Sass
+- Frontend: SolidJS, TypeScript, Vite, Tailwind CSS (in `frontend/`, bun)
 - Infrastructure: Docker Compose (Nginx, PHP-FPM, MariaDB)
-- Tests: PHPUnit 12
-- Static Analysis: PHPStan, Psalm (Psalm clean)
+- Tests: PHPUnit 13, Playwright (e2e), Vitest (frontend)
+- Static Analysis: PHPStan level 10, PHPat
 - API: OpenAPI v3 at `public/api.yml`
 
 ## Essential Commands
@@ -30,40 +30,37 @@ docker compose run --rm app-dev bin/console doctrine:migrations:migrate -n
 ### Testing
 ```bash
 # Run all PHPUnit tests
-docker compose run --rm -e APP_ENV=test app bin/phpunit
+docker compose run --rm -e APP_ENV=test app-dev bin/phpunit
 
 # Run tests with coverage
-docker compose run --rm -e APP_ENV=test app bin/phpunit --coverage-html var/coverage
+docker compose run --rm -e APP_ENV=test app-dev bin/phpunit --coverage-html var/coverage
 
 # Or use composer script
-docker compose run --rm -e APP_ENV=test app composer test
+docker compose run --rm -e APP_ENV=test app-dev composer test
 ```
 
 ### Code Quality
 ```bash
 # Check code style
-docker compose run --rm app composer cs-check
+COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-check
 
 # Fix code style
-docker compose run --rm app composer cs-fix
+COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-fix
 
 # Run PHPStan analysis
-docker compose run --rm app composer analyze
+COMPOSE_PROFILES=tools docker compose run --rm app-tools composer analyze
 
-# Run Psalm analysis
-docker compose run --rm app composer psalm
-
-# Security check
-docker compose run --rm app composer security-check
+# Security audit
+COMPOSE_PROFILES=tools docker compose run --rm app-tools composer audit
 ```
 
-### Frontend Build
+### Frontend Build (bun, in frontend/)
 ```bash
-# Development build
-docker compose run --rm app npm run dev
+# Development server with HMR
+cd frontend && bun install && bun run dev
 
-# Production build
-docker compose run --rm app npm run build
+# Production build (outputs to public/build-ui)
+cd frontend && bun run build
 ```
 
 ## Code Style and Standards
@@ -82,7 +79,7 @@ docker compose run --rm app npm run build
 - **Persistence:** Doctrine ORM with migrations in `migrations/`
 - **Views:** Twig templates in `templates/`
 - **Services:** Business logic in `App\Service` namespace
-- **Frontend:** Webpack Encore builds assets from `assets/` to `public/build/`
+- **Frontend:** SolidJS + TypeScript in `frontend/`, built by Vite (bun) to `public/build-ui/`
 
 ## Testing Guidelines
 
@@ -106,23 +103,22 @@ Before submitting any PR:
 
 1. **Run Code Style Checks:**
    ```bash
-   docker compose run --rm app composer cs-check
+   COMPOSE_PROFILES=tools docker compose run --rm app-tools composer cs-check
    ```
 
 2. **Run Static Analysis:**
    ```bash
-   docker compose run --rm app composer analyze
-   docker compose run --rm app composer psalm
+   COMPOSE_PROFILES=tools docker compose run --rm app-tools composer analyze
    ```
 
 3. **Run Tests:**
    ```bash
-   docker compose run --rm -e APP_ENV=test app bin/phpunit
+   docker compose run --rm -e APP_ENV=test app-dev bin/phpunit
    ```
 
-4. **Security Check:**
+4. **Security Audit:**
    ```bash
-   docker compose run --rm app composer security-check
+   COMPOSE_PROFILES=tools docker compose run --rm app-tools composer audit
    ```
 
 ## Project Structure
@@ -132,14 +128,14 @@ Before submitting any PR:
 - `config/` - Symfony configuration, routes, services
 - `public/` - Web root and front controller
 - `migrations/` - Doctrine migrations
-- `assets/` - Frontend source assets
+- `frontend/` - SolidJS frontend sources (Vite/bun)
 - `tests/` - PHPUnit tests
 - `docs/` - Developer documentation
 
 ## Important Notes
 
-- **Run commands in Docker:** Always use `docker compose run --rm app` prefix
-- **Service Layer:** Ongoing refactor moves helpers to `App\Service` (see PLANNING.md)
+- **Run commands in Docker:** Always use `docker compose run --rm app-dev` (or `app-tools`) prefix
+- **Service Layer:** Business logic lives in `App\Service`
 - **Configuration:** Primary config via `.env` and `.env.local`
 - **Documentation:** Update relevant docs when making changes
 - **Minimal Changes:** Make surgical, focused changes - don't refactor unrelated code
@@ -151,7 +147,6 @@ For more details, see:
 - `README.rst` - Project setup and overview
 - `docs/techstack.md` - Technology stack details
 - `docs/testing.md` - Testing procedures
-- `docs/security-checklist.md` - Security guidelines
+- `docs/security.md` - Security guidelines
 - `docs/configuration.md` - Configuration options
-- `PLANNING.md` - Upgrade path and refactors
 - `TASKS.md` - Current tasks and progress

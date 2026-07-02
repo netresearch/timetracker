@@ -15,6 +15,9 @@ jobs:
       actions: read
       id-token: write
       contents: write
+    outputs:
+      has_subjects: ${{ steps.subjects.outputs.has_subjects }}
+      subjects: ${{ steps.subjects.outputs.subjects }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

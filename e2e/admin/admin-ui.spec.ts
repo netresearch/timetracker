@@ -6,7 +6,7 @@ import { goToAdminPage } from '../helpers/navigation';
 /**
  * E2E tests for the Administration area.
  *
- * The ExtJS Administration tab was migrated into the SolidJS UI
+ * Administration lives in the SolidJS UI
  * (frontend/src/pages/Admin.tsx + components/AdminCrudShell.tsx), served at
  * `/ui/admin` and gated on ROLE_ADMIN. One generic CRUD shell drives all eight
  * entities via per-entity descriptors; list responses are row-wrapped and

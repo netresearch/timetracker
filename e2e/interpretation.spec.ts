@@ -6,8 +6,8 @@ import { goToAuswertungPage } from './helpers/navigation';
 /**
  * E2E tests for the Evaluation (Auswertung) feature.
  *
- * The Interpretation/Auswertung tab was migrated out of the ExtJS shell into
- * the SolidJS UI (frontend/src/pages/Auswertung.tsx), served at
+ * Interpretation/Auswertung lives in the SolidJS UI
+ * (frontend/src/pages/Auswertung.tsx), served at
  * `/ui/auswertung`. These tests drive that page; the grouped-effort charts
  * render for the logged-in user's own entries by default. The API-endpoint
  * tests further below exercise the backend the page consumes.

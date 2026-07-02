@@ -1,7 +1,6 @@
 # timetracker frontend (SolidJS)
 
-The new UI, replacing the legacy ExtJS app one view at a time
-(strangler-fig migration). Served by Symfony under `/ui/` via
+The TimeTracker UI. Served by Symfony under `/ui/` via
 [pentatrion/vite-bundle](https://symfony-vite.pentatrion.com/)
 (`config/packages/pentatrion_vite.yaml`, `src/Controller/Ui/SpaAction.php`,
 `templates/ui/index.html.twig`).
@@ -9,7 +8,7 @@ The new UI, replacing the legacy ExtJS app one view at a time
 ## Stack
 
 - [SolidJS](https://www.solidjs.com/) 1.9 + TypeScript (strict)
-- Vite 8 (`vite-plugin-symfony` writes `public/build/ui/.vite/entrypoints.json`)
+- Vite 8 (`vite-plugin-symfony` writes `public/build-ui/.vite/entrypoints.json`)
 - [Ark UI](https://ark-ui.com/) headless components + own design tokens
   (CSS custom properties, `light-dark()`, see `src/styles/app.css`)
 - [TanStack Solid Query](https://tanstack.com/query) for server state
@@ -22,7 +21,7 @@ The new UI, replacing the legacy ExtJS app one view at a time
 ```bash
 bun install            # install dependencies
 bun run dev            # vite dev server with HMR (run next to the Symfony app)
-bun run build          # production build into ../public/build/ui
+bun run build          # production build into ../public/build-ui
 bun run lint           # eslint
 bun run typecheck      # paraglide compile + tsc --noEmit
 bun run test           # vitest

@@ -20,7 +20,7 @@ variable "PHP_BASE_IMAGE" {
 }
 
 variable "NODE_VERSION" {
-  default = "24"
+  default = "26"
 }
 
 variable "COMPOSER_IMAGE" {
@@ -29,6 +29,10 @@ variable "COMPOSER_IMAGE" {
 
 variable "XDEBUG_VERSION" {
   default = "3.5.3"
+}
+
+variable "APCU_VERSION" {
+  default = "5.1.28"
 }
 
 
@@ -77,6 +81,7 @@ target "_common" {
     NODE_VERSION   = NODE_VERSION
     COMPOSER_IMAGE = COMPOSER_IMAGE
     XDEBUG_VERSION = XDEBUG_VERSION
+    APCU_VERSION   = APCU_VERSION
   }
 }
 

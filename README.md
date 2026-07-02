@@ -46,9 +46,9 @@ open http://localhost:8765
 ### Manual Installation
 
 ```bash
-# Prerequisites: PHP 8.5+, MariaDB/MySQL, Composer, Node.js 22+
+# Prerequisites: PHP 8.5+, MariaDB/MySQL, Composer, bun (frontend), Node.js 26+ (e2e)
 composer install
-npm install && npm run build
+cd frontend && bun install && bun run build && cd ..
 
 cp .env.example .env.local
 # Edit .env.local with your database and LDAP settings
@@ -65,14 +65,14 @@ symfony server:start
 
 - **PHP**: 8.5 with extensions: `ldap`, `pdo_mysql`, `intl`, `mbstring`
 - **Database**: MariaDB 12+ or MySQL 8.0+
-- **Node.js**: 22+ (for asset compilation)
+- **Node.js**: 26+ (for the Playwright e2e tooling; the frontend builds with bun)
 
 ---
 
 ## Technology Stack
 
 - **Backend**: PHP 8.5, Symfony 8, Doctrine ORM 3
-- **Frontend**: ExtJS (legacy UI), Stimulus, SCSS, Webpack Encore
+- **Frontend**: SolidJS, TypeScript, Vite, Tailwind CSS
 - **Testing**: PHPUnit 12, Playwright (E2E), PHPStan Level 10, PHP-CS-Fixer, Rector
 - **Infrastructure**: Docker, GitHub Actions CI/CD
 

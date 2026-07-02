@@ -1,7 +1,5 @@
-# Vite integration for the new SolidJS frontend (frontend/).
-# The legacy ExtJS app keeps using plain asset() tags + Webpack Encore copyFiles;
-# everything new is built by Vite into public/build-ui — deliberately OUTSIDE
-# public/build, which Encore's cleanupOutputBeforeBuild() wipes.
+# Vite integration for the SolidJS frontend (frontend/); Vite builds into
+# public/build-ui.
 pentatrion_vite:
     public_directory: public
     build_directory: build-ui

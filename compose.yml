@@ -40,7 +40,6 @@ services:
       - ./docker/php/test.ini:/usr/local/etc/php/conf.d/99-test.ini:ro
     depends_on:
       - db
-      - db-test
     restart: "no"
     profiles:
       - dev
@@ -116,30 +115,6 @@ services:
       - development
       - test
 
-  # Test database (for unit/integration tests)
-  db-test:
-    image: mariadb:12.1
-    environment:
-      - MYSQL_ROOT_PASSWORD=${TEST_DB_ROOT_PASSWORD:-global123}
-      - MYSQL_USER=${TEST_DB_USER:-unittest}
-      - MYSQL_PASSWORD=${TEST_DB_PASSWORD:-unittest}
-      - MYSQL_DATABASE=${TEST_DB_NAME:-unittest}
-    volumes:
-      - db-test-data:/var/lib/mysql
-      - ./sql/unittest/001_testtables.sql:/docker-entrypoint-initdb.d/001_testtables.sql
-      - ./sql/unittest/002_testdata.sql:/docker-entrypoint-initdb.d/002_testdata.sql
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 5s
-    profiles: 
-      - dev
-      - development
-      - test
-
   # Unit test database (for PHPUnit tests)
   db_unittest:
     image: mariadb:12.1
@@ -192,7 +167,7 @@ services:
       # Frozen time for deterministic E2E tests - matches test data in sql/testdata.sql
       - APP_FROZEN_TIME=2024-01-15 12:00:00
       # Use separate E2E database to avoid conflicts with dev
-      - DATABASE_URL=mysql://timetracker:${E2E_DB_PASSWORD:-timetracker}@db-e2e:3306/timetracker?serverVersion=mariadb-12.1.0&charset=utf8mb4
+      - DATABASE_URL=mysql://timetracker:${E2E_DB_PASSWORD:-timetracker}@db-e2e:3306/timetracker?serverVersion=mariadb-12.1.2&charset=utf8mb4
       # Coverage collection (set COVERAGE_ENABLED=1 XDEBUG_MODE=coverage to enable)
       - COVERAGE_ENABLED=${COVERAGE_ENABLED:-0}
       - XDEBUG_MODE=${XDEBUG_MODE:-off}
@@ -265,10 +240,6 @@ volumes:
   db-data:
     driver: local
 
-  # Test volumes  
-  db-test-data:
-    driver: local
-  
   # Unit test volume
   db-unittest-data:
     driver: local

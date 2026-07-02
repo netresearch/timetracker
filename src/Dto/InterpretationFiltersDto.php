@@ -40,7 +40,7 @@ final readonly class InterpretationFiltersDto
         public ?string $month = null,
         public ?int $maxResults = null,
         public ?int $page = null,
-        public ?int $start = null, // ExtJS offset parameter
+        public ?int $start = null, // row-offset pagination parameter
     ) {
     }
 

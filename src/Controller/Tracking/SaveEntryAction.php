@@ -247,10 +247,10 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         // Always reflect the submitted state so clearing a description or ticket
-        // inline actually persists. Both clients POST the whole record (the
-        // SolidJS grid via savePayload, the ExtJS grid via `params: record.data`),
-        // sending '' for a cleared field — the previous non-empty guard made the
-        // cleared value silently revert on the next refetch.
+        // inline actually persists. The grid POSTs the whole record
+        // (savePayload), sending '' for a cleared field — the previous
+        // non-empty guard made the cleared value silently revert on the next
+        // refetch.
         $entry->setDescription($entrySaveDto->description);
         $entry->setTicket($ticket);
 

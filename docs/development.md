@@ -147,11 +147,11 @@ mysql timetracker < sql/full.sql
 composer install --dev
 
 # Frontend dependencies
-npm install --legacy-peer-deps
+npm install --legacy-peer-deps   # root deps (Playwright e2e tooling)
 
-# Build frontend assets
-npm run dev              # Development build
-npm run watch           # Watch mode for development
+# Build frontend assets (bun, in frontend/)
+cd frontend && bun install && bun run build   # production build to public/build-ui
+cd frontend && bun run dev                    # dev server with HMR
 ```
 
 ### 4. Verification
@@ -330,8 +330,7 @@ kcachegrind /tmp/cachegrind.out.*
 ```bash
 # Database operations
 make db-migrate           # Apply migrations
-make db-reset            # Reset to clean state
-make db-fixtures         # Load sample data
+make reset-test-db        # Recreate the test database from fixtures
 
 # Manual operations  
 php bin/console doctrine:database:drop --force
@@ -539,7 +538,7 @@ rm -rf node_modules package-lock.json
 npm install --legacy-peer-deps
 
 # Use exact Node.js version
-nvm use 18.17.0
+nvm use 26
 npm install
 ```
 
@@ -567,9 +566,9 @@ php -d xdebug.mode=profile bin/console app:export
 ### Getting Help
 
 1. **Check Existing Documentation**
-   - [API Documentation](API_DOCUMENTATION.md)
-   - [Architecture Guide](PROJECT_INDEX.md)
-   - [Security Guide](SECURITY_IMPLEMENTATION_GUIDE.md)
+   - [API Documentation](api.md)
+   - [Technology Stack](techstack.md)
+   - [Security Guide](security.md)
 
 2. **Search Issues**
    - [GitHub Issues](https://github.com/netresearch/timetracker/issues)
@@ -604,7 +603,7 @@ php -d xdebug.mode=profile bin/console app:export
 
 ---
 
-**🎉 Congratulations!** Your development environment is now ready. Start by exploring the [API Documentation](API_DOCUMENTATION.md) or pick up a GitHub issue labeled `good-first-issue`.
+**🎉 Congratulations!** Your development environment is now ready. Start by exploring the [API Documentation](api.md) or pick up a GitHub issue labeled `good-first-issue`.
 
 ---
 
