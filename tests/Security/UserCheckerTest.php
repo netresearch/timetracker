@@ -20,16 +20,25 @@ use Symfony\Component\Security\Core\User\InMemoryUser;
  */
 final class UserCheckerTest extends TestCase
 {
-    public function testActiveUserPassesPreAuth(): void
+    public function testActiveUserPassesPostAuth(): void
     {
         $this->expectNotToPerformAssertions();
 
-        new UserChecker()->checkPreAuth(new User()->setActive(true));
+        new UserChecker()->checkPostAuth(new User()->setActive(true));
     }
 
-    public function testDeactivatedUserIsRejected(): void
+    public function testDeactivatedUserIsRejectedAfterCredentials(): void
     {
         $this->expectException(CustomUserMessageAccountStatusException::class);
+
+        new UserChecker()->checkPostAuth(new User()->setActive(false));
+    }
+
+    public function testPreAuthNeverRejects(): void
+    {
+        // The active check moved to checkPostAuth so a wrong password can't be
+        // used to probe deactivated usernames; preAuth is now a no-op.
+        $this->expectNotToPerformAssertions();
 
         new UserChecker()->checkPreAuth(new User()->setActive(false));
     }
@@ -39,6 +48,6 @@ final class UserCheckerTest extends TestCase
         // The check only applies to our User entity; any other UserInterface passes.
         $this->expectNotToPerformAssertions();
 
-        new UserChecker()->checkPreAuth(new InMemoryUser('x', null));
+        new UserChecker()->checkPostAuth(new InMemoryUser('x', null));
     }
 }

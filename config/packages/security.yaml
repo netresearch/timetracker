@@ -27,15 +27,20 @@ security:
             # Set entry point to form_login for multiple authenticators
             entry_point: form_login
 
-            # Use the new authenticator manager in Symfony 7.3
+            # Single authenticator routing per user (local password vs LDAP bind).
             custom_authenticators:
-                - App\Security\LdapAuthenticator
+                - App\Security\LoginFormAuthenticator
 
             # Form login configuration for unified route
             form_login:
                 login_path: _login
                 check_path: _login
                 enable_csrf: true
+
+            # Throttle repeated login attempts per username+IP (offline-crackable
+            # local hashes now exist; this also protects LDAP-account logins).
+            login_throttling:
+                max_attempts: 5
 
             # Standard logout configuration
             logout:

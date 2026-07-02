@@ -14,7 +14,7 @@ use App\Entity\User;
 use App\Enum\UserType;
 use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
-use App\Security\LdapAuthenticator;
+use App\Security\LoginFormAuthenticator;
 use App\Service\Ldap\LdapClientService;
 use Doctrine\ORM\EntityManagerInterface;
 use Laminas\Ldap\Exception\LdapException;
@@ -33,25 +33,29 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface;
+use Symfony\Component\PasswordHasher\PasswordHasherInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
+use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use Tests\Fixtures\TokenStub;
 
 /**
- * Unit tests for LdapAuthenticator.
+ * Unit tests for LoginFormAuthenticator.
  *
  * @internal
  */
-#[CoversClass(LdapAuthenticator::class)]
+#[CoversClass(LoginFormAuthenticator::class)]
 #[AllowMockObjectsWithoutExpectations]
-final class LdapAuthenticatorTest extends TestCase
+final class LoginFormAuthenticatorTest extends TestCase
 {
     private EntityManagerInterface&MockObject $entityManager;
     private RouterInterface&Stub $router;
     private ParameterBagInterface&Stub $parameterBag;
     private LoggerInterface&Stub $logger;
     private LdapClientService&Stub $ldapClient;
+    private PasswordHasherFactoryInterface&Stub $passwordHasherFactory;
 
     protected function setUp(): void
     {
@@ -60,18 +64,25 @@ final class LdapAuthenticatorTest extends TestCase
         $this->parameterBag = self::createStub(ParameterBagInterface::class);
         $this->logger = self::createStub(LoggerInterface::class);
         $this->ldapClient = self::createStub(LdapClientService::class);
+
+        $hasher = self::createStub(PasswordHasherInterface::class);
+        $hasher->method('hash')->willReturn('$2y$dummy');
+        $hasher->method('verify')->willReturn(false);
+        $this->passwordHasherFactory = self::createStub(PasswordHasherFactoryInterface::class);
+        $this->passwordHasherFactory->method('getPasswordHasher')->willReturn($hasher);
     }
 
-    private function makeSubject(): LdapAuthenticator
+    private function makeSubject(): LoginFormAuthenticator
     {
         $this->router->method('generate')->willReturn('/');
 
-        return new LdapAuthenticator(
+        return new LoginFormAuthenticator(
             $this->entityManager,
             $this->router,
             $this->parameterBag,
             $this->logger,
             $this->ldapClient,
+            $this->passwordHasherFactory,
         );
     }
 
@@ -656,5 +667,82 @@ final class LdapAuthenticatorTest extends TestCase
         self::assertNotNull($passport->getBadge(\Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge::class));
         self::assertNotNull($passport->getBadge(\Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge::class));
         self::assertNotNull($passport->getBadge(\Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge::class));
+    }
+
+    // ==================== local-password routing (ADR-018 D1) ====================
+
+    public function testLocalAccountUsesPasswordCredentialsAndSkipsLdap(): void
+    {
+        $this->configureDefaultLdapParams();
+
+        // A local account has a password hash → routed to the hasher, not LDAP.
+        $localUser = new User()->setUsername('local.admin')->setPassword('$2y$hashed');
+
+        $userRepo = self::createStub(UserRepository::class);
+        $userRepo->method('findOneBy')->willReturn($localUser);
+        $this->entityManager->method('getRepository')->willReturn($userRepo);
+
+        // The LDAP client must never be touched for a local account.
+
+        $authenticator = $this->makeSubject();
+        $request = new Request([], ['_username' => 'local.admin', '_password' => 'secret', '_csrf_token' => 'token']);
+
+        $passport = $authenticator->authenticate($request);
+
+        $credentials = $passport->getBadge(PasswordCredentials::class);
+        self::assertInstanceOf(PasswordCredentials::class, $credentials);
+        self::assertSame('secret', $credentials->getPassword());
+
+        // The user loader returns the row directly (no LDAP bind).
+        $userBadge = $passport->getBadge(\Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge::class);
+        self::assertNotNull($userBadge);
+        self::assertSame($localUser, $userBadge->getUser());
+    }
+
+    public function testLocalOnlyModeRejectsNonLocalAccountGenerically(): void
+    {
+        // LDAP unconfigured (empty host) + a row without a password hash.
+        $this->parameterBag->method('get')->willReturnMap([
+            ['ldap_host', ''],
+            ['ldap_create_user', false],
+        ]);
+
+        $ldapUser = new User()->setUsername('ldap.only');
+        $userRepo = self::createStub(UserRepository::class);
+        $userRepo->method('findOneBy')->willReturn($ldapUser);
+        $this->entityManager->method('getRepository')->willReturn($userRepo);
+
+        $authenticator = $this->makeSubject();
+        $request = new Request([], ['_username' => 'ldap.only', '_password' => 'secret', '_csrf_token' => 'token']);
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $authenticator->authenticate($request);
+    }
+
+    public function testLocalOnlyModeRejectsUnknownUserGenericallyAfterDummyVerify(): void
+    {
+        $this->parameterBag->method('get')->willReturnMap([
+            ['ldap_host', ''],
+            ['ldap_create_user', true],
+        ]);
+
+        $userRepo = self::createStub(UserRepository::class);
+        $userRepo->method('findOneBy')->willReturn(null);
+        $this->entityManager->method('getRepository')->willReturn($userRepo);
+
+        // The dummy verify must run so the unknown-user path costs the same as a
+        // real wrong-password check (anti-enumeration).
+        $hasher = $this->createMock(PasswordHasherInterface::class);
+        $hasher->method('hash')->willReturn('$2y$dummy');
+        $hasher->expects(self::once())->method('verify')->with('$2y$dummy', 'secret')->willReturn(false);
+        $factory = $this->createMock(PasswordHasherFactoryInterface::class);
+        $factory->method('getPasswordHasher')->willReturn($hasher);
+        $this->passwordHasherFactory = $factory;
+
+        $authenticator = $this->makeSubject();
+        $request = new Request([], ['_username' => 'nobody', '_password' => 'secret', '_csrf_token' => 'token']);
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $authenticator->authenticate($request);
     }
 }

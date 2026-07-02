@@ -1,7 +1,36 @@
 # ADR-018: Authentication Extension — Local Passwords, MFA (TOTP) and Passkeys
 
-**Status:** Proposed
+**Status:** Accepted — D1 (local passwords, LDAP optional) implemented; D2–D4 (MFA, passkeys) pending
 **Date:** 2026-07-02
+
+> **Implementation note (D1).** The auth core landed as one PR: `users.password`
+> migration, `PasswordAuthenticatedUserInterface`, the routing `LoginFormAuthenticator`,
+> local-only mode, `app:user:create`, and `login_throttling`. The admin password
+> set/clear UX is a follow-up PR. One deviation from the design below: `getPassword()`
+> returns the stored hash for local accounts but keeps the **synthetic** value
+> (not `null`) for LDAP accounts — a real `null` would make the remember-me
+> signature hasher `base64_encode(null)` and trip a PHP 8.5 deprecation. Because
+> the LDAP synthetic value is unchanged, **no remember-me invalidation occurs on
+> deploy** (contrary to the Consequences note below).
+>
+> **Security limitation — LDAP remember-me is not credential-bound (accepted).**
+> The signature covers `getPassword()`, which for LDAP accounts is the *stable*
+> synthetic value, not the directory credential. So for LDAP accounts an
+> outstanding remember-me cookie survives an LDAP password change or a
+> directory-side disable until it expires (30 days). This is unchanged from the
+> pre-D1 behaviour (every account had a synthetic password then) and is **not**
+> made worse by D1 — local accounts are strictly *better* off, their cookies are
+> now bound to the real hash and invalidate on password change. The offboarding
+> control remains `users.active = 0`: `UserChecker::checkPostAuth` runs on
+> `AuthenticationSuccessEvent`, which the authenticator manager dispatches for the
+> remember-me authenticator too, so a deactivated account is rejected the moment a
+> remember-me cookie is used to re-authenticate (the user is reloaded from the DB
+> each time). Note the scope: an already-established *session* is refreshed by
+> `ContextListener`, which does **not** re-run `UserChecker` — mid-session
+> deactivation takes effect on the next re-authentication or at session expiry,
+> which is the pre-existing behaviour and unchanged by D1. Binding LDAP
+> remember-me to a directory-derived value (e.g. a hash of the LDAP
+> `pwdChangedTime`) is possible but out of scope for D1.
 **Relates to:** [ADR-004](ADR-004-authentication-strategy-ldap-local.md) (designs, in a
 narrower and safer form, the local-account capability ADR-004 sketched but never built),
 [ADR-011](ADR-011-security-architecture.md) (extends the security architecture),
@@ -12,7 +41,7 @@ narrower and safer form, the local-account capability ADR-004 sketched but never
 ### Current state (verified in code, 2026-07-02)
 
 - **LDAP is the only login path.** The `main` firewall registers one custom
-  authenticator, [`LdapAuthenticator`](../../src/Security/LdapAuthenticator.php)
+  authenticator, [`LdapAuthenticator`](../../src/Security/LoginFormAuthenticator.php) (renamed to `LoginFormAuthenticator` in D1)
   ([config/packages/security.yaml](../../config/packages/security.yaml)). It handles
   every POST to `_login`/`login_check`, binds against LDAP via the laminas-based
   [`LdapClientService`](../../src/Service/Ldap/LdapClientService.php), and passes

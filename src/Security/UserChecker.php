@@ -16,20 +16,29 @@ use Symfony\Component\Security\Core\User\UserCheckerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * Refuses authentication for deactivated accounts. Runs before the credential
- * check, so a deactivated user is rejected even before the LDAP bind. Wired as the
- * `main` firewall's user_checker (config/packages/security.yaml).
+ * Refuses authentication for deactivated accounts. Wired as the `main`
+ * firewall's user_checker (config/packages/security.yaml).
+ *
+ * The check runs in checkPostAuth (AuthenticationSuccessEvent), i.e. AFTER the
+ * credential check, so the distinct "deactivated" message is only ever revealed
+ * to someone who already presented valid credentials — a wrong password yields
+ * the generic bad-credentials error, so the endpoint can't be used to probe
+ * which usernames exist and are deactivated (this matters for local password
+ * accounts, whose user row is resolved before the credential check). It still
+ * enforces on remember-me: AuthenticationSuccessEvent fires for token-based
+ * auth too, whereas checkPreAuth is skipped for PreAuthenticatedUserBadge
+ * passports.
  */
 final class UserChecker implements UserCheckerInterface
 {
     public function checkPreAuth(UserInterface $user): void
     {
-        if ($user instanceof User && !$user->getActive()) {
-            throw new CustomUserMessageAccountStatusException('This account has been deactivated.');
-        }
     }
 
     public function checkPostAuth(UserInterface $user, ?TokenInterface $token = null): void
     {
+        if ($user instanceof User && !$user->getActive()) {
+            throw new CustomUserMessageAccountStatusException('This account has been deactivated.');
+        }
     }
 }

@@ -45,14 +45,29 @@ The test environment ([.env.test](../.env.test)) points at the dedicated
 `mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4`
 (no host port is published for it).
 
-## LDAP
+## Authentication (LDAP + local accounts)
 
-Authentication is LDAP-only. Defaults in [.env](../.env) target the bundled
-`ldap-dev` container:
+Each account authenticates against exactly one source (ADR-018 D1): a user
+with a stored password hash is a **local account** (verified against the hash;
+LDAP is never consulted for it), any other user is an **LDAP account**. LDAP is
+optional — leaving `LDAP_HOST` empty puts the instance in **local-only mode**
+and only password accounts can log in.
+
+Bootstrap a local admin (also the LDAP-outage escape hatch / password reset):
+
+```bash
+bin/console app:user:create <username> --type=ADMIN
+```
+
+Login attempts are throttled to 5 per username+IP.
+
+### LDAP
+
+Defaults in [.env](../.env) target the bundled `ldap-dev` container:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `LDAP_HOST` | `ldap-dev` | LDAP server host |
+| `LDAP_HOST` | `ldap-dev` | LDAP server host (**empty = local-only mode**) |
 | `LDAP_PORT` | `389` | Port (`636` for LDAPS) |
 | `LDAP_READUSER` | `cn=readuser,dc=dev,dc=local` | Read/bind user DN |
 | `LDAP_READPASS` | `readuser` | Read/bind user password |
