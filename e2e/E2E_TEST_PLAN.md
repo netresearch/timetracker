@@ -37,7 +37,7 @@ waits), `navigation` (header link selectors), `worklog`, `api`, `clock`
 
 Users must exist in BOTH:
 
-1. LDAP (`docker/ldap/dev-users.ldif`, ldap-dev container) — authentication
+1. LDAP (`docker/ldap/users-only.ldif`, ldap-dev container) — authentication
 2. The test database (`sql/unittest/*.sql` fixtures) — authorization
 
 With `LDAP_CREATE_USER=true` (default), the first login creates the database
