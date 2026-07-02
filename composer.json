@@ -12,7 +12,6 @@
     "allow-plugins": {
       "composer/package-versions-deprecated": true,
       "ocramius/package-versions": true,
-      "php-http/discovery": true,
       "phpstan/extension-installer": true,
       "symfony/flex": true,
       "captainhook/plugin-composer": true

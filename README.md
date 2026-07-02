@@ -65,7 +65,7 @@ symfony server:start
 
 - **PHP**: 8.5 with extensions: `ldap`, `pdo_mysql`, `intl`, `mbstring`
 - **Database**: MariaDB 12+ or MySQL 8.0+
-- **Node.js**: 22+ (for asset compilation)
+- **Node.js**: 26+ (for the Playwright e2e tooling; the frontend builds with bun)
 
 ---
 

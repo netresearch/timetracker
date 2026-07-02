@@ -20,7 +20,7 @@ variable "PHP_BASE_IMAGE" {
 }
 
 variable "NODE_VERSION" {
-  default = "24"
+  default = "26"
 }
 
 variable "COMPOSER_IMAGE" {
