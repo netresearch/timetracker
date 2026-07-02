@@ -8,6 +8,7 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Symfony\Component\BrowserKit\Cookie;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\RememberMeToken;
 use Tests\AbstractWebTestCase;
 
@@ -17,8 +18,8 @@ use function assert;
  * Regression tests for remember_me authentication edge cases.
  *
  * These tests verify that users authenticated via remember_me (but not fully
- * authenticated) are properly redirected to logout instead of seeing a 403
- * error or getting stuck in a redirect loop.
+ * authenticated) are properly logged out instead of seeing a 403 error or
+ * getting stuck in a redirect loop, and that logout CSRF is enforced.
  *
  * @internal
  *
@@ -26,6 +27,12 @@ use function assert;
  */
 final class RememberMeRedirectTest extends AbstractWebTestCase
 {
+    private const string MSG_NO_CONTAINER = 'Service container not initialized';
+
+    private const string PATH_LOGIN = '/login';
+
+    private const string PATH_LOGOUT = '/logout';
+
     private EntityManagerInterface $entityManager;
 
     /**
@@ -46,7 +53,7 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
 
         // Initialize entity manager
         if (null === $this->serviceContainer) {
-            throw new RuntimeException('Service container not initialized');
+            throw new RuntimeException(self::MSG_NO_CONTAINER);
         }
         $em = $this->serviceContainer->get('doctrine.orm.entity_manager');
         assert($em instanceof EntityManagerInterface);
@@ -57,13 +64,13 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
 
     /**
      * Test that a remember_me authenticated user accessing a route requiring
-     * IS_AUTHENTICATED_FULLY gets redirected to /logout (not 403).
+     * IS_AUTHENTICATED_FULLY is logged out and lands on /login (not 403).
      *
      * This is a regression test for the bug where remember_me users would see
      * "You are not allowed to perform this action" instead of being redirected
      * to re-authenticate.
      */
-    public function testRememberMeUserRedirectsToLogoutNotForbidden(): void
+    public function testRememberMeUserIsLoggedOutNotForbidden(): void
     {
         // Get a real user from the database
         $user = $this->entityManager->getRepository(User::class)->findOneBy([]);
@@ -77,7 +84,7 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
 
         // Set the token in the security context via session
         if (null === $this->serviceContainer) {
-            throw new RuntimeException('Service container not initialized');
+            throw new RuntimeException(self::MSG_NO_CONTAINER);
         }
         /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
         $session = $this->serviceContainer->get('session.factory')->createSession();
@@ -105,7 +112,7 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
 
         // Case 2 in AccessDeniedSubscriber performs a programmatic logout,
         // whose response redirects straight to the login page.
-        self::assertStringContainsString('/login', $location,
+        self::assertStringContainsString(self::PATH_LOGIN, $location,
             'Remember_me user should be logged out and land on /login, not shown 403');
     }
 
@@ -113,12 +120,20 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
      * A bare GET /logout without CSRF token must be rejected: logout CSRF
      * blocks cross-site forced logout (and BrowserKit sends no same-origin
      * fetch metadata either).
+     *
+     * The firewall wraps the LogoutException into AccessDeniedHttpException
+     * (403). This app runs with error_controller: null, so the kernel
+     * rethrows for HTML requests and the global error handler renders the
+     * 403 page in production — in tests the wrapped exception surfaces.
      */
     public function testLogoutWithoutCsrfTokenIsRejected(): void
     {
-        $this->client->request('GET', '/logout');
-
-        self::assertResponseStatusCodeSame(403);
+        try {
+            $this->client->request('GET', self::PATH_LOGOUT);
+            self::fail('Tokenless logout must be rejected');
+        } catch (AccessDeniedHttpException $accessDeniedHttpException) {
+            self::assertStringContainsString('Invalid CSRF token', $accessDeniedHttpException->getMessage());
+        }
     }
 
     /**
@@ -130,7 +145,7 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
      */
     public function testLogoutIsPublicAndRedirectsToLogin(): void
     {
-        $this->client->request('GET', '/logout', [
+        $this->client->request('GET', self::PATH_LOGOUT, [
             '_csrf_token' => $this->logoutCsrfToken(),
         ], [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 
@@ -138,15 +153,13 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
         self::assertResponseRedirects();
         $location = $this->client->getResponse()->headers->get('Location');
         self::assertNotNull($location);
-        self::assertStringContainsString('/login', $location,
+        self::assertStringContainsString(self::PATH_LOGIN, $location,
             '/logout should redirect to /login');
     }
 
     private function logoutCsrfToken(): string
     {
-        if (null === $this->serviceContainer) {
-            throw new RuntimeException('Service container not initialized');
-        }
+        assert(null !== $this->serviceContainer, self::MSG_NO_CONTAINER);
 
         $csrfTokenManager = $this->serviceContainer->get('security.csrf.token_manager');
         assert($csrfTokenManager instanceof \Symfony\Component\Security\Csrf\CsrfTokenManagerInterface);
@@ -181,7 +194,7 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
         self::assertResponseRedirects();
         $location = $this->client->getResponse()->headers->get('Location');
         self::assertNotNull($location);
-        self::assertStringContainsString('/login', $location,
+        self::assertStringContainsString(self::PATH_LOGIN, $location,
             'Stale remember_me cookie should redirect to /login');
 
         // The REMEMBERME cookie should be cleared (deleted)
@@ -205,7 +218,7 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
     public function testLogoutToLoginCompleteFlow(): void
     {
         // Access /logout with a valid token + same-origin fetch metadata
-        $this->client->request('GET', '/logout', [
+        $this->client->request('GET', self::PATH_LOGOUT, [
             '_csrf_token' => $this->logoutCsrfToken(),
         ], [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 
