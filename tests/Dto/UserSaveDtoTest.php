@@ -213,11 +213,29 @@ final class UserSaveDtoTest extends TestCase
         $dto->validatePassword($context);
     }
 
-    public function testValidatePasswordSkippedWhenClearing(): void
+    public function testValidatePasswordRejectsSettingAndClearingTogether(): void
     {
-        // A short (or any) password value is irrelevant when the account is being
-        // reverted to LDAP — the clear path ignores it, so no length violation.
-        $dto = new UserSaveDto(password: 'x', clearPassword: true);
+        // Setting a new password AND clearing are contradictory — rejected
+        // explicitly rather than silently resolved by precedence.
+        $dto = new UserSaveDto(password: 'longenough', clearPassword: true);
+
+        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
+        $violationBuilder->expects(self::once())->method('atPath')->with('password')->willReturnSelf();
+        $violationBuilder->expects(self::once())->method('addViolation');
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::once())
+            ->method('buildViolation')
+            ->with('Choose either setting a new password or clearing it — not both.')
+            ->willReturn($violationBuilder);
+
+        $dto->validatePassword($context);
+    }
+
+    public function testValidatePasswordAcceptsPureClear(): void
+    {
+        // The normal clear case: empty password + clearPassword → no violation.
+        $dto = new UserSaveDto(password: '', clearPassword: true);
 
         $context = $this->createMock(ExecutionContextInterface::class);
         $context->expects(self::never())->method('buildViolation');

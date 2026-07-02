@@ -111,6 +111,10 @@ final class SaveUserAction extends BaseController
      * Apply the optional password block (ADR-018 D1). Excluded from the object
      * mapper, so it is set explicitly here: clear reverts the account to LDAP,
      * a non-empty value is hashed, and an empty value leaves the account as-is.
+     *
+     * Setting and clearing at once is rejected by UserSaveDto::validatePassword
+     * (422) before this runs, so the two branches below are mutually exclusive —
+     * no silent precedence between a supplied password and the clear flag.
      */
     private function applyPasswordChange(User $user, UserSaveDto $userSaveDto): void
     {

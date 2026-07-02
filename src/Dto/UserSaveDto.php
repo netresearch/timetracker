@@ -89,13 +89,31 @@ final readonly class UserSaveDto
     }
 
     /**
-     * A set password must clear a minimal length floor (basic hygiene; complexity
-     * policy is out of scope — see ADR-018). Skipped when clearing or unchanged.
+     * The password block accepts exactly one intent at a time:
+     *  - empty password, clearPassword off → no change;
+     *  - empty password, clearPassword on  → revert to LDAP;
+     *  - password set,   clearPassword off → set it (min. length floor applies).
+     *
+     * Setting AND clearing together is contradictory, so it is rejected explicitly
+     * rather than silently resolved by precedence. The length floor is basic
+     * hygiene; a full complexity policy is out of scope (see ADR-018).
      */
     #[Assert\Callback]
     public function validatePassword(ExecutionContextInterface $executionContext): void
     {
-        if (!$this->clearPassword && '' !== $this->password && mb_strlen($this->password) < 8) {
+        if ('' === $this->password) {
+            return;
+        }
+
+        if ($this->clearPassword) {
+            $executionContext->buildViolation('Choose either setting a new password or clearing it — not both.')
+                ->atPath('password')
+                ->addViolation();
+
+            return;
+        }
+
+        if (mb_strlen($this->password) < 8) {
             $executionContext->buildViolation('Password must be at least 8 characters.')
                 ->atPath('password')
                 ->addViolation();

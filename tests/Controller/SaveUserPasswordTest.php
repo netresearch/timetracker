@@ -72,6 +72,23 @@ final class SaveUserPasswordTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
     }
 
+    public function testSettingAndClearingTogetherIsRejected(): void
+    {
+        // Contradictory intent must be rejected, not silently resolved.
+        $this->logInSession('unittest');
+        $this->client->request(Request::METHOD_POST, '/user/save', [
+            'username' => 'pwuser5',
+            'abbr' => 'PW5',
+            'teams' => ['1'],
+            'locale' => 'de',
+            'type' => 'DEV',
+            'password' => 'sup3rsecret123',
+            'clearPassword' => '1',
+        ], [], ['HTTP_ACCEPT' => 'application/json']);
+
+        $this->assertStatusCode(422);
+    }
+
     /**
      * POST /user/save with sane defaults plus the given overrides; returns the id.
      *

@@ -410,7 +410,7 @@
   "admin_f_password": "Password",
   "admin_help_password": "Set or replace this user's local password (min. 8 characters). Leave blank to keep it unchanged. Setting a password makes this a local account; LDAP is then not used for this user.",
   "admin_f_clear_password": "Clear password (use LDAP)",
-  "admin_help_clear_password": "Remove the local password so this user authenticates via LDAP again. Ignored if a new password is entered above.",
+  "admin_help_clear_password": "Remove the local password so this user authenticates via LDAP again. Leave the password field above blank when using this.",
   "admin_f_team_lead": "Team lead",
   "admin_f_jira_id": "Ticket prefix",
   "admin_f_jira_ticket": "Ticket number",
