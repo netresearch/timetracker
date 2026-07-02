@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2ef375c9d12056131ffe2de47b0c07f6",
+    "content-hash": "0d1cd6842f76d0910cf82f0ed6d88c05",
     "packages": [
         {
             "name": "composer/pcre",
@@ -4103,73 +4103,6 @@
                 }
             ],
             "time": "2026-01-05T13:30:16+00:00"
-        },
-        {
-            "name": "symfony/expression-language",
-            "version": "v8.1.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/expression-language.git",
-                "reference": "67f31731d5b316d0183c565933017d5d3331d609"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/expression-language/zipball/67f31731d5b316d0183c565933017d5d3331d609",
-                "reference": "67f31731d5b316d0183c565933017d5d3331d609",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.4.1",
-                "symfony/cache": "^7.4|^8.0",
-                "symfony/service-contracts": "^2.5|^3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\ExpressionLanguage\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Provides an engine that can compile and evaluate expressions",
-            "homepage": "https://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/expression-language/tree/v8.1.0"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nicolas-grekas",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2026-05-29T05:06:50+00:00"
         },
         {
             "name": "symfony/filesystem",
@@ -8669,59 +8602,6 @@
             "time": "2024-05-06T16:37:16+00:00"
         },
         {
-            "name": "dg/bypass-finals",
-            "version": "v1.10.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/dg/bypass-finals.git",
-                "reference": "62d4ea18f8937af7d794b3358c125ecb52862e98"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/dg/bypass-finals/zipball/62d4ea18f8937af7d794b3358c125ecb52862e98",
-                "reference": "62d4ea18f8937af7d794b3358c125ecb52862e98",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.1"
-            },
-            "require-dev": {
-                "nette/tester": "^2.3",
-                "phpstan/phpstan": "^0.12"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause",
-                "GPL-2.0-only",
-                "GPL-3.0-only"
-            ],
-            "authors": [
-                {
-                    "name": "David Grudl",
-                    "homepage": "https://davidgrudl.com"
-                }
-            ],
-            "description": "Removes final keyword from source code on-the-fly and allows mocking of final methods and classes",
-            "keywords": [
-                "finals",
-                "mocking",
-                "phpunit",
-                "testing",
-                "unit"
-            ],
-            "support": {
-                "issues": "https://github.com/dg/bypass-finals/issues",
-                "source": "https://github.com/dg/bypass-finals/tree/v1.10.1"
-            },
-            "time": "2026-06-04T15:48:46+00:00"
-        },
-        {
             "name": "ergebnis/agent-detector",
             "version": "1.2.0",
             "source": {
@@ -13185,6 +13065,7 @@
         "ext-mbstring": "*",
         "ext-pcre": "*",
         "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
         "ext-reflection": "*"
     },
     "platform-dev": {},

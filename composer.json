@@ -36,6 +36,7 @@
     "ext-mbstring": "*",
     "ext-pcre": "*",
     "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
     "ext-reflection": "*",
     "doctrine/doctrine-bundle": "^3.2",
     "doctrine/doctrine-migrations-bundle": "^3.4|^4.0",
@@ -51,7 +52,6 @@
     "symfony/asset": "^8.1",
     "symfony/console": "^8.1",
     "symfony/dotenv": "^8.1",
-    "symfony/expression-language": "^8.1",
     "symfony/flex": "^2.8",
     "symfony/form": "^8.1",
     "symfony/framework-bundle": "^8.1",
@@ -63,7 +63,6 @@
     "symfony/property-info": "^8.1",
     "symfony/security-bundle": "^8.1",
     "symfony/serializer": "^8.1",
-    "symfony/stopwatch": "^8.1",
     "symfony/translation": "^8.1",
     "symfony/twig-bundle": "^8.1",
     "symfony/validator": "^8.1",
@@ -73,7 +72,6 @@
   "require-dev": {
     "captainhook/captainhook": "^5.27",
     "captainhook/plugin-composer": "^5.3",
-    "dg/bypass-finals": "*",
     "friendsofphp/php-cs-fixer": "^3.65",
     "phpat/phpat": "^0.12",
     "phpdocumentor/reflection-docblock": "^6.0",
@@ -92,6 +90,7 @@
     "symfony/debug-bundle": "^8.1",
     "symfony/maker-bundle": "^1.64",
     "symfony/phpunit-bridge": "^8.1",
+    "symfony/stopwatch": "^8.1",
     "symfony/web-profiler-bundle": "^8.1"
   },
   "scripts": {
@@ -124,7 +123,6 @@
     "perf:baseline": "mkdir -p var && APP_ENV=test php -d memory_limit=1G -d max_execution_time=600 tests/Performance/PerformanceBenchmarkRunner.php var/performance-baseline.json",
     "perf:dashboard": "php tests/Performance/PerformanceDashboard.php var/performance-history.json var/performance-dashboard.html && echo 'Dashboard available at var/performance-dashboard.html'",
     "perf:full": "@perf:benchmark && @perf:dashboard",
-    "security-check": "echo 'Running security check with Local PHP Security Checker'; curl -o security-checker.phar -s https://github.com/fabpot/local-php-security-checker/releases/download/v2.0.6/local-php-security-checker_2.0.6_linux_amd64 && chmod +x security-checker.phar && ./security-checker.phar && rm security-checker.phar",
     "twig:lint": "XDEBUG_MODE=off php bin/console lint:twig templates --show-deprecations",
     "check:all": [
       "@analyze",
