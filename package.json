@@ -7,11 +7,6 @@
   "engines": {
     "node": ">=26.0.0"
   },
-  "overrides": {
-    "serialize-javascript": "^7.0.3",
-    "uuid": "11.1.1",
-    "http-proxy-middleware": "2.0.10"
-  },
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
