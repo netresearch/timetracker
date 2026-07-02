@@ -280,9 +280,10 @@ In the sidebar layout each panel also gets a quick-add "+" button.
 
 ![Settings dialog with language, behavior toggles and display preferences](images/settings.png)
 
-The ⚙ icon opens your personal settings. Two kinds live here:
+The ⚙ icon opens your personal settings, grouped into two labeled sections
+with different save semantics:
 
-**Saved to your account** (apply on every device; press *Save*):
+**Account** — saved to your account and applied on every device; press *Save*:
 
 - **Language** — English or German (reloads the page).
 - **Always show an empty line** — keep a blank entry row ready in the Worklog.
@@ -291,7 +292,8 @@ The ⚙ icon opens your personal settings. Two kinds live here:
 - **Minimum entry duration (minutes)** — a new entry's end pre-fills to start
   + this many minutes (0 disables it).
 
-**Stored on this device** (apply instantly, no Save needed):
+**This device** — stored only in this browser; changes apply instantly, no
+*Save* needed:
 
 - **When editing a table cell, Enter…** stays / moves down / moves right.
 - **Date format** — ISO 8601 (default), automatic by language, or a custom
