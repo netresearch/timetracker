@@ -38,7 +38,13 @@ narrower and safer form, the local-account capability ADR-004 sketched but never
 
 ## Context
 
-### Current state (verified in code, 2026-07-02)
+### Baseline before D1 (verified in code, 2026-07-02)
+
+> This subsection describes the pre-D1 state that **motivated** this decision — it
+> is deliberately not rewritten as D-increments land (that is what an ADR Context
+> is for). For what D1 actually changed, see the **Implementation note (D1)** at
+> the top and the **Status** line; e.g. `users.password` now exists and local
+> accounts can log in.
 
 - **LDAP is the only login path.** The `main` firewall registers one custom
   authenticator, [`LdapAuthenticator`](../../src/Security/LoginFormAuthenticator.php) (renamed to `LoginFormAuthenticator` in D1)

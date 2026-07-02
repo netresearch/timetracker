@@ -45,8 +45,8 @@ final readonly class CreateUserCommand
         SymfonyStyle $io,
         #[Argument(description: 'Login username')]
         ?string $username = null,
-        #[Option(description: 'User type: USER, DEV, PL or ADMIN')]
-        string $type = 'ADMIN',
+        #[Option(description: 'User type: USER, DEV, PL or ADMIN (default ADMIN for a new user; preserved for an existing one)')]
+        ?string $type = null,
         #[Option(description: 'Password (omit to be prompted; prompting keeps it out of shell history)')]
         #[SensitiveParameter]
         ?string $password = null,
@@ -58,13 +58,6 @@ final readonly class CreateUserCommand
 
         if ('' === $username) {
             $io->error('A username is required.');
-
-            return Command::FAILURE;
-        }
-
-        $userType = UserType::tryFrom($type);
-        if (!$userType instanceof UserType || UserType::UNKNOWN === $userType) {
-            $io->error('Invalid --type. Use one of: USER, DEV, PL, ADMIN.');
 
             return Command::FAILURE;
         }
@@ -82,13 +75,31 @@ final readonly class CreateUserCommand
 
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
         $isNew = !$user instanceof User;
+
+        // Resolve the type without silently re-typing an existing user: --type is
+        // applied only when explicitly given. Omitting it defaults a brand-new user
+        // to ADMIN (the bootstrap case) and PRESERVES an existing user's type — this
+        // command doubles as a password reset, so re-running it for `jane` must never
+        // promote her just because ADMIN is the new-user default.
+        if (null !== $type) {
+            $userType = UserType::tryFrom($type);
+            if (!$userType instanceof UserType || UserType::UNKNOWN === $userType) {
+                $io->error('Invalid --type. Use one of: USER, DEV, PL, ADMIN.');
+
+                return Command::FAILURE;
+            }
+        } else {
+            $userType = $isNew ? UserType::ADMIN : $user->getType();
+        }
+
         if ($isNew) {
+            // Locale is intentionally left at the entity default ('de') to match
+            // LDAP auto-provisioning; no per-account override is offered here.
             $user = new User()
                 ->setUsername($username)
-                ->setType($userType->value)
-                ->setLocale('en');
+                ->setType($userType);
         } else {
-            $user->setType($userType->value);
+            $user->setType($userType);
         }
 
         $this->setHashedPassword($user, $password);
