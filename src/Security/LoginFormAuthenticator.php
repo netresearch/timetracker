@@ -18,11 +18,13 @@ use Exception;
 use Laminas\Ldap\Exception\LdapException;
 use Override;
 use Psr\Log\LoggerInterface;
+use SensitiveParameter;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
@@ -33,6 +35,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\CustomCredentials;
+use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Throwable;
@@ -44,11 +47,21 @@ use function is_string;
 use function sprintf;
 use function strlen;
 
-class LdapAuthenticator extends AbstractLoginFormAuthenticator
+/**
+ * The single login-form authenticator (ADR-018 D1). It routes per user:
+ * a row with a local password hash is verified by the password hasher; any
+ * other row (or a not-yet-provisioned username) goes through the unchanged
+ * LDAP bind. LDAP is optional — an empty LDAP host switches the instance to
+ * local-only mode and the LDAP branch is skipped entirely.
+ */
+class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 {
     use TargetPathTrait;
 
-    public function __construct(private EntityManagerInterface $entityManager, private RouterInterface $router, private ParameterBagInterface $parameterBag, private LoggerInterface $logger, private LdapClientService $ldapClientService)
+    /** Lazily hashed dummy, reused to burn constant time on the no-such-account path. */
+    private static ?string $dummyHash = null;
+
+    public function __construct(private EntityManagerInterface $entityManager, private RouterInterface $router, private ParameterBagInterface $parameterBag, private LoggerInterface $logger, private LdapClientService $ldapClientService, private PasswordHasherFactoryInterface $passwordHasherFactory)
     {
     }
 
@@ -92,17 +105,65 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
             throw new CustomUserMessageAuthenticationException('Invalid username format.');
         }
 
+        $sharedBadges = [
+            new CsrfTokenBadge('authenticate', $csrfToken),
+            new RememberMeBadge(),
+        ];
+
+        // Local account (has a password hash): verify against the hash via the
+        // password hasher. LDAP is never consulted for such a user.
+        $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+        if ($existingUser instanceof User && $existingUser->isLocalAccount()) {
+            return new Passport(
+                new UserBadge($username, static fn (): User => $existingUser),
+                new PasswordCredentials($password),
+                $sharedBadges,
+            );
+        }
+
+        // No local password → LDAP branch. With LDAP unconfigured (empty host)
+        // there is no way to authenticate this identifier; fail generically so
+        // local-only mode doesn't reveal whether the username exists.
+        if (!$this->isLdapConfigured()) {
+            // Burn the same time a real local wrong-password verify would, so
+            // the response time can't tell "unknown user" from "real local user"
+            // (login_throttling only limits repeats, not per-name timing probes).
+            $this->equalizePasswordTiming($password);
+            $this->logger->info('Login attempt against a non-local account while LDAP is not configured (local-only mode).');
+            throw new CustomUserMessageAuthenticationException('Invalid credentials.');
+        }
+
         // Store the current password temporarily for the user loader
         $this->currentPassword = $password;
 
         return new Passport(
             new UserBadge($username, fn (string $userIdentifier): User => $this->loadUser($userIdentifier)),
             new CustomCredentials(static fn (): true => true, ['username' => $username]),
-            [
-                new CsrfTokenBadge('authenticate', $csrfToken),
-                new RememberMeBadge(),
-            ],
+            $sharedBadges,
         );
+    }
+
+    /**
+     * Whether an LDAP host is configured. Empty host = local-only mode.
+     */
+    private function isLdapConfigured(): bool
+    {
+        $host = $this->parameterBag->get('ldap_host');
+
+        return is_scalar($host) && '' !== (string) $host;
+    }
+
+    /**
+     * Runs one password verify against a fixed dummy hash so the no-such-account
+     * path takes the same time as a real wrong-password check (uses the same
+     * configured hasher, so the algorithm/cost match). The dummy is hashed once
+     * per process and reused.
+     */
+    private function equalizePasswordTiming(#[SensitiveParameter] string $password): void
+    {
+        $hasher = $this->passwordHasherFactory->getPasswordHasher(User::class);
+        self::$dummyHash ??= $hasher->hash('timing-equalizer');
+        $hasher->verify(self::$dummyHash, $password);
     }
 
     /**
@@ -143,11 +204,14 @@ class LdapAuthenticator extends AbstractLoginFormAuthenticator
             $this->logger->info('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
             throw $userException;
         } catch (Throwable $throwable) {
-            // Generic error handling
+            // Log class + message only — never the trace. A trace serializes
+            // stack-frame arguments, which on this path can include the LDAP
+            // bind password (the prod image ships no php.ini, so the built-in
+            // zend.exception_ignore_args=Off default would capture them).
             $this->logger->error('Unexpected authentication error', [
                 'username' => substr($userIdentifier, 0, 3) . '***',
+                'error_type' => $throwable::class,
                 'error' => $throwable->getMessage(),
-                'trace' => $throwable->getTraceAsString(),
             ]);
             throw new CustomUserMessageAuthenticationException('An unexpected error occurred during authentication.', [], $throwable->getCode(), $throwable);
         }

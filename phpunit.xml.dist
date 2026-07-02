@@ -64,8 +64,10 @@
             <file>tests/Repository/InterpretationUserFilterTest.php</file>
             <file>tests/Repository/OptimizedEntryRepositoryCacheTest.php</file>
             <!-- Security unit tests (not RememberMeRedirectTest) -->
-            <file>tests/Security/LdapAuthenticatorTest.php</file>
+            <file>tests/Security/LoginFormAuthenticatorTest.php</file>
             <file>tests/Security/UserCheckerTest.php</file>
+            <!-- Command unit tests -->
+            <file>tests/Command/CreateUserCommandTest.php</file>
         </testsuite>
         <!-- Integration tests requiring database -->
         <testsuite name="integration">

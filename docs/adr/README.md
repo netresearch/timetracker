@@ -25,7 +25,7 @@ ADRs are historical records: bodies are not rewritten when reality moves on. Whe
 | [ADR-015](ADR-015-php-8-5-symfony-8-upgrade.md) | PHP 8.5 and Symfony 8 Upgrade | Accepted | 2026-01-17 |
 | [ADR-016](ADR-016-solidjs-frontend-rewrite.md) | SolidJS Frontend Rewrite (ExtJS Replacement) | Accepted | 2026-06-12 |
 | [ADR-017](ADR-017-jira-cloud-oauth2.md) | Jira Cloud Support via OAuth 2.0 (Dual-Mode Integration) | Accepted | 2026-06-22 |
-| [ADR-018](ADR-018-authentication-extension.md) | Authentication Extension: Local Passwords, MFA (TOTP) and Passkeys | Proposed | 2026-07-02 |
+| [ADR-018](ADR-018-authentication-extension.md) | Authentication Extension: Local Passwords, MFA (TOTP) and Passkeys | Accepted (D1 done; MFA/passkeys pending) | 2026-07-02 |
 
 ## ADR Format
 

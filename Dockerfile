@@ -201,6 +201,9 @@ COPY --from=deps /var/www/html/migrations /var/www/html/migrations
 COPY --from=deps /var/www/html/sql /var/www/html/sql
 COPY --from=deps --chown=app:app /var/www/html/var /var/www/html/var
 
+# Production PHP hardening (no arg values in exception traces, no error output).
+COPY docker/php/production.ini /usr/local/etc/php/conf.d/zz-production.ini
+
 # Copy healthcheck script
 COPY --chmod=755 docker/php/healthcheck.sh /usr/local/bin/healthcheck
 

@@ -15,13 +15,15 @@ use App\Service\Util\LocalizationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use SensitiveParameter;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 use function is_string;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
-class User implements UserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
@@ -59,6 +61,15 @@ class User implements UserInterface
     /** Minimum entry duration in minutes — a new entry's end pre-fills to start + this. */
     #[ORM\Column(name: 'min_entry_duration', type: 'integer', nullable: false, options: ['default' => 5])]
     protected int $minEntryDuration = 5;
+
+    /**
+     * Symfony `auto` password hash for a LOCAL account (ADR-018 D1).
+     * NULL = LDAP account: the credential check is the LDAP bind. When set, the
+     * account authenticates against this hash and LDAP is never consulted for it.
+     * Never exposed in API responses/DTOs (same rule as TicketSystem secrets).
+     */
+    #[ORM\Column(name: 'password', type: 'string', length: 255, nullable: true)]
+    protected ?string $password = null;
 
     /**
      * @var Collection<int, Team>
@@ -411,14 +422,40 @@ class User implements UserInterface
     }
 
     /**
-     * Returns a password-like string for remember_me functionality.
-     * Since LDAP users don't have stored passwords, we generate a stable hash
-     * based on the username for security signature generation.
+     * The password hash used both for credential verification (local accounts)
+     * and as the remember-me signature property (`signature_properties: ['password']`).
+     *
+     * - Local account: the stored `auto` hash. It changes when the password is
+     *   reset, which correctly invalidates any outstanding remember-me cookie.
+     * - LDAP account (hash NULL): a stable, non-secret synthetic value derived
+     *   from username+id. It keeps remember-me working exactly as before (a
+     *   real NULL here would make the signature hasher base64_encode(null) and
+     *   trip a PHP deprecation) and is never used for credential verification,
+     *   because LDAP accounts are routed to the LDAP bind, not the hasher.
      */
     public function getPassword(): ?string
     {
-        // Generate a stable hash for remember_me functionality
-        // This is not the actual password but a consistent value for this user
-        return hash('sha256', $this->username . '_ldap_user_' . ($this->id ?? '0'));
+        return $this->password ?? hash('sha256', $this->username . '_ldap_user_' . ($this->id ?? '0'));
+    }
+
+    /**
+     * Whether this is a local (password) account. When true, the login
+     * authenticator verifies the password hash and never consults LDAP.
+     */
+    public function isLocalAccount(): bool
+    {
+        return null !== $this->password && '' !== $this->password;
+    }
+
+    /**
+     * Sets the (already hashed) local password, or clears it (NULL) to revert
+     * the account to LDAP authentication. Hashing happens in the caller via
+     * UserPasswordHasherInterface — never store a plain-text value here.
+     */
+    public function setPassword(#[SensitiveParameter] ?string $hashedPassword): self
+    {
+        $this->password = $hashedPassword;
+
+        return $this;
     }
 }
