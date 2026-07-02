@@ -5,7 +5,7 @@
 ## Overview
 
 Symfony 8 application code: controllers, services, entities, repositories, security, and commands.
-Uses Doctrine ORM 3, Twig templating, and PSR-12 coding standards.
+Uses Doctrine ORM 3, Twig templating, and PER-CS + Symfony coding style.
 
 ## Setup & environment
 

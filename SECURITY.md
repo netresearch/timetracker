@@ -7,7 +7,7 @@
 | 5.x.x   | :white_check_mark: |
 | < 5.0   | :x:                |
 
-The 4.x line reached end of life on 2025-03-15 (tag [`v4_EOL`](https://github.com/netresearch/timetracker/releases/tag/v4_EOL)).
+The 4.x line reached end of life on 2025-03-15 (tag [`v4_EOL`](https://github.com/netresearch/timetracker/tree/v4_EOL)).
 
 ## Reporting a Vulnerability
 
