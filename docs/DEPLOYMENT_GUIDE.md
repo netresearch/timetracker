@@ -68,18 +68,8 @@ The app is then reachable on `http://localhost:8765` (or `HTTP_PORT`).
 
 > **Note — nginx upstream name:** the shipped
 > [`docker/nginx/default.conf`](../docker/nginx/default.conf) forwards PHP
-> requests to `phpfpm:9000`, while the PHP-FPM service in `compose.yml` is
-> named `app`. Give the `app` service a `phpfpm` network alias in a compose
-> override (or change `fastcgi_pass` to `app:9000`), e.g.:
->
-> ```yaml
-> # compose.override.yml
-> services:
->   app:
->     networks:
->       default:
->         aliases: [phpfpm]
-> ```
+> requests to `phpfpm:9000`; `compose.yml` gives the `app` service a matching
+> `phpfpm` network alias, so no override is needed.
 
 > **Note — test data:** `compose.yml` mounts both `sql/full.sql` (schema) and
 > `sql/testdata.sql` (deterministic test data for dev/e2e) into the `db`
@@ -88,15 +78,17 @@ The app is then reachable on `http://localhost:8765` (or `HTTP_PORT`).
 
 ## Environment variables
 
-Symfony reads `.env` / `.env.local` (see [`.env`](../.env) for all defaults);
-Compose additionally substitutes variables in `compose.yml`. The relevant ones:
+The production image ships an **empty `.env`** — all runtime configuration
+reaches the `app` container as real environment variables, which `compose.yml`
+passes through (host environment first, then the repository `.env` as the
+Compose substitution source). Export the variables you need before
+`docker compose up`, or set them in a compose override. The relevant ones:
 
 ### Application
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `APP_ENV` | `dev` | Must be `prod` in production |
-| `APP_DEBUG` | `1` | Must be `0` in production |
+| `APP_ENV` / `APP_DEBUG` | `prod` / `0` (baked into the image) | Override only via a compose override file |
 | `APP_SECRET` | insecure placeholder | Symfony secret (CSRF, remember-me). Generate: `openssl rand -base64 32` |
 | `APP_ENCRYPTION_KEY` | falls back to `APP_SECRET` | Dedicated key for Jira OAuth token encryption at rest |
 | `DATABASE_URL` | `mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.1.2` | Doctrine DBAL connection |
