@@ -15,15 +15,20 @@ use App\Service\Util\LocalizationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\BackupCodeInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface as TotpTwoFactorInterface;
 use SensitiveParameter;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 use function is_string;
+use function password_verify;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwoFactorInterface, BackupCodeInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
@@ -70,6 +75,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(name: 'password', type: 'string', length: 255, nullable: true)]
     protected ?string $password = null;
+
+    /**
+     * TOTP shared secret, stored ENCRYPTED at rest (AES-256-GCM via
+     * TokenEncryptionService — ADR-018 D2). NULL = TOTP not enrolled. The
+     * decrypted value is never persisted; it is placed on {@see $totpSecretPlain}
+     * on load by UserTwoFactorSubscriber and set there again on enrolment.
+     */
+    #[ORM\Column(name: 'totp_secret', type: 'string', length: 255, nullable: true)]
+    protected ?string $totpSecret = null;
+
+    /**
+     * Hashed one-time backup codes (recovery codes). Each entry is a password
+     * hash of a plain code shown to the user exactly once; verification and
+     * single-use invalidation compare via the hash. NULL/[] = none outstanding.
+     *
+     * @var list<string>|null
+     */
+    #[ORM\Column(name: 'backup_codes', type: 'json', nullable: true)]
+    protected ?array $backupCodes = null;
+
+    /**
+     * The DECRYPTED TOTP secret — a transient, non-persisted field. Populated
+     * from {@see $totpSecret} by UserTwoFactorSubscriber::postLoad and on
+     * enrolment. scheb reads it via getTotpAuthenticationConfiguration().
+     * Excluded from serialization (see __serialize) so the plaintext never
+     * reaches the session store when the stateful firewall persists the user.
+     */
+    private ?string $totpSecretPlain = null;
+
+    /**
+     * Transient cache of the backup-code hash matched by the last isBackupCode()
+     * call, so invalidateBackupCode() can strip it without a second (deliberately
+     * expensive) password_verify(). Never persisted or serialized.
+     */
+    private ?string $matchedBackupCodeHash = null;
 
     /**
      * @var Collection<int, Team>
@@ -457,5 +497,142 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->password = $hashedPassword;
 
         return $this;
+    }
+
+    // ==================== TOTP two-factor (ADR-018 D2) ====================
+
+    /**
+     * The stored, ENCRYPTED TOTP secret (ciphertext), or NULL. Encryption/
+     * decryption is the caller's job (TokenEncryptionService); the transient
+     * plaintext lives on {@see $totpSecretPlain}.
+     */
+    public function getTotpSecret(): ?string
+    {
+        return $this->totpSecret;
+    }
+
+    /** Store the ENCRYPTED secret and the matching decrypted value (enrolment). */
+    public function setTotpSecret(#[SensitiveParameter] ?string $encryptedSecret, #[SensitiveParameter] ?string $plainSecret): self
+    {
+        $this->totpSecret = $encryptedSecret;
+        $this->totpSecretPlain = $plainSecret;
+
+        return $this;
+    }
+
+    /** Set only the decrypted secret (called by the Doctrine post-load subscriber). */
+    public function setTotpSecretPlain(#[SensitiveParameter] ?string $plainSecret): void
+    {
+        $this->totpSecretPlain = $plainSecret;
+    }
+
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return null !== $this->totpSecretPlain && '' !== $this->totpSecretPlain;
+    }
+
+    public function getTotpAuthenticationUsername(): ?string
+    {
+        return $this->username;
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
+    {
+        if (null === $this->totpSecretPlain || '' === $this->totpSecretPlain) {
+            return null;
+        }
+
+        // RFC 6238 defaults compatible with every common authenticator app.
+        return new TotpConfiguration($this->totpSecretPlain, TotpConfiguration::ALGORITHM_SHA1, 30, 6);
+    }
+
+    // ==================== Backup codes (ADR-018 D2) ====================
+
+    /**
+     * Replace the outstanding recovery codes with the given HASHED codes (each a
+     * password hash of a plain code shown to the user once). Hashing is the
+     * caller's job — never store a plain code here.
+     *
+     * @param list<string> $hashedCodes
+     */
+    public function setBackupCodes(array $hashedCodes): self
+    {
+        $this->backupCodes = [] === $hashedCodes ? null : array_values($hashedCodes);
+
+        return $this;
+    }
+
+    /** @return list<string> the outstanding HASHED codes */
+    public function getBackupCodes(): array
+    {
+        return $this->backupCodes ?? [];
+    }
+
+    public function isBackupCode(#[SensitiveParameter] string $code): bool
+    {
+        foreach ($this->backupCodes ?? [] as $hashed) {
+            if (password_verify($code, $hashed)) {
+                // Cache the match so invalidateBackupCode() can skip the second
+                // (deliberately expensive) verify (a fast string compare instead).
+                $this->matchedBackupCodeHash = $hashed;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function invalidateBackupCode(#[SensitiveParameter] string $code): void
+    {
+        $remaining = [];
+        $consumed = false;
+        foreach ($this->backupCodes ?? [] as $hashed) {
+            // Strip the FIRST matching code only, so duplicate hashes (astronomically
+            // unlikely) don't all vanish at once. Prefer the hash cached by a prior
+            // isBackupCode() over a fresh password_verify().
+            if (!$consumed && ($hashed === $this->matchedBackupCodeHash || password_verify($code, $hashed))) {
+                $consumed = true;
+                $this->matchedBackupCodeHash = null;
+
+                continue;
+            }
+            $remaining[] = $hashed;
+        }
+        $this->backupCodes = [] === $remaining ? null : $remaining;
+    }
+
+    /**
+     * Keep the transient plaintext fields OUT of the serialized form the stateful
+     * firewall stores in the session: the decrypted TOTP secret and the cached
+     * backup-code hash must never be persisted beyond the request (ADR-018 D2).
+     * Everything else (incl. the ENCRYPTED totp_secret and HASHED backup codes)
+     * serializes as before; the plain secret is re-derived on load by
+     * UserTwoFactorSubscriber when the provider refreshes the user.
+     *
+     * @return array<string, mixed>
+     */
+    public function __serialize(): array
+    {
+        // get_object_vars() yields string keys, so the result is array<string, mixed>;
+        // array_diff_key loses that precision for PHPStan but not at runtime.
+        /* @phpstan-ignore return.type */
+        return array_diff_key(
+            get_object_vars($this),
+            ['totpSecretPlain' => null, 'matchedBackupCodeHash' => null],
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function __unserialize(array $data): void
+    {
+        foreach ($data as $property => $value) {
+            // Restore the serialized property set; the two transient plaintext
+            // fields were excluded above and keep their null default.
+            /* @phpstan-ignore property.dynamicName */
+            $this->{$property} = $value;
+        }
     }
 }

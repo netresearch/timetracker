@@ -1,10 +1,5 @@
 <?php
 
-/*
- * Copyright (c) 2025-2026 Netresearch DTT GmbH
- * SPDX-License-Identifier: AGPL-3.0-only
- */
-
 declare(strict_types=1);
 
 return [
@@ -19,4 +14,5 @@ return [
     Pentatrion\ViteBundle\PentatrionViteBundle::class => ['all' => true],
     Symfony\Bundle\WebProfilerBundle\WebProfilerBundle::class => ['dev' => true, 'test' => true, 'profiling' => true],
     Symfony\Bundle\DebugBundle\DebugBundle::class => ['dev' => true, 'test' => true, 'profiling' => true],
+    Scheb\TwoFactorBundle\SchebTwoFactorBundle::class => ['all' => true],
 ];
