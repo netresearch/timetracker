@@ -3,11 +3,33 @@ services:
   # Main application service (build with: docker bake app)
   app:
     image: ghcr.io/netresearch/timetracker:production
+    # APP_ENV=prod / APP_DEBUG=0 come from the image; the image ships an empty
+    # .env, so ALL runtime configuration must be passed as real env vars here.
     environment:
       - TRUSTED_PROXY_ALL
       - TRUSTED_PROXY_LIST
-      - APP_ENV=${APP_ENV:-prod}
-      - APP_DEBUG=${APP_DEBUG:-0}
+      # no in-file default (it would hardcode credentials); the repository
+      # .env supplies a value matching the bundled db service for local runs
+      - DATABASE_URL=${DATABASE_URL:?Set DATABASE_URL (see docs/DEPLOYMENT_GUIDE.md)}
+      - APP_SECRET=${APP_SECRET:?Set APP_SECRET (e.g. openssl rand -base64 32) — the repo .env ships an insecure dev placeholder}
+      - AUTO_MIGRATE=${AUTO_MIGRATE:-1}
+      # bare passthrough: only set when exported — an empty string would defeat
+      # the env(default:secret:...) fallback to APP_SECRET in services.yaml
+      - APP_ENCRYPTION_KEY
+      - APP_LOCALE=${APP_LOCALE:-en}
+      - APP_TITLE=${APP_TITLE:-Netresearch TimeTracker}
+      - APP_LOGO_URL=${APP_LOGO_URL:-/images/logo-netresearch.svg}
+      - APP_HEADER_URL=${APP_HEADER_URL:-}
+      - APP_SHOW_BILLABLE_FIELD_IN_EXPORT=${APP_SHOW_BILLABLE_FIELD_IN_EXPORT:-false}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - LDAP_HOST=${LDAP_HOST:-}
+      - LDAP_PORT=${LDAP_PORT:-389}
+      - LDAP_READUSER=${LDAP_READUSER:-}
+      - LDAP_READPASS=${LDAP_READPASS:-}
+      - LDAP_BASEDN=${LDAP_BASEDN:-}
+      - LDAP_USERNAMEFIELD=${LDAP_USERNAMEFIELD:-uid}
+      - LDAP_USESSL=${LDAP_USESSL:-false}
+      - LDAP_CREATE_USER=${LDAP_CREATE_USER:-true}
     volumes:
       # Production volumes (named volumes for data persistence)
       - app-pub:/var/www/html/public
@@ -16,7 +38,11 @@ services:
     depends_on:
       - db
     restart: always
-    profiles: 
+    networks:
+      default:
+        # docker/nginx/default.conf forwards FastCGI to phpfpm:9000
+        aliases: [phpfpm]
+    profiles:
       - prod
       - production
 

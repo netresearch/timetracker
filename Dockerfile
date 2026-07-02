@@ -211,6 +211,11 @@ COPY --chmod=755 docker/php/docker-entrypoint.sh /usr/local/bin/app-entrypoint
 # Update CA certificates during build (requires root, done before USER switch)
 RUN update-ca-certificates 2>/dev/null || true
 
+# Symfony's Dotenv is booted unconditionally by bin/console and public/index.php
+# and throws if the file is missing; runtime configuration comes from real
+# environment variables (compose.yml), so an empty file is correct here.
+RUN touch /var/www/html/.env
+
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 
