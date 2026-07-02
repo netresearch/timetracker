@@ -100,9 +100,6 @@ See [docs/techstack.md](docs/techstack.md) for details.
 # Run tests
 make test
 
-# Run tests in parallel
-make test-parallel
-
 # Static analysis & code style
 make check-all
 
