@@ -695,7 +695,7 @@ class JiraOAuthApiService
      * Decrypts a stored OAuth token, transparently passing through legacy
      * unencrypted values written before encryption-at-rest was added.
      */
-    private function decryptStored(string $stored): string
+    protected function decryptStored(string $stored): string
     {
         if ('' === $stored) {
             return '';
