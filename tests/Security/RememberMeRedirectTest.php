@@ -6,7 +6,6 @@ namespace Tests\Security;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use RuntimeException;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\RememberMeToken;
@@ -52,9 +51,7 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
         $this->initializeDatabase();
 
         // Initialize entity manager
-        if (null === $this->serviceContainer) {
-            throw new RuntimeException(self::MSG_NO_CONTAINER);
-        }
+        assert(null !== $this->serviceContainer, self::MSG_NO_CONTAINER);
         $em = $this->serviceContainer->get('doctrine.orm.entity_manager');
         assert($em instanceof EntityManagerInterface);
         $this->entityManager = $em;
@@ -83,9 +80,7 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
         $token = new RememberMeToken($user, 'main');
 
         // Set the token in the security context via session
-        if (null === $this->serviceContainer) {
-            throw new RuntimeException(self::MSG_NO_CONTAINER);
-        }
+        assert(null !== $this->serviceContainer, self::MSG_NO_CONTAINER);
         /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
         $session = $this->serviceContainer->get('session.factory')->createSession();
         $session->set('_security_main', serialize($token));
