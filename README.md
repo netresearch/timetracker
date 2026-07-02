@@ -78,8 +78,8 @@ controlling and invoicing; worklogs are mirrored to Jira automatically.
   Billing and Administration
 
 **Jira integration**
-- Automatic background worklog sync (create/update/delete) via OAuth 1.0a for
-  Jira Server/DC; Jira Cloud OAuth 2.0 support is in progress
+- Automatic background worklog sync (create/update/delete) for both
+  **Jira Server/DC** (OAuth 1.0a) and **Jira Cloud** (OAuth 2.0 / 3LO)
 - Per-user, per-ticket-system tokens, encrypted at rest
 - Optional mirroring of external customer tickets into an internal Jira project
 

@@ -36,8 +36,14 @@ each configured ticket system:
 Landed 2026-06-22 as Cloud support PR 1
 ([#416](https://github.com/netresearch/timetracker/pull/416), commits `7a507ae8`
 data model, `428c7696` admin form): the deployment-type/OAuth2 configuration data
-model and admin UI. The runtime 3LO token flow ships in follow-up PRs; as of
-2026-07-02 the authentication service still performs OAuth 1.0a only.
+model and admin UI. The runtime landed 2026-07-02: `JiraCloudApiService`
+implements the 3LO authorize redirect (state carries the ticket-system id,
+encrypted, because Cloud redirect URIs must match the registered URL exactly),
+the authorization-code exchange, rotating refresh tokens with recorded expiry,
+automatic `cloudId` resolution via `accessible-resources`, Bearer-authenticated
+REST through `api.atlassian.com/ex/jira/{cloudId}/rest/api/2/`, and the
+Cloud-only `search/jql` endpoint. `JiraOAuthApiFactory` branches on the
+deployment type; the shared callback route serves both flows.
 
 ## Corrections to the ADR-003 record
 

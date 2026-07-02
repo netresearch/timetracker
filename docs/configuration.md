@@ -85,6 +85,23 @@ Jira access tokens are encrypted at rest with `APP_ENCRYPTION_KEY`; migrate
 plaintext tokens with `bin/console tt:encrypt-jira-tokens`
 ([src/Command/EncryptJiraTokensCommand.php](../src/Command/EncryptJiraTokensCommand.php)).
 
+### Setting up Jira Cloud (OAuth 2.0 / 3LO)
+
+1. In the [Atlassian developer console](https://developer.atlassian.com/console/myapps/),
+   create an **OAuth 2.0 (3LO)** app.
+2. Add the **Jira platform REST API** with the scopes `read:jira-work` and
+   `write:jira-work` (`offline_access` for refresh tokens is requested
+   automatically at authorize time).
+3. Register the callback URL — exactly
+   `https://<your-timetracker>/jiraoauthcallback`, no query string (the ticket
+   system id travels inside the encrypted `state` parameter).
+4. In *Administration → Ticket systems*, set type `JIRA`, deployment type
+   `CLOUD`, the site URL (`https://<site>.atlassian.net`), and the app's
+   **Client ID** / **Client Secret**.
+5. Each user authorizes once via the "Please authorize" link on their first
+   sync; the Atlassian `cloudId` is resolved and stored automatically, access
+   tokens refresh themselves (rotating refresh tokens).
+
 ### Tracking external tickets in an internal Jira project
 
 A project can mirror worklogs for tickets from a *customer's* ticket system
