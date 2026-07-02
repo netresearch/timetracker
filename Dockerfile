@@ -36,7 +36,6 @@ RUN set -ex \
     && apt-get install -y --no-install-recommends \
         libzip-dev \
         libpng-dev \
-        libxml2-dev \
         libldap2-dev \
         libjpeg62-turbo-dev \
         libfreetype6-dev \
@@ -50,7 +49,6 @@ RUN set -ex \
         pdo_mysql \
         ldap \
         zip \
-        xml \
         gd \
         intl \
     && apt-get clean \
@@ -141,8 +139,6 @@ RUN mkdir -p var/log var/cache \
 # =============================================================================
 FROM deps AS tools
 
-COPY --from=composer /usr/bin/composer /usr/bin/composer
-
 # Install dev dependencies for static analysis
 RUN composer install --ignore-platform-req=php
 
@@ -154,8 +150,6 @@ USER app
 FROM deps AS dev
 
 ARG XDEBUG_VERSION
-
-COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 # Install dev tools
 RUN set -ex \
@@ -283,8 +277,6 @@ CMD ["php-fpm"]
 # `deps` (no Xdebug — Xdebug would skew the very timings we measure).
 # =============================================================================
 FROM deps AS profiling
-
-COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 ENV CAPTAINHOOK_DISABLE=true
 ENV APP_ENV=profiling
