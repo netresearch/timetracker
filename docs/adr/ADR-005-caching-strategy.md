@@ -1,5 +1,7 @@
 # ADR-005: Caching Strategy
 
+> **Reality note (2026-07-02):** parts of this ADR describe infrastructure that was never implemented (the Redis distributed-cache layer, `RedisCacheService`, `redis://` cache pools). The implemented cache is APCu-only ([config/packages/cache.yaml](../../config/packages/cache.yaml)); no Redis service exists in [compose.yml](../../compose.yml). See [docs/apcu-setup.md](../apcu-setup.md) for the current state.
+
 **Status:** Accepted  
 **Date:** 2024-09-15  
 **Deciders:** Architecture Team, Performance Team  

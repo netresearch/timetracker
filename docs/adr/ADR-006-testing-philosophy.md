@@ -1,6 +1,8 @@
 # ADR-006: Testing Philosophy
 
-**Status:** Accepted  
+> **Reality note (2026-07-02):** parts of this ADR describe infrastructure that was never implemented or has been removed (`config/testing/paratest.xml`, a `docker-compose.test.yml` with MariaDB 10.11/Redis test services, `test:parallel:*`/`test:integration` composer scripts). See [docs/testing.md](../testing.md) for the current state.
+
+**Status:** Superseded by [ADR-013](ADR-013-testing-strategy.md)  
 **Date:** 2024-09-15  
 **Deciders:** Architecture Team, QA Team  
 

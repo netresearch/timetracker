@@ -1,6 +1,6 @@
 # ADR-003: JIRA Integration Architecture
 
-**Status:** Accepted  
+**Status:** Amended by [ADR-017](ADR-017-jira-cloud-oauth2.md)  
 **Date:** 2024-09-15  
 **Deciders:** Architecture Team, Integration Team  
 

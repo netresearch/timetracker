@@ -1,4 +1,6 @@
-# ADR-005: Testing Strategy
+# ADR-013: Testing Strategy
+
+> **Reality note (2026-07-02):** parts of this ADR describe infrastructure that was never implemented or has been removed (the ParaTest parallel harness with `test:parallel:*` composer scripts and a `tests/Unit/` directory, a `docker-compose.test.yml` MySQL 8.0 test stack). Playwright E2E — listed below as "planned" — is meanwhile fully implemented ([playwright.config.ts](../../playwright.config.ts), [e2e/](../../e2e/)). See [docs/testing.md](../testing.md) for the current state.
 
 ## Status
 Accepted
@@ -565,9 +567,9 @@ composer test:report
 - [ ] Mutation testing for test quality
 
 ## Related ADRs
-- ADR-001: Service Layer Pattern Implementation
-- ADR-002: Repository Pattern Refactoring
-- ADR-004: Performance Optimization Strategy
+- [ADR-009](ADR-009-service-layer-pattern.md): Service Layer Pattern Implementation
+- [ADR-010](ADR-010-repository-pattern-refactoring.md): Repository Pattern Refactoring
+- [ADR-012](ADR-012-performance-optimization-strategy.md): Performance Optimization Strategy
 
 ## References
 - [Test Pyramid - Martin Fowler](https://martinfowler.com/articles/practical-test-pyramid.html)

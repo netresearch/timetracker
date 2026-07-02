@@ -1,5 +1,7 @@
 # ADR-004: Authentication Strategy (LDAP + Local)
 
+> **Reality note (2026-07-02):** parts of this ADR describe infrastructure that was never implemented (JWT token service, `LocalAuthenticator` with local-password fallback). The implemented authentication is session-based form login with a single custom `LdapAuthenticator` — LDAP users have no stored local passwords. See [docs/security.md](../security.md), [config/packages/security.yaml](../../config/packages/security.yaml) and [src/Security/](../../src/Security/) for the current state.
+
 **Status:** Accepted  
 **Date:** 2024-09-15  
 **Deciders:** Architecture Team, Security Team  
