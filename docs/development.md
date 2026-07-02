@@ -1,612 +1,167 @@
-# Developer Setup Guide
+# Development Guide
 
-**Complete development environment setup for TimeTracker application**
-
----
-
-## Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Quick Setup (5 Minutes)](#quick-setup-5-minutes)
-3. [Detailed Setup](#detailed-setup)
-4. [IDE Configuration](#ide-configuration)
-5. [Debugging Setup](#debugging-setup)
-6. [Database & Fixtures](#database--fixtures)
-7. [Git Workflow](#git-workflow)
-8. [Troubleshooting](#troubleshooting)
-
----
+How to set up and work on TimeTracker locally. Everything runs in Docker —
+no local PHP installation is needed. See [techstack.md](techstack.md) for the
+technology overview.
 
 ## Prerequisites
 
-### System Requirements
+| Tool | Version | Purpose |
+|------|---------|---------|
+| Docker + Compose v2 | recent | All services run in containers ([compose.yml](../compose.yml)); images are built with `docker bake` ([docker-bake.hcl](../docker-bake.hcl)) |
+| GNU make | any | Task runner ([Makefile](../Makefile)) |
+| Node.js | 26 ([.nvmrc](../.nvmrc)) | Only for running the Playwright e2e suite from the host |
 
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| **PHP** | 8.4+ | Application runtime |
-| **Composer** | 2.5+ | Dependency management |
-| **Node.js** | 18+ | Frontend asset compilation |
-| **Docker** | 20.10+ | Container development (recommended) |
-| **Git** | 2.30+ | Version control |
+The application requires PHP 8.5 ([composer.json](../composer.json)) — provided
+by the Docker images, so you do not need it on the host. The frontend uses
+[bun](https://bun.sh/); `make npm-build` runs it inside the container, so a host
+install is optional.
 
-### Required PHP Extensions
-
-```bash
-# Check required extensions
-php -m | grep -E "(ldap|pdo_mysql|openssl|intl|json|mbstring|opcache|apcu)"
-
-# Install missing extensions (Ubuntu/Debian)
-sudo apt install php8.4-ldap php8.4-mysql php8.4-intl php8.4-mbstring php8.4-opcache
-```
-
-### Optional Tools
-
-- **Symfony CLI** - Enhanced development server
-- **MySQL Workbench/TablePlus** - Database management
-- **HTTPie/Insomnia** - API testing
-- **Docker Desktop** - Container management GUI
-
----
-
-## Quick Setup (5 Minutes)
+## Quick start
 
 ```bash
-# 1. Clone repository
 git clone https://github.com/netresearch/timetracker.git
 cd timetracker
 
-# 2. Setup with Docker (recommended)
-make up                    # Start all services
-make install              # Install dependencies
-make db-migrate           # Setup database
-
-# 3. Load sample data
-docker compose exec app php bin/console doctrine:fixtures:load --no-interaction
-
-# 4. Verify setup
-make test                 # Run tests
-open http://localhost:8765
-
-# Login with sample user: admin / admin
+make up          # build dev image + start the stack (compose profile: dev)
+make install     # composer install + npm install (inside the app-dev container)
+make npm-build   # build the SolidJS UI into public/build-ui
+make db-migrate  # apply Doctrine migrations
 ```
 
-**🎉 You're ready to develop!**
+The app is now at **http://localhost:8765** (port configurable via `HTTP_PORT`,
+see [configuration.md](configuration.md)).
 
----
+On the first start, the database container seeds itself from
+[`sql/full.sql`](../sql/full.sql) (schema) and
+[`sql/testdata.sql`](../sql/testdata.sql) (deterministic test data pinned to
+2024-01-15) — there is no fixtures bundle.
 
-## Detailed Setup
+### Dev login (local LDAP)
 
-### 1. Environment Configuration
+The dev stack includes an OpenLDAP container (`ldap-dev`, host port 3389) with
+users from [`docker/ldap/users-only.ldif`](../docker/ldap/users-only.ldif):
+
+| Username | Password | Note |
+|----------|----------|------|
+| `i.myself` | `myself123` | Seeded in the DB as type `PL` → has admin rights |
+| `developer` | `dev123` | Created on first login (`LDAP_CREATE_USER=true`) |
+| `unittest` | `test123` | Created on first login |
+| `admin` | `admin123` | Created on first login |
+
+## Daily commands
 
 ```bash
-# Copy environment template
-cp .env.example .env.local
-
-# Generate secure keys
-php -r "echo 'APP_SECRET=' . bin2hex(random_bytes(32)) . PHP_EOL;"
-openssl rand -base64 32 | sed 's/^/APP_ENCRYPTION_KEY=/'
+make help        # list all targets
+make up / down   # start / stop the stack
+make logs        # follow container logs
+make sh          # bash inside the app-dev container
+make cache-clear # bin/console cache:clear
 ```
 
-**Key Configuration Options:**
+Symfony console commands run inside the container, e.g.
+`docker compose exec app-dev bin/console debug:router`. The app defines two own
+commands: `tt:encrypt-jira-tokens` and `tt:sync-subtickets`
+([src/Command/](../src/Command/)).
 
-```env
-# .env.local
+A [Swagger UI](../public/docs/swagger/) is served at
+http://localhost:8765/docs/swagger/index.html (`make swagger` prints the URL).
 
-# Application
-APP_ENV=dev
-APP_DEBUG=1
-APP_SECRET=your-generated-secret-key
-APP_ENCRYPTION_KEY=your-generated-encryption-key
+## Frontend workflow
 
-# Database
-DATABASE_URL="mysql://timetracker:timetracker@127.0.0.1:3306/timetracker?charset=utf8mb4"
-
-# LDAP (for authentication)
-LDAP_HOST=ldap.company.local
-LDAP_PORT=389
-LDAP_USESSL=false
-LDAP_BASEDN="dc=company,dc=local"
-LDAP_READUSER="cn=readonly,dc=company,dc=local"
-LDAP_READPASS="readonly_password"
-LDAP_USERNAMEFIELD=uid
-LDAP_CREATE_USER=true
-
-# Development
-SYMFONY_ENV=dev
-XDEBUG_MODE=debug
-```
-
-### 2. Database Setup
-
-#### Option A: Docker Database (Recommended)
-```bash
-# Use Docker for development database
-make up                   # Starts MySQL container
-make db-migrate          # Run migrations
-```
-
-#### Option B: Local MySQL/MariaDB
-```bash
-# Create database
-mysql -u root -p -e "CREATE DATABASE timetracker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p -e "CREATE USER 'timetracker'@'localhost' IDENTIFIED BY 'timetracker';"
-mysql -u root -p -e "GRANT ALL ON timetracker.* TO 'timetracker'@'localhost';"
-
-# Import schema and run migrations
-php bin/console doctrine:database:create --if-not-exists
-php bin/console doctrine:migrations:migrate --no-interaction
-
-# Apply performance optimizations
-mysql timetracker < sql/full.sql
-```
-
-### 3. Dependencies Installation
+The UI is a SolidJS SPA in [`frontend/`](../frontend/) — see
+[frontend/README.md](../frontend/README.md) for details.
 
 ```bash
-# PHP dependencies
-composer install --dev
-
-# Frontend dependencies
-npm install --legacy-peer-deps   # root deps (Playwright e2e tooling)
-
-# Build frontend assets (bun, in frontend/)
-cd frontend && bun install && bun run build   # production build to public/build-ui
-cd frontend && bun run dev                    # dev server with HMR
+cd frontend
+bun install
+bun run dev        # Vite dev server with HMR (next to the running Symfony app)
+bun run build      # production build into ../public/build-ui
+bun run lint       # ESLint
+bun run typecheck  # paraglide compile + tsc --noEmit
+bun run test       # Vitest (jsdom)
 ```
 
-### 4. Verification
+Containerized equivalents: `make npm-build`, `make npm-dev`.
+
+## Testing
+
+See [testing.md](testing.md) for the full picture. The short version:
 
 ```bash
-# Check system health
-php bin/console about
-
-# Verify database connection
-php bin/console doctrine:schema:validate
-
-# Run initial tests
-composer test:fast
-
-# Check code quality
-composer check-all
+make test          # all PHPUnit tests against the db_unittest container
+make test-unit     # unit suite only (no database, fast)
+make e2e           # Playwright e2e suite (starts its own stack on port 8766)
+make coverage      # PHPUnit with HTML coverage → var/coverage/index.html
 ```
 
----
+Note: Composer's `bin-dir` is `bin/`, so the PHPUnit binary is
+`./bin/phpunit` — there is no `vendor/bin/`.
 
-## IDE Configuration
+## Code quality
 
-### PHPStorm Setup
-
-1. **Create New Project**
-   - Open PHPStorm → File → Open → Select `timetracker` directory
-   - Configure PHP interpreter: Settings → PHP → CLI Interpreter → Add Docker/Local PHP 8.4
-
-2. **Configure Code Style**
-   ```xml
-   <!-- .idea/codeStyles/Project.xml -->
-   <code_scheme name="TimeTracker">
-     <PHPCodeStyleSettings>
-       <option name="PHPDOC_BLANK_LINE_BEFORE_TAGS" value="true" />
-       <option name="PHPDOC_WRAP_LONG_LINES" value="true" />
-       <option name="LOWER_CASE_BOOLEAN_CONST" value="true" />
-       <option name="LOWER_CASE_NULL_CONST" value="true" />
-     </PHPCodeStyleSettings>
-   </code_scheme>
-   ```
-
-3. **Enable Inspections**
-   - File → Settings → Editor → Inspections
-   - Enable: PHP → Type compatibility, Undefined symbols, Doctrine
-
-4. **Database Configuration**
-   - View → Tool Windows → Database
-   - Add MySQL data source: `localhost:3306/timetracker`
-   - User: `timetracker`, Password: `timetracker`
-
-### VS Code Setup
-
-Create `.vscode/settings.json`:
-```json
-{
-  "php.validate.executablePath": "/usr/bin/php8.4",
-  "php.suggest.basic": false,
-  "phpcs.enable": true,
-  "phpcs.standard": "PSR12",
-  "phpstan.enabled": true,
-  "phpstan.configFile": "./phpstan.neon",
-  "files.associations": {
-    "*.twig": "twig"
-  },
-  "emmet.includeLanguages": {
-    "twig": "html"
-  }
-}
-```
-
-**Recommended Extensions:**
-- PHP IntelliSense
-- PHP DocBlocker
-- Twig Language 2
-- Docker
-- GitLens
-
-### VI/Vim Configuration
-
-Add to `.vimrc`:
-```vim
-" PHP settings
-autocmd FileType php set omnifunc=phpcomplete#CompletePHP
-autocmd FileType php set dictionary+=/path/to/symfony.dict
-
-" Symfony-specific settings
-set path+=/var/www/html/src
-set path+=/var/www/html/config
-set suffixesadd+=.php,.twig,.yml,.yaml
-```
-
----
-
-## Debugging Setup
-
-### Xdebug Configuration
-
-1. **Install Xdebug**
-   ```bash
-   # For Docker (already included)
-   # For local development
-   sudo apt install php8.4-xdebug
-   ```
-
-2. **Configure Xdebug**
-   
-   Create `/etc/php/8.4/mods-available/xdebug.ini`:
-   ```ini
-   zend_extension=xdebug.so
-   xdebug.mode=debug
-   xdebug.start_with_request=yes
-   xdebug.client_host=localhost
-   xdebug.client_port=9003
-   xdebug.log=/tmp/xdebug.log
-   xdebug.discover_client_host=1
-   xdebug.idekey=PHPSTORM
-   ```
-
-3. **IDE Debugging Setup**
-
-   **PHPStorm:**
-   - File → Settings → PHP → Debug → Xdebug → Port: 9003
-   - Run → Edit Configurations → Add → PHP Web Page
-   - Name: `TimeTracker Debug`, Server: `localhost:8765`
-
-   **VS Code:**
-   Install PHP Debug extension and create `.vscode/launch.json`:
-   ```json
-   {
-     "version": "0.2.0",
-     "configurations": [
-       {
-         "name": "Listen for Xdebug",
-         "type": "php",
-         "request": "launch",
-         "port": 9003,
-         "pathMappings": {
-           "/var/www/html": "${workspaceFolder}"
-         }
-       }
-     ]
-   }
-   ```
-
-### Debugging Workflow
+All quality tools run in the lightweight `app-tools` container (no database):
 
 ```bash
-# Start debugging session
-export XDEBUG_MODE=debug
-php -dxdebug.start_with_request=yes bin/console debug:router
+make check-all   # PHPStan + PHPat + PHP-CS-Fixer check + Twig lint
+make fix-all     # PHP-CS-Fixer fix + Rector apply
 
-# Debug specific test
-./vendor/bin/phpunit --filter testCreateEntry tests/Controller/EntryControllerTest.php
-
-# Debug with Docker
-docker compose exec -e XDEBUG_MODE=debug app php bin/console cache:clear
+make stan        # PHPStan, level 10 (phpstan.neon)
+make phpat       # architecture rules (config/quality/phpat.neon)
+make cs-check    # PHP-CS-Fixer dry-run
+make cs-fix      # PHP-CS-Fixer apply
+make rector      # Rector dry-run (config/quality/rector.php)
+make rector-fix  # Rector apply
+make twig-lint   # lint:twig templates
+make audit       # composer audit
 ```
 
-### Performance Profiling
+The underlying composer scripts (`composer analyze`, `analyze:arch`,
+`cs-check`, `cs-fix`, `rector`, `twig:lint`, `check:all`, `fix:all`) are
+defined in [composer.json](../composer.json) and can also be run inside any
+app container.
 
-```bash
-# Generate profiling data
-export XDEBUG_MODE=profile
-php bin/console app:export-large-dataset
+## Git hooks (CaptainHook)
 
-# Analyze with tools like KCacheGrind
-kcachegrind /tmp/cachegrind.out.*
-```
+Git hooks are managed by [CaptainHook](https://github.com/captainhookphp/captainhook)
+and installed automatically by the `captainhook/plugin-composer` plugin during
+`composer install`. [captainhook.json](../captainhook.json) configures:
 
----
+- **pre-commit** (conditional on staged file types):
+  - `composer validate` + `composer audit` when `composer.json`/`composer.lock` are staged
+  - PHP syntax check, PHPStan, PHP-CS-Fixer (dry-run), PHPat, and the PHPUnit
+    `unit` suite when PHP files are staged
+  - `lint:twig` when Twig files are staged
+- **commit-msg**: enforces
+  [Conventional Commits](https://www.conventionalcommits.org/)
+  (`type(scope): description`)
 
-## Database & Fixtures
+## Debugging
 
-### Database Management
+Xdebug is installed in the dev image but **off by default** (no runtime
+overhead). Enable it per run via the `XDEBUG_MODE` environment variable —
+e.g. `make test-debug` for step-debugging tests. Full IDE setup:
+[xdebug-setup.md](xdebug-setup.md).
 
-```bash
-# Database operations
-make db-migrate           # Apply migrations
-make reset-test-db        # Recreate the test database from fixtures
+The Symfony profiler and debug toolbar are available in the dev environment
+(`APP_ENV=dev`, default for the `app-dev` service).
 
-# Manual operations  
-php bin/console doctrine:database:drop --force
-php bin/console doctrine:database:create
-php bin/console doctrine:migrations:migrate --no-interaction
-```
+## Environment configuration
 
-### Sample Data
-
-The application includes comprehensive fixtures for development:
-
-```bash
-# Load all fixtures
-php bin/console doctrine:fixtures:load --no-interaction
-
-# Load specific fixture groups
-php bin/console doctrine:fixtures:load --group=users,projects --no-interaction
-
-# Available fixture groups:
-# - users: Sample users with different roles
-# - customers: Test customers and projects  
-# - entries: Time entries for testing
-# - teams: Team structures
-```
-
-**Sample Users Created:**
-- **admin/admin** - Project Leader (full access)
-- **controller/controller** - Controller (reporting access)
-- **developer/developer** - Developer (basic access)
-
-### Database Schema
-
-**Key Tables:**
-- `users` - User accounts and authentication
-- `entries` - Time tracking entries
-- `projects` - Project definitions
-- `customers` - Customer information
-- `teams` - Team organization
-- `activities` - Activity types
-
-**Performance Indexes:**
-```sql
--- Key performance indexes
-CREATE INDEX idx_entries_user_date ON entries (user_id, day);
-CREATE INDEX idx_entries_project_date ON entries (project_id, day);  
-CREATE INDEX idx_entries_ticket ON entries (ticket);
-```
-
----
-
-## Git Workflow
-
-### Branch Strategy
-
-```bash
-# Main branches
-main        # Production-ready code
-develop     # Integration branch for features
-
-# Feature branches
-feature/PROJ-123-new-feature
-hotfix/PROJ-456-critical-bug
-release/v4.1.0
-```
-
-### Commit Standards
-
-Follow [Conventional Commits](https://conventionalcommits.org/):
-
-```bash
-# Commit types
-feat: add new time entry validation
-fix: resolve duplicate entry creation bug
-docs: update API documentation
-test: add integration tests for auth
-refactor: extract service for ticket validation
-perf: optimize database queries for exports
-chore: update dependencies
-```
-
-### Development Workflow
-
-```bash
-# 1. Create feature branch
-git checkout -b feature/PROJ-123-description
-
-# 2. Make changes and commit frequently
-git add .
-git commit -m "feat: add basic time entry form"
-
-# 3. Run quality checks
-make check-all              # Static analysis, code style
-make test                   # Run test suite
-
-# 4. Push and create PR
-git push origin feature/PROJ-123-description
-gh pr create --title "feat: New time entry validation" --body "Implements validation rules for overlapping entries"
-
-# 5. After approval, merge via GitHub
-```
-
-### Pre-commit Hooks
-
-Install pre-commit hooks to ensure code quality:
-
-```bash
-# Install hooks
-composer install
-npm install
-
-# Husky will auto-install git hooks
-# Manual installation:
-cp .husky/pre-commit .git/hooks/
-chmod +x .git/hooks/pre-commit
-```
-
-**Pre-commit Checks:**
-- Code style (Laravel Pint)
-- Static analysis (PHPStan)
-- Test execution
-- Twig template validation
-
----
+Symfony reads `.env` → `.env.local` → `.env.$APP_ENV` → `.env.$APP_ENV.local`
+(later files win, real environment variables win over all). Docker Compose
+interpolates its own settings (profiles, ports, DB credentials) from the shell
+environment or the `.env` file; [.env.example](../.env.example) documents them.
+All variables are described in [configuration.md](configuration.md).
 
 ## Troubleshooting
 
-### Common Issues
-
-#### 1. PHP Version Mismatch
-```
-Error: Your PHP version (8.1.x) is not supported. Required: 8.4+
-```
-**Solutions:**
-```bash
-# Ubuntu/Debian
-sudo add-apt-repository ppa:ondrej/php
-sudo apt update && sudo apt install php8.4-cli php8.4-fpm
-
-# macOS with Homebrew
-brew install php@8.4
-brew link php@8.4
-```
-
-#### 2. Memory Exhausted During Tests
-```
-Fatal error: Allowed memory size of 512M exhausted
-```
-**Solutions:**
-```bash
-# Temporary increase
-php -d memory_limit=2G ./vendor/bin/phpunit
-
-# Permanent fix in php.ini
-memory_limit = 2G
-
-# For specific tests
-export PHP_INI_SCAN_DIR=config/php/
-make test
-```
-
-#### 3. LDAP Connection Issues
-```
-Error: Can't contact LDAP server (ldap://ldap.company.local)
-```
-**Solutions:**
-```bash
-# Test LDAP connectivity
-ldapsearch -x -H ldap://ldap.company.local -b "dc=company,dc=local"
-
-# Check firewall/network
-telnet ldap.company.local 389
-
-# Use test LDAP server for development
-docker compose up ldap-dev
-```
-
-#### 4. Database Connection Failed
-```
-Connection refused [tcp://127.0.0.1:3306]
-```
-**Solutions:**
-```bash
-# Check database container status
-docker compose ps db
-
-# Restart database service
-docker compose restart db
-
-# Check database logs
-docker compose logs db
-
-# Test connection manually
-mysql -h 127.0.0.1 -P 3306 -u timetracker -p
-```
-
-#### 5. Asset Build Failures
-```
-Module not found: Error: Can't resolve 'sass-loader'
-```
-**Solutions:**
-```bash
-# Clear npm cache
-npm cache clean --force
-rm -rf node_modules package-lock.json
-npm install --legacy-peer-deps
-
-# Use exact Node.js version
-nvm use 26
-npm install
-```
-
-### Performance Issues
-
-#### Slow Test Execution
-```bash
-# Run only specific test suites
-composer test:unit              # Fast unit tests only
-composer test:controller        # API endpoint tests
-
-# Skip slow integration tests during development
-./vendor/bin/phpunit --exclude-group=slow
-```
-
-#### High Memory Usage During Export
-```bash
-# Use streaming export for large datasets
-php bin/console app:export:stream --format=xlsx --memory-limit=512M
-
-# Monitor memory usage
-php -d xdebug.mode=profile bin/console app:export
-```
-
-### Getting Help
-
-1. **Check Existing Documentation**
-   - [API Documentation](api.md)
-   - [Technology Stack](techstack.md)
-   - [Security Guide](security.md)
-
-2. **Search Issues**
-   - [GitHub Issues](https://github.com/netresearch/timetracker/issues)
-   - Common solutions in closed issues
-
-3. **Community Support**
-   - Internal Slack: `#timetracker-dev`
-   - GitHub Discussions for questions
-
-4. **Debug Information**
-   ```bash
-   # Gather system information
-   php bin/console about
-   php bin/console debug:config
-   composer diagnose
-   docker compose config
-   ```
-
----
-
-## Development Commands Reference
-
-| Task | Docker | Manual |
-|------|--------|--------|
-| **Start Environment** | `make up` | `symfony server:start` |
-| **Install Dependencies** | `make install` | `composer install && npm install` |
-| **Database Setup** | `make db-migrate` | `php bin/console doctrine:migrations:migrate` |
-| **Run Tests** | `make test` | `composer test` |
-| **Code Quality** | `make check-all` | `composer check-all` |
-| **Build Assets** | `make npm-build` | `npm run build` |
-| **Generate Code** | `docker compose exec app php bin/console make:controller` | `php bin/console make:controller` |
-
----
-
-**🎉 Congratulations!** Your development environment is now ready. Start by exploring the [API Documentation](api.md) or pick up a GitHub issue labeled `good-first-issue`.
-
----
-
-**Last Updated**: 2025-01-20  
-**Maintainer**: Development Team  
-**Questions**: Create an issue or ask in `#timetracker-dev`
+- **Composer platform error (PHP 8.5)**: `make composer-install` passes
+  `--ignore-platform-req=php` until `laminas/laminas-ldap` declares PHP 8.5
+  support ([laminas-ldap#62](https://github.com/laminas/laminas-ldap/issues/62)).
+- **Schema changed, tests fail**: `make reset-test-db` recreates the
+  `db_unittest` container and volume from `sql/full.sql`.
+- **Out-of-memory in tests**: the dev container mounts
+  [`docker/php/test.ini`](../docker/php/test.ini) (2G memory limit); for ad-hoc
+  runs use `php -d memory_limit=2G ./bin/phpunit`.
+- **Port 8765 already in use**: set `HTTP_PORT` in `.env` (compose level).

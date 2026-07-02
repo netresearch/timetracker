@@ -1,47 +1,74 @@
 # Xdebug Development Setup
 
-This document explains how to set up and use Xdebug for debugging PHP code in the TimeTracker development environment.
+How to set up and use Xdebug for debugging PHP code in the TimeTracker
+development environment.
 
 ## Overview
 
-Xdebug is installed in the `devbox` Docker stage and provides:
+Xdebug is installed in the `dev` Docker stage (see [Dockerfile](../Dockerfile),
+inherited by the `e2e` stage) and provides:
+
 - Step debugging with IDE integration
 - Enhanced error reporting and stack traces
-- Code coverage analysis capabilities
-- Performance profiling (optional)
+- Code coverage analysis
+
+**It is off by default**: [docker/php/xdebug.ini](../docker/php/xdebug.ini)
+sets `xdebug.mode=off`, so there is no runtime overhead. Activate it per run
+via the `XDEBUG_MODE` environment variable:
+
+```bash
+XDEBUG_MODE=debug     # step debugging (IDE)
+XDEBUG_MODE=coverage  # test coverage (used by make coverage)
+make test-debug       # runs the test suite with XDEBUG_MODE=debug,develop
+```
+
+The `production` image stage does not include Xdebug at all.
 
 ## Configuration
 
-### Docker Configuration
+The baked-in settings ([docker/php/xdebug.ini](../docker/php/xdebug.ini)):
 
-The Xdebug configuration is automatically applied when using the development container:
-
-```bash
-# Build development container with Xdebug
-docker bake app-dev
-
-# Start development environment
-COMPOSE_PROFILES=dev docker compose up -d
+```ini
+xdebug.mode=off                            ; enable via XDEBUG_MODE env var
+xdebug.start_with_request=yes              ; auto-start once a mode is active
+xdebug.client_host=host.docker.internal
+xdebug.client_port=9003
+xdebug.discover_client_host=true
+xdebug.show_error_trace=1
+xdebug.show_exception_trace=1
 ```
 
-### IDE Setup
+Because `start_with_request=yes` is set, a session starts automatically for
+every request as soon as `XDEBUG_MODE=debug` is active — no browser cookie or
+`XDEBUG_SESSION` parameter is required (an "Xdebug helper" browser extension
+still works if you prefer selective triggering).
 
-#### PhpStorm
-1. Go to **Settings** → **Languages & Frameworks** → **PHP** → **Debug**
-2. Set Xdebug port to `9003`
-3. Enable "Can accept external connections"
-4. Go to **Settings** → **Languages & Frameworks** → **PHP** → **Servers**
-5. Add a new server:
+To enable debugging for the whole dev container, set the variable on the
+service, e.g. in a compose override:
+
+```yaml
+services:
+  app-dev:
+    environment:
+      - XDEBUG_MODE=debug,develop
+```
+
+## IDE Setup
+
+### PhpStorm
+
+1. **Settings** → **PHP** → **Debug**: Xdebug port `9003`, allow external
+   connections
+2. **Settings** → **PHP** → **Servers**: add a server
    - Name: `timetracker-dev`
-   - Host: `localhost`
-   - Port: `8765`
-   - Debugger: `Xdebug`
-   - Use path mappings:
-     - Project root → `/var/www/html`
+   - Host: `localhost`, Port: `8765`
+   - Path mapping: project root → `/var/www/html`
+3. Start "Listen for PHP Debug Connections"
 
-#### VS Code
-1. Install the "PHP Debug" extension
-2. Create `.vscode/launch.json`:
+### VS Code
+
+Install the "PHP Debug" extension and create `.vscode/launch.json`:
+
 ```json
 {
     "version": "0.2.0",
@@ -61,123 +88,60 @@ COMPOSE_PROFILES=dev docker compose up -d
 
 ## Usage
 
-### Web Debugging
+### Web debugging
 
 1. Start your IDE debugger (listen for connections)
-2. Set breakpoints in your PHP code
-3. Add `XDEBUG_SESSION=PHPSTORM` to your browser URL:
-   ```
-   http://localhost:8765/?XDEBUG_SESSION=PHPSTORM
-   ```
-4. Or use a browser extension like "Xdebug helper"
+2. Set breakpoints
+3. Make sure the container runs with `XDEBUG_MODE=debug` (see above)
+4. Open http://localhost:8765 — the session starts automatically
 
-### CLI Debugging
+### CLI debugging
 
 ```bash
-# Debug a CLI script
-docker-compose exec app-dev php -dxdebug.start_with_request=yes bin/console debug:config
+# Debug a console command
+docker compose exec -e XDEBUG_MODE=debug app-dev bin/console tt:sync-subtickets
 
-# Debug a specific PHP file
-docker-compose exec app-dev php -dxdebug.start_with_request=yes bin/test-xdebug.php
+# Debug specific PHPUnit tests
+docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=debug app-dev \
+  ./bin/phpunit --filter=testMethodName
+
+# Or simply: whole suite with Xdebug
+make test-debug
 ```
 
-### Testing Xdebug Installation
+### Verify the installation
 
 ```bash
-# Test Xdebug is working
-docker-compose exec app-dev php bin/test-xdebug.php
+docker compose exec app-dev php bin/test-xdebug.php
 ```
 
-## Configuration Details
+## Code coverage
 
-### Xdebug Settings
-
-The development container uses these Xdebug settings:
-
-```ini
-; Enable debugging and development features
-xdebug.mode=debug,develop
-
-; Auto-start debugging for requests
-xdebug.start_with_request=yes
-
-; Connect to host machine IDE
-xdebug.client_host=host.docker.internal
-xdebug.client_port=9003
-
-; Auto-discover IDE
-xdebug.discover_client_host=true
-
-; Enhanced error display
-xdebug.show_error_trace=1
-xdebug.show_exception_trace=1
-```
-
-### Environment Variables
-
-You can override Xdebug behavior with environment variables:
-
-```yaml
-# In docker-compose.yml
-environment:
-  - XDEBUG_MODE=debug,develop
-  - XDEBUG_CONFIG=client_host=host.docker.internal client_port=9003
+```bash
+make coverage   # XDEBUG_MODE=coverage → HTML report in var/coverage/index.html
 ```
 
 ## Troubleshooting
 
-### Common Issues
-
 1. **Xdebug not connecting to IDE**
-   - Check IDE is listening on port 9003
-   - Verify `host.docker.internal` resolves correctly
-   - Try disabling firewall temporarily
+   - Is the container actually running with `XDEBUG_MODE=debug`? Check with
+     `docker compose exec app-dev php -i | grep xdebug.mode`
+   - Check the IDE is listening on port 9003
+   - Verify `host.docker.internal` resolves from the container
+2. **Breakpoints not hit**
+   - Check the path mapping (`/var/www/html` → project root)
+3. **Slow tests**
+   - Keep `XDEBUG_MODE=off` (the default in all `make test*` targets except
+     `test-debug` and `coverage`)
 
-2. **Breakpoints not working**
-   - Ensure path mappings are correct
-   - Check `XDEBUG_SESSION` parameter is set
-   - Verify Xdebug mode includes "debug"
+Enable Xdebug's own log for connection issues (in
+[docker/php/xdebug.ini](../docker/php/xdebug.ini)):
 
-3. **Performance impact**
-   - Xdebug only runs in development container
-   - Disable when not debugging: set `xdebug.mode=off`
-
-### Debug Logs
-
-Enable Xdebug logging for connection troubleshooting:
-
-```bash
-# Add to docker/php/xdebug.ini
+```ini
 xdebug.log_level=7
 xdebug.log=/var/log/xdebug.log
-
-# View logs
-docker-compose exec app-dev tail -f /var/log/xdebug.log
 ```
 
-## Performance Considerations
-
-- Xdebug adds overhead - only enabled in development
-- Production containers (`runtime` stage) do not include Xdebug
-- APCu cache still works efficiently with Xdebug enabled
-- For production-like testing, use `runtime` stage without Xdebug
-
-## Integration with Other Tools
-
-### PHPUnit Debugging
 ```bash
-# Debug PHPUnit tests
-docker-compose exec app-dev php -dxdebug.start_with_request=yes vendor/bin/phpunit --filter=testMethod
-```
-
-### Symfony Console Debugging
-```bash
-# Debug Symfony commands
-docker-compose exec app-dev php -dxdebug.start_with_request=yes bin/console app:command
-```
-
-### Code Coverage
-```bash
-# Generate code coverage with Xdebug
-docker-compose exec app-dev php -dxdebug.mode=coverage vendor/bin/phpunit --coverage-html coverage/
+docker compose exec app-dev tail -f /var/log/xdebug.log
 ```
