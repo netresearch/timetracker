@@ -6,7 +6,6 @@
  *
  * Imported at the top of app.css so the header compaction/sidebar
  * rules there keep overriding these defaults.
- * (Formerly the frozen Encore artifact public/build/css/header.css.)
  */
 
 .page-header {

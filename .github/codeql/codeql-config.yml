@@ -2,8 +2,6 @@ name: "CodeQL config"
 
 # Only analyze our code, not external libraries
 paths-ignore:
-  # Committed static assets
-  - public/build
   # Node modules
   - node_modules
   # Vendor dependencies

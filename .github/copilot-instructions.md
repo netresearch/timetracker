@@ -82,7 +82,7 @@ docker compose run --rm app npm run build
 - **Persistence:** Doctrine ORM with migrations in `migrations/`
 - **Views:** Twig templates in `templates/`
 - **Services:** Business logic in `App\Service` namespace
-- **Frontend:** Webpack Encore builds assets from `assets/` to `public/build/`
+- **Frontend:** SolidJS + TypeScript in `frontend/`, built by Vite (bun) to `public/build-ui/`
 
 ## Testing Guidelines
 

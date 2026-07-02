@@ -128,8 +128,7 @@ ENV APP_ENV=prod
 RUN composer dump-autoload --optimize --classmap-authoritative \
     && composer run-script post-install-cmd --no-interaction || true
 
-# Build the SolidJS UI (Vite). public/build holds committed static assets
-# (logo images) — the legacy Encore/ExtJS build was removed.
+# Build the SolidJS UI (Vite).
 RUN bun run --cwd frontend build
 
 # Create var directories

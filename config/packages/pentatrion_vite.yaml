@@ -1,6 +1,5 @@
-# Vite integration for the SolidJS frontend (frontend/).
-# Vite builds into public/build-ui; public/build only holds committed static
-# assets (logo images) left over from the removed Encore/ExtJS build.
+# Vite integration for the SolidJS frontend (frontend/); Vite builds into
+# public/build-ui.
 pentatrion_vite:
     public_directory: public
     build_directory: build-ui
