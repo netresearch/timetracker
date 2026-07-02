@@ -1,8 +1,9 @@
-{# Light/dark theming, shared by the SolidJS /ui shell and the login page.
-   Applies the saved preference before first paint (no flash) and, once the
-   DOM is ready, wires the single-button theme cycle rendered in the header
-   (partials/header.html.twig). Single source of truth for theming — the
-   Solid app deliberately ships no theme code (see frontend/src/App.tsx). #}
+{# Light/dark theming, shared by the SolidJS /ui shell, the login page and
+   the error pages. Applies the saved preference before first paint (no
+   flash) and, once the DOM is ready, wires the single-button theme cycle
+   rendered in the header (partials/header.html.twig) — a no-op on pages
+   without that button. Single source of truth for theming — the Solid app
+   deliberately ships no theme code (see frontend/src/App.tsx). #}
 <script>
 (function () {
     var KEY = 'timetracker-theme';
