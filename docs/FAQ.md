@@ -1,308 +1,225 @@
-# TimeTracker FAQ (Frequently Asked Questions)
+# TimeTracker FAQ
 
-## 📋 General Questions
+Answers to common questions about using TimeTracker. For a full walkthrough
+of every page see the [User Guide](user-guide.md).
+
+## General
 
 ### What is TimeTracker?
-TimeTracker is an enterprise-grade time tracking application designed for project and customer-based time management. It provides comprehensive features for tracking work hours, generating reports, and integrating with external systems like JIRA.
 
-### Who uses TimeTracker?
-- **Developers**: Track time on projects and tasks
-- **Project Managers**: Monitor team productivity and project progress
-- **Controllers**: Generate reports and analyze time allocation
-- **Administrators**: Manage users, projects, and system configuration
+A web application for logging work time against customers, projects and
+activities, with reporting, an XLSX controlling export and optional Jira
+worklog synchronization. See [features.md](features.md) for the full list.
 
-### What are the main features?
-- ⏱️ Time tracking with autocompletion
-- 📊 Analytics and reporting dashboards
-- 🔄 JIRA integration for worklog synchronization
-- 👥 Team and project management
-- 📈 Excel/CSV export capabilities
-- 🔐 LDAP/Active Directory authentication
-- 📱 Responsive web interface
+### Which user roles exist?
 
-## 🚀 Getting Started
+| Type | Access |
+|---|---|
+| **USER** / **DEV** | Track time, bulk entry, Overview, Evaluation, own CSV export |
+| **PL** (Project Lead) | All of the above plus Billing and Administration |
+| **ADMIN** | All of the above plus Billing and Administration |
 
-### How do I access TimeTracker?
-Access the application through your web browser at your organization's TimeTracker URL (typically `https://timetracker.yourcompany.com`). Use your LDAP credentials or local account to log in.
+PL currently carries full admin rights (a v4 compatibility carry-over), so PL
+and ADMIN unlock the same pages. Defined in
+[`src/Enum/UserType.php`](../src/Enum/UserType.php).
 
-### What browsers are supported?
-- Chrome 90+ (recommended)
-- Firefox 88+
-- Safari 14+
-- Edge 90+
+### Which languages does the UI support?
 
-### Is there a mobile app?
-Currently, TimeTracker is a responsive web application that works well on mobile browsers. Native mobile apps are not available yet.
+English and German. Change it under ⚙ Settings → Language.
 
-## ⏰ Time Tracking
+## Logging in
 
-### How do I add a time entry?
-1. Click **"Add Entry"** or press **'a'** keyboard shortcut
-2. Select the date
-3. Choose project and activity
-4. Enter duration (e.g., "2h 30m" or "2.5")
-5. Add a description
-6. Click Save
+### How do I log in?
 
-### What time formats are supported?
-```
-1h 30m    → 1 hour 30 minutes
-2.5       → 2.5 hours
-90m       → 90 minutes
-1w 2d 3h  → 1 week, 2 days, 3 hours
-```
+With your organization (LDAP / Active Directory) username and password on the
+login page. *Stay signed in* keeps the session for 30 days on that browser.
 
-### Can I add entries for past dates?
-Yes, you can add entries for any date within the allowed period (typically the current and previous month).
+### I can't log in — what should I check?
 
-### How do I edit an existing entry?
-Simply click on any field of the entry you want to edit. The field becomes editable immediately.
+- **Wrong credentials:** the login checks your directory (LDAP/AD) password —
+  the same one you use for other company systems. TimeTracker itself cannot
+  reset it; use your organization's usual password process.
+- **"This account has been deactivated":** an administrator has disabled your
+  account (Administration → Users → Active). Ask an admin to re-activate it.
+- **First-ever login fails although the password is right:** if the instance
+  runs with automatic user creation disabled (`LDAP_CREATE_USER=false`), an
+  administrator must create your account before you can log in.
 
-### How do I delete an entry?
-- Right-click on the entry and select **"Delete"**
-- Or select the entry and press **'d'** key
+### Why did a "Session expired" dialog appear while I was working?
 
-### What are bulk entries?
-Bulk entries allow you to quickly add recurring entries like vacation or sick days for multiple days at once.
+Your server session ended (e.g. after a long idle period). Sign in again in
+the dialog — the page underneath is kept, including unsaved changes in the
+Worklog grid.
 
-## 🔗 JIRA Integration
+## Time tracking
 
-### How does JIRA integration work?
-TimeTracker can automatically synchronize your time entries with JIRA worklogs. When you track time against a JIRA ticket, it creates or updates the corresponding worklog in JIRA.
+### How do I add an entry?
 
-### How do I connect my JIRA account?
-1. Go to Settings → Integrations
-2. Click "Connect JIRA Account"
-3. Follow the OAuth authorization flow
-4. Grant TimeTracker permission to access your JIRA account
+Press <kbd>Alt</kbd>+<kbd>A</kbd> or the **+** button in the Worklog. Fill in
+date, start/end time, customer, project and activity (plus ticket and
+description) — the row saves automatically once it's complete. Details:
+[User Guide → Worklog](user-guide.md#worklog--tracking-your-time).
 
-### Why isn't my time showing in JIRA?
-Common reasons:
-- JIRA authentication expired (re-authenticate)
-- Network connectivity issues
-- JIRA ticket is closed or restricted
-- Synchronization is still pending (check sync status)
+### How do I edit or delete an entry?
 
-### Can I disable JIRA sync for specific entries?
-Yes, uncheck the "Sync to JIRA" option when creating or editing an entry.
+Double-click a cell (or focus it and press <kbd>Enter</kbd>/<kbd>F2</kbd>)
+to edit in place. Delete via the trash icon in the row — a confirmation
+dialog follows. There is no context menu.
 
-## 👥 User Management
+### What time formats can I type?
 
-### What are the user roles?
+Times are start/end pairs, parsed flexibly: `9:30`, `09:30`, `930`, `0930`,
+`9.30`, `9h30`, plain `9` (→ 09:00), and am/pm suffixes like `9:30am` or `9p`.
 
-| Role | Abbreviation | Permissions |
-|------|--------------|-------------|
-| Developer | DEV | Track time, view own reports |
-| Controller | CTL | All DEV permissions + export data, view team reports |
-| Project Leader | PL | All CTL permissions + manage projects, users, settings |
+### Why is my entry colored?
 
-### How do I change my password?
-If using LDAP authentication, change your password through your organization's standard process. For local accounts, go to Settings → Security → Change Password.
+Row colors relate an entry to the one above it: **day break** (first entry of
+a day), **break** (an unbooked gap before it), **time overlap** (it starts
+before the previous entry ended). The legend is on the in-app Help page.
 
-### Can I have multiple user accounts?
-No, each person should have only one account. Contact an administrator if you need role changes.
+### How do I book a whole vacation or sick-leave period?
 
-## 📊 Reports and Analytics
+Use **Bulk entry** in the Worklog toolbar: choose a preset (e.g. "Vacation"),
+a date range, and whether to use your contract hours or fixed times; weekends
+and holidays are skipped by default. Presets are maintained by administrators
+under Administration → Presets.
 
-### What reports are available?
-- **Personal Dashboard**: Your time entries and statistics
-- **Project Reports**: Time spent per project
-- **Customer Reports**: Time allocation by customer
-- **Team Reports**: Team productivity metrics (PL only)
-- **Activity Reports**: Time distribution by activity type
+### Can I enter time for past or future dates?
+
+Yes — set the entry's date as needed. Future-dated entries are shown in the
+grid only when *Show future* is enabled in Settings.
+
+## Working-time targets (contracts)
+
+### Where do the "expected" times on the Overview come from?
+
+From your **work contract**: an administrator records target hours for each
+weekday plus a validity period (Administration → Contracts). The Overview
+compares your booked time per day against those hours; weekends and public
+holidays (Administration → Holidays) count as 0 expected. The header's
+Today/Week/Month badges use the same targets.
+
+### My balance looks wrong — why?
+
+Usually the contract is missing or outdated: without a contract valid for the
+month, expected time is 0. Ask an administrator to check your entry under
+Administration → Contracts. A contract change mid-month takes effect for the
+whole month in which it is valid on the 1st.
+
+## Jira integration
+
+### How does the Jira sync trigger?
+
+Automatically — there is no per-entry sync option. When your project is linked
+to a Jira ticket system that has *time booking* enabled, every save, edit or
+delete of an entry with a ticket is mirrored as a worklog on that Jira ticket
+in the background. Changing an entry's ticket removes the worklog from the old
+ticket. A failed sync never blocks saving in TimeTracker.
+
+### How do I connect my Jira account?
+
+There is no manual "connect" page. TimeTracker uses a per-user OAuth token per
+ticket system: the first time it needs to act on your behalf, it hands you a
+link to Jira's *authorize* page ("Please authorize: …"). Approve there and
+Jira returns you to TimeTracker — the token is stored (encrypted) and your
+most recent entries are synced.
+
+### Why isn't my time showing up in Jira?
+
+- Your Jira authorization is missing or expired (see the previous answer).
+- The ticket system may not have *time booking* enabled, or the project isn't
+  linked to it — an administrator can check that under Administration →
+  Ticket systems / Projects.
+- Administrators can re-push pending worklogs via `GET /syncentries/jira`.
+
+### Can I see TimeTracker times inside Jira?
+
+Yes, with the optional userscript for Jira Cloud — see
+[features.md → Jira Cloud Time Display](features.md#jira-cloud-time-display-userscript).
+
+## Reports and exports
+
+### How do I analyse booked time?
+
+Use the **Evaluation** page: pick a date range and at least one filter
+(customer, project, team, user, activity, ticket or description) and press
+Refresh. You get effort breakdowns by customer, project, ticket, activity,
+user and day, plus a sortable entry list.
 
 ### How do I export data?
-1. Go to Controlling → Export
-2. Select date range and filters
-3. Choose format (Excel, CSV, JSON)
-4. Click "Export"
 
-### What is the "Interpretation" tab?
-The Interpretation tab provides visual analytics with charts and graphs showing time distribution across projects, customers, and activities.
+- **Your own entries as CSV:** Worklog toolbar → download icon (or
+  <kbd>Alt</kbd>+<kbd>X</kbd>); exports the currently shown day range.
+- **Monthly statement as XLSX** (PL/ADMIN): the **Billing** page — filter by
+  user/project/customer, pick year and month, and Export.
+- **Admin lists as CSV** (PL/ADMIN): every Administration panel has an
+  *Export CSV* button for the filtered list.
 
-### Can I schedule automated reports?
-Not directly in TimeTracker, but you can use the API to build automated reporting solutions.
+There is no JSON export.
 
-## 🏢 Projects and Customers
+## Keyboard shortcuts
 
-### What's the difference between a project and a customer?
-- **Customer**: The client organization (e.g., "Acme Corp")
-- **Project**: Specific work for that customer (e.g., "Acme Website Redesign")
+Press <kbd>?</kbd> for the in-app cheat sheet, or hold <kbd>Alt</kbd> to see
+shortcut badges on the buttons themselves. The most important ones
+(full tables in the [User Guide](user-guide.md#keyboard-shortcuts), source:
+[`frontend/src/lib/shortcuts.ts`](../frontend/src/lib/shortcuts.ts)):
 
-### How do I request a new project?
-Contact your Project Leader or Administrator. They can create new projects through Administration → Projects.
+| Keys | Action |
+|---|---|
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>K</kbd> | Command palette |
+| <kbd>Alt</kbd>+<kbd>1</kbd>…<kbd>7</kbd> | Switch navigation tab |
+| <kbd>Alt</kbd>+<kbd>A</kbd> | Add entry |
+| <kbd>Alt</kbd>+<kbd>C</kbd> / <kbd>P</kbd> / <kbd>I</kbd> | Continue / prolong / info for the current row |
+| <kbd>Alt</kbd>+<kbd>R</kbd> / <kbd>X</kbd> | Refresh / export CSV |
+| <kbd>Enter</kbd> / <kbd>F2</kbd> | Edit the focused cell |
+| <kbd>/</kbd> | Jump to search/filter |
+| <kbd>?</kbd> | Shortcut help |
 
-### Can a project have multiple customers?
-No, each project belongs to exactly one customer. However, a customer can have multiple projects.
-
-### What are project presets?
-Presets are templates for common activities that can be quickly applied when creating time entries.
-
-## ⚙️ Settings and Configuration
+## Settings
 
 ### Where are my personal settings?
-Click on your username in the top-right corner, then select "Settings" to configure:
-- Time display format
-- Default project/activity
-- Notification preferences
-- JIRA integration
 
-### How do I set my default project?
-Settings → Preferences → Default Project
+Behind the ⚙ icon in the header: language, empty-line/suggest-time/show-future
+toggles and minimum entry duration are saved to your account; Enter behavior,
+date format, font, text size and navigation layout apply instantly and are
+stored per device. See [User Guide → Settings](user-guide.md#settings).
 
-### Can I change the interface language?
-Currently, TimeTracker supports:
-- English (default)
-- German
-- French
-Change via Settings → Preferences → Language
+### How do I switch to dark mode?
 
-## 🔒 Security and Privacy
+The theme button in the header cycles System → Light → Dark. The density
+button next to it cycles Comfortable → Compact → Ultra-compact.
 
-### Is my data secure?
-Yes, TimeTracker uses:
-- Encrypted connections (HTTPS)
-- Secure authentication (LDAP/OAuth)
-- Role-based access control
-- Regular security updates
+## Projects and customers
 
-### Who can see my time entries?
-- You can always see your own entries
-- Your Project Leader can see team entries
-- Controllers can see entries for export/reporting
-- Administrators have full access
+### What's the difference between a customer and a project?
 
-### How long is data retained?
-Time entries are retained according to your organization's data retention policy (typically 2-7 years).
+A **customer** is the client organization; a **project** is a piece of work
+for exactly one customer. A customer can have many projects.
 
-### Can I delete my data?
-You can delete your own recent entries. For older data or complete removal, contact an administrator.
+### How do I get a new project or preset added?
 
-## 🐛 Troubleshooting
+Ask a project lead or administrator — both are managed under Administration
+(→ Projects, → Presets).
 
-### I can't log in
-1. Check your username and password
-2. Verify CAPS LOCK is off
-3. Try resetting your password
-4. Contact IT support if using LDAP
+## Troubleshooting & support
 
-### The page is loading slowly
-- Clear browser cache (Ctrl+Shift+R)
-- Check your internet connection
-- Try a different browser
-- Report to IT if problem persists
+### My entry isn't saving
 
-### My entries aren't saving
-- Check for validation errors (red fields)
-- Ensure you have a stable internet connection
-- Try refreshing the page
-- Contact support if the issue continues
+A row only auto-saves once date, start, end, customer, project and activity
+are valid — incomplete or invalid fields show an error beneath the row. The
+disk icon force-saves and surfaces the full error message. Also check for a
+"Session expired" dialog.
 
-### I see an error message
-Note the error code and message, then:
-1. Try refreshing the page
-2. Log out and back in
-3. Contact support with the error details
+### Where do I report bugs or request features?
 
-## 📱 Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `a` | Add new entry |
-| `d` | Delete selected entry |
-| `e` | Edit selected entry |
-| `↑/↓` | Navigate entries |
-| `Ctrl+S` | Save current entry |
-| `Esc` | Cancel editing |
-| `/` | Focus search |
-| `?` | Show help |
-
-## 🔄 API and Integrations
+On GitHub: [issues](https://github.com/netresearch/timetracker/issues) and
+[discussions](https://github.com/netresearch/timetracker/discussions). For
+instance-specific problems (accounts, contracts, Jira connectivity) contact
+your administrator.
 
 ### Is there an API?
-Yes, TimeTracker provides a REST API for:
-- Creating/reading time entries
-- Managing projects and users
-- Generating reports
-- Webhook notifications
 
-### How do I get API access?
-1. Request API credentials from an administrator
-2. Refer to the [API Documentation](./api.md)
-3. Use OAuth 2.0 for authentication
-
-### What integrations are available?
-- JIRA (built-in)
-- LDAP/Active Directory (built-in)
-- Slack (via webhooks)
-- Custom integrations via API
-
-### Can I build my own integration?
-Yes, use the REST API to build custom integrations. See the [API Usage Guide](./api.md) for details.
-
-## 💡 Best Practices
-
-### Daily time tracking tips
-1. Track time as you work (not at end of day)
-2. Use descriptive entry descriptions
-3. Associate entries with specific tickets
-4. Review entries before submitting
-
-### Weekly workflow
-1. Monday: Review previous week's entries
-2. Daily: Track time as you work
-3. Friday: Ensure week is complete
-4. Submit for approval if required
-
-### Project organization
-- Use consistent activity types
-- Keep project descriptions updated
-- Archive completed projects
-- Regular cleanup of old data
-
-## 📞 Support
-
-### How do I get help?
-1. Check this FAQ first
-2. Consult the [Troubleshooting Guide](./TROUBLESHOOTING.md)
-3. Search [GitHub Discussions](https://github.com/netresearch/timetracker/discussions)
-4. Open a [GitHub Issue](https://github.com/netresearch/timetracker/issues) if needed
-
-### How do I report a bug?
-1. Document the issue with screenshots
-2. Note steps to reproduce
-3. Check if already reported
-4. Submit via GitHub Issues or support ticket
-
-### How do I request a feature?
-1. Check if already requested
-2. Describe the use case
-3. Submit feature request via GitHub
-4. Discuss in Slack channel
-
-## 🔄 Updates and Maintenance
-
-### How often is TimeTracker updated?
-- **Minor updates**: Monthly
-- **Security patches**: As needed
-- **Major releases**: Quarterly
-
-### Will I be notified of updates?
-Yes, through:
-- In-app notifications
-- Email announcements
-- Slack channel updates
-
-### Is there scheduled maintenance?
-Maintenance windows:
-- Regular: Sunday 2-4 AM
-- Emergency: As needed with notice
-
-### What happens during maintenance?
-The application may be unavailable briefly. Your data is safe and any unsaved work will be preserved.
-
----
-
-*Can't find your answer? Ask in [GitHub Discussions](https://github.com/netresearch/timetracker/discussions)*
-
-*Last Updated: 2025-01-15 | Version: 1.0*
+Yes — the same HTTP API the UI uses, with session-based authentication. The
+OpenAPI v3 spec lives at [`public/api.yml`](../public/api.yml) (linked from
+the in-app Help page); a Swagger UI is served under `/docs/swagger/` behind
+login. See [api.md](api.md).
