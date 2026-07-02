@@ -247,6 +247,11 @@ export function adminEntities(): EntityDescriptor[] {
       // The backend exposes a synthetic numeric id (Ymd) for row tracking; delete keys on day.
       editable: false,
       deletePayload: (row) => ({ day: str(row.day) }),
+      importAction: {
+        endpoint: '/holiday/import-ical',
+        label: () => m.admin_holiday_import(),
+        hint: () => m.admin_holiday_import_hint(),
+      },
       columns: [
         { key: 'day', label: () => m.admin_f_day() },
         { key: 'name', label: () => m.admin_f_name() },

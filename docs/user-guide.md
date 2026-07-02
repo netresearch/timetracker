@@ -265,7 +265,7 @@ In the sidebar layout each panel also gets a quick-add "+" button.
 | **Projects** | Projects per customer: ticket system, ticket prefix(es), project/technical lead, billing type (time & material / fixed price / none), offer / cost-center / invoice references, estimated duration, subticket list, optional internal-Jira mapping |
 | **Users** | Accounts: username, abbreviation, language, user type, teams. Inactive users cannot log in; their entries are kept |
 | **Teams** | Team names and team leads; teams group users and customers |
-| **Holidays** | Public holidays (date + name) counted as non-working days; add and delete only |
+| **Holidays** | Public holidays (date + name) counted as non-working days; add, delete, or bulk-import from an iCal feed URL or `.ics` file (existing dates updated, new ones added) |
 | **Presets** | Templates for bulk entry: name + customer + project + activity + description |
 | **Ticket systems** | Ticket-system connections (Jira), see [Jira integration](#jira-integration): URLs, *time booking* flag, OAuth credentials (write-only — leave blank to keep the stored value) |
 | **Activities** | Activity types with a *needs ticket* flag and a factor that weights durations in evaluations |

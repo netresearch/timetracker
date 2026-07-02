@@ -154,3 +154,38 @@ export async function postJson<T = unknown>(
 
   return (text ? JSON.parse(text) : null) as T
 }
+
+/**
+ * POSTs multipart/form-data (a file upload and/or plain fields) — the browser
+ * sets the Content-Type with boundary, so it is left off here. Reads
+ * `$request->files`/`$request->request` server-side. Returns the raw text body
+ * (JSON envelope or plain-text message), like postForm.
+ */
+export async function postMultipart(path: string, form: FormData): Promise<string> {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+    body: form,
+  })
+
+  if (sessionLost(response)) {
+    raiseSessionExpired()
+  }
+
+  const text = await response.text()
+  if (!response.ok) {
+    let message = text
+    try {
+      const parsed = JSON.parse(text) as { message?: string }
+      if (typeof parsed.message === 'string') {
+        message = parsed.message
+      }
+    } catch {
+      // Plain-text body — use it verbatim.
+    }
+    throw new ApiError(response.status, message || `${path}: HTTP ${response.status}`)
+  }
+
+  return text
+}

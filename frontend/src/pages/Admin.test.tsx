@@ -8,6 +8,7 @@ import Admin from './Admin'
 
 const getJson = vi.fn()
 const postJson = vi.fn()
+const postMultipart = vi.fn()
 
 vi.mock('../api/client', () => {
   class MockApiError extends Error {
@@ -23,6 +24,7 @@ vi.mock('../api/client', () => {
     apiErrorMessage: (error: unknown, fallback: string) => (error instanceof MockApiError ? error.message : fallback),
     getJson: (...args: unknown[]) => getJson(...args),
     postJson: (...args: unknown[]) => postJson(...args),
+    postMultipart: (...args: unknown[]) => postMultipart(...args),
   }
 })
 
@@ -80,6 +82,7 @@ afterEach(() => {
   cleanup() // unmount even after a throwing test, so a body-portalled combobox + body-inert can't leak into the next test
   getJson.mockReset()
   postJson.mockReset()
+  postMultipart.mockReset()
   vi.restoreAllMocks()
 })
 
@@ -803,6 +806,46 @@ describe('Admin status page', () => {
     fireEvent.click(getByText('Select all 51'))
     await waitFor(() => expect(getByText('51 selected')).toBeInTheDocument())
     expect(queryByText('Select all 51')).toBeNull()
+
+    unmount()
+  })
+
+  it('imports holidays from an iCal URL and refreshes the list', async () => {
+    mockEndpoints()
+    postMultipart.mockResolvedValue(JSON.stringify({ success: true, imported: 3, updated: 1, total: 4 }))
+
+    const { getByRole, getByText, unmount } = renderAdmin('/admin/holidays')
+    await waitFor(() => expect(getByText('New Year')).toBeInTheDocument())
+
+    // The Import button only exists because the holidays descriptor declares importAction.
+    fireEvent.click(getByRole('button', { name: 'Import iCal' }))
+
+    // The dialog is portalled to document.body (Ark UI) — query via screen.
+    const url = (await screen.findByRole('textbox', { name: 'iCal feed URL' })) as HTMLInputElement
+    fireEvent.input(url, { target: { value: 'https://example.com/holidays.ics' } })
+    fireEvent.submit(url.closest('form') as HTMLFormElement)
+
+    await waitFor(() => expect(postMultipart).toHaveBeenCalledWith('/holiday/import-ical', expect.any(FormData)))
+    const sentForm = postMultipart.mock.calls[0]?.[1] as FormData
+    expect(sentForm.get('url')).toBe('https://example.com/holidays.ics')
+    // The success notice reports the counts from the response.
+    await waitFor(() => expect(getByText('3 added, 1 updated.')).toBeInTheDocument())
+
+    unmount()
+  })
+
+  it('blocks the holiday import when neither URL nor file is given', async () => {
+    mockEndpoints()
+
+    const { getByRole, getByText, unmount } = renderAdmin('/admin/holidays')
+    await waitFor(() => expect(getByText('New Year')).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Import iCal' }))
+    const url = (await screen.findByRole('textbox', { name: 'iCal feed URL' })) as HTMLInputElement
+    fireEvent.submit(url.closest('form') as HTMLFormElement)
+
+    await waitFor(() => expect(screen.getByText('Enter a feed URL or choose an .ics file.')).toBeInTheDocument())
+    expect(postMultipart).not.toHaveBeenCalled()
 
     unmount()
   })

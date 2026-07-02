@@ -71,6 +71,16 @@ export interface EntityDescriptor {
    * override for entities keyed by something other than a numeric id.
    */
   deletePayload?: (row: Record<string, unknown>) => Record<string, unknown>
+  /**
+   * Optional bulk import from an iCal feed (URL) or an uploaded .ics file —
+   * used by Holidays. Renders an Import button that opens a small dialog and
+   * POSTs multipart to `endpoint`, then refreshes the list.
+   */
+  importAction?: {
+    endpoint: string
+    label: () => string
+    hint: () => string
+  }
 }
 
 /** Resolves an OptionSource to its loaded options (for column renderers). */

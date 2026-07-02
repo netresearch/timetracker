@@ -2,7 +2,7 @@ import { useQueryClient, useQuery } from '@tanstack/solid-query'
 import { createComputed, createMemo, createSignal, For, Match, onCleanup, Show, Switch } from 'solid-js'
 import { createStore, reconcile } from 'solid-js/store'
 
-import { apiErrorMessage, getJson, postJson } from '../api/client'
+import { apiErrorMessage, getJson, postJson, postMultipart } from '../api/client'
 import { coerceActive, optionSourceKey } from '../api/queries'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
@@ -110,6 +110,49 @@ export function AdminCrudShell(props: {
   const hasActiveField = (): boolean => props.descriptor.fields.some((field) => field.name === 'active')
   const [hideInactive, setHideInactive] = createSignal(true)
   const [page, setPage] = createSignal(0)
+
+  // iCal import dialog (only rendered when the descriptor declares importAction).
+  const [importing, setImporting] = createSignal(false)
+  const [importUrl, setImportUrl] = createSignal('')
+  const [importFile, setImportFile] = createSignal<File | null>(null)
+  const [importBusy, setImportBusy] = createSignal(false)
+  const [importError, setImportError] = createSignal('')
+
+  async function runImport(event: SubmitEvent): Promise<void> {
+    event.preventDefault()
+    const action = props.descriptor.importAction
+    if (!action) {
+      return
+    }
+
+    const form = new FormData()
+    const file = importFile()
+    if (file) {
+      form.set('file', file)
+    } else if (importUrl().trim() !== '') {
+      form.set('url', importUrl().trim())
+    } else {
+      setImportError(m.admin_holiday_import_needs_input())
+
+      return
+    }
+
+    setImportBusy(true)
+    setImportError('')
+    try {
+      const body = await postMultipart(action.endpoint, form)
+      const result = JSON.parse(body) as { imported?: number; updated?: number; total?: number }
+      await queryClient.invalidateQueries({ queryKey: listKey() })
+      setImporting(false)
+      setImportUrl('')
+      setImportFile(null)
+      setNotice(m.admin_holiday_import_done({ imported: result.imported ?? 0, updated: result.updated ?? 0 }))
+    } catch (error) {
+      setImportError(apiErrorMessage(error, m.admin_holiday_import_error()))
+    } finally {
+      setImportBusy(false)
+    }
+  }
 
   const cellText = (row: Row, col: ColumnDef): string =>
     col.render ? col.render(row, props.options) : String(row[col.key] ?? '')
@@ -476,6 +519,13 @@ export function AdminCrudShell(props: {
         <button type="button" class="action-button is-icon" aria-label={m.admin_export_csv()} title={m.admin_export_csv()} onClick={() => exportCsv(visibleRows())} disabled={visibleRows().length === 0}>
           <DownloadIcon />
         </button>
+        <Show when={props.descriptor.importAction}>
+          {(action) => (
+            <button type="button" class="action-button" onClick={() => { setImportError(''); setImporting(true) }}>
+              {action().label()}
+            </button>
+          )}
+        </Show>
       </div>
 
       {/* Shell-level errors (e.g. a failed bulk action) as a prominent full-width
@@ -722,6 +772,33 @@ export function AdminCrudShell(props: {
           </div>
         </form>
       </PageDialog>
+
+      <Show when={props.descriptor.importAction}>
+        {(action) => (
+          <PageDialog open={importing()} onClose={() => setImporting(false)} ariaLabel={action().label()}>
+            <form class="stack-form" onSubmit={(event) => void runImport(event)}>
+              <p class="settings-section-hint">{action().hint()}</p>
+              <label class="field">
+                <span>{m.admin_holiday_import_url()}</span>
+                <input type="url" name="url" placeholder="https://…/holidays.ics" value={importUrl()} disabled={importFile() !== null} onInput={(event) => setImportUrl(event.currentTarget.value)} />
+              </label>
+              <label class="field">
+                <span>{m.admin_holiday_import_file()}</span>
+                <input type="file" name="file" accept=".ics,text/calendar" onChange={(event) => setImportFile(event.currentTarget.files?.[0] ?? null)} />
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="primary-button" disabled={importBusy()}>
+                  {importBusy() ? m.admin_holiday_import_busy() : action().label()}
+                </button>
+                <button type="button" class="action-button" onClick={() => setImporting(false)}>{m.admin_cancel()}</button>
+                <Show when={importError()}>
+                  <span role="alert" class="form-status is-error">{importError()}</span>
+                </Show>
+              </div>
+            </form>
+          </PageDialog>
+        )}
+      </Show>
     </div>
   )
 }
