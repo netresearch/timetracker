@@ -31,6 +31,12 @@ final class ArchitectureTest
 
     private const string NAMESPACE_REPOSITORY = 'App\Repository';
 
+    private const string NAMESPACE_DTO = 'App\Dto';
+
+    private const string NAMESPACE_EXCEPTION = 'App\Exception';
+
+    private const string NAMESPACE_MODEL = 'App\Model';
+
     private const string CLASSNAME_EXCEPTION = '*Exception';
 
     public function testControllersShouldOnlyDependOnBusinessLogic(): Rule
@@ -43,12 +49,12 @@ final class ArchitectureTest
                 Selector::inNamespace(self::NAMESPACE_ENTITY),
                 Selector::inNamespace(self::NAMESPACE_SERVICE),
                 Selector::inNamespace(self::NAMESPACE_REPOSITORY),
-                Selector::inNamespace('App\Dto'),
+                Selector::inNamespace(self::NAMESPACE_DTO),
                 Selector::inNamespace('App\DTO'),
                 Selector::inNamespace(self::NAMESPACE_ENUM),
                 Selector::inNamespace('App\Event'),
-                Selector::inNamespace('App\Exception'),
-                Selector::inNamespace('App\Model'),
+                Selector::inNamespace(self::NAMESPACE_EXCEPTION),
+                Selector::inNamespace(self::NAMESPACE_MODEL),
                 Selector::inNamespace('App\Response'),
                 Selector::inNamespace('App\Util'),
                 Selector::inNamespace('Symfony'),
@@ -72,8 +78,8 @@ final class ArchitectureTest
                 Selector::inNamespace(self::NAMESPACE_REPOSITORY),
                 Selector::inNamespace(self::NAMESPACE_ENUM),
                 Selector::inNamespace(self::NAMESPACE_SERVICE),
-                Selector::inNamespace('App\Exception'),
-                Selector::inNamespace('App\Model'),
+                Selector::inNamespace(self::NAMESPACE_EXCEPTION),
+                Selector::inNamespace(self::NAMESPACE_MODEL),
                 Selector::inNamespace('Doctrine'),
                 Selector::inNamespace('Symfony'),
                 Selector::classname(self::CLASSNAME_EXCEPTION, true),
@@ -89,12 +95,12 @@ final class ArchitectureTest
             ->classes(
                 Selector::inNamespace(self::NAMESPACE_ENTITY),
                 Selector::inNamespace(self::NAMESPACE_REPOSITORY),
-                Selector::inNamespace('App\Dto'),
+                Selector::inNamespace(self::NAMESPACE_DTO),
                 Selector::inNamespace('App\DTO'),
                 Selector::inNamespace(self::NAMESPACE_ENUM),
                 Selector::inNamespace('App\Event'),
-                Selector::inNamespace('App\Exception'),
-                Selector::inNamespace('App\Model'),
+                Selector::inNamespace(self::NAMESPACE_EXCEPTION),
+                Selector::inNamespace(self::NAMESPACE_MODEL),
                 Selector::inNamespace('App\Response'),
                 Selector::inNamespace('App\ValueObject'),
                 Selector::inNamespace(self::NAMESPACE_SERVICE),
@@ -118,8 +124,8 @@ final class ArchitectureTest
                 Selector::inNamespace(self::NAMESPACE_REPOSITORY),
                 Selector::inNamespace(self::NAMESPACE_ENUM),
                 Selector::inNamespace(self::NAMESPACE_SERVICE),
-                Selector::inNamespace('App\Dto'),
-                Selector::inNamespace('App\Model'),
+                Selector::inNamespace(self::NAMESPACE_DTO),
+                Selector::inNamespace(self::NAMESPACE_MODEL),
                 Selector::inNamespace('Doctrine'),
                 Selector::inNamespace('Symfony'),
                 Selector::inNamespace('Psr'),
