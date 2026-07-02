@@ -100,6 +100,24 @@ final class LoginFormAuthenticatorTest extends TestCase
         ]);
     }
 
+    /**
+     * Stubs the fluent setters of the LDAP client so a bind can be configured
+     * by the caller via a single `login()` expectation. Kept separate from the
+     * `login()` stub because tests vary that outcome (success/exception).
+     */
+    private function configureLdapClientChaining(): void
+    {
+        $this->ldapClient->method('setHost')->willReturnSelf();
+        $this->ldapClient->method('setPort')->willReturnSelf();
+        $this->ldapClient->method('setReadUser')->willReturnSelf();
+        $this->ldapClient->method('setReadPass')->willReturnSelf();
+        $this->ldapClient->method('setBaseDn')->willReturnSelf();
+        $this->ldapClient->method('setUserName')->willReturnSelf();
+        $this->ldapClient->method('setUserPass')->willReturnSelf();
+        $this->ldapClient->method('setUseSSL')->willReturnSelf();
+        $this->ldapClient->method('setUserNameField')->willReturnSelf();
+    }
+
     // ==================== supports() tests ====================
 
     public function testSupportsReturnsFalseForGetRequest(): void
@@ -221,16 +239,7 @@ final class LoginFormAuthenticatorTest extends TestCase
         $this->entityManager->method('getRepository')
             ->willReturn($userRepo);
 
-        // Configure LDAP client to allow chaining
-        $this->ldapClient->method('setHost')->willReturnSelf();
-        $this->ldapClient->method('setPort')->willReturnSelf();
-        $this->ldapClient->method('setReadUser')->willReturnSelf();
-        $this->ldapClient->method('setReadPass')->willReturnSelf();
-        $this->ldapClient->method('setBaseDn')->willReturnSelf();
-        $this->ldapClient->method('setUserName')->willReturnSelf();
-        $this->ldapClient->method('setUserPass')->willReturnSelf();
-        $this->ldapClient->method('setUseSSL')->willReturnSelf();
-        $this->ldapClient->method('setUserNameField')->willReturnSelf();
+        $this->configureLdapClientChaining();
         $this->ldapClient->method('login')->willReturn(true);
 
         $authenticator = $this->makeSubject();
@@ -262,15 +271,7 @@ final class LoginFormAuthenticatorTest extends TestCase
         $this->entityManager->expects(self::once())->method('persist');
         $this->entityManager->expects(self::once())->method('flush');
 
-        $this->ldapClient->method('setHost')->willReturnSelf();
-        $this->ldapClient->method('setPort')->willReturnSelf();
-        $this->ldapClient->method('setReadUser')->willReturnSelf();
-        $this->ldapClient->method('setReadPass')->willReturnSelf();
-        $this->ldapClient->method('setBaseDn')->willReturnSelf();
-        $this->ldapClient->method('setUserName')->willReturnSelf();
-        $this->ldapClient->method('setUserPass')->willReturnSelf();
-        $this->ldapClient->method('setUseSSL')->willReturnSelf();
-        $this->ldapClient->method('setUserNameField')->willReturnSelf();
+        $this->configureLdapClientChaining();
         $this->ldapClient->method('login')->willReturn(true);
         $this->ldapClient->method('getTeams')->willReturn([]);
 
@@ -310,15 +311,7 @@ final class LoginFormAuthenticatorTest extends TestCase
         $this->entityManager->expects(self::once())->method('persist');
         $this->entityManager->expects(self::once())->method('flush');
 
-        $this->ldapClient->method('setHost')->willReturnSelf();
-        $this->ldapClient->method('setPort')->willReturnSelf();
-        $this->ldapClient->method('setReadUser')->willReturnSelf();
-        $this->ldapClient->method('setReadPass')->willReturnSelf();
-        $this->ldapClient->method('setBaseDn')->willReturnSelf();
-        $this->ldapClient->method('setUserName')->willReturnSelf();
-        $this->ldapClient->method('setUserPass')->willReturnSelf();
-        $this->ldapClient->method('setUseSSL')->willReturnSelf();
-        $this->ldapClient->method('setUserNameField')->willReturnSelf();
+        $this->configureLdapClientChaining();
         $this->ldapClient->method('login')->willReturn(true);
         $this->ldapClient->method('getTeams')->willReturn(['Dev Team']);
 
@@ -352,15 +345,7 @@ final class LoginFormAuthenticatorTest extends TestCase
         $this->entityManager->method('getRepository')
             ->willReturn($userRepo);
 
-        $this->ldapClient->method('setHost')->willReturnSelf();
-        $this->ldapClient->method('setPort')->willReturnSelf();
-        $this->ldapClient->method('setReadUser')->willReturnSelf();
-        $this->ldapClient->method('setReadPass')->willReturnSelf();
-        $this->ldapClient->method('setBaseDn')->willReturnSelf();
-        $this->ldapClient->method('setUserName')->willReturnSelf();
-        $this->ldapClient->method('setUserPass')->willReturnSelf();
-        $this->ldapClient->method('setUseSSL')->willReturnSelf();
-        $this->ldapClient->method('setUserNameField')->willReturnSelf();
+        $this->configureLdapClientChaining();
         $this->ldapClient->method('login')->willReturn(true);
 
         $authenticator = $this->makeSubject();
@@ -378,15 +363,7 @@ final class LoginFormAuthenticatorTest extends TestCase
     {
         $this->configureDefaultLdapParams();
 
-        $this->ldapClient->method('setHost')->willReturnSelf();
-        $this->ldapClient->method('setPort')->willReturnSelf();
-        $this->ldapClient->method('setReadUser')->willReturnSelf();
-        $this->ldapClient->method('setReadPass')->willReturnSelf();
-        $this->ldapClient->method('setBaseDn')->willReturnSelf();
-        $this->ldapClient->method('setUserName')->willReturnSelf();
-        $this->ldapClient->method('setUserPass')->willReturnSelf();
-        $this->ldapClient->method('setUseSSL')->willReturnSelf();
-        $this->ldapClient->method('setUserNameField')->willReturnSelf();
+        $this->configureLdapClientChaining();
         // LdapException constructor requires Ldap|null as first arg
         $this->ldapClient->method('login')->willThrowException(new LdapException(null, 'LDAP connection failed'));
 
@@ -407,15 +384,7 @@ final class LoginFormAuthenticatorTest extends TestCase
     {
         $this->configureDefaultLdapParams();
 
-        $this->ldapClient->method('setHost')->willReturnSelf();
-        $this->ldapClient->method('setPort')->willReturnSelf();
-        $this->ldapClient->method('setReadUser')->willReturnSelf();
-        $this->ldapClient->method('setReadPass')->willReturnSelf();
-        $this->ldapClient->method('setBaseDn')->willReturnSelf();
-        $this->ldapClient->method('setUserName')->willReturnSelf();
-        $this->ldapClient->method('setUserPass')->willReturnSelf();
-        $this->ldapClient->method('setUseSSL')->willReturnSelf();
-        $this->ldapClient->method('setUserNameField')->willReturnSelf();
+        $this->configureLdapClientChaining();
         $this->ldapClient->method('login')->willThrowException(new RuntimeException('Unexpected error'));
 
         $authenticator = $this->makeSubject();
@@ -648,15 +617,7 @@ final class LoginFormAuthenticatorTest extends TestCase
         $this->entityManager->method('getRepository')
             ->willReturn($userRepo);
 
-        $this->ldapClient->method('setHost')->willReturnSelf();
-        $this->ldapClient->method('setPort')->willReturnSelf();
-        $this->ldapClient->method('setReadUser')->willReturnSelf();
-        $this->ldapClient->method('setReadPass')->willReturnSelf();
-        $this->ldapClient->method('setBaseDn')->willReturnSelf();
-        $this->ldapClient->method('setUserName')->willReturnSelf();
-        $this->ldapClient->method('setUserPass')->willReturnSelf();
-        $this->ldapClient->method('setUseSSL')->willReturnSelf();
-        $this->ldapClient->method('setUserNameField')->willReturnSelf();
+        $this->configureLdapClientChaining();
         $this->ldapClient->method('login')->willReturn(true);
 
         $authenticator = $this->makeSubject();
