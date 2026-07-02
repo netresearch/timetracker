@@ -1,6 +1,8 @@
+# check=skip=InvalidDefaultArgInFrom
 # Netresearch TimeTracker - Dockerfile
 #
-# Build logic only - all versions defined in docker-bake.hcl
+# Build logic only - all versions defined in docker-bake.hcl (single source
+# of truth — hence the deliberately default-less ARGs and the lint skip above).
 # IMPORTANT: Always build with `docker bake`, never `docker build` directly
 #
 # Usage:

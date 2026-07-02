@@ -46,9 +46,9 @@ open http://localhost:8765
 ### Manual Installation
 
 ```bash
-# Prerequisites: PHP 8.5+, MariaDB/MySQL, Composer, Node.js 22+
+# Prerequisites: PHP 8.5+, MariaDB/MySQL, Composer, bun (frontend), Node.js 26+ (e2e)
 composer install
-npm install && npm run build
+cd frontend && bun install && bun run build && cd ..
 
 cp .env.example .env.local
 # Edit .env.local with your database and LDAP settings
