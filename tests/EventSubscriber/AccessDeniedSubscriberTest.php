@@ -119,7 +119,7 @@ final class AccessDeniedSubscriberTest extends TestCase
         self::assertTrue($rememberMeCookie->isCleared(), 'REMEMBERME cookie should be marked as cleared');
     }
 
-    public function testRememberedUserNeedingFullAuthRedirectsToLogout(): void
+    public function testRememberedUserNeedingFullAuthIsLoggedOutProgrammatically(): void
     {
         $user = new User();
         $user->setUsername('testuser');
@@ -134,6 +134,39 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->with('IS_AUTHENTICATED_FULLY')
             ->willReturn(false);
 
+        // The subscriber logs out programmatically (no CSRF-guarded round
+        // trip through /logout) and uses the logout response as-is.
+        $logoutResponse = new RedirectResponse('/login');
+        $this->security
+            ->expects(self::once())->method('logout')
+            ->with(false)
+            ->willReturn($logoutResponse);
+
+        $request = $this->createRequest(true);
+        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        self::assertSame($logoutResponse, $event->getResponse());
+    }
+
+    public function testRememberedUserFallsBackToLoginRedirectWhenLogoutReturnsNoResponse(): void
+    {
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+        $this->security
+            ->expects(self::once())->method('isGranted')
+            ->with('IS_AUTHENTICATED_FULLY')
+            ->willReturn(false);
+        $this->security
+            ->expects(self::once())->method('logout')
+            ->with(false)
+            ->willReturn(null);
+
         $request = $this->createRequest(true);
         $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
 
@@ -141,8 +174,7 @@ final class AccessDeniedSubscriberTest extends TestCase
 
         $response = $event->getResponse();
         self::assertInstanceOf(RedirectResponse::class, $response);
-        // Redirect to logout to properly clear session and all cookies
-        self::assertSame('/logout', $response->getTargetUrl());
+        self::assertSame('/login', $response->getTargetUrl());
     }
 
     public function testFullyAuthenticatedUserWithoutPermissionLetsSymfonyHandle(): void

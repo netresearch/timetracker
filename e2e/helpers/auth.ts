@@ -86,11 +86,10 @@ export async function loginIsolated(page: Page): Promise<void> {
  */
 export async function logout(page: Page): Promise<void> {
   await page.waitForSelector('.badge-logout', { timeout: 10000 });
-  const logoutHref = await page.locator('.badge-logout').getAttribute('href');
-  if (logoutHref) {
-    await page.goto(logoutHref);
-    await page.waitForURL(/\/login/, { timeout: 10000 });
-  }
+  // Click the link instead of page.goto(): logout CSRF is validated via the
+  // Sec-Fetch-Site header, which only a real same-origin navigation carries.
+  await page.locator('.badge-logout').click();
+  await page.waitForURL(/\/login/, { timeout: 10000 });
 }
 
 /**

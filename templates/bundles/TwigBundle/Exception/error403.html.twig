@@ -133,7 +133,10 @@
                 </div>
                 <div class="error-actions">
                     <a href="{{ path('_start') }}" class="btn btn-primary">Go to Homepage</a>
-                    <a href="{{ path('_logout') }}" class="btn">Logout</a>
+                    {# logout_path() needs firewall/request context, which the
+                       global error handler rendering this page does not have —
+                       append the stateless token manually instead. #}
+                    <a href="{{ path('_logout') }}?_csrf_token={{ csrf_token('logout') }}" class="btn">Logout</a>
                 </div>
             </div>
         </div>
