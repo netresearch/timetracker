@@ -3,28 +3,6 @@ framework:
         # Unique name of your app: used to compute stable namespaces for cache keys.
         prefix_seed: timetracker
 
-        # Use APCu for in-memory caching with filesystem fallback for app cache
+        # Use APCu for in-memory caching of the app cache
         # APCu is ideal for frequently accessed, relatively stable data
         app: cache.adapter.apcu
-
-        # Configure specialized cache pools for different use cases
-        pools:
-            # Fast APCu cache for user sessions and authentication data
-            cache.auth:
-                adapter: cache.adapter.apcu
-                default_lifetime: 3600  # 1 hour
-
-            # APCu cache for configuration and metadata (longer TTL)
-            cache.config:
-                adapter: cache.adapter.apcu
-                default_lifetime: 14400  # 4 hours
-
-            # Filesystem cache for larger data that should persist across deploys
-            cache.data:
-                adapter: cache.adapter.filesystem
-                default_lifetime: 86400  # 24 hours
-
-            # APCu cache for short-lived objects like form tokens
-            cache.session:
-                adapter: cache.adapter.apcu
-                default_lifetime: 1800  # 30 minutes

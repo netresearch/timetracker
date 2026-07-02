@@ -291,7 +291,6 @@ APP_DEBUG=0
 APP_SECRET=your-production-secret-key
 DATABASE_URL=mysql://timetracker:${DB_PASSWORD}@db:3306/timetracker?charset=utf8mb4
 REDIS_URL=redis://redis:6379/0
-MAILER_DSN=smtp://smtp.company.com:587?encryption=tls&auth_mode=login&username=timetracker@company.com&password=${SMTP_PASSWORD}
 
 # Security
 TRUSTED_PROXY_LIST=["10.0.0.0/8","172.16.0.0/12","192.168.0.0/16"]
