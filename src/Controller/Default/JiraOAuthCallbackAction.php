@@ -90,7 +90,7 @@ final class JiraOAuthCallbackAction extends BaseController
 
             $error = $request->query->get('error');
             if (is_string($error) && '' !== $error) {
-                return new Response(sprintf('Jira authorization was not granted: %s', $error));
+                return new Response(sprintf('Jira authorization was not granted: %s', $error), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
             }
 
             $code = $request->query->get('code');

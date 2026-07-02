@@ -26,6 +26,7 @@ use SensitiveParameter;
 use Symfony\Component\Routing\RouterInterface;
 use Throwable;
 
+use function in_array;
 use function is_array;
 use function is_int;
 use function is_string;
@@ -59,6 +60,9 @@ class JiraCloudApiService extends JiraOAuthApiService
 
     /** Refresh this many seconds before the recorded expiry to absorb clock skew. */
     protected const int EXPIRY_SKEW_SECONDS = 60;
+
+    /** Access token the cached cloud-rest client was built with. */
+    private string $cloudRestClientToken = '';
 
     public function __construct(
         User $user,
@@ -141,20 +145,20 @@ class JiraCloudApiService extends JiraOAuthApiService
             $this->resolveCloudId($accessToken);
         }
 
-        $cacheKey = 'cloud-' . $accessToken;
-        if (isset($this->clients[$cacheKey])) {
-            return $this->clients[$cacheKey];
+        // One slot, rebuilt when the token rotates — a per-token key would
+        // accumulate stale clients in long-running sync processes.
+        if ($this->cloudRestClientToken !== $accessToken || !isset($this->clients['cloud-rest'])) {
+            $this->clients['cloud-rest'] = $this->createHttpClient([
+                'base_uri' => $this->getJiraApiUrl(),
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Accept' => 'application/json',
+                ],
+            ]);
+            $this->cloudRestClientToken = $accessToken;
         }
 
-        $this->clients[$cacheKey] = $this->createHttpClient([
-            'base_uri' => $this->getJiraApiUrl(),
-            'headers' => [
-                'Authorization' => 'Bearer ' . $accessToken,
-                'Accept' => 'application/json',
-            ],
-        ]);
-
-        return $this->clients[$cacheKey];
+        return $this->clients['cloud-rest'];
     }
 
     /**
@@ -218,9 +222,15 @@ class JiraCloudApiService extends JiraOAuthApiService
     protected function getValidAccessToken(): string
     {
         $userTicketSystem = $this->getUserTicketSystem();
-        $accessToken = $this->getToken();
+        if (!$userTicketSystem instanceof UserTicketsystem) {
+            $this->throwUnauthorizedRedirect();
+        }
 
-        if (!$userTicketSystem instanceof UserTicketsystem || '' === $accessToken) {
+        // Read through the repository-loaded row (single source of truth) —
+        // the User entity's collection can lag behind a store in the same
+        // process (fresh first authorization, rotated refresh).
+        $accessToken = $this->decryptStored($userTicketSystem->getAccessToken());
+        if ('' === $accessToken) {
             $this->throwUnauthorizedRedirect();
         }
 
@@ -261,9 +271,16 @@ class JiraCloudApiService extends JiraOAuthApiService
                 'refresh_token' => $refreshToken,
             ]);
         } catch (JiraApiException $jiraApiException) {
-            // The grant is gone (revoked, rotated away, or expired) — force re-authorization.
-            $this->storeCloudTokens('', '', 0);
-            $this->throwUnauthorizedRedirect($jiraApiException);
+            // Only a definitive rejection means the grant is gone (revoked,
+            // rotated away, or expired) — clear and force re-authorization.
+            // Transient failures (network, 5xx, bad JSON) keep the grant so
+            // the next sync can retry the refresh.
+            if (in_array($jiraApiException->getCode(), [400, 401, 403], true)) {
+                $this->storeCloudTokens('', '', 0);
+                $this->throwUnauthorizedRedirect($jiraApiException);
+            }
+
+            throw $jiraApiException;
         }
 
         $this->storeCloudTokens($data['access_token'], $data['refresh_token'], $data['expires_in']);

@@ -248,6 +248,35 @@ final class JiraCloudApiServiceTest extends TestCase
         self::assertSame('', $userTicketSystem->getRefreshToken());
     }
 
+    public function testTransientRefreshFailureKeepsTheGrant(): void
+    {
+        $this->givenStoredTokens('stale-access', 'refresh-1', '-1 minute');
+        $this->ticketSystem->setCloudId('cloud-id-9');
+        $this->authException = new RequestException(
+            'bad gateway',
+            new Request('POST', '/oauth/token'),
+            new Response(502),
+        );
+
+        $service = $this->createService();
+
+        try {
+            $this->invokeGetClient($service);
+            self::fail('Expected JiraApiException');
+        } catch (JiraApiUnauthorizedException $exception) {
+            self::fail('A transient failure must not restart authorization');
+        } catch (JiraApiException $exception) {
+            self::assertSame(502, $exception->getCode());
+        }
+
+        // The rotating grant survives for the next sync attempt.
+        $userTicketSystem = $this->userTicketSystem;
+        self::assertInstanceOf(UserTicketsystem::class, $userTicketSystem);
+        $refreshToken = $userTicketSystem->getRefreshToken();
+        self::assertIsString($refreshToken);
+        self::assertSame('refresh-1', $this->tokenEncryptionService->decryptToken($refreshToken));
+    }
+
     // ==================== authorization-code exchange ====================
 
     public function testExchangeAuthorizationCodeStoresTokensAndResolvesCloudId(): void
