@@ -29,7 +29,7 @@
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.1",
-    "vite": "^8.1.2",
+    "vite": "^8.1.3",
     "vite-plugin-solid": "^2.11.12",
     "vite-plugin-symfony": "^8.2.4",
     "vitest": "^4.1.9",
