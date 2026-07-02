@@ -4,10 +4,10 @@ import { installFrozenClock, E2E_FROZEN_DATE } from './helpers/clock';
 /**
  * E2E tests for user settings.
  *
- * The Settings tab was migrated out of the ExtJS shell into the SolidJS UI
+ * Settings lives in the SolidJS UI
  * (frontend/src/pages/Settings.tsx), served at `/ui/settings`. These tests
  * drive that page and verify that settings are saved correctly and take
- * effect in the ExtJS tracking grid.
+ * effect in the worklog grid.
  *
  * Note: Uses frozen clock for consistency with other E2E tests.
  */
@@ -168,7 +168,7 @@ test.describe('Settings Effectiveness', () => {
   });
 
   test('suggest_time should pre-fill start time when enabled', async ({ page }) => {
-    // Enable suggest_time via the API, then exercise the ExtJS tracking grid
+    // Enable suggest_time via the API, then exercise the worklog grid
     await applySettingsApi(page, { show_empty_line: 0, suggest_time: 1, show_future: 0 });
 
     await page.goto('/ui/tracking');
@@ -196,8 +196,8 @@ test.describe('Settings Effectiveness', () => {
   });
 
   // Note: show_empty_line is a persisted preference (covered by the save test
-  // above) with no SolidJS worklog-grid effect — it was an ExtJS-only behavior,
-  // so there is nothing to assert against the grid here.
+  // above) with no worklog-grid effect, so there is nothing to assert
+  // against the grid here.
 });
 
 test.describe('Settings API', () => {

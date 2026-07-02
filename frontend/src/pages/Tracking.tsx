@@ -33,7 +33,7 @@ const MAX_DAYS = 366
 // Widen target for the range-aware empty state (the largest preset window).
 const WIDEN_DAYS = 35
 
-// Server-computed EntryClass → row modifier, mirroring the ExtJS row borders.
+// Server-computed EntryClass → row modifier (drives the row borders).
 const CLASS_ROW: Record<number, string> = { 2: 'is-daybreak', 4: 'is-pause', 8: 'is-overlap' }
 
 // Build the /tracking/save body shared by inline-save and Prolong. A non-positive
@@ -179,8 +179,8 @@ function RowAction(props: { label: string; danger?: boolean; keyshortcut?: strin
 }
 
 /**
- * The SolidJS work-log grid (/ui/tracking), successor of the removed ExtJS
- * grid. Inline cell editing reuses the shared inline-grid controller; start/end
+ * The SolidJS work-log grid (/ui/tracking).
+ * Inline cell editing reuses the shared inline-grid controller; start/end
  * accept terse times (930, 9:30a) parsed to H:i; saving a row POSTs the whole
  * entry to /tracking/save and refetches (the server recomputes duration + the
  * row class).
@@ -557,8 +557,8 @@ export default function Tracking() {
     }
   }
 
-  // The ticket-system URL for a ticket, resolved via the entry's project (mirrors
-  // the ExtJS getTicketsystemUrlByTicket, with the same bugs.nr fallback).
+  // The ticket-system URL for a ticket, resolved via the entry's project
+  // (with the bugs.nr fallback).
   function ticketUrlFor(ticket: string, projectId: number): string {
     const project = (projects.data ?? []).find((candidate) => candidate.id === projectId)
     const system = project !== undefined ? (ticketSystems.data ?? []).find((candidate) => candidate.id === project.ticketSystem) : undefined
@@ -659,8 +659,8 @@ export default function Tracking() {
     }
     setPageError('')
     try {
-      // /tracking/delete reads form params ($request->request, shared with the
-      // ExtJS shell), so it must be posted as a form — not a JSON body.
+      // /tracking/delete reads form params ($request->request), so it must be
+      // posted as a form — not a JSON body.
       await postForm('/tracking/delete', { id: num(entry.id) })
       // Drop any pending inline draft for the now-deleted entry.
       editor.takeDraft(num(entry.id))

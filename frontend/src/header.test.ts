@@ -13,7 +13,7 @@ vi.mock('./api/client', async () => ({
 }))
 
 describe('formatDuration', () => {
-  it('formats minutes as H:MM like the ExtJS header', () => {
+  it('formats minutes as H:MM', () => {
     expect(formatDuration(0)).toBe('0:00')
     expect(formatDuration(65)).toBe('1:05')
     expect(formatDuration(480)).toBe('8:00')

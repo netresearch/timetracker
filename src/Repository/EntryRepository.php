@@ -753,7 +753,7 @@ class EntryRepository extends ServiceEntityRepository
 
     /**
      * Applies pagination with safe casting.
-     * Prefers 'start' (ExtJS offset) over calculating the offset from 'page'.
+     * Prefers 'start' (row offset) over calculating the offset from 'page'.
      *
      * @param array<string, mixed> $arFilter
      */
@@ -1431,7 +1431,7 @@ class EntryRepository extends ServiceEntityRepository
         }
 
         // Apply pagination with safe casting
-        // Prefer 'start' (ExtJS offset) over calculating from 'page'
+        // Prefer 'start' (row offset) over calculating from 'page'
         if (isset($arFilter['start']) && is_numeric($arFilter['start'])) {
             $queryBuilder->setFirstResult((int) $arFilter['start']);
         } elseif (isset($arFilter['page']) && is_numeric($arFilter['page'])) {

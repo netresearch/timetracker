@@ -37,8 +37,8 @@ export async function login(
     await page.locator('input[name="_password"]').fill(password);
     await page.locator('#form-submit').click();
     try {
-      // The ExtJS shell is gone: / now redirects into the SolidJS SPA, so a
-      // successful login lands on /ui/tracking (the worklog).
+      // / redirects into the SolidJS SPA: a successful login lands on
+      // /ui/tracking (the worklog).
       await page.waitForURL(/\/ui\//, { timeout: 10000 });
 
       return;

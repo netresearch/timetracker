@@ -59,7 +59,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Include API-like routes used by ExtJS frontend
+        // API-like routes that must receive JSON errors
         $pathInfo = $request->getPathInfo();
         $acceptsJson = str_contains($acceptHeader, 'application/json')
                       || 'XMLHttpRequest' === $request->headers->get('X-Requested-With')

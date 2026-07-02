@@ -3,8 +3,8 @@ import { login } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
 
 /**
- * E2E for the SolidJS work-log (Worklog) grid — the time-tracking UI after the
- * ExtJS shell was removed.
+ * E2E for the SolidJS work-log (Worklog) grid — the time-tracking UI at
+ * /ui/tracking.
  */
 test.describe('Worklog grid', () => {
   test.beforeEach(async ({ page }) => {

@@ -22,7 +22,7 @@ type WorktimeStatus = 'ok' | 'under' | 'neutral'
 
 const STATUS_POLL_INTERVAL_MS = 90_000
 
-/** 'H:MM', optionally suffixed with person-days like the ExtJS header. */
+/** 'H:MM', optionally suffixed with person-days (PT). */
 export function formatDuration(minutes: number, inDays = false): string {
   const days = Math.floor((minutes / (60 * 8)) * 100) / 100
   const hours = Math.floor(minutes / 60)
@@ -322,7 +322,7 @@ export function handleShortcut(event: KeyboardEvent): void {
     }
 
     // Alt+A → add a new entry on pages that offer one (the Add button is tagged
-    // with data-keyboard-add), mirroring the ExtJS tracking grid's Alt+A.
+    // with data-keyboard-add).
     if (event.altKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyA') {
       const add = document.querySelector<HTMLElement>('#main-content [data-keyboard-add]')
       if (add !== null) {

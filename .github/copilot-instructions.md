@@ -8,7 +8,7 @@ TimeTracker is a Symfony-based PHP application for project/customer-centric time
 
 **Technology Stack:**
 - Backend: PHP 8.5, Symfony 8, Doctrine ORM 3, Twig, Monolog
-- Frontend: Webpack Encore, Stimulus, Sass
+- Frontend: SolidJS, TypeScript, Vite, Tailwind CSS (in `frontend/`, bun)
 - Infrastructure: Docker Compose (Nginx, PHP-FPM, MariaDB)
 - Tests: PHPUnit 12
 - Static Analysis: PHPStan, Psalm (Psalm clean)

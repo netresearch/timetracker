@@ -15,9 +15,9 @@ const EXPORT_FROZEN_DATE = new Date('2026-01-15T12:00:00');
 /**
  * E2E tests for Controlling export functionality.
  *
- * The Controlling/Abrechnung "Exportieren" tab was migrated out of the ExtJS
- * shell into the SolidJS UI (frontend/src/pages/Billing.tsx), served at
- * `/ui/billing` for ROLE_PL / ROLE_ADMIN users. The export is now an anchor
+ * Controlling/Abrechnung "Exportieren" lives in the SolidJS UI
+ * (frontend/src/pages/Billing.tsx), served at
+ * `/ui/billing` for ROLE_PL / ROLE_ADMIN users. The export is an anchor
  * (`a.primary-button[download]`) whose href is the query-string route
  * `/controlling/export?...`; clicking it triggers the XLSX download.
  *

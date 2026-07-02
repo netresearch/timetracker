@@ -1356,8 +1356,8 @@ kbd {
 
 /* ── Work-log (Worklog) grid ────────────────────────────────────────────────
    The /ui/tracking grid reuses .data-table; these add the days-range toolbar,
-   the empty state, and the server-class-driven row borders that mirror the
-   legacy ExtJS grid (day break / break / time overlap). */
+   the empty state, and the server-class-driven row borders
+   (day break / break / time overlap). */
 .tracking-toolbar {
   display: flex;
   align-items: center;

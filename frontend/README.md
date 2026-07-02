@@ -1,7 +1,6 @@
 # timetracker frontend (SolidJS)
 
-The new UI, replacing the legacy ExtJS app one view at a time
-(strangler-fig migration). Served by Symfony under `/ui/` via
+The TimeTracker UI. Served by Symfony under `/ui/` via
 [pentatrion/vite-bundle](https://symfony-vite.pentatrion.com/)
 (`config/packages/pentatrion_vite.yaml`, `src/Controller/Ui/SpaAction.php`,
 `templates/ui/index.html.twig`).

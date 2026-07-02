@@ -26,7 +26,7 @@ const ISO_SHAPE = /^\d{4}-\d{2}-\d{2}$/
 
 type Token = { lit: string } | { field: 'y' | 'm' | 'd'; width: 1 | 2 | 4 }
 
-// Canonical digit-only tokens + ExtJS/PHP %-aliases, matched longest-source-first
+// Canonical digit-only tokens + PHP-style %-aliases, matched longest-source-first
 // so YYYY beats YY and MM beats M. Month/weekday NAMES are intentionally absent —
 // they are locale-bound (that is what 'auto' is for) and not round-trippable.
 const TOKEN_TABLE: { src: string; tok: Token }[] = [

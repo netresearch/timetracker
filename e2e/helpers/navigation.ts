@@ -1,9 +1,8 @@
 import { Page } from '@playwright/test';
 
 /**
- * Shared-header navigation links. The whole app is the SolidJS SPA under /ui;
- * the ExtJS shell (and its tab bar) was removed. Clicking a link is a full
- * navigation to the corresponding /ui route.
+ * Header navigation links. The whole app is the SolidJS SPA under /ui;
+ * clicking a link is a full navigation to the corresponding /ui route.
  */
 export const NAV_LINKS = {
   worklog: 'a.main-nav-link[data-nav="tracking"]',

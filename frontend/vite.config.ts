@@ -4,9 +4,8 @@ import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
 import symfony from 'vite-plugin-symfony'
 
-// Built assets land in public/build-ui (NOT inside public/build — Encore's
-// cleanupOutputBeforeBuild() wipes that whole directory) and are referenced
-// by the Symfony pentatrion/vite-bundle Twig helpers via entrypoints.json
+// Built assets land in public/build-ui and are referenced by the Symfony
+// pentatrion/vite-bundle Twig helpers via entrypoints.json
 // (see config/packages/pentatrion_vite.yaml).
 export default defineConfig({
   plugins: [

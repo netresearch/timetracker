@@ -95,7 +95,7 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        // ISO 8601 datetime first (from ExtJS: 2026-01-14T00:00:00), then standard ISO date
+        // ISO 8601 datetime first (e.g. 2026-01-14T00:00:00), then standard ISO date
         return $this->parseDateTime($this->date, [self::FORMAT_ISO_DATETIME, 'Y-m-d']);
     }
 
@@ -109,7 +109,7 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        // ISO 8601 datetime first (from ExtJS: 2026-01-14T08:00:00), then time-only formats
+        // ISO 8601 datetime first (e.g. 2026-01-14T08:00:00), then time-only formats
         return $this->parseDateTime($this->start, [self::FORMAT_ISO_DATETIME, 'H:i:s', 'H:i']);
     }
 
@@ -123,7 +123,7 @@ final readonly class EntrySaveDto
             return null;
         }
 
-        // ISO 8601 datetime first (from ExtJS: 2026-01-14T16:00:00), then time-only formats
+        // ISO 8601 datetime first (e.g. 2026-01-14T16:00:00), then time-only formats
         return $this->parseDateTime($this->end, [self::FORMAT_ISO_DATETIME, 'H:i:s', 'H:i']);
     }
 

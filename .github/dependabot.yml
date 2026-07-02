@@ -16,8 +16,8 @@ updates:
       frontend:
         patterns:
           - "*"
-  # Root npm lockfile (the Symfony Encore/webpack build toolchain). Was unmonitored,
-  # so dev-tooling advisories (http-proxy-middleware, uuid) never produced a bump PR.
+  # Root npm lockfile (Playwright e2e tooling). Was unmonitored, so dev-tooling
+  # advisories (http-proxy-middleware, uuid) never produced a bump PR.
   - package-ecosystem: npm
     directory: /
     schedule:
