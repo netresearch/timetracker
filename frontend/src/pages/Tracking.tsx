@@ -277,9 +277,9 @@ export default function Tracking() {
   // priority order — see app.css) until the table no longer overflows its scroll
   // container. Cells are nowrap, so this fires BEFORE anything wraps. Width is
   // monotonic in the level, so a binary search finds the minimal fitting level
-  // in ~4 reflows instead of a ~14-step linear scan. Re-run on container resize
+  // in ~4 reflows instead of a ~13-step linear scan. Re-run on container resize
   // AND on row/content changes.
-  const MAX_THIN = 14
+  const MAX_THIN = 13
   function applyThinLevel(table: HTMLElement, level: number): void {
     for (let i = 1; i <= MAX_THIN; i++) {
       table.classList.toggle('is-thin-' + i, i <= level)
@@ -328,9 +328,14 @@ export default function Tracking() {
       },
     ),
   )
-  // The External-ticket column is read-only and often empty; when no visible row
-  // has one it becomes a hide candidate for the responsive (narrow) table.
+  // The External-ticket column is read-only and often empty; when NO loaded row
+  // has a value it is dropped from the rendered grid entirely (data-driven — it
+  // reappears as soon as a fetched row carries one). Removing the cells from the
+  // DOM (rather than display:none) keeps gridNav's live cell indices and
+  // aria-colcount consistent: a hidden-but-present cell would still be an
+  // arrow-key stop.
   const hasExtTicket = createMemo<boolean>(() => rows().some((row) => str(row.extTicket) !== ''))
+  const visibleColumns = createMemo(() => (hasExtTicket() ? COLUMNS : COLUMNS.filter((col) => col.key !== 'extTicket')))
   const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
 
   // id→label maps, rebuilt only when the option list changes, so resolving a
@@ -992,7 +997,7 @@ export default function Tracking() {
         <div class="table-scroll" ref={setScrollEl}>
           <table
             class="data-table tracking-table"
-            classList={{ 'is-fetching': entries.isFetching, 'no-extticket': !hasExtTicket() }}
+            classList={{ 'is-fetching': entries.isFetching }}
             // A refetch (refresh / range change) keeps the previous rows visible
             // (keepPreviousData) — aria-busy + a subtle dim are the only in-flight
             // cue a sighted user gets, since the first-load spinner won't fire.
@@ -1013,7 +1018,7 @@ export default function Tracking() {
           >
             <thead>
               <tr>
-                <For each={COLUMNS}>{(col) => <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>{col.label()}</th>}</For>
+                <For each={visibleColumns()}>{(col) => <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>{col.label()}</th>}</For>
                 <th scope="col" data-col-key="actions">{m.tracking_actions()}</th>
               </tr>
             </thead>
@@ -1025,7 +1030,7 @@ export default function Tracking() {
                   return (
                     <>
                     <tr class={`tracking-row ${id <= 0 ? 'is-new' : CLASS_ROW[entry.class] ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id) }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
-                      <For each={COLUMNS}>
+                      <For each={visibleColumns()}>
                         {(col) => {
                           const editable = FIELD_BY_KEY.has(col.key)
                           const fieldType = FIELD_BY_KEY.get(col.key)?.type
@@ -1119,7 +1124,7 @@ export default function Tracking() {
                     {/* Save error gets its own full-width row beneath the row. */}
                     <Show when={editor.rowErrors[id]}>
                       <tr class="row-error">
-                        <td colspan={COLUMNS.length + 1}>
+                        <td colspan={visibleColumns().length + 1}>
                           <span role="alert" class="form-status is-error">{editor.rowErrors[id]}</span>
                         </td>
                       </tr>

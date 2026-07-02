@@ -364,6 +364,41 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('hides the Ext. Ticket column entirely when no loaded row has one (#10)', async () => {
+    // Both empty shapes (null and '') count as "no value".
+    mockApiWith([
+      { entry: DEFAULT_ENTRY }, // extTicket: null
+      { entry: { ...DEFAULT_ENTRY, id: 2, start: '11:00', end: '12:00', description: 'Other', extTicket: '' } },
+    ])
+    const { container, getByRole, queryByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Other' })).toBeInTheDocument())
+
+    expect(queryByRole('columnheader', { name: 'Ext. Ticket' })).toBeNull()
+    expect(container.querySelector('[data-col-key="extTicket"]')).toBeNull()
+    // The column is dropped from the DOM (not display:none-hidden), so the
+    // grid's navigable cell count shrinks with it: 9 data columns + Actions.
+    expect(getByRole('grid').getAttribute('aria-colcount')).toBe('10')
+
+    unmount()
+  })
+
+  it('keeps the Ext. Ticket column when any loaded row has a value (#10)', async () => {
+    mockApiWith([
+      { entry: DEFAULT_ENTRY }, // extTicket: null — one empty row must not hide the column
+      { entry: { ...DEFAULT_ENTRY, id: 2, start: '11:00', end: '12:00', extTicket: 'DHLSUP-1' } },
+    ])
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'DHLSUP-1' })).toBeInTheDocument())
+
+    expect(getByRole('columnheader', { name: 'Ext. Ticket' })).toBeInTheDocument()
+    // Every row renders the cell (blank where empty) so column indices stay
+    // aligned across rows: 10 data columns + Actions.
+    expect(container.querySelectorAll('td[data-col-key="extTicket"]')).toHaveLength(2)
+    expect(getByRole('grid').getAttribute('aria-colcount')).toBe('11')
+
+    unmount()
+  })
+
   it('filters the project dropdown by the row customer (cascade)', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, customer: 7, project: 9, ticket: '', class: 0 } }],
