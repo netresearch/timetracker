@@ -57,9 +57,9 @@ public string $extTicket = ''           // External ticket reference
 - Custom callback: `validateTimeRange()` ensures start < end time
 
 **Usage Context**:
-- **Controller**: `SaveEntryAction`
+- **Controller**: `SaveEntryAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
-- **Endpoint**: `/tracking/save-entry`
+- **Endpoint**: `/tracking/save`
 
 **Example JSON Payload**:
 ```json
@@ -109,7 +109,7 @@ public int $skipholidays = 0            // Skip holidays (boolean as int)
 **Usage Context**:
 - **Controller**: `BulkEntryAction`
 - **HTTP Method**: POST
-- **Endpoint**: `/tracking/bulk-entry`
+- **Endpoint**: `/tracking/bulkentry`
 
 **Example JSON Payload**:
 ```json
@@ -143,20 +143,21 @@ public int $skipholidays = 0            // Skip holidays (boolean as int)
 public int $id = 0                       // User ID for updates
 public string $username = ''             // Username (min 3 chars)
 public string $abbr = ''                 // 3-letter abbreviation
-public string $type = ''                 // User type
+public string $type = ''                 // User type (UserType value: USER, DEV, PL, ADMIN)
 public string $locale = ''               // User locale preference
-public array $teams = []                 // Team ID assignments (not mapped)
+public bool $active = true               // Active flag
+public array $teams = []                 // Team ID assignments (#[Map(if: false)] — not mapped)
 ```
 
 **Validation Constraints**:
 - `username`: NotBlank, Length min 3, UniqueUsername (custom)
-- `abbr`: NotBlank, Length exactly 3, UniqueUserAbbr (custom)
-- `teams`: Custom callback ensures at least one team assignment
+- `abbr`: ValidUserAbbr (custom — enforces the 3-letter format), UniqueUserAbbr (custom)
+- `teams`: Custom callback (`#[Assert\Callback]`) ensures at least one team assignment
 
 **Usage Context**:
-- **Controller**: `SaveUserAction`
+- **Controller**: `SaveUserAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
-- **Endpoint**: `/admin/save-user`
+- **Endpoint**: `/user/save`
 
 **Example JSON Payload**:
 ```json
@@ -164,8 +165,9 @@ public array $teams = []                 // Team ID assignments (not mapped)
   "id": 42,
   "username": "john.doe",
   "abbr": "JDO",
-  "type": "employee",
-  "locale": "en_US",
+  "type": "DEV",
+  "locale": "en",
+  "active": true,
   "teams": [1, 3, 5]
 }
 ```
@@ -194,8 +196,9 @@ public array $teams = []                 // Team access list (not mapped)
 - Class-level: CustomerTeamsRequired (custom constraint)
 
 **Usage Context**:
-- **Controller**: Customer management endpoints
+- **Controller**: `SaveCustomerAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
+- **Endpoint**: `/customer/save`
 
 **Example JSON Payload**:
 ```json
@@ -237,6 +240,9 @@ public ?string $ticket_system = null     // External ticket system (not mapped)
 public bool $additionalInformationFromExternal = false  // External data flag
 public ?string $internalJiraTicketSystem = null         // Internal JIRA system
 public string $internalJiraProjectKey = ''              // Internal JIRA key
+public ?string $invoice = null                          // Invoice reference
+public ?string $internalReference = null                // Internal reference
+public ?string $externalReference = null                // External reference
 ```
 
 **Validation Constraints**:
@@ -245,8 +251,9 @@ public string $internalJiraProjectKey = ''              // Internal JIRA key
 - Class-level: UniqueProjectNameForCustomer (custom constraint)
 
 **Usage Context**:
-- **Controller**: Project management endpoints
+- **Controller**: `SaveProjectAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
+- **Endpoint**: `/project/save`
 
 **Example JSON Payload**:
 ```json
@@ -294,8 +301,9 @@ public float $factor = 0.0               // Billing factor (>= 0)
 - `factor`: GreaterThanOrEqual 0
 
 **Usage Context**:
-- **Controller**: Activity management endpoints
+- **Controller**: `SaveActivityAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
+- **Endpoint**: `/activity/save`
 
 **Example JSON Payload**:
 ```json
@@ -327,8 +335,9 @@ public int $lead_user_id = 0             // Lead user ID (required, positive)
 - `lead_user_id`: NotBlank, Positive
 
 **Usage Context**:
-- **Controller**: Team management endpoints
+- **Controller**: `SaveTeamAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
+- **Endpoint**: `/team/save`
 
 **Example JSON Payload**:
 ```json
@@ -368,8 +377,9 @@ public float $hours_6 = 0.0              // Saturday hours
 - Class-level: ContractDatesValid (custom constraint)
 
 **Usage Context**:
-- **Controller**: Contract management endpoints
+- **Controller**: `SaveContractAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
+- **Endpoint**: `/contract/save`
 
 **Example JSON Payload**:
 ```json
@@ -412,8 +422,9 @@ public string $description = ''          // Default description
 - `name`: NotBlank, Length min 3
 
 **Usage Context**:
-- **Controller**: Preset management endpoints
+- **Controller**: `SavePresetAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
+- **Endpoint**: `/preset/save`
 
 **Example JSON Payload**:
 ```json
@@ -451,14 +462,18 @@ public string $privateKey = ''           // Private key for auth
 public string $ticketUrl = ''            // Ticket URL template
 public ?string $oauthConsumerKey = null  // OAuth consumer key
 public ?string $oauthConsumerSecret = null  // OAuth consumer secret
+public string $deploymentType = 'SERVER' // Deployment type (default 'SERVER')
+public ?string $oauth2ClientId = null    // OAuth2 client ID
+public ?string $oauth2ClientSecret = null  // OAuth2 client secret
 ```
 
 **Validation Constraints**:
 - `name`: NotBlank, Length min 3, UniqueTicketSystemName (custom)
 
 **Usage Context**:
-- **Controller**: Ticket system management endpoints
+- **Controller**: `SaveTicketSystemAction` (via `#[MapRequestPayload]`)
 - **HTTP Method**: POST
+- **Endpoint**: `/ticketsystem/save`
 
 **Example JSON Payload**:
 ```json
@@ -504,15 +519,16 @@ public ?string $year = null              // Year filter
 public ?string $month = null             // Month filter
 public ?int $maxResults = null           // Result limit
 public ?int $page = null                 // Pagination
+public ?int $start = null                // Row-offset pagination parameter
 ```
 
 **Usage Context**:
-- **Controller**: Reporting and interpretation endpoints
-- **HTTP Method**: GET (query parameters)
+- **Controller**: `GetAllEntriesAction` (via `#[MapQueryString]`, `POST /interpretation/allEntries`); the group-by actions (`GroupByUserAction`, etc.) build it with `InterpretationFiltersDto::fromRequest()` in `BaseInterpretationController`
+- **HTTP Method**: Filters are always read from the query string (even on the `POST` `allEntries` route)
 
 **Example Query String**:
 ```
-/interpretation?customer=5&project=12&datestart=2024-09-01&dateend=2024-09-30&maxResults=100&page=1
+/interpretation/allEntries?customer=5&project=12&datestart=2024-09-01&dateend=2024-09-30&maxResults=100&page=1
 ```
 
 **Static Factory**: `fromRequest(Request $request)` with safe type conversion
@@ -529,19 +545,20 @@ public ?int $page = null                 // Pagination
 public int $userid = 0                   // Target user ID
 public int $year = 0                     // Export year
 public int $month = 0                    // Export month
-public int $project = 0                  // Project filter
-public int $customer = 0                 // Customer filter
+public ?int $project = null              // Project filter
+public ?int $customer = null             // Customer filter
 public bool $billable = false            // Include billable entries only
 public bool $tickettitles = false        // Include ticket titles
 ```
 
 **Usage Context**:
-- **Controller**: Data export endpoints
+- **Controller**: `ExportAction` — the DTO is built with `ExportQueryDto::fromRequest()` (not `#[MapQueryString]`, because the target user is resolved before the DTO is created)
 - **HTTP Method**: GET (query parameters)
+- **Endpoint**: `/controlling/export`
 
 **Example Query String**:
 ```
-/export?userid=8&year=2024&month=9&customer=5&billable=true&tickettitles=true
+/controlling/export?userid=8&year=2024&month=9&customer=5&billable=true&tickettitles=true
 ```
 
 **Static Factory**: `fromRequest(Request $request)` with safe type conversion and boolean parsing
@@ -582,13 +599,9 @@ public int $project = 0                  // Project ID for sync operation
 ```
 
 **Usage Context**:
-- **Controller**: Admin synchronization endpoints (JIRA sync)
+- **Controller**: `SyncProjectSubticketsAction` (built with `AdminSyncDto::fromRequest()`)
 - **HTTP Method**: GET
-
-**Example Query String**:
-```
-/admin/sync?project=12
-```
+- **Endpoint**: `/projects/{project}/syncsubtickets` (the `project` id comes from the route path)
 
 ---
 
@@ -602,8 +615,8 @@ public int $id = 0                       // Entity ID
 ```
 
 **Usage Context**:
-- **Controller**: Delete operations, simple lookups
-- **HTTP Method**: POST/DELETE
+- **Controller**: Delete operations (`DeleteActivityAction`, `DeleteCustomerAction`, `DeleteProjectAction`, `DeleteTeamAction`, `DeleteUserAction`, `DeletePresetAction`, `DeleteContractAction`, `DeleteTicketSystemAction`) via `#[MapRequestPayload]`
+- **HTTP Method**: POST (all delete routes use `methods: ['POST']`)
 
 **Example JSON Payload**:
 ```json
@@ -632,6 +645,7 @@ public int $id = 0                       // Entity ID
 | Constraint | DTOs | Purpose |
 |------------|------|---------|
 | `UniqueUsername` | UserSaveDto | Username uniqueness |
+| `ValidUserAbbr` | UserSaveDto | User abbreviation format validation |
 | `UniqueUserAbbr` | UserSaveDto | User abbreviation uniqueness |
 | `UniqueCustomerName` | CustomerSaveDto | Customer name uniqueness |
 | `UniqueProjectNameForCustomer` | ProjectSaveDto | Project name per customer |

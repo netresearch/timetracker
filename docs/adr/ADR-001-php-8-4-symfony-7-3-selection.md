@@ -1,6 +1,6 @@
 # ADR-001: PHP 8.4 and Symfony 7.3 Selection
 
-**Status:** Accepted  
+**Status:** Superseded by [ADR-015](ADR-015-php-8-5-symfony-8-upgrade.md)  
 **Date:** 2024-09-15  
 **Deciders:** Architecture Team  
 

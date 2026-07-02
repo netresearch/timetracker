@@ -5,8 +5,9 @@
 | Version | Supported          |
 |---------|--------------------|
 | 5.x.x   | :white_check_mark: |
-| 4.x.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| < 5.0   | :x:                |
+
+The 4.x line reached end of life on 2025-03-15 (tag [`v4_EOL`](https://github.com/netresearch/timetracker/tree/v4_EOL)).
 
 ## Reporting a Vulnerability
 
@@ -40,7 +41,8 @@ This project implements several security measures:
 - CSRF protection on all state-changing operations
 - AES-256-GCM encryption for sensitive tokens
 - Strict Content Security Policy
-- Regular dependency security audits via GitHub Dependabot and Snyk
+- Automated dependency updates via GitHub Dependabot ([.github/dependabot.yml](.github/dependabot.yml))
+- CodeQL code scanning ([codeql.yml](.github/workflows/codeql.yml)) and npm dependency audits ([security.yml](.github/workflows/security.yml)) in CI; `composer audit` via `make audit`
 - OpenSSF Scorecard and Best Practices compliance
 
 For detailed security documentation, see [docs/security.md](docs/security.md).
@@ -51,8 +53,8 @@ Security updates are released as patch versions. We recommend:
 
 1. Subscribe to GitHub releases for notifications
 2. Keep your installation up to date
-3. Review the CHANGELOG for security-related changes
+3. Review the [GitHub release notes](https://github.com/netresearch/timetracker/releases) for security-related changes
 
 ## Scope
 
-This security policy covers the TimeTracker application code. Third-party dependencies are managed through Composer and npm, with automated security scanning enabled.
+This security policy covers the TimeTracker application code. Third-party dependencies are managed through Composer (PHP), bun (frontend), and npm (e2e tooling), with automated security scanning enabled.

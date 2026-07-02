@@ -1,5 +1,7 @@
 # ADR-008: Database Performance Optimization
 
+> **Reality note (2026-07-02):** parts of this ADR describe infrastructure that was never implemented (time-based table partitioning with automated partition events, the `DatabasePerformanceSubscriber` monitoring class; the `INCLUDE (...)` covering-index syntax is not supported by MariaDB). See [migrations/](../../migrations/) for the indexes that actually exist.
+
 **Status:** Accepted  
 **Date:** 2024-09-15  
 **Deciders:** Architecture Team, Database Team  

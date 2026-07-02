@@ -106,6 +106,7 @@ return "strftime('%Y', {$field})";
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `getContracts` | `(): array<int, array{contract: array}>` | Get all contracts with user joins |
+| `findValidContract` | `(User $user, DateTimeInterface $date): ?Contract` | Find the contract in effect for a user on a given date |
 
 **Query Optimization**:
 - Uses JOIN with users table
@@ -340,6 +341,7 @@ return $this->createQueryBuilder($alias)
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `getAllPresets` | `(): array<int, array{preset: array}>` | Get all presets ordered by name |
+| `getPresetsByUser` | `(int $userId): array` | Presets scoped to a specific user |
 
 **Output Format**:
 ```php
@@ -360,17 +362,13 @@ return $this->createQueryBuilder($alias)
 
 **Entity Managed**: `App\Entity\Project`
 
-**Dependencies**:
-- `ArrayTypeHelper` for type-safe array operations
-
 **Key Methods**:
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `findOneById` | `(int $id): ?Project` | Type-safe ID lookup |
-| `getProjectStructure` | `(int $userId, array $customers): array` | Complex nested project structure |
-| `getProjectsByUser` | `(int $userId, int $customerId): array` | User-accessible projects |
-| `findByCustomer` | `(int $customerId): array<Project>` | Projects by customer |
+| `getProjectsByUser` | `(int $userId, int $customerId = 0): array` | User-accessible projects (global OR team membership), optionally filtered by customer |
+| `findByCustomer` | `(int $customerId = 0): array<Project>` | Projects by customer |
 | `getAllProjectsForAdmin` | `(): array` | Admin view with customer data |
 | `isValidJiraPrefix` | `(string $jiraId): int` | JIRA ID validation |
 
@@ -383,21 +381,16 @@ return $this->createQueryBuilder($alias)
 ->leftJoin('team.users', 'user')
 ```
 
-**Project Structure Algorithm**:
-1. Get global projects (accessible to all)
-2. Get user-specific projects via team membership
-3. Organize by customer ID with 'all' key for complete list
-4. Include metadata: JIRA integration, leads, subtickets
+**`getProjectsByUser` behavior**:
+1. Select projects where `customer.global = 1 OR user.id = :userId` (team membership via `customer.teams` → `team.users`)
+2. Optionally narrow to a customer (`project.global = 1 OR customer.id = :customerId`) when `customerId > 0`
+3. Return a flat list of `['project' => $project->toArray()]` items
 
-**JIRA Integration**: Regex validation for JIRA project prefixes:
-```php
-'/^([A-Z]+[A-Z0-9]*[, ]*)*$/'
-```
+**JIRA Integration**: `isValidJiraPrefix()` validates JIRA project prefixes.
 
 **Output Formats**:
 - **Standard**: `['project' => $project->toArray()]`
-- **Admin View**: Includes customer relationship data
-- **Structure**: Nested by customer with comprehensive metadata
+- **Admin View** (`getAllProjectsForAdmin`): includes customer relationship data
 
 **Relationships**:
 - Belongs to Customer
@@ -602,10 +595,10 @@ $this->createQueryBuilder('e')
 | `findByFilterArrayOptimized` | Index-aware filtering | Optimized filter ordering |
 | `getWorkByUserOptimized` | Cached statistics | 60-second cache TTL |
 
-### ProjectRepository (Complex Methods)
+### ProjectRepository (Access-Control Methods)
 | Method | Purpose | Performance Notes |
 |--------|---------|-------------------|
-| `getProjectStructure` | Nested project organization | Complex but optimized for UI needs |
-| `getProjectsByUser` | Access control queries | Team-based filtering |
+| `getProjectsByUser` | Access control queries | Team-based filtering (global OR team membership) |
+| `getAllProjectsForAdmin` | Admin project list | Joins customer data |
 
 This documentation provides a complete reference for the TimeTracker repository layer, covering all 11 repositories with their methods, optimizations, and relationships. The repositories demonstrate advanced Doctrine patterns, performance optimization techniques, and comprehensive type safety measures.

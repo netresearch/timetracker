@@ -9,6 +9,37 @@ export default function Help() {
       <p class="help-lead">{m.help_intro()}</p>
 
       <section class="help-section">
+        <h2>{m.help_pages()}</h2>
+        <p class="help-intro">{m.help_pages_intro()}</p>
+        <dl class="help-legend">
+          <div class="help-legend-row">
+            <dt>{m.tracking_title()}</dt>
+            <dd>{m.help_page_tracking_desc()}</dd>
+          </div>
+          <div class="help-legend-row">
+            <dt>{m.month_title()}</dt>
+            <dd>{m.help_page_month_desc()}</dd>
+          </div>
+          <div class="help-legend-row">
+            <dt>{m.auswertung_title()}</dt>
+            <dd>{m.help_page_auswertung_desc()}</dd>
+          </div>
+          <div class="help-legend-row">
+            <dt>{m.billing_title()}</dt>
+            <dd>{m.help_page_billing_desc()}</dd>
+          </div>
+          <div class="help-legend-row">
+            <dt>{m.admin_title()}</dt>
+            <dd>{m.help_page_admin_desc()}</dd>
+          </div>
+          <div class="help-legend-row">
+            <dt>{m.settings_title()}</dt>
+            <dd>{m.help_page_settings_desc()}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="help-section">
         <h2>{m.help_usage()}</h2>
         <ul>
           <li>{m.help_usage_add()}</li>
@@ -104,6 +135,11 @@ export default function Help() {
       <section class="help-section">
         <h2>{m.help_links()}</h2>
         <ul>
+          <li>
+            <a href="https://github.com/netresearch/timetracker/blob/main/docs/user-guide.md" target="_blank" rel="noopener noreferrer">
+              {m.help_link_user_guide()}
+            </a>
+          </li>
           <li>
             <a href="https://github.com/netresearch/timetracker" target="_blank" rel="noopener noreferrer">
               {m.help_link_project()}

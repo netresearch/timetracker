@@ -78,21 +78,19 @@ public function getEntry(): Entry
 public function getContext(): ?array
 ```
 - Optional metadata about the operation
-- Common context keys:
-  - `changes`: Array of field changes for UPDATE events
-  - `error`: Error details for SYNC_FAILED events
-  - `source`: Origin of the operation (web, api, sync)
-  - `user_id`: Acting user for audit trails
+- Context keys actually used by the code:
+  - `previous`: The pre-mutation `Entry` snapshot, passed on `CREATED`/`UPDATED` from `SaveEntryAction`; the subscriber reads it via `getPreviousEntry()` to clean up the old Jira worklog when a ticket changes
+  - `exception`: The `Throwable` read by `onEntrySyncFailed()` for `SYNC_FAILED` logging
 
 #### Usage Example
 
 ```php
-// Event creation and dispatch
-$event = new EntryEvent(
-    entry: $entry,
-    context: ['changes' => ['duration' => ['old' => 60, 'new' => 90]]]
+// Event creation and dispatch (see SaveEntryAction::persistEntry)
+$eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
+$this->eventDispatcher->dispatch(
+    new EntryEvent($entry, ['previous' => $previousEntry]),
+    $eventName,
 );
-$this->eventDispatcher->dispatch($event, EntryEvent::UPDATED);
 ```
 
 ## Event Subscribers
@@ -100,7 +98,7 @@ $this->eventDispatcher->dispatch($event, EntryEvent::UPDATED);
 ### EntryEventSubscriber
 
 **Location**: `src/EventSubscriber/EntryEventSubscriber.php`
-**Status**: Currently excluded from service container (line 52 in services.yaml)
+**Status**: Registered and active. It is auto-wired/auto-configured via the `App\:` resource loader in `config/services.yaml` (only `ProfilerAdminGateSubscriber` is excluded among the subscribers; line 52's exclusion targets `JiraIntegrationService`, a different class). Implementing `EventSubscriberInterface` means Symfony tags it as an event subscriber automatically.
 
 The primary business logic subscriber handling entry-related domain events.
 
@@ -131,11 +129,14 @@ public static function getSubscribedEvents(): array
 
 ```php
 public function __construct(
-    private readonly JiraIntegrationService $jiraService,
-    private readonly QueryCacheService $cacheService,
+    private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
+    private readonly ManagerRegistry $managerRegistry,
+    private readonly QueryCacheService $queryCacheService,
     private readonly ?LoggerInterface $logger = null,
 ) {}
 ```
+
+> Worklog sync deliberately uses the legacy `JiraOAuthApiService` (via `JiraOAuthApiFactory`) — it is the only Jira integration path wired into the container. The newer `JiraIntegrationService` stack stays excluded until token encryption is production-ready.
 
 #### Actions Performed
 
@@ -158,11 +159,9 @@ public function onEntryCreated(EntryEvent $event): void
 public function onEntryUpdated(EntryEvent $event): void
 ```
 
-1. **Change Tracking**: Logs what fields were modified via context data
-2. **Cache Refresh**: Invalidates stale cached queries
-3. **JIRA Sync**: Updates existing JIRA worklog if entry was previously synced
-   - Only updates if `syncedToTicketsystem` flag is true
-   - Only updates if `worklogId` exists from previous sync
+1. **Logging**: Records the update
+2. **Cache Refresh**: Invalidates stale cached queries via `QueryCacheService`
+3. **JIRA Sync**: Runs `syncWorklog()` on every update when `shouldAutoSync()` passes (v4 parity). `updateEntryJiraWorkLog` creates a new worklog or updates the existing one based on the worklog id, so entries never synced before are caught up on their next save. If the ticket changed and the previous entry had a worklog id, the old worklog is deleted first (using the `previous` snapshot).
 4. **Graceful Degradation**: Logs warnings on JIRA failures but doesn't block updates
 
 **Entry Deleted (`onEntryDeleted`)**
@@ -200,20 +199,17 @@ public function onEntrySyncFailed(EntryEvent $event): void
 private function shouldAutoSync(Entry $entry): bool
 ```
 
-Complex business logic determining automatic JIRA synchronization:
+`shouldAutoSync()` is a cheap gate; the real per-target decision is made in `syncWorklog()` via `canBookOn()`.
 
-**Requirements Cascade**:
-1. Entry must belong to a project
-2. Project must have associated ticket system
-3. Ticket system must be configured for automatic booking
-4. Ticket system must be JIRA type
-5. Entry must have valid ticket reference
+**`shouldAutoSync()` returns true only when all hold**:
+1. The entry belongs to a `Project`
+2. The entry has a `User` (the Jira client acts on their behalf)
+3. The ticket is not empty (`not in ['', '0']`)
+4. At least one bookable target exists: the project has its own ticket system **or** an internal Jira project key (`Project::hasInternalJiraProjectKey()`)
 
-**Business Rules**:
-- Only JIRA ticket systems support auto-sync currently
-- Ticket validation occurs before sync attempts
-- Missing ticket reference prevents auto-sync
-- Inactive projects skip auto-sync
+**Per-target gate (`canBookOn()`)**: a ticket system is only booked to when `getBookTime()` is true **and** its type is `TicketSystemType::JIRA`.
+
+**Internal Jira mirroring**: for projects with an internal Jira project key, `syncWorklog()` mirrors the external ticket into the internal Jira (finds the issue by summary or creates it), rewrites the entry's ticket to the internal issue key, and preserves the external key in `internalJiraTicketOriginalKey` ("ext. ticket") — matching v4's internal-ticket-system behavior.
 
 ### ExceptionSubscriber
 
@@ -344,54 +340,54 @@ graph TD
 
 ### Dispatch Points in Controllers
 
-Currently, the event dispatching is **implemented but not actively used** in the controllers. The infrastructure exists but requires integration.
+Entry events **are dispatched** from the tracking controllers, after the entity is persisted and flushed.
 
-**Expected Integration Points**:
-
-**SaveEntryAction** (Create/Update)
+**SaveEntryAction** (Create/Update) — `persistEntry()`
 ```php
-// After successful persistence (line 195)
 $entityManager->persist($entry);
 $entityManager->flush();
 
-// MISSING: Event dispatch
-$eventType = $entryId ? EntryEvent::UPDATED : EntryEvent::CREATED;
-$context = $entryId ? ['changes' => $changeTracker->getChanges()] : null;
-$event = new EntryEvent($entry, $context);
-$this->eventDispatcher->dispatch($event, $eventType);
+// Dispatch entry event for Jira sync and cache invalidation
+if ($this->eventDispatcher instanceof EventDispatcherInterface) {
+    $eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
+    $this->eventDispatcher->dispatch(
+        new EntryEvent($entry, ['previous' => $previousEntry]),
+        $eventName,
+    );
+}
 ```
 
 **DeleteEntryAction** (Delete)
 ```php
-// After successful removal (line 54-55)
-$manager->remove($entry);
-$manager->flush();
-
-// MISSING: Event dispatch
-$event = new EntryEvent($entry);
-$this->eventDispatcher->dispatch($event, EntryEvent::DELETED);
+// After successful removal
+$this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::DELETED);
 ```
 
-### Service Layer Usage
+**BulkEntryAction** (bulk create) dispatches `EntryEvent::CREATED` for each generated entry.
 
-**JIRA Integration Service** (External Event Sources)
+### SYNCED / SYNC_FAILED events
+
+`EntryEvent::SYNCED` and `EntryEvent::SYNC_FAILED` are defined constants, and `EntryEventSubscriber` subscribes to both (`onEntrySynced` invalidates the `jira_sync` cache tag; `onEntrySyncFailed` logs the `Throwable` in `context['exception']`). **No component currently dispatches them** — the worklog booking runs inline inside `onEntryCreated`/`onEntryUpdated`, so these two hooks are wired but presently dormant. If a dedicated sync service is added, it would dispatch them like:
+
 ```php
 // After successful JIRA sync
-$event = new EntryEvent($entry, ['worklog_id' => $worklogId]);
-$this->eventDispatcher->dispatch($event, EntryEvent::SYNCED);
+$this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::SYNCED);
 
 // After sync failure
-$event = new EntryEvent($entry, ['error' => $exception->getMessage()]);
-$this->eventDispatcher->dispatch($event, EntryEvent::SYNC_FAILED);
+$this->eventDispatcher->dispatch(
+    new EntryEvent($entry, ['exception' => $exception]),
+    EntryEvent::SYNC_FAILED,
+);
 ```
 
 ### Subscriber Execution Order
 
-Symfony executes subscribers based on priority (highest first):
+Only the two exception subscribers share an event (`KernelEvents::EXCEPTION`), so ordering applies to them (highest priority first):
 
-1. **ExceptionSubscriber** (Priority: 10) - Global exception handling
-2. **AccessDeniedSubscriber** (Priority: 5) - Security exception handling
-3. **EntryEventSubscriber** (Priority: 0, default) - Business logic events
+1. **AccessDeniedSubscriber** (Priority: 15) - Security exception handling (runs first, converts `AccessDeniedException` before the generic handler)
+2. **ExceptionSubscriber** (Priority: 10) - Global exception handling
+
+`EntryEventSubscriber` listens to the custom `entry.*` events (not `KernelEvents::EXCEPTION`), so it is on a separate dispatch path and does not compete with the exception subscribers for ordering.
 
 **Transaction Boundaries**:
 - Events are dispatched **after** database transactions commit
@@ -480,11 +476,9 @@ class ProjectEvent extends Event
 
 ### Controller Integration
 
-**Current State**: Controllers perform direct operations without event dispatching.
+**Current State**: The tracking controllers (`SaveEntryAction`, `DeleteEntryAction`, `BulkEntryAction`) inject `EventDispatcherInterface` and dispatch `EntryEvent`s after persistence.
 
-**Required Integration Steps**:
-
-1. **Inject EventDispatcher**:
+1. **Inject EventDispatcher** (constructor autowiring):
 ```php
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -499,35 +493,16 @@ public function __construct(
 $entityManager->persist($entry);
 $entityManager->flush();
 
-// Dispatch event after successful persistence
-$event = new EntryEvent($entry, $context);
-$this->eventDispatcher->dispatch($event, $eventType);
+// Dispatch after the flush so the entity is durable before side effects
+$eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
+$this->eventDispatcher->dispatch(new EntryEvent($entry, ['previous' => $previousEntry]), $eventName);
 ```
 
-3. **Context Enrichment**:
-```php
-$context = [
-    'source' => 'web',
-    'user_id' => $this->getUser()->getId(),
-    'ip_address' => $request->getClientIp(),
-];
-
-if ($isUpdate) {
-    $context['changes'] = $this->detectChanges($originalEntry, $updatedEntry);
-}
-```
+3. **Context**: the only context key passed today is `previous` (the pre-mutation `Entry` snapshot on update). Richer context (source, acting user, change diffs) is not currently populated.
 
 ### Service Layer Usage
 
-**Service Configuration**:
-```php
-# config/services.yaml
-App\EventSubscriber\EntryEventSubscriber:
-    # Currently excluded - remove from exclusion list
-    public: true
-    autowire: true
-    autoconfigure: true
-```
+**Service Configuration**: `EntryEventSubscriber` needs no explicit service definition — it is picked up by the `App\:` resource loader in `config/services.yaml` (autowire + autoconfigure), and implementing `EventSubscriberInterface` gets it tagged as a subscriber automatically. Only `ProfilerAdminGateSubscriber` is excluded there (it is registered in the `profiling` env only).
 
 **Service Integration**:
 ```php
@@ -633,32 +608,24 @@ public function testControllerWithMockedEvents(): void
 
 ### Current State
 
-**✅ Implemented**:
+**✅ Implemented and active**:
 - Event classes with proper constants and structure
-- Event subscriber interfaces and business logic
-- Exception handling subscribers
-- Auto-configuration infrastructure
+- `EntryEventSubscriber` registered (auto-wired/auto-configured) and handling `CREATED`/`UPDATED`/`DELETED`
+- Controller dispatching wired in `SaveEntryAction`, `DeleteEntryAction`, `BulkEntryAction` (after `flush()`)
+- Jira worklog sync + user-entry cache invalidation on entry create/update/delete
+- Exception handling subscribers (`AccessDeniedSubscriber`, `ExceptionSubscriber`)
 
-**❌ Missing Integration**:
-- Controller event dispatching (not yet connected)
-- Service container registration (EntryEventSubscriber excluded)
-- Change detection for UPDATE events
-- Async/queued event processing
+**⚠️ Wired but dormant**:
+- `SYNCED` / `SYNC_FAILED` are subscribed to but not dispatched by any component today
+- Context is limited to the `previous` snapshot; no source/user/change-diff enrichment
+- No async/queued event processing (subscribers run synchronously within the request)
 
-**⚠️ Configuration Issues**:
-- `EntryEventSubscriber` excluded in `services.yaml` line 52
-- No event dispatcher injection in controllers
-- No context enrichment in business operations
+### Possible Next Steps
 
-### Next Steps for Full Implementation
+1. **Dispatch SYNCED/SYNC_FAILED**: emit them from a dedicated sync path so the dormant hooks fire
+2. **Richer context**: add change diffs / source / acting-user metadata where useful
+3. **Performance**: consider async processing (Messenger) for heavy Jira operations
+4. **Testing**: expand event integration tests
+5. **Monitoring**: add metrics for event processing success/failure rates
 
-1. **Enable EntryEventSubscriber**: Remove exclusion from services.yaml
-2. **Controller Integration**: Add EventDispatcher injection and dispatch calls
-3. **Change Detection**: Implement before/after comparison for updates
-4. **Error Handling**: Add circuit breakers for external service failures
-5. **Performance**: Consider async processing for heavy operations
-6. **Testing**: Add comprehensive event integration tests
-7. **Documentation**: Update API docs with event behavior
-8. **Monitoring**: Add metrics for event processing success/failure rates
-
-The event system foundation is solid and follows Symfony best practices. With proper integration, it will provide robust decoupling and extensibility for the TimeTracker application.
+The event system is active and follows Symfony best practices, providing decoupling between entry persistence and its Jira/caching side effects.

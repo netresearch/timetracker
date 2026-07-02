@@ -1,4 +1,4 @@
-# ADR-001: Service Layer Pattern Implementation
+# ADR-009: Service Layer Pattern Implementation
 
 ## Status
 Accepted
@@ -142,13 +142,13 @@ class ExampleController extends AbstractController
 
 ## Monitoring and Review
 - **Performance Metrics**: Response times and memory usage
-- **Code Quality**: PHPStan level 9 compliance maintained
+- **Code Quality**: PHPStan level 10 compliance maintained (bleeding edge + strict rules, see [phpstan.neon](../../phpstan.neon))
 - **Test Coverage**: Aim for 80%+ coverage on services
 - **Review Cycle**: Quarterly architecture review
 
 ## Related ADRs
-- ADR-002: Repository Pattern Refactoring
-- ADR-005: Testing Strategy
+- [ADR-010](ADR-010-repository-pattern-refactoring.md): Repository Pattern Refactoring
+- [ADR-013](ADR-013-testing-strategy.md): Testing Strategy
 
 ## References
 - [Symfony Service Container Documentation](https://symfony.com/doc/current/service_container.html)

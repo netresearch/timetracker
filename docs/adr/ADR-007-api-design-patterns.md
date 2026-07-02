@@ -1,5 +1,7 @@
 # ADR-007: API Design Patterns
 
+> **Reality note (2026-07-02):** parts of this ADR describe infrastructure that was never implemented (a versioned `/api/v1` REST API with JWT bearer authentication, OpenAPI attributes and bulk endpoints). The actual API is session-authenticated, RPC-style JSON endpoints consumed by the SolidJS SPA. See [docs/api.md](../api.md) for the current state.
+
 **Status:** Accepted  
 **Date:** 2024-09-15  
 **Deciders:** Architecture Team, Frontend Team  

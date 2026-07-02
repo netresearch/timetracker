@@ -1,4 +1,6 @@
-# ADR-004: Performance Optimization Strategy
+# ADR-012: Performance Optimization Strategy
+
+> **Reality note (2026-07-02):** parts of this ADR describe infrastructure that was never implemented (Redis cache pools/adapters, the `PerformanceMonitor` class, a `docker-compose.monitoring.yml` stack; the `INCLUDE (...)` covering-index syntax is not supported by MariaDB). Caching is APCu-only — see [docs/apcu-setup.md](../apcu-setup.md) and [config/packages/cache.yaml](../../config/packages/cache.yaml) for the current state.
 
 ## Status
 Accepted
@@ -434,9 +436,9 @@ docker-compose -f docker-compose.monitoring.yml up -d
 - Resource utilization trending
 
 ## Related ADRs
-- ADR-002: Repository Pattern Refactoring
-- ADR-001: Service Layer Pattern Implementation
-- ADR-005: Testing Strategy
+- [ADR-010](ADR-010-repository-pattern-refactoring.md): Repository Pattern Refactoring
+- [ADR-009](ADR-009-service-layer-pattern.md): Service Layer Pattern Implementation
+- [ADR-013](ADR-013-testing-strategy.md): Testing Strategy
 
 ## References
 - [High Performance MySQL](https://www.oreilly.com/library/view/high-performance-mysql/9781449332471/)

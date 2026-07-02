@@ -1,4 +1,4 @@
-# ADR-003: Security Architecture - LDAP Authentication and Token Encryption
+# ADR-011: Security Architecture - LDAP Authentication and Token Encryption
 
 ## Status
 Accepted
@@ -282,8 +282,8 @@ $this->logger->error('LDAP authentication error', ['error_code' => $exception->g
 - Full system restore procedure documented
 
 ## Related ADRs
-- ADR-001: Service Layer Pattern Implementation
-- ADR-004: Performance Optimization Strategy
+- [ADR-009](ADR-009-service-layer-pattern.md): Service Layer Pattern Implementation
+- [ADR-012](ADR-012-performance-optimization-strategy.md): Performance Optimization Strategy
 
 ## References
 - [RFC 4515: LDAP Search Filters](https://tools.ietf.org/html/rfc4515)

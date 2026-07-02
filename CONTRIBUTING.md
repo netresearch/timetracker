@@ -42,7 +42,7 @@ Before contributing, ensure you have:
 
 - **Development Environment**: Follow the [Development Guide](docs/development.md)
 - **Understanding of the Codebase**: Read the [Technology Stack](docs/techstack.md)
-- **Familiarity with our Stack**: PHP 8.5, Symfony 8, MySQL, Redis
+- **Familiarity with our Stack**: PHP 8.5, Symfony 8, MariaDB, SolidJS + TypeScript frontend
 - **Git Knowledge**: Basic understanding of Git workflows
 
 ### First Contribution
@@ -79,7 +79,7 @@ What currently happens (for bugs)
 
 ## Environment
 - OS: [e.g. Ubuntu 22.04]
-- PHP: [e.g. 8.4.1]  
+- PHP: [e.g. 8.5.1]  
 - Browser: [e.g. Chrome 120]
 
 ## Additional Context
@@ -118,6 +118,10 @@ git commit -m "test(service): add unit tests for EntryService"
 git commit -m "refactor(controller): extract validation logic to service"
 ```
 
+**Sign-off required (DCO):** every commit must carry a `Signed-off-by:`
+trailer matching the commit author — a [DCO](https://developercertificate.org/)
+check blocks PRs without it. Use `git commit --signoff` (or `-s`).
+
 ### 4. Development Process
 
 ```bash
@@ -131,7 +135,7 @@ make cs-fix                 # Fix code style
 
 # 3. Commit your changes
 git add .
-git commit -m "feat(auth): implement JWT refresh token support"
+git commit -m "feat(export): include billable field in XLSX export"
 
 # 4. Keep branch updated
 git fetch origin
@@ -217,11 +221,9 @@ What other approaches were considered and why were they rejected?
 
 ### PHP Standards
 
-#### PSR Compliance
+#### Standards Compliance
 - **PSR-4**: Autoloading standard
-- **PSR-12**: Extended coding style
-- **PSR-18**: HTTP client interface
-- **PSR-20**: Clock interface
+- **PER-CS** (successor of PSR-12): Coding style, enforced via PHP-CS-Fixer with the `@PER-CS` + `@Symfony` rulesets (see [.php-cs-fixer.dist.php](.php-cs-fixer.dist.php))
 
 #### Code Style
 ```php
@@ -525,8 +527,10 @@ For quick feedback while developing, use these watch/no-DB loops instead of the 
 
 namespace Tests\Unit\Service;
 
-use App\Service\EntryValidationService;
 use App\Entity\Entry;
+use App\Service\EntryValidationService;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -543,10 +547,8 @@ final class EntryValidationServiceTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     * @dataProvider validEntryProvider
-     */
+    #[Test]
+    #[DataProvider('validEntryProvider')]
     public function it_validates_correct_entries(array $entryData): void
     {
         $entry = $this->createEntry($entryData);
@@ -557,10 +559,8 @@ final class EntryValidationServiceTest extends TestCase
         $this->assertEmpty($result->getViolations());
     }
 
-    /**
-     * @test
-     * @dataProvider invalidEntryProvider
-     */
+    #[Test]
+    #[DataProvider('invalidEntryProvider')]
     public function it_rejects_invalid_entries(
         array $entryData, 
         string $expectedViolation
@@ -570,8 +570,8 @@ final class EntryValidationServiceTest extends TestCase
         $result = $this->service->validateEntry($entry);
         
         $this->assertFalse($result->isValid());
-        $this->assertStringContains($expectedViolation, 
-                                   $result->getViolations()[0]->getMessage());
+        $this->assertStringContainsString($expectedViolation,
+            $result->getViolations()[0]->getMessage());
     }
 
     public static function validEntryProvider(): array
@@ -619,6 +619,7 @@ final class EntryValidationServiceTest extends TestCase
 
 namespace Tests\Integration;
 
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -626,7 +627,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  */
 final class EntryApiTest extends WebTestCase
 {
-    /** @test */
+    #[Test]
     public function it_creates_entry_via_api(): void
     {
         $client = static::createClient();
@@ -652,7 +653,7 @@ final class EntryApiTest extends WebTestCase
         $this->assertNotNull($entry);
     }
     
-    /** @test */
+    #[Test]
     public function it_validates_overlapping_entries(): void
     {
         $client = static::createClient();
@@ -690,16 +691,17 @@ final class EntryApiTest extends WebTestCase
 
 namespace Tests\Performance;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Performance benchmarks for critical operations
- * 
- * @group performance
  */
+#[Group('performance')]
 final class EntryPerformanceTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function benchmark_entry_creation(): void
     {
         $iterations = 100;
@@ -1017,9 +1019,3 @@ Your contributions help make time tracking better for everyone. Whether you're f
 **Questions?** Don't hesitate to reach out:
 - 💬 [GitHub Discussions](https://github.com/netresearch/timetracker/discussions)
 - 🐛 [GitHub Issues](https://github.com/netresearch/timetracker/issues)
-
----
-
-**Last Updated**: 2025-01-25  
-**Contributing Guidelines Version**: 1.0  
-**Next Review**: 2025-04-20

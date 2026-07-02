@@ -1,4 +1,4 @@
-# ADR-002: Repository Pattern Refactoring
+# ADR-010: Repository Pattern Refactoring
 
 ## Status
 Accepted
@@ -234,9 +234,9 @@ CREATE INDEX idx_entries_activity_day ON entries(activity_id, day);
 - [ ] Performance regression testing
 
 ## Related ADRs
-- ADR-001: Service Layer Pattern Implementation
-- ADR-004: Performance Optimization Strategy
-- ADR-005: Testing Strategy
+- [ADR-009](ADR-009-service-layer-pattern.md): Service Layer Pattern Implementation
+- [ADR-012](ADR-012-performance-optimization-strategy.md): Performance Optimization Strategy
+- [ADR-013](ADR-013-testing-strategy.md): Testing Strategy
 
 ## References
 - [Repository Pattern - Martin Fowler](https://martinfowler.com/eaaCatalog/repository.html)

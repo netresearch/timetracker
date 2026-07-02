@@ -15,7 +15,7 @@
 TimeTracker implements a comprehensive security architecture built on Symfony Security components with the following key features:
 
 - **LDAP-based Authentication**: Users authenticate against an external LDAP server
-- **Role-based Authorization**: Hierarchical role system (DEV → PL → ADMIN)
+- **Role-based Authorization**: Roles derived from user types (`USER`/`DEV`/`PL`/`ADMIN`, see [`src/Enum/UserType.php`](../src/Enum/UserType.php))
 - **Stateless CSRF Protection**: Token-based protection for forms and sensitive operations
 - **Encrypted Token Storage**: AES-256-GCM encryption for sensitive tokens
 - **Session Management**: Secure session handling with remember-me functionality
@@ -100,10 +100,13 @@ When `ldap_create_user` is enabled:
 
 ### Team Mapping
 
-Team assignment uses a YAML configuration file (`config/ldap_ou_team_mapping.yml`):
+Team assignment uses an **optional** YAML file, `config/ldap_ou_team_mapping.yml`.
+It is **not shipped with the repository** — [`src/Service/Ldap/LdapClientService.php`](../src/Service/Ldap/LdapClientService.php)
+probes for it at runtime and, when absent, logs a warning and skips team
+assignment. To enable OU→team mapping, create the file yourself:
 
 ```yaml
-# Example team mapping
+# config/ldap_ou_team_mapping.yml (maps LDAP OU names to TimeTracker team names)
 development: "Development Team"
 qa: "Quality Assurance"
 management: "Management"
@@ -113,14 +116,20 @@ management: "Management"
 
 ### User Types and Roles
 
-TimeTracker uses a hierarchical user type system defined in the `UserType` enum:
+TimeTracker uses a user type system defined in
+[`src/Enum/UserType.php`](../src/Enum/UserType.php):
 
-| User Type | Symfony Roles | Description | Capabilities |
-|-----------|---------------|-------------|--------------|
-| `USER` | `ROLE_USER` | Basic user | View own data |
-| `DEV` | `ROLE_USER` | Developer | Track time, view projects |
-| `PL` | `ROLE_USER`, `ROLE_PL` | Project Lead | Manage team projects |
-| `ADMIN` | `ROLE_USER`, `ROLE_ADMIN` | Administrator | Full system access |
+| User Type | Symfony Roles | Description |
+|-----------|---------------|-------------|
+| `UNKNOWN` (empty string) | `ROLE_USER` | Unconfigured legacy value |
+| `USER` | `ROLE_USER` | Basic user |
+| `DEV` | `ROLE_USER` | Developer (default for LDAP-created users) |
+| `PL` | `ROLE_USER`, `ROLE_PL`, **`ROLE_ADMIN`** | Project Lead — currently also carries `ROLE_ADMIN` for TimeTracker v4 compatibility (see the TODO in the enum), so PL users have **full admin access** including `^/admin` |
+| `ADMIN` | `ROLE_USER`, `ROLE_ADMIN` | Administrator, full system access |
+
+> **Security note:** `^/admin` routes are gated by `ROLE_ADMIN`, which both
+> `ADMIN` **and `PL`** satisfy. Treat the PL type as an administrative role
+> until the v4-compatibility grant is removed.
 
 ### Role Hierarchy
 
@@ -151,7 +160,7 @@ access_control:
 
 ### User Switching (Impersonation)
 
-Administrators can impersonate other users:
+The firewall configures user switching via the `simulateUserId` parameter:
 
 ```yaml
 switch_user:
@@ -159,45 +168,47 @@ switch_user:
     role: ROLE_ALLOWED_TO_SWITCH
 ```
 
+`ROLE_ALLOWED_TO_SWITCH` is only granted through `ROLE_SUPER_ADMIN` in the role
+hierarchy, and no user type currently maps to `ROLE_SUPER_ADMIN`
+([`src/Enum/UserType.php`](../src/Enum/UserType.php) grants at most
+`ROLE_ADMIN`) — so impersonation is configured but effectively unavailable.
+
 ## CSRF Protection
 
 ### Stateless CSRF Implementation
 
-TimeTracker implements stateless CSRF protection for enhanced security:
+TimeTracker uses Symfony's stateless CSRF tokens for the login and logout
+flows. Configured in [`config/packages/framework.yaml`](../config/packages/framework.yaml):
 
-**Configuration:**
 ```yaml
-# config/packages/csrf.yaml
 framework:
-    form:
-        csrf_protection:
-            enabled: true
+    csrf_protection:
+        enabled: true
+        stateless_token_ids: ['authenticate', 'logout']
 ```
 
 **Key Features:**
-- Token-based validation without server-side session storage
-- Automatic token generation for forms
-- Logout CSRF protection enabled
-- Integration with login form
+- The `authenticate` and `logout` token IDs are validated **statelessly** — no
+  server-side session storage; validation relies on the `Sec-Fetch-Site` /
+  `Origin` / `Referer` headers of a same-origin navigation
+- Login form CSRF enabled via `form_login.enable_csrf: true`
+- Logout CSRF enabled via `logout.enable_csrf: true`, blocking cross-site
+  forced logout ([commit 441ce91d](https://github.com/netresearch/timetracker/commit/441ce91d))
 
 ### CSRF Token Usage
 
-**Login Form Integration:**
+**Login Form Integration** ([`templates/login.html.twig`](../templates/login.html.twig)):
 ```twig
-{
-    xtype: 'hiddenfield',
-    name: '_csrf_token',
-    value: '{{ csrf_token('authenticate') }}'
-}
+<input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 ```
 
-**Logout Protection:**
+**Logout Protection** ([`config/packages/security.yaml`](../config/packages/security.yaml)):
 ```yaml
 logout:
     path: _logout
     target: _login
     invalidate_session: true
-    enable_csrf: true  # Stateless CSRF protection
+    enable_csrf: true  # validates the _csrf_token appended by logout_path()
 ```
 
 ## Security Components
@@ -245,38 +256,29 @@ private function sanitizeLdapInput(string $input): string
 **Location:** `src/Service/Security/TokenEncryptionService.php`
 
 **Responsibilities:**
-- Secure token encryption/decryption
-- Key management
-- Token rotation
+- Secure token encryption/decryption (`encryptToken()` / `decryptToken()` / `rotateToken()`)
+- Key derivation
 
 **Security Features:**
 - AES-256-GCM authenticated encryption
-- Random IV generation for each encryption
-- Secure key derivation from environment secrets
-- Token rotation capability
+- Random IV generation for each encryption; ciphertext stored as
+  `base64(iv + tag + ciphertext)`
+- Key derived via SHA-256 from `APP_ENCRYPTION_KEY` (falls back to
+  `APP_SECRET`, see `app.encryption_key` in [`config/services.yaml`](../config/services.yaml))
+- Token rotation capability (`rotateToken()`)
 
-**Encryption Implementation:**
-```php
-private const string CIPHER_METHOD = 'aes-256-gcm';
-private const int TAG_LENGTH = 16;
+**What is encrypted:** the per-user Jira OAuth credentials (`accesstoken`,
+`tokensecret` columns of the `users_ticket_systems` table,
+[`src/Entity/UserTicketsystem.php`](../src/Entity/UserTicketsystem.php)).
+They are encrypted before persisting by
+[`src/Service/Integration/Jira/JiraAuthenticationService.php`](../src/Service/Integration/Jira/JiraAuthenticationService.php)
+and decrypted on use. Databases predating encryption are migrated with the
+idempotent console command `bin/console tt:encrypt-jira-tokens`
+([`src/Command/EncryptJiraTokensCommand.php`](../src/Command/EncryptJiraTokensCommand.php)).
 
-public function encryptToken(string $token): string
-{
-    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length(self::CIPHER_METHOD));
-    $tag = '';
-
-    $encrypted = openssl_encrypt(
-        $token,
-        self::CIPHER_METHOD,
-        $this->encryptionKey,
-        OPENSSL_RAW_DATA,
-        $iv,
-        $tag,
-    );
-
-    return base64_encode($iv . $tag . $encrypted);
-}
-```
+> Changing `APP_ENCRYPTION_KEY` (or `APP_SECRET` while relying on the fallback)
+> makes existing tokens undecryptable — affected users must re-authorize
+> against Jira.
 
 ### 3. SecurityController
 
@@ -313,7 +315,7 @@ public function encryptToken(string $token): string
 
 ### Main Security Configuration
 
-**File:** `config/packages/security.yaml`
+**File:** [`config/packages/security.yaml`](../config/packages/security.yaml) (abridged)
 
 ```yaml
 security:
@@ -326,6 +328,10 @@ security:
                 class: App\Entity\User
                 property: username
 
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
+        ROLE_SUPER_ADMIN: [ROLE_USER, ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -333,9 +339,18 @@ security:
 
         main:
             provider: app_user_provider
+            # Refuse login for deactivated accounts (users.active = 0)
+            user_checker: App\Security\UserChecker
             lazy: true
+            entry_point: form_login
+
             custom_authenticators:
                 - App\Security\LdapAuthenticator
+
+            form_login:
+                login_path: _login
+                check_path: _login
+                enable_csrf: true
 
             logout:
                 path: _logout
@@ -347,7 +362,7 @@ security:
                 secret: '%kernel.secret%'
                 lifetime: 2592000  # 30 days
                 path: /
-                secure: true  # HTTPS required
+                secure: auto  # Secure over HTTPS, non-secure over HTTP
 
             switch_user:
                 parameter: simulateUserId
@@ -379,6 +394,7 @@ LDAP_CREATE_USER=true
 
 # Encryption
 APP_SECRET=your-secret-key
+# Optional dedicated key for Jira token encryption; falls back to APP_SECRET
 APP_ENCRYPTION_KEY=your-encryption-key
 
 # Symfony Configuration
@@ -411,8 +427,10 @@ private function isValidUsername(string $username): bool
 **Session Security Features:**
 - Automatic session invalidation on logout
 - Session ID regeneration on authentication
-- Secure cookie configuration
-- HTTPS-only remember-me tokens
+- Secure cookie configuration (`cookie_secure: auto`, `cookie_samesite: lax` in
+  [`config/packages/framework.yaml`](../config/packages/framework.yaml))
+- Remember-me cookies are marked `Secure` automatically when served over HTTPS
+  (`secure: auto`)
 
 ### 3. Password Security
 
