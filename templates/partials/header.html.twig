@@ -1,9 +1,9 @@
 {# Page header + main navigation for the SolidJS /ui shell
    (ui/index.html.twig). Server-rendered so the chrome paints before the
    Vite bundle loads; frontend/src/header.ts and nav.ts hydrate it.
-   Required context: globalConfig, settings, apptitle, active.
-   `active` marks the current item server-side; SPA routes refine it client-side
-   (frontend/src/nav.ts). settings.roles gates the role-restricted items.
+   Required context: globalConfig, settings, apptitle.
+   The active nav item is set client-side from the route (frontend/src/nav.ts
+   syncNav). settings.roles gates the role-restricted items.
 
    Layout: a single app-bar. Primary items (Time tracking, Overview, Evaluation)
    sit inline; secondary + role-gated items (Extras, Billing, Administration) plus
@@ -35,27 +35,22 @@
         </div>
 
         <nav class="main-nav" aria-label="{{ 'Main navigation'|trans }}">
-            {# Worklog (SolidJS) is the time-tracking grid. Active state is refined
+            {# Worklog (SolidJS) is the time-tracking grid. Active state is set
                client-side via data-nav (nav.ts). Each link carries an icon shown in
                the left-sidebar layout (and alone when the sidebar is collapsed to a
                rail); the label + title keep it accessible. #}
-            <a class="main-nav-link{% if active == 'tracking' %} is-active{% endif %}"
-               {% if active == 'tracking' %}aria-current="page"{% endif %}
+            <a class="main-nav-link"
                data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}" title="{{ 'Worklog'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg><span class="nav-label">{{ 'Worklog'|trans }}</span></a>
-            <a class="main-nav-link{% if active == 'month' %} is-active{% endif %}"
-               {% if active == 'month' %}aria-current="page"{% endif %}
+            <a class="main-nav-link"
                data-nav="month" href="{{ monthPath }}" title="{{ 'Overview'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2"/><path d="M3.5 9h17M8 2.5v4M16 2.5v4"/></svg><span class="nav-label">{{ 'Overview'|trans }}</span></a>
-            <a class="main-nav-link{% if active == 'auswertung' %} is-active{% endif %}"
-               {% if active == 'auswertung' %}aria-current="page"{% endif %}
+            <a class="main-nav-link"
                data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}" title="{{ 'Evaluation'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21h16"/><path d="M6 21V11M12 21V5M18 21v-7"/></svg><span class="nav-label">{{ 'Evaluation'|trans }}</span></a>
             {% if canBill %}
-                <a class="main-nav-link{% if active == 'billing' %} is-active{% endif %}"
-                   {% if active == 'billing' %}aria-current="page"{% endif %}
+                <a class="main-nav-link"
                    data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}" title="{{ 'Billing'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v18l2-1.2L10 21l2-1.2L14 21l2-1.2L18 21V3l-2 1.2L14 3l-2 1.2L10 3 8 4.2 6 3z"/><path d="M9 8.5h6M9 12.5h6"/></svg><span class="nav-label">{{ 'Billing'|trans }}</span></a>
             {% endif %}
             {% if isAdmin %}
-                <a class="main-nav-link{% if active == 'admin' %} is-active{% endif %}"
-                   {% if active == 'admin' %}aria-current="page"{% endif %}
+                <a class="main-nav-link"
                    data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}" title="{{ 'Administration'|trans }}"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></svg><span class="nav-label">{{ 'Administration'|trans }}</span></a>
                 {# The SolidJS SidebarAdminMenu portals the admin entity sub-items
                    (each with a "+") into this slot; CSS shows it only in the
@@ -122,12 +117,10 @@
            in the top bar, so it has no effect there.
            (data-nav kept so the SPA nav sync + the '?' Help shortcut still find them). #}
         <div class="header-controls">
-        <a class="header-icon-link{% if active == 'settings' %} is-active{% endif %}"
-           {% if active == 'settings' %}aria-current="page"{% endif %}
+        <a class="header-icon-link"
            data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}"
            aria-label="{{ 'Settings'|trans }}" title="{{ 'Settings'|trans }}"><svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0 1.6 1.6 0 0 0-1.7-1.6 1.6 1.6 0 0 0-1.8.3 2 2 0 1 1-2.8-2.8 1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H2a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.5-1.3 1.6 1.6 0 0 0-.3-1.8 2 2 0 1 1 2.8-2.8 1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0 1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3 2 2 0 1 1 2.8 2.8 1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4 1.6 1.6 0 0 0-1.5 1z"/></svg></a>
-        <a class="header-icon-link{% if active == 'help' %} is-active{% endif %}"
-           {% if active == 'help' %}aria-current="page"{% endif %}
+        <a class="header-icon-link"
            data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}"
            aria-keyshortcuts="?" aria-label="{{ 'Help'|trans }}" title="{{ 'Help'|trans }} (?)"><svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 1.9-2.6 2.3-2.6 4"/><circle cx="12" cy="17.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
         <div id="theme-toggle-mount" class="header-theme">
@@ -176,17 +169,17 @@
        bar's Month badge, which remains visible on mobile). #}
     <div class="mobile-drawer" id="nav-drawer" hidden>
         <nav class="drawer-nav" aria-label="{{ 'Main navigation'|trans }}">
-            <a class="drawer-link{% if active == 'tracking' %} is-active{% endif %}" data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}">{{ 'Worklog'|trans }}</a>
-            <a class="drawer-link{% if active == 'month' %} is-active{% endif %}" data-nav="month" href="{{ monthPath }}">{{ 'Overview'|trans }}</a>
-            <a class="drawer-link{% if active == 'auswertung' %} is-active{% endif %}" data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
+            <a class="drawer-link" data-nav="tracking" href="{{ path('ui_spa', {'path': 'tracking'}) }}">{{ 'Worklog'|trans }}</a>
+            <a class="drawer-link" data-nav="month" href="{{ monthPath }}">{{ 'Overview'|trans }}</a>
+            <a class="drawer-link" data-nav="auswertung" href="{{ path('ui_spa', {'path': 'auswertung'}) }}">{{ 'Evaluation'|trans }}</a>
             {% if canBill %}
-                <a class="drawer-link{% if active == 'billing' %} is-active{% endif %}" data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
+                <a class="drawer-link" data-nav="billing" href="{{ path('ui_spa', {'path': 'billing'}) }}">{{ 'Billing'|trans }}</a>
             {% endif %}
             {% if isAdmin %}
-                <a class="drawer-link{% if active == 'admin' %} is-active{% endif %}" data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}">{{ 'Administration'|trans }}</a>
+                <a class="drawer-link" data-nav="admin" href="{{ path('ui_spa', {'path': 'admin'}) }}">{{ 'Administration'|trans }}</a>
             {% endif %}
-            <a class="drawer-link{% if active == 'settings' %} is-active{% endif %}" data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}">{{ 'Settings'|trans }}</a>
-            <a class="drawer-link{% if active == 'help' %} is-active{% endif %}" data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}">{{ 'Help'|trans }}</a>
+            <a class="drawer-link" data-nav="settings" href="{{ path('ui_spa', {'path': 'settings'}) }}">{{ 'Settings'|trans }}</a>
+            <a class="drawer-link" data-nav="help" href="{{ path('ui_spa', {'path': 'help'}) }}">{{ 'Help'|trans }}</a>
         </nav>
         <div class="drawer-foot">
             <span class="drawer-user js-user-badge status_active"><span class="status-indicator" aria-hidden="true"></span><span class="user-name js-user-name">{{ settings.user_name }}</span></span>
