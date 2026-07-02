@@ -112,6 +112,37 @@ class AdminControllerTest extends AbstractWebTestCase
         self::assertEquals($expectedJson, $this->getJsonResponse($this->client->getResponse()));
     }
 
+    public function testGetCustomersActionReturnsCustomerInMultipleTeamsOnce(): void
+    {
+        // Guard for the fetch-joined teams query in getAllCustomers(): a customer in
+        // two teams arrives as two SQL rows; hydration must collapse them into ONE
+        // response row carrying both team ids.
+        $this->client->request('POST', '/customer/save', [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode([
+            'id' => 1,
+            'name' => 'Der Bäcker von nebenan',
+            'active' => true,
+            'global' => false,
+            'teams' => [1, 2],
+        ]));
+        $this->assertStatusCode(200);
+
+        $this->client->request('GET', '/getAllCustomers');
+        $this->assertStatusCode(200);
+
+        $rows = [];
+        foreach ($this->getJsonResponse($this->client->getResponse()) as $row) {
+            self::assertIsArray($row);
+            self::assertIsArray($row['customer']);
+            if (1 === $row['customer']['id']) {
+                $rows[] = $row['customer'];
+            }
+        }
+
+        self::assertCount(1, $rows, 'Customer assigned to two teams must appear exactly once');
+        self::assertIsArray($rows[0]['teams']);
+        self::assertEqualsCanonicalizing([1, 2], $rows[0]['teams']);
+    }
+
     public function testGetCustomersActionWithNonPl(): void
     {
         // /getAllCustomers now requires ROLE_ADMIN after auth modernization

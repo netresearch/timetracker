@@ -97,8 +97,11 @@ class ProjectRepository extends ServiceEntityRepository
      */
     public function getAllProjectsForAdmin(): array
     {
+        // addSelect hydrates the joined customer: getName() below would otherwise
+        // initialize one customer proxy per project (N+1 lazy loads).
         $queryBuilder = $this->createQueryBuilder('p')
             ->leftJoin('p.customer', 'c')
+            ->addSelect('c')
             ->orderBy('p.name', 'ASC');
 
         /** @var Project[] $projects */
