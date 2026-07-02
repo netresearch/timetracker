@@ -13,7 +13,7 @@
 
 **Professional time tracking solution for teams and enterprises with advanced LDAP integration, Jira synchronization, and comprehensive reporting.**
 
-![TimeTracker time tracking view](docs/images/tracking.png)
+![The TimeTracker Worklog, split by a lightning seam: dark theme with ultra-compact density and collapsed sidebar on the left, light theme with comfortable spacing and top-bar navigation on the right](docs/images/hero-split.png)
 
 ---
 
