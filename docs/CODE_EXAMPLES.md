@@ -1906,7 +1906,7 @@ class TicketServiceTest extends TestCase
     {
         // Create mock dependencies
         $this->jiraApiFactory = $this->createMock(JiraOAuthApiFactory::class);
-        $this->jiraApi = $this->createMock(\App\Service\Integration\Jira\JiraOAuthApi::class);
+        $this->jiraApi = $this->createMock(\App\Service\Integration\Jira\JiraOAuthApiService::class);
 
         $this->ticketService = new TicketService($this->jiraApiFactory);
     }

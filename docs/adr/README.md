@@ -93,10 +93,10 @@ When architectural decisions change:
 
 ## Related Documentation
 
-- [Architecture Overview](../PROJECT_INDEX.md) - High-level system design
-- [Developer Onboarding Guide](../DEVELOPER_ONBOARDING_GUIDE.md) - Getting started
-- [API Documentation](../API_DOCUMENTATION.md) - Complete API reference
-- [Security Implementation Guide](../SECURITY_IMPLEMENTATION_GUIDE.md) - Security patterns
+- [Technology Stack](../techstack.md) - High-level system design
+- [Development Guide](../development.md) - Getting started
+- [API Documentation](../api.md) - Complete API reference
+- [Security Guide](../security.md) - Security patterns
 
 ## Contributing
 

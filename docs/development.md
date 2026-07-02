@@ -566,9 +566,9 @@ php -d xdebug.mode=profile bin/console app:export
 ### Getting Help
 
 1. **Check Existing Documentation**
-   - [API Documentation](API_DOCUMENTATION.md)
-   - [Architecture Guide](PROJECT_INDEX.md)
-   - [Security Guide](SECURITY_IMPLEMENTATION_GUIDE.md)
+   - [API Documentation](api.md)
+   - [Technology Stack](techstack.md)
+   - [Security Guide](security.md)
 
 2. **Search Issues**
    - [GitHub Issues](https://github.com/netresearch/timetracker/issues)
@@ -603,7 +603,7 @@ php -d xdebug.mode=profile bin/console app:export
 
 ---
 
-**🎉 Congratulations!** Your development environment is now ready. Start by exploring the [API Documentation](API_DOCUMENTATION.md) or pick up a GitHub issue labeled `good-first-issue`.
+**🎉 Congratulations!** Your development environment is now ready. Start by exploring the [API Documentation](api.md) or pick up a GitHub issue labeled `good-first-issue`.
 
 ---
 
