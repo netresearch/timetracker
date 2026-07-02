@@ -1,500 +1,261 @@
-# TimeTracker Troubleshooting Guide
+# Troubleshooting Guide
 
-## 🔍 Quick Diagnostics
+Real failure modes and the commands that actually exist to diagnose them.
+Default ports: **8765** (dev/prod web), **8766** (e2e web), **3389** (dev LDAP,
+host side). Service names come from [`compose.yml`](../compose.yml).
 
-### Health Check Commands
-```bash
-# System health check
-curl http://localhost:8080/status/check
-
-# Database connectivity
-php bin/console doctrine:query:sql "SELECT 1"
-
-# LDAP connectivity
-php bin/console app:ldap:test
-
-# JIRA integration
-php bin/console app:jira:test-connection
-
-# Cache status
-php bin/console cache:pool:list
-```
-
-## 🚨 Common Issues and Solutions
-
-### 1. Authentication Issues
-
-#### LDAP Authentication Fails
-**Symptoms**: Users cannot log in with LDAP credentials
-
-**Solution**:
-```bash
-# Test LDAP connection
-ldapsearch -x -H ldap://your-ldap-server:389 \
-  -D "cn=admin,dc=example,dc=com" \
-  -W -b "dc=example,dc=com"
-
-# Check LDAP configuration
-grep LDAP .env.local
-
-# Enable LDAP debug logging
-echo "LDAP_DEBUG=true" >> .env.local
-php bin/console cache:clear
-```
-
-**Common Fixes**:
-- Verify LDAP server is reachable from application server
-- Check firewall rules (port 389/636)
-- Ensure bind DN has read permissions
-- Verify SSL certificates for LDAPS
-
-#### Session Timeout Issues
-**Symptoms**: Users logged out unexpectedly
-
-**Solution**:
-```yaml
-# config/packages/framework.yaml
-framework:
-    session:
-        cookie_lifetime: 3600  # Increase to desired seconds
-        gc_maxlifetime: 3600
-```
-
-### 2. Database Performance Issues
-
-#### Slow Query Performance
-**Symptoms**: Time entries loading slowly
-
-**Diagnosis**:
-```sql
--- Check slow queries
-SHOW PROCESSLIST;
-
--- Analyze query performance
-EXPLAIN SELECT * FROM entries WHERE user_id = 1;
-
--- Check missing indexes
-SELECT 
-    table_name,
-    index_name,
-    column_name
-FROM information_schema.statistics
-WHERE table_schema = 'timetracker';
-```
-
-**Solution**:
-```bash
-# Run performance optimization migration
-php bin/console doctrine:migrations:migrate
-
-# Rebuild indexes
-php bin/console app:database:optimize-indexes
-
-# Clear query cache
-php bin/console doctrine:cache:clear-query
-```
-
-### 3. JIRA Integration Problems
-
-#### OAuth Token Invalid
-**Symptoms**: JIRA worklog sync fails with 401 errors
-
-**Solution**:
-```bash
-# Re-authenticate with JIRA
-php bin/console app:jira:reauth --user=username
-
-# Clear OAuth token cache
-php bin/console cache:pool:clear cache.app
-
-# Test JIRA connection
-curl -H "Authorization: OAuth ..." \
-  https://jira.example.com/rest/api/2/myself
-```
-
-#### Worklog Sync Failures
-**Symptoms**: Time entries not appearing in JIRA
-
-**Diagnosis**:
-```bash
-# Check sync queue
-php bin/console app:jira:check-queue
-
-# View sync errors
-tail -f var/log/jira_sync.log
-
-# Manual sync attempt
-php bin/console app:jira:sync-entry --entry-id=123 --verbose
-```
-
-### 4. Performance Issues
-
-#### High Memory Usage
-**Symptoms**: Application consuming excessive memory
-
-**Solution**:
-```bash
-# Check PHP memory usage
-php -i | grep memory
-
-# Optimize Composer autoloader
-composer dump-autoload --optimize --apcu
-
-# Clear all caches
-php bin/console cache:clear
-rm -rf var/cache/*
-
-# Check for memory leaks
-php bin/console app:memory:analyze
-```
-
-#### Slow Page Load Times
-**Diagnosis**:
-```bash
-# Enable Symfony profiler
-APP_ENV=dev php bin/console server:run
-
-# Check asset compilation
-npm run build
-php bin/console assets:install
-
-# Analyze with blackfire/xdebug
-```
-
-### 5. Docker Issues
-
-#### Container Won't Start
-**Symptoms**: Docker containers failing to start
-
-**Solution**:
-```bash
-# Check container logs
-docker compose logs -f app
-docker compose logs -f database
-
-# Reset containers
-docker compose down -v
-docker bake app-dev && docker compose up -d
-
-# Check disk space
-df -h
-docker system prune -a
-
-# Verify port availability
-lsof -i :8080
-lsof -i :3306
-```
-
-#### Database Connection from Container
-**Symptoms**: App container cannot connect to database
-
-**Solution**:
-```bash
-# Test connection from app container
-docker-compose exec app ping database
-
-# Check environment variables
-docker-compose exec app printenv | grep DATABASE
-
-# Correct connection string
-DATABASE_URL="mysql://user:pass@database:3306/timetracker"
-```
-
-### 6. Testing Issues
-
-#### PHPUnit Tests Failing
-**Symptoms**: Tests fail locally but pass in CI
-
-**Solution**:
-```bash
-# Reset test database
-php bin/console doctrine:database:drop --force --env=test
-php bin/console doctrine:database:create --env=test
-php bin/console doctrine:migrations:migrate --no-interaction --env=test
-
-# Clear test cache
-php bin/console cache:clear --env=test
-
-# Run with verbose output
-./vendor/bin/phpunit --verbose --debug
-```
-
-#### PHPStan Errors
-**Symptoms**: Static analysis failures
-
-**Solution**:
-```bash
-# Clear PHPStan cache
-rm -rf /tmp/phpstan
-
-# Regenerate baseline
-./vendor/bin/phpstan analyse --generate-baseline
-
-# Run with debug
-./vendor/bin/phpstan analyse --debug
-```
-
-### 7. Frontend Issues
-
-#### Assets Not Loading
-**Symptoms**: JavaScript/CSS files returning 404
-
-**Solution**:
-```bash
-# Rebuild assets (Vite, outputs to public/build-ui)
-cd frontend && bun install && bun run build
-
-# Install Symfony assets
-php bin/console assets:install --symlink
-
-# Dev server with HMR (source maps included)
-cd frontend && bun run dev
-
-# Clear browser cache
-# Chrome: Ctrl+Shift+R
-# Firefox: Ctrl+F5
-```
-
-### 8. Email/Notification Issues
-
-#### Emails Not Sending
-**Symptoms**: Password reset emails not received
-
-**Solution**:
-```bash
-# Test email configuration
-php bin/console swiftmailer:email:send \
-  --from=test@example.com \
-  --to=user@example.com \
-  --subject="Test" \
-  --body="Test email"
-
-# Check mail spool
-ls -la var/spool/
-
-# Process mail queue
-php bin/console messenger:consume async
-```
-
-## 📊 Performance Optimization
-
-### Database Optimization
-```sql
--- Analyze table statistics
-ANALYZE TABLE entries;
-
--- Optimize tables
-OPTIMIZE TABLE entries, users, projects;
-
--- Check table fragmentation
-SELECT 
-    table_name,
-    data_free / 1024 / 1024 as fragmentation_mb
-FROM information_schema.tables
-WHERE table_schema = 'timetracker'
-    AND data_free > 0;
-```
-
-### Cache Optimization
-```bash
-# Enable OPcache
-echo "opcache.enable=1" >> /etc/php/8.4/fpm/conf.d/opcache.ini
-echo "opcache.memory_consumption=256" >> /etc/php/8.4/fpm/conf.d/opcache.ini
-
-# Configure APCu
-echo "apc.enabled=1" >> /etc/php/8.4/fpm/conf.d/apcu.ini
-echo "apc.shm_size=128M" >> /etc/php/8.4/fpm/conf.d/apcu.ini
-
-# Restart PHP-FPM
-systemctl restart php8.4-fpm
-```
-
-## 🔧 Debug Commands
-
-### Enable Debug Mode
-```bash
-# Temporary debug mode
-APP_ENV=dev APP_DEBUG=1 php bin/console server:run
-
-# Enable SQL logging
-echo "DATABASE_LOGGING=true" >> .env.local
-
-# Enable profiler
-composer require --dev symfony/profiler-pack
-```
-
-### Useful Debug Commands
-```bash
-# Show all routes
-php bin/console debug:router
-
-# Show service configuration
-php bin/console debug:container
-
-# Show event listeners
-php bin/console debug:event-dispatcher
-
-# Check autowiring
-php bin/console debug:autowiring
-
-# Validate schema
-php bin/console doctrine:schema:validate
-```
-
-## 📝 Log File Locations
+## Quick diagnostics
 
 ```bash
-# Application logs
-tail -f var/log/prod.log
-tail -f var/log/dev.log
+# What is running (and its health)?
+docker compose ps
 
-# Web server logs
-tail -f /var/log/nginx/error.log
-tail -f /var/log/nginx/access.log
+# Container logs
+docker compose logs -f app-dev     # dev PHP-FPM (app in prod, app-e2e in e2e)
+docker compose logs -f httpd-dev   # dev nginx (httpd in prod)
+docker compose logs -f db
 
-# PHP logs
-tail -f /var/log/php8.4-fpm.log
+# Is the app answering? (public endpoint, no login required)
+curl -fsS http://localhost:8765/status/check
+# -> {"loginStatus":false}
 
-# Docker logs
-docker-compose logs -f
+# Database reachable from the app container?
+docker compose exec app-dev bin/console dbal:run-sql 'SELECT 1'
 
-# System logs
-journalctl -u nginx -f
-journalctl -u php8.4-fpm -f
+# Symfony application logs
+tail -f var/log/dev.log            # var/log/prod.log in prod
 ```
 
-## 🆘 Emergency Procedures
+## Stack won't start / port conflicts
 
-### Application Won't Start
+The web server binds `${HTTP_PORT:-8765}`, the e2e stack `${E2E_HTTP_PORT:-8766}`,
+and the dev LDAP server publishes host port `3389`.
+
 ```bash
-# 1. Check PHP syntax
-find src -name "*.php" -exec php -l {} \;
+# Who is holding the port?
+lsof -i :8765
+lsof -i :8766
 
-# 2. Clear everything
-rm -rf var/cache/* var/log/*
-php bin/console cache:clear --no-warmup
-php bin/console cache:warmup
-
-# 3. Check permissions
-chown -R www-data:www-data var/
-chmod -R 755 var/
-
-# 4. Reinstall dependencies
-rm -rf vendor/
-composer install
-
-# 5. Safe mode
-APP_ENV=prod APP_DEBUG=0 APP_SAFE_MODE=1 php bin/console
+# Use another port
+HTTP_PORT=9080 docker compose up -d
 ```
 
-### Database Corruption
+If containers restart in a loop, check `docker compose logs` first — the
+production `app` entrypoint exits loudly when the database is unreachable for
+more than ~60 s or a migration fails (see
+[`docker/php/docker-entrypoint.sh`](../docker/php/docker-entrypoint.sh)).
+
+Rebuild images after Dockerfile/dependency changes (`docker bake`, never
+`docker build`):
+
 ```bash
-# 1. Backup current state
-mysqldump -u root -p timetracker > backup_$(date +%Y%m%d).sql
-
-# 2. Check tables
-mysqlcheck -u root -p --check timetracker
-
-# 3. Repair tables
-mysqlcheck -u root -p --repair timetracker
-
-# 4. Restore from backup if needed
-mysql -u root -p timetracker < backup_20240315.sql
+make bake-dev && docker compose up -d    # or: make up
 ```
 
-### Performance Emergency
+## Cache permission errors on var/
+
+The dev container runs as root and bind-mounts `./var/cache` and `./var/log`
+([`compose.yml`](../compose.yml)), so files created by the container are
+root-owned on the host. Typical symptoms: `Failed to remove directory/file
+var/cache/...` or `Unable to write to the "cache" directory`.
+
 ```bash
-# 1. Enable maintenance mode
-touch var/maintenance.lock
+# Clear the cache from inside the container (same user that created it)
+docker compose run --rm app-dev rm -rf var/cache/dev var/cache/test
+make cache-clear                          # bin/console cache:clear in the container
 
-# 2. Clear all caches
-redis-cli FLUSHALL
-php bin/console cache:pool:clear cache.app
-rm -rf var/cache/*
-
-# 3. Restart services
-systemctl restart php8.4-fpm
-systemctl restart nginx
-systemctl restart redis
-
-# 4. Disable maintenance mode
-rm var/maintenance.lock
+# Or re-own the directories on the host
+sudo chown -R "$USER" var/
 ```
 
-## 📞 Getting Help
+## Database connection failures
 
-### Collect Diagnostic Information
+Symptoms: `SQLSTATE[HY000] [2002] Connection refused`, or the entrypoint's
+`database not reachable after 60s`.
+
+1. Check the `db` container is up and healthy: `docker compose ps db`,
+   `docker compose logs db`.
+2. Check `DATABASE_URL` — host must be the Compose **service name**:
+
+   ```text
+   mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.1.2
+   ```
+
+   PHPUnit uses `db_unittest`, e2e uses `db-e2e` (see the [Makefile](../Makefile)
+   and `compose.yml`).
+3. Test credentials directly:
+
+   ```bash
+   docker compose exec db mariadb -utimetracker -ptimetracker -e 'SELECT 1' timetracker
+   ```
+
+4. The DB is seeded from `sql/full.sql` **only when the `db-data` volume is
+   empty**. Changed DB credentials in `.env` after the first start do not apply
+   to an existing volume — either change them in MariaDB or recreate the volume
+   (destroys data): `docker compose down && docker volume rm timetracker_db-data`.
+
+For test-database schema drift after pulling migrations:
+
 ```bash
-# Generate diagnostic report
-php bin/console app:diagnostic:report > diagnostic_$(date +%Y%m%d).txt
-
-# Information to include:
-# - PHP version: php -v
-# - Symfony version: php bin/console --version
-# - Composer packages: composer show
-# - Environment: printenv | grep -E "APP_|DATABASE_"
-# - Recent logs: tail -n 100 var/log/prod.log
+make reset-test-db
 ```
 
-### Support Channels
-- **GitHub Issues**: [Report bugs and feature requests](https://github.com/netresearch/timetracker/issues)
-- **GitHub Discussions**: [Ask questions and get help](https://github.com/netresearch/timetracker/discussions)
-- **Documentation**: [docs/](../docs/)
+## LDAP login failures
 
-## 🔄 Recovery Procedures
+Login always goes through [`src/Security/LdapAuthenticator.php`](../src/Security/LdapAuthenticator.php).
 
-### Rollback Deployment
+1. **Check the `LDAP_*` variables** (`.env` / `.env.local`): `LDAP_HOST`,
+   `LDAP_PORT`, `LDAP_USESSL`, `LDAP_READUSER`, `LDAP_READPASS`, `LDAP_BASEDN`,
+   `LDAP_USERNAMEFIELD` (use `sAMAccountName` for Active Directory, `uid`
+   otherwise), `LDAP_CREATE_USER`.
+2. **Local development** ships an OpenLDAP server (`ldap-dev` service) with
+   seeded users from [`docker/ldap/users-only.ldif`](../docker/ldap/users-only.ldif),
+   e.g. `developer` / `dev123`. Verify it responds:
+
+   ```bash
+   docker compose ps ldap-dev
+   ldapsearch -x -H ldap://localhost:3389 \
+     -D "cn=readuser,dc=dev,dc=local" -w readuser \
+     -b "dc=dev,dc=local" '(uid=developer)'
+   ```
+
+3. **Username rejected before LDAP is even asked:** usernames longer than 256
+   chars or containing characters outside `a-zA-Z0-9._@-` are rejected by the
+   authenticator's validation.
+4. **Deactivated account:** [`src/Security/UserChecker.php`](../src/Security/UserChecker.php)
+   refuses login for users with `active = 0` in the `users` table.
+5. **User exists in LDAP but not in TimeTracker:** with `LDAP_CREATE_USER=false`
+   only pre-created users can log in. With `true`, first login auto-creates the
+   user (type `DEV`, locale `de`); team assignment additionally requires the
+   optional `config/ldap_ou_team_mapping.yml` (not shipped — a warning is
+   logged and team mapping skipped when absent).
+6. Authentication errors are logged with context in `var/log/dev.log` /
+   `var/log/prod.log` (channel: security/LDAP messages from the authenticator).
+
+## Frontend build issues (blank UI, 404 on /build-ui assets)
+
+The SolidJS SPA in [`frontend/`](../frontend) is built with **bun** into
+`public/build-ui` (Vite + `vite-plugin-symfony`). If `public/build-ui` is
+missing or stale:
+
 ```bash
-# 1. Identify last working version
-git log --oneline -10
+cd frontend
+bun install --frozen-lockfile
+bun run build
 
-# 2. Rollback code
-git checkout <last-working-commit>
+# or via the container:
+make npm-build
 
-# 3. Rollback database
-php bin/console doctrine:migrations:migrate prev
-
-# 4. Clear caches
-php bin/console cache:clear
-
-# 5. Restart services
-systemctl restart php8.4-fpm nginx
+# Dev server with HMR:
+bun run dev        # or: make npm-dev
 ```
 
-### Data Recovery
+Frontend unit tests: `bun run test` (Vitest, see [`frontend/README.md`](../frontend/README.md)).
+Hard-reload the browser (Ctrl+Shift+R) after rebuilding, since asset filenames
+are content-hashed.
+
+## E2E stack problems
+
+`make e2e-up` builds the e2e image, creates `.env.test.local` from
+[`.env.test.local.example`](../.env.test.local.example) if missing, starts the
+`e2e` profile (`app-e2e`, `httpd-e2e`, `db-e2e`, `ldap-dev`) and polls
+`http://localhost:8766/login` until it returns 200 (up to 60 s).
+
+- **Readiness loop never succeeds:** check `docker compose logs app-e2e` and
+  `docker compose logs db-e2e` — the app waits for the separate e2e database.
+- **Port 8766 taken:** set `E2E_HTTP_PORT` in `.env`.
+- **Deterministic time:** the e2e app runs with `APP_FROZEN_TIME=2024-01-15 12:00:00`
+  matching [`sql/testdata.sql`](../sql/testdata.sql) — tests asserting on dates
+  rely on this, don't "fix" it.
+- Run tests against a running stack with `make e2e-run`; `make e2e` manages the
+  stack itself; `make e2e-down` stops only the e2e services (leaves `ldap-dev`
+  up for other profiles).
+
+## Jira integration errors
+
+Jira sync uses per-user OAuth tokens stored (encrypted) in the
+`users_ticket_systems` table.
+
+- **401 / "Jira authentication required":** the stored token is missing,
+  expired, or was revoked in Jira. The API answers with a JSON 401 containing a
+  `redirect_url` ([`src/EventSubscriber/ExceptionSubscriber.php`](../src/EventSubscriber/ExceptionSubscriber.php))
+  — following it re-runs the OAuth flow (callback route: `/jiraoauthcallback`).
+- **Sync silently skipped for a user:** `checkUserTicketSystem()`
+  ([`src/Service/Integration/Jira/JiraAuthenticationService.php`](../src/Service/Integration/Jira/JiraAuthenticationService.php))
+  returns false when the user has no token row or has set the
+  "avoid connection" flag for that ticket system.
+- **Tokens undecryptable after key change:** tokens are encrypted with
+  `APP_ENCRYPTION_KEY` (fallback: `APP_SECRET`). Changing that key invalidates
+  existing tokens — affected users must re-authorize via the OAuth flow.
+- **Legacy plaintext tokens** (pre-encryption databases) are migrated with:
+
+  ```bash
+  docker compose exec app bin/console tt:encrypt-jira-tokens
+  ```
+
+- **Subticket mapping outdated:**
+
+  ```bash
+  docker compose exec app bin/console tt:sync-subtickets [project-id]
+  ```
+
+## Locale / language quirks
+
+- The SPA is translated in **English and German** only
+  ([`frontend/project.inlang/settings.json`](../frontend/project.inlang/settings.json)).
+- The backend accepts `de`, `en`, `es`, `fr`, `ru` as user locales and
+  normalizes anything else to `en`
+  ([`src/Service/Util/LocalizationService.php`](../src/Service/Util/LocalizationService.php)).
+- Each user picks their locale in **Settings**; it is stored per user and wins
+  over instance defaults. New LDAP-created users start with `de`.
+- `APP_LOCALE` (`.env`) is the instance-level default locale; the Symfony
+  fallback locale is `en` ([`config/services.yaml`](../config/services.yaml)).
+
+So: a user seeing German although the instance default is English almost always
+has `de` stored in their own settings (or was just auto-created via LDAP).
+
+## Test failures (PHPUnit)
+
 ```bash
-# From daily backup
-mysql -u root -p timetracker < /backup/daily/timetracker_$(date +%Y%m%d).sql
-
-# From binary logs
-mysqlbinlog /var/log/mysql/mysql-bin.000001 | mysql -u root -p
-
-# Point-in-time recovery
-mysqlbinlog --start-datetime="2024-03-15 10:00:00" \
-            --stop-datetime="2024-03-15 11:00:00" \
-            /var/log/mysql/mysql-bin.000001 | mysql -u root -p
+make test            # full suite against db_unittest (Xdebug off, quiet)
+make test-unit       # DB-free unit tests only
+make test-verbose    # verbose output
+make test-debug      # with Xdebug (XDEBUG_MODE=debug,develop)
+make reset-test-db   # rebuild the unittest DB after schema changes
 ```
 
-## 🛡️ Security Incident Response
+Tests run inside the dev container with `memory_limit=2G`
+([`docker/php/test.ini`](../docker/php/test.ini) is mounted for that). See
+[testing.md](testing.md) and
+[DEVELOPER_PHPUNIT_CUSTOMIZATION.md](DEVELOPER_PHPUNIT_CUSTOMIZATION.md).
 
-### Suspected Breach
+Static analysis and style (no DB needed, `tools` profile):
+
 ```bash
-# 1. Enable emergency mode
-echo "EMERGENCY_MODE=true" >> .env.local
-
-# 2. Rotate all secrets
-php bin/console app:security:rotate-secrets
-
-# 3. Force logout all users
-php bin/console app:session:invalidate-all
-
-# 4. Review audit logs
-grep -E "CRITICAL|ERROR|WARNING" var/log/*.log
-
-# 5. Generate security report
-php bin/console app:security:audit > security_audit.txt
+make stan            # PHPStan level 10
+make check-all       # PHPStan + PHPat + cs-check + twig lint
+make cs-fix          # auto-fix code style
 ```
 
----
+## Useful Symfony debug commands
 
-*Last Updated: 2025-01-15 | Version: 1.0*
+All standard, all available in the dev container
+(`docker compose exec app-dev bash` or `make sh`):
+
+```bash
+bin/console debug:router            # all routes
+bin/console debug:container         # services
+bin/console debug:event-dispatcher  # listeners/subscribers
+bin/console doctrine:schema:validate
+bin/console cache:clear
+```
+
+## Getting help
+
+- **GitHub issues:** <https://github.com/netresearch/timetracker/issues>
+- Include: `php -v` / `bin/console --version` output, `APP_ENV`, relevant lines
+  from `var/log/*.log` and `docker compose logs`, and steps to reproduce.
+
+Related docs: [development.md](development.md) ·
+[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) · [testing.md](testing.md) ·
+[apcu-setup.md](apcu-setup.md) · [xdebug-setup.md](xdebug-setup.md)
