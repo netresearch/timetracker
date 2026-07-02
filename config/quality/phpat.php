@@ -38,7 +38,6 @@ final class ArchitectureTest
                 Selector::inNamespace('App\Event'),
                 Selector::inNamespace('Symfony'),
                 Selector::inNamespace('Doctrine'),
-                Selector::inNamespace('Sensio'),
                 Selector::classname(self::CLASSNAME_DATETIME, true),
                 Selector::classname(self::CLASSNAME_EXCEPTION, true),
             )
