@@ -249,8 +249,15 @@ export function adminEntities(): EntityDescriptor[] {
       deletePayload: (row) => ({ day: str(row.day) }),
       importAction: {
         endpoint: '/holiday/import-ical',
+        fileAccept: '.ics,text/calendar',
         label: () => m.admin_holiday_import(),
         hint: () => m.admin_holiday_import_hint(),
+        urlLabel: () => m.admin_holiday_import_url(),
+        fileLabel: () => m.admin_holiday_import_file(),
+        busyLabel: () => m.admin_holiday_import_busy(),
+        needsInput: () => m.admin_holiday_import_needs_input(),
+        done: (counts) => m.admin_holiday_import_done(counts),
+        error: () => m.admin_holiday_import_error(),
       },
       columns: [
         { key: 'day', label: () => m.admin_f_day() },

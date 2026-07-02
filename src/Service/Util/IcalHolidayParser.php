@@ -9,11 +9,14 @@ declare(strict_types=1);
 
 namespace App\Service\Util;
 
+use function checkdate;
+use function explode;
 use function ksort;
 use function preg_match;
 use function preg_replace;
 use function str_replace;
-use function str_starts_with;
+use function strcspn;
+use function strlen;
 use function substr;
 use function trim;
 
@@ -65,12 +68,14 @@ final readonly class IcalHolidayParser
                 continue;
             }
 
-            if (str_starts_with($line, 'DTSTART;VALUE=DATE:')) {
-                $date = $this->toIsoDate(substr($line, 19));
-            } elseif (str_starts_with($line, 'DTSTART:')) {
-                $date = $this->toIsoDate(substr($line, 8));
-            } elseif (str_starts_with($line, 'SUMMARY:')) {
-                $title = trim(substr($line, 8));
+            // Split "NAME[;params]:value" — real feeds carry parameters such as
+            // DTSTART;TZID=Europe/Berlin:… or SUMMARY;LANGUAGE=de:… that a strict
+            // prefix match would miss.
+            [$name, $value] = $this->splitProperty($line);
+            if ('DTSTART' === $name) {
+                $date = $this->toIsoDate($value);
+            } elseif ('SUMMARY' === $name) {
+                $title = trim($value);
             }
         }
 
@@ -80,11 +85,35 @@ final readonly class IcalHolidayParser
     }
 
     /**
-     * `YYYYMMDD[...]` => `YYYY-MM-DD`, or null when the value is not a date.
+     * Splits a content line into its property name (before the first `;` or `:`)
+     * and its value (after the first unescaped `:`). Parameters are discarded.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function splitProperty(string $line): array
+    {
+        $colon = strcspn($line, ':');
+        if ($colon === strlen($line)) {
+            return ['', ''];
+        }
+
+        $namePart = substr($line, 0, $colon);
+        $name = explode(';', $namePart, 2)[0];
+
+        return [$name, substr($line, $colon + 1)];
+    }
+
+    /**
+     * `YYYYMMDD[...]` => `YYYY-MM-DD`, or null when the value is not a real
+     * calendar date (rejects e.g. 20260231).
      */
     private function toIsoDate(string $value): ?string
     {
         if (1 !== preg_match('/^(\d{4})(\d{2})(\d{2})/', $value, $matches)) {
+            return null;
+        }
+
+        if (!checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1])) {
             return null;
         }
 

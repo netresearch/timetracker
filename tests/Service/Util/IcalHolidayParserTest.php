@@ -76,6 +76,22 @@ final class IcalHolidayParserTest extends TestCase
         self::assertSame(['2026-06-06' => 'Real'], $this->parser->parse($ical));
     }
 
+    public function testHandlesPropertyParameters(): void
+    {
+        // Real feeds carry parameters: SUMMARY;LANGUAGE=de, DTSTART;TZID=… .
+        $ical = "BEGIN:VEVENT\r\nDTSTART;TZID=Europe/Berlin:20260101T000000\r\nSUMMARY;LANGUAGE=de:Neujahr\r\nEND:VEVENT";
+
+        self::assertSame(['2026-01-01' => 'Neujahr'], $this->parser->parse($ical));
+    }
+
+    public function testRejectsImpossibleCalendarDate(): void
+    {
+        // 2026-02-31 is not a real date — must not reach the database.
+        $ical = "BEGIN:VEVENT\nDTSTART;VALUE=DATE:20260231\nSUMMARY:Nonexistent\nEND:VEVENT";
+
+        self::assertSame([], $this->parser->parse($ical));
+    }
+
     public function testEmptyInputYieldsNoEvents(): void
     {
         self::assertSame([], $this->parser->parse(''));

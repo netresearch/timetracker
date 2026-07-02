@@ -111,12 +111,23 @@ export function AdminCrudShell(props: {
   const [hideInactive, setHideInactive] = createSignal(true)
   const [page, setPage] = createSignal(0)
 
-  // iCal import dialog (only rendered when the descriptor declares importAction).
+  // Bulk-import dialog (only rendered when the descriptor declares importAction).
   const [importing, setImporting] = createSignal(false)
   const [importUrl, setImportUrl] = createSignal('')
   const [importFile, setImportFile] = createSignal<File | null>(null)
   const [importBusy, setImportBusy] = createSignal(false)
   const [importError, setImportError] = createSignal('')
+  let fileInputEl: HTMLInputElement | undefined
+
+  function resetImport(): void {
+    setImportUrl('')
+    setImportFile(null)
+    // Clear the native input too — the reactive signal doesn't reach the DOM's
+    // shown filename.
+    if (fileInputEl) {
+      fileInputEl.value = ''
+    }
+  }
 
   async function runImport(event: SubmitEvent): Promise<void> {
     event.preventDefault()
@@ -132,7 +143,7 @@ export function AdminCrudShell(props: {
     } else if (importUrl().trim() !== '') {
       form.set('url', importUrl().trim())
     } else {
-      setImportError(m.admin_holiday_import_needs_input())
+      setImportError(action.needsInput())
 
       return
     }
@@ -141,14 +152,13 @@ export function AdminCrudShell(props: {
     setImportError('')
     try {
       const body = await postMultipart(action.endpoint, form)
-      const result = JSON.parse(body) as { imported?: number; updated?: number; total?: number }
+      const result = JSON.parse(body) as { imported?: number; updated?: number }
       await queryClient.invalidateQueries({ queryKey: listKey() })
       setImporting(false)
-      setImportUrl('')
-      setImportFile(null)
-      setNotice(m.admin_holiday_import_done({ imported: result.imported ?? 0, updated: result.updated ?? 0 }))
+      resetImport()
+      setNotice(action.done({ imported: result.imported ?? 0, updated: result.updated ?? 0 }))
     } catch (error) {
-      setImportError(apiErrorMessage(error, m.admin_holiday_import_error()))
+      setImportError(apiErrorMessage(error, action.error()))
     } finally {
       setImportBusy(false)
     }
@@ -775,22 +785,22 @@ export function AdminCrudShell(props: {
 
       <Show when={props.descriptor.importAction}>
         {(action) => (
-          <PageDialog open={importing()} onClose={() => setImporting(false)} ariaLabel={action().label()}>
+          <PageDialog open={importing()} onClose={() => { setImporting(false); resetImport() }} ariaLabel={action().label()}>
             <form class="stack-form" onSubmit={(event) => void runImport(event)}>
               <p class="settings-section-hint">{action().hint()}</p>
               <label class="field">
-                <span>{m.admin_holiday_import_url()}</span>
+                <span>{action().urlLabel()}</span>
                 <input type="url" name="url" placeholder="https://…/holidays.ics" value={importUrl()} disabled={importFile() !== null} onInput={(event) => setImportUrl(event.currentTarget.value)} />
               </label>
               <label class="field">
-                <span>{m.admin_holiday_import_file()}</span>
-                <input type="file" name="file" accept=".ics,text/calendar" onChange={(event) => setImportFile(event.currentTarget.files?.[0] ?? null)} />
+                <span>{action().fileLabel()}</span>
+                <input ref={(el) => { fileInputEl = el }} type="file" name="file" accept={action().fileAccept} onChange={(event) => setImportFile(event.currentTarget.files?.[0] ?? null)} />
               </label>
               <div class="form-actions">
                 <button type="submit" class="primary-button" disabled={importBusy()}>
-                  {importBusy() ? m.admin_holiday_import_busy() : action().label()}
+                  {importBusy() ? action().busyLabel() : action().label()}
                 </button>
-                <button type="button" class="action-button" onClick={() => setImporting(false)}>{m.admin_cancel()}</button>
+                <button type="button" class="action-button" onClick={() => { setImporting(false); resetImport() }}>{m.admin_cancel()}</button>
                 <Show when={importError()}>
                   <span role="alert" class="form-status is-error">{importError()}</span>
                 </Show>

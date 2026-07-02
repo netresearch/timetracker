@@ -14,6 +14,7 @@ use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
 use App\Service\Util\IcalHolidayParser;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -29,6 +30,7 @@ use Symfony\Contracts\Service\Attribute\Required;
 use function count;
 use function file_get_contents;
 use function in_array;
+use function is_scalar;
 use function is_string;
 use function parse_url;
 use function strlen;
@@ -83,8 +85,19 @@ final class ImportHolidaysAction extends BaseController
         $updated = 0;
 
         try {
+            // One query for all existing days instead of a SELECT per event.
+            $existing = $connection->fetchFirstColumn(
+                'SELECT day FROM holidays WHERE day IN (?)',
+                [array_keys($events)],
+                [ArrayParameterType::STRING],
+            );
+            $existingDays = [];
+            foreach ($existing as $existingDay) {
+                $existingDays[is_string($existingDay) ? $existingDay : (string) (is_scalar($existingDay) ? $existingDay : '')] = true;
+            }
+
             foreach ($events as $day => $name) {
-                if (false !== $connection->fetchOne('SELECT day FROM holidays WHERE day = ?', [$day])) {
+                if (isset($existingDays[$day])) {
                     $connection->update('holidays', ['name' => $name], ['day' => $day]);
                     ++$updated;
                 } else {
@@ -93,7 +106,9 @@ final class ImportHolidaysAction extends BaseController
                 }
             }
         } catch (Exception $exception) {
-            $response = new Response($this->translate('Error on save') . ': ' . $exception->getMessage());
+            // Don't echo the DBAL message — it can carry schema/SQL detail.
+            $this->logger->error('Holiday iCal import failed to persist', ['error' => $exception->getMessage()]);
+            $response = new Response($this->translate('Error on save'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
 
             return $response;
@@ -115,11 +130,22 @@ final class ImportHolidaysAction extends BaseController
     {
         $file = $request->files->get('file');
         if ($file instanceof UploadedFile) {
+            if (!$file->isValid()) {
+                return new Error($this->translate('The uploaded file could not be read.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+            }
+
+            // Reject oversized uploads by their reported size BEFORE reading the
+            // whole file into memory.
+            if ($file->getSize() > self::MAX_ICAL_BYTES) {
+                return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+            }
+
             $content = file_get_contents($file->getPathname());
             if (false === $content || '' === $content) {
                 return new Error($this->translate('The uploaded file could not be read.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
             }
 
+            // Belt-and-braces: a spoofed size can't slip past the read.
             if (strlen($content) > self::MAX_ICAL_BYTES) {
                 return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
             }
@@ -142,7 +168,26 @@ final class ImportHolidaysAction extends BaseController
                 'timeout' => 10,
                 'max_redirects' => 3,
             ]);
-            $content = $response->getContent();
+
+            // Reject by advertised Content-Length before downloading the body.
+            $contentLength = $response->getHeaders(false)['content-length'][0] ?? null;
+            if (null !== $contentLength && (int) $contentLength > self::MAX_ICAL_BYTES) {
+                $response->cancel();
+
+                return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+            }
+
+            // Stream the body and abort as soon as it exceeds the cap, so a
+            // lying/absent Content-Length can't force an unbounded download.
+            $content = '';
+            foreach ($this->httpClient->stream($response) as $chunk) {
+                $content .= $chunk->getContent();
+                if (strlen($content) > self::MAX_ICAL_BYTES) {
+                    $response->cancel();
+
+                    return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+                }
+            }
         } catch (ExceptionInterface $exception) {
             // Do not surface the transport error to the client — it can carry
             // internal host/network detail (SSRF probe feedback). Log it instead.
@@ -153,10 +198,6 @@ final class ImportHolidaysAction extends BaseController
 
         if ('' === $content) {
             return new Error($this->translate('The iCal feed is empty.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
-        }
-
-        if (strlen($content) > self::MAX_ICAL_BYTES) {
-            return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
         }
 
         return $content;
