@@ -76,20 +76,11 @@ final readonly class CreateUserCommand
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
         $isNew = !$user instanceof User;
 
-        // Resolve the type without silently re-typing an existing user: --type is
-        // applied only when explicitly given. Omitting it defaults a brand-new user
-        // to ADMIN (the bootstrap case) and PRESERVES an existing user's type — this
-        // command doubles as a password reset, so re-running it for `jane` must never
-        // promote her just because ADMIN is the new-user default.
-        if (null !== $type) {
-            $userType = UserType::tryFrom($type);
-            if (!$userType instanceof UserType || UserType::UNKNOWN === $userType) {
-                $io->error('Invalid --type. Use one of: USER, DEV, PL, ADMIN.');
+        $userType = $this->resolveType($type, $user);
+        if (!$userType instanceof UserType) {
+            $io->error('Invalid --type. Use one of: USER, DEV, PL, ADMIN.');
 
-                return Command::FAILURE;
-            }
-        } else {
-            $userType = $isNew ? UserType::ADMIN : $user->getType();
+            return Command::FAILURE;
         }
 
         if ($isNew) {
@@ -114,6 +105,29 @@ final readonly class CreateUserCommand
         ));
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Resolve the effective user type without silently re-typing an existing user.
+     *
+     * An explicitly given --type is validated (a `null` return signals an invalid
+     * value). When --type is omitted, a brand-new user defaults to ADMIN (the
+     * bootstrap case) and an existing user KEEPS its current type — this command
+     * doubles as a password reset, so re-running it for `jane` must never promote
+     * her just because ADMIN is the new-user default.
+     */
+    private function resolveType(?string $type, ?User $existing): ?UserType
+    {
+        if (null === $type) {
+            return $existing instanceof User ? $existing->getType() : UserType::ADMIN;
+        }
+
+        $userType = UserType::tryFrom($type);
+        if (!$userType instanceof UserType || UserType::UNKNOWN === $userType) {
+            return null;
+        }
+
+        return $userType;
     }
 
     private function setHashedPassword(User $user, #[SensitiveParameter] string $plainPassword): void

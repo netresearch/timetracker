@@ -33,6 +33,9 @@ final class UserChecker implements UserCheckerInterface
 {
     public function checkPreAuth(UserInterface $user): void
     {
+        // Intentionally empty: the deactivation check runs in checkPostAuth (after
+        // the credential check) to avoid disclosing account status pre-auth. See
+        // the class docblock.
     }
 
     public function checkPostAuth(UserInterface $user, ?TokenInterface $token = null): void
