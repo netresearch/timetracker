@@ -24,6 +24,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use UnexpectedValueException;
@@ -33,8 +34,10 @@ use function sprintf;
 
 final class SaveUserAction extends BaseController
 {
-    public function __construct(private readonly ObjectMapperInterface $objectMapper)
-    {
+    public function __construct(
+        private readonly ObjectMapperInterface $objectMapper,
+        private readonly UserPasswordHasherInterface $passwordHasher,
+    ) {
     }
 
     /**
@@ -60,6 +63,7 @@ final class SaveUserAction extends BaseController
         // Uniqueness checks are performed via custom validators
 
         $this->objectMapper->map($userSaveDto, $user);
+        $this->applyPasswordChange($user, $userSaveDto);
 
         $user->resetTeams();
 
@@ -101,5 +105,27 @@ final class SaveUserAction extends BaseController
         $data = [$user->getId(), $userSaveDto->username, $userSaveDto->abbr, $userSaveDto->type];
 
         return new JsonResponse($data);
+    }
+
+    /**
+     * Apply the optional password block (ADR-018 D1). Excluded from the object
+     * mapper, so it is set explicitly here: clear reverts the account to LDAP,
+     * a non-empty value is hashed, and an empty value leaves the account as-is.
+     *
+     * Setting and clearing at once is rejected by UserSaveDto::validatePassword
+     * (422) before this runs, so the two branches below are mutually exclusive —
+     * no silent precedence between a supplied password and the clear flag.
+     */
+    private function applyPasswordChange(User $user, UserSaveDto $userSaveDto): void
+    {
+        if ($userSaveDto->clearPassword) {
+            $user->setPassword(null);
+
+            return;
+        }
+
+        if ('' !== $userSaveDto->password) {
+            $user->setPassword($this->passwordHasher->hashPassword($user, $userSaveDto->password));
+        }
     }
 }

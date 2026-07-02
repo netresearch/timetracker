@@ -151,4 +151,95 @@ final class UserSaveDtoTest extends TestCase
 
         $dto->validateTeams($context);
     }
+
+    // ==================== password field tests ====================
+
+    public function testFromRequestReadsPasswordFields(): void
+    {
+        $request = new Request([], [
+            'username' => 'jane',
+            'password' => 'sup3rsecret',
+            'clearPassword' => '1',
+        ]);
+
+        $dto = UserSaveDto::fromRequest($request);
+
+        self::assertSame('sup3rsecret', $dto->password);
+        self::assertTrue($dto->clearPassword);
+    }
+
+    public function testPasswordFieldsDefaultToEmptyAndFalse(): void
+    {
+        $dto = UserSaveDto::fromRequest(new Request());
+
+        self::assertSame('', $dto->password);
+        self::assertFalse($dto->clearPassword);
+    }
+
+    public function testValidatePasswordRejectsTooShortWhenSetting(): void
+    {
+        $dto = new UserSaveDto(password: 'short');
+
+        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
+        $violationBuilder->expects(self::once())->method('atPath')->with('password')->willReturnSelf();
+        $violationBuilder->expects(self::once())->method('addViolation');
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::once())
+            ->method('buildViolation')
+            ->with('Password must be at least 8 characters.')
+            ->willReturn($violationBuilder);
+
+        $dto->validatePassword($context);
+    }
+
+    public function testValidatePasswordAcceptsLongEnough(): void
+    {
+        $dto = new UserSaveDto(password: 'longenough');
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::never())->method('buildViolation');
+
+        $dto->validatePassword($context);
+    }
+
+    public function testValidatePasswordSkippedWhenEmpty(): void
+    {
+        $dto = new UserSaveDto(password: '');
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::never())->method('buildViolation');
+
+        $dto->validatePassword($context);
+    }
+
+    public function testValidatePasswordRejectsSettingAndClearingTogether(): void
+    {
+        // Setting a new password AND clearing are contradictory — rejected
+        // explicitly rather than silently resolved by precedence.
+        $dto = new UserSaveDto(password: 'longenough', clearPassword: true);
+
+        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
+        $violationBuilder->expects(self::once())->method('atPath')->with('password')->willReturnSelf();
+        $violationBuilder->expects(self::once())->method('addViolation');
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::once())
+            ->method('buildViolation')
+            ->with('Choose either setting a new password or clearing it — not both.')
+            ->willReturn($violationBuilder);
+
+        $dto->validatePassword($context);
+    }
+
+    public function testValidatePasswordAcceptsPureClear(): void
+    {
+        // The normal clear case: empty password + clearPassword → no violation.
+        $dto = new UserSaveDto(password: '', clearPassword: true);
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::never())->method('buildViolation');
+
+        $dto->validatePassword($context);
+    }
 }

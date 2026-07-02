@@ -6,7 +6,10 @@
 > **Implementation note (D1).** The auth core landed as one PR: `users.password`
 > migration, `PasswordAuthenticatedUserInterface`, the routing `LoginFormAuthenticator`,
 > local-only mode, `app:user:create`, and `login_throttling`. The admin password
-> set/clear UX is a follow-up PR. One deviation from the design below: `getPassword()`
+> set/clear UX landed as a follow-up PR: the SPA "Users" form gained a password
+> field and a "clear password (use LDAP)" checkbox, handled in `SaveUserAction`
+> (excluded from the object mapper, hashed explicitly), plus an `is_local`
+> indicator on the users list. One deviation from the design below: `getPassword()`
 > returns the stored hash for local accounts but keeps the **synthetic** value
 > (not `null`) for LDAP accounts — a real `null` would make the remember-me
 > signature hasher `base64_encode(null)` and trip a PHP 8.5 deprecation. Because

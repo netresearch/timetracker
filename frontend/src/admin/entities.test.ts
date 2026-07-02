@@ -26,6 +26,23 @@ describe('admin entity descriptors', () => {
     expect(typeof payload.type).toBe('string')
   })
 
+  it('user toForm never pre-fills the password and defaults clearPassword to false', () => {
+    const add = byKey('users').toForm(null)
+    expect(add).toMatchObject({ password: '', clearPassword: false })
+
+    const edit = byKey('users').toForm({ id: 7, username: 'jane', abbr: 'JAN', locale: 'de', type: 'DEV', active: true, is_local: true, teams: [1] })
+    // A local account is never echoed with its hash — the form field stays blank.
+    expect(edit).toMatchObject({ password: '', clearPassword: false })
+  })
+
+  it('user toPayload forwards the password block (set/clear)', () => {
+    const set = byKey('users').toPayload({ id: 3, username: 'u', abbr: 'U', locale: 'en', type: 'PL', teams: [2], password: 'sup3rsecret', clearPassword: false })
+    expect(set).toMatchObject({ password: 'sup3rsecret', clearPassword: false })
+
+    const clear = byKey('users').toPayload({ id: 3, username: 'u', abbr: 'U', locale: 'en', type: 'PL', teams: [2], password: '', clearPassword: true })
+    expect(clear).toMatchObject({ password: '', clearPassword: true })
+  })
+
   it('project toForm normalizes snake_case and camelCase rows identically (pick)', () => {
     const projects = byKey('projects')
     const snake = projects.toForm({ id: 4, name: 'P', customer: 1, ticket_system: 2, jira_id: 'ABC', cost_center: 'CC', project_lead: 5, technical_lead: 6 })

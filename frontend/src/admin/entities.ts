@@ -180,6 +180,7 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'locale', label: () => m.admin_f_language(), render: (row) => localeLabel(row.locale) },
         { key: 'teams', label: () => m.admin_f_teams(), render: (row, o) => ((row.teams as number[]) ?? []).map((id) => o('teams').find((t) => t.id === id)?.label ?? id).join(', ') },
         { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
+        { key: 'is_local', label: () => m.admin_f_local_account(), render: (row) => mark(row.is_local), align: 'center', boolean: true },
         { key: 'last_activity', label: () => m.admin_f_last_activity() },
       ],
       fields: [
@@ -203,15 +204,18 @@ export function adminEntities(): EntityDescriptor[] {
             { value: 'ADMIN', label: () => m.admin_type_admin() },
           ],
         },
+        { name: 'password', label: () => m.admin_f_password(), type: 'password', help: () => m.admin_help_password() },
+        { name: 'clearPassword', label: () => m.admin_f_clear_password(), type: 'checkbox', help: () => m.admin_help_clear_password() },
         { name: 'teams', label: () => m.admin_f_teams(), type: 'multiselect', source: 'teams', required: true },
       ],
       rowLabel: (row) => str(row.username),
       toForm: (row) => row === null
-        ? { id: 0, username: '', abbr: '', locale: 'de', type: 'DEV', active: true, teams: [] }
-        : { id: num(row.id), username: str(row.username), abbr: str(row.abbr), locale: str(row.locale) || 'de', type: str(row.type) || 'DEV', active: bool(row.active), teams: (row.teams as number[]) ?? [] },
+        ? { id: 0, username: '', abbr: '', locale: 'de', type: 'DEV', active: true, password: '', clearPassword: false, teams: [] }
+        : { id: num(row.id), username: str(row.username), abbr: str(row.abbr), locale: str(row.locale) || 'de', type: str(row.type) || 'DEV', active: bool(row.active), password: '', clearPassword: false, teams: (row.teams as number[]) ?? [] },
       // locale/type are string selects; the shell stores select values as numbers,
-      // so re-stringify here before sending.
-      toPayload: (v) => ({ id: v.id, username: v.username, abbr: v.abbr, locale: v.locale, type: v.type, active: v.active, teams: v.teams }),
+      // so re-stringify here before sending. password is write-only (never echoed
+      // back from the server) — it starts blank and only travels on submit.
+      toPayload: (v) => ({ id: v.id, username: v.username, abbr: v.abbr, locale: v.locale, type: v.type, active: v.active, password: v.password, clearPassword: v.clearPassword, teams: v.teams }),
     },
     {
       key: 'teams',

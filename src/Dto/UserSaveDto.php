@@ -36,6 +36,21 @@ final readonly class UserSaveDto
         public string $locale = '',
         public bool $active = true,
 
+        /**
+         * New local password. Empty means "no change". Excluded from the automatic
+         * DTO→entity mapping (#[Map(if: false)]): a mapped plain value would be
+         * persisted unhashed — it is hashed explicitly in SaveUserAction.
+         */
+        #[Map(if: false)]
+        public string $password = '',
+
+        /**
+         * When true, revert the account to LDAP (clear the local password hash).
+         * Excluded from mapping; handled explicitly in SaveUserAction.
+         */
+        #[Map(if: false)]
+        public bool $clearPassword = false,
+
         /** @var list<int|string> */
         #[Map(if: false)]
         public array $teams = [],
@@ -57,6 +72,8 @@ final readonly class UserSaveDto
             type: (string) ($request->request->get('type') ?? ''),
             locale: (string) ($request->request->get('locale') ?? ''),
             active: $request->request->getBoolean('active', true),
+            password: (string) ($request->request->get('password') ?? ''),
+            clearPassword: $request->request->getBoolean('clearPassword'),
             teams: array_values($teams),
         );
     }
@@ -67,6 +84,38 @@ final readonly class UserSaveDto
         if ([] === $this->teams) {
             $executionContext->buildViolation('Every user must belong to at least one team')
                 ->atPath('teams')
+                ->addViolation();
+        }
+    }
+
+    /**
+     * The password block accepts exactly one intent at a time:
+     *  - empty password, clearPassword off → no change;
+     *  - empty password, clearPassword on  → revert to LDAP;
+     *  - password set,   clearPassword off → set it (min. length floor applies).
+     *
+     * Setting AND clearing together is contradictory, so it is rejected explicitly
+     * rather than silently resolved by precedence. The length floor is basic
+     * hygiene; a full complexity policy is out of scope (see ADR-018).
+     */
+    #[Assert\Callback]
+    public function validatePassword(ExecutionContextInterface $executionContext): void
+    {
+        if ('' === $this->password) {
+            return;
+        }
+
+        if ($this->clearPassword) {
+            $executionContext->buildViolation('Choose either setting a new password or clearing it — not both.')
+                ->atPath('password')
+                ->addViolation();
+
+            return;
+        }
+
+        if (mb_strlen($this->password) < 8) {
+            $executionContext->buildViolation('Password must be at least 8 characters.')
+                ->atPath('password')
                 ->addViolation();
         }
     }
