@@ -46,10 +46,10 @@ interface SaveResponse {
   message: string
 }
 
-// Only the locales the UI actually ships translations for (paraglide compiles
-// the locales in project.inlang/settings.json; AppConfig.locale mirrors them).
-// Labels are endonyms on purpose — a user locked into the wrong language must
-// still recognise their own.
+// Only the locales the UI actually ships translations for (the same SET as
+// project.inlang/settings.json — the display order here is deliberate and
+// independent of it). Labels are endonyms on purpose — a user locked into the
+// wrong language must still recognise their own.
 const LANGUAGES = [
   { value: 'de', label: 'Deutsch' },
   { value: 'en', label: 'English' },
