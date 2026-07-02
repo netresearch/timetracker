@@ -144,9 +144,8 @@ Before submitting any PR:
 
 For more details, see:
 - `AGENTS.md` - Comprehensive agent guide
-- `README.rst` - Project setup and overview
+- `README.md` - Project setup and overview
 - `docs/techstack.md` - Technology stack details
 - `docs/testing.md` - Testing procedures
 - `docs/security.md` - Security guidelines
 - `docs/configuration.md` - Configuration options
-- `TASKS.md` - Current tasks and progress

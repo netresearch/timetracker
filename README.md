@@ -13,6 +13,8 @@
 
 **Professional time tracking solution for teams and enterprises with advanced LDAP integration, Jira synchronization, and comprehensive reporting.**
 
+![TimeTracker time tracking view](docs/images/tracking.png)
+
 ---
 
 ## Features
@@ -21,8 +23,8 @@
 - **Bulk Operations** - Efficient handling of vacation, sick leave, and recurring tasks
 - **XLSX Export** - Export reports for controlling and compliance
 - **LDAP/Active Directory** - Seamless authentication with automatic user provisioning
-- **Jira Synchronization** - Bidirectional worklog sync with OAuth 2.0 support
-- **Role-based Access Control** - Developer, Controller, and Project Leader roles
+- **Jira Synchronization** - Automatic worklog sync via OAuth 1.0a (Server/DC); Jira Cloud OAuth 2.0 support is in progress
+- **Role-based Access Control** - User types USER/DEV (track time), PL (Project Lead), and ADMIN — project leads and admins also get Billing and Administration
 - **Multi-tenant Architecture** - Support for multiple customers and projects
 
 ---
@@ -50,8 +52,9 @@ open http://localhost:8765
 composer install
 cd frontend && bun install && bun run build && cd ..
 
-cp .env.example .env.local
-# Edit .env.local with your database and LDAP settings
+# The committed .env ships development defaults. Create a .env.local to
+# override what differs on your machine — at least DATABASE_URL and the
+# LDAP_* settings. (.env.example only holds Docker Compose variables.)
 
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
@@ -73,7 +76,7 @@ symfony server:start
 
 - **Backend**: PHP 8.5, Symfony 8, Doctrine ORM 3
 - **Frontend**: SolidJS, TypeScript, Vite, Tailwind CSS
-- **Testing**: PHPUnit 12, Playwright (E2E), PHPStan Level 10, PHP-CS-Fixer, Rector
+- **Testing**: PHPUnit 13, Playwright (E2E), PHPStan Level 10, PHP-CS-Fixer, Rector
 - **Infrastructure**: Docker, GitHub Actions CI/CD
 
 See [docs/techstack.md](docs/techstack.md) for details.
@@ -84,6 +87,7 @@ See [docs/techstack.md](docs/techstack.md) for details.
 
 | Guide | Description |
 |-------|-------------|
+| [User Guide](docs/user-guide.md) | Using the app, with screenshots |
 | [Development](docs/development.md) | Local setup and development workflow |
 | [Configuration](docs/configuration.md) | Environment variables and settings |
 | [API Reference](docs/api.md) | REST API endpoints and examples |
@@ -109,7 +113,7 @@ make fix-all
 
 ### Code Quality Standards
 
-- PSR-12 code style (PHP-CS-Fixer)
+- PER-CS + Symfony code style (PHP-CS-Fixer, `@PER-CS` + `@Symfony` rulesets — see [.php-cs-fixer.dist.php](.php-cs-fixer.dist.php))
 - PHPStan Level 10 static analysis
 - PHPUnit tests
 - Conventional Commits
