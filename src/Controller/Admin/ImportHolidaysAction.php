@@ -16,6 +16,8 @@ use App\Response\Error;
 use App\Service\Util\IcalHolidayParser;
 use Doctrine\DBAL\Connection;
 use Exception;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpClient\NoPrivateNetworkHttpClient;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -47,11 +49,17 @@ final class ImportHolidaysAction extends BaseController
 
     private IcalHolidayParser $icalHolidayParser;
 
+    private LoggerInterface $logger;
+
     #[Required]
-    public function setImportDependencies(HttpClientInterface $httpClient, IcalHolidayParser $icalHolidayParser): void
+    public function setImportDependencies(HttpClientInterface $httpClient, IcalHolidayParser $icalHolidayParser, LoggerInterface $logger): void
     {
-        $this->httpClient = $httpClient;
+        // SSRF guard: NoPrivateNetworkHttpClient rejects requests whose resolved
+        // IP is loopback/private/link-local — re-checked on EVERY redirect hop,
+        // so it also closes the DNS-rebinding / redirect-to-internal bypass.
+        $this->httpClient = new NoPrivateNetworkHttpClient($httpClient);
         $this->icalHolidayParser = $icalHolidayParser;
+        $this->logger = $logger;
     }
 
     #[Route(path: '/holiday/import-ical', name: 'importHolidaysIcal_attr', methods: ['POST'])]
@@ -136,7 +144,11 @@ final class ImportHolidaysAction extends BaseController
             ]);
             $content = $response->getContent();
         } catch (ExceptionInterface $exception) {
-            return new Error($this->translate('The iCal feed could not be fetched.') . ' ' . $exception->getMessage(), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_GATEWAY);
+            // Do not surface the transport error to the client — it can carry
+            // internal host/network detail (SSRF probe feedback). Log it instead.
+            $this->logger->warning('Holiday iCal fetch failed', ['url' => $url, 'error' => $exception->getMessage()]);
+
+            return new Error($this->translate('The iCal feed could not be fetched.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_GATEWAY);
         }
 
         if ('' === $content) {

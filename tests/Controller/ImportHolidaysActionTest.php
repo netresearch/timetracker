@@ -55,6 +55,14 @@ final class ImportHolidaysActionTest extends AbstractWebTestCase
         $this->assertStatusCode(400);
     }
 
+    public function testUrlResolvingToPrivateIpIsRejected(): void
+    {
+        // SSRF guard: NoPrivateNetworkHttpClient blocks the request to a
+        // loopback IP before any connection; the action maps that to 502.
+        $this->client->request('POST', '/holiday/import-ical', ['url' => 'http://127.0.0.1/holidays.ics']);
+        $this->assertStatusCode(502);
+    }
+
     public function testFileWithoutEventsIsRejected(): void
     {
         $this->client->request('POST', '/holiday/import-ical', [], ['file' => $this->icsUpload('BEGIN:VCALENDAR END:VCALENDAR')]);
