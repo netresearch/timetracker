@@ -1638,7 +1638,7 @@ jobs:
           file: var/coverage.xml
           
       - name: Run security audit
-        run: composer security-check
+        run: composer audit
         
       - name: Archive test results
         if: failure()

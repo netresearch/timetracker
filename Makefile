@@ -291,7 +291,7 @@ validate-stack:
 	@echo "🔍 Validating modern toolchain..."
 	@echo "──────────────────────────────────"
 	@echo "▶ Checking composer configuration..."
-	@docker compose run --rm app composer validate --no-check-publish
+	@COMPOSE_PROFILES=tools docker compose run --rm app-tools composer validate --no-check-publish
 	@echo "✅ Composer configuration valid"
 	@echo ""
 	@echo "▶ Running PHPStan analysis..."
@@ -311,4 +311,4 @@ validate-stack:
 # Coverage analysis target (replacing analyze-coverage.php location)
 analyze-coverage:
 	@echo "📊 Analyzing test coverage..."
-	@docker compose run --rm -e APP_ENV=test app php tests/tools/analyze-coverage.php
+	@docker compose run --rm -e APP_ENV=test app-dev php tests/tools/analyze-coverage.php

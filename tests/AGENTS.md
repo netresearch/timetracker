@@ -4,13 +4,13 @@
 
 ## Overview
 
-PHPUnit 12 test suite: unit tests, controller tests, and integration tests.
-Uses Symfony test framework, bypass-finals for mocking, and parallel execution via ParaTest.
+PHPUnit 13 test suite: unit tests, controller tests, and integration tests.
+Uses the Symfony test framework.
 
 ## Setup & environment
 
 - Install: `composer install`
-- Test database: `db-test` container (MariaDB) with `unittest` credentials
+- Test database: `db_unittest` container (MariaDB) with `unittest` credentials
 - Environment: `APP_ENV=test` is set automatically by test scripts
 - Database setup: Test data loaded from `sql/unittest/` SQL files
 
@@ -21,7 +21,6 @@ Uses Symfony test framework, bypass-finals for mocking, and parallel execution v
 - Run unit tests only: `composer test:unit`
 - Run controller tests: `composer test:controller`
 - Run all tests: `composer test`
-- Run parallel: `composer test:parallel`
 - Coverage report: `composer test:coverage`
 
 ## Code style & conventions
@@ -121,7 +120,7 @@ public function testSyncWithJiraHandlesApiError(): void
 
 ## When stuck
 
-- PHPUnit docs: https://docs.phpunit.de/en/12.0/
+- PHPUnit docs: https://docs.phpunit.de/en/13.0/
 - Symfony testing: https://symfony.com/doc/current/testing.html
 - Review existing test patterns in this codebase
 - Check `config/testing/` for PHPUnit configurations
@@ -129,7 +128,7 @@ public function testSyncWithJiraHandlesApiError(): void
 ## House Rules
 
 - Unit tests must not touch the database
-- Controller tests use the test database (`db-test`)
+- Controller tests use the test database (`db_unittest`)
 - Use `#[Group('...')]` for test categorization
 - Performance tests go in `Performance/` with `#[Group('performance')]`
 - Prefer `assertSame()` over `assertEquals()` for strict comparison
