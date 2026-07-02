@@ -306,12 +306,24 @@ The ⚙ icon opens your personal settings. Two kinds live here:
 Header buttons (explained on the in-app Help page too):
 
 - **Theme** cycles System → Light → Dark.
-- **Density** cycles Comfortable → Compact → Ultra-compact (ultra-compact
-  also hides hint texts and the Worklog legend).
-- In the sidebar layout the menu can be collapsed to an icon rail and resized
-  by dragging.
 
-All three are remembered per device.
+  ![The Worklog in the dark theme](images/dark-mode.png)
+
+- **Density** cycles Comfortable → Compact → Ultra-compact (ultra-compact
+  also hides hint texts and the Worklog legend). Compact fits noticeably more
+  rows and columns on screen:
+
+  ![The Worklog in compact density — more rows and all columns visible](images/density-compact.png)
+
+- **Navigation layout** (set in [Settings](#settings)) moves the menu from the
+  top bar into a **left or right sidebar**; the sidebar can be collapsed to an
+  icon rail and resized by dragging.
+
+  ![The app with the navigation in a left sidebar](images/nav-sidebar-left.png)
+
+  ![The app with the navigation in a right sidebar](images/nav-sidebar-right.png)
+
+All of these are remembered per device.
 
 ## Keyboard shortcuts
 
@@ -319,7 +331,11 @@ All three are remembered per device.
 
 Press <kbd>?</kbd> anywhere for the cheat sheet; the full tables are on the
 Help page. Holding <kbd>Alt</kbd> reveals shortcut badges directly on the
-buttons and navigation items. The tables below mirror
+buttons and navigation items:
+
+![Holding Alt shows shortcut badges on the tabs and toolbar buttons](images/alt-badges.png)
+
+The tables below mirror
 [`frontend/src/lib/shortcuts.ts`](../frontend/src/lib/shortcuts.ts).
 
 **Global**
