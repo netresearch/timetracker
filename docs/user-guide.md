@@ -278,14 +278,14 @@ In the sidebar layout each panel also gets a quick-add "+" button.
 
 ## Settings
 
-![Settings dialog with language, behavior toggles and display preferences](images/settings.png)
+![Settings dialog: an Account card (language, behavior toggles, minimum duration, Save) above a This-device card (display preferences)](images/settings.png)
 
 The ⚙ icon opens your personal settings, grouped into two labeled sections
 with different save semantics:
 
 **Account** — saved to your account and applied on every device; press *Save*:
 
-- **Language** — English or German (reloads the page).
+- **Language** — English, German, Spanish, French or Russian (reloads the page).
 - **Always show an empty line** — keep a blank entry row ready in the Worklog.
 - **Suggest time** — pre-fill new entries' start/end times.
 - **Show future** — include future-dated entries in the Worklog.
