@@ -43,8 +43,11 @@ security:
                 target: _login
                 # Ensure any custom session data is cleared on logout
                 invalidate_session: true
-                # Note: CSRF disabled because ExtJS frontend uses simple link for logout
-                enable_csrf: false
+                # Stateless CSRF (framework.csrf_protection): the _csrf_token
+                # that logout_path()/logout_url() append is validated via the
+                # Sec-Fetch-Site/Origin/Referer headers of a same-origin
+                # navigation — blocking cross-site forced logout.
+                enable_csrf: true
 
             # Remember me functionality (uses Symfony's built-in feature)
             remember_me:

@@ -25,7 +25,7 @@
                 'suggestTime': settings.suggest_time == 1,
                 'showFuture': settings.show_future == 1,
                 'minEntryDuration': settings.min_entry_duration,
-                'logoutUrl': url('_logout'),
+                'logoutUrl': logout_url(),
                 'csrfToken': csrf_token('authenticate'),
                 'loginPath': path('_login'),
             }|json_encode(jsonHexFlags)|raw }};

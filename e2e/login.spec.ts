@@ -83,12 +83,12 @@ test.describe('Logout', () => {
     // Wait for the app to fully load and show logout link
     await page.waitForSelector('.badge-logout', { timeout: 10000 });
 
-    // Get the logout URL and navigate directly
+    // The logout link carries the CSRF token; click it (a real same-origin
+    // navigation with Sec-Fetch-Site) instead of page.goto().
     const logoutHref = await page.locator('.badge-logout').getAttribute('href');
-    expect(logoutHref).toBeTruthy();
+    expect(logoutHref).toContain('_csrf_token');
 
-    // Navigate to logout URL and wait for redirect
-    await page.goto(logoutHref!);
+    await page.locator('.badge-logout').click();
     await page.waitForURL(/\/login/, { timeout: 10000 });
 
     // Verify we're on the login page

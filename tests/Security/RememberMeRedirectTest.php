@@ -98,26 +98,41 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
         // Access a route that requires IS_AUTHENTICATED_FULLY
         $this->client->request('GET', '/');
 
-        // Should redirect to /logout, NOT show 403
+        // Should be logged out programmatically and redirected, NOT shown 403
         self::assertResponseRedirects();
         $location = $this->client->getResponse()->headers->get('Location');
         self::assertNotNull($location);
 
-        // Should redirect to /logout (Case 2 in AccessDeniedSubscriber)
-        self::assertStringContainsString('/logout', $location,
-            'Remember_me user should be redirected to /logout, not shown 403');
+        // Case 2 in AccessDeniedSubscriber performs a programmatic logout,
+        // whose response redirects straight to the login page.
+        self::assertStringContainsString('/login', $location,
+            'Remember_me user should be logged out and land on /login, not shown 403');
     }
 
     /**
-     * Test that /logout is accessible (PUBLIC_ACCESS) and redirects to /login.
+     * A bare GET /logout without CSRF token must be rejected: logout CSRF
+     * blocks cross-site forced logout (and BrowserKit sends no same-origin
+     * fetch metadata either).
+     */
+    public function testLogoutWithoutCsrfTokenIsRejected(): void
+    {
+        $this->client->request('GET', '/logout');
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    /**
+     * Test that /logout is accessible (PUBLIC_ACCESS) with a valid token and
+     * same-origin fetch metadata, and redirects to /login.
      *
      * This is a regression test for the bug where /logout required
      * IS_AUTHENTICATED_FULLY, causing an infinite /logout -> /logout loop.
      */
     public function testLogoutIsPublicAndRedirectsToLogin(): void
     {
-        // Access /logout without any authentication
-        $this->client->request('GET', '/logout');
+        $this->client->request('GET', '/logout', [
+            '_csrf_token' => $this->logoutCsrfToken(),
+        ], [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 
         // Should redirect to /login, not 403 or loop
         self::assertResponseRedirects();
@@ -125,6 +140,18 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
         self::assertNotNull($location);
         self::assertStringContainsString('/login', $location,
             '/logout should redirect to /login');
+    }
+
+    private function logoutCsrfToken(): string
+    {
+        if (null === $this->serviceContainer) {
+            throw new RuntimeException('Service container not initialized');
+        }
+
+        $csrfTokenManager = $this->serviceContainer->get('security.csrf.token_manager');
+        assert($csrfTokenManager instanceof \Symfony\Component\Security\Csrf\CsrfTokenManagerInterface);
+
+        return $csrfTokenManager->getToken('logout')->getValue();
     }
 
     /**
@@ -177,8 +204,10 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
      */
     public function testLogoutToLoginCompleteFlow(): void
     {
-        // Access /logout directly (simulating redirect from protected route)
-        $this->client->request('GET', '/logout');
+        // Access /logout with a valid token + same-origin fetch metadata
+        $this->client->request('GET', '/logout', [
+            '_csrf_token' => $this->logoutCsrfToken(),
+        ], [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 
         // Follow redirect to /login
         $this->client->followRedirect();

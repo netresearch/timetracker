@@ -129,11 +129,15 @@ final class SecurityControllerTest extends AbstractWebTestCase
         assert($csrfTokenManager instanceof \Symfony\Component\Security\Csrf\CsrfTokenManagerInterface);
         $csrfToken = $csrfTokenManager->getToken('logout')->getValue();
 
-        // After logging out with CSRF token
+        // After logging out with CSRF token. The stateless CSRF validator
+        // accepts the token only alongside a same-origin fetch-metadata
+        // header, which BrowserKit does not send on its own.
         $this->client->request(
             \Symfony\Component\HttpFoundation\Request::METHOD_GET,
             '/logout',
             ['_csrf_token' => $csrfToken],
+            [],
+            ['HTTP_SEC_FETCH_SITE' => 'same-origin'],
         );
 
         // The user should be redirected
