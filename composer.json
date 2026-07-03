@@ -71,7 +71,8 @@
     "symfony/twig-bundle": "^8.1",
     "symfony/validator": "^8.1",
     "symfony/yaml": "^8.1",
-    "twig/twig": "^3.21"
+    "twig/twig": "^3.21",
+    "web-auth/webauthn-symfony-bundle": "^5.3"
   },
   "require-dev": {
     "captainhook/captainhook": "^5.27",
