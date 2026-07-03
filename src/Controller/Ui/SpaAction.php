@@ -11,6 +11,7 @@ namespace App\Controller\Ui;
 
 use App\Controller\BaseController;
 use App\Entity\User;
+use App\Service\Security\TwoFactorStatusService;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -28,6 +29,10 @@ use Twig\Error\SyntaxError;
  */
 final class SpaAction extends BaseController
 {
+    public function __construct(private readonly TwoFactorStatusService $twoFactorStatus)
+    {
+    }
+
     /**
      * @throws LoaderError  When template loading fails
      * @throws RuntimeError When template rendering fails
@@ -50,6 +55,10 @@ final class SpaAction extends BaseController
             'apptitle' => $this->params->get('app_title'),
             'locale' => $settings['locale'],
             'settings' => $settings,
+            // Org-wide mandatory 2FA (ADR-018): the flag plus this user's current
+            // 2FA state (TOTP OR passkey) drive the SPA's enrolment gate.
+            'twoFactorRequired' => (bool) $this->params->get('app_require_two_factor'),
+            'hasTwoFactor' => $this->twoFactorStatus->hasTwoFactor($user),
         ]);
     }
 }

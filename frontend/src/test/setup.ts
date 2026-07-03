@@ -76,6 +76,8 @@ window.APP_CONFIG = {
   minEntryDuration: 5,
   totpEnabled: false,
   localAccount: true,
+  twoFactorRequired: false,
+  hasTwoFactor: false,
   logoutUrl: '/logout',
   csrfToken: 'test-csrf-token',
   loginPath: '/login',

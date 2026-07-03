@@ -49,8 +49,12 @@ export function SecuritySection(): JSX.Element {
   )
 }
 
-/** Register / list / remove passkeys (WebAuthn) — ADR-018 D3. */
-function PasskeyControls(): JSX.Element {
+/** Register / list / remove passkeys (WebAuthn) — ADR-018 D3.
+ *
+ *  `onRegistered` lets the mandatory-2FA gate react once the user has a passkey
+ *  (it reloads into the app); omitted in the normal Settings usage.
+ */
+export function PasskeyControls(props: Readonly<{ onRegistered?: () => void }> = {}): JSX.Element {
   const [passkeys, { refetch }] = createResource(listPasskeys)
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal('')
@@ -61,6 +65,7 @@ function PasskeyControls(): JSX.Element {
     try {
       await registerPasskey()
       await refetch()
+      props.onRegistered?.()
     } catch (caught) {
       // A user cancelling the native prompt throws too — keep the message quiet.
       setError(apiErrorMessage(caught, m.settings_passkey_error()))
@@ -177,8 +182,13 @@ function PasswordChange(): JSX.Element {
   )
 }
 
-/** Enable / disable TOTP two-factor. */
-function TwoFactorControls(props: { initiallyEnabled: boolean }): JSX.Element {
+/** Enable / disable TOTP two-factor.
+ *
+ *  `onEnrolled` fires once the user has finished enrolling and dismissed their
+ *  backup codes — the mandatory-2FA gate uses it to reload into the app; omitted
+ *  in the normal Settings usage.
+ */
+export function TwoFactorControls(props: Readonly<{ initiallyEnabled: boolean; onEnrolled?: () => void }>): JSX.Element {
   const [enabled, setEnabled] = createSignal(props.initiallyEnabled)
   const [enrollment, setEnrollment] = createSignal<EnrollmentStart | null>(null)
   const [code, setCode] = createSignal('')
@@ -267,7 +277,7 @@ function TwoFactorControls(props: { initiallyEnabled: boolean }): JSX.Element {
             <ul class="security-backup-list">
               <For each={codes()}>{(entry) => <li>{entry}</li>}</For>
             </ul>
-            <button type="button" class="primary-button" onClick={() => setBackupCodes(null)}>
+            <button type="button" class="primary-button" onClick={() => { setBackupCodes(null); props.onEnrolled?.() }}>
               {m.settings_2fa_backup_done()}
             </button>
           </div>

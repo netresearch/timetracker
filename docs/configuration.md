@@ -33,6 +33,7 @@ defaults in [.env](../.env):
 | `APP_LOGO_URL` | `/images/logo-netresearch.svg` | Logo shown in the UI |
 | `APP_HEADER_URL` | empty | Optional link target for the header/logo |
 | `APP_SHOW_BILLABLE_FIELD_IN_EXPORT` | `false` | Include the billable column in exports |
+| `REQUIRE_TWO_FACTOR` | `false` | Org-wide mandatory 2FA: every user must enrol a second factor (authenticator app or passkey) before they can use the app |
 
 ## Database
 

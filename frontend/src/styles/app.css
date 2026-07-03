@@ -1100,6 +1100,46 @@ main {
   object-fit: contain;
 }
 
+/* Mandatory-2FA enrolment gate: same visual language as the login card, but a
+   wider card since it hosts the full enrolment UI (QR/secret, backup codes). */
+.twofactor-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  background: var(--color-bg);
+}
+
+.twofactor-gate-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 30rem;
+  padding: 2rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.4));
+}
+
+.twofactor-gate-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.twofactor-gate-intro {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.twofactor-gate-logout {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
 .login-title {
   margin: 0 0 0.5rem;
   font-size: 1.25rem;

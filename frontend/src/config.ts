@@ -15,6 +15,11 @@ export interface AppConfig {
   /** Whether this is a local (password) account. LDAP users cannot change a local
    *  password, so the Security section hides that control for them. */
   localAccount: boolean
+  /** Org-wide mandatory 2FA (ADR-018): when true, a user without any second factor
+   *  is held at the enrolment gate before the app loads. */
+  twoFactorRequired: boolean
+  /** Whether this user already has a second factor (TOTP or a passkey). */
+  hasTwoFactor: boolean
   logoutUrl: string
   /** CSRF token for the 'authenticate' intention — stateless, so it stays valid
    *  across a session that expires while the SPA is open (re-login overlay). */
@@ -42,6 +47,14 @@ export function appConfig(): AppConfig {
 
 export function hasRole(role: string): boolean {
   return appConfig().roles.includes(role)
+}
+
+/** Whether the org mandates 2FA and this user has not yet enrolled a second
+ *  factor — the SPA holds them at the enrolment gate until they do. */
+export function needsTwoFactorEnrolment(): boolean {
+  const config = appConfig()
+
+  return config.twoFactorRequired && !config.hasTwoFactor
 }
 
 /** Project leads and admins may use the billing export. */

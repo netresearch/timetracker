@@ -27,6 +27,8 @@
                 'minEntryDuration': settings.min_entry_duration,
                 'totpEnabled': settings.totp_enabled,
                 'localAccount': settings.local_account,
+                'twoFactorRequired': twoFactorRequired,
+                'hasTwoFactor': hasTwoFactor,
                 'logoutUrl': logout_url(),
                 'csrfToken': csrf_token('authenticate'),
                 'loginPath': path('_login'),
