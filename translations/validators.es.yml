@@ -21,3 +21,6 @@
 "Please provide a valid customer name with at least 3 letters.": "Introduce un nombre de cliente válido con al menos 3 caracteres."
 "Please provide a valid activity name with at least 3 letters.": "Introduce un nombre de actividad válido con al menos 3 caracteres."
 "Factor must be greater than or equal to 0.": "El factor debe ser mayor o igual que 0."
+"Password must be at least 8 characters.": "La contraseña debe tener al menos 8 caracteres."
+"Authentication source must be either local or LDAP.": "La fuente de autenticación debe ser local o LDAP."
+"An LDAP account has no local password — choose local authentication to set one.": "Una cuenta LDAP no tiene contraseña local: elige autenticación local para establecer una."

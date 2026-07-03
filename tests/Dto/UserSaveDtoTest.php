@@ -31,6 +31,8 @@ final class UserSaveDtoTest extends TestCase
         self::assertSame('', $dto->type);
         self::assertSame('', $dto->locale);
         self::assertSame([], $dto->teams);
+        self::assertSame('', $dto->password);
+        self::assertNull($dto->authSource);
     }
 
     public function testConstructorWithAllValues(): void
@@ -154,31 +156,76 @@ final class UserSaveDtoTest extends TestCase
 
     // ==================== password field tests ====================
 
-    public function testFromRequestReadsPasswordFields(): void
+    public function testFromRequestReadsPasswordAndAuthSource(): void
     {
         $request = new Request([], [
             'username' => 'jane',
             'password' => 'sup3rsecret',
-            'clearPassword' => '1',
+            'authSource' => 'local',
         ]);
 
         $dto = UserSaveDto::fromRequest($request);
 
         self::assertSame('sup3rsecret', $dto->password);
-        self::assertTrue($dto->clearPassword);
+        self::assertSame(UserSaveDto::AUTH_LOCAL, $dto->authSource);
     }
 
-    public function testPasswordFieldsDefaultToEmptyAndFalse(): void
+    public function testPasswordDefaultsEmptyAndAuthSourceDefaultsNull(): void
     {
         $dto = UserSaveDto::fromRequest(new Request());
 
         self::assertSame('', $dto->password);
-        self::assertFalse($dto->clearPassword);
+        // Omitted → null ("no source change"), never coerced to a concrete value.
+        self::assertNull($dto->authSource);
     }
 
-    public function testValidatePasswordRejectsTooShortWhenSetting(): void
+    public function testOmittedAuthSourceValidatesLikeLocalForPasswordLength(): void
     {
-        $dto = new UserSaveDto(password: 'short');
+        // A legacy client sending only a (too-short) password is still length-checked.
+        $short = new UserSaveDto(password: 'short', authSource: null);
+
+        $builder = $this->createMock(ConstraintViolationBuilderInterface::class);
+        $builder->expects(self::once())->method('atPath')->with('password')->willReturnSelf();
+        $builder->expects(self::once())->method('addViolation');
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::once())
+            ->method('buildViolation')
+            ->with('Password must be at least 8 characters.')
+            ->willReturn($builder);
+
+        $short->validatePassword($context);
+    }
+
+    public function testOmittedAuthSourceWithoutPasswordIsAccepted(): void
+    {
+        $dto = new UserSaveDto(password: '', authSource: null);
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::never())->method('buildViolation');
+
+        $dto->validatePassword($context);
+    }
+
+    public function testValidateRejectsUnknownAuthSource(): void
+    {
+        $dto = new UserSaveDto(authSource: 'bogus');
+
+        $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
+        $violationBuilder->expects(self::once())->method('atPath')->with('authSource')->willReturnSelf();
+        $violationBuilder->expects(self::once())->method('addViolation');
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::once())
+            ->method('buildViolation')
+            ->with('Authentication source must be either local or LDAP.')
+            ->willReturn($violationBuilder);
+
+        $dto->validatePassword($context);
+    }
+
+    public function testValidatePasswordRejectsTooShortForLocal(): void
+    {
+        $dto = new UserSaveDto(password: 'short', authSource: UserSaveDto::AUTH_LOCAL);
 
         $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $violationBuilder->expects(self::once())->method('atPath')->with('password')->willReturnSelf();
@@ -193,9 +240,9 @@ final class UserSaveDtoTest extends TestCase
         $dto->validatePassword($context);
     }
 
-    public function testValidatePasswordAcceptsLongEnough(): void
+    public function testValidatePasswordAcceptsLongEnoughForLocal(): void
     {
-        $dto = new UserSaveDto(password: 'longenough');
+        $dto = new UserSaveDto(password: 'longenough', authSource: UserSaveDto::AUTH_LOCAL);
 
         $context = $this->createMock(ExecutionContextInterface::class);
         $context->expects(self::never())->method('buildViolation');
@@ -203,21 +250,10 @@ final class UserSaveDtoTest extends TestCase
         $dto->validatePassword($context);
     }
 
-    public function testValidatePasswordSkippedWhenEmpty(): void
+    public function testValidatePasswordRejectsPasswordUnderLdap(): void
     {
-        $dto = new UserSaveDto(password: '');
-
-        $context = $this->createMock(ExecutionContextInterface::class);
-        $context->expects(self::never())->method('buildViolation');
-
-        $dto->validatePassword($context);
-    }
-
-    public function testValidatePasswordRejectsSettingAndClearingTogether(): void
-    {
-        // Setting a new password AND clearing are contradictory — rejected
-        // explicitly rather than silently resolved by precedence.
-        $dto = new UserSaveDto(password: 'longenough', clearPassword: true);
+        // Supplying a password while choosing the directory is contradictory.
+        $dto = new UserSaveDto(password: 'longenough', authSource: UserSaveDto::AUTH_LDAP);
 
         $violationBuilder = $this->createMock(ConstraintViolationBuilderInterface::class);
         $violationBuilder->expects(self::once())->method('atPath')->with('password')->willReturnSelf();
@@ -226,16 +262,27 @@ final class UserSaveDtoTest extends TestCase
         $context = $this->createMock(ExecutionContextInterface::class);
         $context->expects(self::once())
             ->method('buildViolation')
-            ->with('Choose either setting a new password or clearing it — not both.')
+            ->with('An LDAP account has no local password — choose local authentication to set one.')
             ->willReturn($violationBuilder);
 
         $dto->validatePassword($context);
     }
 
-    public function testValidatePasswordAcceptsPureClear(): void
+    public function testValidatePasswordAcceptsLdapWithoutPassword(): void
     {
-        // The normal clear case: empty password + clearPassword → no violation.
-        $dto = new UserSaveDto(password: '', clearPassword: true);
+        $dto = new UserSaveDto(password: '', authSource: UserSaveDto::AUTH_LDAP);
+
+        $context = $this->createMock(ExecutionContextInterface::class);
+        $context->expects(self::never())->method('buildViolation');
+
+        $dto->validatePassword($context);
+    }
+
+    public function testValidatePasswordAcceptsLocalWithoutPassword(): void
+    {
+        // At the DTO level this is fine (keep the existing hash); the entity-aware
+        // "a brand-new local account needs a password" check lives in SaveUserAction.
+        $dto = new UserSaveDto(password: '', authSource: UserSaveDto::AUTH_LOCAL);
 
         $context = $this->createMock(ExecutionContextInterface::class);
         $context->expects(self::never())->method('buildViolation');

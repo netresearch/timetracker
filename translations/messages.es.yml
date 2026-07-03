@@ -92,3 +92,4 @@
 "The new password must be at least 8 characters.": "La nueva contraseña debe tener al menos 8 caracteres."
 "No enrolment is in progress. Start again.": "No hay ninguna configuración en curso. Empieza de nuevo."
 "That code is not valid. Check your authenticator and try again.": "Ese código no es válido. Comprueba tu aplicación de autenticación e inténtalo de nuevo."
+"A local account needs a password. Set one, or choose LDAP authentication.": "Una cuenta local necesita una contraseña. Establece una o elige autenticación LDAP."

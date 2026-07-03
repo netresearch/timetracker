@@ -26,21 +26,24 @@ describe('admin entity descriptors', () => {
     expect(typeof payload.type).toBe('string')
   })
 
-  it('user toForm never pre-fills the password and defaults clearPassword to false', () => {
+  it('user toForm never pre-fills the password and derives authSource from is_local', () => {
     const add = byKey('users').toForm(null)
-    expect(add).toMatchObject({ password: '', clearPassword: false })
+    expect(add).toMatchObject({ password: '', authSource: 'ldap' })
 
-    const edit = byKey('users').toForm({ id: 7, username: 'jane', abbr: 'JAN', locale: 'de', type: 'DEV', active: true, is_local: true, teams: [1] })
+    const local = byKey('users').toForm({ id: 7, username: 'jane', abbr: 'JAN', locale: 'de', type: 'DEV', active: true, is_local: true, teams: [1] })
     // A local account is never echoed with its hash — the form field stays blank.
-    expect(edit).toMatchObject({ password: '', clearPassword: false })
+    expect(local).toMatchObject({ password: '', authSource: 'local' })
+
+    const ldap = byKey('users').toForm({ id: 8, username: 'bob', abbr: 'BOB', locale: 'de', type: 'DEV', active: true, is_local: false, teams: [1] })
+    expect(ldap).toMatchObject({ password: '', authSource: 'ldap' })
   })
 
-  it('user toPayload forwards the password block (set/clear)', () => {
-    const set = byKey('users').toPayload({ id: 3, username: 'u', abbr: 'U', locale: 'en', type: 'PL', teams: [2], password: 'sup3rsecret', clearPassword: false })
-    expect(set).toMatchObject({ password: 'sup3rsecret', clearPassword: false })
+  it('user toPayload forwards the password and explicit authSource', () => {
+    const local = byKey('users').toPayload({ id: 3, username: 'u', abbr: 'U', locale: 'en', type: 'PL', teams: [2], password: 'sup3rsecret', authSource: 'local' })
+    expect(local).toMatchObject({ password: 'sup3rsecret', authSource: 'local' })
 
-    const clear = byKey('users').toPayload({ id: 3, username: 'u', abbr: 'U', locale: 'en', type: 'PL', teams: [2], password: '', clearPassword: true })
-    expect(clear).toMatchObject({ password: '', clearPassword: true })
+    const ldap = byKey('users').toPayload({ id: 3, username: 'u', abbr: 'U', locale: 'en', type: 'PL', teams: [2], password: '', authSource: 'ldap' })
+    expect(ldap).toMatchObject({ password: '', authSource: 'ldap' })
   })
 
   it('project toForm normalizes snake_case and camelCase rows identically (pick)', () => {

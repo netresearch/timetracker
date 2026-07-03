@@ -16,7 +16,8 @@ use function is_string;
 use function password_verify;
 
 /**
- * Covers the admin "set / clear local password" block on /user/save (ADR-018 D1).
+ * Covers the admin explicit authentication-source block on /user/save (ADR-018 D1):
+ * 'local' sets/keeps a password, 'ldap' clears it.
  *
  * @internal
  *
@@ -26,7 +27,7 @@ final class SaveUserPasswordTest extends AbstractWebTestCase
 {
     public function testSettingPasswordStoresAHashAndMakesAccountLocal(): void
     {
-        $id = $this->saveUser('pwuser1', ['password' => 'sup3rsecret123']);
+        $id = $this->saveUser('pwuser1', ['authSource' => 'local', 'password' => 'sup3rsecret123']);
 
         $stored = $this->storedPassword($id);
         self::assertNotNull($stored, 'password column must be populated');
@@ -34,25 +35,25 @@ final class SaveUserPasswordTest extends AbstractWebTestCase
         self::assertTrue(password_verify('sup3rsecret123', $stored), 'stored value must be a valid hash of the password');
     }
 
-    public function testClearingPasswordRevertsAccountToLdap(): void
+    public function testChoosingLdapRevertsAccountToDirectory(): void
     {
-        $id = $this->saveUser('pwuser2', ['password' => 'sup3rsecret123']);
+        $id = $this->saveUser('pwuser2', ['authSource' => 'local', 'password' => 'sup3rsecret123']);
         self::assertNotNull($this->storedPassword($id));
 
-        // Re-save with clearPassword set → the local hash is removed (LDAP account).
-        $this->saveUser('pwuser2', ['id' => $id, 'clearPassword' => '1']);
+        // Re-save with authSource=ldap → the local hash is removed (directory account).
+        $this->saveUser('pwuser2', ['id' => $id, 'authSource' => 'ldap']);
 
-        self::assertNull($this->storedPassword($id), 'clearPassword must null the hash');
+        self::assertNull($this->storedPassword($id), 'switching to LDAP must null the hash');
     }
 
-    public function testEmptyPasswordLeavesExistingHashUnchanged(): void
+    public function testLocalWithoutNewPasswordLeavesExistingHashUnchanged(): void
     {
-        $id = $this->saveUser('pwuser3', ['password' => 'sup3rsecret123']);
+        $id = $this->saveUser('pwuser3', ['authSource' => 'local', 'password' => 'sup3rsecret123']);
         $before = $this->storedPassword($id);
         self::assertNotNull($before);
 
-        // A normal edit (no password field) must not touch the stored hash.
-        $this->saveUser('pwuser3', ['id' => $id, 'type' => 'PL']);
+        // Editing a local user without a new password must not touch the stored hash.
+        $this->saveUser('pwuser3', ['id' => $id, 'type' => 'PL', 'authSource' => 'local']);
 
         self::assertSame($before, $this->storedPassword($id));
     }
@@ -66,15 +67,16 @@ final class SaveUserPasswordTest extends AbstractWebTestCase
             'teams' => ['1'],
             'locale' => 'de',
             'type' => 'DEV',
+            'authSource' => 'local',
             'password' => 'short',
         ], [], ['HTTP_ACCEPT' => 'application/json']);
 
         $this->assertStatusCode(422);
     }
 
-    public function testSettingAndClearingTogetherIsRejected(): void
+    public function testPasswordUnderLdapIsRejected(): void
     {
-        // Contradictory intent must be rejected, not silently resolved.
+        // Contradictory intent (a password while choosing the directory) is rejected.
         $this->logInSession('unittest');
         $this->client->request(Request::METHOD_POST, '/user/save', [
             'username' => 'pwuser5',
@@ -82,11 +84,43 @@ final class SaveUserPasswordTest extends AbstractWebTestCase
             'teams' => ['1'],
             'locale' => 'de',
             'type' => 'DEV',
+            'authSource' => 'ldap',
             'password' => 'sup3rsecret123',
-            'clearPassword' => '1',
         ], [], ['HTTP_ACCEPT' => 'application/json']);
 
         $this->assertStatusCode(422);
+    }
+
+    public function testNewLocalAccountWithoutPasswordIsRejected(): void
+    {
+        // An admin picking 'local' without ever setting a password must not be
+        // silently downgraded to LDAP — the account has no hash to fall back on.
+        $this->logInSession('unittest');
+        $this->client->request(Request::METHOD_POST, '/user/save', [
+            'username' => 'pwuser6',
+            'abbr' => 'PW6',
+            'teams' => ['1'],
+            'locale' => 'de',
+            'type' => 'DEV',
+            'authSource' => 'local',
+        ], [], ['HTTP_ACCEPT' => 'application/json']);
+
+        $this->assertStatusCode(422);
+    }
+
+    public function testLegacyEditWithoutAuthSourceKeepsLocalPassword(): void
+    {
+        // A client that predates the auth-source control posts a bare edit (no
+        // authSource field). This must NOT clear an existing local hash — a silent
+        // downgrade to the directory would be data loss.
+        $id = $this->saveUser('pwuser7', ['authSource' => 'local', 'password' => 'sup3rsecret123']);
+        $before = $this->storedPassword($id);
+        self::assertNotNull($before);
+
+        // No authSource, no password — just a routine field edit.
+        $this->saveUser('pwuser7', ['id' => $id, 'type' => 'PL']);
+
+        self::assertSame($before, $this->storedPassword($id), 'a legacy bare edit must not touch the hash');
     }
 
     /**
