@@ -48,6 +48,29 @@ class WebauthnCredentialRepository extends ServiceEntityRepository implements Pu
 
     public function saveCredentialRecord(CredentialRecord $credentialRecord): void
     {
+        // Registration hands us the BASE CredentialRecord (the attestation
+        // validator constructs it) — convert it into the id-bearing entity
+        // subclass, or Doctrine cannot persist it ("entity has no identity").
+        // Login counter-updates pass back the managed entity from
+        // findOneByCredentialId and are persisted as-is.
+        if (!$credentialRecord instanceof WebauthnCredential) {
+            $credentialRecord = new WebauthnCredential(
+                $credentialRecord->publicKeyCredentialId,
+                $credentialRecord->type,
+                $credentialRecord->transports,
+                $credentialRecord->attestationType,
+                $credentialRecord->trustPath,
+                $credentialRecord->aaguid,
+                $credentialRecord->credentialPublicKey,
+                $credentialRecord->userHandle,
+                $credentialRecord->counter,
+                $credentialRecord->otherUI,
+                $credentialRecord->backupEligible,
+                $credentialRecord->backupStatus,
+                $credentialRecord->uvInitialized,
+            );
+        }
+
         $manager = $this->getEntityManager();
         $manager->persist($credentialRecord);
         $manager->flush();

@@ -66,9 +66,10 @@ export function PasskeyControls(props: Readonly<{ onRegistered?: () => void }> =
       await registerPasskey()
       await refetch()
       props.onRegistered?.()
-    } catch (caught) {
-      // A user cancelling the native prompt throws too — keep the message quiet.
-      setError(apiErrorMessage(caught, m.settings_passkey_error()))
+    } catch {
+      // Always the localized message: the failure handler's body is a machine
+      // marker (not prose), and a user cancelling the native prompt throws too.
+      setError(m.settings_passkey_error())
     } finally {
       setBusy(false)
     }

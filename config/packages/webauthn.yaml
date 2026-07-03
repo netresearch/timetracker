@@ -41,4 +41,6 @@ webauthn:
                 profile: default
                 user_entity_guesser: Webauthn\Bundle\Security\Guesser\CurrentUserEntityGuesser
                 success_handler: App\Security\Webauthn\PasskeyRegisterSuccessHandler
+                # The bundle default echoes raw exception messages to the client.
+                failure_handler: App\Security\Webauthn\PasskeyRegisterFailureHandler
                 hide_existing_credentials: true
