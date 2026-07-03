@@ -54,8 +54,15 @@ final class TwoFactorEnrollmentTest extends AbstractWebTestCase
         // The secret is now stored (encrypted, non-null) on the user.
         self::assertNotNull($this->storedTotpSecret(1));
 
-        // 3) disable → cleared.
+        // 3a) disable without a re-auth code is rejected (ADR-018 D4) — 2FA stays on.
         $this->client->request(Request::METHOD_POST, '/settings/2fa/disable', [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertStatusCode(422);
+        self::assertTrue($this->jsonBody()['enabled'] ?? false);
+        self::assertNotNull($this->storedTotpSecret(1));
+
+        // 3b) disable with a fresh code → cleared.
+        $disableCode = TOTP::createFromSecret($secret)->now();
+        $this->client->request(Request::METHOD_POST, '/settings/2fa/disable', ['code' => $disableCode], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
         self::assertFalse($this->jsonBody()['enabled'] ?? true);
         self::assertNull($this->storedTotpSecret(1));
