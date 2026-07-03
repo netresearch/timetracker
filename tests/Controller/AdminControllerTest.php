@@ -287,7 +287,10 @@ class AdminControllerTest extends AbstractWebTestCase
     {
         $this->logInSession('developer');
         $this->client->request('GET', '/getProjects');
-        $this->assertMessage('You are not allowed to perform this action.');
+        // This denial goes through the controller translate() path and the
+        // developer fixture's locale is de — the German catalog now covers it
+        // (the English here used to be the missing-translation fallback).
+        $this->assertMessage('Diese Aktion ist nicht erlaubt.');
     }
 
     // -------------- users routes --------------------------------

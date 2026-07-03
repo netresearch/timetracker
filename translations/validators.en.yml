@@ -1,0 +1,28 @@
+# English identity catalog: the translation IDs ARE the English source
+# strings (this app's convention). Without this file every id counts as a
+# 'missing message' for locale en in the profiler / debug:translation,
+# burying genuinely missing translations in noise.
+"Every user must belong to at least one team": "Every user must belong to at least one team"
+"Please provide a valid preset name with at least 3 letters.": "Please provide a valid preset name with at least 3 letters."
+"Please provide a valid date.": "Please provide a valid date."
+"Please provide a holiday name.": "Please provide a holiday name."
+"Please provide a valid project name with at least 3 letters.": "Please provide a valid project name with at least 3 letters."
+"The Jira prefix must contain only uppercase letters.": "The Jira prefix must contain only uppercase letters."
+"Please enter a valid contract start.": "Please enter a valid contract start."
+"Please provide a valid team name with at least 3 letters.": "Please provide a valid team name with at least 3 letters."
+"Please provide a lead user for the team.": "Please provide a lead user for the team."
+"Please provide a valid ticket system name with at least 3 letters.": "Please provide a valid ticket system name with at least 3 letters."
+"Please provide a valid user name with at least 3 letters.": "Please provide a valid user name with at least 3 letters."
+"Date is required": "Date is required"
+"Start time is required": "Start time is required"
+"End time is required": "End time is required"
+"Ticket cannot be longer than 50 characters": "Ticket cannot be longer than 50 characters"
+"Invalid ticket format": "Invalid ticket format"
+"Description cannot be longer than 1000 characters": "Description cannot be longer than 1000 characters"
+"Preset ID is required": "Preset ID is required"
+"Please provide a valid customer name with at least 3 letters.": "Please provide a valid customer name with at least 3 letters."
+"Please provide a valid activity name with at least 3 letters.": "Please provide a valid activity name with at least 3 letters."
+"Factor must be greater than or equal to 0.": "Factor must be greater than or equal to 0."
+"Password must be at least 8 characters.": "Password must be at least 8 characters."
+"Authentication source must be either local or LDAP.": "Authentication source must be either local or LDAP."
+"An LDAP account has no local password — choose local authentication to set one.": "An LDAP account has no local password — choose local authentication to set one."

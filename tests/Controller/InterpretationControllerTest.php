@@ -286,7 +286,9 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $this->logInSession('developer');
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/interpretation/allEntries', []);
         $this->assertStatusCode(403);
-        $this->assertMessage('You are not allowed to perform this action.');
+        // Controller translate() path + de-locale fixture — the German catalog now
+        // covers this id (the English used to be the missing-translation fallback).
+        $this->assertMessage('Diese Aktion ist nicht erlaubt.');
     }
 
     public function testGetAllEntriesActionIgnoresInvalidDateString(): void
