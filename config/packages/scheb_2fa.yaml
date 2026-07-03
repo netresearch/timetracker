@@ -1,9 +1,9 @@
 # Two-factor authentication (ADR-018 D2). TOTP + backup codes.
 # Reference: https://symfony.com/bundles/SchebTwoFactorBundle/6.x/configuration.html
 #
-# NOTE: the `main` firewall does NOT yet enable `two_factor` — enrolment and the
-# SPA challenge step land in a follow-up increment. Until then this config is
-# inert (no user has a totp_secret), so login is unchanged.
+# The `main` firewall enables `two_factor` (see security.yaml): users with an
+# enrolled TOTP secret are challenged after the password step; everyone else
+# logs in unchanged.
 scheb_two_factor:
     security_tokens:
         - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
@@ -16,6 +16,10 @@ scheb_two_factor:
     totp:
         enabled: true
         issuer: '%app_title%'
+        # Accept a code from the previous window for this many seconds — absorbs
+        # small device-clock skew and a period tick between typing and verifying
+        # (enrolment already allows ±1 period; this aligns the login check).
+        leeway: 15
 
     # One-time recovery codes for when the authenticator device is unavailable.
     backup_codes:

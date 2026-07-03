@@ -18,6 +18,7 @@ use Exception;
 use Laminas\Ldap\Exception\LdapException;
 use Override;
 use Psr\Log\LoggerInterface;
+use Scheb\TwoFactorBundle\Security\Authentication\Token\TwoFactorTokenInterface;
 use SensitiveParameter;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -263,6 +264,14 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): Response
     {
+        // Password accepted but a second factor is outstanding: scheb swapped the
+        // token for a TwoFactorToken before this handler ran (ADR-018 D2). The SPA
+        // needs the explicit signal — a bare {ok:true} would make it believe the
+        // login completed. The no-JS fallback goes straight to the /2fa form.
+        if ($token instanceof TwoFactorTokenInterface) {
+            return $this->twoFactorRequiredResponse($request);
+        }
+
         $targetPath = $this->getTargetPath($request->getSession(), $firewallName);
         $redirect = null !== $targetPath && '' !== $targetPath
             ? $targetPath
@@ -276,6 +285,16 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         }
 
         return new RedirectResponse($redirect);
+    }
+
+    /** The "second factor outstanding" answer: JSON signal for the SPA, /2fa for no-JS. */
+    private function twoFactorRequiredResponse(Request $request): Response
+    {
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse(['ok' => false, 'twoFactorRequired' => true], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return new RedirectResponse($this->router->generate('2fa_login'));
     }
 
     /**

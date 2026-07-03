@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
 
 /**
@@ -45,6 +46,14 @@ class ExceptionSubscriber implements EventSubscriberInterface
     {
         $throwable = $exceptionEvent->getThrowable();
         $request = $exceptionEvent->getRequest();
+
+        // Security denials are owned by the dedicated chain: AccessDeniedSubscriber
+        // (priority 15), scheb's 2FA ExceptionListener (2), or the firewall's own
+        // listener (1). Converting them here would turn e.g. the "2FA code
+        // outstanding" state into a misleading 500.
+        if ($throwable instanceof AccessDeniedException) {
+            return;
+        }
 
         // Log the exception
         $this->logException($throwable);

@@ -1073,6 +1073,25 @@ main {
   margin-top: 0.5rem;
 }
 
+/* 2FA challenge step: one-line explainer above the code field, and a quiet
+   text-style escape hatch back to the credentials form. */
+.login-2fa-hint {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.login-2fa-back {
+  background: none;
+  border: 0;
+  color: var(--color-link);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  min-height: 44px;
+  text-decoration: underline;
+}
+
 /* ---- Help page ---- */
 
 .help-section {

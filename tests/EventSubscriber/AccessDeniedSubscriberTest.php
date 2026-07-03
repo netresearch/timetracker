@@ -55,6 +55,18 @@ final class AccessDeniedSubscriberTest extends TestCase
         );
     }
 
+    /** One place for the security.isGranted() stub the access-denied branches read. */
+    private function stubIsGranted(bool $fully, bool $twoFactorInProgress = false): void
+    {
+        $this->security
+            ->method('isGranted')
+            ->willReturnCallback(static fn (string $attribute): bool => match ($attribute) {
+                'IS_AUTHENTICATED_2FA_IN_PROGRESS' => $twoFactorInProgress,
+                'IS_AUTHENTICATED_FULLY' => $fully,
+                default => false,
+            });
+    }
+
     public function testSubscribedEvents(): void
     {
         $events = AccessDeniedSubscriber::getSubscribedEvents();
@@ -129,10 +141,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         // User is authenticated via remember_me but NOT fully authenticated
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(false);
+        $this->stubIsGranted(fully: false, twoFactorInProgress: false);
 
         // The subscriber logs out programmatically (no CSRF-guarded round
         // trip through /logout) and uses the logout response as-is.
@@ -158,10 +167,7 @@ final class AccessDeniedSubscriberTest extends TestCase
         $this->security
             ->method('getUser')
             ->willReturn($user);
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(false);
+        $this->stubIsGranted(fully: false, twoFactorInProgress: false);
         $this->security
             ->expects(self::once())->method('logout')
             ->with(false)
@@ -177,6 +183,28 @@ final class AccessDeniedSubscriberTest extends TestCase
         self::assertSame('/login', $response->getTargetUrl());
     }
 
+    public function testTwoFactorInProgressIsDeferredToSchebListener(): void
+    {
+        // Password accepted, TOTP code outstanding: NOT a stale remember-me
+        // session — the subscriber must neither log out nor respond, so scheb's
+        // ExceptionListener (priority 2) can answer with the challenge.
+        $user = new User();
+        $user->setUsername('testuser');
+
+        $this->security
+            ->method('getUser')
+            ->willReturn($user);
+        $this->stubIsGranted(fully: false, twoFactorInProgress: true);
+        $this->security
+            ->expects(self::never())->method('logout');
+
+        $event = $this->createExceptionEvent($this->createRequest(false), new AccessDeniedException('Access Denied'));
+
+        $this->subscriber->onKernelException($event);
+
+        self::assertNull($event->getResponse());
+    }
+
     public function testFullyAuthenticatedUserWithoutPermissionLetsSymfonyHandle(): void
     {
         $user = new User();
@@ -187,10 +215,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->willReturn($user);
 
         // User is fully authenticated
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         $request = $this->createRequest(false);
         $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
@@ -211,10 +236,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         // Create request preferring HTML
         $request = $this->createRequestWithHeaders(false, [
@@ -237,10 +259,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         $request = $this->createRequestWithHeaders(false, [
             'Accept' => 'application/json',
@@ -268,10 +287,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         // Need to override Accept header to avoid HTML preference from Request::create()
         $request = $this->createRequestWithHeaders(false, [
@@ -296,10 +312,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         // Need to override Accept header to avoid HTML preference from Request::create()
         $request = $this->createRequestWithHeaders(false, [
@@ -322,10 +335,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         // Need to override Accept header to avoid HTML preference from Request::create()
         $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/api/v1/users');
@@ -345,10 +355,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         // Path starts with /get, so should return JSON (no Accept header to avoid HTML preference)
         $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/getEntries');
@@ -368,10 +375,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         // Path ends with /save, so should return JSON
         $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/entry/save');
@@ -391,10 +395,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         // Path ends with /delete, so should return JSON
         $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/entry/delete');
@@ -414,10 +415,7 @@ final class AccessDeniedSubscriberTest extends TestCase
             ->method('getUser')
             ->willReturn($user);
 
-        $this->security
-            ->expects(self::once())->method('isGranted')
-            ->with('IS_AUTHENTICATED_FULLY')
-            ->willReturn(true);
+        $this->stubIsGranted(fully: true, twoFactorInProgress: false);
 
         // Path starts with /getAll, so should return JSON
         $request = $this->createRequestWithHeaders(false, ['Accept' => '*/*'], '/getAllProjects');

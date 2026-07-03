@@ -6,6 +6,9 @@ export interface LoginConfig {
   csrfToken: string
   /** Where the form posts — the unified `_login` route. */
   loginPath: string
+  /** Where the 2FA code step posts (`_auth_code`) — the firewall-intercepted
+   *  /2fa_check path. Optional so a stale shell template degrades gracefully. */
+  twoFactorPath?: string
   /** Pre-filled on a server-rendered re-display after a failed no-JS submit. */
   lastUsername: string
   /** Server-side auth error message for the no-JS fallback path (else null). */
