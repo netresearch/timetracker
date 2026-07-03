@@ -13,6 +13,7 @@ use App\Controller\BaseController;
 use App\Dto\IdDto;
 use App\Entity\User;
 use App\Model\JsonResponse;
+use App\Repository\WebauthnCredentialRepository;
 use App\Response\Error;
 use App\Service\Security\TwoFactorEnrollmentService;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,10 +23,10 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Admin break-glass: clear another user's two-factor (ADR-018 D2) — the TOTP
- * secret and any outstanding backup codes. This is the recovery path for a user
- * who has lost their authenticator and their backup codes; it drops them back to
- * password-only sign-in, from where they can re-enrol.
+ * Admin break-glass: clear another user's SECOND FACTORS (ADR-018) — the TOTP
+ * secret, any outstanding backup codes, AND every registered passkey. This is
+ * the recovery path for a user who has lost their authenticator/passkey device;
+ * it drops them back to password-only sign-in, from where they can re-enrol.
  *
  * ROLE_ADMIN only. Unlike the self-service disable (D4), no second-factor re-auth
  * is demanded — the whole point is that the target no longer has the factor. It
@@ -34,8 +35,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  */
 final class ResetUserTwoFactorAction extends BaseController
 {
-    public function __construct(private readonly TwoFactorEnrollmentService $enrollment)
-    {
+    public function __construct(
+        private readonly TwoFactorEnrollmentService $enrollment,
+        private readonly WebauthnCredentialRepository $credentials,
+    ) {
     }
 
     #[Route(path: '/user/reset-2fa', name: 'resetUserTwoFactor_attr', methods: ['POST'])]
@@ -65,6 +68,14 @@ final class ResetUserTwoFactorAction extends BaseController
         // Unconditional clear (disable() is idempotent): always drop the secret AND
         // the backup codes, even in an inconsistent state where only one is set.
         $this->enrollment->disable($user);
+
+        // Passkeys are second factors too — remove them all. The handle itself
+        // stays on the user (it is stable and non-enumerable; re-registration
+        // reuses it).
+        $handle = $user->getWebauthnUserHandle();
+        if (null !== $handle && '' !== $handle) {
+            $this->credentials->deleteByUserHandle($handle);
+        }
 
         $manager = $this->doctrineRegistry->getManager();
         $manager->persist($user);

@@ -153,4 +153,50 @@ class WebauthnCredentialRepository extends ServiceEntityRepository implements Pu
 
         return $record;
     }
+
+    /**
+     * Passkey counts for EVERY user handle in one grouped query — feeds the
+     * admin users grid without a per-user COUNT (N+1).
+     *
+     * @return array<string, int> userHandle => number of passkeys
+     */
+    public function countsByUserHandle(): array
+    {
+        /** @var list<array{userHandle: string, n: int|string}> $rows */
+        $rows = $this->getEntityManager()
+            ->createQueryBuilder()
+            ->from(WebauthnCredential::class, 'c')
+            ->select('c.userHandle AS userHandle', 'COUNT(c.id) AS n')
+            ->groupBy('c.userHandle')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            // Defensive: the ceremony always sets a handle, but a null/empty one
+            // must not collapse several users onto the '' key.
+            if ('' === $row['userHandle']) {
+                continue;
+            }
+
+            $counts[$row['userHandle']] = (int) $row['n'];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Remove every passkey of a user handle — the admin break-glass reset
+     * (ADR-018): the account falls back to password-only sign-in.
+     */
+    public function deleteByUserHandle(string $userHandle): void
+    {
+        $this->getEntityManager()
+            ->createQueryBuilder()
+            ->delete(WebauthnCredential::class, 'c')
+            ->where(self::USER_HANDLE_PREDICATE)
+            ->setParameter('userHandle', $userHandle)
+            ->getQuery()
+            ->execute();
+    }
 }

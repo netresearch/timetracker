@@ -733,7 +733,7 @@ export function AdminCrudShell(props: {
                           <EditIcon />
                         </button>
                       </Show>
-                      <Show when={props.descriptor.resetTwoFactorEndpoint !== undefined && Boolean(row.totp_enabled)}>
+                      <Show when={props.descriptor.resetTwoFactorEndpoint !== undefined && (Boolean(row.totp_enabled) || Number(row.passkeys ?? 0) > 0)}>
                         <button type="button" class="link-button is-icon" aria-label={m.admin_reset_2fa()} title={m.admin_reset_2fa()} onClick={() => void resetTwoFactor(row)}>
                           <ResetIcon />
                         </button>
