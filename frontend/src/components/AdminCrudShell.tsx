@@ -7,7 +7,7 @@ import { coerceActive, optionSourceKey } from '../api/queries'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { gridNav } from '../lib/gridNavigation'
-import { DiskIcon, DownloadIcon, EditIcon, TrashIcon } from '../lib/icons'
+import { DiskIcon, DownloadIcon, EditIcon, ResetIcon, TrashIcon } from '../lib/icons'
 import { DateField } from './DateField'
 import { PageDialog } from './PageDialog'
 import { m } from '../paraglide/messages.js'
@@ -448,6 +448,23 @@ export function AdminCrudShell(props: {
     }
   }
 
+  // Admin break-glass (ADR-018 D2): clear a user's TOTP + backup codes so they
+  // can re-enrol after losing their authenticator. Confirmed because it lowers
+  // that account's protection to password-only.
+  async function resetTwoFactor(row: Row) {
+    const endpoint = props.descriptor.resetTwoFactorEndpoint
+    if (endpoint === undefined || !window.confirm(`${m.admin_reset_2fa_confirm()}\n${props.descriptor.rowLabel(row)}`)) {
+      return
+    }
+    try {
+      await postJson(endpoint, { id: row.id })
+      await refreshAfterMutation()
+      flashNotice(m.admin_2fa_reset())
+    } catch (caught) {
+      setError(apiErrorMessage(caught, m.app_load_error()))
+    }
+  }
+
   let searchEl: HTMLInputElement | undefined
 
   return (
@@ -714,6 +731,11 @@ export function AdminCrudShell(props: {
                       <Show when={props.descriptor.editable !== false}>
                         <button type="button" class="link-button is-icon" aria-label={m.admin_edit()} title={m.admin_edit()} onClick={() => openForm(row)}>
                           <EditIcon />
+                        </button>
+                      </Show>
+                      <Show when={props.descriptor.resetTwoFactorEndpoint !== undefined && Boolean(row.totp_enabled)}>
+                        <button type="button" class="link-button is-icon" aria-label={m.admin_reset_2fa()} title={m.admin_reset_2fa()} onClick={() => void resetTwoFactor(row)}>
+                          <ResetIcon />
                         </button>
                       </Show>
                       <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void remove(row)}>

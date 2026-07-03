@@ -155,6 +155,16 @@ describe('admin entity descriptors', () => {
     expect(users.toPayload({ id: 9, username: 'ex', abbr: 'EX', locale: 'de', type: 'DEV', active: false, teams: [1] })).toMatchObject({ active: false })
   })
 
+  it('users expose a totp_enabled (boolean dot) column and a reset-2FA endpoint', () => {
+    const users = byKey('users')
+    const totp = col(users, 'totp_enabled')
+    expect(totp.boolean).toBe(true)
+    expect(totp.render?.({ totp_enabled: true }, noOptions)).toBe('✓')
+    expect(totp.render?.({ totp_enabled: false }, noOptions)).toBe('—')
+    // The break-glass reset control is wired to the admin endpoint.
+    expect(users.resetTwoFactorEndpoint).toBe('/user/reset-2fa')
+  })
+
   it('project lead selects offer only active users (activeOnly)', () => {
     const projects = byKey('projects')
     for (const name of ['project_lead', 'technical_lead']) {

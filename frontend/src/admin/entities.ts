@@ -181,6 +181,7 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'teams', label: () => m.admin_f_teams(), render: (row, o) => ((row.teams as number[]) ?? []).map((id) => o('teams').find((t) => t.id === id)?.label ?? id).join(', ') },
         { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
         { key: 'is_local', label: () => m.admin_f_local_account(), render: (row) => mark(row.is_local), align: 'center', boolean: true },
+        { key: 'totp_enabled', label: () => m.admin_f_2fa(), render: (row) => mark(row.totp_enabled), align: 'center', boolean: true },
         { key: 'last_activity', label: () => m.admin_f_last_activity() },
       ],
       fields: [
@@ -214,6 +215,7 @@ export function adminEntities(): EntityDescriptor[] {
         { name: 'password', label: () => m.admin_f_password(), type: 'password', help: () => m.admin_help_password() },
         { name: 'teams', label: () => m.admin_f_teams(), type: 'multiselect', source: 'teams', required: true },
       ],
+      resetTwoFactorEndpoint: '/user/reset-2fa',
       rowLabel: (row) => str(row.username),
       toForm: (row) => row === null
         ? { id: 0, username: '', abbr: '', locale: 'de', type: 'DEV', active: true, password: '', authSource: 'ldap', teams: [] }
