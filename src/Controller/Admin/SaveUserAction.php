@@ -63,7 +63,10 @@ final class SaveUserAction extends BaseController
         // Uniqueness checks are performed via custom validators
 
         $this->objectMapper->map($userSaveDto, $user);
-        $this->applyPasswordChange($user, $userSaveDto);
+        $authSourceError = $this->applyAuthSource($user, $userSaveDto);
+        if ($authSourceError instanceof Error) {
+            return $authSourceError;
+        }
 
         $user->resetTeams();
 
@@ -108,24 +111,53 @@ final class SaveUserAction extends BaseController
     }
 
     /**
-     * Apply the optional password block (ADR-018 D1). Excluded from the object
-     * mapper, so it is set explicitly here: clear reverts the account to LDAP,
-     * a non-empty value is hashed, and an empty value leaves the account as-is.
+     * Apply the explicit authentication source (ADR-018 D1). Excluded from the
+     * object mapper, so it is set here:
+     *  - null (field omitted, legacy client) → never change the source: a supplied
+     *    password still sets the account local, but a bare edit leaves it exactly as
+     *    is — an old client must not silently downgrade a local account to LDAP;
+     *  - 'ldap'  → clear the local hash (directory account);
+     *  - 'local' with a new password → hash and store it;
+     *  - 'local' with no new password → keep the existing hash, but reject when the
+     *    account has none yet (an admin picked local without ever setting one — the
+     *    UI cannot silently downgrade the choice to LDAP).
      *
-     * Setting and clearing at once is rejected by UserSaveDto::validatePassword
-     * (422) before this runs, so the two branches below are mutually exclusive —
-     * no silent precedence between a supplied password and the clear flag.
+     * The DTO-level validation (a password supplied under LDAP, or a too-short one)
+     * has already run via MapRequestPayload; this adds the one check that needs the
+     * persisted entity. Returns an Error to reject, or null on success.
      */
-    private function applyPasswordChange(User $user, UserSaveDto $userSaveDto): void
+    private function applyAuthSource(User $user, UserSaveDto $userSaveDto): ?Error
     {
-        if ($userSaveDto->clearPassword) {
+        if (null === $userSaveDto->authSource) {
+            if ('' !== $userSaveDto->password) {
+                $user->setPassword($this->passwordHasher->hashPassword($user, $userSaveDto->password));
+            }
+
+            return null;
+        }
+
+        if (UserSaveDto::AUTH_LDAP === $userSaveDto->authSource) {
             $user->setPassword(null);
 
-            return;
+            return null;
         }
 
         if ('' !== $userSaveDto->password) {
             $user->setPassword($this->passwordHasher->hashPassword($user, $userSaveDto->password));
+
+            return null;
         }
+
+        if (!$user->isLocalAccount()) {
+            // No existing local hash to keep — an admin picked local but never set a
+            // password. getPassword() can't say so (it returns a synthetic LDAP
+            // signature when the column is NULL), hence the isLocalAccount() check.
+            return new Error(
+                $this->translate('A local account needs a password. Set one, or choose LDAP authentication.'),
+                \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        }
+
+        return null;
     }
 }

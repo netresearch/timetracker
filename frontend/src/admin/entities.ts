@@ -204,18 +204,24 @@ export function adminEntities(): EntityDescriptor[] {
             { value: 'ADMIN', label: () => m.admin_type_admin() },
           ],
         },
+        {
+          name: 'authSource', label: () => m.admin_f_auth_source(), type: 'select', stringValue: true, help: () => m.admin_help_auth_source(),
+          staticOptions: [
+            { value: 'local', label: () => m.admin_auth_source_local() },
+            { value: 'ldap', label: () => m.admin_auth_source_ldap() },
+          ],
+        },
         { name: 'password', label: () => m.admin_f_password(), type: 'password', help: () => m.admin_help_password() },
-        { name: 'clearPassword', label: () => m.admin_f_clear_password(), type: 'checkbox', help: () => m.admin_help_clear_password() },
         { name: 'teams', label: () => m.admin_f_teams(), type: 'multiselect', source: 'teams', required: true },
       ],
       rowLabel: (row) => str(row.username),
       toForm: (row) => row === null
-        ? { id: 0, username: '', abbr: '', locale: 'de', type: 'DEV', active: true, password: '', clearPassword: false, teams: [] }
-        : { id: num(row.id), username: str(row.username), abbr: str(row.abbr), locale: str(row.locale) || 'de', type: str(row.type) || 'DEV', active: bool(row.active), password: '', clearPassword: false, teams: (row.teams as number[]) ?? [] },
-      // locale/type are string selects; the shell stores select values as numbers,
-      // so re-stringify here before sending. password is write-only (never echoed
-      // back from the server) — it starts blank and only travels on submit.
-      toPayload: (v) => ({ id: v.id, username: v.username, abbr: v.abbr, locale: v.locale, type: v.type, active: v.active, password: v.password, clearPassword: v.clearPassword, teams: v.teams }),
+        ? { id: 0, username: '', abbr: '', locale: 'de', type: 'DEV', active: true, password: '', authSource: 'ldap', teams: [] }
+        : { id: num(row.id), username: str(row.username), abbr: str(row.abbr), locale: str(row.locale) || 'de', type: str(row.type) || 'DEV', active: bool(row.active), password: '', authSource: bool(row.is_local) ? 'local' : 'ldap', teams: (row.teams as number[]) ?? [] },
+      // locale/type/authSource are string selects; the shell stores select values as
+      // numbers, so re-stringify here before sending. password is write-only (never
+      // echoed back from the server) — it starts blank and only travels on submit.
+      toPayload: (v) => ({ id: v.id, username: v.username, abbr: v.abbr, locale: v.locale, type: v.type, active: v.active, password: v.password, authSource: v.authSource, teams: v.teams }),
     },
     {
       key: 'teams',

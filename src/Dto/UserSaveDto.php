@@ -23,6 +23,12 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[Map(target: User::class)]
 final readonly class UserSaveDto
 {
+    /** The account authenticates against its own local password hash. */
+    public const string AUTH_LOCAL = 'local';
+
+    /** The account authenticates against the directory (no local password). */
+    public const string AUTH_LDAP = 'ldap';
+
     public function __construct(
         public int $id = 0,
         #[Assert\NotBlank(message: 'Please provide a valid user name with at least 3 letters.')]
@@ -45,11 +51,18 @@ final readonly class UserSaveDto
         public string $password = '',
 
         /**
-         * When true, revert the account to LDAP (clear the local password hash).
-         * Excluded from mapping; handled explicitly in SaveUserAction.
+         * Explicit authentication source: 'local' (own password) or 'ldap' (the
+         * directory). Replaces the old implicit clearPassword flag — the admin now
+         * states the intent and the server enforces it (a local account must end up
+         * with a password). Excluded from mapping; applied in SaveUserAction.
+         *
+         * NULL means the field was omitted (a client that predates this control):
+         * SaveUserAction then leaves the existing account untouched — a bare edit
+         * must never silently downgrade an existing LOCAL account to the directory.
+         * Only an explicit 'ldap' clears the hash.
          */
         #[Map(if: false)]
-        public bool $clearPassword = false,
+        public ?string $authSource = null,
 
         /** @var list<int|string> */
         #[Map(if: false)]
@@ -73,7 +86,9 @@ final readonly class UserSaveDto
             locale: (string) ($request->request->get('locale') ?? ''),
             active: $request->request->getBoolean('active', true),
             password: (string) ($request->request->get('password') ?? ''),
-            clearPassword: $request->request->getBoolean('clearPassword'),
+            // Preserve "omitted" as null (legacy clients) rather than coercing to a
+            // value — SaveUserAction treats null as "leave the auth source as-is".
+            authSource: $request->request->has('authSource') ? (string) $request->request->get('authSource') : null,
             teams: array_values($teams),
         );
     }
@@ -89,24 +104,35 @@ final readonly class UserSaveDto
     }
 
     /**
-     * The password block accepts exactly one intent at a time:
-     *  - empty password, clearPassword off → no change;
-     *  - empty password, clearPassword on  → revert to LDAP;
-     *  - password set,   clearPassword off → set it (min. length floor applies).
+     * The authentication-source block accepts one coherent intent:
+     *  - authSource null (omitted) → legacy client: no source change, a supplied
+     *    password is still length-checked and sets the account local;
+     *  - authSource 'ldap' → directory account, so no password may be supplied;
+     *  - authSource 'local', password set   → set it (min. length floor applies);
+     *  - authSource 'local', password empty → keep the existing hash (SaveUserAction
+     *    rejects this when the account has none yet — that check needs the entity).
      *
-     * Setting AND clearing together is contradictory, so it is rejected explicitly
-     * rather than silently resolved by precedence. The length floor is basic
+     * A non-null value other than local/ldap is rejected; supplying a password while
+     * choosing LDAP is contradictory and rejected here. The length floor is basic
      * hygiene; a full complexity policy is out of scope (see ADR-018).
      */
     #[Assert\Callback]
     public function validatePassword(ExecutionContextInterface $executionContext): void
     {
+        if (null !== $this->authSource && self::AUTH_LOCAL !== $this->authSource && self::AUTH_LDAP !== $this->authSource) {
+            $executionContext->buildViolation('Authentication source must be either local or LDAP.')
+                ->atPath('authSource')
+                ->addViolation();
+
+            return;
+        }
+
         if ('' === $this->password) {
             return;
         }
 
-        if ($this->clearPassword) {
-            $executionContext->buildViolation('Choose either setting a new password or clearing it — not both.')
+        if (self::AUTH_LDAP === $this->authSource) {
+            $executionContext->buildViolation('An LDAP account has no local password — choose local authentication to set one.')
                 ->atPath('password')
                 ->addViolation();
 

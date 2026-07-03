@@ -92,3 +92,4 @@
 "The new password must be at least 8 characters.": "Новый пароль должен содержать не менее 8 символов."
 "No enrolment is in progress. Start again.": "Настройка не запущена. Начните заново."
 "That code is not valid. Check your authenticator and try again.": "Этот код недействителен. Проверьте приложение-аутентификатор и попробуйте снова."
+"A local account needs a password. Set one, or choose LDAP authentication.": "Локальной учётной записи нужен пароль. Задайте его или выберите LDAP-аутентификацию."
