@@ -27,6 +27,21 @@ import { goToWorklogPage, goToAuswertungPage, goToAdminPage, hideDebugToolbar } 
  */
 async function expectNoSeriousA11y(page: Page, scopeSelector?: string): Promise<void> {
   await hideDebugToolbar(page).catch(() => undefined); // APP_ENV=test injects .sf-toolbar
+  // Stabilise the render before scanning. Two intermittent sources of a phantom
+  // colour-contrast failure on the worklog table's sticky header:
+  //   1. Web fonts still swapping — wait for document.fonts.ready.
+  //   2. The grid auto-focuses a row, which can scroll a body row UNDER the
+  //      position:sticky <th>; axe mis-samples an overlapping sticky element's
+  //      background (reporting a composite colour that isn't in the CSS), so
+  //      reset every scroll container (and the window) to the top, where the
+  //      header overlaps nothing.
+  // Then settle two animation frames so the scan sees a fully painted, stable DOM.
+  await page.evaluate(async () => {
+    await document.fonts?.ready; // no-op if the Font Loading API is absent
+    window.scrollTo(0, 0);
+    document.querySelectorAll('.table-scroll, .modal-page-body').forEach((el) => { el.scrollTop = 0; });
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  });
   let builder = new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .exclude('.sf-toolbar');  // Symfony web debug toolbar — not shipped code
