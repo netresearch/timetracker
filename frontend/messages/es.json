@@ -486,5 +486,7 @@
   "settings_2fa_backup_hint": "Cada código funciona una vez, para iniciar sesión cuando tu aplicación de autenticación no esté disponible. Solo se muestran ahora; guárdalos en un lugar seguro.",
   "settings_2fa_backup_done": "Los he guardado",
   "settings_2fa_error": "Algo salió mal. Inténtalo de nuevo.",
-  "settings_2fa_disable_confirm": "¿Desactivar la autenticación de dos factores? Iniciarás sesión solo con tu contraseña hasta que la vuelvas a activar."
+  "settings_2fa_disable_confirm": "¿Desactivar la autenticación de dos factores? Iniciarás sesión solo con tu contraseña hasta que la vuelvas a activar.",
+  "tracking_row_actions": "Acciones de fila",
+  "tracking_ticket_link_hint": "Ctrl+clic (⌘ en Mac) abre el ticket; un clic simple edita la celda"
 }

@@ -65,3 +65,10 @@ export function RefreshIcon(): JSX.Element {
 export function ResetIcon(): JSX.Element {
   return <Icon><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-1" /></Icon>
 }
+
+// Kebab (vertical dots): the collapsed row-actions menu trigger. The shared Icon
+// shell is stroke-based (fill:none), so the dots fill themselves explicitly —
+// stroked circles would render as hollow rings.
+export function KebabIcon(): JSX.Element {
+  return <Icon><circle cx="12" cy="5" r="1.8" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none" /><circle cx="12" cy="19" r="1.8" fill="currentColor" stroke="none" /></Icon>
+}

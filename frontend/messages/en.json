@@ -486,5 +486,7 @@
   "settings_2fa_backup_hint": "Each code works once, for signing in when your authenticator is unavailable. They are shown only now — store them somewhere safe.",
   "settings_2fa_backup_done": "I've saved them",
   "settings_2fa_error": "Something went wrong. Please try again.",
-  "settings_2fa_disable_confirm": "Disable two-factor authentication? You'll sign in with just your password until you turn it back on."
+  "settings_2fa_disable_confirm": "Disable two-factor authentication? You'll sign in with just your password until you turn it back on.",
+  "tracking_row_actions": "Row actions",
+  "tracking_ticket_link_hint": "Ctrl+click (⌘ on Mac) opens the ticket — a plain click edits the cell"
 }
