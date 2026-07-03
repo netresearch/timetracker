@@ -469,6 +469,44 @@ final class LoginFormAuthenticatorTest extends TestCase
         self::assertSame(['ok' => true, 'redirect' => '/dashboard'], json_decode((string) $response->getContent(), true));
     }
 
+    public function testOnAuthenticationSuccessSignalsTwoFactorRequiredForXhr(): void
+    {
+        // scheb swapped the token for a TwoFactorToken (password ok, code
+        // outstanding): the SPA must get the explicit challenge signal, not
+        // {ok:true} — it would otherwise believe the login completed.
+        $authenticator = $this->makeSubject();
+
+        $request = new Request();
+        $request->setSession(new Session(new MockArraySessionStorage()));
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest');
+
+        $token = self::createStub(\Scheb\TwoFactorBundle\Security\Authentication\Token\TwoFactorTokenInterface::class);
+
+        $response = $authenticator->onAuthenticationSuccess($request, $token, 'main');
+
+        self::assertInstanceOf(JsonResponse::class, $response);
+        self::assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
+        self::assertSame(['ok' => false, 'twoFactorRequired' => true], json_decode((string) $response->getContent(), true));
+    }
+
+    public function testOnAuthenticationSuccessRedirectsToTwoFactorFormForNoJs(): void
+    {
+        $this->router->method('generate')
+            ->willReturnCallback(static fn (string $route): string => '2fa_login' === $route ? '/2fa' : '/_start');
+
+        $authenticator = $this->makeSubject();
+
+        $request = new Request();
+        $request->setSession(new Session(new MockArraySessionStorage()));
+
+        $token = self::createStub(\Scheb\TwoFactorBundle\Security\Authentication\Token\TwoFactorTokenInterface::class);
+
+        $response = $authenticator->onAuthenticationSuccess($request, $token, 'main');
+
+        self::assertSame(Response::HTTP_FOUND, $response->getStatusCode());
+        self::assertSame('/2fa', $response->headers->get('Location'));
+    }
+
     // ==================== onAuthenticationFailure() tests ====================
 
     public function testOnAuthenticationFailureReturnsJsonForXhr(): void

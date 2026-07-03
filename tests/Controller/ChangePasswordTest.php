@@ -9,9 +9,9 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
-use App\Entity\User;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\LocalPasswordTestTrait;
 
 use function is_string;
 use function password_hash;
@@ -29,6 +29,8 @@ use const PASSWORD_DEFAULT;
  */
 final class ChangePasswordTest extends AbstractWebTestCase
 {
+    use LocalPasswordTestTrait;
+
     public function testLdapAccountCannotChangePassword(): void
     {
         $this->setStoredPassword(1, null); // LDAP account: no local password
@@ -79,18 +81,6 @@ final class ChangePasswordTest extends AbstractWebTestCase
     private function post(array $body): void
     {
         $this->client->request(Request::METHOD_POST, '/settings/password', $body, [], ['HTTP_ACCEPT' => 'application/json']);
-    }
-
-    private function setStoredPassword(int $userId, ?string $hash): void
-    {
-        // Set via the EM (not raw SQL) so the identity map logInSession's find()
-        // reads from is consistent — otherwise it returns a stale cached entity.
-        self::assertNotNull($this->serviceContainer);
-        $manager = $this->serviceContainer->get('doctrine')->getManager();
-        $user = $manager->getRepository(User::class)->find($userId);
-        self::assertInstanceOf(User::class, $user);
-        $user->setPassword($hash);
-        $manager->flush();
     }
 
     private function storedPassword(int $userId): ?string

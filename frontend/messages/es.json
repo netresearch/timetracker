@@ -488,5 +488,10 @@
   "settings_2fa_error": "Algo salió mal. Inténtalo de nuevo.",
   "settings_2fa_disable_confirm": "¿Desactivar la autenticación de dos factores? Iniciarás sesión solo con tu contraseña hasta que la vuelvas a activar.",
   "tracking_row_actions": "Acciones de fila",
-  "tracking_ticket_link_hint": "Ctrl+clic (⌘ en Mac) abre el ticket; un clic simple edita la celda"
+  "tracking_ticket_link_hint": "Ctrl+clic (⌘ en Mac) abre el ticket; un clic simple edita la celda",
+  "login_2fa_hint": "Introduce el código de 6 dígitos de tu aplicación de autenticación, o uno de tus códigos de respaldo.",
+  "login_2fa_code": "Código de verificación",
+  "login_2fa_submit": "Verificar",
+  "login_2fa_error": "Ese código no es válido. Comprueba tu aplicación de autenticación e inténtalo de nuevo.",
+  "login_2fa_back": "Volver al inicio de sesión"
 }

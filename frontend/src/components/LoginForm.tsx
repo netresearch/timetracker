@@ -9,6 +9,11 @@ import { m } from '../paraglide/messages.js'
  * submits via fetch (X-Requested-With) and shows inline errors without a reload.
  * The field names (_username, _password, _csrf_token, _remember_me) and the
  * #form-submit id match what the firewall and the e2e suite expect.
+ *
+ * Two-factor (ADR-018 D2): a correct password on an enrolled account answers
+ * {twoFactorRequired:true}, and the form swaps to a one-field code step posting
+ * `_auth_code` to /2fa_check (a TOTP code or a one-time backup code). The no-JS
+ * fallback is redirected server-side to the /2fa form instead.
  */
 export function LoginForm(props: { config: LoginConfig }) {
   // The config is injected once at page load and never changes, so reading it
@@ -20,6 +25,18 @@ export function LoginForm(props: { config: LoginConfig }) {
   const [remember, setRemember] = createSignal(true)
   const [error, setError] = createSignal<string | null>(cfg.error)
   const [submitting, setSubmitting] = createSignal(false)
+  const [phase, setPhase] = createSignal<'credentials' | 'code'>('credentials')
+  const [code, setCode] = createSignal('')
+
+  const postForm = (path: string, body: Record<string, string>) => fetch(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest',
+      Accept: 'application/json',
+    },
+    body: new URLSearchParams(body),
+  })
 
   const submit = async (event: SubmitEvent) => {
     event.preventDefault()
@@ -34,23 +51,21 @@ export function LoginForm(props: { config: LoginConfig }) {
     setSubmitting(true)
     setError(null)
     try {
-      const response = await fetch(props.config.loginPath, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Requested-With': 'XMLHttpRequest',
-          Accept: 'application/json',
-        },
-        body: new URLSearchParams({
-          _username: username(),
-          _password: password(),
-          _csrf_token: props.config.csrfToken,
-          ...(remember() ? { _remember_me: 'on' } : {}),
-        }),
+      const response = await postForm(props.config.loginPath, {
+        _username: username(),
+        _password: password(),
+        _csrf_token: props.config.csrfToken,
+        ...(remember() ? { _remember_me: 'on' } : {}),
       })
-      const data = (await response.json().catch(() => null)) as { ok?: boolean; redirect?: string } | null
+      const data = (await response.json().catch(() => null)) as { ok?: boolean; redirect?: string; twoFactorRequired?: boolean } | null
       if (response.ok && data?.ok === true) {
-        window.location.assign(data.redirect ?? '/')
+        globalThis.location.assign(data.redirect ?? '/')
+
+        return
+      }
+      if (data?.twoFactorRequired === true) {
+        // Password accepted; the account needs its second factor.
+        setPhase('code')
 
         return
       }
@@ -62,62 +77,144 @@ export function LoginForm(props: { config: LoginConfig }) {
     }
   }
 
+  const submitCode = async (event: SubmitEvent) => {
+    event.preventDefault()
+    if (submitting()) {
+      return
+    }
+    if (code().trim() === '') {
+      // novalidate disables the browser's own message — say why nothing happened.
+      setError(m.login_2fa_error())
+
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    try {
+      const response = await postForm(props.config.twoFactorPath ?? '/2fa_check', {
+        _auth_code: code().trim(),
+      })
+      const data = (await response.json().catch(() => null)) as { ok?: boolean; redirect?: string } | null
+      if (response.ok && data?.ok === true) {
+        globalThis.location.assign(data.redirect ?? '/')
+
+        return
+      }
+      setError(m.login_2fa_error())
+    } catch {
+      setError(m.login_2fa_error())
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const backToCredentials = () => {
+    setPhase('credentials')
+    setCode('')
+    setError(null)
+  }
+
   return (
     <main class="login-page">
-      <form class="login-card" method="post" action={props.config.loginPath} onSubmit={submit} novalidate>
-        <img class="login-logo" src={props.config.logoUrl} alt={props.config.appTitle} />
-        <h1 class="login-title">{props.config.appTitle}</h1>
+      <Show
+        when={phase() === 'credentials'}
+        fallback={
+          <form class="login-card" onSubmit={(event) => void submitCode(event)} novalidate>
+            <img class="login-logo" src={props.config.logoUrl} alt={props.config.appTitle} />
+            <h1 class="login-title">{props.config.appTitle}</h1>
 
-        <Show when={error()}>
-          <p class="form-status is-error" role="alert">
-            {error()}
-          </p>
-        </Show>
+            <Show when={error()}>
+              <p class="form-status is-error" role="alert">
+                {error()}
+              </p>
+            </Show>
 
-        <input type="hidden" name="_csrf_token" value={props.config.csrfToken} />
+            <p class="login-2fa-hint">{m.login_2fa_hint()}</p>
 
-        <label class="field">
-          <span>{m.login_username()}</span>
-          <input
-            type="text"
-            name="_username"
-            autocomplete="username"
-            autocapitalize="off"
-            autocorrect="off"
-            spellcheck={false}
-            required
-            autofocus
-            value={username()}
-            onInput={(e) => setUsername(e.currentTarget.value)}
-          />
-        </label>
+            <label class="field">
+              <span>{m.login_2fa_code()}</span>
+              <input
+                id="auth-code"
+                type="text"
+                name="_auth_code"
+                autocomplete="one-time-code"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck={false}
+                required
+                // No inputmode=numeric: backup codes are hex, so mobile users
+                // need the full keyboard. Ref-focus because autofocus only fires
+                // on document load, not on this dynamically mounted phase.
+                ref={(el) => setTimeout(() => el.focus())}
+                value={code()}
+                onInput={(e) => setCode(e.currentTarget.value)}
+              />
+            </label>
 
-        <label class="field">
-          <span>{m.login_password()}</span>
-          <input
-            type="password"
-            name="_password"
-            autocomplete="current-password"
-            required
-            value={password()}
-            onInput={(e) => setPassword(e.currentTarget.value)}
-          />
-        </label>
+            <button type="submit" id="form-submit" class="primary-button login-submit" disabled={submitting()}>
+              {submitting() ? m.login_submitting() : m.login_2fa_submit()}
+            </button>
+            <button type="button" class="login-2fa-back" onClick={backToCredentials}>
+              {m.login_2fa_back()}
+            </button>
+          </form>
+        }
+      >
+        <form class="login-card" method="post" action={props.config.loginPath} onSubmit={(event) => void submit(event)} novalidate>
+          <img class="login-logo" src={props.config.logoUrl} alt={props.config.appTitle} />
+          <h1 class="login-title">{props.config.appTitle}</h1>
 
-        <label class="field-check">
-          <input
-            type="checkbox"
-            name="_remember_me"
-            checked={remember()}
-            onChange={(e) => setRemember(e.currentTarget.checked)}
-          />
-          <span>{m.login_remember()}</span>
-        </label>
+          <Show when={error()}>
+            <p class="form-status is-error" role="alert">
+              {error()}
+            </p>
+          </Show>
 
-        <button type="submit" id="form-submit" class="primary-button login-submit" disabled={submitting()}>
-          {submitting() ? m.login_submitting() : m.login_submit()}
-        </button>
-      </form>
+          <input type="hidden" name="_csrf_token" value={props.config.csrfToken} />
+
+          <label class="field">
+            <span>{m.login_username()}</span>
+            <input
+              type="text"
+              name="_username"
+              autocomplete="username"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck={false}
+              required
+              autofocus
+              value={username()}
+              onInput={(e) => setUsername(e.currentTarget.value)}
+            />
+          </label>
+
+          <label class="field">
+            <span>{m.login_password()}</span>
+            <input
+              type="password"
+              name="_password"
+              autocomplete="current-password"
+              required
+              value={password()}
+              onInput={(e) => setPassword(e.currentTarget.value)}
+            />
+          </label>
+
+          <label class="field-check">
+            <input
+              type="checkbox"
+              name="_remember_me"
+              checked={remember()}
+              onChange={(e) => setRemember(e.currentTarget.checked)}
+            />
+            <span>{m.login_remember()}</span>
+          </label>
+
+          <button type="submit" id="form-submit" class="primary-button login-submit" disabled={submitting()}>
+            {submitting() ? m.login_submitting() : m.login_submit()}
+          </button>
+        </form>
+      </Show>
     </main>
   )
 }

@@ -11,6 +11,7 @@ const config: LoginConfig = {
   logoUrl: '/logo.svg',
   csrfToken: 'csrf-123',
   loginPath: '/login',
+  twoFactorPath: '/2fa_check',
   lastUsername: '',
   error: null,
 }
@@ -88,6 +89,74 @@ describe('LoginForm', () => {
     fireEvent.click(getByRole('button', { name: 'Sign in' }))
 
     expect(await findByRole('alert')).toHaveTextContent('Login failed')
+
+    unmount()
+  })
+
+  it('swaps to the code step when the server signals twoFactorRequired', async () => {
+    // 1st fetch: password accepted but 2FA outstanding; 2nd: the code check.
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: () => Promise.resolve({ ok: false, twoFactorRequired: true }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ ok: true, redirect: '/' }) })
+    vi.stubGlobal('fetch', fetchMock)
+    const assign = vi.fn()
+    vi.stubGlobal('location', { ...window.location, assign })
+    const { container, getByRole, findByLabelText, unmount } = render(() => <LoginForm config={config} />)
+
+    fireEvent.input(container.querySelector('input[name="_username"]')!, { target: { value: 'developer' } })
+    fireEvent.input(container.querySelector('input[name="_password"]')!, { target: { value: 'secret' } })
+    fireEvent.click(getByRole('button', { name: 'Sign in' }))
+
+    // The form swaps to the one-field challenge without a redirect.
+    const codeInput = await findByLabelText('Verification code')
+    expect(assign).not.toHaveBeenCalled()
+
+    fireEvent.input(codeInput, { target: { value: '123456' } })
+    fireEvent.click(getByRole('button', { name: 'Verify' }))
+
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/'))
+    expect(fetchMock).toHaveBeenLastCalledWith('/2fa_check', expect.objectContaining({ method: 'POST' }))
+    const body = (fetchMock.mock.calls[1]![1] as { body: URLSearchParams }).body
+    expect(body.get('_auth_code')).toBe('123456')
+
+    unmount()
+  })
+
+  it('shows the 2FA error and stays on the code step for a wrong code', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: () => Promise.resolve({ ok: false, twoFactorRequired: true }) })
+      .mockResolvedValueOnce({ ok: false, status: 401, json: () => Promise.resolve({ ok: false, error: 'invalid' }) })
+    vi.stubGlobal('fetch', fetchMock)
+    const { container, getByRole, findByLabelText, findByRole, unmount } = render(() => <LoginForm config={config} />)
+
+    fireEvent.input(container.querySelector('input[name="_username"]')!, { target: { value: 'developer' } })
+    fireEvent.input(container.querySelector('input[name="_password"]')!, { target: { value: 'secret' } })
+    fireEvent.click(getByRole('button', { name: 'Sign in' }))
+
+    const codeInput = await findByLabelText('Verification code')
+    fireEvent.input(codeInput, { target: { value: '000000' } })
+    fireEvent.click(getByRole('button', { name: 'Verify' }))
+
+    expect(await findByRole('alert')).toHaveTextContent('That code is not valid')
+    expect(container.querySelector('input[name="_auth_code"]')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('returns to the credentials step via the back link', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: () => Promise.resolve({ ok: false, twoFactorRequired: true }) })
+    vi.stubGlobal('fetch', fetchMock)
+    const { container, getByRole, findByLabelText, unmount } = render(() => <LoginForm config={config} />)
+
+    fireEvent.input(container.querySelector('input[name="_username"]')!, { target: { value: 'developer' } })
+    fireEvent.input(container.querySelector('input[name="_password"]')!, { target: { value: 'secret' } })
+    fireEvent.click(getByRole('button', { name: 'Sign in' }))
+    await findByLabelText('Verification code')
+
+    fireEvent.click(getByRole('button', { name: 'Back to sign-in' }))
+
+    expect(container.querySelector('input[name="_username"]')).toBeInTheDocument()
 
     unmount()
   })

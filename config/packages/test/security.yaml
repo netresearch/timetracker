@@ -15,4 +15,14 @@ security:
             logout:
                 path: _logout
                 target: _login
+            # Mirror the production two_factor block (this file fully overrides the
+            # main firewall) so the challenge flow is functionally testable. Inert
+            # for the test fixtures' default state (no user has a TOTP secret).
+            two_factor:
+                auth_form_path: 2fa_login
+                check_path: 2fa_login_check
+                auth_code_parameter_name: _auth_code
+                authentication_required_handler: App\Security\TwoFactor\TwoFactorJsonRequiredHandler
+                success_handler: App\Security\TwoFactor\TwoFactorJsonSuccessHandler
+                failure_handler: App\Security\TwoFactor\TwoFactorJsonFailureHandler
 

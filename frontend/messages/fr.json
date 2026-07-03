@@ -488,5 +488,10 @@
   "settings_2fa_error": "Une erreur s'est produite. Veuillez réessayer.",
   "settings_2fa_disable_confirm": "Désactiver l'authentification à deux facteurs ? Vous vous connecterez uniquement avec votre mot de passe jusqu'à ce que vous la réactiviez.",
   "tracking_row_actions": "Actions de ligne",
-  "tracking_ticket_link_hint": "Ctrl+clic (⌘ sur Mac) ouvre le ticket — un simple clic modifie la cellule"
+  "tracking_ticket_link_hint": "Ctrl+clic (⌘ sur Mac) ouvre le ticket — un simple clic modifie la cellule",
+  "login_2fa_hint": "Saisissez le code à 6 chiffres de votre application d'authentification — ou l'un de vos codes de secours.",
+  "login_2fa_code": "Code de vérification",
+  "login_2fa_submit": "Vérifier",
+  "login_2fa_error": "Ce code n'est pas valide. Vérifiez votre application d'authentification et réessayez.",
+  "login_2fa_back": "Retour à la connexion"
 }

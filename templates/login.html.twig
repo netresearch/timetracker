@@ -18,6 +18,7 @@
                 'logoUrl': logo_url,
                 'csrfToken': csrf_token('authenticate'),
                 'loginPath': path('_login'),
+                'twoFactorPath': path('2fa_login_check'),
                 'lastUsername': last_username is defined ? last_username : '',
                 'error': errorMessage,
             }|json_encode(jsonHexFlags)|raw }};

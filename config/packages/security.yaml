@@ -42,6 +42,21 @@ security:
             login_throttling:
                 max_attempts: 5
 
+            # Second factor (ADR-018 D2, increment 3). Only challenges users with an
+            # enrolled TOTP secret — everyone else logs in exactly as before. The
+            # three handlers speak JSON to the SPA (fetch/XHR) and fall back to the
+            # scheb-rendered /2fa form for no-JS clients. The check path
+            # (/2fa_check) is firewall-intercepted, not a controller. CSRF stays off
+            # here: the password step already validates the stateless 'authenticate'
+            # token, and the code check is bound to the session's TwoFactorToken.
+            two_factor:
+                auth_form_path: 2fa_login
+                check_path: 2fa_login_check
+                auth_code_parameter_name: _auth_code
+                authentication_required_handler: App\Security\TwoFactor\TwoFactorJsonRequiredHandler
+                success_handler: App\Security\TwoFactor\TwoFactorJsonSuccessHandler
+                failure_handler: App\Security\TwoFactor\TwoFactorJsonFailureHandler
+
             # Standard logout configuration
             logout:
                 path: _logout
@@ -81,6 +96,10 @@ security:
         # where the `dev` firewall is narrowed so these fall through to `main`;
         # lock them to admins. Inert in dev/test/prod (no such routes/firewall match).
         - { path: ^/_(profiler|wdt), roles: ROLE_ADMIN }
+        # The 2FA form (/2fa) and code check (/2fa_check) are reached while the
+        # login is half-done — the catch-all's IS_AUTHENTICATED_FULLY would block
+        # them, so allow the in-progress state explicitly (must precede ^/).
+        - { path: ^/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS }
         - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 
         # Uncomment to restrict access to paths starting with /_internal to only localhost
