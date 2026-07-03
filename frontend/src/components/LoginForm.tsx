@@ -1,6 +1,7 @@
 import { createSignal, Show } from 'solid-js'
 
 import type { LoginConfig } from '../loginConfig'
+import { PasskeyIcon } from '../lib/icons'
 import { loginWithPasskey, passkeysSupported } from '../lib/passkeys'
 import { m } from '../paraglide/messages.js'
 
@@ -233,7 +234,10 @@ export function LoginForm(props: { config: LoginConfig }) {
 
           <Show when={passkeysSupported()}>
             <button type="button" class="login-passkey" disabled={submitting()} onClick={() => void signInWithPasskey()}>
-              {m.login_passkey()}
+              {/* No whitespace text node between the two children: the button is a
+                  flex row with gap, so a stray space would become a third flex
+                  item and double the gap. */}
+              <PasskeyIcon /><span>{m.login_passkey()}</span>
             </button>
           </Show>
         </form>
