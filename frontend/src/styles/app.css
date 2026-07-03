@@ -743,6 +743,58 @@ main {
   margin: -0.4rem 0 0;
 }
 
+/* ---- Responsive-hybrid field layout (form overhaul) ----------------------
+   Inside a .stack-form (Settings, the admin dialogs, bulk/billing forms) a
+   field's label sits BESIDE its control on a wide container and collapses back
+   to stacked on a narrow one. Bare .field (login, filter bars) is untouched, so
+   it keeps stacking. Textareas, multi-selects and two-up .field-rows keep the
+   full width with the label on top. Scoped via a container query so a narrow
+   admin modal or a mobile viewport degrades gracefully. */
+.stack-form {
+  container-type: inline-size;
+}
+
+@container (min-width: 30rem) {
+  .stack-form .field {
+    display: grid;
+    /* em (not rem) so the label column tracks the --font-scale text-size
+       preference (ADR-014), keeping long labels from clipping when scaled up. */
+    grid-template-columns: 11em minmax(0, 1fr);
+    align-items: center;
+    gap: 0.3rem 1.2rem;
+  }
+
+  /* Every control and hint stacks in the control column; only the label <span>
+     stays in column 1. Without pinning, a field's SECOND control — e.g. the
+     custom date-format <input> that appears after the <select> — would be
+     auto-placed into the narrow label column and break the row alignment. */
+  .stack-form .field > input:not([type='checkbox']):not([type='radio']),
+  .stack-form .field > select,
+  .stack-form .field > textarea,
+  .stack-form .field > .field-hint {
+    grid-column: 2;
+  }
+
+  .stack-form .field > .field-hint {
+    margin: 0.15em 0 0;
+  }
+
+  /* Full-width exceptions — a single-column grid keeps the label on top and lets
+     every child (reset from the pin above) flow naturally down that one column. */
+  .stack-form .field.multiselect,
+  .stack-form .field:has(textarea),
+  .stack-form .field-row .field {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .stack-form .field.multiselect > *,
+  .stack-form .field:has(textarea) > *,
+  .stack-form .field-row .field > * {
+    grid-column: auto;
+  }
+}
+
 /* ---- Settings: grouped preference cards ---- */
 
 /* Settings stacks two labeled cards — account-saved vs this-device — so the
