@@ -105,7 +105,8 @@ final class SaveEntryTicketPrefixTest extends AbstractWebTestCase
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
-        self::assertSame('Given ticket does not have a valid prefix.', $data['message']);
+        // The 'unittest' user is German, so the message is localized (ADR i18n fix).
+        self::assertSame('Das angegebene Ticket hat kein gültiges Präfix.', $data['message']);
     }
 
     public function testTicketPrefixMustMatchExactlyNotMerelyStartWith(): void
@@ -121,6 +122,7 @@ final class SaveEntryTicketPrefixTest extends AbstractWebTestCase
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
-        self::assertSame('Given ticket does not have a valid prefix.', $data['message']);
+        // The 'unittest' user is German, so the message is localized (ADR i18n fix).
+        self::assertSame('Das angegebene Ticket hat kein gültiges Präfix.', $data['message']);
     }
 }
