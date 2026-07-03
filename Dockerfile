@@ -62,6 +62,9 @@ RUN pecl install apcu-${APCU_VERSION} \
 
 COPY docker/php/apcu.ini /usr/local/etc/php/conf.d/
 
+# Worker pool sizing for the parallel page-load burst (see the file's comment).
+COPY docker/php/fpm-pool.conf /usr/local/etc/php-fpm.d/zz-pool.conf
+
 # Create non-root user
 RUN addgroup --gid 1000 app \
     && adduser --uid 1000 --gid 1000 --disabled-password --gecos "" app
