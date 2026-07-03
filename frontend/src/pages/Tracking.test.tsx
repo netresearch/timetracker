@@ -874,4 +874,68 @@ describe('Tracking (Worklog grid)', () => {
       window.APP_CONFIG!.minEntryDuration = 5
     }
   })
+
+  it('gates the ticket link behind Ctrl/Cmd — a plain click is prevented (starts editing)', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],
+    })
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('a.ticket-link')).toBeInTheDocument())
+    const link = container.querySelector('a.ticket-link') as HTMLAnchorElement
+
+    // Plain click: navigation prevented — the click bubbles to the cell and
+    // starts inline editing instead of opening the ticket system.
+    const plain = new MouseEvent('click', { bubbles: true, cancelable: true })
+    link.dispatchEvent(plain)
+    expect(plain.defaultPrevented).toBe(true)
+
+    // Ctrl+click (the activation key): the link keeps its default behaviour.
+    const modified = new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true })
+    link.dispatchEvent(modified)
+    expect(modified.defaultPrevented).toBe(false)
+
+    unmount()
+  })
+
+  it('offers every row action in the kebab menu and fires the chosen one', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],
+    })
+    const { container, getByRole, getAllByRole, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('.action-menu')).toBeInTheDocument())
+
+    // Open via click (touch/keyboard path; hover is a pointer-only accelerator).
+    fireEvent.click(getByRole('button', { name: 'Row actions' }))
+    const menu = await waitFor(() => {
+      const pop = container.querySelector('.action-menu-pop')
+      expect(pop).toBeInTheDocument()
+
+      return pop as HTMLElement
+    })
+    // Saved latest row: Continue, Prolong, Info, Delete.
+    expect(menu.querySelectorAll("[role='menuitem']").length).toBe(4)
+
+    // Choosing Continue clones the row (same effect as the icon button) and closes the menu.
+    fireEvent.click(getByRole('menuitem', { name: /Continue/ }))
+    await waitFor(() => expect(getAllByRole('row').length).toBeGreaterThan(2))
+    expect(container.querySelector('.action-menu-pop')).not.toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('closes the kebab menu with Escape', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],
+    })
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('.action-menu')).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Row actions' }))
+    await waitFor(() => expect(container.querySelector('.action-menu-pop')).toBeInTheDocument())
+
+    fireEvent.keyDown(container.querySelector('.action-menu-pop')!, { key: 'Escape' })
+    await waitFor(() => expect(container.querySelector('.action-menu-pop')).not.toBeInTheDocument())
+
+    unmount()
+  })
 })

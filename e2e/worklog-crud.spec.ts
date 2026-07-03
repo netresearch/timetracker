@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loginIsolated } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
-import { cleanupWorklogEntries, createWorklogEntry, openTextEditor, rowByStamp } from './helpers/worklog';
+import { cleanupWorklogEntries, createWorklogEntry, openTextEditor, rowByStamp, clickRowAction } from './helpers/worklog';
 
 /**
  * End-to-end coverage of the SolidJS Worklog CRUD journey (create / edit / save /
@@ -51,7 +51,7 @@ test.describe('Worklog CRUD', () => {
 
     // DELETE: the trash icon opens an accessible confirmation dialog (no native
     // window.confirm); confirming there triggers the form-encoded delete.
-    await rowByStamp(page, edited).getByRole('button', { name: /^(Delete|Löschen)$/i }).click();
+    await clickRowAction(rowByStamp(page, edited), /^(Delete|Löschen)$/i);
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     const deleted = page.waitForResponse(isDelete);
@@ -65,7 +65,7 @@ test.describe('Worklog CRUD', () => {
     let deleteFired = false;
     page.on('request', (r) => { if (isDelete(r)) deleteFired = true; });
 
-    await rowByStamp(page, stamp).getByRole('button', { name: /^(Delete|Löschen)$/i }).click();
+    await clickRowAction(rowByStamp(page, stamp), /^(Delete|Löschen)$/i);
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: /^(Cancel|Abbrechen)$/i }).click();
@@ -78,14 +78,14 @@ test.describe('Worklog CRUD', () => {
   test('Prolong posts the entry with a now end-time', async ({ page }) => {
     const stamp = await createEntry(page);
     const saved = page.waitForResponse(isSave);
-    await rowByStamp(page, stamp).getByRole('button', { name: /Prolong|Verlängern/i }).click();
+    await clickRowAction(rowByStamp(page, stamp), /Prolong|Verlängern/i);
     const response = await saved;
     expect(response.request().method()).toBe('POST');
   });
 
   test('Continue clones a saved row into a fresh editable draft', async ({ page }) => {
     const stamp = await createEntry(page);
-    await rowByStamp(page, stamp).getByRole('button', { name: /Continue|Fortsetzen/i }).click();
+    await clickRowAction(rowByStamp(page, stamp), /Continue|Fortsetzen/i);
 
     // A new, unsaved draft row appears at the top, opened for editing.
     await expect(page.locator('tr.tracking-row.is-new')).toHaveCount(1);

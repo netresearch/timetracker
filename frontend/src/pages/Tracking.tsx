@@ -14,7 +14,7 @@ import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INL
 import { ChipSelect } from '../lib/chipSelect'
 import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
-import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, TrashIcon } from '../lib/icons'
+import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { PageDialog } from '../components/PageDialog'
 import { sessionExpired } from '../lib/session'
@@ -203,10 +203,22 @@ export default function Tracking() {
   }
   const closeDaysMenu = (): void => { setDaysMenuOpen(false); setDaysActiveIdx(-1) }
   const chooseDays = (value: number): void => { applyDays(value); closeDaysMenu() }
+  // The collapsed row-actions menu (kebab) — one open at a time, keyed by row id.
+  // Opens on hover AND on click/tap (touch + keyboard have no hover; WCAG 1.4.13:
+  // the popup is hoverable — it lives inside the hovered wrapper — dismissible
+  // via Escape/click-outside, and persistent until dismissed).
+  const [actionsMenuRow, setActionsMenuRow] = createSignal<number | null>(null)
+  const closeActionsMenu = (): void => { setActionsMenuRow(null) }
   onMount(() => {
     const onDocPointer = (event: PointerEvent): void => {
       if (daysComboRef !== undefined && !daysComboRef.contains(event.target as Node)) {
         closeDaysMenu()
+      }
+      // event.target can be a non-Element node (e.g. a text node) — guard
+      // before calling closest() so the global handler can't throw.
+      const target = event.target
+      if (actionsMenuRow() !== null && (!(target instanceof Element) || target.closest('.action-menu') === null)) {
+        closeActionsMenu()
       }
     }
     document.addEventListener('pointerdown', onDocPointer)
@@ -273,13 +285,13 @@ export default function Tracking() {
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
 
   // Progressive responsive thinning: raise .is-thin-N on the table (each level
-  // shortens the date / truncates a column / hides a low-value column, in
-  // priority order — see app.css) until the table no longer overflows its scroll
-  // container. Cells are nowrap, so this fires BEFORE anything wraps. Width is
-  // monotonic in the level, so a binary search finds the minimal fitting level
-  // in ~4 reflows instead of a ~13-step linear scan. Re-run on container resize
-  // AND on row/content changes.
-  const MAX_THIN = 13
+  // tightens padding / collapses the actions / shortens the date / truncates a
+  // column / hides a low-value column, in priority order — see app.css) until
+  // the table no longer overflows its scroll container. Cells are nowrap, so
+  // this fires BEFORE anything wraps. Width is monotonic in the level, so a
+  // binary search finds the minimal fitting level in ~4 reflows instead of a
+  // ~14-step linear scan. Re-run on container resize AND on row/content changes.
+  const MAX_THIN = 14
   function applyThinLevel(table: HTMLElement, level: number): void {
     for (let i = 1; i <= MAX_THIN; i++) {
       table.classList.toggle('is-thin-' + i, i <= level)
@@ -586,7 +598,24 @@ export default function Tracking() {
 
       return ticket === ''
         ? ''
-        : <a class="ticket-link" href={ticketUrlFor(ticket, num(row.project))} target="_blank" rel="noopener noreferrer">{ticket}</a>
+        : (
+          <a
+            class="ticket-link"
+            href={ticketUrlFor(ticket, num(row.project))}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={m.tracking_ticket_link_hint()}
+            onClick={(event) => {
+              // A plain click starts inline editing (it bubbles to the cell);
+              // following the link needs Ctrl/⌘ as the activation key. Middle
+              // click, keyboard activation and the context menu are unaffected
+              // (none of them dispatch a plain unmodified click).
+              if (!event.ctrlKey && !event.metaKey) {
+                event.preventDefault()
+              }
+            }}
+          >{ticket}</a>
+        )
     }
     if (colKey === 'date') {
       const parts = dateParts(str(editor.overlayRow(entry).date))
@@ -1103,18 +1132,57 @@ export default function Tracking() {
                           "inside the row" so clicking Delete isn't read as a row-leave. */}
                       <td class="tracking-row-actions" data-col-key="actions" data-row-id={String(id)}>
                         <div class="row-actions">
-                          {/* Per-row Continue / Prolong / Info — only for saved entries. */}
-                          <Show when={id > 0}>
-                            <RowAction label={m.tracking_continue()} keyshortcut={rowShortcut('Alt+C')} onClick={() => continueEntry(entry)}><ContinueIcon /></RowAction>
-                            {/* Prolong rewrites the row's end to now — only meaningful on the
-                                LATEST entry; on an older row it would silently overwrite a past
-                                end with the current time, so it's hidden there. */}
-                            <Show when={isLatestEntry(entry)}>
-                              <RowAction label={m.tracking_prolong()} keyshortcut={rowShortcut('Alt+P')} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
+                          {/* Full button set — shown at comfortable widths. Under width
+                              pressure (.is-thin-2) it collapses into the kebab menu below,
+                              which stays visible at every level (unlike the pre-menu
+                              behaviour of hiding the whole column). */}
+                          <span class="action-set">
+                            {/* Per-row Continue / Prolong / Info — only for saved entries. */}
+                            <Show when={id > 0}>
+                              <RowAction label={m.tracking_continue()} keyshortcut={rowShortcut('Alt+C')} onClick={() => continueEntry(entry)}><ContinueIcon /></RowAction>
+                              {/* Prolong rewrites the row's end to now — only meaningful on the
+                                  LATEST entry; on an older row it would silently overwrite a past
+                                  end with the current time, so it's hidden there. */}
+                              <Show when={isLatestEntry(entry)}>
+                                <RowAction label={m.tracking_prolong()} keyshortcut={rowShortcut('Alt+P')} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
+                              </Show>
+                              <RowAction label={m.tracking_info()} keyshortcut={rowShortcut('Alt+I')} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
                             </Show>
-                            <RowAction label={m.tracking_info()} keyshortcut={rowShortcut('Alt+I')} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
-                          </Show>
-                          <RowAction label={m.admin_delete()} danger onClick={() => setPendingDelete(entry)}><TrashIcon /></RowAction>
+                            <RowAction label={m.admin_delete()} danger onClick={() => setPendingDelete(entry)}><TrashIcon /></RowAction>
+                          </span>
+                          {/* Collapsed variant: one always-visible kebab, opening on hover
+                              (pointer) or click/tap (touch, keyboard). Save/Reset stay OUTSIDE
+                              the menu — mid-entry saving must not cost an extra click. */}
+                          <span
+                            class="action-menu"
+                            onPointerEnter={(event) => { if (event.pointerType === 'mouse') { setActionsMenuRow(id) } }}
+                            onPointerLeave={(event) => { if (event.pointerType === 'mouse' && actionsMenuRow() === id) { closeActionsMenu() } }}
+                            onKeyDown={(event) => { if (event.key === 'Escape') { closeActionsMenu() } }}
+                          >
+                            <button
+                              type="button"
+                              class="link-button is-icon"
+                              aria-haspopup="menu"
+                              aria-expanded={actionsMenuRow() === id}
+                              aria-label={m.tracking_row_actions()}
+                              title={m.tracking_row_actions()}
+                              onClick={() => setActionsMenuRow((current) => (current === id ? null : id))}
+                            >
+                              <KebabIcon />
+                            </button>
+                            <Show when={actionsMenuRow() === id}>
+                              <div class="action-menu-pop" role="menu">
+                                <Show when={id > 0}>
+                                  <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); continueEntry(entry) }}><ContinueIcon /> {m.tracking_continue()}</button>
+                                  <Show when={isLatestEntry(entry)}>
+                                    <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); void prolongLast(entry) }}><ProlongIcon /> {m.tracking_prolong()}</button>
+                                  </Show>
+                                  <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); void showInfo(entry) }}><InfoIcon /> {m.tracking_info()}</button>
+                                </Show>
+                                <button type="button" role="menuitem" class="is-danger" onClick={() => { closeActionsMenu(); setPendingDelete(entry) }}><TrashIcon /> {m.admin_delete()}</button>
+                              </div>
+                            </Show>
+                          </span>
                           {/* Force-save and discard (reset) share the unsaved cue: both show while the
                               row has pending edits, and always for a brand-new row (id <= 0). Each keeps
                               a reserved slot (visibility only toggles) so the Delete icon never shifts.

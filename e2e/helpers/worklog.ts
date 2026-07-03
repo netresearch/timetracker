@@ -137,3 +137,20 @@ export async function createWorklogEntry(page: Page): Promise<string> {
   await expect(rowByStamp(page, stamp)).toBeVisible({ timeout: 15000 });
   return stamp;
 }
+
+/**
+ * Click a per-row worklog action (Continue / Prolong / Info / Delete) whether the
+ * actions are rendered as individual icon buttons (wide table) or collapsed into
+ * the kebab menu (.is-thin-2 — the responsive fit may collapse them at any
+ * viewport once columns get wide). The kebab opens on click and offers the same
+ * actions as role=menuitem entries.
+ */
+export async function clickRowAction(row: Locator, name: RegExp): Promise<void> {
+  const kebab = row.getByRole('button', { name: /Row actions|Zeilenaktionen/i });
+  if (await kebab.isVisible()) {
+    await kebab.click();
+    await row.getByRole('menuitem', { name }).click();
+    return;
+  }
+  await row.getByRole('button', { name }).click();
+}
