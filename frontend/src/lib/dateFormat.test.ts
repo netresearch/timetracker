@@ -8,7 +8,7 @@ const ISO = '2026-06-19'
 const appConfigStub: AppConfig = {
   locale: 'de', userId: 1, userName: 'x', appTitle: '', roles: [],
   showEmptyLine: false, suggestTime: false, showFuture: false, minEntryDuration: 5, logoutUrl: '',
-  csrfToken: '', loginPath: '/login',
+  csrfToken: '', loginPath: '/login', totpEnabled: false, localAccount: true,
 }
 
 describe('dateFormat', () => {

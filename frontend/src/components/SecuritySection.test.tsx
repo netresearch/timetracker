@@ -1,0 +1,122 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const postJson = vi.fn()
+
+vi.mock('../api/client', () => ({
+  ApiError: class extends Error {},
+  ValidationError: class extends Error {},
+  SessionExpiredError: class extends Error {},
+  apiErrorMessage: (error: unknown, fallback: string) => (error instanceof Error && error.message ? error.message : fallback),
+  postJson: (...args: unknown[]) => postJson(...args),
+}))
+
+// Imported after the mock so the component picks up the stubbed client.
+const { SecuritySection } = await import('./SecuritySection')
+
+/** Reset APP_CONFIG to the state each test needs (setup.ts seeds a base object). */
+function configure(overrides: { totpEnabled?: boolean; localAccount?: boolean }): void {
+  window.APP_CONFIG = { ...window.APP_CONFIG!, totpEnabled: false, localAccount: true, ...overrides }
+}
+
+describe('SecuritySection', () => {
+  beforeEach(() => {
+    postJson.mockReset()
+    configure({})
+  })
+  afterEach(cleanup)
+
+  it('shows the password form for a local account', () => {
+    render(() => <SecuritySection />)
+    expect(screen.getByLabelText('Current password')).toBeTruthy()
+  })
+
+  it('hides the password form for an LDAP account', () => {
+    configure({ localAccount: false })
+    render(() => <SecuritySection />)
+    expect(screen.queryByLabelText('Current password')).toBeNull()
+  })
+
+  it('rejects mismatched new passwords without calling the API', async () => {
+    render(() => <SecuritySection />)
+    fireEvent.input(screen.getByLabelText('Current password'), { target: { value: 'oldpass12' } })
+    fireEvent.input(screen.getByLabelText('New password'), { target: { value: 'brandnew34' } })
+    fireEvent.input(screen.getByLabelText('Confirm new password'), { target: { value: 'different99' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Change password' }))
+
+    await waitFor(() => expect(screen.getByText('The new passwords do not match.')).toBeTruthy())
+    expect(postJson).not.toHaveBeenCalled()
+  })
+
+  it('changes the password with the correct payload', async () => {
+    postJson.mockResolvedValueOnce({ success: true })
+    render(() => <SecuritySection />)
+    fireEvent.input(screen.getByLabelText('Current password'), { target: { value: 'oldpass12' } })
+    fireEvent.input(screen.getByLabelText('New password'), { target: { value: 'brandnew34' } })
+    fireEvent.input(screen.getByLabelText('Confirm new password'), { target: { value: 'brandnew34' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Change password' }))
+
+    await waitFor(() => expect(screen.getByText('Your password has been changed.')).toBeTruthy())
+    expect(postJson).toHaveBeenCalledWith('/settings/password', { currentPassword: 'oldpass12', newPassword: 'brandnew34' })
+  })
+
+  it('enrols in TOTP and reveals the backup codes exactly once', async () => {
+    postJson
+      .mockResolvedValueOnce({ provisioningUri: 'otpauth://totp/x', secret: 'JBSWY3DPEHPK3PXP' })
+      .mockResolvedValueOnce({ enabled: true, backupCodes: ['aaaa-1111', 'bbbb-2222'] })
+    render(() => <SecuritySection />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enable two-factor' }))
+    await waitFor(() => expect((screen.getByLabelText('Setup key') as HTMLInputElement).value).toBe('JBSWY3DPEHPK3PXP'))
+    expect(postJson).toHaveBeenNthCalledWith(1, '/settings/2fa/totp/start', {})
+
+    fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+
+    await waitFor(() => expect(screen.getByText('aaaa-1111')).toBeTruthy())
+    expect(screen.getByText('bbbb-2222')).toBeTruthy()
+    expect(postJson).toHaveBeenNthCalledWith(2, '/settings/2fa/totp/confirm', { code: '123456' })
+
+    // Dismissing the codes reveals the enabled state.
+    fireEvent.click(screen.getByRole('button', { name: "I've saved them" }))
+    await waitFor(() => expect(screen.getByText('Two-factor authentication is on.')).toBeTruthy())
+  })
+
+  it('clears a typed code when enrolment is cancelled', async () => {
+    postJson.mockResolvedValueOnce({ provisioningUri: 'otpauth://totp/x', secret: 'SECRET1' })
+    render(() => <SecuritySection />)
+    fireEvent.click(screen.getByRole('button', { name: 'Enable two-factor' }))
+    await waitFor(() => screen.getByLabelText('Verification code'))
+    fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '999999' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    // A fresh enrolment must not pre-fill the previously typed code.
+    postJson.mockResolvedValueOnce({ provisioningUri: 'otpauth://totp/y', secret: 'SECRET2' })
+    fireEvent.click(screen.getByRole('button', { name: 'Enable two-factor' }))
+    await waitFor(() => expect((screen.getByLabelText('Verification code') as HTMLInputElement).value).toBe(''))
+  })
+
+  it('disables TOTP when already enabled and confirmed', async () => {
+    configure({ totpEnabled: true })
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(true)
+    postJson.mockResolvedValueOnce({ enabled: false })
+    render(() => <SecuritySection />)
+
+    expect(screen.getByText('Two-factor authentication is on.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Disable two-factor' }))
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Enable two-factor' })).toBeTruthy())
+    expect(postJson).toHaveBeenCalledWith('/settings/2fa/disable', {})
+  })
+
+  it('does not disable TOTP when the confirmation is declined', () => {
+    configure({ totpEnabled: true })
+    vi.spyOn(globalThis, 'confirm').mockReturnValue(false)
+    render(() => <SecuritySection />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Disable two-factor' }))
+
+    expect(postJson).not.toHaveBeenCalled()
+    expect(screen.getByText('Two-factor authentication is on.')).toBeTruthy()
+  })
+})

@@ -380,9 +380,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
      * return all relevant settings in an array.
      *
      * Returns user settings for API responses.
-     * Note: Boolean settings are returned as integers (0/1) for frontend compatibility.
+     * Note: the three grid-display toggles (show_empty_line, suggest_time,
+     * show_future) are returned as integers (0/1) for the legacy frontend; the
+     * remaining flags (active, totp_enabled, local_account) are native booleans.
      *
-     * @return array{show_empty_line: int, suggest_time: int, show_future: int, active: bool, min_entry_duration: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>}
+     * @return array{show_empty_line: int, suggest_time: int, show_future: int, active: bool, min_entry_duration: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>, totp_enabled: bool, local_account: bool}
      */
     public function getSettings(): array
     {
@@ -397,6 +399,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
             'type' => $this->getType()->value,
             'locale' => new LocalizationService()->normalizeLocale($this->getLocale()),
             'roles' => $this->getRoles(),
+            // Drives the SPA Settings "Security" section: whether 2FA is already on,
+            // and whether this is a local account (LDAP users cannot change a local
+            // password, so that control is hidden for them).
+            'totp_enabled' => $this->isTotpAuthenticationEnabled(),
+            'local_account' => $this->isLocalAccount(),
         ];
     }
 

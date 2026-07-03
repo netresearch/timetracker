@@ -9,6 +9,12 @@ export interface AppConfig {
   showFuture: boolean
   /** Minutes a new entry's end pre-fills past its start (0 disables; default 5). */
   minEntryDuration: number
+  /** Whether TOTP two-factor is already enrolled — toggles the Security section's
+   *  enable-vs-disable UI. */
+  totpEnabled: boolean
+  /** Whether this is a local (password) account. LDAP users cannot change a local
+   *  password, so the Security section hides that control for them. */
+  localAccount: boolean
   logoutUrl: string
   /** CSRF token for the 'authenticate' intention — stateless, so it stays valid
    *  across a session that expires while the SPA is open (re-login overlay). */

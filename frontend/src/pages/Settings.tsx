@@ -1,5 +1,6 @@
 import { createSignal, For, Show } from 'solid-js'
 
+import { SecuritySection } from '../components/SecuritySection'
 import { apiErrorMessage, postForm } from '../api/client'
 import { appConfig, type AppConfig } from '../config'
 import { dateFormat, setDateFormat, formatWith, validatePattern, type DateFormatMode } from '../lib/dateFormat'
@@ -183,6 +184,10 @@ export default function Settings() {
           </Show>
         </div>
       </form>
+
+      {/* Account security — password change + two-factor. Separate per-account
+          server operations, so each posts on its own (not via /settings/save). */}
+      <SecuritySection />
 
       {/* Device-local UI preferences — localStorage only, apply instantly.
           Deliberately OUTSIDE the save form: nothing here is submitted. The

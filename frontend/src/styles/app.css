@@ -925,6 +925,111 @@ main {
   color: var(--color-danger-text);
 }
 
+/* ---- Settings: Security section ---- */
+
+/* Password change and two-factor each sit in their own block within the card,
+   separated by a hairline so the two independent operations read as distinct. */
+.security-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.security-block + .security-block {
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.4rem;
+  padding-top: 1rem;
+}
+
+.security-heading {
+  font-family: var(--font-display);
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* A one-line state (hint or "2FA is on") next to its action button. Wraps on a
+   narrow container so the button never overflows. */
+.security-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+}
+.security-row .field-hint {
+  margin: 0;
+}
+
+.security-on {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-success-text);
+}
+
+.security-enroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* The base32 setup key: monospace and full-width so it's readable and easy to copy
+   (focus selects it). */
+.security-secret {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.04em;
+}
+
+/* One-time backup codes, highlighted so they're not missed — they show only once. */
+.security-backup {
+  border: 1px solid var(--color-success-text);
+  background: var(--color-success-bg);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.security-backup-heading {
+  margin: 0;
+  font-weight: 700;
+}
+.security-backup-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.3rem 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.05em;
+  letter-spacing: 0.05em;
+}
+
+/* Secondary action (cancel enrolment, disable 2FA): same shape as .primary-button
+   but outlined, so the primary action stays visually dominant. */
+.ghost-button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 600;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.2rem;
+}
+.ghost-button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.ghost-button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
 /* ---- Login page ---- */
 
 .login-page {

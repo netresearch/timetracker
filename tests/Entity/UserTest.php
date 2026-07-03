@@ -307,6 +307,9 @@ final class UserTest extends TestCase
         self::assertSame('DEV', $settings['type']);
         self::assertSame('en', $settings['locale']);
         self::assertIsArray($settings['roles']);
+        // A fresh user has neither a local password nor a TOTP secret.
+        self::assertFalse($settings['totp_enabled']);
+        self::assertFalse($settings['local_account']);
     }
 
     public function testGetSettingsWithDefaultValues(): void

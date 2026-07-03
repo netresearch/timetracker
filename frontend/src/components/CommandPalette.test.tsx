@@ -9,7 +9,7 @@ import { CommandPalette } from './CommandPalette'
 const appConfigStub: AppConfig = {
   locale: 'de', userId: 1, userName: 'x', appTitle: 'TT', roles: ['ROLE_ADMIN'],
   showEmptyLine: false, suggestTime: false, showFuture: false, minEntryDuration: 5, logoutUrl: '/logout',
-  csrfToken: '', loginPath: '/login',
+  csrfToken: '', loginPath: '/login', totpEnabled: false, localAccount: true,
 }
 
 beforeEach(() => {
