@@ -87,3 +87,8 @@
 "Entry data is incomplete.": "Die Eintragsdaten sind unvollständig."
 "Given ticket does not have a valid format.": "Das angegebene Ticket hat kein gültiges Format."
 "Given ticket does not have a valid prefix.": "Das angegebene Ticket hat kein gültiges Präfix."
+"Your password is managed by the directory (LDAP) and cannot be changed here.": "Dein Passwort wird über das Verzeichnis (LDAP) verwaltet und kann hier nicht geändert werden."
+"Your current password is incorrect.": "Dein aktuelles Passwort ist falsch."
+"The new password must be at least 8 characters.": "Das neue Passwort muss mindestens 8 Zeichen lang sein."
+"No enrolment is in progress. Start again.": "Es läuft keine Einrichtung. Bitte erneut starten."
+"That code is not valid. Check your authenticator and try again.": "Dieser Code ist ungültig. Prüfe deine Authenticator-App und versuche es erneut."

@@ -87,3 +87,8 @@
 "Entry data is incomplete.": "Данные записи неполны."
 "Given ticket does not have a valid format.": "Указанный тикет имеет неверный формат."
 "Given ticket does not have a valid prefix.": "Указанный тикет имеет неверный префикс."
+"Your password is managed by the directory (LDAP) and cannot be changed here.": "Ваш пароль управляется каталогом (LDAP) и не может быть изменён здесь."
+"Your current password is incorrect.": "Текущий пароль неверен."
+"The new password must be at least 8 characters.": "Новый пароль должен содержать не менее 8 символов."
+"No enrolment is in progress. Start again.": "Настройка не запущена. Начните заново."
+"That code is not valid. Check your authenticator and try again.": "Этот код недействителен. Проверьте приложение-аутентификатор и попробуйте снова."
