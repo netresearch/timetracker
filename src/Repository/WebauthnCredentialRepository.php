@@ -68,6 +68,30 @@ class WebauthnCredentialRepository extends ServiceEntityRepository implements Pu
         return $records;
     }
 
+    /**
+     * The app's own credential rows for a user handle (with their surrogate ids),
+     * for the Settings passkey list/remove UI — distinct from the bundle's
+     * findAllForUserEntity, which returns the abstract CredentialRecord.
+     *
+     * @return array<WebauthnCredential>
+     */
+    public function findByUserHandle(string $userHandle): array
+    {
+        // A DQL query (not findBy) so PHPStan's Doctrine plugin doesn't trip over
+        // userHandle being mapped on the XML mapped-superclass, not this subclass.
+        /** @var array<WebauthnCredential> $records */
+        $records = $this->getEntityManager()
+            ->createQueryBuilder()
+            ->from(WebauthnCredential::class, 'c')
+            ->select('c')
+            ->where('c.userHandle = :userHandle')
+            ->setParameter('userHandle', $userHandle)
+            ->getQuery()
+            ->getResult();
+
+        return $records;
+    }
+
     public function findOneByCredentialId(string $publicKeyCredentialId): ?CredentialRecord
     {
         /** @var CredentialRecord|null $record */

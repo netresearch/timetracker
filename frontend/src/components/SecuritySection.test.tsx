@@ -11,6 +11,19 @@ vi.mock('../api/client', () => ({
   postJson: (...args: unknown[]) => postJson(...args),
 }))
 
+// Passkeys (WebAuthn) — unsupported in jsdom, so the browser ceremony is stubbed.
+const registerPasskey = vi.fn()
+const deletePasskey = vi.fn()
+const listPasskeys = vi.fn()
+let passkeysAvailable = false
+
+vi.mock('../lib/passkeys', () => ({
+  passkeysSupported: () => passkeysAvailable,
+  registerPasskey: (...a: unknown[]) => registerPasskey(...a),
+  deletePasskey: (...a: unknown[]) => deletePasskey(...a),
+  listPasskeys: (...a: unknown[]) => listPasskeys(...a),
+}))
+
 // Imported after the mock so the component picks up the stubbed client.
 const { SecuritySection } = await import('./SecuritySection')
 
@@ -22,6 +35,10 @@ function configure(overrides: { totpEnabled?: boolean; localAccount?: boolean })
 describe('SecuritySection', () => {
   beforeEach(() => {
     postJson.mockReset()
+    registerPasskey.mockReset()
+    deletePasskey.mockReset()
+    listPasskeys.mockReset().mockResolvedValue([])
+    passkeysAvailable = false
     configure({})
   })
   afterEach(cleanup)
@@ -94,6 +111,36 @@ describe('SecuritySection', () => {
     postJson.mockResolvedValueOnce({ provisioningUri: 'otpauth://totp/y', secret: 'SECRET2' })
     fireEvent.click(screen.getByRole('button', { name: 'Enable two-factor' }))
     await waitFor(() => expect((screen.getByLabelText('Verification code') as HTMLInputElement).value).toBe(''))
+  })
+
+  it('hides the passkey section when the browser has no WebAuthn support', () => {
+    passkeysAvailable = false
+    render(() => <SecuritySection />)
+    expect(screen.queryByRole('button', { name: 'Add a passkey' })).toBeNull()
+  })
+
+  it('registers a passkey and refreshes the list', async () => {
+    passkeysAvailable = true
+    listPasskeys.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 7, fingerprint: 'abcdef0123', transports: ['internal'] }])
+    registerPasskey.mockResolvedValue(undefined)
+    render(() => <SecuritySection />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Add a passkey' }))
+
+    await waitFor(() => expect(registerPasskey).toHaveBeenCalled())
+    // The refreshed list renders the new passkey with a remove control.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Remove' })).toBeTruthy())
+  })
+
+  it('removes a passkey', async () => {
+    passkeysAvailable = true
+    listPasskeys.mockResolvedValue([{ id: 7, fingerprint: 'abcdef0123', transports: ['internal'] }])
+    deletePasskey.mockResolvedValue(undefined)
+    render(() => <SecuritySection />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }))
+
+    await waitFor(() => expect(deletePasskey).toHaveBeenCalledWith(7))
   })
 
   it('disables TOTP when already enabled and confirmed', async () => {

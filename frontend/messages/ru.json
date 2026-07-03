@@ -493,5 +493,13 @@
   "login_2fa_code": "Код подтверждения",
   "login_2fa_submit": "Подтвердить",
   "login_2fa_error": "Этот код недействителен. Проверьте приложение-аутентификатор и попробуйте снова.",
-  "login_2fa_back": "Вернуться ко входу"
+  "login_2fa_back": "Вернуться ко входу",
+  "settings_passkey_heading": "Passkey-ключи",
+  "settings_passkey_hint": "Входите по отпечатку, лицу или ключу безопасности — без пароля.",
+  "settings_passkey_label": "Passkey",
+  "settings_passkey_add": "Добавить passkey",
+  "settings_passkey_remove": "Удалить",
+  "settings_passkey_error": "Не удалось выполнить операцию с passkey.",
+  "login_passkey": "Войти по passkey",
+  "login_passkey_error": "Вход по passkey не завершён. Попробуйте снова или используйте пароль."
 }

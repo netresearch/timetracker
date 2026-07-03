@@ -1005,6 +1005,43 @@ main {
   letter-spacing: 0.05em;
 }
 
+/* Registered passkeys, one per row with a remove control. */
+.security-passkey-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.security-passkey-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+}
+.security-passkey-name code {
+  font-size: 0.85em;
+  color: var(--color-text-muted);
+}
+
+/* Passkey sign-in on the login card: a quiet text-style alternative under the
+   primary submit, only shown when the browser supports WebAuthn. */
+.login-passkey {
+  background: none;
+  border: 0;
+  color: var(--color-link);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.95rem;
+  margin-top: 0.4rem;
+  min-height: 44px;
+  text-decoration: underline;
+}
+
 /* Secondary action (cancel enrolment, disable 2FA): same shape as .primary-button
    but outlined, so the primary action stays visually dominant. */
 .ghost-button {

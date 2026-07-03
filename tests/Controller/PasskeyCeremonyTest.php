@@ -70,6 +70,26 @@ final class PasskeyCeremonyTest extends AbstractWebTestCase
         self::assertArrayHasKey('challenge', $body, 'request options must carry a challenge');
     }
 
+    public function testPasskeyListStartsEmpty(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/settings/security/passkeys/list', [], [], ['HTTP_ACCEPT' => 'application/json']);
+
+        $this->assertStatusCode(200);
+        $body = $this->getJsonResponse($this->client->getResponse());
+        self::assertArrayHasKey('passkeys', $body);
+        self::assertSame([], $body['passkeys']);
+    }
+
+    public function testDeletingAnUnknownPasskeyIsRejected(): void
+    {
+        // The ownership guard also covers "not mine" — a missing/foreign id 404s
+        // rather than deleting anything.
+        $this->client->request(Request::METHOD_POST, '/settings/security/passkeys/delete', ['id' => '999999'], [], ['HTTP_ACCEPT' => 'application/json']);
+
+        $this->assertStatusCode(404);
+        self::assertFalse($this->getJsonResponse($this->client->getResponse())['success'] ?? true);
+    }
+
     private function storedUserHandle(int $userId): ?string
     {
         self::assertNotNull($this->serviceContainer);
