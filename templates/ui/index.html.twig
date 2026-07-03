@@ -25,6 +25,8 @@
                 'suggestTime': settings.suggest_time == 1,
                 'showFuture': settings.show_future == 1,
                 'minEntryDuration': settings.min_entry_duration,
+                'totpEnabled': settings.totp_enabled,
+                'localAccount': settings.local_account,
                 'logoutUrl': logout_url(),
                 'csrfToken': csrf_token('authenticate'),
                 'loginPath': path('_login'),

@@ -74,6 +74,8 @@ window.APP_CONFIG = {
   suggestTime: false,
   showFuture: false,
   minEntryDuration: 5,
+  totpEnabled: false,
+  localAccount: true,
   logoutUrl: '/logout',
   csrfToken: 'test-csrf-token',
   loginPath: '/login',
