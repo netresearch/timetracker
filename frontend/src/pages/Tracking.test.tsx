@@ -559,10 +559,18 @@ describe('Tracking (Worklog grid)', () => {
     await waitFor(() => expect(getByRole('gridcell', { name: 'Newest' })).toBeInTheDocument())
 
     // Dates render in ISO (yyyy-mm-dd), one consistent format everywhere.
-    // The date cell renders three responsive widths (full / MM-DD / DD); read the
-    // full-date span rather than the whole cell's concatenated text.
+    // The date cell renders three responsive widths (full / MM-DD / weekday);
+    // read the full-date span rather than the whole cell's concatenated text.
     const dates = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-full')).map((el) => el.textContent)
     expect(dates).toEqual(['2026-06-16', '2026-06-15', '2026-06-14'])
+
+    // The narrower rungs keep orienting information: month-day, then the localized
+    // weekday — never a bare day-of-month, which reads as noise (issue #520).
+    const mids = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-mid')).map((el) => el.textContent)
+    expect(mids).toEqual(['06-16', '06-15', '06-14'])
+    const shorts = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-short')).map((el) => el.textContent)
+    // 2026-06-16 is a Tuesday (en test locale).
+    expect(shorts).toEqual(['Tue', 'Mon', 'Sun'])
 
     unmount()
   })
