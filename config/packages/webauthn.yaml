@@ -1,0 +1,44 @@
+# Passkeys / WebAuthn (ADR-018 D3). Discoverable (resident-key) credentials with
+# user verification, so a passkey is a full two-factor authenticator on its own.
+webauthn:
+    # App-provided storage (both required — the bundle defaults are throwing stubs).
+    credential_repository: App\Repository\WebauthnCredentialRepository
+    user_repository: App\Repository\WebauthnUserEntityRepository
+
+    # The full origin the ceremony accepts (env, as a single list item — a
+    # per-item env scalar is allowed where the whole array node is not). RP id
+    # below is the registrable domain (no scheme/port).
+    allowed_origins:
+        - '%env(WEBAUTHN_ALLOWED_ORIGINS)%'
+
+    # Registration: passkey (resident key + user verification), no attestation.
+    creation_profiles:
+        default:
+            rp:
+                id: '%env(WEBAUTHN_RP_ID)%'
+                name: '%app_title%'
+            attestation_conveyance: none
+            authenticator_selection_criteria:
+                user_verification: required
+                resident_key: required
+                require_resident_key: true
+
+    # Usernameless / discoverable login.
+    request_profiles:
+        default:
+            rp_id: '%env(WEBAUTHN_RP_ID)%'
+            user_verification: required
+
+    # Standalone "add a passkey" ceremony for the logged-in user (Settings →
+    # Security). CurrentUserEntityGuesser resolves the authenticated user, so this
+    # is NOT anonymous self-registration.
+    controllers:
+        enabled: true
+        creation:
+            settings_passkey:
+                options_path: /settings/security/passkeys/options
+                result_path: /settings/security/passkeys
+                profile: default
+                user_entity_guesser: Webauthn\Bundle\Security\Guesser\CurrentUserEntityGuesser
+                success_handler: App\Security\Webauthn\PasskeyRegisterSuccessHandler
+                hide_existing_credentials: true

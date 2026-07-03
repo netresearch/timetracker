@@ -493,5 +493,13 @@
   "login_2fa_code": "Code de vérification",
   "login_2fa_submit": "Vérifier",
   "login_2fa_error": "Ce code n'est pas valide. Vérifiez votre application d'authentification et réessayez.",
-  "login_2fa_back": "Retour à la connexion"
+  "login_2fa_back": "Retour à la connexion",
+  "settings_passkey_heading": "Clés d'accès",
+  "settings_passkey_hint": "Connectez-vous avec votre empreinte, votre visage ou une clé de sécurité — sans mot de passe.",
+  "settings_passkey_label": "Clé d'accès",
+  "settings_passkey_add": "Ajouter une clé d'accès",
+  "settings_passkey_remove": "Supprimer",
+  "settings_passkey_error": "L'opération de clé d'accès n'a pas pu être effectuée.",
+  "login_passkey": "Se connecter avec une clé d'accès",
+  "login_passkey_error": "La connexion par clé d'accès n'a pas abouti. Réessayez ou utilisez votre mot de passe."
 }

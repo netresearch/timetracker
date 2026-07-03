@@ -1,7 +1,8 @@
-import { createSignal, Show, For, type JSX } from 'solid-js'
+import { createResource, createSignal, Show, For, type JSX } from 'solid-js'
 
 import { apiErrorMessage, postJson } from '../api/client'
 import { appConfig } from '../config'
+import { deletePasskey, listPasskeys, passkeysSupported, registerPasskey } from '../lib/passkeys'
 import { m } from '../paraglide/messages.js'
 
 /** Server response from POST /settings/2fa/totp/start. */
@@ -37,10 +38,79 @@ export function SecuritySection(): JSX.Element {
         <p class="settings-section-hint">{m.settings_section_security_hint()}</p>
 
         <TwoFactorControls initiallyEnabled={config.totpEnabled} />
+        <Show when={passkeysSupported()}>
+          <PasskeyControls />
+        </Show>
         <Show when={config.localAccount}>
           <PasswordChange />
         </Show>
       </fieldset>
+    </div>
+  )
+}
+
+/** Register / list / remove passkeys (WebAuthn) — ADR-018 D3. */
+function PasskeyControls(): JSX.Element {
+  const [passkeys, { refetch }] = createResource(listPasskeys)
+  const [busy, setBusy] = createSignal(false)
+  const [error, setError] = createSignal('')
+
+  async function add(): Promise<void> {
+    setBusy(true)
+    setError('')
+    try {
+      await registerPasskey()
+      await refetch()
+    } catch (caught) {
+      // A user cancelling the native prompt throws too — keep the message quiet.
+      setError(apiErrorMessage(caught, m.settings_passkey_error()))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function remove(id: number): Promise<void> {
+    setBusy(true)
+    setError('')
+    try {
+      await deletePasskey(id)
+      await refetch()
+    } catch (caught) {
+      setError(apiErrorMessage(caught, m.settings_passkey_error()))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div class="security-block">
+      <h3 class="security-heading">{m.settings_passkey_heading()}</h3>
+      <p class="field-hint">{m.settings_passkey_hint()}</p>
+
+      <Show when={(passkeys()?.length ?? 0) > 0}>
+        <ul class="security-passkey-list">
+          <For each={passkeys()}>
+            {(passkey) => (
+              <li>
+                <span class="security-passkey-name">{m.settings_passkey_label()} · <code>{passkey.fingerprint.slice(0, 10)}</code></span>
+                <button type="button" class="ghost-button" disabled={busy()} onClick={() => void remove(passkey.id)}>
+                  {m.settings_passkey_remove()}
+                </button>
+              </li>
+            )}
+          </For>
+        </ul>
+      </Show>
+
+      <div class="security-row">
+        <button type="button" class="primary-button" disabled={busy()} onClick={() => void add()}>
+          {busy() ? m.app_saving() : m.settings_passkey_add()}
+        </button>
+      </div>
+
+      <Show when={error()}>
+        <span role="alert" class="form-status is-error">{error()}</span>
+      </Show>
     </div>
   )
 }

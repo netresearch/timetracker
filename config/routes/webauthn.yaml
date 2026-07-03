@@ -1,0 +1,6 @@
+# The bundle builds its ceremony routes (login/registration options + result)
+# dynamically from webauthn.yaml via a custom loader — importing type: webauthn
+# is what actually registers them (ADR-018 D3).
+webauthn:
+    resource: '.'
+    type: webauthn

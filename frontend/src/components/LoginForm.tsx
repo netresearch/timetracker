@@ -1,6 +1,7 @@
 import { createSignal, Show } from 'solid-js'
 
 import type { LoginConfig } from '../loginConfig'
+import { loginWithPasskey, passkeysSupported } from '../lib/passkeys'
 import { m } from '../paraglide/messages.js'
 
 /**
@@ -103,6 +104,22 @@ export function LoginForm(props: { config: LoginConfig }) {
       setError(m.login_2fa_error())
     } catch {
       setError(m.login_2fa_error())
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const signInWithPasskey = async () => {
+    if (submitting()) {
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    try {
+      globalThis.location.assign(await loginWithPasskey())
+    } catch {
+      // Includes the user dismissing the native prompt — a quiet inline message.
+      setError(m.login_passkey_error())
     } finally {
       setSubmitting(false)
     }
@@ -213,6 +230,12 @@ export function LoginForm(props: { config: LoginConfig }) {
           <button type="submit" id="form-submit" class="primary-button login-submit" disabled={submitting()}>
             {submitting() ? m.login_submitting() : m.login_submit()}
           </button>
+
+          <Show when={passkeysSupported()}>
+            <button type="button" class="login-passkey" disabled={submitting()} onClick={() => void signInWithPasskey()}>
+              {m.login_passkey()}
+            </button>
+          </Show>
         </form>
       </Show>
     </main>

@@ -493,5 +493,13 @@
   "login_2fa_code": "Código de verificación",
   "login_2fa_submit": "Verificar",
   "login_2fa_error": "Ese código no es válido. Comprueba tu aplicación de autenticación e inténtalo de nuevo.",
-  "login_2fa_back": "Volver al inicio de sesión"
+  "login_2fa_back": "Volver al inicio de sesión",
+  "settings_passkey_heading": "Claves de acceso",
+  "settings_passkey_hint": "Inicia sesión con tu huella, rostro o una llave de seguridad, sin contraseña.",
+  "settings_passkey_label": "Clave de acceso",
+  "settings_passkey_add": "Añadir una clave de acceso",
+  "settings_passkey_remove": "Eliminar",
+  "settings_passkey_error": "No se pudo completar la operación con la clave de acceso.",
+  "login_passkey": "Iniciar sesión con una clave de acceso",
+  "login_passkey_error": "El inicio de sesión con clave de acceso no se completó. Inténtalo de nuevo o usa tu contraseña."
 }

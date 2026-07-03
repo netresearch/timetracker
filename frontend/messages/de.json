@@ -493,5 +493,13 @@
   "login_2fa_code": "Bestätigungscode",
   "login_2fa_submit": "Bestätigen",
   "login_2fa_error": "Dieser Code ist ungültig. Prüfe deine Authenticator-App und versuche es erneut.",
-  "login_2fa_back": "Zurück zur Anmeldung"
+  "login_2fa_back": "Zurück zur Anmeldung",
+  "settings_passkey_heading": "Passkeys",
+  "settings_passkey_hint": "Melde dich mit Fingerabdruck, Gesicht oder Sicherheitsschlüssel an – ohne Passwort.",
+  "settings_passkey_label": "Passkey",
+  "settings_passkey_add": "Passkey hinzufügen",
+  "settings_passkey_remove": "Entfernen",
+  "settings_passkey_error": "Der Passkey-Vorgang konnte nicht abgeschlossen werden.",
+  "login_passkey": "Mit Passkey anmelden",
+  "login_passkey_error": "Die Passkey-Anmeldung wurde nicht abgeschlossen. Versuche es erneut oder nutze dein Passwort."
 }

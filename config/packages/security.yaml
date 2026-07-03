@@ -81,6 +81,21 @@ security:
                 parameter: simulateUserId
                 role: ROLE_ALLOWED_TO_SWITCH
 
+            # Passkey / WebAuthn login (ADR-018 D3). Sits alongside form_login as
+            # an additional authenticator — it only claims the two ceremony paths
+            # below, so password login is undisturbed. A passkey is inherently
+            # two-factor, so it is not sent through the TOTP challenge (scheb keys
+            # its trigger on token class; WebauthnToken is not listed).
+            webauthn:
+                user_provider: app_user_provider
+                success_handler: App\Security\Webauthn\PasskeyLoginSuccessHandler
+                failure_handler: App\Security\Webauthn\PasskeyLoginFailureHandler
+                authentication:
+                    profile: default
+                    routes:
+                        options_path: /login/options
+                        result_path: /login/passkey
+
     # Access control settings
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }

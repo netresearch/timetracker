@@ -47,9 +47,34 @@ CREATE TABLE `users` (
   `password` varchar(255) DEFAULT NULL,
   `totp_secret` varchar(255) DEFAULT NULL,
   `backup_codes` json DEFAULT NULL,
+  `webauthn_user_handle` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`)
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `webauthn_user_handle` (`webauthn_user_handle`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+--
+-- Tabellenstruktur für Tabelle `webauthn_credentials` (ADR-018 D3 passkeys)
+--
+CREATE TABLE `webauthn_credentials` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `public_key_credential_id` longtext NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `transports` json NOT NULL,
+  `attestation_type` varchar(255) NOT NULL,
+  `trust_path` json NOT NULL,
+  `aaguid` tinytext NOT NULL,
+  `credential_public_key` longtext NOT NULL,
+  `user_handle` varchar(255) NOT NULL,
+  `counter` int(11) NOT NULL,
+  `other_ui` json DEFAULT NULL,
+  `backup_eligible` tinyint(1) DEFAULT NULL,
+  `backup_status` tinyint(1) DEFAULT NULL,
+  `uv_initialized` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `webauthn_user_handle` (`user_handle`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 --

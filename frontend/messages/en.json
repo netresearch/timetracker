@@ -493,5 +493,13 @@
   "login_2fa_code": "Verification code",
   "login_2fa_submit": "Verify",
   "login_2fa_error": "That code is not valid. Check your authenticator and try again.",
-  "login_2fa_back": "Back to sign-in"
+  "login_2fa_back": "Back to sign-in",
+  "settings_passkey_heading": "Passkeys",
+  "settings_passkey_hint": "Sign in with your fingerprint, face, or a security key — no password to type.",
+  "settings_passkey_label": "Passkey",
+  "settings_passkey_add": "Add a passkey",
+  "settings_passkey_remove": "Remove",
+  "settings_passkey_error": "The passkey operation could not be completed.",
+  "login_passkey": "Sign in with a passkey",
+  "login_passkey_error": "Passkey sign-in didn't complete. Try again, or use your password."
 }
