@@ -52,6 +52,27 @@ final class ResetUserTwoFactorTest extends AbstractWebTestCase
         self::assertNull($this->storedBackupCodes(self::TARGET_ID), 'the backup codes are cleared too');
     }
 
+    public function testAdminResetRemovesTheTargetsPasskeys(): void
+    {
+        // Seed a passkey for the target directly (a real WebAuthn ceremony can't
+        // run headless): mint the handle on the user, insert one credential row.
+        self::assertNotNull($this->connection);
+        $handle = 'aaaaaaaa-bbbb-cccc-dddd-eeeeffff0000';
+        $this->connection->executeStatement('UPDATE users SET webauthn_user_handle = ? WHERE id = ?', [$handle, self::TARGET_ID]);
+        $this->connection->executeStatement(
+            "INSERT INTO webauthn_credentials (public_key_credential_id, type, transports, attestation_type, trust_path, aaguid, credential_public_key, user_handle, counter, other_ui, backup_eligible, backup_status, uv_initialized)
+             VALUES ('dGVzdC1jcmVkZW50aWFs', 'public-key', '[]', 'none', '{}', '00000000-0000-0000-0000-000000000000', 'dGVzdC1rZXk=', ?, 0, NULL, NULL, NULL, NULL)",
+            [$handle],
+        );
+        self::assertSame(1, $this->passkeyCount($handle), 'precondition: the target has a passkey');
+
+        $this->logInSession('unittest');
+        $this->postReset(self::TARGET_ID);
+
+        $this->assertStatusCode(200);
+        self::assertSame(0, $this->passkeyCount($handle), 'the break-glass reset removes the passkeys');
+    }
+
     public function testAdminCannotResetTheirOwnTwoFactor(): void
     {
         $this->logInSession('unittest');
@@ -152,5 +173,15 @@ final class ResetUserTwoFactorTest extends AbstractWebTestCase
         $value = $connection->fetchOne('SELECT ' . $column . ' FROM users WHERE id = ?', [$userId]);
 
         return is_string($value) ? $value : null;
+    }
+
+    private function passkeyCount(string $handle): int
+    {
+        $connection = $this->connection;
+        self::assertNotNull($connection);
+        $value = $connection->fetchOne('SELECT COUNT(*) FROM webauthn_credentials WHERE user_handle = ?', [$handle]);
+        self::assertIsNumeric($value);
+
+        return (int) $value;
     }
 }

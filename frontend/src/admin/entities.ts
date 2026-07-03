@@ -182,6 +182,8 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
         { key: 'is_local', label: () => m.admin_f_local_account(), render: (row) => mark(row.is_local), align: 'center', boolean: true },
         { key: 'totp_enabled', label: () => m.admin_f_2fa(), render: (row) => mark(row.totp_enabled), align: 'center', boolean: true },
+        // A count, not a dot — "how many devices" matters for the break-glass reset.
+        { key: 'passkeys', label: () => m.admin_f_passkeys(), render: (row) => (num(row.passkeys) > 0 ? String(num(row.passkeys)) : '—'), align: 'center' },
         { key: 'last_activity', label: () => m.admin_f_last_activity() },
       ],
       fields: [

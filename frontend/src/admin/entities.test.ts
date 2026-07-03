@@ -165,6 +165,13 @@ describe('admin entity descriptors', () => {
     expect(users.resetTwoFactorEndpoint).toBe('/user/reset-2fa')
   })
 
+  it('users expose a passkeys count column (count when set, dash when zero)', () => {
+    const passkeys = col(byKey('users'), 'passkeys')
+    expect(passkeys.render?.({ passkeys: 2 }, noOptions)).toBe('2')
+    expect(passkeys.render?.({ passkeys: 0 }, noOptions)).toBe('—')
+    expect(passkeys.render?.({}, noOptions)).toBe('—')
+  })
+
   it('project lead selects offer only active users (activeOnly)', () => {
     const projects = byKey('projects')
     for (const name of ['project_lead', 'technical_lead']) {

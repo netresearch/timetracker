@@ -79,9 +79,10 @@ export interface EntityDescriptor {
    */
   importAction?: ImportAction
   /**
-   * Optional admin break-glass (ADR-018 D2): when set, a row whose `totp_enabled`
-   * is true gets a per-row "Reset 2FA" button that POSTs `{ id }` here to clear
-   * that user's TOTP secret and backup codes (recovery for a lost authenticator).
+   * Optional admin break-glass (ADR-018): when set, a row with `totp_enabled` or
+   * a non-zero `passkeys` count gets a per-row "Reset 2FA" button that POSTs
+   * `{ id }` here to clear that user's TOTP secret, backup codes AND passkeys
+   * (recovery for a lost authenticator or passkey device).
    */
   resetTwoFactorEndpoint?: string
 }

@@ -10,8 +10,11 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\User;
+use App\Entity\WebauthnCredential;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+
+use function assert;
 
 /**
  * Class UserRepository.
@@ -89,7 +92,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, abbr_duplicate: bool, locale:string, teams: array<int, int>, active: bool, is_local: bool, totp_enabled: bool, last_activity: string|null}}>
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, abbr_duplicate: bool, locale:string, teams: array<int, int>, active: bool, is_local: bool, totp_enabled: bool, passkeys: int, last_activity: string|null}}>
      */
     public function getAllUsers(): array
     {
@@ -104,6 +107,11 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
 
         $lastActivity = $this->lastActivityBy('user_id');
+
+        // Passkey counts, one grouped query for all users (keyed by handle).
+        $credentialRepository = $this->getEntityManager()->getRepository(WebauthnCredential::class);
+        assert($credentialRepository instanceof WebauthnCredentialRepository);
+        $passkeyCounts = $credentialRepository->countsByUserHandle();
 
         // Count each non-empty abbreviation so the admin grid can flag the legacy
         // duplicates that need cleaning up (the save validator grandfathers them).
@@ -146,6 +154,12 @@ class UserRepository extends ServiceEntityRepository
                 // Whether the user has TOTP two-factor enrolled — drives the admin
                 // "Reset 2FA" recovery control. Never the secret, only the flag.
                 'totp_enabled' => $user->isTotpAuthenticationEnabled(),
+                // Registered passkeys (count only) — shown in the grid; together
+                // with totp_enabled it decides whether the reset control appears.
+                // A user without a minted handle has no passkeys by definition.
+                'passkeys' => null !== ($handle = $user->getWebauthnUserHandle()) && '' !== $handle
+                    ? ($passkeyCounts[$handle] ?? 0)
+                    : 0,
                 'last_activity' => $lastActivity[(int) $user->getId()] ?? null,
             ]];
         }
