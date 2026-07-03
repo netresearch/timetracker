@@ -101,7 +101,7 @@ final class SaveEntryAction extends BaseTrackingController
 
         // Check if someone else already owns the entry (if exists)
         if ($entry instanceof Entry && $entry->getUserId() !== $user->getId()) {
-            return new Error('Entry is already owned by a different user.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Entry is already owned by a different user.'), Response::HTTP_BAD_REQUEST);
         }
 
         $isNewEntry = !$entry instanceof Entry;
@@ -124,7 +124,7 @@ final class SaveEntryAction extends BaseTrackingController
         // also hides inactive projects from the picker, so a fresh pick is active.
         $projectChanged = !$previousEntry instanceof Entry || $previousEntry->getProjectId() !== $project->getId();
         if ($projectChanged && !$project->getActive()) {
-            return new Error('Project is no longer active.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Project is no longer active.'), Response::HTTP_BAD_REQUEST);
         }
 
         $durationError = $this->calculateDuration($entry);
@@ -142,7 +142,14 @@ final class SaveEntryAction extends BaseTrackingController
             // Return JSON response matching test expectations
             return $this->buildEntryResponse($entry, $entrySaveDto);
         } catch (Throwable $throwable) {
-            return new Error('Could not save entry: ' . $throwable->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            // Log the detail server-side; never leak a raw exception message (which
+            // can carry SQL, paths or internals) into the user-facing API response.
+            $this->logger->error('Failed to save a work-log entry.', [
+                'error_type' => $throwable::class,
+                'error' => $throwable->getMessage(),
+            ]);
+
+            return new Error($this->translate('Could not save the entry. Please try again.'), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -158,7 +165,7 @@ final class SaveEntryAction extends BaseTrackingController
         $customer = $customerRepo->findOneById($customerId);
 
         if (!$customer instanceof Customer) {
-            return new Error('Given customer does not exist.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Given customer does not exist.'), Response::HTTP_BAD_REQUEST);
         }
 
         return $customer;
@@ -176,7 +183,7 @@ final class SaveEntryAction extends BaseTrackingController
         $project = $projectRepo->findOneById($projectId);
 
         if (!$project instanceof Project) {
-            return new Error('Given project does not exist.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Given project does not exist.'), Response::HTTP_BAD_REQUEST);
         }
 
         return $project;
@@ -194,7 +201,7 @@ final class SaveEntryAction extends BaseTrackingController
         $activity = $activityRepo->findOneById($activityId);
 
         if (!$activity instanceof Activity) {
-            return new Error('Given activity does not exist.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Given activity does not exist.'), Response::HTTP_BAD_REQUEST);
         }
 
         return $activity;
@@ -267,7 +274,7 @@ final class SaveEntryAction extends BaseTrackingController
     {
         $dayDate = $entrySaveDto->getDateAsDateTime();
         if (!$dayDate instanceof DateTimeInterface && '' !== $entrySaveDto->date && '0' !== $entrySaveDto->date) {
-            return new Error('Given day does not have a valid format.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Given day does not have a valid format.'), Response::HTTP_BAD_REQUEST);
         }
 
         if ($dayDate instanceof DateTimeInterface) {
@@ -281,7 +288,7 @@ final class SaveEntryAction extends BaseTrackingController
     {
         $startTime = $entrySaveDto->getStartAsDateTime();
         if (!$startTime instanceof DateTimeInterface && '' !== $entrySaveDto->start && '0' !== $entrySaveDto->start) {
-            return new Error('Given start does not have a valid format.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Given start does not have a valid format.'), Response::HTTP_BAD_REQUEST);
         }
 
         if ($startTime instanceof DateTimeInterface) {
@@ -295,7 +302,7 @@ final class SaveEntryAction extends BaseTrackingController
     {
         $endTime = $entrySaveDto->getEndAsDateTime();
         if (!$endTime instanceof DateTimeInterface && '' !== $entrySaveDto->end && '0' !== $entrySaveDto->end) {
-            return new Error('Given end does not have a valid format.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Given end does not have a valid format.'), Response::HTTP_BAD_REQUEST);
         }
 
         if ($endTime instanceof DateTimeInterface) {
@@ -318,7 +325,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         if ($start >= $end) {
-            return new Error('Start time cannot be after end time.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Start time cannot be after end time.'), Response::HTTP_BAD_REQUEST);
         }
 
         $interval = $start->diff($end);
@@ -378,7 +385,7 @@ final class SaveEntryAction extends BaseTrackingController
         if (!$day instanceof DateTime || !$start instanceof DateTime || !$end instanceof DateTime
             || !$entryUser instanceof User || !$customer instanceof Customer
             || !$project instanceof Project || !$activity instanceof Activity) {
-            return new Error('Entry data is incomplete.', Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new Error($this->translate('Entry data is incomplete.'), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         $durationMinutes = $entry->getDuration();
@@ -433,7 +440,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         if (!$this->ticketService->checkFormat($ticket)) {
-            return new Error('Given ticket does not have a valid format.', Response::HTTP_BAD_REQUEST);
+            return new Error($this->translate('Given ticket does not have a valid format.'), Response::HTTP_BAD_REQUEST);
         }
 
         $ticketPrefix = (string) $this->ticketService->getPrefix($ticket);
@@ -443,6 +450,6 @@ final class SaveEntryAction extends BaseTrackingController
 
         return $prefixMatches
             ? null
-            : new Error('Given ticket does not have a valid prefix.', Response::HTTP_BAD_REQUEST);
+            : new Error($this->translate('Given ticket does not have a valid prefix.'), Response::HTTP_BAD_REQUEST);
     }
 }

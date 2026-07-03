@@ -13,6 +13,7 @@ use App\Dto\EntrySaveDto;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Tests for EntrySaveDto.
@@ -24,10 +25,21 @@ final class EntrySaveDtoTest extends KernelTestCase
 {
     private ValidatorInterface $validator;
 
+    private TranslatorInterface $translator;
+
     protected function setUp(): void
     {
         self::bootKernel();
         $this->validator = self::getContainer()->get('validator');
+        // Assert against the localized violation message the app actually renders
+        // (the default locale is German), so these stay correct as catalogs grow.
+        $this->translator = self::getContainer()->get('translator');
+    }
+
+    /** The validator-domain translation of a message id in the app's default locale. */
+    private function validationMessage(string $id): string
+    {
+        return $this->translator->trans($id, [], 'validators');
     }
 
     protected function tearDown(): void
@@ -323,7 +335,7 @@ final class EntrySaveDtoTest extends KernelTestCase
         $violations = $this->validator->validate($dto);
 
         self::assertGreaterThan(0, $violations->count());
-        self::assertStringContainsString('Invalid ticket format', (string) $violations);
+        self::assertStringContainsString($this->validationMessage('Invalid ticket format'), (string) $violations);
     }
 
     public function testTicketTooLong(): void
@@ -338,7 +350,7 @@ final class EntrySaveDtoTest extends KernelTestCase
         $violations = $this->validator->validate($dto);
 
         self::assertGreaterThan(0, $violations->count());
-        self::assertStringContainsString('Ticket cannot be longer than 50 characters', (string) $violations);
+        self::assertStringContainsString($this->validationMessage('Ticket cannot be longer than 50 characters'), (string) $violations);
     }
 
     public function testDescriptionTooLong(): void
@@ -353,7 +365,7 @@ final class EntrySaveDtoTest extends KernelTestCase
         $violations = $this->validator->validate($dto);
 
         self::assertGreaterThan(0, $violations->count());
-        self::assertStringContainsString('Description cannot be longer than 1000 characters', (string) $violations);
+        self::assertStringContainsString($this->validationMessage('Description cannot be longer than 1000 characters'), (string) $violations);
     }
 
     public function testInvalidTimeRange(): void
