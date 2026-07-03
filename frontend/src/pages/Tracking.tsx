@@ -208,7 +208,18 @@ export default function Tracking() {
   // the popup is hoverable — it lives inside the hovered wrapper — dismissible
   // via Escape/click-outside, and persistent until dismissed).
   const [actionsMenuRow, setActionsMenuRow] = createSignal<number | null>(null)
-  const closeActionsMenu = (): void => { setActionsMenuRow(null) }
+  // Closing on pointerleave is deferred by a short grace period: a slow or
+  // diagonal move from the kebab to its popup may clip past the hoverable area
+  // for a moment, and an immediate close makes the menu vanish mid-transit.
+  // Re-entering (or opening another row's menu) cancels the pending close.
+  let actionsMenuCloseTimer: ReturnType<typeof setTimeout> | undefined
+  const cancelActionsMenuClose = (): void => { clearTimeout(actionsMenuCloseTimer) }
+  const closeActionsMenu = (): void => { cancelActionsMenuClose(); setActionsMenuRow(null) }
+  const scheduleActionsMenuClose = (id: number): void => {
+    cancelActionsMenuClose()
+    actionsMenuCloseTimer = setTimeout(() => { if (actionsMenuRow() === id) { setActionsMenuRow(null) } }, 150)
+  }
+  onCleanup(cancelActionsMenuClose)
   onMount(() => {
     const onDocPointer = (event: PointerEvent): void => {
       if (daysComboRef !== undefined && !daysComboRef.contains(event.target as Node)) {
@@ -1155,8 +1166,8 @@ export default function Tracking() {
                               the menu — mid-entry saving must not cost an extra click. */}
                           <span
                             class="action-menu"
-                            onPointerEnter={(event) => { if (event.pointerType === 'mouse') { setActionsMenuRow(id) } }}
-                            onPointerLeave={(event) => { if (event.pointerType === 'mouse' && actionsMenuRow() === id) { closeActionsMenu() } }}
+                            onPointerEnter={(event) => { if (event.pointerType === 'mouse') { cancelActionsMenuClose(); setActionsMenuRow(id) } }}
+                            onPointerLeave={(event) => { if (event.pointerType === 'mouse' && actionsMenuRow() === id) { scheduleActionsMenuClose(id) } }}
                             onKeyDown={(event) => { if (event.key === 'Escape') { closeActionsMenu() } }}
                           >
                             <button
