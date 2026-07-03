@@ -919,8 +919,11 @@ export default function Tracking() {
           <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
           <div class="days-combo" ref={(el) => { daysComboRef = el }}>
             <input
+              id="tracking-days-input"
+              name="days"
               type="text"
               inputmode="numeric"
+              autocomplete="off"
               class="tracking-days-input"
               role="combobox"
               aria-labelledby="tracking-days-lbl"
