@@ -113,6 +113,9 @@ final class ArchitectureTest
                 Selector::inNamespace('Psr'),
                 Selector::inNamespace('GuzzleHttp'),
                 Selector::inNamespace('Laminas'),
+                // TOTP library backing the 2FA enrolment service (ADR-018 D2),
+                // an integration dependency like Laminas (LDAP) above.
+                Selector::inNamespace('OTPHP'),
                 Selector::classname(self::CLASSNAME_EXCEPTION, true),
             )
             ->because('Services orchestrate business logic over the data and integration layers');
