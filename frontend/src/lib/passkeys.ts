@@ -1,4 +1,4 @@
-import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser'
+import { browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, startAuthentication, startRegistration, WebAuthnAbortService } from '@simplewebauthn/browser'
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
 
 import { getJson, postJson } from '../api/client'
@@ -27,13 +27,65 @@ export async function registerPasskey(): Promise<void> {
   await postJson('/settings/security/passkeys', attestation as unknown as Record<string, unknown>)
 }
 
-/** Discoverable ("usernameless") passkey login; resolves to the redirect target. */
-export async function loginWithPasskey(): Promise<string> {
+/** Whether the browser can surface passkeys inline via autofill (Conditional UI). */
+export const passkeyAutofillSupported = browserSupportsWebAuthnAutofill
+
+function abortedError(): DOMException {
+  return new DOMException('Passkey ceremony aborted.', 'AbortError')
+}
+
+/**
+ * Discoverable ("usernameless") passkey login. `useBrowserAutofill` picks the
+ * mediation: false = an immediate native modal (the explicit button); true =
+ * Conditional UI, which resolves only once the user selects a passkey from the
+ * username field's autofill. Both post the assertion to /login/passkey and
+ * resolve to the redirect target.
+ *
+ * `signal` closes the SPA race the background (autofill) caller has: the phase
+ * can switch or the form unmount DURING the /login/options fetch, before any
+ * WebAuthn ceremony exists for cancelPasskeyCeremony() to abort. Checking it
+ * around that await stops startAuthentication from firing a stray prompt after
+ * the caller has moved on.
+ */
+async function requestPasskeyLogin(useBrowserAutofill: boolean, signal?: AbortSignal): Promise<string> {
+  if (signal?.aborted) {
+    throw abortedError()
+  }
   const optionsJSON = await postJson<PublicKeyCredentialRequestOptionsJSON>('/login/options', {})
-  const assertion = await startAuthentication({ optionsJSON })
+  if (signal?.aborted) {
+    throw abortedError()
+  }
+  const assertion = await startAuthentication({ optionsJSON, useBrowserAutofill })
   const result = await postJson<{ ok?: boolean; redirect?: string }>('/login/passkey', assertion as unknown as Record<string, unknown>)
 
   return result.redirect ?? '/'
+}
+
+/** Explicit ("Sign in with a passkey" button) modal login. */
+export function loginWithPasskey(): Promise<string> {
+  return requestPasskeyLogin(false)
+}
+
+/**
+ * Conditional-UI ("autofill") passkey login, started in the background from
+ * page load. Resolves to a redirect once the user picks a passkey from the
+ * username field's autofill; rejects if aborted (via `signal` before the
+ * ceremony, or {@see cancelPasskeyCeremony} during it) or on error — callers
+ * stay quiet on the ceremony rejections and surface only a server rejection.
+ */
+export function loginWithPasskeyAutofill(signal?: AbortSignal): Promise<string> {
+  return requestPasskeyLogin(true, signal)
+}
+
+/**
+ * Cancel any in-flight passkey ceremony. The background autofill request must
+ * not outlive the login form's credentials phase — otherwise it could resolve
+ * and redirect the user mid-2FA. A NEW startAuthentication (the explicit button)
+ * already aborts a prior ceremony on its own; this is for the paths that don't
+ * start one (leaving the credentials phase, unmounting).
+ */
+export function cancelPasskeyCeremony(): void {
+  WebAuthnAbortService.cancelCeremony()
 }
 
 export async function listPasskeys(): Promise<Passkey[]> {

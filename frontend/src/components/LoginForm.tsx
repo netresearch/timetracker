@@ -1,8 +1,9 @@
-import { createSignal, Show } from 'solid-js'
+import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js'
 
+import { ApiError } from '../api/client'
 import type { LoginConfig } from '../loginConfig'
 import { PasskeyIcon } from '../lib/icons'
-import { loginWithPasskey, passkeysSupported } from '../lib/passkeys'
+import { cancelPasskeyCeremony, loginWithPasskey, loginWithPasskeyAutofill, passkeyAutofillSupported, passkeysSupported } from '../lib/passkeys'
 import { m } from '../paraglide/messages.js'
 
 /**
@@ -132,6 +133,52 @@ export function LoginForm(props: { config: LoginConfig }) {
     setError(null)
   }
 
+  // Conditional UI (passkey autofill): from page load, quietly ask the browser
+  // to offer the user's discoverable passkeys in the username field's autofill.
+  // It resolves to a redirect once the user picks one — no button, no modal
+  // until they engage. Ceremony rejections (unsupported, dismissed, or aborted
+  // by the explicit button starting its own) are intentionally silent; only a
+  // server rejection of a passkey the user actually selected surfaces an error.
+  // Owns the background autofill request so it can be torn down when the form
+  // leaves the credentials phase or unmounts.
+  const passkeyAutofill = new AbortController()
+
+  onMount(() => {
+    void (async () => {
+      try {
+        if (!(await passkeyAutofillSupported())) {
+          return
+        }
+        globalThis.location.assign(await loginWithPasskeyAutofill(passkeyAutofill.signal))
+      } catch (caught) {
+        // An ApiError means the ceremony produced an assertion but the server
+        // rejected it — worth telling the user. Everything else (abort, dismiss,
+        // unsupported, and the in-try support probe rejecting) stays silent so
+        // the password form is never disrupted.
+        if (caught instanceof ApiError) {
+          setError(m.login_passkey_error())
+        }
+      }
+    })()
+  })
+
+  // Tear the autofill request down completely: the AbortController stops it in
+  // the /login/options window (before any ceremony exists), and cancelCeremony
+  // aborts an already-started navigator.credentials.get(). A password submit is
+  // a plain fetch and aborts neither on its own, so do both when the form
+  // switches to the 2FA code step (else a late selection could redirect
+  // mid-2FA) and on unmount.
+  const teardownPasskeyAutofill = (): void => {
+    passkeyAutofill.abort()
+    cancelPasskeyCeremony()
+  }
+  createEffect(() => {
+    if (phase() === 'code') {
+      teardownPasskeyAutofill()
+    }
+  })
+  onCleanup(teardownPasskeyAutofill)
+
   return (
     <main class="login-page">
       <Show
@@ -195,7 +242,9 @@ export function LoginForm(props: { config: LoginConfig }) {
             <input
               type="text"
               name="_username"
-              autocomplete="username"
+              // The 'webauthn' token is what lets the browser surface passkeys
+              // in this field's autofill for the Conditional-UI login above.
+              autocomplete="username webauthn"
               autocapitalize="off"
               autocorrect="off"
               spellcheck={false}
