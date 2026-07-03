@@ -754,12 +754,17 @@ main {
   container-type: inline-size;
 }
 
-@container (min-width: 30rem) {
+@container (min-width: 26em) {
   .stack-form .field {
     display: grid;
     /* em (not rem) so the label column tracks the --font-scale text-size
-       preference (ADR-014), keeping long labels from clipping when scaled up. */
-    grid-template-columns: 11em minmax(0, 1fr);
+       preference (ADR-014). The label column is WIDE enough that ordinary
+       (German) labels stay on one line — at 11em "Minimale Eintragsdauer
+       (Minuten)" broke onto three. The control column is CAPPED — a language
+       select or a minutes field doesn't earn the whole card width; leftover
+       space stays right. Fixed widths (not max-content) keep the columns
+       aligned ACROSS fields, since each .field is its own grid. */
+    grid-template-columns: 18em minmax(0, 22em);
     align-items: center;
     gap: 0.3rem 1.2rem;
   }
@@ -2653,7 +2658,12 @@ th[aria-sort='descending'] .th-sort-glyph {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  max-width: 30rem;
+  /* em (not rem): the dialog hosts text and must grow with the user's
+     text-size preference (ADR-014), like the field columns inside it. Wide
+     enough that the .stack-form inside (this minus the padding) clears the
+     side-by-side container breakpoint — it previously sat just below it and
+     the admin edit forms silently stayed stacked. */
+  max-width: 36em;
   padding: 1.4rem;
   width: 100%;
 }
