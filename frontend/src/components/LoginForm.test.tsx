@@ -1,9 +1,31 @@
-import { fireEvent, render, waitFor } from '@solidjs/testing-library'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, waitFor } from '@solidjs/testing-library'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { ApiError } from '../api/client'
 import type { LoginConfig } from '../loginConfig'
-import { LoginForm } from './LoginForm'
+
+// Passkeys (WebAuthn) — unsupported in jsdom, so the ceremonies are stubbed.
+// Defaults keep the passkey UI hidden and autofill inert, matching real jsdom,
+// so tests that don't opt in behave exactly as before.
+const passkeysSupported = vi.fn(() => false)
+const passkeyAutofillSupported = vi.fn(() => Promise.resolve(false))
+const loginWithPasskey = vi.fn<(...args: unknown[]) => Promise<string>>(() => Promise.resolve('/'))
+const loginWithPasskeyAutofill = vi.fn<(...args: unknown[]) => Promise<string>>(() => Promise.resolve('/'))
+const cancelPasskeyCeremony = vi.fn()
+
+vi.mock('../lib/passkeys', () => ({
+  passkeysSupported: () => passkeysSupported(),
+  passkeyAutofillSupported: () => passkeyAutofillSupported(),
+  loginWithPasskey: (...args: unknown[]) => loginWithPasskey(...args),
+  loginWithPasskeyAutofill: (...args: unknown[]) => loginWithPasskeyAutofill(...args),
+  cancelPasskeyCeremony: () => cancelPasskeyCeremony(),
+}))
+
+const { LoginForm } = await import('./LoginForm')
+
+// A microtask flush so an onMount async catch settles before an absence assert.
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 const config: LoginConfig = {
   locale: 'en',
@@ -27,12 +49,119 @@ function mockFetchOnce(status: number, body: unknown) {
   return fetchMock
 }
 
+beforeEach(() => {
+  passkeysSupported.mockReset().mockReturnValue(false)
+  passkeyAutofillSupported.mockReset().mockResolvedValue(false)
+  loginWithPasskey.mockReset().mockResolvedValue('/')
+  loginWithPasskeyAutofill.mockReset().mockResolvedValue('/')
+  cancelPasskeyCeremony.mockReset()
+})
+
 afterEach(() => {
+  cleanup() // remove each render's DOM so landmarks (a11y) and state don't leak
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
 
 describe('LoginForm', () => {
+  it('marks the username field for passkey autofill (webauthn autocomplete token)', () => {
+    const { container, unmount } = render(() => <LoginForm config={config} />)
+
+    expect(container.querySelector('input[name="_username"]')).toHaveAttribute('autocomplete', 'username webauthn')
+
+    unmount()
+  })
+
+  it('starts conditional-UI passkey autofill on mount and redirects when one is chosen', async () => {
+    const assign = vi.fn()
+    vi.stubGlobal('location', { ...window.location, assign })
+    passkeyAutofillSupported.mockResolvedValue(true)
+    loginWithPasskeyAutofill.mockResolvedValue('/ui/tracking')
+
+    const { unmount } = render(() => <LoginForm config={config} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/ui/tracking'))
+
+    unmount()
+  })
+
+  it('leaves the password form usable when autofill is unsupported or unused', async () => {
+    const assign = vi.fn()
+    vi.stubGlobal('location', { ...window.location, assign })
+    passkeyAutofillSupported.mockResolvedValue(false)
+
+    const { getByRole, unmount } = render(() => <LoginForm config={config} />)
+
+    await waitFor(() => expect(passkeyAutofillSupported).toHaveBeenCalled())
+    expect(loginWithPasskeyAutofill).not.toHaveBeenCalled()
+    expect(assign).not.toHaveBeenCalled()
+    expect(getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('surfaces an error when the server rejects a passkey the user selected (ApiError)', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    loginWithPasskeyAutofill.mockRejectedValue(new ApiError(401, 'nope'))
+
+    const { getByRole, unmount } = render(() => <LoginForm config={config} />)
+
+    await waitFor(() => expect(getByRole('alert')).toBeInTheDocument())
+
+    unmount()
+  })
+
+  it('stays silent when the autofill ceremony is aborted or dismissed', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    // A DOMException/AbortError from the ceremony — NOT an ApiError.
+    loginWithPasskeyAutofill.mockRejectedValue(new Error('The operation was aborted.'))
+
+    const { container, unmount } = render(() => <LoginForm config={config} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+    await flush()
+    expect(container.querySelector('[role="alert"]')).toBeNull()
+
+    unmount()
+  })
+
+  it('passes an abort signal to the autofill request so it can be torn down', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+
+    const { unmount } = render(() => <LoginForm config={config} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+    expect(loginWithPasskeyAutofill).toHaveBeenCalledWith(expect.any(AbortSignal))
+
+    unmount()
+  })
+
+  it('tears down the autofill request when switching to the 2FA code step', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    // Capture the signal handed to the autofill request so we can assert it aborts.
+    let signal: AbortSignal | undefined
+    loginWithPasskeyAutofill.mockImplementation((...args: unknown[]) => {
+      signal = args[0] as AbortSignal | undefined
+
+      return new Promise<string>(() => {}) // never resolves — a live conditional ceremony
+    })
+    const fetchMock = mockFetchOnce(200, { twoFactorRequired: true })
+
+    const { container, getByRole, unmount } = render(() => <LoginForm config={config} />)
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+    fireEvent.input(container.querySelector('input[name="_username"]')!, { target: { value: 'jane' } })
+    fireEvent.input(container.querySelector('input[name="_password"]')!, { target: { value: 'pw' } })
+    fireEvent.click(getByRole('button', { name: 'Sign in' }))
+
+    // Password accepted → 2FA phase → both teardown paths fire.
+    await waitFor(() => expect(getByRole('button', { name: 'Verify' })).toBeInTheDocument())
+    expect(cancelPasskeyCeremony).toHaveBeenCalled()
+    expect(signal?.aborted).toBe(true)
+    expect(fetchMock).toHaveBeenCalled()
+
+    unmount()
+  })
   it('renders the firewall field names and the #form-submit button', () => {
     const { container, getByRole, unmount } = render(() => <LoginForm config={config} />)
 
