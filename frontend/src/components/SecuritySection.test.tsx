@@ -3,8 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const postJson = vi.fn()
 
+class MockApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message)
+  }
+}
+
 vi.mock('../api/client', () => ({
-  ApiError: class extends Error {},
+  ApiError: MockApiError,
   ValidationError: class extends Error {},
   SessionExpiredError: class extends Error {},
   apiErrorMessage: (error: unknown, fallback: string) => (error instanceof Error && error.message ? error.message : fallback),
@@ -143,27 +149,47 @@ describe('SecuritySection', () => {
     await waitFor(() => expect(deletePasskey).toHaveBeenCalledWith(7))
   })
 
-  it('disables TOTP when already enabled and confirmed', async () => {
+  it('requires a re-auth code to disable TOTP, then disables', async () => {
     configure({ totpEnabled: true })
-    vi.spyOn(globalThis, 'confirm').mockReturnValue(true)
     postJson.mockResolvedValueOnce({ enabled: false })
     render(() => <SecuritySection />)
 
     expect(screen.getByText('Two-factor authentication is on.')).toBeTruthy()
+    // First click only reveals the code step (ADR-018 D4) — no request yet.
+    fireEvent.click(screen.getByRole('button', { name: 'Disable two-factor' }))
+    expect(postJson).not.toHaveBeenCalled()
+
+    fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '654321' } })
     fireEvent.click(screen.getByRole('button', { name: 'Disable two-factor' }))
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Enable two-factor' })).toBeTruthy())
-    expect(postJson).toHaveBeenCalledWith('/settings/2fa/disable', {})
+    expect(postJson).toHaveBeenCalledWith('/settings/2fa/disable', { code: '654321' })
   })
 
-  it('does not disable TOTP when the confirmation is declined', () => {
+  it('cancels the disable step without calling the API', () => {
     configure({ totpEnabled: true })
-    vi.spyOn(globalThis, 'confirm').mockReturnValue(false)
     render(() => <SecuritySection />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Disable two-factor' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(postJson).not.toHaveBeenCalled()
     expect(screen.getByText('Two-factor authentication is on.')).toBeTruthy()
+  })
+
+  it('keeps 2FA on and shows a localized error when the disable code is rejected', async () => {
+    configure({ totpEnabled: true })
+    // The server answers 422 with no prose; the SPA supplies the localized message.
+    postJson.mockRejectedValueOnce(new MockApiError(422, ''))
+    render(() => <SecuritySection />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Disable two-factor' }))
+    fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '000000' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Disable two-factor' }))
+
+    await waitFor(() => expect(screen.getByText(/That code wasn't right/)).toBeTruthy())
+    // Rejected re-auth leaves 2FA on: no flip to the enable state.
+    expect(screen.queryByRole('button', { name: 'Enable two-factor' })).toBeNull()
+    expect(postJson).toHaveBeenCalledWith('/settings/2fa/disable', { code: '000000' })
   })
 })

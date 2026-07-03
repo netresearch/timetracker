@@ -12,8 +12,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
 
+use function password_hash;
 use function rawurldecode;
 use function strlen;
+
+use const PASSWORD_DEFAULT;
 
 /**
  * @internal
@@ -99,5 +102,58 @@ final class TwoFactorEnrollmentServiceTest extends TestCase
         self::assertNull($user->getTotpSecret());
         self::assertSame([], $user->getBackupCodes());
         self::assertFalse($user->isTotpAuthenticationEnabled());
+    }
+
+    public function testVerifyUserCodeAcceptsACurrentTotpCode(): void
+    {
+        $clock = new MockClock('2026-07-03 12:00:00');
+        $service = $this->service($clock);
+        $user = new User()->setUsername('jane');
+        $user->setTotpSecret('ENC(' . self::SECRET . ')', self::SECRET);
+
+        $code = TOTP::createFromSecret(self::SECRET, $clock)->now();
+
+        self::assertTrue($service->verifyUserCode($user, $code));
+    }
+
+    public function testVerifyUserCodeAcceptsABackupCode(): void
+    {
+        $service = $this->service(new MockClock('2026-07-03 12:00:00'));
+        $user = new User()->setUsername('jane');
+        // 2FA must be enabled for the re-auth to apply; the wrong-TOTP path then
+        // falls through to the backup-code check.
+        $user->setTotpSecret('ENC(' . self::SECRET . ')', self::SECRET);
+        $user->setBackupCodes([password_hash('rescue-me', PASSWORD_DEFAULT)]);
+
+        self::assertTrue($service->verifyUserCode($user, 'rescue-me'));
+    }
+
+    public function testVerifyUserCodeRejectsAWrongCode(): void
+    {
+        $clock = new MockClock('2026-07-03 12:00:00');
+        $service = $this->service($clock);
+        $user = new User()->setUsername('jane');
+        $user->setTotpSecret('ENC(' . self::SECRET . ')', self::SECRET);
+
+        $valid = TOTP::createFromSecret(self::SECRET, $clock)->now();
+        $wrong = '000000' === $valid ? '111111' : '000000';
+
+        self::assertFalse($service->verifyUserCode($user, $wrong));
+    }
+
+    public function testVerifyUserCodeRejectsAnEmptyCode(): void
+    {
+        $service = $this->service(new MockClock());
+        $user = new User()->setUsername('jane');
+        $user->setTotpSecret('ENC(' . self::SECRET . ')', self::SECRET);
+
+        self::assertFalse($service->verifyUserCode($user, ''));
+    }
+
+    public function testVerifyUserCodeRejectsWhenTwoFactorIsOff(): void
+    {
+        $service = $this->service(new MockClock());
+
+        self::assertFalse($service->verifyUserCode(new User()->setUsername('jane'), '123456'));
     }
 }

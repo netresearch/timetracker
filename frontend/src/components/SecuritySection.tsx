@@ -1,6 +1,6 @@
 import { createResource, createSignal, Show, For, type JSX } from 'solid-js'
 
-import { apiErrorMessage, postJson } from '../api/client'
+import { ApiError, apiErrorMessage, postJson } from '../api/client'
 import { appConfig } from '../config'
 import { deletePasskey, listPasskeys, passkeysSupported, registerPasskey } from '../lib/passkeys'
 import { m } from '../paraglide/messages.js'
@@ -185,6 +185,9 @@ function TwoFactorControls(props: { initiallyEnabled: boolean }): JSX.Element {
   const [backupCodes, setBackupCodes] = createSignal<string[] | null>(null)
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal('')
+  // Disabling requires re-auth (ADR-018 D4): a small inline code step, not a one-click.
+  const [disabling, setDisabling] = createSignal(false)
+  const [disableCode, setDisableCode] = createSignal('')
 
   async function start(): Promise<void> {
     setBusy(true)
@@ -215,22 +218,32 @@ function TwoFactorControls(props: { initiallyEnabled: boolean }): JSX.Element {
     }
   }
 
-  async function disable(): Promise<void> {
-    // Turning off 2FA weakens the account — confirm before the single click acts.
-    if (!globalThis.confirm(m.settings_2fa_disable_confirm())) {
-      return
-    }
+  async function disable(event: Event): Promise<void> {
+    event.preventDefault()
     setBusy(true)
     setError('')
     try {
-      await postJson('/settings/2fa/disable', {})
+      // Re-auth with a current code: turning 2FA off must prove live possession.
+      await postJson('/settings/2fa/disable', { code: disableCode().trim() })
       setEnabled(false)
       setBackupCodes(null)
+      setDisabling(false)
+      setDisableCode('')
     } catch (caught) {
-      setError(apiErrorMessage(caught, m.settings_2fa_error()))
+      // A rejected code answers 422 (server sends no prose); show the localized
+      // "wrong code" message rather than a raw fallback.
+      setError(caught instanceof ApiError && 422 === caught.status
+        ? m.settings_2fa_bad_code()
+        : apiErrorMessage(caught, m.settings_2fa_error()))
     } finally {
       setBusy(false)
     }
+  }
+
+  function cancelDisable(): void {
+    setDisabling(false)
+    setDisableCode('')
+    setError('')
   }
 
   /** Abandon an in-progress enrolment, clearing the typed code and any error so a
@@ -303,12 +316,34 @@ function TwoFactorControls(props: { initiallyEnabled: boolean }): JSX.Element {
             </Show>
           }
         >
-          <div class="security-row">
-            <p role="status" class="security-on">{m.settings_2fa_on()}</p>
-            <button type="button" class="ghost-button" disabled={busy()} onClick={() => void disable()}>
-              {m.settings_2fa_disable()}
-            </button>
-          </div>
+          <Show
+            when={disabling()}
+            fallback={
+              <div class="security-row">
+                <p role="status" class="security-on">{m.settings_2fa_on()}</p>
+                <button type="button" class="ghost-button" disabled={busy()} onClick={() => { setDisabling(true); setError('') }}>
+                  {m.settings_2fa_disable()}
+                </button>
+              </div>
+            }
+          >
+            <form class="security-enroll" onSubmit={(event) => void disable(event)}>
+              <p class="field-hint">{m.settings_2fa_disable_hint()}</p>
+              <label class="field">
+                <span>{m.settings_2fa_code()}</span>
+                {/* No inputmode=numeric: a backup code is hex, so leave the full keyboard. */}
+                <input type="text" autocomplete="one-time-code" autocapitalize="off" spellcheck={false} required value={disableCode()} onInput={(e) => setDisableCode(e.currentTarget.value)} />
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="primary-button is-danger" disabled={busy()}>
+                  {busy() ? m.app_saving() : m.settings_2fa_disable()}
+                </button>
+                <button type="button" class="ghost-button" disabled={busy()} onClick={cancelDisable}>
+                  {m.app_cancel()}
+                </button>
+              </div>
+            </form>
+          </Show>
         </Show>
       </Show>
 

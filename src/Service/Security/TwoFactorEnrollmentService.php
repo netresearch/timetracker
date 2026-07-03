@@ -77,6 +77,28 @@ final readonly class TwoFactorEnrollmentService
     }
 
     /**
+     * Verify a code against a user's ENROLLED second factor — a current TOTP code
+     * or one of their backup codes. The re-auth gate for a sensitive change (e.g.
+     * turning 2FA off, ADR-018 D4): proving possession of the factor, uniform for
+     * local and LDAP accounts alike. Returns false when the user has no 2FA.
+     */
+    public function verifyUserCode(User $user, #[SensitiveParameter] string $code): bool
+    {
+        if ('' === $code || !$user->isTotpAuthenticationEnabled()) {
+            return false;
+        }
+
+        // The entity owns the scheb coupling; the service works with the plain
+        // secret (a string) so it stays free of the 2FA-bundle model types.
+        $secret = $user->getTotpSecretPlain();
+        if (null !== $secret && $this->verifyCode($secret, $code)) {
+            return true;
+        }
+
+        return $user->isBackupCode($code);
+    }
+
+    /**
      * Confirm enrolment: verify the code against the pending secret, then store the
      * encrypted secret and hashed backup codes on the user (the caller flushes).
      *

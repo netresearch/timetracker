@@ -559,6 +559,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
         return null !== $this->totpSecretPlain && '' !== $this->totpSecretPlain;
     }
 
+    /**
+     * The DECRYPTED TOTP secret, or null when 2FA is off. Exposed so a service can
+     * re-verify a code (ADR-018 D4) without depending on the scheb config type —
+     * the scheb coupling stays here in the entity, which already implements it.
+     */
+    public function getTotpSecretPlain(): ?string
+    {
+        return $this->totpSecretPlain;
+    }
+
     public function getTotpAuthenticationUsername(): ?string
     {
         return $this->username;
