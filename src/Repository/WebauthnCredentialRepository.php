@@ -34,6 +34,9 @@ use function base64_encode;
  */
 class WebauthnCredentialRepository extends ServiceEntityRepository implements PublicKeyCredentialSourceRepositoryInterface, CanSaveCredentialRecord
 {
+    /** DQL predicate shared by every by-user-handle query below. */
+    private const string USER_HANDLE_PREDICATE = 'c.userHandle = :userHandle';
+
     // PublicKeyCredentialSourceRepositoryInterface is an (deprecated) empty marker
     // extending CredentialRecordRepositoryInterface — the bundle aliases both to
     // the configured repo, so we implement the marker to satisfy the DI alias
@@ -60,7 +63,7 @@ class WebauthnCredentialRepository extends ServiceEntityRepository implements Pu
             ->createQueryBuilder()
             ->from(WebauthnCredential::class, 'c')
             ->select('c')
-            ->where('c.userHandle = :userHandle')
+            ->where(self::USER_HANDLE_PREDICATE)
             ->setParameter('userHandle', $publicKeyCredentialUserEntity->id)
             ->getQuery()
             ->getResult();
@@ -84,12 +87,32 @@ class WebauthnCredentialRepository extends ServiceEntityRepository implements Pu
             ->createQueryBuilder()
             ->from(WebauthnCredential::class, 'c')
             ->select('c')
-            ->where('c.userHandle = :userHandle')
+            ->where(self::USER_HANDLE_PREDICATE)
             ->setParameter('userHandle', $userHandle)
             ->getQuery()
             ->getResult();
 
         return $records;
+    }
+
+    /**
+     * How many passkeys a user handle has registered — for the mandatory-2FA
+     * gate, which counts a passkey as a valid second factor (ADR-018).
+     */
+    public function countByUserHandle(string $userHandle): int
+    {
+        $count = $this->getEntityManager()
+            ->createQueryBuilder()
+            ->from(WebauthnCredential::class, 'c')
+            ->select('COUNT(c.id)')
+            ->where(self::USER_HANDLE_PREDICATE)
+            ->setParameter('userHandle', $userHandle)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        // getSingleScalarResult() is mixed (COUNT comes back as a numeric string
+        // on some drivers) — normalise to int.
+        return (int) $count;
     }
 
     public function findOneByCredentialId(string $publicKeyCredentialId): ?CredentialRecord

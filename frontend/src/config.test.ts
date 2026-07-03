@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { appConfig, canBill, canBulkEnter, hasRole } from './config'
+import { appConfig, canBill, canBulkEnter, hasRole, needsTwoFactorEnrolment } from './config'
 
 const original = window.APP_CONFIG
 
@@ -35,5 +35,22 @@ describe('config role helpers', () => {
   it('throws when APP_CONFIG is missing', () => {
     window.APP_CONFIG = undefined
     expect(() => appConfig()).toThrow(/APP_CONFIG is missing/)
+  })
+})
+
+describe('needsTwoFactorEnrolment', () => {
+  it('is false when 2FA is not required', () => {
+    window.APP_CONFIG = { ...original!, twoFactorRequired: false, hasTwoFactor: false }
+    expect(needsTwoFactorEnrolment()).toBe(false)
+  })
+
+  it('is false when required but the user already has a second factor', () => {
+    window.APP_CONFIG = { ...original!, twoFactorRequired: true, hasTwoFactor: true }
+    expect(needsTwoFactorEnrolment()).toBe(false)
+  })
+
+  it('is true only when required and the user has no second factor', () => {
+    window.APP_CONFIG = { ...original!, twoFactorRequired: true, hasTwoFactor: false }
+    expect(needsTwoFactorEnrolment()).toBe(true)
   })
 })
