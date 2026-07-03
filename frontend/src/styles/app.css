@@ -1582,6 +1582,21 @@ kbd {
   white-space: nowrap;
 }
 
+/* Invisible hover bridge over the 2px visual gap between the kebab button and
+   the popup (plus side slack for diagonal movement): the cursor never crosses a
+   non-hoverable strip, so the wrapper's pointerleave can't fire mid-transit.
+   Exactly the gap's height — any taller and it would overlap the button's
+   bottom edge (the popup is z-index 30) and swallow clicks meant to toggle it.
+   Diagonal paths that leave the strip are covered by the JS close grace. */
+.action-menu-pop::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -6px;
+  left: -6px;
+  height: 2px;
+}
+
 .action-menu-pop [role='menuitem'] {
   display: flex;
   align-items: center;

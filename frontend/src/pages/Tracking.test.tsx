@@ -938,4 +938,45 @@ describe('Tracking (Worklog grid)', () => {
 
     unmount()
   })
+
+  it('gives the kebab hover menu a close grace period (survives a brief pointer exit)', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],
+    })
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('.action-menu')).toBeInTheDocument())
+    const wrapper = container.querySelector('.action-menu')!
+
+    // pointerenter/leave don't bubble and jsdom has no PointerEvent — dispatch
+    // plain events carrying the pointerType the handlers check.
+    const pointer = (type: string): Event => Object.assign(new Event(type), { pointerType: 'mouse' })
+
+    // Hover opens (Solid signals apply synchronously).
+    wrapper.dispatchEvent(pointer('pointerenter'))
+    expect(container.querySelector('.action-menu-pop')).toBeInTheDocument()
+
+    vi.useFakeTimers()
+    try {
+      // Leaving does NOT close immediately — the cursor may be crossing the
+      // small gap between the button and the popup.
+      wrapper.dispatchEvent(pointer('pointerleave'))
+      expect(container.querySelector('.action-menu-pop')).toBeInTheDocument()
+      vi.advanceTimersByTime(100)
+      expect(container.querySelector('.action-menu-pop')).toBeInTheDocument()
+
+      // Re-entering within the grace period cancels the pending close for good.
+      wrapper.dispatchEvent(pointer('pointerenter'))
+      vi.advanceTimersByTime(500)
+      expect(container.querySelector('.action-menu-pop')).toBeInTheDocument()
+
+      // Leaving for longer than the grace period closes it.
+      wrapper.dispatchEvent(pointer('pointerleave'))
+      vi.advanceTimersByTime(200)
+      expect(container.querySelector('.action-menu-pop')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+
+    unmount()
+  })
 })
