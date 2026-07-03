@@ -310,6 +310,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'teams' => [2], // User 2 is in team 2
                     'active' => true,
                     'is_local' => false,
+                    'totp_enabled' => false,
                     'last_activity' => '2020-02-08',
                 ],
             ],
@@ -324,6 +325,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'teams' => [], // User 3 has no teams in current test data
                     'active' => true,
                     'is_local' => false,
+                    'totp_enabled' => false,
                     'last_activity' => '0500-01-31',
                 ],
             ],
@@ -338,6 +340,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'teams' => [], // User 5 has no teams
                     'active' => true,
                     'is_local' => false,
+                    'totp_enabled' => false,
                     'last_activity' => null,
                 ],
             ],
@@ -352,6 +355,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'teams' => [], // User 4 has no teams
                     'active' => true,
                     'is_local' => false,
+                    'totp_enabled' => false,
                     'last_activity' => null,
                 ],
             ],
@@ -366,6 +370,7 @@ class AdminControllerTest extends AbstractWebTestCase
                     'teams' => [1], // User 1 is in team 1
                     'active' => true,
                     'is_local' => false,
+                    'totp_enabled' => false,
                     'last_activity' => '2023-10-24',
                 ],
             ],

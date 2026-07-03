@@ -89,7 +89,7 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, abbr_duplicate: bool, locale:string, teams: array<int, int>, active: bool, is_local: bool, last_activity: string|null}}>
+     * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, abbr_duplicate: bool, locale:string, teams: array<int, int>, active: bool, is_local: bool, totp_enabled: bool, last_activity: string|null}}>
      */
     public function getAllUsers(): array
     {
@@ -143,6 +143,9 @@ class UserRepository extends ServiceEntityRepository
                 // Whether this account authenticates by local password (true) or
                 // LDAP (false). Never the hash itself — only the derived flag.
                 'is_local' => $user->isLocalAccount(),
+                // Whether the user has TOTP two-factor enrolled — drives the admin
+                // "Reset 2FA" recovery control. Never the secret, only the flag.
+                'totp_enabled' => $user->isTotpAuthenticationEnabled(),
                 'last_activity' => $lastActivity[(int) $user->getId()] ?? null,
             ]];
         }

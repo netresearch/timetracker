@@ -78,6 +78,12 @@ export interface EntityDescriptor {
    * All labels live here so the shell component stays entity-agnostic.
    */
   importAction?: ImportAction
+  /**
+   * Optional admin break-glass (ADR-018 D2): when set, a row whose `totp_enabled`
+   * is true gets a per-row "Reset 2FA" button that POSTs `{ id }` here to clear
+   * that user's TOTP secret and backup codes (recovery for a lost authenticator).
+   */
+  resetTwoFactorEndpoint?: string
 }
 
 export interface ImportAction {
