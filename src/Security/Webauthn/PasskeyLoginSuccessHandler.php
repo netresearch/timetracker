@@ -11,7 +11,6 @@ namespace App\Security\Webauthn;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerInterface;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
@@ -38,11 +37,11 @@ final class PasskeyLoginSuccessHandler implements SuccessHandler, Authentication
         ?PublicKeyCredential $publicKeyCredential = null,
         ?PublicKeyCredentialOptions $publicKeyCredentialOptions = null,
         ?PublicKeyCredentialUserEntity $userEntity = null,
-    ): Response {
+    ): JsonResponse {
         return $this->jsonRedirect($request);
     }
 
-    public function onAuthenticationSuccess(Request $request, TokenInterface $token): Response
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token): JsonResponse
     {
         return $this->jsonRedirect($request);
     }

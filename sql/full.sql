@@ -49,7 +49,8 @@ CREATE TABLE `users` (
   `backup_codes` json DEFAULT NULL,
   `webauthn_user_handle` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`)
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `webauthn_user_handle` (`webauthn_user_handle`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 
@@ -71,7 +72,8 @@ CREATE TABLE `webauthn_credentials` (
   `backup_eligible` tinyint(1) DEFAULT NULL,
   `backup_status` tinyint(1) DEFAULT NULL,
   `uv_initialized` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `webauthn_user_handle` (`user_handle`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 

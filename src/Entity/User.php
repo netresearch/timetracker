@@ -100,7 +100,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
      * passkeys are bound to. NULL until the user registers their first passkey;
      * a random UUID is then assigned (never the integer PK, which is guessable).
      */
-    #[ORM\Column(name: 'webauthn_user_handle', type: 'string', length: 36, nullable: true)]
+    #[ORM\Column(name: 'webauthn_user_handle', type: 'string', length: 36, unique: true, nullable: true)]
     protected ?string $webauthnUserHandle = null;
 
     /**

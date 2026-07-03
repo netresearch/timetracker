@@ -23,15 +23,15 @@ use Webauthn\Bundle\Security\Handler\FailureHandler;
  */
 final class PasskeyLoginFailureHandler implements FailureHandler, AuthenticationFailureHandlerInterface
 {
-    public function onFailure(Request $request, ?Throwable $exception = null): Response
+    public function onFailure(Request $request, ?Throwable $exception = null): JsonResponse
     {
-        return new JsonResponse(
-            ['ok' => false, 'error' => $exception?->getMessage() ?? 'Authentication failed'],
-            Response::HTTP_UNAUTHORIZED,
-        );
+        // Never echo the raw exception message — a WebAuthn verification failure can
+        // carry internal detail (RP/origin mismatch, counter regression). The SPA
+        // shows its own localized message; a generic marker is enough on the wire.
+        return new JsonResponse(['ok' => false, 'error' => 'passkey_authentication_failed'], Response::HTTP_UNAUTHORIZED);
     }
 
-    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): JsonResponse
     {
         return $this->onFailure($request, $exception);
     }

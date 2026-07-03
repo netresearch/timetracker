@@ -30,7 +30,7 @@ final class PasskeyRegisterSuccessHandler implements SuccessHandler
         ?PublicKeyCredential $publicKeyCredential = null,
         ?PublicKeyCredentialOptions $publicKeyCredentialOptions = null,
         ?PublicKeyCredentialUserEntity $userEntity = null,
-    ): Response {
+    ): JsonResponse {
         return new JsonResponse(['success' => true], Response::HTTP_CREATED);
     }
 }

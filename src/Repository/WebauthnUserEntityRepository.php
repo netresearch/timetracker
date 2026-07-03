@@ -38,9 +38,17 @@ final readonly class WebauthnUserEntityRepository implements PublicKeyCredential
         }
 
         if (null === $user->getWebauthnUserHandle()) {
-            // First passkey interaction for this account — assign a stable handle.
-            $user->setWebauthnUserHandle(Uuid::v4()->toRfc4122());
-            $this->entityManager->flush();
+            // Assign a stable handle exactly once, ATOMICALLY: the guarded UPDATE
+            // wins for at most one concurrent request (the rest touch zero rows),
+            // so there is no lost-update race, the unique index forbids duplicates,
+            // and — unlike a read-modify-write flush — an existing handle can never
+            // be overwritten (matters because the login-options builder can reach
+            // this method with a request-supplied username).
+            $this->entityManager->getConnection()->executeStatement(
+                'UPDATE users SET webauthn_user_handle = :handle WHERE id = :id AND webauthn_user_handle IS NULL',
+                ['handle' => Uuid::v4()->toRfc4122(), 'id' => $user->getId()],
+            );
+            $this->entityManager->refresh($user);
         }
 
         return $this->toUserEntity($user);
