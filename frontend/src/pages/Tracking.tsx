@@ -145,16 +145,30 @@ function displayDate(value: string): string {
   return formatUserDate(dmyToIso(value) ?? value)
 }
 
+// Localized short weekday ("Fri" / "Fr.") — one formatter per page load, the
+// app locale never changes without a reload. Construct and format in UTC (the
+// same pattern as dateFormat.ts formatAuto) so a DST transition or timezone
+// mismatch can never shift a date-only value onto the neighbouring weekday.
+let weekdayFormat: Intl.DateTimeFormat | undefined
+function shortWeekday(iso: string): string {
+  weekdayFormat ??= new Intl.DateTimeFormat(appConfig().locale, { weekday: 'short', timeZone: 'UTC' })
+  const [year, month, day] = iso.split('-').map(Number)
+
+  return weekdayFormat.format(new Date(Date.UTC(year!, month! - 1, day!)))
+}
+
 // Three widths of the same date so the responsive table can shrink the Date
-// column purely in CSS: full (the user's preferred format), then MM-DD, then DD.
+// column purely in CSS: full (the user's preferred format), then MM-DD, then the
+// weekday. The narrowest rung is the weekday, not the bare day-of-month — a lone
+// "03" says nothing without its month/year, while "Fri" orients the reader in a
+// recent-entries worklog (issue #520).
 function dateParts(value: string): { full: string; mid: string; short: string } {
   const full = displayDate(value)
   const iso = dmyToIso(value) ?? value
-  const parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
-  const month = parts?.[2]
-  const day = parts?.[3]
-  if (month !== undefined && day !== undefined) {
-    return { full, mid: `${month}-${day}`, short: day }
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(iso)
+  const isoDate = match?.[1]
+  if (isoDate !== undefined) {
+    return { full, mid: isoDate.slice(5), short: shortWeekday(isoDate) }
   }
 
   return { full, mid: full, short: full }
