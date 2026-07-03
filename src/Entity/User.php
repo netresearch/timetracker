@@ -96,6 +96,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
     protected ?array $backupCodes = null;
 
     /**
+     * Stable, non-enumerable WebAuthn user handle (ADR-018 D3) — the opaque id
+     * passkeys are bound to. NULL until the user registers their first passkey;
+     * a random UUID is then assigned (never the integer PK, which is guessable).
+     */
+    #[ORM\Column(name: 'webauthn_user_handle', type: 'string', length: 36, nullable: true)]
+    protected ?string $webauthnUserHandle = null;
+
+    /**
      * The DECRYPTED TOTP secret — a transient, non-persisted field. Populated
      * from {@see $totpSecret} by UserTwoFactorSubscriber::postLoad and on
      * enrolment. scheb reads it via getTotpAuthenticationConfiguration().
@@ -492,6 +500,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
     public function isLocalAccount(): bool
     {
         return null !== $this->password && '' !== $this->password;
+    }
+
+    /** The WebAuthn user handle, or null until the first passkey is registered. */
+    public function getWebauthnUserHandle(): ?string
+    {
+        return $this->webauthnUserHandle;
+    }
+
+    public function setWebauthnUserHandle(?string $webauthnUserHandle): self
+    {
+        $this->webauthnUserHandle = $webauthnUserHandle;
+
+        return $this;
     }
 
     /**

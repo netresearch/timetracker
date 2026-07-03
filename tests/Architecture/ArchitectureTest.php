@@ -86,6 +86,9 @@ final class ArchitectureTest
                 // (TotpTwoFactorInterface, BackupCodeInterface, TotpConfiguration)
                 // — a framework contract like Symfony's UserInterface. ADR-018 D2.
                 Selector::inNamespace('Scheb\TwoFactorBundle\Model'),
+                // WebAuthn credential model the passkey entity extends (ADR-018 D3),
+                // another framework-contract superclass like the scheb one above.
+                Selector::inNamespace('Webauthn'),
                 Selector::classname(self::CLASSNAME_EXCEPTION, true),
             )
             ->because('Entities stay data-centric: relations, ORM metadata, validation');
@@ -136,6 +139,9 @@ final class ArchitectureTest
                 Selector::inNamespace('Doctrine'),
                 Selector::inNamespace('Symfony'),
                 Selector::inNamespace('Psr'),
+                // WebAuthn credential/user-entity contracts the passkey repositories
+                // implement + return (ADR-018 D3) — the bundle's data-layer types.
+                Selector::inNamespace('Webauthn'),
                 Selector::classname(self::CLASSNAME_EXCEPTION, true),
             )
             ->because('Repositories handle data access (plus the query-helper services they delegate to)');
