@@ -234,6 +234,25 @@ export default function Tracking() {
     actionsMenuCloseTimer = setTimeout(() => { if (actionsMenuRow() === id) { setActionsMenuRow(null) } }, 150)
   }
   onCleanup(cancelActionsMenuClose)
+  // The popup is position:fixed (to escape the table's overflow clipping), so its
+  // viewport coordinates are set here from the kebab's rect when it mounts. The
+  // kebab button is the popup's sibling inside .action-menu. Right-aligned to the
+  // button and opened below it, flipping above when it would overflow the viewport
+  // bottom; clamped horizontally so it never leaves the viewport.
+  const positionActionsMenu = (popup: HTMLElement): void => {
+    const button = popup.parentElement?.querySelector('button')
+    if (!button) {
+      return
+    }
+    const anchor = button.getBoundingClientRect()
+    const menu = popup.getBoundingClientRect()
+    const gap = 2
+    const left = Math.max(4, Math.min(anchor.right - menu.width, window.innerWidth - menu.width - 4))
+    const below = anchor.bottom + gap
+    const flipUp = below + menu.height > window.innerHeight && anchor.top - menu.height - gap >= 0
+    popup.style.left = `${left}px`
+    popup.style.top = `${flipUp ? anchor.top - menu.height - gap : below}px`
+  }
   onMount(() => {
     const onDocPointer = (event: PointerEvent): void => {
       if (daysComboRef !== undefined && !daysComboRef.contains(event.target as Node)) {
@@ -248,6 +267,16 @@ export default function Tracking() {
     }
     document.addEventListener('pointerdown', onDocPointer)
     onCleanup(() => document.removeEventListener('pointerdown', onDocPointer))
+    // The kebab popup is position:fixed, so a scroll (of the table or the page)
+    // or a resize would leave it stranded away from its button — close it instead.
+    // Capture phase so a scroll on the inner .table-scroll container is caught too.
+    const onViewportShift = (): void => { if (actionsMenuRow() !== null) { closeActionsMenu() } }
+    window.addEventListener('scroll', onViewportShift, { capture: true, passive: true })
+    window.addEventListener('resize', onViewportShift, { passive: true })
+    onCleanup(() => {
+      window.removeEventListener('scroll', onViewportShift, { capture: true })
+      window.removeEventListener('resize', onViewportShift)
+    })
   })
   const entries = useQuery(() => trackingEntriesQuery(days()))
   const customers = useQuery(trackingCustomersQuery)
@@ -1196,7 +1225,7 @@ export default function Tracking() {
                               <KebabIcon />
                             </button>
                             <Show when={actionsMenuRow() === id}>
-                              <div class="action-menu-pop" role="menu">
+                              <div class="action-menu-pop" role="menu" ref={positionActionsMenu}>
                                 <Show when={id > 0}>
                                   <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); continueEntry(entry) }}><ContinueIcon /> {m.tracking_continue()}</button>
                                   <Show when={isLatestEntry(entry)}>

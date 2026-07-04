@@ -947,6 +947,24 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('closes the kebab menu on scroll (the fixed popup must not strand from its button)', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],
+    })
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('.action-menu')).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Row actions' }))
+    await waitFor(() => expect(container.querySelector('.action-menu-pop')).toBeInTheDocument())
+
+    // The popup is position:fixed; a scroll would leave it stranded away from its
+    // button, so a captured scroll (table or page) dismisses it.
+    fireEvent.scroll(window)
+    await waitFor(() => expect(container.querySelector('.action-menu-pop')).not.toBeInTheDocument())
+
+    unmount()
+  })
+
   it('gives the kebab hover menu a close grace period (survives a brief pointer exit)', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],
