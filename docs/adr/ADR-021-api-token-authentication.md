@@ -44,26 +44,30 @@ Scopes are `resource:action`, `action ∈ {read, write}`, over the API's resourc
 | `settings` | the caller's own `/settings` |
 | `sync` | `/syncentries/jira`, project subticket sync |
 
-`read` covers the `GET`/`getAll*` reads of a resource; `write` covers create/update/delete.
+`read` covers a resource's read/query operations and `write` its create/update/delete —
+by operation **semantics**, not HTTP method (some reads, e.g. `/getSummary`, are `POST`).
 Admin-only resources (`users`, `ticketsystems`, …) additionally require the user to hold
 the admin role — the scope alone is insufficient. A wildcard `*` (all scopes the user can
 grant) is allowed for convenience but discouraged in the UI.
 
 ### 3. Opaque, hashed tokens
 
-A token is an opaque high-entropy string with a recognizable prefix: `tt_pat_<32+ bytes
-base62>`. Only a **SHA-256 hash** is stored; the plaintext is shown **once** at creation.
-The prefix enables secret-scanning and safe logging (log the prefix + id, never the token).
-No JWT — opaque tokens are trivially **revocable** and carry no self-asserted claims.
+A token is `tt_pat_` followed by 64 hex characters (32 random bytes) — opaque and
+high-entropy. Only a **SHA-256 hash** of the whole string is stored; the plaintext is shown
+**once** at creation. The `tt_pat_` prefix enables secret-scanning; logs may carry the token
+row's database id but never the token itself. No JWT — opaque tokens are trivially
+**revocable** and carry no self-asserted claims.
 
 ### 4. Stateless Bearer firewall + scope enforcement
 
-- A dedicated **stateless firewall** matches the data-API paths and accepts
+- A dedicated **stateless firewall** matches the data-API paths (an **anchored** path
+  pattern — never a loose prefix that a look-alike route could slip through) and accepts
   `Authorization: Bearer tt_pat_…`. The SPA/login/2FA firewalls are unchanged; humans keep
   cookies + MFA, tokens never touch the login or 2FA routes.
-- A custom **authenticator** hashes the presented token, looks it up (constant-time by
-  hash), rejects if missing/expired/revoked, stamps `last_used_at`, and authenticates as
-  the owning user with the token's scopes attached to the security token.
+- A custom **authenticator** hashes the presented token and looks up that SHA-256 hash
+  (the plaintext is never compared directly, so there is no per-request secret to
+  time-attack), rejects if missing/expired/revoked, records use (see §7), and authenticates
+  as the owning user with the token's scopes attached to the security token.
 - **Enforcement** is a `#[RequireScope('entries:write')]` controller attribute backed by a
   voter: the request is denied `403` unless the token grants the scope. Session (cookie)
   requests bypass the scope check (a human in the SPA is not scope-limited) — scopes gate
@@ -71,21 +75,23 @@ No JWT — opaque tokens are trivially **revocable** and carry no self-asserted 
 
 ### 5. Storage
 
-New table `user_api_tokens`: `id`, `user_id` (FK), `name`, `token_hash` (unique),
-`scopes` (JSON array), `expires_at` (nullable), `last_used_at` (nullable), `created_at`,
-`revoked_at` (nullable). One additive migration; no change to existing tables.
+New table `api_tokens`: `id`, `user_id` (FK, `ON DELETE CASCADE`), `name`, `token_hash`
+(unique), `scopes` (JSON array), `expires_at` (nullable), `last_used_at` (nullable),
+`created_at`, `revoked_at` (nullable). One additive migration; no change to existing tables.
 
 ### 6. Management surface
 
 - **Settings UI** (ADR-016 SPA): a "Personal access tokens" section — create (name,
   scope checkboxes grouped by resource, optional expiry), list (name, scopes, last used,
   expiry; never the token), and revoke. The plaintext is shown once with a copy button.
-- **CLI**: `app:user:token:create <user> --scope … [--expires …]` for bootstrap/cron.
+- **CLI**: `app:api-token:create <user> <name> --scope … [--expires …]` for bootstrap/cron.
 
 ### 7. Security
 
 Hashed at rest; recognizable prefix for secret-scanning; `last_used_at` for audit and
-stale-token cleanup; optional expiry (recommend a default, e.g. 90 days, overridable);
+stale-token cleanup, written **coarsely** (at most once per few minutes) so authentication
+does not incur a row write on every request; optional expiry (recommend a default, e.g.
+90 days, overridable);
 per-token revocation; rate limiting on the Bearer firewall; tokens excluded from logs and
 from every API response. A token cannot be used to change auth state (password, MFA,
 passkeys) — those stay session+re-auth only, out of the token firewall.
