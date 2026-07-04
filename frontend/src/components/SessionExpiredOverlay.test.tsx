@@ -5,18 +5,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // exercised. The default keeps the button hidden (passkeysSupported → false),
 // matching real jsdom, so the password/2FA tests behave exactly as before.
 const passkeysSupported = vi.fn(() => false)
+const passkeyAutofillSupported = vi.fn(() => Promise.resolve(false))
 const loginWithPasskey = vi.fn<(...args: unknown[]) => Promise<string>>(() => Promise.resolve('/'))
+const loginWithPasskeyAutofill = vi.fn<(...args: unknown[]) => Promise<string>>(() => Promise.resolve('/'))
+const cancelPasskeyCeremony = vi.fn()
 
 vi.mock('../lib/passkeys', () => ({
   passkeysSupported: () => passkeysSupported(),
+  passkeyAutofillSupported: () => passkeyAutofillSupported(),
   loginWithPasskey: (...args: unknown[]) => loginWithPasskey(...args),
+  loginWithPasskeyAutofill: (...args: unknown[]) => loginWithPasskeyAutofill(...args),
+  cancelPasskeyCeremony: () => cancelPasskeyCeremony(),
 }))
 
 const { SessionExpiredOverlay } = await import('./SessionExpiredOverlay')
 
 beforeEach(() => {
-  passkeysSupported.mockReturnValue(false)
-  loginWithPasskey.mockResolvedValue('/')
+  // Reset call history too (the overlay calls cancelPasskeyCeremony on every
+  // teardown, so counts would accumulate across tests otherwise).
+  passkeysSupported.mockReset().mockReturnValue(false)
+  passkeyAutofillSupported.mockReset().mockResolvedValue(false)
+  loginWithPasskey.mockReset().mockResolvedValue('/')
+  loginWithPasskeyAutofill.mockReset().mockResolvedValue('/')
+  cancelPasskeyCeremony.mockClear()
 })
 
 afterEach(() => {
@@ -163,5 +174,51 @@ describe('SessionExpiredOverlay', () => {
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
     expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('starts passkey autofill (conditional UI) on mount and resumes in place when one is picked', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    loginWithPasskeyAutofill.mockResolvedValue('/ui/tracking')
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+  })
+
+  it('tears down the passkey autofill ceremony on unmount', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    // Never resolves — the background ceremony stays pending until torn down.
+    loginWithPasskeyAutofill.mockReturnValue(new Promise<string>(() => {}))
+    const { unmount } = render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+    unmount()
+    expect(cancelPasskeyCeremony).toHaveBeenCalled()
+  })
+
+  it('passes an AbortSignal to the autofill ceremony so it can be aborted', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    loginWithPasskeyAutofill.mockReturnValue(new Promise<string>(() => {}))
+    render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+    expect(loginWithPasskeyAutofill.mock.calls[0]![0]).toBeInstanceOf(AbortSignal)
+  })
+
+  it('tears down the autofill when switching to the 2FA code step', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    loginWithPasskeyAutofill.mockReturnValue(new Promise<string>(() => {}))
+    mockTwoFactorFetch(true) // password accepted → 2FA required
+    render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+
+    fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'ldap-pass' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    // Entering the code phase must abort the pending autofill (cancelCeremony),
+    // so a late passkey pick can't resume the session mid-2FA.
+    await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeInTheDocument())
+    expect(cancelPasskeyCeremony).toHaveBeenCalled()
   })
 })

@@ -1,10 +1,11 @@
 import { Dialog } from '@ark-ui/solid/dialog'
-import { createSignal, Show } from 'solid-js'
+import { createEffect, createSignal, onCleanup, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
+import { ApiError } from '../api/client'
 import { appConfig } from '../config'
 import { PasskeyIcon } from '../lib/icons'
-import { loginWithPasskey, passkeysSupported } from '../lib/passkeys'
+import { cancelPasskeyCeremony, loginWithPasskey, loginWithPasskeyAutofill, passkeyAutofillSupported, passkeysSupported } from '../lib/passkeys'
 import { m } from '../paraglide/messages.js'
 
 // The firewall-intercepted 2FA code path. APP_CONFIG (unlike LOGIN_CONFIG) does
@@ -145,6 +146,40 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
     setError(null)
   }
 
+  // Conditional UI (passkey autofill), same as LoginForm but keyed on the
+  // credentials phase so it (re)starts on mount AND when returning from the 2FA
+  // step, with a FRESH AbortController each time (an aborted one can't be reused).
+  // The 'webauthn' token on the username field enables the inline surfacing; a
+  // picked passkey resumes in place (onSuccess) instead of navigating. Leaving the
+  // phase (→ 2FA) or unmounting tears it down — abort stops it in the
+  // /login/options window, cancelPasskeyCeremony aborts a started
+  // navigator.credentials.get() — so a late pick can't resume mid-2FA or after the
+  // overlay closes. Ceremony rejections (unsupported, dismissed, aborted) are
+  // silent; only a server rejection of a selected passkey surfaces an error.
+  createEffect(() => {
+    if (phase() !== 'credentials') {
+      return
+    }
+    const passkeyAutofill = new AbortController()
+    void (async () => {
+      try {
+        if (!(await passkeyAutofillSupported())) {
+          return
+        }
+        await loginWithPasskeyAutofill(passkeyAutofill.signal)
+        props.onSuccess()
+      } catch (caught) {
+        if (caught instanceof ApiError) {
+          setError(m.login_passkey_error())
+        }
+      }
+    })()
+    onCleanup(() => {
+      passkeyAutofill.abort()
+      cancelPasskeyCeremony()
+    })
+  })
+
   return (
     // modal (default) inerts the page below (readable but non-interactive for AT);
     // non-dismissible (no Esc / outside-click close) — only a successful re-login
@@ -201,10 +236,10 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
                   <input
                     type="text"
                     name="_username"
-                    // No 'webauthn' token: it only surfaces passkeys with an active
-                    // conditional-mediation request, which this overlay does not
-                    // start — it offers the explicit passkey button below instead.
-                    autocomplete="username"
+                    // 'webauthn' surfaces the user's passkeys inline in this field's
+                    // autofill — backed by the conditional-mediation ceremony started
+                    // on mount above (matching the /login form).
+                    autocomplete="username webauthn"
                     autocapitalize="off"
                     autocorrect="off"
                     spellcheck={false}
