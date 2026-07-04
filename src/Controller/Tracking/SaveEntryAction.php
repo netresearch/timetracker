@@ -472,12 +472,7 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         $needle = strtoupper(trim($ticket));
-        foreach (explode(',', $subtickets) as $subticket) {
-            if (strtoupper(trim($subticket)) === $needle) {
-                return true;
-            }
-        }
 
-        return false;
+        return array_any(explode(',', $subtickets), static fn (string $subticket): bool => strtoupper(trim($subticket)) === $needle);
     }
 }
