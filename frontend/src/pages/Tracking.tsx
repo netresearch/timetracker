@@ -378,8 +378,27 @@ export default function Tracking() {
   // id→label maps, rebuilt only when the option list changes, so resolving a
   // relation cell is O(1) instead of an O(n) .find on every row render.
   const toLabelMap = (list: NamedOption[] | undefined): Map<number, string> => new Map((list ?? []).map((option) => [option.id, option.label]))
-  const customerLabels = createMemo(() => toLabelMap(customers.data))
-  const projectLabels = createMemo(() => toLabelMap(allProjectOptions()))
+  // Fold each visible entry's embedded label into the map so a row on a
+  // since-deactivated customer/project (absent from the active-only option lists)
+  // still renders its name, not a raw id. Only fills gaps — the option list's
+  // label wins for ids it already covers — and is bounded by the visible entries.
+  const withEntryLabels = (
+    map: Map<number, string>,
+    idOf: (entry: TrackingEntry) => number | null,
+    nameOf: (entry: TrackingEntry) => string | null | undefined,
+  ): Map<number, string> => {
+    for (const entry of entries.data ?? []) {
+      const id = idOf(entry)
+      const name = nameOf(entry)
+      if (id !== null && id > 0 && name != null && name !== '' && !map.has(id)) {
+        map.set(id, name)
+      }
+    }
+
+    return map
+  }
+  const customerLabels = createMemo(() => withEntryLabels(toLabelMap(customers.data), (entry) => entry.customer, (entry) => entry.customerName))
+  const projectLabels = createMemo(() => withEntryLabels(toLabelMap(allProjectOptions()), (entry) => entry.project, (entry) => entry.projectName))
   const activityLabels = createMemo(() => toLabelMap(activities.data))
   const labelFrom = (map: Map<number, string>, id: number): string => (id > 0 ? (map.get(id) ?? String(id)) : '')
 

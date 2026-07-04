@@ -95,6 +95,33 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
+     * Active (or global) projects only — the bookable set the tracking-page picker
+     * needs, without the large inactive tail (~94 active vs ~1000 total on prod).
+     * Historical entries on a since-deactivated project still render because their
+     * label is embedded in the entry (Entry::toArray), so display never depends on
+     * the inactive projects being in this list. addSelect hydrates the customer so
+     * Project::toArray doesn't lazy-load one proxy per project (N+1).
+     *
+     * @return list<Project>
+     */
+    public function findActiveOrGlobal(): array
+    {
+        $result = $this->createQueryBuilder('project')
+            ->leftJoin('project.customer', 'customer')
+            ->addSelect('customer')
+            ->where('project.active = 1')
+            ->orWhere('project.global = 1')
+            ->orderBy('project.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        assert(is_array($result) && (array_is_list($result) || 0 === count($result)));
+        /** @var list<Project> $result */
+
+        return $result;
+    }
+
+    /**
      * @return array<int, array{id: int, name: string, customerId: int, customerName: string}>
      */
     public function getAllProjectsForAdmin(): array

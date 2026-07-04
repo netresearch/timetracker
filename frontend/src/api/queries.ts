@@ -142,7 +142,14 @@ export interface TrackingEntry {
   end: string | null
   user: number | null
   customer: number | null
+  // Embedded labels for THIS entry's customer/project, so the grid can render a
+  // row on a since-deactivated record without carrying the full inactive tail in
+  // the option lists (which are active-only). Bounded by the visible entries.
+  // Optional: only /getData populates them; new/optimistic rows and the save
+  // envelope don't (their picked record is already in the active option list).
+  customerName?: string | null
   project: number | null
+  projectName?: string | null
   activity: number | null
   description: string
   ticket: string
@@ -279,7 +286,10 @@ export interface TrackingProject {
 export function trackingProjectsQuery() {
   return {
     queryKey: ['tracking-projects'] as const,
-    queryFn: () => getJson<{ project?: Record<string, unknown> }[]>('/getAllProjects'),
+    // ?active=1: the lean, bookable set (active/global only, no last_activity) —
+    // not the full ~1000-project admin list. Labels for entries on deactivated
+    // projects come embedded in the entry (TrackingEntry.projectName).
+    queryFn: () => getJson<{ project?: Record<string, unknown> }[]>('/getAllProjects?active=1'),
     select: (rows: { project?: Record<string, unknown> }[]): TrackingProject[] =>
       rows
         .map((row) => row?.project)

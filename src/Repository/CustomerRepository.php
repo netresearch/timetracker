@@ -44,10 +44,14 @@ class CustomerRepository extends ServiceEntityRepository
      */
     public function getCustomersByUser(int $userId): array
     {
+        // Active/bookable customers only (global or in one of the user's teams).
+        // The tracking picker doesn't need the inactive tail; a historical entry on
+        // a since-deactivated customer still renders from its embedded label
+        // (Entry::toArray), so display never depends on this list carrying it.
         /** @var Customer[] $result */
         $result = $this->createQueryBuilder('customer')
-            ->andWhere('customer.global = 1')
-            ->orWhere('user.id = :userId')
+            ->where('customer.active = 1')
+            ->andWhere('customer.global = 1 OR user.id = :userId')
             ->setParameter('userId', $userId)
             ->leftJoin('customer.teams', 'team')
             ->leftJoin('team.users', 'user')

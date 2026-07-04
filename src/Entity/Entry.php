@@ -424,7 +424,7 @@ class Entry extends Base
      *
      * @return (int|string|null)[]
      *
-     * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: string, durationMinutes: int, class: int, worklog: int|null, extTicket: string|null}
+     * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, customerName: string|null, project: int|null, projectName: string|null, activity: int|null, description: string, ticket: string, duration: string, durationMinutes: int, class: int, worklog: int|null, extTicket: string|null}
      */
     #[Override]
     public function toArray(): array
@@ -433,11 +433,14 @@ class Entry extends Base
         $projectEntity = $this->getProject();
         if ($customerEntity instanceof Customer) {
             $customer = $customerEntity->getId();
+            $customerName = $customerEntity->getName();
         } elseif ($projectEntity instanceof Project) {
             $projectCustomer = $projectEntity->getCustomer();
             $customer = $projectCustomer instanceof Customer ? $projectCustomer->getId() : null;
+            $customerName = $projectCustomer instanceof Customer ? $projectCustomer->getName() : null;
         } else {
             $customer = null;
+            $customerName = null;
         }
 
         $userEntity = $this->getUser();
@@ -450,7 +453,12 @@ class Entry extends Base
             'end' => isset($this->end) ? $this->getEnd()->format('H:i') : null,
             'user' => $userEntity instanceof User ? $userEntity->getId() : null,
             'customer' => $customer,
+            // Embedded labels: the grid renders an entry on a since-deactivated
+            // customer/project from these (bounded by the visible entries), so the
+            // option lists can stay active-only (GetAllProjectsAction ?active=1).
+            'customerName' => $customerName,
             'project' => $projectEntity instanceof Project ? ($projectEntity->getId() ?? 0) : null,
+            'projectName' => $projectEntity instanceof Project ? $projectEntity->getName() : null,
             'activity' => $activityEntity instanceof Activity ? $activityEntity->getId() : null,
             'description' => $this->getDescription(),
             'ticket' => $this->getTicket(),

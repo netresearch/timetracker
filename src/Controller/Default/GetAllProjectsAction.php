@@ -42,15 +42,25 @@ final class GetAllProjectsAction extends BaseController
         }
 
         $customerId = (int) $request->query->get('customer');
+        // The tracking-page picker passes ?active=1 for the lean, bookable set
+        // (active/global only — ~94 vs ~1000 projects). The admin grid omits it and
+        // still gets every project. Historical entries on a deactivated project
+        // render from their embedded label (Entry::toArray), not this list.
+        $activeOnly = $request->query->getBoolean('active');
         $objectRepository = $this->managerRegistry->getRepository(Project::class);
         assert($objectRepository instanceof ProjectRepository);
         /** @var array<int, Project> $result */
-        $result = $customerId > 0 ? $objectRepository->findByCustomer($customerId) : $objectRepository->findAll();
+        $result = match (true) {
+            $customerId > 0 => $objectRepository->findByCustomer($customerId),
+            $activeOnly => $objectRepository->findActiveOrGlobal(),
+            default => $objectRepository->findAll(),
+        };
 
         // "Last activity" (date of the most recent booking) is for the admin overview,
-        // which lists every project unfiltered; skip the aggregate on the customer-filtered
-        // entry-form path, which doesn't show the column.
-        $lastActivity = $customerId > 0 ? [] : $objectRepository->lastActivityBy('project_id');
+        // which lists every project unfiltered; skip the aggregate on the tracking
+        // picker (?active=1) and the customer-filtered entry-form path, neither of
+        // which shows the column.
+        $lastActivity = ($customerId > 0 || $activeOnly) ? [] : $objectRepository->lastActivityBy('project_id');
 
         $data = [];
         foreach ($result as $project) {

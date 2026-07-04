@@ -821,6 +821,11 @@ class EntryRepository extends ServiceEntityRepository
             ->leftJoin('e.customer', 'c')
             ->leftJoin('e.project', 'p')
             ->leftJoin('e.activity', 'a')
+            // Hydrate customer + project so Entry::toArray can emit their names
+            // without an N+1 — the grid renders each entry's label from the entry
+            // itself, which lets the option lists stay active-only. Both are
+            // ManyToOne, so no row multiplication.
+            ->addSelect('c', 'p')
 
             ->where(self::WHERE_USER)
             ->setParameter('user', $user)
