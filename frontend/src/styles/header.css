@@ -227,7 +227,10 @@
 }
 
 .worktime-item dt {
-    color: light-dark(#50555b,#b9bec4);
+    /* Use the shared muted token (not a hardcoded copy) so its AA-contrast value
+       applies here too — the old literal #50555b was ~4.49:1 on the header, a
+       near-threshold flake source in the a11y scan. */
+    color: var(--color-text-muted);
     font-size: 10px;
     letter-spacing: .5px;
     margin: 0;
