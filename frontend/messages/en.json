@@ -365,6 +365,7 @@
   "admin_sync_all_confirm": "Sync subtickets for all projects? This may take a while.",
   "admin_subtickets_synced": "Synced {count} subtickets.",
   "admin_subtickets_synced_all": "Subtickets synced for all projects.",
+  "admin_subtickets_synced_partial": "Some projects could not be synced.",
   "admin_yes": "Yes",
   "admin_no": "No",
   "admin_e_customers": "Customers",

@@ -365,6 +365,7 @@
   "admin_sync_all_confirm": "Синхронизировать подтикеты для всех проектов? Это может занять некоторое время.",
   "admin_subtickets_synced": "Синхронизировано подтикетов: {count}.",
   "admin_subtickets_synced_all": "Подтикеты синхронизированы для всех проектов.",
+  "admin_subtickets_synced_partial": "Некоторые проекты не удалось синхронизировать.",
   "admin_yes": "Да",
   "admin_no": "Нет",
   "admin_e_customers": "Клиенты",

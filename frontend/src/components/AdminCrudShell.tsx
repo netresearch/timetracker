@@ -476,7 +476,7 @@ export function AdminCrudShell(props: {
     try {
       const result = await postJson<{ success?: boolean; subtickets?: string[] }>(build(row), {})
       await refreshAfterMutation()
-      flashNotice(m.admin_subtickets_synced({ count: String(result.subtickets?.length ?? 0) }))
+      flashNotice(m.admin_subtickets_synced({ count: String(result?.subtickets?.length ?? 0) }))
     } catch (caught) {
       setError(apiErrorMessage(caught, m.app_load_error()))
     }
@@ -490,9 +490,11 @@ export function AdminCrudShell(props: {
       return
     }
     try {
-      await postJson(endpoint, {})
+      // The endpoint answers 200 with { success:false } when at least one project
+      // failed (e.g. no token) — report that as a partial result, not a clean sweep.
+      const result = await postJson<{ success?: boolean }>(endpoint, {})
       await refreshAfterMutation()
-      flashNotice(m.admin_subtickets_synced_all())
+      flashNotice(result?.success === false ? m.admin_subtickets_synced_partial() : m.admin_subtickets_synced_all())
     } catch (caught) {
       setError(apiErrorMessage(caught, m.app_load_error()))
     }
