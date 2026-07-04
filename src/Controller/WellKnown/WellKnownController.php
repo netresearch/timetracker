@@ -11,6 +11,7 @@ namespace App\Controller\WellKnown;
 
 use App\Service\ClockInterface;
 use DateInterval;
+use DateTimeZone;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -38,7 +39,12 @@ final class WellKnownController extends AbstractController
     public function securityTxt(Request $request): Response
     {
         $base = $request->getSchemeAndHttpHost();
-        $expires = $this->clock->now()->add(new DateInterval('P1Y'))->format('Y-m-d\TH:i:s\Z');
+        // Normalise to UTC before stamping the literal 'Z' — the clock may run in
+        // the server's local timezone, which would otherwise mislabel the offset.
+        $expires = $this->clock->now()
+            ->add(new DateInterval('P1Y'))
+            ->setTimezone(new DateTimeZone('UTC'))
+            ->format('Y-m-d\TH:i:s\Z');
 
         $body = 'Contact: ' . self::SECURITY_CONTACT . "\n"
             . "Expires: {$expires}\n"

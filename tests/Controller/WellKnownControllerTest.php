@@ -45,7 +45,7 @@ final class WellKnownControllerTest extends AbstractWebTestCase
         self::assertSame('/ui/settings', $response->headers->get('Location'));
     }
 
-    public function testApiCatalogIsAlinksetPointingAtTheOpenApi(): void
+    public function testApiCatalogIsALinkSetPointingAtTheOpenApi(): void
     {
         $this->client->request(Request::METHOD_GET, '/.well-known/api-catalog');
 
