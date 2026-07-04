@@ -240,7 +240,10 @@ export default function Tracking() {
   // button and opened below it, flipping above when it would overflow the viewport
   // bottom; clamped horizontally so it never leaves the viewport.
   const positionActionsMenu = (popup: HTMLElement): void => {
-    const button = popup.parentElement?.querySelector('button')
+    // The kebab is the .action-menu's own trigger (aria-haspopup=menu) — target it
+    // explicitly, not the first descendant button, which would also match the
+    // menuitem buttons inside this very popup.
+    const button = popup.parentElement?.querySelector('[aria-haspopup="menu"]')
     if (!button) {
       return
     }
@@ -253,6 +256,21 @@ export default function Tracking() {
     popup.style.left = `${left}px`
     popup.style.top = `${flipUp ? anchor.top - menu.height - gap : below}px`
   }
+  // The fixed popup would strand from its button on scroll/resize; attach a dismiss
+  // handler only while a menu is open, rather than a permanent global listener.
+  createEffect(() => {
+    if (actionsMenuRow() === null) {
+      return
+    }
+    const dismiss = (): void => closeActionsMenu()
+    // Capture phase so a scroll on the inner .table-scroll container is caught too.
+    window.addEventListener('scroll', dismiss, { capture: true, passive: true })
+    window.addEventListener('resize', dismiss, { passive: true })
+    onCleanup(() => {
+      window.removeEventListener('scroll', dismiss, { capture: true })
+      window.removeEventListener('resize', dismiss)
+    })
+  })
   onMount(() => {
     const onDocPointer = (event: PointerEvent): void => {
       if (daysComboRef !== undefined && !daysComboRef.contains(event.target as Node)) {
@@ -267,16 +285,6 @@ export default function Tracking() {
     }
     document.addEventListener('pointerdown', onDocPointer)
     onCleanup(() => document.removeEventListener('pointerdown', onDocPointer))
-    // The kebab popup is position:fixed, so a scroll (of the table or the page)
-    // or a resize would leave it stranded away from its button — close it instead.
-    // Capture phase so a scroll on the inner .table-scroll container is caught too.
-    const onViewportShift = (): void => { if (actionsMenuRow() !== null) { closeActionsMenu() } }
-    window.addEventListener('scroll', onViewportShift, { capture: true, passive: true })
-    window.addEventListener('resize', onViewportShift, { passive: true })
-    onCleanup(() => {
-      window.removeEventListener('scroll', onViewportShift, { capture: true })
-      window.removeEventListener('resize', onViewportShift)
-    })
   })
   const entries = useQuery(() => trackingEntriesQuery(days()))
   const customers = useQuery(trackingCustomersQuery)
