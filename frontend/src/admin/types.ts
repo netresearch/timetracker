@@ -85,6 +85,20 @@ export interface EntityDescriptor {
    * (recovery for a lost authenticator or passkey device).
    */
   resetTwoFactorEndpoint?: string
+  /**
+   * Optional per-row "Sync subtickets" action (Projects): re-pull the project's
+   * Jira sub-issues into the read-only `subtickets` column. The path carries the
+   * row id, so this builds the endpoint per row; the shell POSTs to it, then
+   * refreshes the list. Requires a ticket system on the project (the server 400s
+   * otherwise, surfaced inline).
+   */
+  syncSubticketsEndpoint?: (row: Record<string, unknown>) => string
+  /**
+   * Optional toolbar "Sync all subtickets" action (Projects): POST here to sync
+   * every project's subtickets in one pass, then refresh. Confirmed first — it
+   * fans out to the ticket system for all projects and can take a while.
+   */
+  syncAllSubticketsEndpoint?: string
 }
 
 export interface ImportAction {

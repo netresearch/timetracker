@@ -138,6 +138,10 @@ export function adminEntities(): EntityDescriptor[] {
         { name: 'internalReference', label: () => m.admin_f_internal_ref(), type: 'text' },
         { name: 'externalReference', label: () => m.admin_f_external_ref(), type: 'text' },
       ],
+      // Jira subticket sync (parity with the legacy admin): a per-row pull and a
+      // global "sync all". The subtickets column above is read-only; these refresh it.
+      syncSubticketsEndpoint: (row) => `/projects/${num(row.id)}/syncsubtickets`,
+      syncAllSubticketsEndpoint: '/projects/syncsubtickets',
       rowLabel: (row) => str(row.name),
       toForm: (row) => row === null
         ? { id: 0, name: '', customer: 0, ticket_system: 0, jiraId: '', jiraTicket: '', additionalInformationFromExternal: false, active: true, global: false, project_lead: 0, technical_lead: 0, offer: '', cost_center: '', billing: 0, estimation: '', internalJiraProjectKey: '', internalJiraTicketSystem: '', invoice: '', internalReference: '', externalReference: '' }

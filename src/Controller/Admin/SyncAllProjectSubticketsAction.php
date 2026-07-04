@@ -20,7 +20,7 @@ use Throwable;
 
 final class SyncAllProjectSubticketsAction extends BaseController
 {
-    #[Route(path: '/projects/syncsubtickets', name: 'syncAllSubtickets_attr', methods: ['GET'])]
+    #[Route(path: '/projects/syncsubtickets', name: 'syncAllSubtickets_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(): JsonResponse
     {

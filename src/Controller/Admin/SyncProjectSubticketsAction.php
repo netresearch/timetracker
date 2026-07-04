@@ -33,7 +33,7 @@ final class SyncProjectSubticketsAction extends BaseController
         $this->subticketSyncService = $subticketSyncService;
     }
 
-    #[Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['GET'])]
+    #[Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(Request $request): JsonResponse|Error|ModelResponse
     {
