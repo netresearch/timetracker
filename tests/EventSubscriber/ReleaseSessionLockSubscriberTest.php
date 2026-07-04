@@ -38,11 +38,24 @@ final class ReleaseSessionLockSubscriberTest extends TestCase
     public static function readOnlyDataRoutes(): iterable
     {
         yield 'entries' => ['_getDataDays_attr'];
-        yield 'customers' => ['_getCustomers_attr'];
-        yield 'projects' => ['_getAllProjects_attr'];
-        yield 'activities' => ['_getActivities_attr'];
-        yield 'ticket systems' => ['_getTicketSystems_attr'];
+        yield 'data (GET)' => ['_getData_attr'];
         yield 'time summary' => ['time_summary_attr'];
+        yield 'customers (tracking)' => ['_getCustomers_attr'];
+        yield 'customers (admin)' => ['_getAllCustomers_attr'];
+        yield 'customer' => ['_getCustomer_attr'];
+        yield 'projects (tracking)' => ['_getProjects_attr'];
+        yield 'projects (admin)' => ['_getAllProjects_attr'];
+        yield 'activities' => ['_getActivities_attr'];
+        yield 'users (tracking)' => ['_getUsers_attr'];
+        yield 'users (admin)' => ['_getAllUsers_attr'];
+        yield 'teams (admin)' => ['_getAllTeams_attr'];
+        yield 'ticket systems' => ['_getTicketSystems_attr'];
+        yield 'ticket time summary' => ['_getTicketTimeSummary_attr'];
+        yield 'holidays (admin)' => ['_getAllHolidays_attr'];
+        yield 'holidays' => ['_getHolidays_attr'];
+        yield 'presets (admin)' => ['_getAllPresets_attr'];
+        yield 'contracts (admin)' => ['_getContracts_attr'];
+        yield 'contract hours' => ['_getContractHours_attr'];
     }
 
     public function testLeavesOtherRoutesLocked(): void
