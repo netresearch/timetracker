@@ -28,6 +28,7 @@ ADRs are historical records: bodies are not rewritten when reality moves on. Whe
 | [ADR-018](ADR-018-authentication-extension.md) | Authentication Extension: Local Passwords, MFA (TOTP) and Passkeys | Accepted (D1 done; MFA/passkeys pending) | 2026-07-02 |
 | [ADR-019](ADR-019-session-storage-and-lock-contention.md) | Session Storage and Lock-Contention Strategy | Accepted (files + early lock-release; Valkey deferred) | 2026-07-04 |
 | [ADR-020](ADR-020-subticket-ticket-resolution.md) | Jira Subticket Sync and Ticket→Project Resolution | Accepted | 2026-07-04 |
+| [ADR-021](ADR-021-api-token-authentication.md) | API Token Authentication with Fine-Grained Scopes | Proposed | 2026-07-04 |
 
 ## ADR Format
 
