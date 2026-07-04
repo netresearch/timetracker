@@ -21,6 +21,21 @@ function mockLoginFetch(ok: boolean): ReturnType<typeof vi.fn> {
   return fetchMock
 }
 
+// The password POST (→ /login) reports 2FA required; the code POST (→ /2fa_check)
+// yields codeOk. Mirrors the JSON contract of TwoFactorJsonRequired/SuccessHandler.
+function mockTwoFactorFetch(codeOk: boolean): ReturnType<typeof vi.fn> {
+  const fetchMock = vi.fn().mockImplementation((url: string) =>
+    Promise.resolve(
+      String(url) === '/2fa_check'
+        ? { ok: codeOk, status: codeOk ? 200 : 401, json: async () => ({ ok: codeOk }) }
+        : { ok: false, status: 401, json: async () => ({ ok: false, twoFactorRequired: true }) },
+    ),
+  )
+  vi.stubGlobal('fetch', fetchMock)
+
+  return fetchMock
+}
+
 describe('SessionExpiredOverlay', () => {
   it('re-logs in via XHR with the LoginForm contract and calls onSuccess on {ok:true}', async () => {
     const fetchMock = mockLoginFetch(true)
@@ -62,5 +77,45 @@ describe('SessionExpiredOverlay', () => {
     render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
     const link = screen.getByRole('link', { name: /login page/i })
     expect(link.getAttribute('href')).toBe('/login')
+  })
+
+  it('treats a 2FA-required password as success: swaps to the code step, then resumes on a valid code', async () => {
+    // Regression: a correct LDAP password on a TOTP-enrolled account was mislabelled
+    // "login failed" because the overlay had no twoFactorRequired branch.
+    const fetchMock = mockTwoFactorFetch(true)
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'ldap-pass' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    // Password accepted → code step appears; no error, no premature resume.
+    await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeInTheDocument())
+    expect(onSuccess).not.toHaveBeenCalled()
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify' }))
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+    const [codeUrl, codeInit] = fetchMock.mock.calls[1]!
+    expect(codeUrl).toBe('/2fa_check')
+    expect(String(codeInit.body)).toContain('_auth_code=123456')
+  })
+
+  it('surfaces a 2FA code error without resuming', async () => {
+    mockTwoFactorFetch(false)
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'ldap-pass' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeInTheDocument())
+
+    fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '000000' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify' }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(onSuccess).not.toHaveBeenCalled()
   })
 })
