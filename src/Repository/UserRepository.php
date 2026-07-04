@@ -13,6 +13,7 @@ use App\Entity\User;
 use App\Entity\WebauthnCredential;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Cache\CacheItemPoolInterface;
 
 use function assert;
 
@@ -25,9 +26,10 @@ class UserRepository extends ServiceEntityRepository
 {
     use LastActivityTrait;
 
-    public function __construct(ManagerRegistry $managerRegistry)
+    public function __construct(ManagerRegistry $managerRegistry, ?CacheItemPoolInterface $cacheItemPool = null)
     {
         parent::__construct($managerRegistry, User::class);
+        $this->lastActivityCache = $cacheItemPool;
     }
 
     /**
