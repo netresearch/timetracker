@@ -21,10 +21,13 @@ vi.mock('../lib/passkeys', () => ({
 const { SessionExpiredOverlay } = await import('./SessionExpiredOverlay')
 
 beforeEach(() => {
-  passkeysSupported.mockReturnValue(false)
-  passkeyAutofillSupported.mockResolvedValue(false)
-  loginWithPasskey.mockResolvedValue('/')
-  loginWithPasskeyAutofill.mockResolvedValue('/')
+  // Reset call history too (the overlay calls cancelPasskeyCeremony on every
+  // teardown, so counts would accumulate across tests otherwise).
+  passkeysSupported.mockReset().mockReturnValue(false)
+  passkeyAutofillSupported.mockReset().mockResolvedValue(false)
+  loginWithPasskey.mockReset().mockResolvedValue('/')
+  loginWithPasskeyAutofill.mockReset().mockResolvedValue('/')
+  cancelPasskeyCeremony.mockClear()
 })
 
 afterEach(() => {
@@ -191,6 +194,31 @@ describe('SessionExpiredOverlay', () => {
 
     await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
     unmount()
+    expect(cancelPasskeyCeremony).toHaveBeenCalled()
+  })
+
+  it('passes an AbortSignal to the autofill ceremony so it can be aborted', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    loginWithPasskeyAutofill.mockReturnValue(new Promise<string>(() => {}))
+    render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+    expect(loginWithPasskeyAutofill.mock.calls[0]![0]).toBeInstanceOf(AbortSignal)
+  })
+
+  it('tears down the autofill when switching to the 2FA code step', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    loginWithPasskeyAutofill.mockReturnValue(new Promise<string>(() => {}))
+    mockTwoFactorFetch(true) // password accepted → 2FA required
+    render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+
+    fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'ldap-pass' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    // Entering the code phase must abort the pending autofill (cancelCeremony),
+    // so a late passkey pick can't resume the session mid-2FA.
+    await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeInTheDocument())
     expect(cancelPasskeyCeremony).toHaveBeenCalled()
   })
 })

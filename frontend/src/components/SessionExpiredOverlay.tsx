@@ -1,5 +1,5 @@
 import { Dialog } from '@ark-ui/solid/dialog'
-import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js'
+import { createEffect, createSignal, onCleanup, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
 import { ApiError } from '../api/client'
@@ -146,15 +146,21 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
     setError(null)
   }
 
-  // Conditional UI (passkey autofill), same as LoginForm: from mount, quietly ask
-  // the browser to surface the user's discoverable passkeys inline in the username
-  // field's autofill (the 'webauthn' token below is what enables it). It resolves
-  // once the user picks one — then resume in place (onSuccess) instead of
-  // navigating. Ceremony rejections (unsupported, dismissed, or aborted when the
-  // explicit button / 2FA step takes over) are silent; only a server rejection of a
-  // passkey the user actually selected surfaces an error.
-  const passkeyAutofill = new AbortController()
-  onMount(() => {
+  // Conditional UI (passkey autofill), same as LoginForm but keyed on the
+  // credentials phase so it (re)starts on mount AND when returning from the 2FA
+  // step, with a FRESH AbortController each time (an aborted one can't be reused).
+  // The 'webauthn' token on the username field enables the inline surfacing; a
+  // picked passkey resumes in place (onSuccess) instead of navigating. Leaving the
+  // phase (→ 2FA) or unmounting tears it down — abort stops it in the
+  // /login/options window, cancelPasskeyCeremony aborts a started
+  // navigator.credentials.get() — so a late pick can't resume mid-2FA or after the
+  // overlay closes. Ceremony rejections (unsupported, dismissed, aborted) are
+  // silent; only a server rejection of a selected passkey surfaces an error.
+  createEffect(() => {
+    if (phase() !== 'credentials') {
+      return
+    }
+    const passkeyAutofill = new AbortController()
     void (async () => {
       try {
         if (!(await passkeyAutofillSupported())) {
@@ -168,22 +174,11 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
         }
       }
     })()
+    onCleanup(() => {
+      passkeyAutofill.abort()
+      cancelPasskeyCeremony()
+    })
   })
-  // Tear the autofill down completely: the AbortController stops it in the
-  // /login/options window (before any ceremony exists), and cancelPasskeyCeremony
-  // aborts an already-started navigator.credentials.get(). Do both when the form
-  // switches to the 2FA code step (else a late passkey pick could resume mid-2FA)
-  // and on unmount.
-  const teardownPasskeyAutofill = (): void => {
-    passkeyAutofill.abort()
-    cancelPasskeyCeremony()
-  }
-  createEffect(() => {
-    if (phase() === 'code') {
-      teardownPasskeyAutofill()
-    }
-  })
-  onCleanup(teardownPasskeyAutofill)
 
   return (
     // modal (default) inerts the page below (readable but non-interactive for AT);
