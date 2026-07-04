@@ -62,11 +62,12 @@ final readonly class ReleaseSessionLockSubscriber implements EventSubscriberInte
         '_getAllTeams_attr',
         '_getTicketSystems_attr',
         '_getTicketTimeSummary_attr',
-        // Admin-only grids.
+        // Admin-only grids (App\Controller\Admin).
         '_getAllHolidays_attr',
-        '_getHolidays_attr',
         '_getAllPresets_attr',
         '_getContracts_attr',
+        // User-facing lookups (App\Controller\Default; IS_AUTHENTICATED_FULLY, not admin).
+        '_getHolidays_attr',
         '_getContractHours_attr',
     ];
 

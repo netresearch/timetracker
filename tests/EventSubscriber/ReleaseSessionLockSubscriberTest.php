@@ -67,11 +67,12 @@ final class ReleaseSessionLockSubscriberTest extends TestCase
 
     public function testLeavesNonGetRequestsLocked(): void
     {
-        // Same route as the allowlisted GET, but as a POST — a write (or anything
-        // non-GET) must keep its lock even on an allowlisted route name.
+        // _getData_attr is a DUAL-method route (methods: ['GET', 'POST']) — the
+        // real regression case: its POST verb writes and must keep its lock even
+        // though the route name is on the read-only allowlist for GET.
         $session = $this->sessionExpectingSave(false);
 
-        $this->dispatch('_getDataDays_attr', Request::METHOD_POST, $session);
+        $this->dispatch('_getData_attr', Request::METHOD_POST, $session);
     }
 
     public function testIgnoresAnUnstartedSession(): void
