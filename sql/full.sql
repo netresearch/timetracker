@@ -443,3 +443,20 @@ LEFT JOIN teams_users tu ON tu.user_id=u.id
 LEFT JOIN teams t ON t.id=tu.team_id
 WHERE u.type = 'DEV'
 GROUP BY Team, Jahr,Monat ORDER BY Jahr ASC, Monat ASC, Team ASC;
+
+-- User-bound API personal access tokens (ADR-021). Only the SHA-256 hash is stored.
+CREATE TABLE `api_tokens` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `token_hash` VARCHAR(64) NOT NULL,
+  `scopes` JSON NOT NULL,
+  `created_at` DATETIME NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `expires_at` DATETIME DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `last_used_at` DATETIME DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `revoked_at` DATETIME DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_api_token_hash` (`token_hash`),
+  KEY `idx_api_token_user` (`user_id`),
+  CONSTRAINT `FK_api_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
