@@ -240,21 +240,27 @@ export default function Tracking() {
   // button and opened below it, flipping above when it would overflow the viewport
   // bottom; clamped horizontally so it never leaves the viewport.
   const positionActionsMenu = (popup: HTMLElement): void => {
-    // The kebab is the .action-menu's own trigger (aria-haspopup=menu) — target it
-    // explicitly, not the first descendant button, which would also match the
-    // menuitem buttons inside this very popup.
-    const button = popup.parentElement?.querySelector('[aria-haspopup="menu"]')
-    if (!button) {
-      return
-    }
-    const anchor = button.getBoundingClientRect()
-    const menu = popup.getBoundingClientRect()
-    const gap = 2
-    const left = Math.max(4, Math.min(anchor.right - menu.width, window.innerWidth - menu.width - 4))
-    const below = anchor.bottom + gap
-    const flipUp = below + menu.height > window.innerHeight && anchor.top - menu.height - gap >= 0
-    popup.style.left = `${left}px`
-    popup.style.top = `${flipUp ? anchor.top - menu.height - gap : below}px`
+    // Measure on the NEXT frame: at ref-callback time the popup isn't laid out yet,
+    // so popup.getBoundingClientRect() reports width/height 0 — the clamp below would
+    // then leave left at anchor.right and the menu would open off the right edge of
+    // the viewport. rAF gives it a real box before we position it.
+    requestAnimationFrame(() => {
+      // The kebab is the .action-menu's own trigger (aria-haspopup=menu) — target it
+      // explicitly, not the first descendant button, which would also match the
+      // menuitem buttons inside this very popup.
+      const button = popup.parentElement?.querySelector('[aria-haspopup="menu"]')
+      if (!button || !popup.isConnected) {
+        return
+      }
+      const anchor = button.getBoundingClientRect()
+      const menu = popup.getBoundingClientRect()
+      const gap = 2
+      const left = Math.max(4, Math.min(anchor.right - menu.width, window.innerWidth - menu.width - 4))
+      const below = anchor.bottom + gap
+      const flipUp = below + menu.height > window.innerHeight && anchor.top - menu.height - gap >= 0
+      popup.style.left = `${left}px`
+      popup.style.top = `${flipUp ? anchor.top - menu.height - gap : below}px`
+    })
   }
   // The fixed popup would strand from its button on scroll/resize; attach a dismiss
   // handler only while a menu is open, rather than a permanent global listener.
