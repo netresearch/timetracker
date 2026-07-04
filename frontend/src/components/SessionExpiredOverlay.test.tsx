@@ -1,7 +1,23 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { SessionExpiredOverlay } from './SessionExpiredOverlay'
+// Passkeys (WebAuthn) — unsupported in jsdom; stub so the explicit button can be
+// exercised. The default keeps the button hidden (passkeysSupported → false),
+// matching real jsdom, so the password/2FA tests behave exactly as before.
+const passkeysSupported = vi.fn(() => false)
+const loginWithPasskey = vi.fn<(...args: unknown[]) => Promise<string>>(() => Promise.resolve('/'))
+
+vi.mock('../lib/passkeys', () => ({
+  passkeysSupported: () => passkeysSupported(),
+  loginWithPasskey: (...args: unknown[]) => loginWithPasskey(...args),
+}))
+
+const { SessionExpiredOverlay } = await import('./SessionExpiredOverlay')
+
+beforeEach(() => {
+  passkeysSupported.mockReturnValue(false)
+  loginWithPasskey.mockResolvedValue('/')
+})
 
 afterEach(() => {
   cleanup()
@@ -114,6 +130,36 @@ describe('SessionExpiredOverlay', () => {
 
     fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '000000' } })
     fireEvent.click(screen.getByRole('button', { name: 'Verify' }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('hides the passkey button when WebAuthn is unsupported', () => {
+    // passkeysSupported defaults to false (jsdom parity).
+    render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Sign in with a passkey' })).toBeNull()
+  })
+
+  it('offers a passkey button that resumes in place on success', async () => {
+    passkeysSupported.mockReturnValue(true)
+    loginWithPasskey.mockResolvedValue('/ui/tracking')
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with a passkey' }))
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+    expect(loginWithPasskey).toHaveBeenCalledTimes(1)
+  })
+
+  it('surfaces an inline error when the passkey ceremony fails, without resuming', async () => {
+    passkeysSupported.mockReturnValue(true)
+    loginWithPasskey.mockRejectedValue(new Error('user dismissed'))
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with a passkey' }))
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
     expect(onSuccess).not.toHaveBeenCalled()

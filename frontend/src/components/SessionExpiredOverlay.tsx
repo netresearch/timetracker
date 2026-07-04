@@ -201,12 +201,14 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
                   <input
                     type="text"
                     name="_username"
-                    // 'webauthn' lets the browser surface the user's passkeys in
-                    // this field's autofill, matching the /login form.
-                    autocomplete="username webauthn"
+                    // No 'webauthn' token: it only surfaces passkeys with an active
+                    // conditional-mediation request, which this overlay does not
+                    // start — it offers the explicit passkey button below instead.
+                    autocomplete="username"
                     autocapitalize="off"
                     autocorrect="off"
                     spellcheck={false}
+                    required
                     value={username()}
                     onInput={(e) => setUsername(e.currentTarget.value)}
                   />
@@ -215,7 +217,14 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
                 <label class="field">
                   <span>{m.login_password()}</span>
                   <input
-                    ref={(el) => { passwordEl = el }}
+                    ref={(el) => {
+                      passwordEl = el
+                      // Re-focus on (re)mount — notably when returning from the 2FA
+                      // step to this phase, where Dialog's initialFocusEl no longer
+                      // fires. Defer a tick and guard isConnected in case the phase
+                      // flips back before the callback runs.
+                      setTimeout(() => { if (el.isConnected) el.focus() })
+                    }}
                     type="password"
                     name="_password"
                     autocomplete="current-password"
