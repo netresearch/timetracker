@@ -6,6 +6,17 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ apptitle }}</title>
+        {# Structured data for agents/search (schema.org). Hex-escaped like APP_CONFIG
+           so a crafted app title can't break out of the script element. #}
+        <script type="application/ld+json">{{ {
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            'name': apptitle,
+            'applicationCategory': 'BusinessApplication',
+            'operatingSystem': 'Web browser',
+            'description': 'Time tracking with Jira and LDAP integration and XLSX export.',
+            'browserRequirements': 'Requires JavaScript. Requires authentication.'
+        }|json_encode(jsonHexFlags)|raw }}</script>
         {% include 'partials/theme-init.html.twig' %}
         {% include 'partials/density-init.html.twig' %}
         {% include 'partials/font-init.html.twig' %}
