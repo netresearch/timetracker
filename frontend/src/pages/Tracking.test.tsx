@@ -924,7 +924,9 @@ describe('Tracking (Worklog grid)', () => {
     expect(menu.querySelectorAll("[role='menuitem']").length).toBe(4)
 
     // Choosing Continue clones the row (same effect as the icon button) and closes the menu.
-    fireEvent.click(getByRole('menuitem', { name: /Continue/ }))
+    // The popup starts visibility:hidden and is revealed on the next frame once positioned,
+    // so wait for the item to be accessible (getByRole ignores visibility:hidden nodes).
+    fireEvent.click(await waitFor(() => getByRole('menuitem', { name: /Continue/ })))
     await waitFor(() => expect(getAllByRole('row').length).toBeGreaterThan(2))
     expect(container.querySelector('.action-menu-pop')).not.toBeInTheDocument()
 
