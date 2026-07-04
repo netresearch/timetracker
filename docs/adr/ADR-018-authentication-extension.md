@@ -1,6 +1,6 @@
 # ADR-018: Authentication Extension — Local Passwords, MFA (TOTP) and Passkeys
 
-**Status:** Accepted — D1 (local passwords, LDAP optional) implemented; D2–D4 (MFA, passkeys) pending
+**Status:** Accepted — implemented. D1 (local passwords, LDAP optional), D2 (TOTP MFA + backup codes), D3 (WebAuthn passkeys), and D4 (session / remember-me interaction) all shipped, plus org-wide mandatory-2FA enforcement and admin break-glass reset of a user's 2FA and passkeys.
 **Date:** 2026-07-02
 
 > **Implementation note (D1).** The auth core landed as one PR: `users.password`
