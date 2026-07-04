@@ -44,7 +44,7 @@ final class SaveEntryTicketPrefixTest extends AbstractWebTestCase
         ];
     }
 
-    private function configureProjectOne(?string $jiraId, ?string $internalKey = null, ?string $internalTicketSystem = null): void
+    private function configureProjectOne(?string $jiraId, ?string $internalKey = null, ?string $internalTicketSystem = null, ?string $subtickets = null): void
     {
         $container = $this->client->getContainer();
         /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
@@ -59,6 +59,9 @@ final class SaveEntryTicketPrefixTest extends AbstractWebTestCase
         }
         if (null !== $internalTicketSystem) {
             $project->setInternalJiraTicketSystem($internalTicketSystem);
+        }
+        if (null !== $subtickets) {
+            $project->setSubtickets($subtickets);
         }
 
         $em->persist($project);
@@ -93,6 +96,30 @@ final class SaveEntryTicketPrefixTest extends AbstractWebTestCase
         $this->client->request(Request::METHOD_POST, '/tracking/save', $this->saveParameters(['ticket' => 'OPSDHL-77']), [], ['HTTP_ACCEPT' => 'application/json']);
 
         $this->assertStatusCode(200);
+    }
+
+    public function testTicketListedInSyncedSubticketsIsAcceptedDespiteForeignPrefix(): void
+    {
+        $this->logInSession('unittest');
+        // Project 1 allows only the 'SA' prefix, but its synced subtickets list
+        // enumerates a key from another Jira project — that exact key must be
+        // accepted (an epic subtask can live in a different project).
+        $this->configureProjectOne('SA', null, null, 'FOREIGN-9, FOREIGN-10');
+
+        $this->client->request(Request::METHOD_POST, '/tracking/save', $this->saveParameters(['ticket' => 'FOREIGN-9']), [], ['HTTP_ACCEPT' => 'application/json']);
+
+        $this->assertStatusCode(200);
+    }
+
+    public function testForeignPrefixTicketNotInSubticketsIsStillRejected(): void
+    {
+        $this->logInSession('unittest');
+        // A foreign key that is NOT in the subtickets list stays rejected.
+        $this->configureProjectOne('SA', null, null, 'FOREIGN-9');
+
+        $this->client->request(Request::METHOD_POST, '/tracking/save', $this->saveParameters(['ticket' => 'FOREIGN-42']), [], ['HTTP_ACCEPT' => 'application/json']);
+
+        $this->assertStatusCode(400);
     }
 
     public function testTicketWithUnknownPrefixIsRejected(): void

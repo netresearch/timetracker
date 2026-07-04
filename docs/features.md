@@ -102,8 +102,12 @@ Worklog entries are always personal — users only manage their own entries.
   never block saving.
 - **Per-user OAuth authorization** per ticket system; TimeTracker sends the
   user to Jira's authorize page on first use and stores the token encrypted.
-- **Subticket sync** per project or across all projects (admin endpoints and
-  the `tt:sync-subtickets` console command).
+- **Subticket sync** per project or across all projects (admin buttons, the
+  `tt:sync-subtickets` console command for cron, and on project save). Synced
+  subtickets resolve a typed ticket to its project — an exact subticket match wins
+  over the `jira_id` prefix — so tickets from another Jira project can be tracked
+  without widening the prefix list. See [subticket-sync.md](subticket-sync.md)
+  ([ADR-020](adr/ADR-020-subticket-ticket-resolution.md)).
 - **Internal ticket mapping:** book on external ticket numbers and mirror
   worklogs into an internal Jira project.
 - **Time display inside Jira:** optional userscript, see

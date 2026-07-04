@@ -200,6 +200,7 @@ CREATE TABLE `projects` (
   `internal_jira_project_key` VARCHAR(50) NULL,
   `internal_jira_ticket_system` INTEGER(11) NULL,
   `subtickets` TEXT DEFAULT '',
+  `subtickets_synced_at` DATETIME DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
   PRIMARY KEY (`id`),
   KEY `customer_id` (`customer_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

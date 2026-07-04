@@ -442,6 +442,7 @@
   "admin_f_internal_ref": "Internal reference",
   "admin_f_external_ref": "External reference",
   "admin_f_subtickets": "Subtickets",
+  "admin_f_subtickets_synced": "Subtickets synced",
   "admin_f_book_time": "Time booking",
   "admin_f_url": "URL",
   "admin_f_ticket_url": "Ticket URL",
