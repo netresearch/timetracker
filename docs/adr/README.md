@@ -26,6 +26,7 @@ ADRs are historical records: bodies are not rewritten when reality moves on. Whe
 | [ADR-016](ADR-016-solidjs-frontend-rewrite.md) | SolidJS Frontend Rewrite (ExtJS Replacement) | Accepted | 2026-06-12 |
 | [ADR-017](ADR-017-jira-cloud-oauth2.md) | Jira Cloud Support via OAuth 2.0 (Dual-Mode Integration) | Accepted | 2026-06-22 |
 | [ADR-018](ADR-018-authentication-extension.md) | Authentication Extension: Local Passwords, MFA (TOTP) and Passkeys | Accepted (D1 done; MFA/passkeys pending) | 2026-07-02 |
+| [ADR-019](ADR-019-session-storage-and-lock-contention.md) | Session Storage and Lock-Contention Strategy | Accepted (files + early lock-release; Valkey deferred) | 2026-07-04 |
 
 ## ADR Format
 
@@ -55,6 +56,7 @@ Each ADR follows this standard structure:
 ### Security & Quality
 - **AES-256-GCM encryption at rest** for Jira OAuth tokens ([ADR-011](ADR-011-security-architecture.md))
 - CSRF-protected, session-based login and logout ([config/packages/security.yaml](../../config/packages/security.yaml))
+- **File-based sessions** with the write-lock released early for read-only data GETs, so the SPA's parallel grid fetches aren't serialized; a non-locking Valkey backend is designed but deferred until multi-instance ([ADR-019](ADR-019-session-storage-and-lock-contention.md))
 - **PHPStan level 10**, PHPUnit 13, Playwright E2E with axe accessibility checks ([ADR-013](ADR-013-testing-strategy.md), [docs/testing.md](../testing.md))
 
 ## Reviewing and Updating ADRs

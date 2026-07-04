@@ -33,17 +33,42 @@ use function in_array;
 final readonly class ReleaseSessionLockSubscriber implements EventSubscriberInterface
 {
     /**
-     * Route names of read-only data endpoints fetched concurrently on page load.
+     * Route names of read-only data endpoints the SPA fetches CONCURRENTLY (the
+     * tracking grid, the admin option sources, the summaries). One request that
+     * keeps the session lock serialises the whole parallel batch — so this must
+     * list EVERY such read, not a subset (a single omission re-serialises all of
+     * them). Every controller here was verified not to write the session.
+     *
+     * Only GET is released (see the method guard below), so a route that also
+     * accepts POST (/getData) keeps its lock on the writing verb. Add any new
+     * read-only data GET here.
      *
      * @var list<string>
      */
     private const array READ_ONLY_ROUTES = [
+        // Worklog grid + summaries.
         '_getDataDays_attr',
+        '_getData_attr',
+        'time_summary_attr',
+        // Shared option sources / relation lookups (tracking + admin grids).
         '_getCustomers_attr',
+        '_getAllCustomers_attr',
+        '_getCustomer_attr',
+        '_getProjects_attr',
         '_getAllProjects_attr',
         '_getActivities_attr',
+        '_getUsers_attr',
+        '_getAllUsers_attr',
+        '_getAllTeams_attr',
         '_getTicketSystems_attr',
-        'time_summary_attr',
+        '_getTicketTimeSummary_attr',
+        // Admin-only grids (App\Controller\Admin).
+        '_getAllHolidays_attr',
+        '_getAllPresets_attr',
+        '_getContracts_attr',
+        // User-facing lookups (App\Controller\Default; IS_AUTHENTICATED_FULLY, not admin).
+        '_getHolidays_attr',
+        '_getContractHours_attr',
     ];
 
     public static function getSubscribedEvents(): array

@@ -1,6 +1,8 @@
 # ADR-012: Performance Optimization Strategy
 
 > **Reality note (2026-07-02):** parts of this ADR describe infrastructure that was never implemented (Redis cache pools/adapters, the `PerformanceMonitor` class, a `docker-compose.monitoring.yml` stack; the `INCLUDE (...)` covering-index syntax is not supported by MariaDB). Caching is APCu-only — see [docs/apcu-setup.md](../apcu-setup.md) and [config/packages/cache.yaml](../../config/packages/cache.yaml) for the current state.
+>
+> **Reality note (2026-07-04):** the tracking page's dominant latency turned out to be a *concurrency* bottleneck, not a query one — PHP's session file-lock serialized the SPA's parallel data GETs. Diagnosis, fix (early lock-release) and the deferred Valkey option are recorded in [ADR-019](ADR-019-session-storage-and-lock-contention.md).
 
 ## Status
 Accepted

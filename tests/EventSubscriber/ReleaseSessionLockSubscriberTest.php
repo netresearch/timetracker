@@ -38,11 +38,24 @@ final class ReleaseSessionLockSubscriberTest extends TestCase
     public static function readOnlyDataRoutes(): iterable
     {
         yield 'entries' => ['_getDataDays_attr'];
-        yield 'customers' => ['_getCustomers_attr'];
-        yield 'projects' => ['_getAllProjects_attr'];
-        yield 'activities' => ['_getActivities_attr'];
-        yield 'ticket systems' => ['_getTicketSystems_attr'];
+        yield 'data (GET)' => ['_getData_attr'];
         yield 'time summary' => ['time_summary_attr'];
+        yield 'customers (tracking)' => ['_getCustomers_attr'];
+        yield 'customers (admin)' => ['_getAllCustomers_attr'];
+        yield 'customer' => ['_getCustomer_attr'];
+        yield 'projects (tracking)' => ['_getProjects_attr'];
+        yield 'projects (admin)' => ['_getAllProjects_attr'];
+        yield 'activities' => ['_getActivities_attr'];
+        yield 'users (tracking)' => ['_getUsers_attr'];
+        yield 'users (admin)' => ['_getAllUsers_attr'];
+        yield 'teams (admin)' => ['_getAllTeams_attr'];
+        yield 'ticket systems' => ['_getTicketSystems_attr'];
+        yield 'ticket time summary' => ['_getTicketTimeSummary_attr'];
+        yield 'holidays (admin)' => ['_getAllHolidays_attr'];
+        yield 'holidays' => ['_getHolidays_attr'];
+        yield 'presets (admin)' => ['_getAllPresets_attr'];
+        yield 'contracts (admin)' => ['_getContracts_attr'];
+        yield 'contract hours' => ['_getContractHours_attr'];
     }
 
     public function testLeavesOtherRoutesLocked(): void
@@ -54,11 +67,12 @@ final class ReleaseSessionLockSubscriberTest extends TestCase
 
     public function testLeavesNonGetRequestsLocked(): void
     {
-        // Same route as the allowlisted GET, but as a POST — a write (or anything
-        // non-GET) must keep its lock even on an allowlisted route name.
+        // _getData_attr is a DUAL-method route (methods: ['GET', 'POST']) — the
+        // real regression case: its POST verb writes and must keep its lock even
+        // though the route name is on the read-only allowlist for GET.
         $session = $this->sessionExpectingSave(false);
 
-        $this->dispatch('_getDataDays_attr', Request::METHOD_POST, $session);
+        $this->dispatch('_getData_attr', Request::METHOD_POST, $session);
     }
 
     public function testIgnoresAnUnstartedSession(): void
