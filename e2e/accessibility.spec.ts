@@ -38,6 +38,14 @@ async function expectNoSeriousA11y(page: Page, scopeSelector?: string): Promise<
   // Then settle two animation frames so the scan sees a fully painted, stable DOM.
   await page.evaluate(async () => {
     await document.fonts?.ready; // no-op if the Font Loading API is absent
+    // The worklog grid auto-focuses a row on load, whose scroll-into-view can push
+    // a body row UNDER the position:sticky <th> even after an initial scroll reset —
+    // axe then composites the header colour with the row peeking beneath and reports
+    // a phantom colour-contrast failure. Blur that focus, let any pending
+    // scroll-into-view run, THEN reset every scroll container to the top as the LAST
+    // action before the scan, so no row sits under the sticky header when axe samples.
+    (document.activeElement as HTMLElement | null)?.blur();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     window.scrollTo(0, 0);
     document.querySelectorAll('.table-scroll, .modal-page-body').forEach((el) => { el.scrollTop = 0; });
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
