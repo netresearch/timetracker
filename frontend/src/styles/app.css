@@ -62,7 +62,7 @@
   --color-bg: light-dark(#f6f8f9, #15181c);
   --color-surface: light-dark(#ffffff, #1d2127);
   --color-text: light-dark(#1c1e21, #f1f2f4);
-  --color-text-muted: light-dark(#50555b, #b9bec4);
+  --color-text-muted: light-dark(#414650, #b9bec4);
   --color-border: light-dark(#dde5e8, #3c434b);
   --color-link: light-dark(#0a4f8f, #93c1f8);
   --color-focus: light-dark(#0a4f8f, #93c1f8);
