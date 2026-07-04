@@ -36,10 +36,6 @@ services:
         public: false       # Allows optimizing the container by removing unused services
         bind:
             $projectDir: '%kernel.project_dir%'
-            # Shared cache pool for repositories that opt in (nullable — null in
-            # environments without a pool). Used by the last-activity aggregate
-            # cache (LastActivityTrait) on the customer/project/user repositories.
-            $cacheItemPool: '@?cache.app'
 
     # Makes classes in src/ available to be used as services
     # This creates a service per class whose id is the fully-qualified class name

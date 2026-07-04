@@ -12,7 +12,6 @@ namespace App\Repository;
 use App\Entity\Project;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use Psr\Cache\CacheItemPoolInterface;
 
 use function assert;
 use function count;
@@ -25,10 +24,9 @@ class ProjectRepository extends ServiceEntityRepository
 {
     use LastActivityTrait;
 
-    public function __construct(ManagerRegistry $managerRegistry, ?CacheItemPoolInterface $cacheItemPool = null)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
         parent::__construct($managerRegistry, Project::class);
-        $this->lastActivityCache = $cacheItemPool;
     }
 
     /**

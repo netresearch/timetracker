@@ -12,7 +12,6 @@ namespace App\Repository;
 use App\Entity\Customer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use Psr\Cache\CacheItemPoolInterface;
 
 /**
  * @extends ServiceEntityRepository<Customer>
@@ -21,10 +20,9 @@ class CustomerRepository extends ServiceEntityRepository
 {
     use LastActivityTrait;
 
-    public function __construct(ManagerRegistry $managerRegistry, ?CacheItemPoolInterface $cacheItemPool = null)
+    public function __construct(ManagerRegistry $managerRegistry)
     {
         parent::__construct($managerRegistry, Customer::class);
-        $this->lastActivityCache = $cacheItemPool;
     }
 
     /**
