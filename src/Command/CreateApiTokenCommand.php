@@ -13,7 +13,7 @@ use App\Entity\User;
 use App\Service\ApiToken\ApiTokenService;
 use App\Service\ClockInterface;
 use App\ValueObject\ApiScope;
-use DateTimeImmutable;
+use DateMalformedStringException;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Symfony\Component\Console\Attribute\Argument;
@@ -24,7 +24,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function implode;
 use function sprintf;
-use function strtotime;
 
 /**
  * Mint an API personal access token for a user (ADR-021), for cron/bootstrap use.
@@ -70,14 +69,15 @@ final readonly class CreateApiTokenCommand
 
         $expiresAt = null;
         if (null !== $expires && '' !== $expires) {
-            $timestamp = strtotime($expires, $this->clock->now()->getTimestamp());
-            if (false === $timestamp) {
+            try {
+                // Relative to the injected clock (not the system clock) so the
+                // stored expiry matches the app's time and stays testable.
+                $expiresAt = $this->clock->now()->modify($expires);
+            } catch (DateMalformedStringException) {
                 $io->error('Invalid --expires. Use e.g. "+90 days" or "2026-12-31".');
 
                 return Command::FAILURE;
             }
-
-            $expiresAt = new DateTimeImmutable()->setTimestamp($timestamp);
         }
 
         try {

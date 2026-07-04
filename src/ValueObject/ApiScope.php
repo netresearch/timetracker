@@ -33,13 +33,20 @@ final class ApiScope
     /** @var list<string> */
     public const array ACTIONS = ['read', 'write'];
 
+    /** @var list<string>|null memoised scope list (resources/actions are constant) */
+    private static ?array $all = null;
+
     /**
-     * Every valid scope string, including the wildcard.
+     * Every valid scope string, including the wildcard. Computed once.
      *
      * @return list<string>
      */
     public static function all(): array
     {
+        if (null !== self::$all) {
+            return self::$all;
+        }
+
         $scopes = [self::WILDCARD];
         foreach (self::RESOURCES as $resource) {
             foreach (self::ACTIONS as $action) {
@@ -47,7 +54,7 @@ final class ApiScope
             }
         }
 
-        return $scopes;
+        return self::$all = $scopes;
     }
 
     public static function isValid(string $scope): bool

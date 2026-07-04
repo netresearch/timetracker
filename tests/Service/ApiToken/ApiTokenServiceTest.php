@@ -62,7 +62,7 @@ final class ApiTokenServiceTest extends TestCase
         $service->create($this->createMock(User::class), 'x', []);
     }
 
-    public function testFindActiveRejectsAwrongPrefixWithoutHittingTheRepository(): void
+    public function testFindActiveRejectsAWrongPrefixWithoutHittingTheRepository(): void
     {
         $apiTokenRepository = $this->createMock(ApiTokenRepository::class);
         $apiTokenRepository->expects(self::never())->method('findOneByHash');
@@ -109,6 +109,29 @@ final class ApiTokenServiceTest extends TestCase
         $service->revoke($token);
 
         self::assertNotNull($token->getRevokedAt());
+    }
+
+    public function testRecordUsageStampsLastUsedAtFromTheClockAndFlushes(): void
+    {
+        $token = $this->token(revoked: false, expired: false);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('flush');
+
+        $service = $this->service($entityManager, $this->createMock(ApiTokenRepository::class));
+        $service->recordUsage($token);
+
+        self::assertSame(self::NOW, $token->getLastUsedAt()?->format('Y-m-d H:i:s'));
+    }
+
+    public function testGrantableScopesExcludesTheScopesAlreadyOnTheToken(): void
+    {
+        $service = $this->service($this->createMock(EntityManagerInterface::class), $this->createMock(ApiTokenRepository::class));
+
+        $grantable = $service->grantableScopes(['entries:read', '*']);
+
+        self::assertNotContains('entries:read', $grantable);
+        self::assertNotContains('*', $grantable);
+        self::assertContains('projects:write', $grantable);
     }
 
     private function service(EntityManagerInterface $entityManager, ApiTokenRepository $apiTokenRepository): ApiTokenService
