@@ -10,9 +10,11 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use InvalidArgumentException;
+use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 
 use function in_array;
+use function is_array;
 use function sprintf;
 
 /**
@@ -32,7 +34,7 @@ trait LastActivityTrait
      * booking", so a short TTL is a safe, large win: the query drops to ~0 on a
      * hit and the map is at most LAST_ACTIVITY_TTL seconds stale.
      */
-    private ?CacheItemPoolInterface $lastActivityCache = null;
+    protected ?CacheItemPoolInterface $lastActivityCache = null;
 
     private const int LAST_ACTIVITY_TTL = 300;
 
@@ -53,10 +55,11 @@ trait LastActivityTrait
         if ($this->lastActivityCache instanceof CacheItemPoolInterface) {
             $cacheItem = $this->lastActivityCache->getItem('last_activity_' . $column);
             if ($cacheItem->isHit()) {
-                /** @var array<int, string> $cached */
                 $cached = $cacheItem->get();
-
-                return $cached;
+                if (is_array($cached)) {
+                    /** @var array<int, string> $cached */
+                    return $cached;
+                }
             }
         }
 
@@ -65,7 +68,7 @@ trait LastActivityTrait
             sprintf('SELECT %1$s, MAX(day) FROM entries WHERE %1$s IS NOT NULL GROUP BY %1$s', $column),
         );
 
-        if (null !== $cacheItem && $this->lastActivityCache instanceof CacheItemPoolInterface) {
+        if ($cacheItem instanceof CacheItemInterface && $this->lastActivityCache instanceof CacheItemPoolInterface) {
             $this->lastActivityCache->save($cacheItem->set($result)->expiresAfter(self::LAST_ACTIVITY_TTL));
         }
 
