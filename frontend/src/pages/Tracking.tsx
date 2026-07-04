@@ -234,6 +234,43 @@ export default function Tracking() {
     actionsMenuCloseTimer = setTimeout(() => { if (actionsMenuRow() === id) { setActionsMenuRow(null) } }, 150)
   }
   onCleanup(cancelActionsMenuClose)
+  // The popup is position:fixed (to escape the table's overflow clipping), so its
+  // viewport coordinates are set here from the kebab's rect when it mounts. The
+  // kebab button is the popup's sibling inside .action-menu. Right-aligned to the
+  // button and opened below it, flipping above when it would overflow the viewport
+  // bottom; clamped horizontally so it never leaves the viewport.
+  const positionActionsMenu = (popup: HTMLElement): void => {
+    // The kebab is the .action-menu's own trigger (aria-haspopup=menu) — target it
+    // explicitly, not the first descendant button, which would also match the
+    // menuitem buttons inside this very popup.
+    const button = popup.parentElement?.querySelector('[aria-haspopup="menu"]')
+    if (!button) {
+      return
+    }
+    const anchor = button.getBoundingClientRect()
+    const menu = popup.getBoundingClientRect()
+    const gap = 2
+    const left = Math.max(4, Math.min(anchor.right - menu.width, window.innerWidth - menu.width - 4))
+    const below = anchor.bottom + gap
+    const flipUp = below + menu.height > window.innerHeight && anchor.top - menu.height - gap >= 0
+    popup.style.left = `${left}px`
+    popup.style.top = `${flipUp ? anchor.top - menu.height - gap : below}px`
+  }
+  // The fixed popup would strand from its button on scroll/resize; attach a dismiss
+  // handler only while a menu is open, rather than a permanent global listener.
+  createEffect(() => {
+    if (actionsMenuRow() === null) {
+      return
+    }
+    const dismiss = (): void => closeActionsMenu()
+    // Capture phase so a scroll on the inner .table-scroll container is caught too.
+    window.addEventListener('scroll', dismiss, { capture: true, passive: true })
+    window.addEventListener('resize', dismiss, { passive: true })
+    onCleanup(() => {
+      window.removeEventListener('scroll', dismiss, { capture: true })
+      window.removeEventListener('resize', dismiss)
+    })
+  })
   onMount(() => {
     const onDocPointer = (event: PointerEvent): void => {
       if (daysComboRef !== undefined && !daysComboRef.contains(event.target as Node)) {
@@ -1196,7 +1233,7 @@ export default function Tracking() {
                               <KebabIcon />
                             </button>
                             <Show when={actionsMenuRow() === id}>
-                              <div class="action-menu-pop" role="menu">
+                              <div class="action-menu-pop" role="menu" ref={positionActionsMenu}>
                                 <Show when={id > 0}>
                                   <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); continueEntry(entry) }}><ContinueIcon /> {m.tracking_continue()}</button>
                                   <Show when={isLatestEntry(entry)}>

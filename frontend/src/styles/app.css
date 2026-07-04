@@ -1585,9 +1585,13 @@ kbd {
 }
 
 .action-menu-pop {
-  position: absolute;
-  top: calc(100% + 2px);
-  right: 0;
+  /* position:fixed so the menu escapes the .table-scroll overflow — an absolute
+     popup was clipped by the scroll container (overflow-x:auto forces overflow-y
+     to auto) and spawned a table scrollbar. top/left are set from the kebab's
+     rect in JS (positionActionsMenu), which also flips it above when it would
+     overflow the viewport bottom. Stays a DOM child of .action-menu so the hover
+     model and click-outside detection are unchanged. */
+  position: fixed;
   z-index: 30;
   min-width: 11em;
   padding: 4px;
