@@ -11,6 +11,7 @@ namespace Tests\Repository;
 
 use App\Repository\LastActivityTrait;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Cache\CacheItemPoolInterface;
 
 /**
  * Concrete user of LastActivityTrait so its public method can be unit-tested (and
@@ -20,8 +21,9 @@ final class LastActivityDouble
 {
     use LastActivityTrait;
 
-    public function __construct(private readonly EntityManagerInterface $entityManager)
+    public function __construct(private readonly EntityManagerInterface $entityManager, ?CacheItemPoolInterface $cacheItemPool = null)
     {
+        $this->lastActivityCache = $cacheItemPool;
     }
 
     public function getEntityManager(): EntityManagerInterface

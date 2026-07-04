@@ -10,8 +10,11 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use InvalidArgumentException;
+use Psr\Cache\CacheItemInterface;
+use Psr\Cache\CacheItemPoolInterface;
 
 use function in_array;
+use function is_array;
 use function sprintf;
 
 /**
@@ -20,6 +23,21 @@ use function sprintf;
  */
 trait LastActivityTrait
 {
+    /**
+     * Cache pool for the last-activity maps, set from each repository's
+     * constructor (may be null in environments without a cache pool).
+     *
+     * The aggregate is a full index scan of the whole entries table — MariaDB
+     * won't apply a loose index scan to the MAX(), so on prod (~240k rows) it
+     * costs ~150 ms and runs on every /getAllProjects (incl. the tracking page),
+     * /getAllCustomers and /getAllUsers. The value is display-only "date of last
+     * booking", so a short TTL is a safe, large win: the query drops to ~0 on a
+     * hit and the map is at most LAST_ACTIVITY_TTL seconds stale.
+     */
+    protected ?CacheItemPoolInterface $lastActivityCache = null;
+
+    private const int LAST_ACTIVITY_TTL = 300;
+
     /**
      * Map of the given entry FK value => the date (Y-m-d) of the most recent
      * entry that references it. Entities with no entries are absent from the map.
@@ -33,10 +51,26 @@ trait LastActivityTrait
             throw new InvalidArgumentException(sprintf('Unsupported activity column: %s', $column));
         }
 
+        $cacheItem = null;
+        if ($this->lastActivityCache instanceof CacheItemPoolInterface) {
+            $cacheItem = $this->lastActivityCache->getItem('last_activity_' . $column);
+            if ($cacheItem->isHit()) {
+                $cached = $cacheItem->get();
+                if (is_array($cached)) {
+                    /** @var array<int, string> $cached */
+                    return $cached;
+                }
+            }
+        }
+
         /** @var array<int, string> $result */
         $result = $this->getEntityManager()->getConnection()->fetchAllKeyValue(
             sprintf('SELECT %1$s, MAX(day) FROM entries WHERE %1$s IS NOT NULL GROUP BY %1$s', $column),
         );
+
+        if ($cacheItem instanceof CacheItemInterface && $this->lastActivityCache instanceof CacheItemPoolInterface) {
+            $this->lastActivityCache->save($cacheItem->set($result)->expiresAfter(self::LAST_ACTIVITY_TTL));
+        }
 
         return $result;
     }
