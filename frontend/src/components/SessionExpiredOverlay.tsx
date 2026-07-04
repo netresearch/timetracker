@@ -1,10 +1,11 @@
 import { Dialog } from '@ark-ui/solid/dialog'
-import { createSignal, Show } from 'solid-js'
+import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
+import { ApiError } from '../api/client'
 import { appConfig } from '../config'
 import { PasskeyIcon } from '../lib/icons'
-import { loginWithPasskey, passkeysSupported } from '../lib/passkeys'
+import { cancelPasskeyCeremony, loginWithPasskey, loginWithPasskeyAutofill, passkeyAutofillSupported, passkeysSupported } from '../lib/passkeys'
 import { m } from '../paraglide/messages.js'
 
 // The firewall-intercepted 2FA code path. APP_CONFIG (unlike LOGIN_CONFIG) does
@@ -145,6 +146,45 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
     setError(null)
   }
 
+  // Conditional UI (passkey autofill), same as LoginForm: from mount, quietly ask
+  // the browser to surface the user's discoverable passkeys inline in the username
+  // field's autofill (the 'webauthn' token below is what enables it). It resolves
+  // once the user picks one — then resume in place (onSuccess) instead of
+  // navigating. Ceremony rejections (unsupported, dismissed, or aborted when the
+  // explicit button / 2FA step takes over) are silent; only a server rejection of a
+  // passkey the user actually selected surfaces an error.
+  const passkeyAutofill = new AbortController()
+  onMount(() => {
+    void (async () => {
+      try {
+        if (!(await passkeyAutofillSupported())) {
+          return
+        }
+        await loginWithPasskeyAutofill(passkeyAutofill.signal)
+        props.onSuccess()
+      } catch (caught) {
+        if (caught instanceof ApiError) {
+          setError(m.login_passkey_error())
+        }
+      }
+    })()
+  })
+  // Tear the autofill down completely: the AbortController stops it in the
+  // /login/options window (before any ceremony exists), and cancelPasskeyCeremony
+  // aborts an already-started navigator.credentials.get(). Do both when the form
+  // switches to the 2FA code step (else a late passkey pick could resume mid-2FA)
+  // and on unmount.
+  const teardownPasskeyAutofill = (): void => {
+    passkeyAutofill.abort()
+    cancelPasskeyCeremony()
+  }
+  createEffect(() => {
+    if (phase() === 'code') {
+      teardownPasskeyAutofill()
+    }
+  })
+  onCleanup(teardownPasskeyAutofill)
+
   return (
     // modal (default) inerts the page below (readable but non-interactive for AT);
     // non-dismissible (no Esc / outside-click close) — only a successful re-login
@@ -201,10 +241,10 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
                   <input
                     type="text"
                     name="_username"
-                    // No 'webauthn' token: it only surfaces passkeys with an active
-                    // conditional-mediation request, which this overlay does not
-                    // start — it offers the explicit passkey button below instead.
-                    autocomplete="username"
+                    // 'webauthn' surfaces the user's passkeys inline in this field's
+                    // autofill — backed by the conditional-mediation ceremony started
+                    // on mount above (matching the /login form).
+                    autocomplete="username webauthn"
                     autocapitalize="off"
                     autocorrect="off"
                     spellcheck={false}

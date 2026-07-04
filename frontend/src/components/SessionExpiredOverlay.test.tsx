@@ -5,18 +5,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // exercised. The default keeps the button hidden (passkeysSupported → false),
 // matching real jsdom, so the password/2FA tests behave exactly as before.
 const passkeysSupported = vi.fn(() => false)
+const passkeyAutofillSupported = vi.fn(() => Promise.resolve(false))
 const loginWithPasskey = vi.fn<(...args: unknown[]) => Promise<string>>(() => Promise.resolve('/'))
+const loginWithPasskeyAutofill = vi.fn<(...args: unknown[]) => Promise<string>>(() => Promise.resolve('/'))
+const cancelPasskeyCeremony = vi.fn()
 
 vi.mock('../lib/passkeys', () => ({
   passkeysSupported: () => passkeysSupported(),
+  passkeyAutofillSupported: () => passkeyAutofillSupported(),
   loginWithPasskey: (...args: unknown[]) => loginWithPasskey(...args),
+  loginWithPasskeyAutofill: (...args: unknown[]) => loginWithPasskeyAutofill(...args),
+  cancelPasskeyCeremony: () => cancelPasskeyCeremony(),
 }))
 
 const { SessionExpiredOverlay } = await import('./SessionExpiredOverlay')
 
 beforeEach(() => {
   passkeysSupported.mockReturnValue(false)
+  passkeyAutofillSupported.mockResolvedValue(false)
   loginWithPasskey.mockResolvedValue('/')
+  loginWithPasskeyAutofill.mockResolvedValue('/')
 })
 
 afterEach(() => {
@@ -163,5 +171,26 @@ describe('SessionExpiredOverlay', () => {
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
     expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('starts passkey autofill (conditional UI) on mount and resumes in place when one is picked', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    loginWithPasskeyAutofill.mockResolvedValue('/ui/tracking')
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+  })
+
+  it('tears down the passkey autofill ceremony on unmount', async () => {
+    passkeyAutofillSupported.mockResolvedValue(true)
+    // Never resolves — the background ceremony stays pending until torn down.
+    loginWithPasskeyAutofill.mockReturnValue(new Promise<string>(() => {}))
+    const { unmount } = render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
+
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+    unmount()
+    expect(cancelPasskeyCeremony).toHaveBeenCalled()
   })
 })
