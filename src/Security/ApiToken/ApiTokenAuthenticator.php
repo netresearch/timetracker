@@ -25,7 +25,6 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 
 use function assert;
-use function str_starts_with;
 use function strlen;
 use function substr;
 
@@ -38,21 +37,19 @@ use function substr;
  */
 final class ApiTokenAuthenticator extends AbstractAuthenticator
 {
-    private const string BEARER_PREFIX = 'Bearer ' . ApiTokenService::PREFIX;
-
     public function __construct(private readonly ApiTokenService $apiTokenService)
     {
     }
 
     public function supports(Request $request): bool
     {
-        return str_starts_with((string) $request->headers->get('Authorization'), self::BEARER_PREFIX);
+        return ApiTokenRequestMatcher::hasBearerToken((string) $request->headers->get('Authorization'));
     }
 
     public function authenticate(Request $request): SelfValidatingPassport
     {
-        // Strip "Bearer " (7 chars); the remainder is the tt_pat_… plaintext.
-        $plaintext = substr((string) $request->headers->get('Authorization'), strlen('Bearer '));
+        // Strip the "Bearer " scheme (case-insensitive); the rest is the tt_pat_… plaintext.
+        $plaintext = substr((string) $request->headers->get('Authorization'), strlen(ApiTokenRequestMatcher::SCHEME));
         $apiToken = $this->apiTokenService->findActiveByPlaintext($plaintext);
         if (!$apiToken instanceof ApiToken) {
             throw new CustomUserMessageAuthenticationException('Invalid API token.');

@@ -12,6 +12,8 @@ namespace Tests\Controller;
 use App\Entity\ApiToken;
 use App\Entity\User;
 use App\Service\ApiToken\ApiTokenService;
+use DateTimeImmutable;
+use Doctrine\Bundle\DoctrineBundle\Registry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\AbstractWebTestCase;
@@ -27,25 +29,27 @@ use Tests\AbstractWebTestCase;
 final class ApiTokenAuthTest extends AbstractWebTestCase
 {
     /**
+     * Persist a token fixture directly (only the public `doctrine` service, so the
+     * PHPStan symfony-container check is env-independent) and return its plaintext.
+     * The stored hash mirrors ApiTokenService — a drift there makes the token
+     * unresolvable and these tests fail, so the coupling is caught, not silent.
+     *
      * @param list<string> $scopes
      */
     private function mintToken(array $scopes, bool $revoke = false): string
     {
-        $container = self::getContainer();
-        // The test container exposes private services (framework.test: true); the
-        // Symfony PHPStan extension models only the runtime container.
-        // @phpstan-ignore symfonyContainer.serviceNotFound
-        $apiTokenService = $container->get(ApiTokenService::class);
-        self::assertInstanceOf(ApiTokenService::class, $apiTokenService);
+        /** @var Registry $doctrine */
+        $doctrine = self::getContainer()->get('doctrine');
+        $entityManager = $doctrine->getManager();
 
-        $user = $container->get('doctrine')->getManager()->getRepository(User::class)->findOneBy(['username' => 'unittest']);
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => 'unittest']);
         self::assertInstanceOf(User::class, $user);
 
-        [$token, $plaintext] = $apiTokenService->create($user, 'test', $scopes);
-        self::assertInstanceOf(ApiToken::class, $token);
-        if ($revoke) {
-            $apiTokenService->revoke($token);
-        }
+        $plaintext = ApiTokenService::PREFIX . bin2hex(random_bytes(32));
+        $now = new DateTimeImmutable();
+        $token = new ApiToken($user, 'test', hash('sha256', $plaintext), array_values($scopes), $now, null, null, $revoke ? $now : null);
+        $entityManager->persist($token);
+        $entityManager->flush();
 
         return $plaintext;
     }
@@ -86,6 +90,17 @@ final class ApiTokenAuthTest extends AbstractWebTestCase
         $status = $this->requestWithToken(Request::METHOD_GET, '/getTicketSystems', $this->mintToken(['*']))->getStatusCode();
 
         self::assertSame(Response::HTTP_FORBIDDEN, $status);
+    }
+
+    public function testBearerSchemeIsAcceptedCaseInsensitively(): void
+    {
+        // RFC 7235: the auth-scheme name is case-insensitive, so "bearer" is valid.
+        $this->client->request(Request::METHOD_GET, '/getAllProjects', [], [], [
+            'HTTP_AUTHORIZATION' => 'bearer ' . $this->mintToken(['projects:read']),
+            'HTTP_ACCEPT' => 'application/json',
+        ]);
+
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
     }
 
     public function testInvalidTokenIsUnauthorized(): void

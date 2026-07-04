@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestMatcherInterface;
 
 use function str_starts_with;
+use function strlen;
+use function strtolower;
+use function substr;
 
 /**
  * Claims a request for the stateless `api` firewall (ADR-021) iff it carries an
@@ -22,10 +25,20 @@ use function str_starts_with;
  */
 final readonly class ApiTokenRequestMatcher implements RequestMatcherInterface
 {
-    private const string BEARER_PREFIX = 'Bearer ' . ApiTokenService::PREFIX;
+    /** RFC 7235 auth-scheme names are case-insensitive; the token itself is exact. */
+    public const string SCHEME = 'bearer ';
 
     public function matches(Request $request): bool
     {
-        return str_starts_with((string) $request->headers->get('Authorization'), self::BEARER_PREFIX);
+        return self::hasBearerToken((string) $request->headers->get('Authorization'));
+    }
+
+    /**
+     * Whether the header is a `Bearer` (any case) carrying a `tt_pat_` token.
+     */
+    public static function hasBearerToken(string $authorization): bool
+    {
+        return str_starts_with(strtolower($authorization), self::SCHEME)
+            && str_starts_with(substr($authorization, strlen(self::SCHEME)), ApiTokenService::PREFIX);
     }
 }
