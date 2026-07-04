@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Tests\AbstractWebTestCase;
 
 class AdminControllerTest extends AbstractWebTestCase
@@ -494,7 +495,7 @@ class AdminControllerTest extends AbstractWebTestCase
     public function testSyncProjectSubticketsPathParameter(): void
     {
         // Project ID 1 exists in test data
-        $this->client->request('GET', '/projects/1/syncsubtickets');
+        $this->client->request('POST', '/projects/1/syncsubtickets');
 
         // Should NOT fail with "project not found" or similar parameter error
         // Expected: either success or "no ticket system configured" (project found but no config)
@@ -508,5 +509,33 @@ class AdminControllerTest extends AbstractWebTestCase
             strtolower($content),
             'Path parameter {project} should be mapped - project should be found',
         );
+    }
+
+    /**
+     * The global sync iterates every project and reports overall success; a project
+     * without a ticket system is skipped (counted as a failure), so with the seed
+     * data the endpoint still answers with a well-formed JSON success flag.
+     */
+    public function testSyncAllSubticketsReturnsJsonSuccessFlag(): void
+    {
+        $this->client->request('POST', '/projects/syncsubtickets');
+
+        $response = $this->client->getResponse();
+        self::assertSame(200, $response->getStatusCode());
+        $data = json_decode((string) $response->getContent(), true);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('success', $data);
+    }
+
+    /**
+     * GET is no longer allowed on the sync route (it mutates state → POST only).
+     */
+    public function testSyncProjectSubticketsRejectsGet(): void
+    {
+        // The router rejects the wrong verb before a controller runs; with exception
+        // catching off the functional client surfaces it as the routing exception.
+        $this->client->catchExceptions(false);
+        $this->expectException(MethodNotAllowedHttpException::class);
+        $this->client->request('GET', '/projects/1/syncsubtickets');
     }
 }

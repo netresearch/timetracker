@@ -278,6 +278,62 @@ describe('Admin', () => {
     unmount()
   })
 
+  it('syncs one project\'s subtickets via the per-row action (id in the path)', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue({ success: true, subtickets: ['ABC-1', 'ABC-2'] })
+    const { getByRole, unmount } = renderAdmin('/admin/projects')
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Site' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Sync subtickets' }))
+
+    // The per-project route carries the id in the path; the body is empty.
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/projects/4/syncsubtickets', {}))
+
+    unmount()
+  })
+
+  it('syncs every project via the toolbar action once the confirm is accepted', async () => {
+    mockEndpoints()
+    postJson.mockResolvedValue({ success: true })
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const { getByRole, unmount } = renderAdmin('/admin/projects')
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Site' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Sync all subtickets' }))
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/projects/syncsubtickets', {}))
+
+    unmount()
+  })
+
+  it('reports a partial result when sync-all returns success:false', async () => {
+    mockEndpoints()
+    // 200 + success:false = at least one project failed; the notice must not claim
+    // a clean sweep.
+    postJson.mockResolvedValue({ success: false })
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const { getByRole, findByText, unmount } = renderAdmin('/admin/projects')
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Site' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Sync all subtickets' }))
+
+    expect(await findByText('Some projects could not be synced.')).toBeInTheDocument()
+
+    unmount()
+  })
+
+  it('does not sync all when the confirm dialog is cancelled', async () => {
+    mockEndpoints()
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const { getByRole, unmount } = renderAdmin('/admin/projects')
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Site' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Sync all subtickets' }))
+    expect(postJson).not.toHaveBeenCalled()
+
+    unmount()
+  })
+
   it('holidays are immutable: no Edit button, and delete posts the day (not id)', async () => {
     mockEndpoints()
     postJson.mockResolvedValue({ success: true })

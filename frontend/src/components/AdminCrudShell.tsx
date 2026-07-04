@@ -7,7 +7,7 @@ import { coerceActive, optionSourceKey } from '../api/queries'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { gridNav } from '../lib/gridNavigation'
-import { DiskIcon, DownloadIcon, EditIcon, ResetIcon, TrashIcon } from '../lib/icons'
+import { DiskIcon, DownloadIcon, EditIcon, RefreshIcon, ResetIcon, TrashIcon } from '../lib/icons'
 import { DateField } from './DateField'
 import { PageDialog } from './PageDialog'
 import { m } from '../paraglide/messages.js'
@@ -465,6 +465,41 @@ export function AdminCrudShell(props: {
     }
   }
 
+  // Jira subticket sync (parity with the legacy admin). Per-row: re-pull one
+  // project's sub-issues into its read-only `subtickets` column, then refresh so
+  // the updated list shows. A project without a ticket system 400s → inline error.
+  async function syncSubtickets(row: Row) {
+    const build = props.descriptor.syncSubticketsEndpoint
+    if (build === undefined) {
+      return
+    }
+    try {
+      const result = await postJson<{ success?: boolean; subtickets?: string[] }>(build(row), {})
+      await refreshAfterMutation()
+      flashNotice(m.admin_subtickets_synced({ count: String(result?.subtickets?.length ?? 0) }))
+    } catch (caught) {
+      setError(apiErrorMessage(caught, m.app_load_error()))
+    }
+  }
+
+  // Toolbar: sync every project's subtickets in one pass. Confirmed because it
+  // fans out to the ticket system for all projects and can take a while.
+  async function syncAllSubtickets() {
+    const endpoint = props.descriptor.syncAllSubticketsEndpoint
+    if (endpoint === undefined || !window.confirm(m.admin_sync_all_confirm())) {
+      return
+    }
+    try {
+      // The endpoint answers 200 with { success:false } when at least one project
+      // failed (e.g. no token) — report that as a partial result, not a clean sweep.
+      const result = await postJson<{ success?: boolean }>(endpoint, {})
+      await refreshAfterMutation()
+      flashNotice(result?.success === false ? m.admin_subtickets_synced_partial() : m.admin_subtickets_synced_all())
+    } catch (caught) {
+      setError(apiErrorMessage(caught, m.app_load_error()))
+    }
+  }
+
   let searchEl: HTMLInputElement | undefined
 
   return (
@@ -552,6 +587,11 @@ export function AdminCrudShell(props: {
               {action().label()}
             </button>
           )}
+        </Show>
+        <Show when={props.descriptor.syncAllSubticketsEndpoint !== undefined}>
+          <button type="button" class="action-button" onClick={() => void syncAllSubtickets()}>
+            {m.admin_sync_all_subtickets()}
+          </button>
         </Show>
       </div>
 
@@ -736,6 +776,11 @@ export function AdminCrudShell(props: {
                       <Show when={props.descriptor.resetTwoFactorEndpoint !== undefined && (Boolean(row.totp_enabled) || Number(row.passkeys ?? 0) > 0)}>
                         <button type="button" class="link-button is-icon" aria-label={m.admin_reset_2fa()} title={m.admin_reset_2fa()} onClick={() => void resetTwoFactor(row)}>
                           <ResetIcon />
+                        </button>
+                      </Show>
+                      <Show when={props.descriptor.syncSubticketsEndpoint !== undefined}>
+                        <button type="button" class="link-button is-icon" aria-label={m.admin_sync_subtickets()} title={m.admin_sync_subtickets()} onClick={() => void syncSubtickets(row)}>
+                          <RefreshIcon />
                         </button>
                       </Show>
                       <button type="button" class="link-button is-icon is-danger" aria-label={m.admin_delete()} title={m.admin_delete()} onClick={() => void remove(row)}>
