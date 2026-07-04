@@ -80,8 +80,9 @@ class SubticketSyncService
     }
 
     /**
-     * Stamp the sync time and persist the project. Called only on a successful
-     * sync (the early guards throw before reaching here).
+     * Stamp the sync time and persist the project. Reached on any successful
+     * completion — both the normal path and the "no main ticket → empty list"
+     * path; the missing ticket-system / lead / token guards throw before this.
      */
     private function persistSynced(Project $project): void
     {

@@ -69,7 +69,10 @@ class Project extends Base
      *
      * @var string|null
      */
-    #[ORM\Column(name: 'subtickets', type: 'string', length: 255, nullable: true)]
+    // TEXT in every schema (sql/full.sql + the 004_ticketproject migration): a
+    // project's subtickets list can exceed 255 chars, and it now drives ticket→
+    // project resolution, so the mapping must not cap it at 255.
+    #[ORM\Column(name: 'subtickets', type: 'text', nullable: true)]
     protected $subtickets;
 
     /**
