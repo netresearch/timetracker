@@ -240,6 +240,11 @@ export default function Tracking() {
   // button and opened below it, flipping above when it would overflow the viewport
   // bottom; clamped horizontally so it never leaves the viewport.
   const positionActionsMenu = (popup: HTMLElement): void => {
+    // Hide until positioned: the ref fires before layout, so without this the popup
+    // paints one frame at its unpositioned (static) coordinates — a visible flicker —
+    // before the next-frame clamp runs. A visibility:hidden box still has layout, so
+    // the getBoundingClientRect() below stays accurate.
+    popup.style.visibility = 'hidden'
     // Measure on the NEXT frame: at ref-callback time the popup isn't laid out yet,
     // so popup.getBoundingClientRect() reports width/height 0 — the clamp below would
     // then leave left at anchor.right and the menu would open off the right edge of
@@ -260,6 +265,7 @@ export default function Tracking() {
       const flipUp = below + menu.height > window.innerHeight && anchor.top - menu.height - gap >= 0
       popup.style.left = `${left}px`
       popup.style.top = `${flipUp ? anchor.top - menu.height - gap : below}px`
+      popup.style.visibility = 'visible'
     })
   }
   // The fixed popup would strand from its button on scroll/resize; attach a dismiss
