@@ -15,6 +15,7 @@ use App\Event\EntryEvent;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
+use App\Security\ApiToken\RequireScope;
 use App\Util\RequestEntityHelper;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,6 +38,7 @@ final class DeleteEntryAction extends BaseTrackingController
     /**
      * @throws BadRequestException When request parameters are invalid
      */
+    #[RequireScope('entries:write')]
     #[Route(path: '/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(

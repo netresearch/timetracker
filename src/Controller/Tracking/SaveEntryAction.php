@@ -23,6 +23,7 @@ use App\Repository\CustomerRepository;
 use App\Repository\EntryRepository;
 use App\Repository\ProjectRepository;
 use App\Response\Error;
+use App\Security\ApiToken\RequireScope;
 use App\Service\Util\TicketService;
 use BadMethodCallException;
 use DateTime;
@@ -65,6 +66,7 @@ final class SaveEntryAction extends BaseTrackingController
      * @throws BadMethodCallException
      * @throws InvalidArgumentException
      */
+    #[RequireScope('entries:write')]
     #[Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(

@@ -103,9 +103,20 @@ final readonly class ApiTokenService
         return $token;
     }
 
+    /**
+     * Stamp last-used, coarsely (ADR-021 §7): skip the write when the token was
+     * already used within the last 5 minutes, so authentication does not incur a
+     * row write on every request.
+     */
     public function recordUsage(ApiToken $token): void
     {
-        $token->setLastUsedAt($this->clock->now());
+        $now = $this->clock->now();
+        $last = $token->getLastUsedAt();
+        if ($last instanceof DateTimeImmutable && $last > $now->modify('-5 minutes')) {
+            return;
+        }
+
+        $token->setLastUsedAt($now);
         $this->entityManager->flush();
     }
 

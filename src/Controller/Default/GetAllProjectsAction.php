@@ -15,6 +15,7 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\ProjectRepository;
+use App\Security\ApiToken\RequireScope;
 use Exception;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -33,6 +34,7 @@ final class GetAllProjectsAction extends BaseController
      * @throws Exception                When database operations fail
      * @throws InvalidArgumentException When customer ID parameter is invalid
      */
+    #[RequireScope('projects:read')]
     #[Route(path: '/getAllProjects', name: '_getAllProjects_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): RedirectResponse|Response|JsonResponse

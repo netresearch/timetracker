@@ -19,6 +19,19 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
+        # Stateless API-token firewall (ADR-021). Claims ONLY requests carrying an
+        # `Authorization: Bearer tt_pat_…` header (via the request matcher), so the
+        # SPA/session flows below are untouched and no session cookie is set for API
+        # calls. Same user provider + user_checker, so a deactivated user's token is
+        # rejected. Scope enforcement is RequireScopeSubscriber (#[RequireScope]).
+        api:
+            request_matcher: App\Security\ApiToken\ApiTokenRequestMatcher
+            stateless: true
+            provider: app_user_provider
+            user_checker: App\Security\UserChecker
+            custom_authenticators:
+                - App\Security\ApiToken\ApiTokenAuthenticator
+
         main:
             provider: app_user_provider
             # Refuse login for deactivated accounts (users.active = 0).

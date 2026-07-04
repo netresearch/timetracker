@@ -1,6 +1,6 @@
 # ADR-021: API Token Authentication with Fine-Grained Scopes
 
-**Status:** Accepted — implementation phased (see end); Phase 1 (schema + token service + CLI) in progress.
+**Status:** Accepted — implementation phased (see end). Phases 1 (schema + token service + CLI) and 2 (Bearer firewall + authenticator + #[RequireScope] voter, fail-closed) done; Phases 3–5 (Settings UI, OpenAPI scopes, agent-skills.json/MCP) pending.
 **Date:** 2026-07-04
 **Relates to:** [ADR-011](ADR-011-security-architecture.md) (session-based auth this
 extends), [ADR-018](ADR-018-authentication-extension.md) (the auth stack — local
