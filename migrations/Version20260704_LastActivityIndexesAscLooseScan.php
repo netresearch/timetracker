@@ -40,21 +40,21 @@ final class Version20260704_LastActivityIndexesAscLooseScan extends AbstractMigr
 
     public function up(Schema $schema): void
     {
-        $this->addSql('DROP INDEX idx_entries_user_day ON entries');
+        $this->addSql('DROP INDEX IF EXISTS idx_entries_user_day ON entries');
         $this->addSql('CREATE INDEX idx_entries_user_day ON entries (user_id, day)');
-        $this->addSql('DROP INDEX idx_entries_customer_day ON entries');
+        $this->addSql('DROP INDEX IF EXISTS idx_entries_customer_day ON entries');
         $this->addSql('CREATE INDEX idx_entries_customer_day ON entries (customer_id, day)');
-        $this->addSql('DROP INDEX idx_entries_project_day ON entries');
+        $this->addSql('DROP INDEX IF EXISTS idx_entries_project_day ON entries');
         $this->addSql('CREATE INDEX idx_entries_project_day ON entries (project_id, day)');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP INDEX idx_entries_user_day ON entries');
+        $this->addSql('DROP INDEX IF EXISTS idx_entries_user_day ON entries');
         $this->addSql('CREATE INDEX idx_entries_user_day ON entries (user_id, day DESC)');
-        $this->addSql('DROP INDEX idx_entries_customer_day ON entries');
+        $this->addSql('DROP INDEX IF EXISTS idx_entries_customer_day ON entries');
         $this->addSql('CREATE INDEX idx_entries_customer_day ON entries (customer_id, day DESC)');
-        $this->addSql('DROP INDEX idx_entries_project_day ON entries');
+        $this->addSql('DROP INDEX IF EXISTS idx_entries_project_day ON entries');
         $this->addSql('CREATE INDEX idx_entries_project_day ON entries (project_id, day DESC)');
     }
 }
