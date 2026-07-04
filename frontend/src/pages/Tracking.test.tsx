@@ -353,6 +353,35 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('resolves a ticket by an exact subticket over a foreign prefix match', async () => {
+    // Project 9 owns the 'FOREIGN' prefix, but the same key is an exact subticket
+    // of project 10 — the subticket match wins (more specific, and the backend
+    // accepts it the same way via isKnownSubticket).
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 0, project: 0, ticket: '', class: 0 } }],
+      customers: [{ customer: { id: 7, name: 'A' } }, { customer: { id: 8, name: 'B' } }],
+      projects: [
+        { project: { id: 9, name: 'Prefix owner', customer: 7, jiraId: 'FOREIGN' } },
+        { project: { id: 10, name: 'Subticket owner', customer: 8, jiraId: 'SUB', subtickets: 'FOREIGN-9, FOREIGN-10' } },
+      ],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'foreign-9' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+    ;(getByRole('combobox') as HTMLElement).focus()
+
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ ticket: 'FOREIGN-9', project: 10, customer: 8 })),
+    )
+
+    unmount()
+  })
+
   it('shows the external ticket the backend mirrored, in its own column (#453)', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, ticket: 'OPSDHL-2881', extTicket: 'DHLSUP-1067002', customer: 1, project: 4 } }],

@@ -20,7 +20,7 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class SubticketSyncService
 {
-    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory)
+    public function __construct(private readonly ManagerRegistry $managerRegistry, private readonly JiraOAuthApiFactory $jiraOAuthApiFactory, private readonly ClockInterface $clock)
     {
     }
 
@@ -47,13 +47,10 @@ class SubticketSyncService
 
         $mainTickets = $project->getJiraTicket();
         if (null === $mainTickets) {
-            if ('' !== ($project->getSubtickets() ?? '')) {
-                $project->setSubtickets('');
-
-                $em = $this->managerRegistry->getManager();
-                $em->persist($project);
-                $em->flush();
-            }
+            // A ticket-system-bound project with no main ticket has no subtickets;
+            // clear the list but still record that a sync ran.
+            $project->setSubtickets('');
+            $this->persistSynced($project);
 
             return [];
         }
@@ -77,11 +74,22 @@ class SubticketSyncService
 
         // Convert array to comma-separated string for storage
         $project->setSubtickets(implode(',', $allSubtickets));
+        $this->persistSynced($project);
+
+        return array_values($allSubtickets);
+    }
+
+    /**
+     * Stamp the sync time and persist the project. Reached on any successful
+     * completion — both the normal path and the "no main ticket → empty list"
+     * path; the missing ticket-system / lead / token guards throw before this.
+     */
+    private function persistSynced(Project $project): void
+    {
+        $project->setSubticketsSyncedAt($this->clock->now());
         $em = $this->managerRegistry->getManager();
         $em->persist($project);
         $em->flush();
-
-        return array_values($allSubtickets);
     }
 
     /**

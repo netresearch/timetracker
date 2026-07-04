@@ -265,8 +265,9 @@ describe('Admin', () => {
     const { getByRole, unmount } = renderAdmin('/admin/projects')
     await waitFor(() => expect(getByRole('gridcell', { name: 'Site' })).toBeInTheDocument())
 
-    // The auto-synced subtickets column is shown (read-only).
-    expect(getByRole('columnheader', { name: /Subtickets/i })).toBeInTheDocument()
+    // The auto-synced subtickets column (read-only) and its last-synced timestamp.
+    expect(getByRole('columnheader', { name: 'Subtickets' })).toBeInTheDocument()
+    expect(getByRole('columnheader', { name: 'Subtickets synced' })).toBeInTheDocument()
 
     // The edit modal exposes the three new editable fields.
     fireEvent.click(getByRole('button', { name: 'Edit' }))

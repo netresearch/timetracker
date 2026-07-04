@@ -12,8 +12,10 @@ namespace Tests\Service;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Service\FrozenClock;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\SubticketSyncService;
+use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
@@ -31,12 +33,14 @@ use function assert;
 #[AllowMockObjectsWithoutExpectations]
 final class SubticketSyncServiceTest extends TestCase
 {
+    // Fixed clock so the sync timestamp is deterministic.
+    private const SYNC_TIME = '2024-01-15 12:00:00';
+
     private function createService(
         ManagerRegistry $managerRegistry,
         JiraOAuthApiFactory $jiraOAuthApiFactory,
     ): SubticketSyncService {
-        // SubticketSyncService signature changed to (ManagerRegistry, JiraOAuthApiFactory)
-        return new SubticketSyncService($managerRegistry, $jiraOAuthApiFactory);
+        return new SubticketSyncService($managerRegistry, $jiraOAuthApiFactory, new FrozenClock(self::SYNC_TIME));
     }
 
     public function testProjectNotFoundThrows404(): void
@@ -131,7 +135,7 @@ final class SubticketSyncServiceTest extends TestCase
         $user->method('getUsername')->willReturn('dev');
 
         $mock = $this->getMockBuilder(Project::class)
-            ->onlyMethods(['getTicketSystem', 'getJiraTicket', 'getProjectLead', 'setSubtickets'])
+            ->onlyMethods(['getTicketSystem', 'getJiraTicket', 'getProjectLead', 'setSubtickets', 'setSubticketsSyncedAt'])
             ->getMock();
         $mock->method('getTicketSystem')->willReturn($ticketSystem);
         $mock->method('getJiraTicket')->willReturn('DEF-2, ABC-1');
@@ -144,6 +148,10 @@ final class SubticketSyncServiceTest extends TestCase
 
             return $expected === $actualArray;
         }));
+        // The sync stamps the (frozen) sync time on the project.
+        $mock->expects(self::once())->method('setSubticketsSyncedAt')->with(self::callback(
+            static fn (DateTimeImmutable $when): bool => self::SYNC_TIME === $when->format('Y-m-d H:i:s'),
+        ));
 
         $repo = $this->createMock(ObjectRepository::class);
         $repo->method('find')->willReturn($mock);

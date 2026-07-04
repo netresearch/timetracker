@@ -442,6 +442,7 @@
   "admin_f_internal_ref": "Внутренняя ссылка",
   "admin_f_external_ref": "Внешняя ссылка",
   "admin_f_subtickets": "Подтикеты",
+  "admin_f_subtickets_synced": "Подтикеты синхронизированы",
   "admin_f_book_time": "Передача времени",
   "admin_f_url": "URL",
   "admin_f_ticket_url": "URL тикета",

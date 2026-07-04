@@ -494,17 +494,29 @@ export default function Tracking() {
   // cell shows the fixed value immediately, not on the next refetch.
   function handleCommit(id: number, colKey: string, value: unknown): void {
     if (colKey === 'ticket') {
-      const prefix = str(value).toUpperCase().trim().split(/[-:]/)[0] ?? ''
-      if (prefix === '') {
+      const ticketKey = str(value).toUpperCase().trim()
+      if (ticketKey === '') {
         return
       }
-      // jiraId is a comma/space-separated list of allowed prefixes (the backend
-      // splits it the same way in validateTicketPrefix), so match membership —
+      const prefix = ticketKey.split(/[-:]/)[0] ?? ''
+      const candidates = projects.data ?? []
+      // Exact subticket match wins over a prefix match: the synced subtickets list
+      // enumerates specific keys (possibly from another Jira project), so it is more
+      // precise than the jiraId prefix rule — the backend accepts it the same way
+      // (SaveEntryAction::isKnownSubticket).
+      const bySubticket = candidates.find(
+        (candidate) => candidate.subtickets !== '' && candidate.subtickets.toUpperCase().split(/[\s,]+/).includes(ticketKey),
+      )
+      // Fallback: jiraId is a comma/space-separated list of allowed prefixes (the
+      // backend splits it the same way in validateTicketPrefix), so match membership —
       // an exact === missed multi-prefix projects, so an external ticket like
       // DHLSUP-1 derived the wrong/no project and the save was rejected (#453).
-      const project = (projects.data ?? []).find(
-        (candidate) => candidate.jiraId !== '' && candidate.jiraId.toUpperCase().split(/[\s,]+/).includes(prefix),
-      )
+      const byPrefix = prefix === ''
+        ? undefined
+        : candidates.find(
+            (candidate) => candidate.jiraId !== '' && candidate.jiraId.toUpperCase().split(/[\s,]+/).includes(prefix),
+          )
+      const project = bySubticket ?? byPrefix
       if (project !== undefined) {
         editor.setDraftField(id, 'project', project.id)
         if (project.customer > 0) {

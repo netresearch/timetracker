@@ -274,6 +274,9 @@ export interface TrackingProject {
   active: boolean
   jiraId: string
   ticketSystem: number
+  // Comma-separated Jira sub-issue keys synced from the ticket system; an exact
+  // match here maps a ticket to this project even when its prefix isn't in jiraId.
+  subtickets: string
 }
 
 export function trackingProjectsQuery() {
@@ -292,6 +295,7 @@ export function trackingProjectsQuery() {
           active: coerceActive(project.active),
           jiraId: String(project.jiraId ?? project.jira_id ?? ''),
           ticketSystem: Number(project.ticket_system ?? project.ticketSystem ?? 0),
+          subtickets: String(project.subtickets ?? ''),
         })),
     staleTime: REFERENCE_STALE_TIME,
   }

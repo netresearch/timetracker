@@ -13,6 +13,8 @@ use App\Enum\BillingType;
 use App\Model\Base;
 use App\Repository\ProjectRepository;
 use App\Service\Util\TimeCalculationService;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -67,8 +69,18 @@ class Project extends Base
      *
      * @var string|null
      */
-    #[ORM\Column(name: 'subtickets', type: 'string', length: 255, nullable: true)]
+    // TEXT in every schema (sql/full.sql + the 004_ticketproject migration): a
+    // project's subtickets list can exceed 255 chars, and it now drives ticket→
+    // project resolution, so the mapping must not cap it at 255.
+    #[ORM\Column(name: 'subtickets', type: 'text', nullable: true)]
     protected $subtickets;
+
+    /**
+     * When the subtickets column was last refreshed from the ticket system.
+     * Null means it has never been synced. Set by SubticketSyncService.
+     */
+    #[ORM\Column(name: 'subtickets_synced_at', type: 'datetime_immutable', nullable: true)]
+    protected ?DateTimeImmutable $subticketsSyncedAt = null;
 
     /**
      * @var TicketSystem|null
@@ -234,6 +246,9 @@ class Project extends Base
     {
         $data = parent::toArray();
         $data['estimationText'] = new TimeCalculationService()->minutesToReadable($this->getEstimation(), false);
+        // Serialize the sync timestamp as ISO-8601 (or null) rather than leaking a
+        // DateTimeImmutable object into the JSON payload.
+        $data['subticketsSyncedAt'] = $this->subticketsSyncedAt?->format(DateTimeInterface::ATOM);
 
         return $data;
     }
@@ -420,6 +435,21 @@ class Project extends Base
     public function setSubtickets(?string $subtickets): static
     {
         $this->subtickets = $subtickets;
+
+        return $this;
+    }
+
+    /**
+     * When the subtickets were last synced from the ticket system (null = never).
+     */
+    public function getSubticketsSyncedAt(): ?DateTimeImmutable
+    {
+        return $this->subticketsSyncedAt;
+    }
+
+    public function setSubticketsSyncedAt(?DateTimeImmutable $subticketsSyncedAt): static
+    {
+        $this->subticketsSyncedAt = $subticketsSyncedAt;
 
         return $this;
     }

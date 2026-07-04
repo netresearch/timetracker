@@ -443,6 +443,13 @@ final class SaveEntryAction extends BaseTrackingController
             return new Error($this->translate('Given ticket does not have a valid format.'), Response::HTTP_BAD_REQUEST);
         }
 
+        // A ticket explicitly listed in the project's synced subtickets is accepted
+        // regardless of its prefix: subtickets can live in a different Jira project
+        // (e.g. epic-linked issues), so an exact key match wins over the prefix rule.
+        if ($this->isKnownSubticket($project, $ticket)) {
+            return null;
+        }
+
         $ticketPrefix = (string) $this->ticketService->getPrefix($ticket);
         $allowedPrefixes = array_map(trim(...), explode(',', $jiraId));
         $prefixMatches = in_array($ticketPrefix, $allowedPrefixes, true)
@@ -451,5 +458,21 @@ final class SaveEntryAction extends BaseTrackingController
         return $prefixMatches
             ? null
             : new Error($this->translate('Given ticket does not have a valid prefix.'), Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * Whether the ticket key is one of the project's synced subtickets (exact,
+     * case-insensitive match). Empty subtickets → never matches.
+     */
+    private function isKnownSubticket(Project $project, string $ticket): bool
+    {
+        $subtickets = $project->getSubtickets();
+        if (null === $subtickets || '' === $subtickets) {
+            return false;
+        }
+
+        $needle = strtoupper(trim($ticket));
+
+        return array_any(explode(',', $subtickets), static fn (string $subticket): bool => strtoupper(trim($subticket)) === $needle);
     }
 }

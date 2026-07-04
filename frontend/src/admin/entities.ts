@@ -1,4 +1,5 @@
 import { num, str } from '../lib/coerce'
+import { formatUserDate } from '../lib/dateFormat'
 import { m } from '../paraglide/messages.js'
 import type { EntityDescriptor, OptionLookup, OptionSource } from './types'
 
@@ -108,6 +109,8 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'billing', label: () => m.admin_f_billing(), render: (row) => billingLabel(row.billing) },
         // View-only: auto-synced from the ticket system (no matching field → read-only).
         { key: 'subtickets', label: () => m.admin_f_subtickets() },
+        // When the subtickets were last synced (— = never). The sync button refreshes it.
+        { key: 'subticketsSyncedAt', label: () => m.admin_f_subtickets_synced(), render: (row) => { const v = str(row.subticketsSyncedAt); return v === '' ? '—' : formatUserDate(v.split('T')[0] ?? v) } },
         { key: 'last_activity', label: () => m.admin_f_last_activity() },
       ],
       fields: [
