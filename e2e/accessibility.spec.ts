@@ -44,7 +44,9 @@ async function expectNoSeriousA11y(page: Page, scopeSelector?: string): Promise<
     // a phantom colour-contrast failure. Blur that focus, let any pending
     // scroll-into-view run, THEN reset every scroll container to the top as the LAST
     // action before the scan, so no row sits under the sticky header when axe samples.
-    (document.activeElement as HTMLElement | null)?.blur();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     window.scrollTo(0, 0);
     document.querySelectorAll('.table-scroll, .modal-page-body').forEach((el) => { el.scrollTop = 0; });
