@@ -106,6 +106,9 @@ security:
         - { path: ^/images, roles: PUBLIC_ACCESS }
         - { path: ^/status/check, roles: PUBLIC_ACCESS }
         - { path: ^/status/page, roles: PUBLIC_ACCESS }
+        # Public agent/discovery affordances (RFC 8615 well-known URIs, llms.txt).
+        - { path: ^/\.well-known, roles: PUBLIC_ACCESS }
+        - { path: ^/llms\.txt, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
         # Profiler/web-debug-toolbar routes exist only in the `profiling` env,
         # where the `dev` firewall is narrowed so these fall through to `main`;

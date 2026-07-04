@@ -2,6 +2,23 @@
 # www.google.com/support/webmasters/bin/answer.py?hl=en&answer=156449
 
 user-agent: *
+# Content Signals (content-signals.org): this is a private, authenticated
+# time-tracking app — no public content to index, ground, or train on.
+content-signal: search=no, ai-input=no, ai-train=no
 allow: /$
 allow: /login$
+disallow: /
+
+# AI training/scraping crawlers: nothing here is public, so disallow explicitly.
+# (Authenticated AI *agents* acting for a user are unaffected — they log in and
+# use the API; robots.txt governs unauthenticated crawlers only.)
+user-agent: GPTBot
+user-agent: OAI-SearchBot
+user-agent: ChatGPT-User
+user-agent: ClaudeBot
+user-agent: Claude-User
+user-agent: CCBot
+user-agent: Google-Extended
+user-agent: PerplexityBot
+user-agent: Bytespider
 disallow: /
