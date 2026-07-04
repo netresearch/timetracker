@@ -1,7 +1,23 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { SessionExpiredOverlay } from './SessionExpiredOverlay'
+// Passkeys (WebAuthn) — unsupported in jsdom; stub so the explicit button can be
+// exercised. The default keeps the button hidden (passkeysSupported → false),
+// matching real jsdom, so the password/2FA tests behave exactly as before.
+const passkeysSupported = vi.fn(() => false)
+const loginWithPasskey = vi.fn<(...args: unknown[]) => Promise<string>>(() => Promise.resolve('/'))
+
+vi.mock('../lib/passkeys', () => ({
+  passkeysSupported: () => passkeysSupported(),
+  loginWithPasskey: (...args: unknown[]) => loginWithPasskey(...args),
+}))
+
+const { SessionExpiredOverlay } = await import('./SessionExpiredOverlay')
+
+beforeEach(() => {
+  passkeysSupported.mockReturnValue(false)
+  loginWithPasskey.mockResolvedValue('/')
+})
 
 afterEach(() => {
   cleanup()
@@ -16,6 +32,21 @@ function mockLoginFetch(ok: boolean): ReturnType<typeof vi.fn> {
     status: ok ? 200 : 401,
     json: async () => ({ ok }),
   })
+  vi.stubGlobal('fetch', fetchMock)
+
+  return fetchMock
+}
+
+// The password POST (→ /login) reports 2FA required; the code POST (→ /2fa_check)
+// yields codeOk. Mirrors the JSON contract of TwoFactorJsonRequired/SuccessHandler.
+function mockTwoFactorFetch(codeOk: boolean): ReturnType<typeof vi.fn> {
+  const fetchMock = vi.fn().mockImplementation((url: string) =>
+    Promise.resolve(
+      String(url) === '/2fa_check'
+        ? { ok: codeOk, status: codeOk ? 200 : 401, json: async () => ({ ok: codeOk }) }
+        : { ok: false, status: 401, json: async () => ({ ok: false, twoFactorRequired: true }) },
+    ),
+  )
   vi.stubGlobal('fetch', fetchMock)
 
   return fetchMock
@@ -62,5 +93,75 @@ describe('SessionExpiredOverlay', () => {
     render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
     const link = screen.getByRole('link', { name: /login page/i })
     expect(link.getAttribute('href')).toBe('/login')
+  })
+
+  it('treats a 2FA-required password as success: swaps to the code step, then resumes on a valid code', async () => {
+    // Regression: a correct LDAP password on a TOTP-enrolled account was mislabelled
+    // "login failed" because the overlay had no twoFactorRequired branch.
+    const fetchMock = mockTwoFactorFetch(true)
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'ldap-pass' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    // Password accepted → code step appears; no error, no premature resume.
+    await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeInTheDocument())
+    expect(onSuccess).not.toHaveBeenCalled()
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify' }))
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+    const [codeUrl, codeInit] = fetchMock.mock.calls[1]!
+    expect(codeUrl).toBe('/2fa_check')
+    expect(String(codeInit.body)).toContain('_auth_code=123456')
+  })
+
+  it('surfaces a 2FA code error without resuming', async () => {
+    mockTwoFactorFetch(false)
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'ldap-pass' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    await waitFor(() => expect(screen.getByLabelText('Verification code')).toBeInTheDocument())
+
+    fireEvent.input(screen.getByLabelText('Verification code'), { target: { value: '000000' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify' }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('hides the passkey button when WebAuthn is unsupported', () => {
+    // passkeysSupported defaults to false (jsdom parity).
+    render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Sign in with a passkey' })).toBeNull()
+  })
+
+  it('offers a passkey button that resumes in place on success', async () => {
+    passkeysSupported.mockReturnValue(true)
+    loginWithPasskey.mockResolvedValue('/ui/tracking')
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with a passkey' }))
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+    expect(loginWithPasskey).toHaveBeenCalledTimes(1)
+  })
+
+  it('surfaces an inline error when the passkey ceremony fails, without resuming', async () => {
+    passkeysSupported.mockReturnValue(true)
+    loginWithPasskey.mockRejectedValue(new Error('user dismissed'))
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with a passkey' }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(onSuccess).not.toHaveBeenCalled()
   })
 })
