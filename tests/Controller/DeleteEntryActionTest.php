@@ -33,6 +33,8 @@ use const JSON_THROW_ON_ERROR;
  */
 final class DeleteEntryActionTest extends AbstractWebTestCase
 {
+    private const string JSON_MIME = 'application/json';
+
     private function entityManager(): EntityManagerInterface
     {
         $doctrine = self::getContainer()->get('doctrine');
@@ -86,7 +88,7 @@ final class DeleteEntryActionTest extends AbstractWebTestCase
             '/tracking/delete',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
+            ['CONTENT_TYPE' => self::JSON_MIME, 'HTTP_ACCEPT' => self::JSON_MIME],
             json_encode(['id' => $id], JSON_THROW_ON_ERROR),
         );
 
@@ -122,7 +124,7 @@ final class DeleteEntryActionTest extends AbstractWebTestCase
             '/tracking/delete',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
+            ['CONTENT_TYPE' => self::JSON_MIME, 'HTTP_ACCEPT' => self::JSON_MIME],
             json_encode([], JSON_THROW_ON_ERROR),
         );
 
