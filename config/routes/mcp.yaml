@@ -1,0 +1,8 @@
+# ADR-021 Phase 5 — registers the single MCP endpoint (GET/POST/DELETE/OPTIONS)
+# at mcp.http.path (/mcp) → Symfony\AI\McpBundle McpController::handle. The bundle
+# provides the route *loader* (type: mcp) but does not import it, so this file is
+# required. The endpoint sits behind the stateless ApiToken firewall by virtue of
+# the Bearer-header request matcher — no security.yaml change needed.
+mcp:
+    resource: .
+    type: mcp

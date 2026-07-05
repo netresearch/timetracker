@@ -1,0 +1,15 @@
+# ADR-021 Phase 5 — native MCP server (Symfony\AI\McpBundle).
+# Exposes a curated set of tools (src/Mcp/Tool) to coding agents over Streamable
+# HTTP at /mcp. Auth is the existing scoped PAT: the /mcp request carries
+# `Authorization: Bearer tt_pat_…`, which the ApiToken firewall claims and
+# authenticates (config/packages/security.yaml). Each tool enforces its scope via
+# App\Mcp\ScopeGuard. The route itself is imported in config/routes/mcp.yaml
+# (the bundle registers the controller but not the route).
+mcp:
+    app: 'Netresearch TimeTracker'
+    version: '1.0.0'
+    description: 'Log and query time entries in TimeTracker. Authenticate with a scoped personal access token (Bearer tt_pat_…) created under Settings.'
+    client_transports:
+        http: true
+    http:
+        path: /mcp

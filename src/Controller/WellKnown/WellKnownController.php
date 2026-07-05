@@ -92,6 +92,27 @@ final class WellKnownController extends AbstractController
     }
 
     /**
+     * MCP server card — points MCP-native clients (Claude Code / Cursor) at the
+     * Streamable HTTP endpoint (ADR-021 Phase 5). The `/.well-known/mcp/server.json`
+     * convention (SEP-1649) is still emerging; keep the shape minimal. Auth is a
+     * scoped personal access token presented as `Authorization: Bearer tt_pat_…`.
+     */
+    #[Route(path: '/.well-known/mcp/server.json', name: 'well_known_mcp_server', methods: ['GET'])]
+    public function mcpServer(Request $request): JsonResponse
+    {
+        $base = $request->getSchemeAndHttpHost();
+
+        return new JsonResponse([
+            'name' => 'Netresearch TimeTracker',
+            'description' => 'Log and query time entries. Authenticate with a scoped personal access token (Bearer tt_pat_…) created under Settings.',
+            'version' => '1.0.0',
+            'remotes' => [
+                ['type' => 'streamable-http', 'url' => $base . '/mcp'],
+            ],
+        ]);
+    }
+
+    /**
      * llms.txt (llmstxt.org) — a concise, agent-oriented map of the application.
      */
     #[Route(path: '/llms.txt', name: 'llms_txt', methods: ['GET'])]
