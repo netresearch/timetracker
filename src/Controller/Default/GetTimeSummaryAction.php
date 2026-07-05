@@ -17,6 +17,7 @@ use App\Enum\Period;
 use App\Model\JsonResponse;
 use App\Repository\ContractRepository;
 use App\Repository\EntryRepository;
+use App\Security\ApiToken\RequireScope;
 use App\Service\ClockInterface;
 use App\Service\Util\ExpectedWorkTimeCalculator;
 use DateTimeImmutable;
@@ -63,6 +64,7 @@ final class GetTimeSummaryAction extends BaseController
      * @throws Exception When database operations fail
      * @throws Exception When user ID retrieval or time calculation fails
      */
+    #[RequireScope('reporting:read')]
     #[Route(path: '/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]
     public function __invoke(#[CurrentUser] ?User $user = null): JsonResponse|RedirectResponse
     {

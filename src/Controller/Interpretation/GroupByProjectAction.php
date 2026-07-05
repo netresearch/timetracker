@@ -12,6 +12,7 @@ namespace App\Controller\Interpretation;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
+use App\Security\ApiToken\RequireScope;
 use App\Service\Util\TimeCalculationService;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,6 +31,7 @@ final class GroupByProjectAction extends BaseInterpretationController
         $this->timeCalculationService = $timeCalculationService;
     }
 
+    #[RequireScope('reporting:read')]
     #[Route(path: '/interpretation/project', name: 'interpretation_project_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(

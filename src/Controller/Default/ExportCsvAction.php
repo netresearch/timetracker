@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\User;
 use App\Model\Response;
 use App\Repository\EntryRepository;
+use App\Security\ApiToken\RequireScope;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -28,6 +29,7 @@ final class ExportCsvAction extends BaseController
     /**
      * @throws Exception
      */
+    #[RequireScope('reporting:read')]
     #[Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): Response

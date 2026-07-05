@@ -14,6 +14,7 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Response\Error;
+use App\Security\ApiToken\RequireScope;
 use App\Util\RequestEntityHelper;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -21,6 +22,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class GetEntryAction extends BaseTrackingController
 {
+    #[RequireScope('entries:read')]
     #[Route(path: '/tracking/entry/{id}', name: 'timetracking_get_attr', requirements: ['id' => '\d+'], methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(

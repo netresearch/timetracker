@@ -14,6 +14,7 @@ use App\Entity\Preset;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Repository\PresetRepository;
+use App\Security\ApiToken\RequireScope;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -27,6 +28,7 @@ final class GetPresetsAction extends BaseController
     // authenticated user) needs — so reading the list is not admin-gated.
     // Creating/editing/deleting presets stays admin-only via the dedicated
     // Save/Delete actions.
+    #[RequireScope('presets:read')]
     #[Route(path: '/getAllPresets', name: '_getAllPresets_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[CurrentUser] ?User $user = null): JsonResponse|RedirectResponse

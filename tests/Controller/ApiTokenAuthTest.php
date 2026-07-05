@@ -85,11 +85,34 @@ final class ApiTokenAuthTest extends AbstractWebTestCase
 
     public function testEndpointWithoutRequireScopeIsForbiddenForTokens(): void
     {
-        // Fail-closed: /getTicketSystems declares no #[RequireScope], so even a
-        // wildcard token cannot reach it.
-        $status = $this->requestWithToken(Request::METHOD_GET, '/getTicketSystems', $this->mintToken(['*']))->getStatusCode();
+        // Fail-closed: /getAllHolidays declares no #[RequireScope] (deliberately not
+        // opened to tokens), so even a wildcard token cannot reach it.
+        $status = $this->requestWithToken(Request::METHOD_GET, '/getAllHolidays', $this->mintToken(['*']))->getStatusCode();
 
         self::assertSame(Response::HTTP_FORBIDDEN, $status);
+    }
+
+    public function testPhase4ReadEndpointReachableWithItsScope(): void
+    {
+        // /getTicketSystems opted in with ticketsystems:read (Phase 4).
+        $status = $this->requestWithToken(Request::METHOD_GET, '/getTicketSystems', $this->mintToken(['ticketsystems:read']))->getStatusCode();
+
+        self::assertSame(200, $status);
+    }
+
+    public function testPhase4ReadEndpointDeniedWithWrongScope(): void
+    {
+        // A reporting endpoint needs reporting:read; entries:read does not satisfy it.
+        $status = $this->requestWithToken(Request::METHOD_GET, '/getTimeSummary', $this->mintToken(['entries:read']))->getStatusCode();
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $status);
+    }
+
+    public function testReportingEndpointReachableWithReportingScope(): void
+    {
+        $status = $this->requestWithToken(Request::METHOD_GET, '/getTimeSummary', $this->mintToken(['reporting:read']))->getStatusCode();
+
+        self::assertSame(200, $status);
     }
 
     public function testBearerSchemeIsAcceptedCaseInsensitively(): void

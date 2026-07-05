@@ -16,6 +16,7 @@ use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Model\Response;
+use App\Security\ApiToken\RequireScope;
 use App\Service\ExportService as Export;
 use App\Util\PhpSpreadsheet\LOReadFilter;
 use DateTimeInterface;
@@ -54,6 +55,7 @@ final class ExportAction extends BaseController
     // canBill() gate (ROLE_PL || ROLE_ADMIN); enforcing it here closes the IDOR
     // a plain IS_AUTHENTICATED_FULLY left open.
     #[IsGranted('ROLE_ADMIN')]
+    #[RequireScope('reporting:read')]
     #[Route(path: '/controlling/export', name: '_controllingExport_attr_invokable', methods: ['GET'])]
     #[Route(path: '/controlling/export/{userid}/{year}/{month}/{project}/{customer}/{billable}', name: '_controllingExport_bc', requirements: ['year' => '\d+', 'userid' => '\d+'], defaults: ['userid' => 0, 'year' => 0, 'month' => 0, 'project' => 0, 'customer' => 0, 'billable' => 0], methods: ['GET'])]
     public function __invoke(Request $request): Response

@@ -15,6 +15,7 @@ use App\Enum\UserType;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\UserRepository;
+use App\Security\ApiToken\RequireScope;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -24,6 +25,7 @@ use function assert;
 
 final class GetUsersAction extends BaseController
 {
+    #[RequireScope('users:read')]
     #[Route(path: '/getUsers', name: '_getUsers_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[CurrentUser] ?User $user = null): RedirectResponse|Response|JsonResponse

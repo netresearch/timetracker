@@ -15,6 +15,7 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\ProjectRepository;
+use App\Security\ApiToken\RequireScope;
 use Exception;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -33,6 +34,7 @@ final class GetProjectsAction extends BaseController
      * @throws BadRequestException   When request is malformed
      * @throws AccessDeniedException When user lacks required permissions
      */
+    #[RequireScope('projects:read')]
     #[Route(path: '/getProjects', name: '_getProjects_attr', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
     public function __invoke(#[CurrentUser] ?User $user = null): RedirectResponse|Response|JsonResponse

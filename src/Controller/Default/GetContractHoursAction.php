@@ -14,6 +14,7 @@ use App\Entity\Contract;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Repository\ContractRepository;
+use App\Security\ApiToken\RequireScope;
 use App\Service\Util\ContractHoursResolver;
 use DateTime;
 use Exception;
@@ -48,6 +49,7 @@ final class GetContractHoursAction extends BaseController
     /**
      * @throws Exception When date construction fails
      */
+    #[RequireScope('contracts:read')]
     #[Route(path: '/getContractHours', name: '_getContractHours_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): JsonResponse|RedirectResponse
