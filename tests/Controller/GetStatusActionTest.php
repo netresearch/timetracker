@@ -14,6 +14,7 @@ use Tests\Traits\HttpRequestTestTrait;
 
 use function sprintf;
 
+use const JSON_THROW_ON_ERROR;
 use const PHP_VERSION;
 
 /**
@@ -91,7 +92,7 @@ final class GetStatusActionTest extends AbstractWebTestCase
         self::assertStringContainsStringIgnoringCase('file', $sessionsBackend);
 
         // The richer payload still leaks no credentials.
-        self::assertStringNotContainsStringIgnoringCase('password', (string) json_encode($json));
+        self::assertStringNotContainsStringIgnoringCase('password', json_encode($json, JSON_THROW_ON_ERROR));
     }
 
     public function testForbiddenForNonAdmin(): void

@@ -173,7 +173,13 @@ function SubsystemCards(props: Readonly<{ subsystems: Subsystem[] }>) {
                 </For>
               </dl>
               <Show when={subsystem.adr}>
-                {(adr) => <p class="subsystem-adr"><code>{adr()}</code></p>}
+                {(adr) => (
+                  <p class="subsystem-adr">
+                    <a href="https://github.com/netresearch/timetracker/tree/main/docs/adr" target="_blank" rel="noreferrer">
+                      <code>{adr()}</code>
+                    </a>
+                  </p>
+                )}
               </Show>
             </article>
           )}

@@ -2487,7 +2487,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 
 .subsystem-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(16em, 1fr));
   gap: 0.8rem;
 }
 
@@ -2561,7 +2561,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 
 .subsystem-config {
   display: grid;
-  grid-template-columns: minmax(6rem, auto) 1fr;
+  grid-template-columns: minmax(6em, auto) 1fr;
   gap: 0.2rem 0.8rem;
   margin: 0;
   padding-top: 0.4rem;

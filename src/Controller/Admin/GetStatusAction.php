@@ -26,6 +26,7 @@ use function ini_get;
 use function is_scalar;
 use function is_string;
 
+use const FILTER_VALIDATE_BOOLEAN;
 use const PHP_VERSION;
 
 /**
@@ -225,6 +226,15 @@ final class GetStatusAction extends BaseController
         $taxonomy = $this->apiTokenService->scopeTaxonomy();
         $scopeCount = count($taxonomy['resources']) * count($taxonomy['actions']) + 1;
 
+        // Live COUNT probes up front so the card status reflects whether they
+        // actually succeeded — a null (query failed) must not read as a green "ok".
+        $activeTokens = $this->countRows('SELECT COUNT(*) FROM api_tokens WHERE revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())');
+        $totalTokens = $this->countRows('SELECT COUNT(*) FROM api_tokens');
+        $passkeys = $this->countRows('SELECT COUNT(*) FROM webauthn_credentials');
+        $totpUsers = $this->countRows('SELECT COUNT(*) FROM users WHERE totp_secret IS NOT NULL');
+        $ticketSystems = $this->countRows('SELECT COUNT(*) FROM ticket_systems');
+        $bookableTicketSystems = $this->countRows('SELECT COUNT(*) FROM ticket_systems WHERE book_time = 1');
+
         return [
             [
                 'id' => 'database',
@@ -263,10 +273,10 @@ final class GetStatusAction extends BaseController
             [
                 'id' => 'api_tokens',
                 'backend' => 'Database (SHA-256 hashed)',
-                'status' => 'ok',
+                'status' => null === $activeTokens ? 'na' : 'ok',
                 'config' => [
-                    'active' => $this->countRows('SELECT COUNT(*) FROM api_tokens WHERE revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())'),
-                    'total' => $this->countRows('SELECT COUNT(*) FROM api_tokens'),
+                    'active' => $activeTokens,
+                    'total' => $totalTokens,
                     'prefix' => ApiTokenService::PREFIX,
                 ],
                 'adr' => 'ADR-021',
@@ -274,12 +284,12 @@ final class GetStatusAction extends BaseController
             [
                 'id' => 'passkeys_mfa',
                 'backend' => 'Database',
-                'status' => 'ok',
+                'status' => null === $passkeys ? 'na' : 'ok',
                 'config' => [
-                    'passkeys' => $this->countRows('SELECT COUNT(*) FROM webauthn_credentials'),
-                    'totp_users' => $this->countRows('SELECT COUNT(*) FROM users WHERE totp_secret IS NOT NULL'),
+                    'passkeys' => $passkeys,
+                    'totp_users' => $totpUsers,
                     'webauthn_rp_id' => $this->env('WEBAUTHN_RP_ID'),
-                    'require_two_factor' => $this->env('REQUIRE_TWO_FACTOR'),
+                    'require_two_factor' => filter_var($this->env('REQUIRE_TWO_FACTOR') ?? '', FILTER_VALIDATE_BOOLEAN),
                 ],
                 'adr' => 'ADR-018',
             ],
@@ -291,7 +301,9 @@ final class GetStatusAction extends BaseController
                     'ldap_host' => $this->stringParam('ldap_host'),
                     'ldap_port' => $this->stringParam('ldap_port'),
                     'ldap_basedn' => $this->stringParam('ldap_basedn'),
-                    'ldap_ssl' => $this->stringParam('ldap_usessl'),
+                    // Raw param (bool) so the client renders Yes/No, matching the
+                    // main config section — stringParam would coerce it to "1"/"0".
+                    'ldap_ssl' => $this->param('ldap_usessl'),
                 ],
                 'adr' => null,
             ],
@@ -302,17 +314,17 @@ final class GetStatusAction extends BaseController
                 'config' => [
                     'auth' => 'Bearer ' . ApiTokenService::PREFIX . '…',
                     'scopes' => $scopeCount,
-                    'openapi' => '/api/doc',
+                    'openapi' => '/api.yml',
                 ],
                 'adr' => 'ADR-021',
             ],
             [
                 'id' => 'jira',
                 'backend' => 'Per-user OAuth + ticket systems',
-                'status' => 'ok',
+                'status' => null === $ticketSystems ? 'na' : 'ok',
                 'config' => [
-                    'ticket_systems' => $this->countRows('SELECT COUNT(*) FROM ticket_systems'),
-                    'bookable' => $this->countRows('SELECT COUNT(*) FROM ticket_systems WHERE book_time = 1'),
+                    'ticket_systems' => $ticketSystems,
+                    'bookable' => $bookableTicketSystems,
                 ],
                 'adr' => null,
             ],
