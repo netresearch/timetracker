@@ -53,7 +53,13 @@ final readonly class RequireScopeSubscriber implements EventSubscriberInterface
             return; // not a token request — scopes gate token auth only
         }
 
-        $required = $this->requiredScope($event->getController());
+        $controller = $event->getController();
+        $controllerObject = is_array($controller) ? $controller[0] : (is_object($controller) ? $controller : null);
+        if ($controllerObject instanceof SelfEnforcesScope) {
+            return; // controller enforces scopes per call (e.g. the MCP endpoint)
+        }
+
+        $required = $this->requiredScope($controller);
         // Deny by short-circuiting the controller to a generic 403 (no token/scope
         // detail leaked) rather than throwing — a thrown exception at
         // kernel.controller time trips a framework type error building the response.
