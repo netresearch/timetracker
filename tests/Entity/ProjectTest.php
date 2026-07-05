@@ -16,6 +16,7 @@ use App\Entity\User;
 use App\Enum\BillingType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 /**
  * Unit tests for Project entity.
@@ -430,6 +431,72 @@ final class ProjectTest extends TestCase
 
         self::assertSame($project, $result);
         self::assertSame('INTERNAL', $project->getInternalJiraProjectKey());
+    }
+
+    public function testSetInternalJiraProjectKeyTrimsSurroundingWhitespace(): void
+    {
+        $project = new Project();
+
+        $project->setInternalJiraProjectKey('  INTERNAL  ');
+
+        self::assertSame('INTERNAL', $project->getInternalJiraProjectKey());
+    }
+
+    public function testSetInternalJiraProjectKeyNormalizesBlankToNull(): void
+    {
+        $project = new Project();
+
+        // A whitespace-only key would otherwise read as "configured" and divert
+        // worklog booking/deletion to a non-existent internal ticket system.
+        $project->setInternalJiraProjectKey('   ');
+
+        self::assertNull($project->getInternalJiraProjectKey());
+    }
+
+    // ==================== hasInternalJiraProjectKey tests ====================
+
+    public function testHasInternalJiraProjectKeyTrueWhenKeyAndSystemSet(): void
+    {
+        $project = new Project();
+        $project->setInternalJiraProjectKey('INTERNAL');
+        $project->setInternalJiraTicketSystem('3');
+
+        self::assertTrue($project->hasInternalJiraProjectKey());
+    }
+
+    public function testHasInternalJiraProjectKeyFalseByDefault(): void
+    {
+        self::assertFalse(new Project()->hasInternalJiraProjectKey());
+    }
+
+    public function testHasInternalJiraProjectKeyFalseForHydratedWhitespaceKey(): void
+    {
+        // Doctrine hydration bypasses the setter, so a legacy DB row can hold a
+        // whitespace-only key directly — this is the exact prod trigger that
+        // orphaned a worklog. hasInternalJiraProjectKey() must reject it on its own.
+        $project = new Project();
+        new ReflectionProperty(Project::class, 'internalJiraProjectKey')->setValue($project, ' ');
+        $project->setInternalJiraTicketSystem('3');
+
+        self::assertFalse($project->hasInternalJiraProjectKey());
+    }
+
+    public function testHasInternalJiraProjectKeyFalseWhenSystemIsZero(): void
+    {
+        // internal_jira_ticket_system = 0 means "no internal system", even with a key.
+        $project = new Project();
+        $project->setInternalJiraProjectKey('INTERNAL');
+        $project->setInternalJiraTicketSystem('0');
+
+        self::assertFalse($project->hasInternalJiraProjectKey());
+    }
+
+    public function testHasInternalJiraProjectKeyFalseWhenKeySetButNoSystem(): void
+    {
+        $project = new Project();
+        $project->setInternalJiraProjectKey('INTERNAL');
+
+        self::assertFalse($project->hasInternalJiraProjectKey());
     }
 
     // ==================== InternalJiraTicketSystem tests ====================
