@@ -108,8 +108,10 @@ final class WellKnownController extends AbstractController
 
             ## API
 
-            - [OpenAPI specification]({$base}/api.yml): the HTTP API. Authentication is
-              session-based (login cookie); there is no public API token yet.
+            - [OpenAPI specification]({$base}/api.yml): the HTTP API. Humans authenticate
+              with the login cookie; agents and scripts use a scoped **personal access
+              token** (Bearer `tt_pat_…`, created under Settings) — see the `bearerAuth`
+              scheme in the spec.
             - [API catalog]({$base}/.well-known/api-catalog): machine-readable API discovery (RFC 9727).
 
             ## Documentation
