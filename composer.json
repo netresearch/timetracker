@@ -1,149 +1,149 @@
 {
-  "name": "netresearch/timetracker",
-  "license": "AGPL-3.0-only",
-  "type": "project",
-  "description": "",
-  "config": {
-    "bin-dir": "bin",
-    "platform": {
-      "php": "8.5"
+    "name": "netresearch/timetracker",
+    "license": "AGPL-3.0-only",
+    "type": "project",
+    "description": "",
+    "config": {
+        "bin-dir": "bin",
+        "platform": {
+            "php": "8.5"
+        },
+        "sort-packages": true,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "ocramius/package-versions": true,
+            "phpstan/extension-installer": true,
+            "symfony/flex": true,
+            "captainhook/plugin-composer": true
+        }
     },
-    "sort-packages": true,
-    "allow-plugins": {
-      "composer/package-versions-deprecated": true,
-      "ocramius/package-versions": true,
-      "phpstan/extension-installer": true,
-      "symfony/flex": true,
-      "captainhook/plugin-composer": true
-    }
-  },
-  "prefer-stable": true,
-  "autoload": {
-    "psr-4": {
-      "App\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Tests\\": "tests/"
-    }
-  },
-  "require": {
-    "php": "^8.5",
-    "ext-apcu": "*",
-    "ext-date": "*",
-    "ext-intl": "*",
-    "ext-json": "*",
-    "ext-ldap": "*",
-    "ext-mbstring": "*",
-    "ext-pcre": "*",
-    "ext-pdo": "*",
-    "ext-pdo_mysql": "*",
-    "ext-reflection": "*",
-    "doctrine/doctrine-bundle": "^3.2",
-    "doctrine/doctrine-migrations-bundle": "^3.4|^4.0",
-    "doctrine/orm": "^3.5",
-    "doctrine/persistence": "^4.0",
-    "guzzlehttp/guzzle": "^7.9",
-    "guzzlehttp/oauth-subscriber": "^0.9.1",
-    "laminas/laminas-ldap": "^2.19",
-    "pentatrion/vite-bundle": "^8.2",
-    "phpoffice/phpspreadsheet": "^5.0",
-    "phpstan/phpdoc-parser": "^2.2",
-    "scheb/2fa-backup-code": "^8.6",
-    "scheb/2fa-bundle": "^8.6",
-    "scheb/2fa-totp": "^8.6",
-    "sentry/sentry-symfony": "^5.3",
-    "symfony/asset": "^8.1",
-    "symfony/console": "^8.1",
-    "symfony/dotenv": "^8.1",
-    "symfony/flex": "^2.8",
-    "symfony/framework-bundle": "^8.1",
-    "symfony/monolog-bundle": "^3.10|^4.0",
-    "symfony/object-mapper": "^8.1",
-    "symfony/polyfill-mbstring": "^1.33",
-    "symfony/property-access": "^8.1",
-    "symfony/property-info": "^8.1",
-    "symfony/rate-limiter": "^8.1",
-    "symfony/security-bundle": "^8.1",
-    "symfony/serializer": "^8.1",
-    "symfony/translation": "^8.1",
-    "symfony/twig-bundle": "^8.1",
-    "symfony/validator": "^8.1",
-    "symfony/yaml": "^8.1",
-    "twig/twig": "^3.21",
-    "web-auth/webauthn-symfony-bundle": "^5.3"
-  },
-  "require-dev": {
-    "captainhook/captainhook": "^5.27",
-    "captainhook/plugin-composer": "^5.3",
-    "friendsofphp/php-cs-fixer": "^3.65",
-    "phpat/phpat": "^0.12",
-    "phpstan/extension-installer": "^1.4",
-    "phpstan/phpstan": "^2.1",
-    "phpstan/phpstan-deprecation-rules": "*",
-    "phpstan/phpstan-doctrine": "^2.0",
-    "phpstan/phpstan-phpunit": "*",
-    "phpstan/phpstan-strict-rules": "*",
-    "phpstan/phpstan-symfony": "^2.0",
-    "phpunit/phpunit": "^13.0",
-    "rector/rector": "^2.1",
-    "struggle-for-php/sfp-phpstan-psr-log": "*",
-    "symfony/browser-kit": "^8.1",
-    "symfony/debug-bundle": "^8.1",
-    "symfony/maker-bundle": "^1.64",
-    "symfony/phpunit-bridge": "^8.1",
-    "symfony/stopwatch": "^8.1",
-    "symfony/web-profiler-bundle": "^8.1"
-  },
-  "scripts": {
-    "auto-scripts": {
-      "cache:clear": "symfony-cmd",
-      "assets:install %PUBLIC_DIR%": "symfony-cmd"
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
     },
-    "post-install-cmd": [
-      "@auto-scripts"
-    ],
-    "post-update-cmd": [
-      "@auto-scripts"
-    ],
-    "cs-check": "php -d memory_limit=512M bin/php-cs-fixer fix --dry-run --diff",
-    "cs-fix": "php -d memory_limit=512M bin/php-cs-fixer fix",
-    "analyze": "php -d memory_limit=1G bin/phpstan analyze",
-    "analyze:arch": "php -d memory_limit=1G bin/phpstan analyze -c config/quality/phpat.neon",
-    "rector": "rector process src --config=config/quality/rector.php",
-    "test": "APP_ENV=test php -d memory_limit=512M bin/phpunit",
-    "test:unit": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit",
-    "test:controller": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=controller",
-    "test:fast": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit --do-not-cache-result && APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=controller --do-not-cache-result",
-    "test:coverage": "APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
-    "test:coverage-text": "APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-text",
-    "perf:export": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance",
-    "perf:unit": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance-unit",
-    "perf:integration": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance-integration",
-    "perf:benchmark": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=600 tests/Performance/PerformanceBenchmarkRunner.php",
-    "perf:report": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=600 tests/Performance/PerformanceBenchmarkRunner.php var/performance-report.json",
-    "perf:baseline": "mkdir -p var && APP_ENV=test php -d memory_limit=1G -d max_execution_time=600 tests/Performance/PerformanceBenchmarkRunner.php var/performance-baseline.json",
-    "perf:dashboard": "php tests/Performance/PerformanceDashboard.php var/performance-history.json var/performance-dashboard.html && echo 'Dashboard available at var/performance-dashboard.html'",
-    "perf:full": "@perf:benchmark && @perf:dashboard",
-    "twig:lint": "XDEBUG_MODE=off php bin/console lint:twig templates --show-deprecations",
-    "check:all": [
-      "@analyze",
-      "@analyze:arch",
-      "@cs-check",
-      "@twig:lint"
-    ],
-    "test:all": "APP_ENV=test php -d memory_limit=512M bin/phpunit && APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
-    "fix:all": [
-      "@cs-fix",
-      "@rector"
-    ]
-  },
-  "extra": {
-    "symfony": {
-      "allow-contrib": false,
-      "require": "^8.1"
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
     },
-    "branch-alias": null
-  }
+    "require": {
+        "php": "^8.5",
+        "ext-apcu": "*",
+        "ext-date": "*",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-ldap": "*",
+        "ext-mbstring": "*",
+        "ext-pcre": "*",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
+        "ext-reflection": "*",
+        "doctrine/doctrine-bundle": "^3.2",
+        "doctrine/doctrine-migrations-bundle": "^3.4|^4.0",
+        "doctrine/orm": "^3.5",
+        "doctrine/persistence": "^4.0",
+        "guzzlehttp/guzzle": "^7.9",
+        "guzzlehttp/oauth-subscriber": "^0.9.1",
+        "laminas/laminas-ldap": "^2.19",
+        "pentatrion/vite-bundle": "^8.2",
+        "phpoffice/phpspreadsheet": "^5.0",
+        "phpstan/phpdoc-parser": "^2.2",
+        "scheb/2fa-backup-code": "^8.6",
+        "scheb/2fa-bundle": "^8.6",
+        "scheb/2fa-totp": "^8.6",
+        "sentry/sentry-symfony": "^5.3",
+        "symfony/asset": "^8.1",
+        "symfony/console": "^8.1",
+        "symfony/dotenv": "^8.1",
+        "symfony/flex": "^2.8",
+        "symfony/framework-bundle": "^8.1",
+        "symfony/monolog-bundle": "^3.10|^4.0",
+        "symfony/object-mapper": "^8.1",
+        "symfony/polyfill-mbstring": "^1.33",
+        "symfony/property-access": "^8.1",
+        "symfony/property-info": "^8.1",
+        "symfony/rate-limiter": "^8.1",
+        "symfony/security-bundle": "^8.1",
+        "symfony/serializer": "^8.1",
+        "symfony/translation": "^8.1",
+        "symfony/twig-bundle": "^8.1",
+        "symfony/validator": "^8.1",
+        "symfony/yaml": "^8.1",
+        "twig/twig": "^3.21",
+        "web-auth/webauthn-symfony-bundle": "^5.3"
+    },
+    "require-dev": {
+        "captainhook/captainhook": "^5.27",
+        "captainhook/plugin-composer": "^5.3",
+        "friendsofphp/php-cs-fixer": "^3.65",
+        "phpat/phpat": "^0.12",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-deprecation-rules": "*",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-phpunit": "*",
+        "phpstan/phpstan-strict-rules": "*",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^13.0",
+        "rector/rector": "2.4.5",
+        "struggle-for-php/sfp-phpstan-psr-log": "*",
+        "symfony/browser-kit": "^8.1",
+        "symfony/debug-bundle": "^8.1",
+        "symfony/maker-bundle": "^1.64",
+        "symfony/phpunit-bridge": "^8.1",
+        "symfony/stopwatch": "^8.1",
+        "symfony/web-profiler-bundle": "^8.1"
+    },
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ],
+        "cs-check": "php -d memory_limit=512M bin/php-cs-fixer fix --dry-run --diff",
+        "cs-fix": "php -d memory_limit=512M bin/php-cs-fixer fix",
+        "analyze": "php -d memory_limit=1G bin/phpstan analyze",
+        "analyze:arch": "php -d memory_limit=1G bin/phpstan analyze -c config/quality/phpat.neon",
+        "rector": "rector process src --config=config/quality/rector.php",
+        "test": "APP_ENV=test php -d memory_limit=512M bin/phpunit",
+        "test:unit": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit",
+        "test:controller": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=controller",
+        "test:fast": "APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=unit --do-not-cache-result && APP_ENV=test php -d memory_limit=512M bin/phpunit --testsuite=controller --do-not-cache-result",
+        "test:coverage": "APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
+        "test:coverage-text": "APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-text",
+        "perf:export": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance",
+        "perf:unit": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance-unit",
+        "perf:integration": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=300 bin/phpunit --configuration=config/testing/phpunit-performance.xml --testsuite=performance-integration",
+        "perf:benchmark": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=600 tests/Performance/PerformanceBenchmarkRunner.php",
+        "perf:report": "APP_ENV=test php -d memory_limit=1G -d max_execution_time=600 tests/Performance/PerformanceBenchmarkRunner.php var/performance-report.json",
+        "perf:baseline": "mkdir -p var && APP_ENV=test php -d memory_limit=1G -d max_execution_time=600 tests/Performance/PerformanceBenchmarkRunner.php var/performance-baseline.json",
+        "perf:dashboard": "php tests/Performance/PerformanceDashboard.php var/performance-history.json var/performance-dashboard.html && echo 'Dashboard available at var/performance-dashboard.html'",
+        "perf:full": "@perf:benchmark && @perf:dashboard",
+        "twig:lint": "XDEBUG_MODE=off php bin/console lint:twig templates --show-deprecations",
+        "check:all": [
+            "@analyze",
+            "@analyze:arch",
+            "@cs-check",
+            "@twig:lint"
+        ],
+        "test:all": "APP_ENV=test php -d memory_limit=512M bin/phpunit && APP_ENV=test php -d memory_limit=512M bin/phpunit --coverage-html=var/coverage",
+        "fix:all": [
+            "@cs-fix",
+            "@rector"
+        ]
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "^8.1"
+        },
+        "branch-alias": null
+    }
 }
