@@ -139,4 +139,22 @@ final readonly class ApiTokenService
     {
         return array_values(array_filter(ApiScope::all(), static fn (string $scope): bool => !in_array($scope, $current, true)));
     }
+
+    /**
+     * The scope taxonomy for the management UI's create-form picker (ADR-021 Phase
+     * 3): the resource areas, the actions, and the wildcard — the building blocks
+     * the UI assembles into `resource:action` strings. Exposing it here keeps the
+     * ApiScope value object behind the service, so controllers don't reach it
+     * directly (an architecture rule the taxonomy would otherwise break).
+     *
+     * @return array{resources: list<string>, actions: list<string>, wildcard: string}
+     */
+    public function scopeTaxonomy(): array
+    {
+        return [
+            'resources' => ApiScope::RESOURCES,
+            'actions' => ApiScope::ACTIONS,
+            'wildcard' => ApiScope::WILDCARD,
+        ];
+    }
 }

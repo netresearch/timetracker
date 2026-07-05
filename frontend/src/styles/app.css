@@ -971,6 +971,138 @@ main {
   color: var(--color-success-text);
 }
 
+/* ---- Settings: API tokens (ADR-021) ---- */
+
+.apitoken-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* The one-time plaintext of a freshly minted token: a caution box, since it is
+   the only moment the secret is visible. */
+.apitoken-created {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--color-warning-text);
+  border-radius: 8px;
+  background: var(--color-warning-bg);
+}
+.apitoken-created-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-warning-text);
+}
+.apitoken-secret-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.apitoken-secret {
+  flex: 1 1 20ch;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.85rem;
+}
+
+.apitoken-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.apitoken-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.apitoken-item.is-inactive {
+  opacity: 0.6;
+}
+.apitoken-item-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.apitoken-name {
+  font-weight: 600;
+}
+.apitoken-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+.apitoken-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.apitoken-chip {
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+}
+.apitoken-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.apitoken-scopes-picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.apitoken-scopes-picker > legend {
+  padding: 0;
+  font-weight: 600;
+}
+.apitoken-wildcard {
+  display: flex;
+  align-items: start;
+  gap: 0.5rem;
+}
+.apitoken-wildcard .field-hint {
+  margin: 0;
+}
+
+.apitoken-scope-grid {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.apitoken-scope-grid th,
+.apitoken-scope-grid td {
+  padding: 0.25rem 0.6rem;
+  text-align: center;
+}
+.apitoken-scope-grid th[scope='row'] {
+  text-align: start;
+  font-weight: 400;
+  font-family: var(--font-mono, monospace);
+}
+.apitoken-scope-grid thead th {
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+}
+
 .security-enroll {
   display: flex;
   flex-direction: column;
