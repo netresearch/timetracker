@@ -562,6 +562,8 @@
   "status_subsystem_authentication_desc": "Backends de inicio de sesión y directorio.",
   "status_subsystem_api": "API",
   "status_subsystem_api_desc": "Superficie de la API REST y autenticación.",
+  "status_subsystem_mcp": "Servidor MCP",
+  "status_subsystem_mcp_desc": "Punto de conexión Model Context Protocol para agentes de código (Streamable HTTP).",
   "status_subsystem_jira": "Integración con Jira",
   "status_subsystem_jira_desc": "Sincronización de worklogs con Jira."
 }

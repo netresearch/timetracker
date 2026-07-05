@@ -15,6 +15,8 @@ use App\Service\ApiToken\ApiTokenService;
 use Composer\InstalledVersions;
 use Doctrine\DBAL\Connection;
 use ReflectionClass;
+use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -59,6 +61,8 @@ final class GetStatusAction extends BaseController
     public function __construct(
         private readonly Connection $connection,
         private readonly ApiTokenService $apiTokenService,
+        #[AutowireLocator('mcp.tool')]
+        private readonly ServiceLocator $mcpTools,
     ) {
     }
 
@@ -315,6 +319,18 @@ final class GetStatusAction extends BaseController
                     'auth' => 'Bearer ' . ApiTokenService::PREFIX . '…',
                     'scopes' => $scopeCount,
                     'openapi' => '/api.yml',
+                ],
+                'adr' => 'ADR-021',
+            ],
+            [
+                'id' => 'mcp',
+                'backend' => 'Native MCP server (Streamable HTTP)',
+                'status' => 'ok',
+                'config' => [
+                    'endpoint' => '/mcp',
+                    'transport' => 'streamable-http',
+                    'tools' => count($this->mcpTools->getProvidedServices()),
+                    'auth' => 'scoped ' . ApiTokenService::PREFIX . '… (per-tool)',
                 ],
                 'adr' => 'ADR-021',
             ],

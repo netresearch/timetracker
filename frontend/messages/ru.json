@@ -562,6 +562,8 @@
   "status_subsystem_authentication_desc": "Механизмы входа и каталог.",
   "status_subsystem_api": "API",
   "status_subsystem_api_desc": "REST API и аутентификация.",
+  "status_subsystem_mcp": "MCP-сервер",
+  "status_subsystem_mcp_desc": "Конечная точка Model Context Protocol для агентов по коду (Streamable HTTP).",
   "status_subsystem_jira": "Интеграция с Jira",
   "status_subsystem_jira_desc": "Синхронизация worklog с Jira."
 }
