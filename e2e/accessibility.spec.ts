@@ -27,6 +27,14 @@ import { goToWorklogPage, goToAuswertungPage, goToAdminPage, hideDebugToolbar } 
  */
 async function expectNoSeriousA11y(page: Page, scopeSelector?: string): Promise<void> {
   await hideDebugToolbar(page).catch(() => undefined); // APP_ENV=test injects .sf-toolbar
+  // Wait out any in-flight worklog refetch: `.tracking-table.is-fetching` dims its
+  // rows (opacity transition), a transient state that must not be sampled by the
+  // scan. Scoped to the tracking table (not a bare `.is-fetching`) so unrelated
+  // components can't make this wait; bounded and best-effort — resolves immediately
+  // on pages without a fetching table.
+  await page
+    .waitForFunction(() => document.querySelectorAll('.tracking-table.is-fetching').length === 0, undefined, { timeout: 3000 })
+    .catch(() => undefined);
   // Stabilise the render before scanning. Two intermittent sources of a phantom
   // colour-contrast failure on the worklog table's sticky header:
   //   1. Web fonts still swapping — wait for document.fonts.ready.
