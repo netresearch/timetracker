@@ -98,7 +98,10 @@ class CrudController extends BaseController
             // leads (PL) may delete any. Without this ownership check any
             // logged-in user could delete another user's entry by guessing its
             // id (IDOR). See v6 DeleteEntryAction for the same policy.
-            if ($entry->getUser()->getId() != $this->getUserId($request)
+            // getUser() can be null (nullable relation, cf. getAction) — a
+            // null-owned entry is only deletable by a PL.
+            $owner = $entry->getUser();
+            if ((!is_object($owner) || $owner->getId() != $this->getUserId($request))
                 && !$this->isPl($request)
             ) {
                 $message = $this->get('translator')->trans('You are not allowed to delete this entry.');

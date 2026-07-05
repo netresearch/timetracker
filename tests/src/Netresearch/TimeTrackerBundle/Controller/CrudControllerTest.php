@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 
 class CrudControllerTest extends BaseTest
 {
+    private const DELETE_URL = '/tracking/delete';
+
     public function testGetAction()
     {
         $this->client->request('GET', '/tracking/entry/1');
@@ -108,11 +110,11 @@ class CrudControllerTest extends BaseTest
     {
         $parameter = ['id' => 1,];
 
-        $this->client->request('POST', '/tracking/delete', $parameter);
+        $this->client->request('POST', self::DELETE_URL, $parameter);
         $this->assertStatusCode(200, 'First delete did not return expected 200');
         $this->assertJsonStructure(['success' => true, 'alert' => null]);
         //  second delete
-        $this->client->request('POST', '/tracking/delete', $parameter);
+        $this->client->request('POST', self::DELETE_URL, $parameter);
         $this->assertStatusCode(404, 'Second delete did not return expected 404');
         $this->assertJsonStructure(['message' => 'Kein Eintrag für ID.']);
     }
@@ -122,7 +124,7 @@ class CrudControllerTest extends BaseTest
         // Security (IDOR fix): a plain developer must not delete another user's
         // entry. noContract -> loginId 4 (DEV); entry 2 is owned by user 1 (PL).
         $this->logInSession('noContract');
-        $this->client->request('POST', '/tracking/delete', ['id' => 2]);
+        $this->client->request('POST', self::DELETE_URL, ['id' => 2]);
         $this->assertStatusCode(403, 'A developer must not be able to delete a foreign entry');
     }
 
