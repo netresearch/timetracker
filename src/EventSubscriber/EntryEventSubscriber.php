@@ -29,6 +29,7 @@ use function in_array;
 use function is_array;
 use function is_object;
 use function is_string;
+use function spl_object_id;
 use function sprintf;
 
 /**
@@ -211,23 +212,42 @@ class EntryEventSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Delete on EVERY system the worklog could have been booked on, mirroring
+        // Delete on the systems the worklog could have been booked on, mirroring
         // syncWorklog's targets. An either/or (internal xor own) orphaned worklogs
         // whenever the two disagreed — e.g. a stray internal key that booked on the
-        // own system but would delete only on the (missing) internal one. Deleting a
-        // worklog that isn't there is a no-op (deleteEntryJiraWorkLog swallows the
-        // not-found), so attempting both systems is safe and idempotent.
+        // own system but would delete only on the (missing) internal one.
         $ticketSystems = $this->bookableTicketSystems($project);
         if ([] === $ticketSystems) {
             return;
         }
 
+        $lastError = null;
         foreach ($ticketSystems as $ticketSystem) {
-            $this->jiraOAuthApiFactory->create($user, $ticketSystem)
-                ->deleteEntryJiraWorkLog($entry);
+            // deleteEntryJiraWorkLog nulls the worklog id once it removes the entry
+            // (and no-ops on a not-found), so stop as soon as it is gone.
+            if (null === $entry->getWorklogId()) {
+                break;
+            }
+
+            try {
+                $this->jiraOAuthApiFactory->create($user, $ticketSystem)
+                    ->deleteEntryJiraWorkLog($entry);
+            } catch (JiraApiException $jiraApiException) {
+                // Keep trying the remaining systems — a failure on one (auth,
+                // network, wrong instance) must not prevent cleanup on another.
+                $lastError = $jiraApiException;
+            }
         }
 
         $this->managerRegistry->getManager()->flush();
+
+        // The worklog id survived every attempt AND a call failed: nothing cleaned
+        // it up, so surface the error (onEntryDeleted logs it) instead of reporting
+        // success. A still-set id with no error means the worklog was simply not
+        // found anywhere — nothing to delete.
+        if (null !== $entry->getWorklogId() && $lastError instanceof JiraApiException) {
+            throw $lastError;
+        }
     }
 
     /**
@@ -241,21 +261,29 @@ class EntryEventSubscriber implements EventSubscriberInterface
      */
     private function bookableTicketSystems(Project $project): array
     {
-        $ticketSystems = [];
+        $candidates = [];
 
         if ($project->hasInternalJiraProjectKey()) {
             $internal = $this->findInternalTicketSystem($project);
             if ($internal instanceof TicketSystem && $this->canBookOn($internal)) {
-                $ticketSystems[] = $internal;
+                $candidates[] = $internal;
             }
         }
 
         $own = $project->getTicketSystem();
         if ($own instanceof TicketSystem && $this->canBookOn($own)) {
-            $ticketSystems[] = $own;
+            $candidates[] = $own;
         }
 
-        return $ticketSystems;
+        // Dedupe: the internal and own system can be the same row/instance, which
+        // would otherwise book/delete twice. Key by id when persisted, else by
+        // object identity.
+        $unique = [];
+        foreach ($candidates as $candidate) {
+            $unique[$candidate->getId() ?? spl_object_id($candidate)] = $candidate;
+        }
+
+        return array_values($unique);
     }
 
     private function shouldAutoSync(Entry $entry): bool

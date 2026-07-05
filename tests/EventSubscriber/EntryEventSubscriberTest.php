@@ -11,12 +11,13 @@ use App\Entity\User;
 use App\Enum\TicketSystemType;
 use App\Event\EntryEvent;
 use App\EventSubscriber\EntryEventSubscriber;
+use App\Exception\Integration\Jira\JiraApiException;
+use App\Repository\TicketSystemRepository;
 use App\Service\Cache\QueryCacheService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
-use Doctrine\Persistence\ObjectRepository;
 use Exception;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -434,21 +435,26 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryDeleted($event);
     }
 
-    public function testOnEntryDeletedFallsBackToOwnSystemWhenInternalKeyHasNoSystem(): void
+    public function testOnEntryDeletedFallsBackToOwnSystemWhenInternalSystemMissing(): void
     {
-        // Regression for the orphaned-worklog bug: a project flagged as having an
-        // internal Jira key but with NO valid internal ticket system (id 0) must
-        // still delete the worklog on its OWN ticket system, where syncWorklog
-        // actually booked it — the old either/or logic gave up and orphaned it.
+        // Regression for the orphaned-worklog bug: a project IS configured for an
+        // internal Jira mirror, but its internal ticket-system row no longer exists
+        // (findInternalTicketSystem() -> null). The worklog was booked on the OWN
+        // system, so delete must still clean it up there — the old either/or logic
+        // targeted only the (missing) internal system and gave up.
         $ownSystem = self::createStub(TicketSystem::class);
         $ownSystem->method('getBookTime')->willReturn(true);
         $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
         $project = self::createStub(Project::class);
         $project->method('hasInternalJiraProjectKey')->willReturn(true);
-        // (int) '0' === 0 → findInternalTicketSystem() returns null (no internal system).
-        $project->method('getInternalJiraTicketSystem')->willReturn('0');
+        $project->method('getInternalJiraTicketSystem')->willReturn('99');
         $project->method('getTicketSystem')->willReturn($ownSystem);
+
+        // The configured internal ticket system id points at a deleted row.
+        $repository = $this->createMock(TicketSystemRepository::class);
+        $repository->method('find')->willReturn(null);
+        $this->managerRegistry->method('getRepository')->willReturn($repository);
 
         $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
@@ -467,6 +473,55 @@ final class EntryEventSubscriberTest extends TestCase
         $this->jiraOAuthApiService->expects(self::once())
             ->method('deleteEntryJiraWorkLog')
             ->with($entry);
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryDeleted($event);
+    }
+
+    public function testOnEntryDeletedKeepsTryingOtherSystemsAfterAFailure(): void
+    {
+        // A failure deleting on the first candidate system must not abort cleanup on
+        // the others, and an unresolved deletion must surface as an error (not a
+        // silent success). Two bookable systems; the delete throws on each.
+        $internalSystem = self::createStub(TicketSystem::class);
+        $internalSystem->method('getBookTime')->willReturn(true);
+        $internalSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $ownSystem = self::createStub(TicketSystem::class);
+        $ownSystem->method('getBookTime')->willReturn(true);
+        $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('hasInternalJiraProjectKey')->willReturn(true);
+        $project->method('getInternalJiraTicketSystem')->willReturn('99');
+        $project->method('getTicketSystem')->willReturn($ownSystem);
+
+        $repository = $this->createMock(TicketSystemRepository::class);
+        $repository->method('find')->willReturn($internalSystem);
+        $this->managerRegistry->method('getRepository')->willReturn($repository);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $entry = self::createStub(Entry::class);
+        $entry->method('getUser')->willReturn($user);
+        $entry->method('getProject')->willReturn($project);
+        $entry->method('getTicket')->willReturn('ABC-123');
+        $entry->method('getSyncedToTicketsystem')->willReturn(true);
+        $entry->method('getWorklogId')->willReturn(12345);
+
+        // Both candidate systems are attempted (create once per system) even though
+        // the first delete throws.
+        $this->jiraOAuthApiFactory->expects(self::exactly(2))
+            ->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+        $this->jiraOAuthApiService->method('deleteEntryJiraWorkLog')
+            ->willThrowException(new JiraApiException('boom', 500));
+
+        // The unresolved failure surfaces at error level.
+        $this->logger->expects(self::once())
+            ->method('error')
+            ->with('JIRA worklog deletion failed', self::anything());
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryDeleted($event);
@@ -566,7 +621,7 @@ final class EntryEventSubscriberTest extends TestCase
         $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $ticketSystemRepository = $this->createMock(ObjectRepository::class);
+        $ticketSystemRepository = $this->createMock(TicketSystemRepository::class);
         $ticketSystemRepository->method('find')->willReturn($internalTicketSystem);
         $this->managerRegistry->method('getRepository')
             ->willReturn($ticketSystemRepository);
@@ -696,7 +751,7 @@ final class EntryEventSubscriberTest extends TestCase
         $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
 
-        $ticketSystemRepository = $this->createMock(ObjectRepository::class);
+        $ticketSystemRepository = $this->createMock(TicketSystemRepository::class);
         $ticketSystemRepository->method('find')->willReturn($internalTicketSystem);
         $this->managerRegistry->method('getRepository')->willReturn($ticketSystemRepository);
 
