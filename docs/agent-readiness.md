@@ -30,14 +30,23 @@ acting for a user is unaffected: it logs in and uses the HTTP API. The two are
 different audiences, and the discovery files above serve the agent while the
 robots directives address the crawler.
 
-## Deferred (paired with API-token auth)
+## Programmatic access (ADR-021)
 
-The HTTP API (`/api.yml`) is currently **session-cookie authenticated** — an agent
-can *discover and read* it but cannot authenticate programmatically. Two follow-ups
-depend on adding API-token auth (a dedicated ADR):
+The HTTP API (`/api.yml`) accepts **scoped personal access tokens** (Bearer
+`tt_pat_…`, created under Settings) in addition to the human login cookie — so an
+agent can now authenticate and call it, narrowed to `resource:action` scopes. See
+[ADR-021](adr/ADR-021-api-token-authentication.md) and the `bearerAuth` scheme in
+`api.yml`.
 
-- **`/.well-known/agent-skills.json`** ([Cloudflare Agent Skills Discovery RFC](https://github.com/cloudflare/agent-skills-discovery-rfc)) — a discovery index of `SKILL.md` skills (e.g. "log time", "query worklog"). A useful skill must be able to *call* the API, so it waits on token auth.
-- **MCP server** — a thin wrapper over the token-authenticated API for MCP-native clients (Claude Desktop/Code). No new capability over the API; adds turnkey client integration.
+### MCP server (ADR-021 Phase 5)
+
+Coding agents (Claude Code / Cursor) use a native **MCP server** over Streamable
+HTTP at `/mcp`, authenticated with the same PAT, exposing a curated set of tools
+(flagship: "log time on a ticket"). Discovery: `/.well-known/mcp/server.json`.
+
+The originally-planned `/.well-known/agent-skills.json` was **dropped** — 2026 has
+no client-consumed standard for a callable-skill manifest; MCP is the convergent
+one. See ADR-021 Phase 5.
 
 The security contact in `security.txt` (`mailto:security@netresearch.de`) should be
 confirmed against the actual Netresearch security channel.
