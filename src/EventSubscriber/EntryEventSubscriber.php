@@ -101,7 +101,10 @@ class EntryEventSubscriber implements EventSubscriberInterface
                 $this->syncWorklog($entry, $this->getPreviousEntry($entryEvent));
                 $this->logger?->info('JIRA worklog updated');
             } catch (Exception $e) {
-                $this->logger?->warning('JIRA worklog update failed', ['exception' => $e]);
+                // Error, not warning: see onEntryDeleted — a warning is swallowed by
+                // prod's fingers_crossed(action_level: error) handler, hiding a failed
+                // Jira sync entirely.
+                $this->logger?->error('JIRA worklog update failed', ['exception' => $e]);
             }
         }
     }
@@ -120,7 +123,10 @@ class EntryEventSubscriber implements EventSubscriberInterface
                 $this->deleteWorklog($entry);
                 $this->logger?->info('JIRA worklog deleted');
             } catch (Exception $e) {
-                $this->logger?->warning('JIRA worklog deletion failed', ['exception' => $e]);
+                // Error, not warning: prod's fingers_crossed handler only flushes
+                // at error level, so a warning here would leave an orphaned Jira
+                // worklog with no trace while the entry delete still reports success.
+                $this->logger?->error('JIRA worklog deletion failed', ['exception' => $e]);
             }
         }
     }
@@ -205,20 +211,51 @@ class EntryEventSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // v4 parity: entries of internal-key projects have their worklog in
-        // the internal Jira, not in the project's own ticket system.
-        $ticketSystem = $project->hasInternalJiraProjectKey()
-            ? $this->findInternalTicketSystem($project)
-            : $project->getTicketSystem();
-
-        if (!$ticketSystem instanceof TicketSystem || !$this->canBookOn($ticketSystem)) {
+        // Delete on EVERY system the worklog could have been booked on, mirroring
+        // syncWorklog's targets. An either/or (internal xor own) orphaned worklogs
+        // whenever the two disagreed — e.g. a stray internal key that booked on the
+        // own system but would delete only on the (missing) internal one. Deleting a
+        // worklog that isn't there is a no-op (deleteEntryJiraWorkLog swallows the
+        // not-found), so attempting both systems is safe and idempotent.
+        $ticketSystems = $this->bookableTicketSystems($project);
+        if ([] === $ticketSystems) {
             return;
         }
 
-        $this->jiraOAuthApiFactory->create($user, $ticketSystem)
-            ->deleteEntryJiraWorkLog($entry);
+        foreach ($ticketSystems as $ticketSystem) {
+            $this->jiraOAuthApiFactory->create($user, $ticketSystem)
+                ->deleteEntryJiraWorkLog($entry);
+        }
 
         $this->managerRegistry->getManager()->flush();
+    }
+
+    /**
+     * The Jira ticket systems a worklog for $project may live on: the internal
+     * mirror system (when the project has a valid internal key) and/or the
+     * project's own ticket system, each filtered to those that accept bookings.
+     * Booking and deletion share this set so they can never target a different
+     * system and leave an orphaned worklog behind.
+     *
+     * @return list<TicketSystem>
+     */
+    private function bookableTicketSystems(Project $project): array
+    {
+        $ticketSystems = [];
+
+        if ($project->hasInternalJiraProjectKey()) {
+            $internal = $this->findInternalTicketSystem($project);
+            if ($internal instanceof TicketSystem && $this->canBookOn($internal)) {
+                $ticketSystems[] = $internal;
+            }
+        }
+
+        $own = $project->getTicketSystem();
+        if ($own instanceof TicketSystem && $this->canBookOn($own)) {
+            $ticketSystems[] = $own;
+        }
+
+        return $ticketSystems;
     }
 
     private function shouldAutoSync(Entry $entry): bool

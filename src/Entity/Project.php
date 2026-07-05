@@ -164,21 +164,13 @@ class Project extends Base
     #[ORM\Column(name: 'additional_information_from_external', type: 'boolean', options: ['default' => false])]
     protected bool $additionalInformationFromExternal = false;
 
-    /**
-     * the internal key of the project the current ticket should be booked to.
-     *
-     * @var string|null
-     */
+    /** the internal key of the project the current ticket should be booked to. */
     #[ORM\Column(name: 'internal_jira_project_key', type: 'string', length: 255, nullable: true)]
-    protected $internalJiraProjectKey;
+    protected ?string $internalJiraProjectKey = null;
 
-    /**
-     * the id of the internal jira ticket system.
-     *
-     * @var string|null
-     */
+    /** the id of the internal jira ticket system. */
     #[ORM\Column(name: 'internal_jira_ticket_system', type: 'string', length: 255, nullable: true)]
-    protected $internalJiraTicketSystem;
+    protected ?string $internalJiraTicketSystem = null;
 
     /**
      * Sets the additional Information.
@@ -201,7 +193,11 @@ class Project extends Base
      */
     public function setInternalJiraProjectKey(?string $strInternalJiraProjectKey): static
     {
-        $this->internalJiraProjectKey = $strInternalJiraProjectKey;
+        // Normalize blank/whitespace-only input to null: a stray " " would
+        // otherwise read as a configured key and divert worklog booking/deletion
+        // to a non-existent internal ticket system (see hasInternalJiraProjectKey).
+        $trimmed = null === $strInternalJiraProjectKey ? '' : trim($strInternalJiraProjectKey);
+        $this->internalJiraProjectKey = '' === $trimmed ? null : $trimmed;
 
         return $this;
     }
@@ -719,7 +715,7 @@ class Project extends Base
      */
     public function getInternalJiraTicketSystem(): ?string
     {
-        return null !== $this->internalJiraTicketSystem ? (string) $this->internalJiraTicketSystem : null;
+        return $this->internalJiraTicketSystem;
     }
 
     /**
@@ -727,8 +723,14 @@ class Project extends Base
      */
     public function hasInternalJiraProjectKey(): bool
     {
-        return null !== $this->internalJiraProjectKey && '' !== $this->internalJiraProjectKey
-            && null !== $this->internalJiraTicketSystem && '' !== $this->internalJiraTicketSystem;
+        // A project mirrors to an internal Jira only when it has a non-blank key
+        // AND a real (positive) internal ticket-system id. Trimming guards against
+        // a whitespace-only key, and the > 0 check rejects a "0"/blank system id —
+        // either of which would otherwise divert delete to a null internal system
+        // and orphan the worklog booked on the project's own ticket system.
+        return null !== $this->internalJiraProjectKey
+            && '' !== trim($this->internalJiraProjectKey)
+            && (int) $this->internalJiraTicketSystem > 0;
     }
 
     /**

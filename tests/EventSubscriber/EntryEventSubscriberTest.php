@@ -335,7 +335,7 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryUpdated($event);
     }
 
-    public function testOnEntryUpdatedLogsWarningOnJiraFailure(): void
+    public function testOnEntryUpdatedLogsErrorOnJiraFailure(): void
     {
         [$entry] = $this->createSyncableEntry();
 
@@ -346,8 +346,10 @@ final class EntryEventSubscriberTest extends TestCase
             ->method('updateEntryJiraWorkLog')
             ->willThrowException($exception);
 
+        // Error, not warning: prod's fingers_crossed(action_level: error) handler
+        // would swallow a warning, hiding the failed sync entirely.
         $this->logger->expects(self::once())
-            ->method('warning')
+            ->method('error')
             ->with('JIRA worklog update failed', ['exception' => $exception]);
 
         $event = new EntryEvent($entry);
@@ -411,7 +413,7 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryDeleted($event);
     }
 
-    public function testOnEntryDeletedLogsWarningOnFailure(): void
+    public function testOnEntryDeletedLogsErrorOnFailure(): void
     {
         [$entry] = $this->createSyncableEntry(synced: true, worklogId: 12345);
 
@@ -422,9 +424,49 @@ final class EntryEventSubscriberTest extends TestCase
             ->method('deleteEntryJiraWorkLog')
             ->willThrowException($exception);
 
+        // Error, not warning: a warning is swallowed by prod's fingers_crossed
+        // handler, leaving an orphaned Jira worklog with no trace.
         $this->logger->expects(self::once())
-            ->method('warning')
+            ->method('error')
             ->with('JIRA worklog deletion failed', ['exception' => $exception]);
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryDeleted($event);
+    }
+
+    public function testOnEntryDeletedFallsBackToOwnSystemWhenInternalKeyHasNoSystem(): void
+    {
+        // Regression for the orphaned-worklog bug: a project flagged as having an
+        // internal Jira key but with NO valid internal ticket system (id 0) must
+        // still delete the worklog on its OWN ticket system, where syncWorklog
+        // actually booked it — the old either/or logic gave up and orphaned it.
+        $ownSystem = self::createStub(TicketSystem::class);
+        $ownSystem->method('getBookTime')->willReturn(true);
+        $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('hasInternalJiraProjectKey')->willReturn(true);
+        // (int) '0' === 0 → findInternalTicketSystem() returns null (no internal system).
+        $project->method('getInternalJiraTicketSystem')->willReturn('0');
+        $project->method('getTicketSystem')->willReturn($ownSystem);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $entry = self::createStub(Entry::class);
+        $entry->method('getUser')->willReturn($user);
+        $entry->method('getProject')->willReturn($project);
+        $entry->method('getTicket')->willReturn('ABC-123');
+        $entry->method('getSyncedToTicketsystem')->willReturn(true);
+        $entry->method('getWorklogId')->willReturn(12345);
+
+        $this->jiraOAuthApiFactory->expects(self::once())
+            ->method('create')
+            ->with($user, $ownSystem)
+            ->willReturn($this->jiraOAuthApiService);
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('deleteEntryJiraWorkLog')
+            ->with($entry);
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryDeleted($event);
