@@ -122,8 +122,11 @@ class CrudControllerTest extends BaseTest
     public function testDeleteForeignEntryIsForbidden()
     {
         // Security (IDOR fix): a plain developer must not delete another user's
-        // entry. noContract -> loginId 4 (DEV); entry 2 is owned by user 1 (PL).
-        $this->logInSession('noContract');
+        // entry. In the test seed 'developer' is loginId 2 (type DEV); entry 2 is
+        // owned by user 1 (i.myself, a PL), so it is foreign to the developer.
+        // Entry 2 (not 1) is used so this stays independent of testDeleteAction(),
+        // which removes entry 1.
+        $this->logInSession('developer');
         $this->client->request('POST', self::DELETE_URL, ['id' => 2]);
         $this->assertStatusCode(403, 'A developer must not be able to delete a foreign entry');
     }
