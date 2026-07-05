@@ -779,6 +779,11 @@ describe('Admin status page', () => {
             symfony: { kernel: '7.3.0' },
             packages: { 'doctrine/orm': '3.1.0' },
             database: { driver: 'mysql', platform: 'MariaDBPlatform', serverVersion: '11.4.2-MariaDB', host: 'db', port: '3306', name: 'tt' },
+            subsystems: [
+              { id: 'database', backend: 'MariaDBPlatform 11.4.2-MariaDB', status: 'ok', config: { driver: 'mysql', host: 'db', port: '3306', name: 'tt' }, adr: null },
+              { id: 'sessions', backend: 'PHP native file handler (filesystem)', status: 'ok', config: { handler: 'files', write_lock: 'released early on read-only requests' }, adr: 'ADR-019' },
+              { id: 'cache', backend: 'APCu (in-memory, per process)', status: 'degraded', config: { adapter: 'APCu', enabled: false }, adr: null },
+            ],
             config: { ldap_host: 'ldap.example', ldap_ssl: true },
           })
         : Promise.resolve([]),
@@ -790,9 +795,14 @@ describe('Admin status page', () => {
     // The build section renders; with no baked revision it reports a local build.
     expect(getByRole('heading', { name: 'Build' })).toBeInTheDocument()
     expect(getByText('Unknown (local build)')).toBeInTheDocument()
+    // Subsystem cards: section + a Database card with its combined backend string.
+    expect(getByRole('heading', { name: 'Storage & subsystems' })).toBeInTheDocument()
     expect(getByRole('heading', { name: 'Database' })).toBeInTheDocument()
-    expect(getByText('MariaDBPlatform')).toBeInTheDocument()
-    expect(getByText('11.4.2-MariaDB')).toBeInTheDocument()
+    expect(getByText('MariaDBPlatform 11.4.2-MariaDB')).toBeInTheDocument()
+    // The degraded cache card shows its status badge.
+    expect(getByText('Degraded')).toBeInTheDocument()
+    // The sessions card links its ADR.
+    expect(getByText('ADR-019')).toBeInTheDocument()
     expect(getByText('intl, pdo_mysql')).toBeInTheDocument()
     // boolean config renders Yes/No, not raw true/false
     expect(getByText('Yes')).toBeInTheDocument()
@@ -828,6 +838,7 @@ describe('Admin status page', () => {
             symfony: { kernel: '7.3.0' },
             packages: {},
             database: { driver: 'mysql', platform: 'MariaDBPlatform', serverVersion: '11', host: 'db', port: '3306', name: 'tt' },
+            subsystems: [],
             config: {},
           })
         : Promise.resolve([]),
