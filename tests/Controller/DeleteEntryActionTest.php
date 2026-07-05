@@ -13,12 +13,10 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
-use App\Entity\User;
-use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\EntityManagerTestTrait;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -33,25 +31,9 @@ use const JSON_THROW_ON_ERROR;
  */
 final class DeleteEntryActionTest extends AbstractWebTestCase
 {
+    use EntityManagerTestTrait;
+
     private const string JSON_MIME = 'application/json';
-
-    private function entityManager(): EntityManagerInterface
-    {
-        $doctrine = self::getContainer()->get('doctrine');
-        self::assertInstanceOf(Registry::class, $doctrine);
-        $manager = $doctrine->getManager();
-        self::assertInstanceOf(EntityManagerInterface::class, $manager);
-
-        return $manager;
-    }
-
-    private function user(string $username): User
-    {
-        $user = $this->entityManager()->getRepository(User::class)->findOneBy(['username' => $username]);
-        self::assertInstanceOf(User::class, $user);
-
-        return $user;
-    }
 
     /** Persist a minimal entry owned by $username and return it. */
     private function makeEntry(string $username): Entry
