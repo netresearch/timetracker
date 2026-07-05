@@ -3,22 +3,30 @@
       :height: 25px
       :align: left
 
-=======================
-Netresearch TimeTracker
-=======================
+.. danger::
+
+   **⚠  DEPRECATED — v4 IS END-OF-LIFE.  DO NOT DEPLOY v4.  ⚠**
+
+   **This v4 line is no longer maintained.** It receives **no further fixes,
+   features, or support** — only one final good-will security patch. It is kept
+   for historical reference only.
+
+   ➡️  **Use the current stable line — ``main`` / v6 — for everything.**
+   New installations must start on v6; existing v4 installs should **upgrade to
+   v6 now.**
+
+   The last v4 change is a **security patch** for an entry-deletion authorization
+   flaw: any authenticated user could delete another user's time entry by id (an
+   IDOR). Nothing else will be fixed on this branch.
+
+==========================================
+Netresearch TimeTracker — v4 (END-OF-LIFE)
+==========================================
 
 Project and customer based time tracking for company employees.
 
-.. warning::
-
-   **End of life — this v4 line is no longer maintained.**
-
-   All further fixes, updates, and improvements go to the current stable line
-   (``main`` / v6) only. The final v4 release is a good-will **security patch**
-   for an entry-deletion authorization issue (any authenticated user could delete
-   another user's entry by id — an IDOR); it receives no further changes.
-
-   Please **upgrade to v6**.
+    ⚠ **v4 is end-of-life and unmaintained — see the deprecation notice above.
+    Use / upgrade to v6 (``main``).**
 
 Features:
 
