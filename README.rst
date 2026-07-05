@@ -3,21 +3,21 @@
       :height: 25px
       :align: left
 
-.. danger::
+⚠️  **DEPRECATED — v4 IS END-OF-LIFE. DO NOT DEPLOY v4.**  ⚠️
 
-   **⚠  DEPRECATED — v4 IS END-OF-LIFE.  DO NOT DEPLOY v4.  ⚠**
+**This v4 line is no longer maintained.** It receives **no further fixes,
+features, or support** — only one final good-will security patch. It is kept
+for historical reference only.
 
-   **This v4 line is no longer maintained.** It receives **no further fixes,
-   features, or support** — only one final good-will security patch. It is kept
-   for historical reference only.
+➡️  **Use the current stable line —** ``main`` **/ v6 — for everything.**
+New installations must start on v6; existing v4 installs should **upgrade to
+v6 now.**
 
-   ➡️  **Use the current stable line — ``main`` / v6 — for everything.**
-   New installations must start on v6; existing v4 installs should **upgrade to
-   v6 now.**
+The last v4 change is a **security patch** for an entry-deletion authorization
+flaw: any authenticated user could delete another user's time entry by id (an
+IDOR). Nothing else will be fixed on this branch.
 
-   The last v4 change is a **security patch** for an entry-deletion authorization
-   flaw: any authenticated user could delete another user's time entry by id (an
-   IDOR). Nothing else will be fixed on this branch.
+----
 
 ==========================================
 Netresearch TimeTracker — v4 (END-OF-LIFE)
