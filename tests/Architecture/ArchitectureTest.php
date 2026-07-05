@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Architecture;
 
+use App\Security\ApiToken\RequireScope;
 use PHPat\Selector\Selector;
 use PHPat\Test\Builder\Rule;
 use PHPat\Test\PHPat;
@@ -64,6 +65,9 @@ final class ArchitectureTest
                 Selector::inNamespace('Composer'),
                 Selector::inNamespace('Psr'),
                 Selector::classname(self::CLASSNAME_EXCEPTION, true),
+                // The #[RequireScope] API-token attribute (ADR-021) — a security
+                // attribute controllers declare, analogous to Symfony's #[IsGranted].
+                Selector::classname(RequireScope::class),
             )
             ->because('Controllers depend on the app layers, framework and export/status tooling only');
     }

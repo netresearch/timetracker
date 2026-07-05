@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Repository\EntryRepository;
+use App\Security\ApiToken\RequireScope;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +30,7 @@ final class GetDataAction extends BaseController
      * @throws InvalidArgumentException When query parameters are invalid
      * @throws BadRequestException      When query parameters are malformed
      */
+    #[RequireScope('entries:read')]
     #[Route(path: '/getData', name: '_getData_attr', methods: ['GET', 'POST'])]
     #[Route(path: '/getData/days/{days}', name: '_getDataDays_attr', defaults: ['days' => 3], methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]

@@ -123,6 +123,17 @@ final class ApiTokenServiceTest extends TestCase
         self::assertSame(self::NOW, $token->getLastUsedAt()?->format('Y-m-d H:i:s'));
     }
 
+    public function testRecordUsageIsThrottledWhenUsedWithinTheWindow(): void
+    {
+        // last_used_at 2 minutes ago (< 5-minute window) → no write.
+        $now = new DateTimeImmutable(self::NOW);
+        $token = new ApiToken($this->createMock(User::class), 'n', 'h', ['entries:read'], $now, null, $now->modify('-2 minutes'));
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::never())->method('flush');
+
+        $this->service($entityManager, $this->createMock(ApiTokenRepository::class))->recordUsage($token);
+    }
+
     public function testGrantableScopesExcludesTheScopesAlreadyOnTheToken(): void
     {
         $service = $this->service($this->createMock(EntityManagerInterface::class), $this->createMock(ApiTokenRepository::class));
