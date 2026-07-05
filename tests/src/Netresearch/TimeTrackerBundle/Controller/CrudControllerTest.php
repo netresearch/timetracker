@@ -117,6 +117,15 @@ class CrudControllerTest extends BaseTest
         $this->assertJsonStructure(['message' => 'Kein Eintrag für ID.']);
     }
 
+    public function testDeleteForeignEntryIsForbidden()
+    {
+        // Security (IDOR fix): a plain developer must not delete another user's
+        // entry. noContract -> loginId 4 (DEV); entry 2 is owned by user 1 (PL).
+        $this->logInSession('noContract');
+        $this->client->request('POST', '/tracking/delete', ['id' => 2]);
+        $this->assertStatusCode(403, 'A developer must not be able to delete a foreign entry');
+    }
+
     //-------------- Bulkentry routes ----------------------------------------
 
     public function testBulkentryActionNonExistendPreset()
