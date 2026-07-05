@@ -145,6 +145,32 @@ final class McpToolsTest extends AbstractWebTestCase
         );
     }
 
+    public function testLogTimeRejectsDurationPastMidnight(): void
+    {
+        $this->useToken(['entries:write']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(LogTimeTool::class)->logTime(
+            project: '1',
+            activity: '1',
+            durationMinutes: 120,
+            start: '23:00',
+        );
+    }
+
+    public function testLogTimeRejectsMalformedStart(): void
+    {
+        $this->useToken(['entries:write']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(LogTimeTool::class)->logTime(
+            project: '1',
+            activity: '1',
+            durationMinutes: 60,
+            start: 'not-a-time',
+        );
+    }
+
     public function testDeleteEntryRemovesOwnEntry(): void
     {
         $this->useToken(['entries:write']);

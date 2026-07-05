@@ -18,14 +18,15 @@ use App\Mcp\ScopeGuard;
 use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
 use App\Service\ClockInterface;
-use DateInterval;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
 use Symfony\Component\HttpFoundation\Response;
 
 use function ctype_digit;
+use function intdiv;
 use function ltrim;
+use function preg_match;
 use function sprintf;
 use function strtoupper;
 use function trim;
@@ -42,7 +43,8 @@ final readonly class LogTimeTool
 {
     use DecodesActionResponse;
 
-    private const string DEFAULT_START = '09:00:00';
+    private const string DEFAULT_START = '09:00';
+    private const int MINUTES_PER_DAY = 24 * 60;
 
     public function __construct(
         private ScopeGuard $scopeGuard,
@@ -119,7 +121,7 @@ final readonly class LogTimeTool
     {
         $projectInput = trim($projectInput);
         $project = ctype_digit(ltrim($projectInput, '-'))
-            ? $this->projectRepository->findOneById((int) $projectInput)
+            ? $this->projectRepository->find((int) $projectInput)
             : $this->projectRepository->findOneBy(['name' => $projectInput]);
 
         if (!$project instanceof Project) {
@@ -136,8 +138,8 @@ final readonly class LogTimeTool
     {
         $activityInput = trim($activityInput);
         $activity = ctype_digit(ltrim($activityInput, '-'))
-            ? $this->activityRepository->findOneById((int) $activityInput)
-            : $this->activityRepository->findOneByName($activityInput);
+            ? $this->activityRepository->find((int) $activityInput)
+            : $this->activityRepository->findOneBy(['name' => $activityInput]);
 
         if (!$activity instanceof Activity) {
             throw new ToolCallException(sprintf('Unknown activity "%s" — use list_activities to see valid names/ids.', $activityInput));
@@ -147,12 +149,17 @@ final readonly class LogTimeTool
     }
 
     /**
-     * Normalise the caller's time inputs into concrete start/end clock strings.
-     * Either an explicit start+end, or a duration (start defaults to 09:00).
+     * Normalise the caller's time inputs into concrete start/end clock strings:
+     * either an explicit start+end, or a duration (start defaults to 09:00).
+     * Uses plain minute arithmetic so a malformed time is a clear tool error
+     * rather than a DateMalformedStringException, and a duration that would run
+     * past midnight is rejected up front instead of silently wrapping the clock.
      *
-     * @throws ToolCallException when neither a duration nor start+end is given
+     * @throws ToolCallException when neither a duration nor start+end is given,
+     *                           the start is malformed, or the duration overruns
+     *                           the day
      *
-     * @return array{0: string, 1: string} [start "H:i:s", end "H:i:s"]
+     * @return array{0: string, 1: string} [start "H:i", end "H:i"]
      */
     private function resolveTimes(?string $start, ?string $end, ?int $durationMinutes): array
     {
@@ -162,16 +169,33 @@ final readonly class LogTimeTool
 
         if (null !== $durationMinutes && $durationMinutes > 0) {
             $startTime = null !== $start ? trim($start) : self::DEFAULT_START;
-            // Anchor to an arbitrary date to add the interval; only the time survives.
-            $endTime = $this->clock->now()
-                ->setTime(0, 0)
-                ->modify($startTime)
-                ->add(new DateInterval('PT' . $durationMinutes . 'M'))
-                ->format('H:i:s');
+            $endMinutes = $this->minutesOfDay($startTime) + $durationMinutes;
 
-            return [$startTime, $endTime];
+            if ($endMinutes >= self::MINUTES_PER_DAY) {
+                throw new ToolCallException('The duration runs past midnight from the given start; pass explicit start and end, or split it across days.');
+            }
+
+            return [$startTime, sprintf('%02d:%02d', intdiv($endMinutes, 60), $endMinutes % 60)];
         }
 
         throw new ToolCallException('Provide either durationMinutes, or both start and end.');
+    }
+
+    /**
+     * @throws ToolCallException when $time is not a valid HH:MM[:SS] clock value
+     */
+    private function minutesOfDay(string $time): int
+    {
+        if (1 !== preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?$/', trim($time), $matches)) {
+            throw new ToolCallException(sprintf('Invalid start time "%s"; use HH:MM.', $time));
+        }
+
+        $hours = (int) $matches[1];
+        $minutes = (int) $matches[2];
+        if ($hours > 23 || $minutes > 59) {
+            throw new ToolCallException(sprintf('Invalid start time "%s"; use HH:MM.', $time));
+        }
+
+        return ($hours * 60) + $minutes;
     }
 }
