@@ -1289,6 +1289,7 @@ paths:
 
   /login:
      post:
+      security: []   # public: this is where a session is established
       summary: login
       tags:
         - User
@@ -1927,6 +1928,7 @@ paths:
 
   /status/check:
     get:
+      security: []   # public: reports auth state, callable unauthenticated
       summary: Check the login status
       tags:
       - Setting
@@ -1944,6 +1946,7 @@ paths:
 
   /status/page:
     get:
+      security: []   # public: reports auth state, callable unauthenticated
       summary: Display login status
       tags:
         - Setting
