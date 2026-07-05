@@ -9,6 +9,17 @@ Netresearch TimeTracker
 
 Project and customer based time tracking for company employees.
 
+.. warning::
+
+   **End of life — this v4 line is no longer maintained.**
+
+   All further fixes, updates, and improvements go to the current stable line
+   (``main`` / v6) only. The final v4 release is a good-will **security patch**
+   for an entry-deletion authorization issue (any authenticated user could delete
+   another user's entry by id — an IDOR); it receives no further changes.
+
+   Please **upgrade to v6**.
+
 Features:
 
 - Time tracking with autocompletion
