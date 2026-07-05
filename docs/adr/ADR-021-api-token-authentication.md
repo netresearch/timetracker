@@ -1,6 +1,6 @@
 # ADR-021: API Token Authentication with Fine-Grained Scopes
 
-**Status:** Accepted — implementation phased (see end). Phases 1 (schema + token service + CLI), 2 (Bearer firewall + authenticator + #[RequireScope] voter, fail-closed), and 3 (Settings token-management UI + i18n) done; Phases 4–5 (OpenAPI scopes, agent-skills.json/MCP) pending.
+**Status:** Accepted — implementation phased (see end). Phases 1 (schema + token service + CLI), 2 (Bearer firewall + authenticator + #[RequireScope] voter, fail-closed), 3 (Settings token-management UI + i18n), and 4 (read endpoints annotated with #[RequireScope]; OpenAPI bearer securityScheme + scope model; coverage test) done; Phase 5 (agent-skills.json/MCP) pending.
 **Date:** 2026-07-04
 **Relates to:** [ADR-011](ADR-011-security-architecture.md) (session-based auth this
 extends), [ADR-018](ADR-018-authentication-extension.md) (the auth stack — local
@@ -128,4 +128,11 @@ passkeys) — those stay session+re-auth only, out of the token firewall.
 3. Settings UI (create/list/revoke) + i18n. **Done** — session-only endpoints
    under `/settings/api-tokens` (fail-closed against Bearer) + the SPA section.
 4. OpenAPI `securitySchemes` + per-endpoint scopes; docs/agent-readiness.md update.
+   **Done** — read endpoints (customers/projects/users/teams/presets/contracts/
+   ticketsystems/reporting/entry) annotated `#[RequireScope('resource:read')]`;
+   OpenAPI gained the `bearerAuth` scheme + scope model in the description; a
+   coverage test validates every declared scope and guards the count. Per-operation
+   scope tags are intentionally NOT duplicated into the static YAML — the code's
+   `#[RequireScope]` is the single source of truth. Holidays/admin-status/jira-sync
+   left fail-closed (not token-facing).
 5. (Then, separately) agent-skills.json with real skills; optional MCP wrapper.

@@ -14,6 +14,7 @@ use App\Entity\Customer;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\CustomerRepository;
+use App\Security\ApiToken\RequireScope;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -21,6 +22,7 @@ use function assert;
 
 final class GetCustomersAction extends BaseController
 {
+    #[RequireScope('customers:read')]
     #[Route(path: '/getAllCustomers', name: '_getAllCustomers_attr', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(): Response|JsonResponse

@@ -15,6 +15,7 @@ use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\EntryRepository;
+use App\Security\ApiToken\RequireScope;
 use App\Service\Util\TimeCalculationService;
 use Exception;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -44,6 +45,7 @@ final class GetTicketTimeSummaryAction extends BaseController
      * @throws BadRequestException When route parameters are invalid
      * @throws Exception           When time calculation operations fail
      */
+    #[RequireScope('reporting:read')]
     #[Route(path: '/getTicketTimeSummary/{ticket}', name: '_getTicketTimeSummary_attr', defaults: ['ticket' => null], methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): Response|RedirectResponse

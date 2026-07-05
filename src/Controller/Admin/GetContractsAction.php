@@ -14,6 +14,7 @@ use App\Entity\Contract;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\ContractRepository;
+use App\Security\ApiToken\RequireScope;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -21,6 +22,7 @@ use function assert;
 
 final class GetContractsAction extends BaseController
 {
+    #[RequireScope('contracts:read')]
     #[Route(path: '/getContracts', name: '_getContracts_attr', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(): Response|JsonResponse

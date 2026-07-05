@@ -15,6 +15,7 @@ use App\Enum\UserType;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Repository\ContractRepository;
+use App\Security\ApiToken\RequireScope;
 use App\Service\Util\ContractHoursResolver;
 use App\Service\Util\TimeCalculationService;
 use DateTimeInterface;
@@ -47,6 +48,7 @@ final class GroupByWorktimeAction extends BaseInterpretationController
         $this->contractHoursResolver = $contractHoursResolver;
     }
 
+    #[RequireScope('reporting:read')]
     #[Route(path: '/interpretation/time', name: 'interpretation_time_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(

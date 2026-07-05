@@ -12,6 +12,7 @@ namespace App\Controller\Interpretation;
 use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
+use App\Security\ApiToken\RequireScope;
 use App\Service\Util\TimeCalculationService;
 use Exception;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -36,6 +37,7 @@ final class GetLastEntriesAction extends BaseInterpretationController
      * @throws Exception           When database operations fail
      * @throws Exception           When entry retrieval or time calculation fails
      */
+    #[RequireScope('reporting:read')]
     #[Route(path: '/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(

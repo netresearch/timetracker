@@ -14,6 +14,7 @@ use App\Entity\TicketSystem;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\TicketSystemRepository;
+use App\Security\ApiToken\RequireScope;
 use Exception;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -27,6 +28,7 @@ final class GetTicketSystemsAction extends BaseController
     /**
      * @throws Exception
      */
+    #[RequireScope('ticketsystems:read')]
     #[Route(path: '/getTicketSystems', name: '_getTicketSystems_attr', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function __invoke(): Response|JsonResponse

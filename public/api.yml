@@ -1,7 +1,33 @@
 openapi: 3.0.0
 info:
   title: Time Tracker API
-  description: Track your time
+  description: |
+    Track your time.
+
+    ## Authentication (ADR-021)
+
+    Two mechanisms:
+    - **Session cookie** — the SolidJS SPA; unrestricted (a session carries the
+      user's full role-based access).
+    - **Personal access token (Bearer)** — for scripts, CI and agents. Send it as
+      `Authorization: Bearer tt_pat_…`. Tokens are user-bound and created in
+      Settings → Security → API tokens; only their SHA-256 hash is stored.
+
+    ### Scopes
+
+    A token carries `resource:action` scopes (e.g. `entries:read`, `projects:read`,
+    `entries:write`), or the `*` wildcard. A token's effective access is the
+    **intersection** of the owning user's roles and the token's scopes — scopes only
+    ever narrow access, never widen it.
+
+    Resources: `entries`, `projects`, `customers`, `activities`, `presets`, `teams`,
+    `users`, `contracts`, `ticketsystems`, `reporting`, `settings`, `sync`.
+    Actions: `read`, `write`.
+
+    Enforcement is **fail-closed**: an endpoint reachable by a token must declare its
+    required scope server-side (`#[RequireScope]`); one that declares none is denied
+    to tokens entirely (session access is unaffected). The required scope per
+    endpoint is authoritative in the code, not duplicated here.
   version: 0.1.9
 tags:
 - name: "Activity"
@@ -2263,7 +2289,24 @@ paths:
                 example: [16,"tinatest","TINA","DEV"]
 
 
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        Personal access token (ADR-021). Send as `Authorization: Bearer tt_pat_…`.
+        The token's `resource:action` scopes (or `*`) are enforced per endpoint,
+        fail-closed, intersected with the owning user's roles.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+      description: Session cookie used by the SPA (full role-based access).
   schemas:
 
     ChartDataSuccessResponse:
