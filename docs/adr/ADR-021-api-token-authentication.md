@@ -1,6 +1,6 @@
 # ADR-021: API Token Authentication with Fine-Grained Scopes
 
-**Status:** Accepted — implementation phased (see end). Phases 1 (schema + token service + CLI), 2 (Bearer firewall + authenticator + #[RequireScope] voter, fail-closed), 3 (Settings token-management UI + i18n), and 4 (read endpoints annotated with #[RequireScope]; OpenAPI bearer securityScheme + scope model; coverage test) done; Phase 5 (agent-skills.json/MCP) pending.
+**Status:** Accepted — implementation phased (see end). Phases 1 (schema + token service + CLI), 2 (Bearer firewall + authenticator + #[RequireScope] voter, fail-closed), 3 (Settings token-management UI + i18n), and 4 (read endpoints annotated with #[RequireScope]; OpenAPI bearer securityScheme + scope model; coverage test) done; Phase 5 (native MCP server; agent-skills.json dropped) in progress.
 **Date:** 2026-07-04
 **Relates to:** [ADR-011](ADR-011-security-architecture.md) (session-based auth this
 extends), [ADR-018](ADR-018-authentication-extension.md) (the auth stack — local
@@ -110,9 +110,9 @@ passkeys) — those stay session+re-auth only, out of the token firewall.
 
 ## Consequences
 
-- **Unlocks the deferred agent work**: `/.well-known/agent-skills.json` can ship *callable*
-  skills (a scoped "log time" token), and an MCP server becomes a thin wrapper over the
-  token API.
+- **Unlocks the deferred agent work**: a native **MCP server** (Phase 5) exposes curated,
+  scoped, *callable* skills (flagship: "log time on a ticket") to coding agents over the
+  token auth. (The originally-planned `agent-skills.json` manifest was dropped — see Phase 5.)
 - **New attack surface** (a bearer credential): mitigated by hashing, scopes, expiry,
   revocation, rate limiting, and keeping auth-state changes off the token firewall.
 - **Scope maintenance**: every new API endpoint must declare its required scope; a missing
@@ -135,4 +135,40 @@ passkeys) — those stay session+re-auth only, out of the token firewall.
    scope tags are intentionally NOT duplicated into the static YAML — the code's
    `#[RequireScope]` is the single source of truth. Holidays/admin-status/jira-sync
    left fail-closed (not token-facing).
-5. (Then, separately) agent-skills.json with real skills; optional MCP wrapper.
+5. **Native MCP server** (see "Phase 5" below). The originally-planned
+   `/.well-known/agent-skills.json` is **dropped** — 2026 research found no
+   client-consumed standard for a callable-skill manifest (`ai-plugin.json` is
+   dead, `llms.txt` is a docs pointer, Anthropic "Agent Skills" is a *local*
+   SKILL.md packaging format, the Cloudflare RFC never converged). The one
+   convergent standard for callable actions is **MCP**, whose auth spec
+   explicitly sanctions static scoped Bearer tokens — our PATs drop straight in.
+
+## Phase 5: Native MCP server
+
+**Decision (2026-07-05):** expose the API to coding agents (Claude Code / Cursor)
+as a **native Symfony MCP server** over **Streamable HTTP at `/mcp`**, reusing the
+Phase-1/2 PAT auth and scopes. Chosen over a Python/FastMCP sidecar for
+single-codebase auth reuse and one deployment. Deps: `symfony/mcp-bundle`
+(v0.10.0) + `mcp/sdk` (v0.6.0) — tagged (pre-1.0) releases, resolve cleanly on
+PHP 8.5 / Symfony 8.1.
+
+- **Transport/endpoint:** Streamable HTTP at `/mcp` (stdio is for local
+  processes; a hosted app serves HTTP). Agents connect with their PAT as Bearer.
+- **Auth:** `/mcp` behind the existing stateless Bearer firewall (extend its path
+  pattern). Sessions never reach it. Each tool declares a required scope, enforced
+  via `ApiScope::grants()` ∩ the user's roles — the same fail-closed rule as
+  `#[RequireScope]`.
+- **Curated toolset** (thin wrappers over existing services — no reimplementation;
+  research shows per-endpoint auto-generation underperforms): `log_time`
+  (`entries:write`, flagship), `list_recent_entries` (`entries:read`),
+  `list_projects` (`projects:read`), `list_activities` (`activities:read`),
+  `delete_entry` (`entries:write`). Optional `get_summary` (`reporting:read`).
+- **New v2 endpoints where BC blocks:** if an existing endpoint's shape can't serve
+  a clean tool without breaking the SPA, add a `/api/v2/*` endpoint for the tool to
+  call rather than mutate the BC surface.
+- **Discovery + doc-drift:** add `/.well-known/mcp/server.json` (emerging
+  server-card) pointing at `/mcp`; fix the stale `llms.txt` (it still claims "no
+  API token yet"); update `docs/agent-readiness.md`.
+- **Tests:** `/mcp` rejects missing/invalid PAT; each tool happy-path + a
+  scope-denied path; a coverage test that every registered MCP tool declares a
+  scope (fail-closed), mirroring `RequireScopeCoverageTest`.
