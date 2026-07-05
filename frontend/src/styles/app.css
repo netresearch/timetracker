@@ -2479,6 +2479,111 @@ th[aria-sort='descending'] .th-sort-glyph {
   overflow-wrap: anywhere;
 }
 
+/* Storage/subsystem overview cards — span the full status-page grid width and
+   lay the cards out in their own responsive grid. */
+.subsystem-section {
+  grid-column: 1 / -1;
+}
+
+.subsystem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.8rem;
+}
+
+.subsystem-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.8rem 0.9rem;
+  background: var(--color-bg);
+}
+
+.subsystem-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.subsystem-card-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.subsystem-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.subsystem-status.is-ok {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+.subsystem-status.is-degraded {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+.subsystem-status.is-error {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+.subsystem-status.is-na {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.subsystem-desc {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.subsystem-backend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.5rem;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.subsystem-backend-label {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.subsystem-config {
+  display: grid;
+  grid-template-columns: minmax(6rem, auto) 1fr;
+  gap: 0.2rem 0.8rem;
+  margin: 0;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--color-border);
+}
+.subsystem-config dt {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.subsystem-config dd {
+  margin: 0;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.subsystem-adr {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
 /* Build-provenance update verdict on the status page. */
 .status-update {
   font-weight: 600;

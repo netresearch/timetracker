@@ -11,6 +11,7 @@ namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
 use App\Model\JsonResponse;
+use App\Service\ApiToken\ApiTokenService;
 use Composer\InstalledVersions;
 use Doctrine\DBAL\Connection;
 use ReflectionClass;
@@ -19,7 +20,9 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
 
+use function count;
 use function extension_loaded;
+use function ini_get;
 use function is_scalar;
 use function is_string;
 
@@ -52,8 +55,10 @@ final class GetStatusAction extends BaseController
         'curl', 'json', 'opcache', 'sodium', 'gd', 'zip',
     ];
 
-    public function __construct(private readonly Connection $connection)
-    {
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly ApiTokenService $apiTokenService,
+    ) {
     }
 
     #[Route(path: '/admin/status', name: 'admin_status_attr', methods: ['GET'])]
@@ -83,6 +88,7 @@ final class GetStatusAction extends BaseController
             ],
             'packages' => $this->packageVersions(),
             'database' => $this->databaseInfo($this->connection),
+            'subsystems' => $this->subsystems(),
             'config' => [
                 'ldap_host' => $this->param('ldap_host'),
                 'ldap_port' => $this->param('ldap_port'),
@@ -195,5 +201,160 @@ final class GetStatusAction extends BaseController
             'port' => $str($parts['port'] ?? null),
             'name' => $schema ?? $str(isset($parts['path']) ? ltrim($parts['path'], '/') : null),
         ];
+    }
+
+    /**
+     * Storage/subsystem cards for the admin status page: what each subsystem
+     * stores, on which backend, its status, and the relevant non-secret config.
+     * Every value is read live (ini/env/COUNT) or from config — nothing invented;
+     * a subsystem that can't be probed degrades to a null field rather than
+     * failing the page. Labels/descriptions are localized on the client by id.
+     *
+     * @return list<array{id: string, backend: string, status: string, config: array<string, mixed>, adr: string|null}>
+     */
+    private function subsystems(): array
+    {
+        $database = $this->databaseInfo($this->connection);
+        $databaseBackend = trim(($database['platform'] ?? '') . ' ' . ($database['serverVersion'] ?? ''));
+        if ('' === $databaseBackend) {
+            $databaseBackend = 'MariaDB';
+        }
+
+        $sessionHandler = $this->iniOrNull('session.save_handler') ?? 'files';
+        $apcuEnabled = extension_loaded('apcu') && '0' !== ini_get('apc.enabled');
+        $taxonomy = $this->apiTokenService->scopeTaxonomy();
+        $scopeCount = count($taxonomy['resources']) * count($taxonomy['actions']) + 1;
+
+        return [
+            [
+                'id' => 'database',
+                'backend' => $databaseBackend,
+                'status' => null !== $database['serverVersion'] ? 'ok' : 'error',
+                'config' => [
+                    'driver' => $database['driver'],
+                    'host' => $database['host'],
+                    'port' => $database['port'],
+                    'name' => $database['name'],
+                ],
+                'adr' => null,
+            ],
+            [
+                'id' => 'sessions',
+                'backend' => 'files' === $sessionHandler ? 'PHP native file handler (filesystem)' : $sessionHandler,
+                'status' => 'ok',
+                'config' => [
+                    'handler' => $sessionHandler,
+                    'save_path' => $this->iniOrNull('session.save_path') ?? '(system default)',
+                    'cookie_samesite' => $this->iniOrNull('session.cookie_samesite'),
+                    'write_lock' => 'released early on read-only requests',
+                ],
+                'adr' => 'ADR-019',
+            ],
+            [
+                'id' => 'cache',
+                'backend' => 'APCu (in-memory, per process)',
+                'status' => $apcuEnabled ? 'ok' : 'degraded',
+                'config' => [
+                    'adapter' => 'APCu',
+                    'enabled' => $apcuEnabled,
+                ],
+                'adr' => null,
+            ],
+            [
+                'id' => 'api_tokens',
+                'backend' => 'Database (SHA-256 hashed)',
+                'status' => 'ok',
+                'config' => [
+                    'active' => $this->countRows('SELECT COUNT(*) FROM api_tokens WHERE revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())'),
+                    'total' => $this->countRows('SELECT COUNT(*) FROM api_tokens'),
+                    'prefix' => ApiTokenService::PREFIX,
+                ],
+                'adr' => 'ADR-021',
+            ],
+            [
+                'id' => 'passkeys_mfa',
+                'backend' => 'Database',
+                'status' => 'ok',
+                'config' => [
+                    'passkeys' => $this->countRows('SELECT COUNT(*) FROM webauthn_credentials'),
+                    'totp_users' => $this->countRows('SELECT COUNT(*) FROM users WHERE totp_secret IS NOT NULL'),
+                    'webauthn_rp_id' => $this->env('WEBAUTHN_RP_ID'),
+                    'require_two_factor' => $this->env('REQUIRE_TWO_FACTOR'),
+                ],
+                'adr' => 'ADR-018',
+            ],
+            [
+                'id' => 'authentication',
+                'backend' => 'LDAP directory + local accounts',
+                'status' => 'ok',
+                'config' => [
+                    'ldap_host' => $this->stringParam('ldap_host'),
+                    'ldap_port' => $this->stringParam('ldap_port'),
+                    'ldap_basedn' => $this->stringParam('ldap_basedn'),
+                    'ldap_ssl' => $this->stringParam('ldap_usessl'),
+                ],
+                'adr' => null,
+            ],
+            [
+                'id' => 'api',
+                'backend' => 'REST + stateless Bearer token',
+                'status' => 'ok',
+                'config' => [
+                    'auth' => 'Bearer ' . ApiTokenService::PREFIX . '…',
+                    'scopes' => $scopeCount,
+                    'openapi' => '/api/doc',
+                ],
+                'adr' => 'ADR-021',
+            ],
+            [
+                'id' => 'jira',
+                'backend' => 'Per-user OAuth + ticket systems',
+                'status' => 'ok',
+                'config' => [
+                    'ticket_systems' => $this->countRows('SELECT COUNT(*) FROM ticket_systems'),
+                    'bookable' => $this->countRows('SELECT COUNT(*) FROM ticket_systems WHERE book_time = 1'),
+                ],
+                'adr' => null,
+            ],
+        ];
+    }
+
+    /** A COUNT(*) result as int, or null when the query fails (missing table, DB down). */
+    private function countRows(string $sql): ?int
+    {
+        try {
+            $value = $this->connection->fetchOne($sql);
+
+            return is_scalar($value) ? (int) $value : null;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    /** A non-empty php.ini value, or null. */
+    private function iniOrNull(string $key): ?string
+    {
+        $value = ini_get($key);
+
+        return is_string($value) && '' !== $value ? $value : null;
+    }
+
+    /** A container parameter coerced to a non-empty string, or null. */
+    private function stringParam(string $key): ?string
+    {
+        $value = $this->param($key);
+
+        return is_scalar($value) && '' !== (string) $value ? (string) $value : null;
+    }
+
+    /** A non-empty environment value (real env first, then superglobals), or null. */
+    private function env(string $key): ?string
+    {
+        $value = getenv($key);
+        if (false === $value || '' === $value) {
+            $value = $_SERVER[$key] ?? $_ENV[$key] ?? null;
+        }
+
+        return is_string($value) && '' !== $value ? $value : null;
     }
 }

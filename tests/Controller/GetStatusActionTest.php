@@ -12,6 +12,8 @@ namespace Tests\Controller;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\HttpRequestTestTrait;
 
+use function sprintf;
+
 use const PHP_VERSION;
 
 /**
@@ -30,7 +32,7 @@ final class GetStatusActionTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
 
         $json = $this->getJsonResponse($this->client->getResponse());
-        foreach (['app', 'build', 'php', 'symfony', 'packages', 'database', 'config'] as $section) {
+        foreach (['app', 'build', 'php', 'symfony', 'packages', 'database', 'subsystems', 'config'] as $section) {
             self::assertArrayHasKey($section, $json);
         }
         self::assertIsArray($json['php']);
@@ -49,6 +51,47 @@ final class GetStatusActionTest extends AbstractWebTestCase
         // Never leaks credentials: no password anywhere, no DB user key.
         self::assertStringNotContainsStringIgnoringCase('password', (string) json_encode($json));
         self::assertArrayNotHasKey('user', $json['database']);
+    }
+
+    public function testSubsystemCardsCoverExpectedStorage(): void
+    {
+        $this->getJson('/admin/status');
+        $this->assertStatusCode(200);
+
+        $json = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($json['subsystems']);
+
+        $byId = [];
+        foreach ($json['subsystems'] as $card) {
+            self::assertIsArray($card);
+            foreach (['id', 'backend', 'status', 'config', 'adr'] as $key) {
+                self::assertArrayHasKey($key, $card);
+            }
+            $id = $card['id'];
+            self::assertIsString($id);
+            $byId[$id] = $card;
+        }
+
+        // Every storage/subsystem the page promises is present.
+        foreach (['database', 'sessions', 'cache', 'api_tokens', 'passkeys_mfa', 'authentication', 'api', 'jira'] as $id) {
+            self::assertArrayHasKey($id, $byId, sprintf('missing subsystem card: %s', $id));
+        }
+
+        // The token card reports live counts and the recognizable prefix.
+        $apiTokenConfig = $byId['api_tokens']['config'];
+        self::assertIsArray($apiTokenConfig);
+        self::assertIsInt($apiTokenConfig['active']);
+        self::assertSame('tt_pat_', $apiTokenConfig['prefix']);
+
+        // Sessions are file-based and link ADR-019 — a regression guard against
+        // silently reporting a shared backend that is not actually deployed.
+        self::assertSame('ADR-019', $byId['sessions']['adr']);
+        $sessionsBackend = $byId['sessions']['backend'];
+        self::assertIsString($sessionsBackend);
+        self::assertStringContainsStringIgnoringCase('file', $sessionsBackend);
+
+        // The richer payload still leaks no credentials.
+        self::assertStringNotContainsStringIgnoringCase('password', (string) json_encode($json));
     }
 
     public function testForbiddenForNonAdmin(): void

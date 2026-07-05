@@ -13,6 +13,14 @@ interface BuildInfo {
   releasesUrl: string
 }
 
+interface Subsystem {
+  id: string
+  backend: string
+  status: 'ok' | 'degraded' | 'error' | 'na'
+  config: Record<string, unknown>
+  adr: string | null
+}
+
 interface StatusData {
   app: { title: string | null; env: string; debug: boolean; locale: string | null; version: string | null }
   build: BuildInfo
@@ -20,6 +28,7 @@ interface StatusData {
   symfony: { kernel: string }
   packages: Record<string, string | null>
   database: { driver: string | null; platform: string | null; serverVersion: string | null; host: string | null; port: string | null; name: string | null }
+  subsystems: Subsystem[]
   config: Record<string, unknown>
 }
 
@@ -48,6 +57,47 @@ const FIELD_LABELS: Record<string, () => string> = {
   name: () => m.status_field_name(),
 }
 const fieldLabel = (key: string): string => FIELD_LABELS[key]?.() ?? key
+
+// Subsystem card titles/descriptions, keyed by the backend's stable `id`.
+const SUBSYSTEM_LABELS: Record<string, () => string> = {
+  database: () => m.status_subsystem_database(),
+  sessions: () => m.status_subsystem_sessions(),
+  cache: () => m.status_subsystem_cache(),
+  api_tokens: () => m.status_subsystem_api_tokens(),
+  passkeys_mfa: () => m.status_subsystem_passkeys_mfa(),
+  authentication: () => m.status_subsystem_authentication(),
+  api: () => m.status_subsystem_api(),
+  jira: () => m.status_subsystem_jira(),
+}
+const SUBSYSTEM_DESCS: Record<string, () => string> = {
+  database: () => m.status_subsystem_database_desc(),
+  sessions: () => m.status_subsystem_sessions_desc(),
+  cache: () => m.status_subsystem_cache_desc(),
+  api_tokens: () => m.status_subsystem_api_tokens_desc(),
+  passkeys_mfa: () => m.status_subsystem_passkeys_mfa_desc(),
+  authentication: () => m.status_subsystem_authentication_desc(),
+  api: () => m.status_subsystem_api_desc(),
+  jira: () => m.status_subsystem_jira_desc(),
+}
+const subsystemLabel = (id: string): string => SUBSYSTEM_LABELS[id]?.() ?? id
+const subsystemDesc = (id: string): string => SUBSYSTEM_DESCS[id]?.() ?? ''
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case 'ok':
+      return m.status_subsystem_ok()
+    case 'degraded':
+      return m.status_subsystem_degraded()
+    case 'error':
+      return m.status_subsystem_error()
+    default:
+      return m.status_subsystem_na()
+  }
+}
+
+// Config keys are technical identifiers (driver, save_path, totp_users…); render
+// them humanized rather than carrying an i18n entry per key.
+const humanizeKey = (key: string): string => key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
 
 function fmt(value: unknown): string {
   if (value === null || value === undefined || value === '') {
@@ -89,6 +139,46 @@ function StatusGroup(props: Readonly<{ title: string; rows: Record<string, unkno
           )}
         </For>
       </dl>
+    </section>
+  )
+}
+
+/** Storage/subsystem overview: one card per subsystem with its backend, live
+ *  status, and relevant non-secret configuration. */
+function SubsystemCards(props: Readonly<{ subsystems: Subsystem[] }>) {
+  return (
+    <section class="status-group subsystem-section">
+      <h2 class="status-group-title">{m.status_subsystems()}</h2>
+      <div class="subsystem-grid">
+        <For each={props.subsystems}>
+          {(subsystem) => (
+            <article class="subsystem-card">
+              <header class="subsystem-card-head">
+                <h3 class="subsystem-card-title">{subsystemLabel(subsystem.id)}</h3>
+                <span class={`subsystem-status is-${subsystem.status}`}>{statusLabel(subsystem.status)}</span>
+              </header>
+              <p class="subsystem-desc">{subsystemDesc(subsystem.id)}</p>
+              <p class="subsystem-backend">
+                <span class="subsystem-backend-label">{m.status_subsystem_backend()}</span>
+                <span>{subsystem.backend}</span>
+              </p>
+              <dl class="subsystem-config">
+                <For each={Object.entries(subsystem.config)}>
+                  {([key, value]) => (
+                    <>
+                      <dt>{humanizeKey(key)}</dt>
+                      <dd>{fmt(value)}</dd>
+                    </>
+                  )}
+                </For>
+              </dl>
+              <Show when={subsystem.adr}>
+                {(adr) => <p class="subsystem-adr"><code>{adr()}</code></p>}
+              </Show>
+            </article>
+          )}
+        </For>
+      </div>
     </section>
   )
 }
@@ -205,9 +295,9 @@ export default function AdminStatus() {
           <>
             <StatusGroup title={m.status_app()} rows={status().app} />
             <BuildSection build={status().build} />
+            <SubsystemCards subsystems={status().subsystems} />
             <StatusGroup title={m.status_php()} rows={{ version: status().php.version, extensions: status().php.extensions }} />
             <StatusGroup title={m.status_symfony()} rows={status().symfony} />
-            <StatusGroup title={m.status_database()} rows={status().database} />
             <StatusGroup title={m.status_packages()} rows={status().packages} />
             <StatusGroup title={m.status_config()} rows={status().config} />
           </>
