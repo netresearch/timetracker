@@ -23,6 +23,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function is_array;
 use function is_string;
 use function preg_match;
 use function trim;
@@ -52,8 +53,12 @@ final class ApiTokenCreateAction extends BaseController
             return $this->unprocessable($this->translate('Please enter a token name (up to 100 characters).'));
         }
 
+        // Read the whole payload rather than $payload->all('scopes'): the latter
+        // throws BadRequestException (400) when a malformed request sends a scalar
+        // for `scopes`, bypassing the 422 the empty-scope path below returns.
+        $rawScopes = $payload->all()['scopes'] ?? [];
         /** @var list<string> $scopes */
-        $scopes = array_values(array_filter($payload->all('scopes'), is_string(...)));
+        $scopes = is_array($rawScopes) ? array_values(array_filter($rawScopes, is_string(...))) : [];
 
         try {
             $expiresAt = $this->parseExpiry($payload->get('expiresAt'));

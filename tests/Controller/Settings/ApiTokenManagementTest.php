@@ -198,6 +198,20 @@ final class ApiTokenManagementTest extends AbstractWebTestCase
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
     }
 
+    public function testCreateRejectsScalarScopesWithValidationError(): void
+    {
+        $this->logInSession('unittest');
+
+        // A malformed request sending a scalar for `scopes` must return the 422
+        // validation error, not a 400 from InputBag::all('scopes').
+        $this->client->request(Request::METHOD_POST, '/settings/api-tokens/create', [
+            'name' => 'scalar scopes',
+            'scopes' => 'entries:read',
+        ], [], ['HTTP_ACCEPT' => self::JSON_MIME]);
+
+        self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+    }
+
     public function testCreateNormalizesDateOnlyExpiryToEndOfDay(): void
     {
         $this->logInSession('unittest');

@@ -53,6 +53,14 @@ describe('ApiTokenControls', () => {
     expect(screen.getByLabelText('projects:write')).toBeInTheDocument()
   })
 
+  it('prevents selecting a past expiry date', async () => {
+    render(() => <ApiTokenControls />)
+    await waitFor(() => screen.getByLabelText('entries:read'))
+
+    const today = new Date().toISOString().slice(0, 10)
+    expect(screen.getByLabelText('Expires', { exact: false })).toHaveAttribute('min', today)
+  })
+
   it('blocks submit and does not call the API when name or scopes are missing', async () => {
     render(() => <ApiTokenControls />)
     await waitFor(() => screen.getByLabelText('entries:read'))

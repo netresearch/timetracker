@@ -6,6 +6,7 @@
 import { createResource, createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
+import { formatUserDate } from '../lib/dateFormat'
 import {
   type ApiToken,
   createApiToken,
@@ -26,8 +27,16 @@ function tokenState(token: ApiToken): 'revoked' | 'expired' | 'active' {
   return 'active'
 }
 
+/** Format the date part with the user's date preference. Slicing the ISO string
+ *  (rather than `new Date`) keeps a date-only value like a token expiry on its
+ *  intended calendar day regardless of the viewer's timezone. */
 function formatDate(iso: string | null): string {
-  return iso === null ? '' : new Date(iso).toLocaleDateString()
+  return iso === null ? '' : formatUserDate(iso.slice(0, 10))
+}
+
+/** Today as yyyy-mm-dd, for the expiry input's `min` (no past dates). */
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
 }
 
 /**
@@ -119,6 +128,8 @@ export function ApiTokenControls(): JSX.Element {
     try {
       await navigator.clipboard.writeText(token.token)
       setCopied(true)
+      // Revert the label so a later copy of a different token reads "Copy" again.
+      setTimeout(() => setCopied(false), 2000)
     } catch {
       // Clipboard denied (permissions / insecure context) — the value stays
       // visible in the field for a manual copy, so this is non-fatal.
@@ -255,7 +266,12 @@ export function ApiTokenControls(): JSX.Element {
 
         <label class="field">
           <span>{m.settings_apitoken_expiry_label()}</span>
-          <input type="date" value={expiresAt()} onInput={(event) => setExpiresAt(event.currentTarget.value)} />
+          <input
+            type="date"
+            min={todayIso()}
+            value={expiresAt()}
+            onInput={(event) => setExpiresAt(event.currentTarget.value)}
+          />
         </label>
 
         <div class="security-row">
