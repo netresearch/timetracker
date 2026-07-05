@@ -2,6 +2,7 @@ import { createResource, createSignal, Show, For, type JSX } from 'solid-js'
 
 import { ApiError, apiErrorMessage, postJson } from '../api/client'
 import { appConfig } from '../config'
+import { ApiTokenControls } from './ApiTokenControls'
 import { deletePasskey, listPasskeys, passkeysSupported, registerPasskey } from '../lib/passkeys'
 import { m } from '../paraglide/messages.js'
 
@@ -44,6 +45,7 @@ export function SecuritySection(): JSX.Element {
         <Show when={config.localAccount}>
           <PasswordChange />
         </Show>
+        <ApiTokenControls />
       </fieldset>
     </div>
   )
