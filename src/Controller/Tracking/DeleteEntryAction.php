@@ -46,30 +46,53 @@ final class DeleteEntryAction extends BaseTrackingController
         #[CurrentUser]
         User $currentUser,
     ): Response|JsonResponse|Error {
-        $entryId = RequestEntityHelper::id($request, 'id');
-        if ($entryId > 0) {
-            $doctrine = $this->managerRegistry;
-            $entry = RequestEntityHelper::findById($doctrine, Entry::class, $entryId);
-
-            if (!$entry instanceof Entry) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-
-            $day = $entry->getDay()->format('Y-m-d');
-
-            // Dispatch event before removal (subscriber handles Jira worklog deletion)
-            if ($this->eventDispatcher instanceof EventDispatcherInterface) {
-                $this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::DELETED);
-            }
-
-            $manager = $doctrine->getManager();
-            $manager->remove($entry);
-            $manager->flush();
-
-            $this->calculateClasses($currentUser->getId() ?? 0, $day);
+        // Read from the merged payload so form (SPA) and JSON (API/token) clients
+        // behave identically. A missing/invalid id is a client error, not a silent
+        // success — the old code returned {"success":true} without deleting anything
+        // when the id could not be read (e.g. a JSON body).
+        $entryId = (int) $request->getPayload()->get('id', 0);
+        if ($entryId <= 0) {
+            return new Error(
+                $this->translator->trans('No entry id provided.'),
+                \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST,
+            );
         }
+
+        $doctrine = $this->managerRegistry;
+        $entry = RequestEntityHelper::findById($doctrine, Entry::class, (string) $entryId);
+        if (!$entry instanceof Entry) {
+            return new Error(
+                $this->translator->trans('No entry for id.'),
+                \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND,
+            );
+        }
+
+        // Ownership (mirrors GetEntryAction): a developer may only delete their own
+        // entries; admins and project leads (ROLE_ADMIN — PL carries it) may delete
+        // any. Without this, any authenticated principal — including an
+        // entries:write API token — could delete another user's entry by id.
+        if ($entry->getUserId() !== $currentUser->getId()
+            && !$this->isGranted('ROLE_ADMIN')
+            && !$currentUser->getType()->isPl()
+        ) {
+            return new Error(
+                $this->translator->trans('You are not allowed to delete this entry.'),
+                \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN,
+            );
+        }
+
+        $day = $entry->getDay()->format('Y-m-d');
+
+        // Dispatch event before removal (subscriber handles Jira worklog deletion)
+        if ($this->eventDispatcher instanceof EventDispatcherInterface) {
+            $this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::DELETED);
+        }
+
+        $manager = $doctrine->getManager();
+        $manager->remove($entry);
+        $manager->flush();
+
+        $this->calculateClasses($currentUser->getId() ?? 0, $day);
 
         return new JsonResponse(['success' => true]);
     }
