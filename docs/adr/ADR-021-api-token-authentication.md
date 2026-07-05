@@ -1,6 +1,6 @@
 # ADR-021: API Token Authentication with Fine-Grained Scopes
 
-**Status:** Accepted — implementation phased (see end). Phases 1 (schema + token service + CLI), 2 (Bearer firewall + authenticator + #[RequireScope] voter, fail-closed), 3 (Settings token-management UI + i18n), and 4 (read endpoints annotated with #[RequireScope]; OpenAPI bearer securityScheme + scope model; coverage test), and 5 (native MCP server exposing curated scoped tools over Streamable HTTP at /mcp; agent-skills.json dropped) done. All phases implemented.
+**Status:** Accepted — implementation phased (see end). Phases 1 (schema + token service + CLI), 2 (Bearer firewall + authenticator + #[RequireScope] voter, fail-closed), 3 (Settings token-management UI + i18n), 4 (read endpoints annotated with #[RequireScope]; OpenAPI bearer securityScheme + scope model; coverage test), and 5 (native MCP server exposing curated scoped tools over Streamable HTTP at `/mcp`; `agent-skills.json` dropped) done. All phases implemented.
 **Date:** 2026-07-04
 **Relates to:** [ADR-011](ADR-011-security-architecture.md) (session-based auth this
 extends), [ADR-018](ADR-018-authentication-extension.md) (the auth stack — local
