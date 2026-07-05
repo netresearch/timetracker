@@ -10,14 +10,12 @@ declare(strict_types=1);
 namespace Tests\Controller\Settings;
 
 use App\Entity\ApiToken;
-use App\Entity\User;
 use App\Service\ApiToken\ApiTokenService;
 use DateTimeImmutable;
-use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\EntityManagerTestTrait;
 
 /**
  * The Settings API-token management endpoints (ADR-021 Phase 3): list, create
@@ -30,25 +28,9 @@ use Tests\AbstractWebTestCase;
  */
 final class ApiTokenManagementTest extends AbstractWebTestCase
 {
+    use EntityManagerTestTrait;
+
     private const string JSON_MIME = 'application/json';
-
-    private function entityManager(): EntityManagerInterface
-    {
-        $doctrine = self::getContainer()->get('doctrine');
-        self::assertInstanceOf(Registry::class, $doctrine);
-        $manager = $doctrine->getManager();
-        self::assertInstanceOf(EntityManagerInterface::class, $manager);
-
-        return $manager;
-    }
-
-    private function user(string $username): User
-    {
-        $user = $this->entityManager()->getRepository(User::class)->findOneBy(['username' => $username]);
-        self::assertInstanceOf(User::class, $user);
-
-        return $user;
-    }
 
     /**
      * Persist a token fixture for $username directly (hash mirrors ApiTokenService)

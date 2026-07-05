@@ -46,31 +46,77 @@ final class DeleteEntryAction extends BaseTrackingController
         #[CurrentUser]
         User $currentUser,
     ): Response|JsonResponse|Error {
-        $entryId = RequestEntityHelper::id($request, 'id');
-        if ($entryId > 0) {
-            $doctrine = $this->managerRegistry;
-            $entry = RequestEntityHelper::findById($doctrine, Entry::class, $entryId);
-
-            if (!$entry instanceof Entry) {
-                $message = $this->translator->trans('No entry for id.');
-
-                return new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
-            }
-
-            $day = $entry->getDay()->format('Y-m-d');
-
-            // Dispatch event before removal (subscriber handles Jira worklog deletion)
-            if ($this->eventDispatcher instanceof EventDispatcherInterface) {
-                $this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::DELETED);
-            }
-
-            $manager = $doctrine->getManager();
-            $manager->remove($entry);
-            $manager->flush();
-
-            $this->calculateClasses($currentUser->getId() ?? 0, $day);
+        $entry = $this->resolveEntry($request);
+        if ($entry instanceof Error) {
+            return $entry;
         }
 
+        if (!$this->mayDelete($entry, $currentUser)) {
+            return new Error(
+                $this->translator->trans('You are not allowed to delete this entry.'),
+                \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN,
+            );
+        }
+
+        // The owner's day is what changed — recalculate their classes, not the
+        // deleter's (an admin/PL may be removing someone else's entry).
+        $ownerId = $entry->getUserId() ?? 0;
+        $day = $entry->getDay()->format('Y-m-d');
+
+        // Dispatch event before removal (subscriber handles Jira worklog deletion)
+        if ($this->eventDispatcher instanceof EventDispatcherInterface) {
+            $this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::DELETED);
+        }
+
+        $manager = $this->managerRegistry->getManager();
+        $manager->remove($entry);
+        $manager->flush();
+
+        $this->calculateClasses($ownerId, $day);
+
         return new JsonResponse(['success' => true]);
+    }
+
+    /**
+     * Resolve the entry to delete from the request, reading the id from the merged
+     * payload so form (SPA) and JSON (API/token) clients behave identically. A
+     * missing/invalid id is a client error, not a silent success — the old code
+     * returned {"success":true} without deleting anything when the id could not be
+     * read (e.g. from a JSON body).
+     */
+    private function resolveEntry(Request $request): Entry|Error
+    {
+        $entryId = (int) $request->getPayload()->get('id', 0);
+        if ($entryId <= 0) {
+            return new Error(
+                $this->translator->trans('No entry id provided.'),
+                \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST,
+            );
+        }
+
+        $entry = RequestEntityHelper::findById($this->managerRegistry, Entry::class, (string) $entryId);
+
+        return $entry instanceof Entry ? $entry : new Error(
+            $this->translator->trans('No entry for id.'),
+            \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND,
+        );
+    }
+
+    /**
+     * Ownership (mirrors GetEntryAction): a developer may only delete their own
+     * entries; admins and project leads (ROLE_ADMIN — PL carries it) may delete any.
+     * Without this, any authenticated principal — including an entries:write API
+     * token — could delete another user's entry by id.
+     */
+    private function mayDelete(Entry $entry, User $currentUser): bool
+    {
+        if ($entry->getUserId() === $currentUser->getId()) {
+            return true;
+        }
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return true;
+        }
+
+        return $currentUser->getType()->isPl();
     }
 }
