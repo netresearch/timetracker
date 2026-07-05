@@ -2034,9 +2034,14 @@ kbd {
    contrast threshold, which the a11y scan caught as an (intermittent) violation
    whenever it sampled mid-fetch. The header labels stay crisp; only the data
    updating is signalled. */
+.tracking-table tbody {
+  /* Transition on the always-present tbody (not the toggled .is-fetching rule) so
+     the dim animates both in AND out — otherwise the un-dim snaps when the class
+     is removed. */
+  transition: opacity 0.15s ease;
+}
 .tracking-table.is-fetching tbody {
   opacity: 0.6;
-  transition: opacity 0.15s ease;
 }
 
 /* Row-colour legend: a small swatch (the same border colour) + its label. */
