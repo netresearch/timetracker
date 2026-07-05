@@ -2028,8 +2028,13 @@ kbd {
 }
 
 /* In-flight refetch cue (refresh / range change): the previous rows stay visible
-   (keepPreviousData), so a subtle dim is the only signal the data is updating. */
-.tracking-table.is-fetching {
+   (keepPreviousData), so a subtle dim is the only signal the data is updating.
+   Dim only the body rows, NOT the whole table — dimming the position:sticky
+   <thead> to 0.6 blended its muted-text-on-accent-soft header below the 4.5:1
+   contrast threshold, which the a11y scan caught as an (intermittent) violation
+   whenever it sampled mid-fetch. The header labels stay crisp; only the data
+   updating is signalled. */
+.tracking-table.is-fetching tbody {
   opacity: 0.6;
   transition: opacity 0.15s ease;
 }
