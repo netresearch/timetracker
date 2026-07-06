@@ -11,6 +11,8 @@ namespace Tests\Mcp;
 
 use App\Entity\User;
 use App\Mcp\Tool\DeleteEntryTool;
+use App\Mcp\Tool\GetTicketInfoTool;
+use App\Mcp\Tool\GetTimeBalanceTool;
 use App\Mcp\Tool\ListActivitiesTool;
 use App\Mcp\Tool\ListProjectsTool;
 use App\Mcp\Tool\ListRecentEntriesTool;
@@ -191,6 +193,78 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $this->expectException(ToolCallException::class);
         self::getContainer()->get(DeleteEntryTool::class)->deleteEntry(1);
+    }
+
+    public function testGetTimeBalanceReturnsPeriods(): void
+    {
+        $this->useToken(['reporting:read']);
+
+        $result = self::getContainer()->get(GetTimeBalanceTool::class)->getTimeBalance();
+
+        self::assertArrayHasKey('warnings', $result);
+        self::assertIsList($result['warnings']);
+        foreach (['today', 'week', 'month'] as $period) {
+            self::assertArrayHasKey($period, $result);
+            self::assertIsArray($result[$period]);
+            foreach (['ist', 'soll_total', 'soll_so_far', 'diff', 'status'] as $key) {
+                self::assertArrayHasKey($key, $result[$period]);
+            }
+        }
+    }
+
+    public function testGetTimeBalanceIsDeniedWithoutScope(): void
+    {
+        $this->useToken(['entries:read']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(GetTimeBalanceTool::class)->getTimeBalance();
+    }
+
+    public function testGetTicketInfoReturnsScopes(): void
+    {
+        // Create an entry to report on.
+        $this->useToken(['entries:write']);
+        $created = self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', ticket: 'SA-9', durationMinutes: 30);
+        self::assertIsArray($created['result'] ?? null);
+        $id = $created['result']['id'];
+        self::assertIsInt($id);
+
+        $this->useToken(['reporting:read']);
+        $info = self::getContainer()->get(GetTicketInfoTool::class)->getTicketInfo($id);
+
+        foreach (['customer', 'project', 'activity', 'ticket', 'estimate', 'warnings'] as $key) {
+            self::assertArrayHasKey($key, $info);
+        }
+        self::assertIsArray($info['estimate']);
+        self::assertArrayHasKey('status', $info['estimate']);
+    }
+
+    public function testGetTicketInfoRejectsUnknownEntry(): void
+    {
+        $this->useToken(['reporting:read']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(GetTicketInfoTool::class)->getTicketInfo(999999);
+    }
+
+    public function testGetTicketInfoIsDeniedWithoutScope(): void
+    {
+        $this->useToken(['entries:read']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(GetTicketInfoTool::class)->getTicketInfo(1);
+    }
+
+    public function testLogTimeReturnsTicketInfoAndBalance(): void
+    {
+        $this->useToken(['entries:write']);
+
+        $result = self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', ticket: 'SA-8', durationMinutes: 45);
+
+        self::assertArrayHasKey('ticket_info', $result);
+        self::assertArrayHasKey('balance', $result);
+        self::assertIsArray($result['balance']);
+        self::assertArrayHasKey('today', $result['balance']);
     }
 
     /**

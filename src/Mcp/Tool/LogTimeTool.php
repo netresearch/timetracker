@@ -18,6 +18,8 @@ use App\Mcp\ScopeGuard;
 use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
 use App\Service\ClockInterface;
+use App\Service\EntrySummaryService;
+use App\Service\TimeBalanceService;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
@@ -25,6 +27,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 use function ctype_digit;
 use function intdiv;
+use function is_array;
+use function is_int;
 use function ltrim;
 use function preg_match;
 use function sprintf;
@@ -52,6 +56,8 @@ final readonly class LogTimeTool
         private ProjectRepository $projectRepository,
         private ActivityRepository $activityRepository,
         private ClockInterface $clock,
+        private EntrySummaryService $entrySummaryService,
+        private TimeBalanceService $timeBalanceService,
     ) {
     }
 
@@ -111,7 +117,31 @@ final readonly class LogTimeTool
             throw new ToolCallException($this->errorMessage($body, 'Failed to save the time entry.'));
         }
 
-        return [] === $body ? ['success' => true] : $body;
+        $result = [] === $body ? ['success' => true] : $body;
+
+        // Return the same context the user sees in the UI after a booking: the
+        // ticket's per-scope totals ("Info" popup) and the running time balance,
+        // both carrying any warnings the agent should surface.
+        $entryId = $this->createdEntryId($body);
+        if (null !== $entryId) {
+            $result['ticket_info'] = $this->entrySummaryService->forEntry($entryId, (int) $user->getId());
+        }
+        $result['balance'] = $this->timeBalanceService->forUser($user);
+
+        return $result;
+    }
+
+    /**
+     * @param array<array-key, mixed> $body the decoded SaveEntryAction response
+     */
+    private function createdEntryId(array $body): ?int
+    {
+        $result = $body['result'] ?? null;
+        if (!is_array($result)) {
+            return null;
+        }
+
+        return is_int($result['id'] ?? null) ? $result['id'] : null;
     }
 
     /**
