@@ -562,6 +562,8 @@
   "status_subsystem_authentication_desc": "Login-Backends und Verzeichnisdienst.",
   "status_subsystem_api": "API",
   "status_subsystem_api_desc": "REST-API-Schnittstelle und Authentifizierung.",
+  "status_subsystem_mcp": "MCP-Server",
+  "status_subsystem_mcp_desc": "Model-Context-Protocol-Endpunkt für Coding-Agents (Streamable HTTP).",
   "status_subsystem_jira": "Jira-Integration",
   "status_subsystem_jira_desc": "Worklog-Synchronisation mit Jira."
 }

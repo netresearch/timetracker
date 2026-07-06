@@ -67,6 +67,7 @@ const SUBSYSTEM_LABELS: Record<string, () => string> = {
   passkeys_mfa: () => m.status_subsystem_passkeys_mfa(),
   authentication: () => m.status_subsystem_authentication(),
   api: () => m.status_subsystem_api(),
+  mcp: () => m.status_subsystem_mcp(),
   jira: () => m.status_subsystem_jira(),
 }
 const SUBSYSTEM_DESCS: Record<string, () => string> = {
@@ -77,6 +78,7 @@ const SUBSYSTEM_DESCS: Record<string, () => string> = {
   passkeys_mfa: () => m.status_subsystem_passkeys_mfa_desc(),
   authentication: () => m.status_subsystem_authentication_desc(),
   api: () => m.status_subsystem_api_desc(),
+  mcp: () => m.status_subsystem_mcp_desc(),
   jira: () => m.status_subsystem_jira_desc(),
 }
 const subsystemLabel = (id: string): string => SUBSYSTEM_LABELS[id]?.() ?? id

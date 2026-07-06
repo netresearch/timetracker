@@ -74,7 +74,7 @@ final class GetStatusActionTest extends AbstractWebTestCase
         }
 
         // Every storage/subsystem the page promises is present.
-        foreach (['database', 'sessions', 'cache', 'api_tokens', 'passkeys_mfa', 'authentication', 'api', 'jira'] as $id) {
+        foreach (['database', 'sessions', 'cache', 'api_tokens', 'passkeys_mfa', 'authentication', 'api', 'mcp', 'jira'] as $id) {
             self::assertArrayHasKey($id, $byId, sprintf('missing subsystem card: %s', $id));
         }
 

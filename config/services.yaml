@@ -24,6 +24,10 @@ parameters:
     ldap_usernamefield: '%env(LDAP_USERNAMEFIELD)%'
     ldap_usessl: '%env(bool:LDAP_USESSL)%'
     ldap_create_user: '%env(bool:LDAP_CREATE_USER)%'
+    # MCP server (ADR-021 Phase 5): hostnames the /mcp Streamable-HTTP transport's
+    # DNS-rebinding guard accepts in the Host/Origin header. Must include the public
+    # domain (the SDK default is localhost-only, which 403s a real host).
+    app.mcp_allowed_hosts: '%env(csv:MCP_ALLOWED_HOSTS)%'
 
 imports:
     - { resource: services/object_mapper.yaml }
@@ -52,11 +56,30 @@ services:
             - '../src/Service/Integration/Jira/JiraTicketService.php'
             - '../src/Service/Integration/Jira/JiraAuthenticationService.php'
             - '../src/Service/Integration/Jira/JiraIntegrationService.php'
+            # Wired explicitly below (overrides the bundle's mcp.server.controller).
+            - '../src/Mcp/McpEndpointController.php'
 
     # Controllers are tagged automatically
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
+
+    # ADR-021 Phase 5: override the bundle's mcp.server.controller (final, hardcodes
+    # localhost-only DNS-rebinding hosts) with ours, host-allowlisted. Same args as
+    # Symfony\AI\McpBundle McpBundle::loadExtension registers, plus the allowed hosts.
+    mcp.server.controller:
+        class: App\Mcp\McpEndpointController
+        public: true
+        arguments:
+            - '@mcp.server'
+            - '@mcp.psr_http_factory'
+            - '@mcp.http_foundation_factory'
+            - '@mcp.psr17_factory'
+            - '@mcp.psr17_factory'
+            - '%app.mcp_allowed_hosts%'
+            - '@logger'
+        tags:
+            - 'controller.service_arguments'
 
     # Add this if you use repositories
     App\Repository\:
