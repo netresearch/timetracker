@@ -162,7 +162,14 @@ PHP 8.5 / Symfony 8.1.
   research shows per-endpoint auto-generation underperforms): `log_time`
   (`entries:write`, flagship), `list_recent_entries` (`entries:read`),
   `list_projects` (`projects:read`), `list_activities` (`activities:read`),
-  `delete_entry` (`entries:write`). Optional `get_summary` (`reporting:read`).
+  `delete_entry` (`entries:write`), `get_ticket_info` (`reporting:read`) and
+  `get_time_balance` (`reporting:read`).
+- **Info-on-write:** `log_time` returns the same context the tracking UI shows
+  after a booking — the entry's per-scope totals (the "Info"/`I` popup, via
+  `EntrySummaryService`) under `ticket_info`, and the user's today/week/month
+  IST-vs-SOLL balance (via `TimeBalanceService`) under `balance`. Both carry
+  `warnings` for the agent when an estimate or a time target is neared/exceeded/
+  underrun. The two info tools expose the same data on demand.
 - **New v2 endpoints where BC blocks:** if an existing endpoint's shape can't serve
   a clean tool without breaking the SPA, add a `/api/v2/*` endpoint for the tool to
   call rather than mutate the BC surface.
