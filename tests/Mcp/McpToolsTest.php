@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace Tests\Mcp;
 
+use App\Entity\Activity;
+use App\Entity\Customer;
+use App\Entity\Entry;
 use App\Entity\User;
 use App\Mcp\Tool\DeleteEntryTool;
 use App\Mcp\Tool\GetTicketInfoTool;
@@ -17,6 +20,8 @@ use App\Mcp\Tool\ListActivitiesTool;
 use App\Mcp\Tool\ListProjectsTool;
 use App\Mcp\Tool\ListRecentEntriesTool;
 use App\Mcp\Tool\LogTimeTool;
+use App\Repository\ActivityRepository;
+use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
 use App\Security\ApiToken\ApiAccessToken;
 use Mcp\Exception\ToolCallException;
@@ -245,6 +250,42 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $this->expectException(ToolCallException::class);
         self::getContainer()->get(GetTicketInfoTool::class)->getTicketInfo(999999);
+    }
+
+    public function testGetTicketInfoRejectsAnotherUsersEntry(): void
+    {
+        // An entry owned by user 2, requested by user 1 — must read as "not
+        // found" so cross-user scope totals are never disclosed (IDOR).
+        $container = self::getContainer();
+        $em = $container->get('doctrine')->getManager();
+        $owner = $container->get(UserRepository::class)->find(2);
+        self::assertInstanceOf(User::class, $owner);
+        $project = $container->get(ProjectRepository::class)->find(1);
+        self::assertNotNull($project);
+        $customer = $project->getCustomer();
+        self::assertInstanceOf(Customer::class, $customer);
+        $activity = $container->get(ActivityRepository::class)->find(1);
+        self::assertInstanceOf(Activity::class, $activity);
+
+        $entry = new Entry();
+        $entry->setUser($owner)
+            ->setCustomer($customer)
+            ->setProject($project)
+            ->setActivity($activity)
+            ->setTicket('SA-77')
+            ->setDescription('owned by user 2')
+            ->setDay('2026-07-06')
+            ->setStart('09:00:00')
+            ->setEnd('10:00:00')
+            ->setDuration(60);
+        $em->persist($entry);
+        $em->flush();
+        $foreignId = (int) $entry->getId();
+
+        $this->useToken(['reporting:read']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(GetTicketInfoTool::class)->getTicketInfo($foreignId);
     }
 
     public function testGetTicketInfoIsDeniedWithoutScope(): void

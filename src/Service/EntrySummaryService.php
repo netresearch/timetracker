@@ -46,7 +46,12 @@ final readonly class EntrySummaryService
      */
     public function forEntry(int $entryId, int $userId): ?array
     {
-        if (!$this->entryRepository->find($entryId) instanceof Entry) {
+        $entry = $this->entryRepository->find($entryId);
+        // Scope to the caller's own entries: getEntrySummary aggregates the
+        // customer/project/activity/ticket totals across all users, so returning
+        // a summary for an entry the caller does not own would leak other users'
+        // scope names and totals (IDOR). Treat "not owned" as "not found".
+        if (!$entry instanceof Entry || $entry->getUser()?->getId() !== $userId) {
             return null;
         }
 
