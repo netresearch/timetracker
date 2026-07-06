@@ -23,6 +23,7 @@ use Symfony\Bridge\PsrHttpMessage\HttpMessageFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+use function str_starts_with;
 use function strtolower;
 
 /**
@@ -67,7 +68,8 @@ final readonly class McpEndpointController implements SelfEnforcesScope
         );
 
         $psrResponse = $this->server->run($transport);
-        $streamed = 'text/event-stream' === strtolower($psrResponse->getHeaderLine('Content-Type'));
+        // Match the media type tolerant of parameters (e.g. "text/event-stream; charset=utf-8").
+        $streamed = str_starts_with(strtolower($psrResponse->getHeaderLine('Content-Type')), 'text/event-stream');
 
         return $this->httpFoundationFactory->createResponse($psrResponse, $streamed);
     }
