@@ -31,7 +31,10 @@ final readonly class ListProjectsTool
      * customer. Returns id, name, customer, and the ticket prefixes the project
      * accepts. Use a project's name or id with `log_time`.
      *
-     * @return list<array{id: int|null, name: string, customer: string|null, customer_id: int|null, ticket_prefixes: string|null}>
+     * The list is wrapped in an object — MCP structuredContent must be a JSON
+     * object at the top level, never a bare array (#573, ADR-022 §4).
+     *
+     * @return array{projects: list<array{id: int|null, name: string, customer: string|null, customer_id: int|null, ticket_prefixes: string|null}>}
      */
     #[McpTool(name: 'list_projects', description: 'List bookable projects (active or global) to log time against.')]
     public function listProjects(
@@ -62,6 +65,6 @@ final readonly class ListProjectsTool
             ];
         }
 
-        return $result;
+        return ['projects' => $result];
     }
 }

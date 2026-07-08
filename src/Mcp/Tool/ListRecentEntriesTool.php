@@ -35,7 +35,10 @@ final readonly class ListRecentEntriesTool
      * (default 7, capped at 90), oldest first. Each entry includes its id, date,
      * start/end, duration, ticket, project/activity ids and description.
      *
-     * @return list<array<string, mixed>>
+     * The list is wrapped in an object — MCP structuredContent must be a JSON
+     * object at the top level, never a bare array (#573, ADR-022 §4).
+     *
+     * @return array{entries: list<array<string, mixed>>}
      */
     #[McpTool(name: 'list_recent_entries', description: "List the authenticated user's own recent time entries.")]
     public function listRecentEntries(
@@ -46,9 +49,9 @@ final readonly class ListRecentEntriesTool
 
         $days = max(1, min(90, $days));
 
-        return array_map(
+        return ['entries' => array_map(
             static fn (Entry $entry): array => $entry->toArray(),
             $this->entryRepository->getEntriesByUser($user, $days, false),
-        );
+        )];
     }
 }
