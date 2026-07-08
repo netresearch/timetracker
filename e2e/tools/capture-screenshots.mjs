@@ -199,10 +199,14 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ baseURL: args.baseUrl });
 
 try {
-  if (args.clock !== '') {
+  if (args.clock != null && args.clock !== '') {
     // Match the e2e stack's frozen server time so "future" client-clock logic
     // (e.g. the worklog's future-entry cue) renders deterministically.
-    await page.clock.install({ time: new Date(args.clock) });
+    const frozenTime = new Date(args.clock);
+    if (Number.isNaN(frozenTime.getTime())) {
+      throw new Error(`Invalid --clock value: "${args.clock}". Expected an ISO date-time, e.g. 2024-01-15T12:00:00.`);
+    }
+    await page.clock.install({ time: frozenTime });
   }
   if (args.login) {
     await login(page, args);

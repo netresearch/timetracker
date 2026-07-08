@@ -198,8 +198,56 @@ describe('Tracking (Worklog grid)', () => {
       const divider = container.querySelector('tr.tracking-divider')
       expect(divider).not.toBeNull()
       expect(divider?.textContent).toBe('Future')
+      // The band stays in the a11y tree so its label reaches screen readers.
+      expect(divider?.getAttribute('aria-hidden')).not.toBe('true')
       // The divider renders directly above the first today/past row.
       expect(divider?.nextElementSibling).toBe(rowOf(1))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.showFuture = false
+    }
+  })
+
+  it('does not mark a same-day row as a pause when an adjacent entry has no end time', async () => {
+    // A blank previous end must not turn the next same-day row into a false
+    // pause (mirrors the backend, which skips the comparison when a time is missing).
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: '15/01/2024', start: '08:00', end: '', description: 'NoEnd', class: 0 } },
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: '15/01/2024', start: '09:00', end: '10:00', description: 'After', class: 0 } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'After' })).toBeInTheDocument())
+
+    const rowOf = (id: number): Element | null => container.querySelector(`td[data-row-id="${id}"]`)?.closest('tr') ?? null
+    expect(rowOf(1)?.classList.contains('is-daybreak')).toBe(true) // first of the day
+    expect(rowOf(2)?.classList.contains('is-pause')).toBe(false) // blank previous end → not a pause
+    expect(rowOf(2)?.classList.contains('is-overlap')).toBe(false)
+
+    unmount()
+  })
+
+  it('detects future entries given already-ISO dates too', async () => {
+    window.APP_CONFIG!.showFuture = true
+    try {
+      mockTracking({
+        entries: [
+          { entry: { ...DEFAULT_ENTRY, id: 1, date: '2026-06-20', start: '09:00', end: '10:00', description: 'IsoAhead', class: 0 } },
+        ],
+        customers: [{ customer: { id: 1, name: 'ACME' } }],
+        projects: [{ project: { id: 4, name: 'Site' } }],
+        activities: [{ activity: { id: 5, name: 'Dev' } }],
+      })
+      const { container, getByRole, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'IsoAhead' })).toBeInTheDocument())
+
+      const rowOf = (id: number): Element | null => container.querySelector(`td[data-row-id="${id}"]`)?.closest('tr') ?? null
+      expect(rowOf(1)?.classList.contains('is-future')).toBe(true) // 2026-06-20 (ISO) > frozen today
 
       unmount()
     } finally {

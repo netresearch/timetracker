@@ -42,13 +42,25 @@ type RowCue = '' | 'is-daybreak' | 'is-pause' | 'is-overlap'
 // Mirrors BaseTrackingController::calculateClasses: a day's earliest entry is
 // the day break; a later one is a pause (gap after the previous) or an overlap
 // (starts before the previous ended), else plain.
+// Normalise a worklog date to an ISO day (YYYY-MM-DD), accepting both the
+// grid's dd/mm/YYYY format and an already-ISO value (imported/seed rows).
+function toIsoDay(dateValue: string | null): string | null {
+  const value = str(dateValue)
+  const iso = dmyToIso(value)
+  if (iso !== null) {
+    return iso
+  }
+
+  return /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : null
+}
+
 function deriveRowCues(entries: TrackingEntry[]): Map<number, RowCue> {
   // Parse each row's id/day/start/end ONCE, then sort by the precomputed key —
-  // so dmyToIso/str don't re-run inside the O(n log n) comparator.
+  // so parsing doesn't re-run inside the O(n log n) comparator.
   const rows = entries
     .filter((entry) => num(entry.id) > 0 && str(entry.date) !== '')
     .map((entry) => {
-      const day = dmyToIso(str(entry.date)) ?? str(entry.date)
+      const day = toIsoDay(entry.date) ?? str(entry.date)
       const start = str(entry.start)
 
       return { id: num(entry.id), day, start, end: str(entry.end), key: `${day} ${start}` }
@@ -62,10 +74,15 @@ function deriveRowCues(entries: TrackingEntry[]): Map<number, RowCue> {
     let cue: RowCue = ''
     if (row.day !== previousDay) {
       cue = 'is-daybreak'
-    } else if (row.start > previousEnd) {
-      cue = 'is-pause'
-    } else if (row.start < previousEnd) {
-      cue = 'is-overlap'
+    } else if (row.start !== '' && previousEnd !== '') {
+      // Only a fully-timed pair yields pause/overlap — mirrors the backend,
+      // which skips the comparison when a start/end is missing (otherwise a
+      // blank previous end would mark every later same-day row a pause).
+      if (row.start > previousEnd) {
+        cue = 'is-pause'
+      } else if (row.start < previousEnd) {
+        cue = 'is-overlap'
+      }
     }
     cues.set(row.id, cue)
     previousDay = row.day
@@ -78,7 +95,7 @@ function deriveRowCues(entries: TrackingEntry[]): Map<number, RowCue> {
 // An entry sits in the future when its calendar day is after the local today
 // (same client-clock convention as Month.tsx — no server-timezone skew).
 function isFutureDay(dateValue: string | null, todayIso: string): boolean {
-  const day = dmyToIso(str(dateValue))
+  const day = toIsoDay(dateValue)
 
   return day !== null && day > todayIso
 }
@@ -1284,9 +1301,10 @@ export default function Tracking() {
                     <>
                     {/* Labeled band marking where future entries end and today/past
                         begin — a non-colour cue paired with the .is-future tint.
-                        A non-data row (grid-divider) so keyboard nav skips it. */}
+                        A non-data row (grid-divider) so keyboard nav skips it, but it
+                        stays in the a11y tree so the "future" label reaches AT. */}
                     <Show when={futureDividerBeforeId() === id}>
-                      <tr class="tracking-divider grid-divider" aria-hidden="true">
+                      <tr class="tracking-divider grid-divider">
                         <td colspan={visibleColumns().length + 1}>{m.tracking_future_divider()}</td>
                       </tr>
                     </Show>
