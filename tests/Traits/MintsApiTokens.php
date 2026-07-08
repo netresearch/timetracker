@@ -19,7 +19,10 @@ use Symfony\Component\HttpFoundation\Request;
 use function array_values;
 use function bin2hex;
 use function hash;
+use function json_encode;
 use function random_bytes;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Mints a scoped personal access token for the 'unittest' fixture user and
@@ -30,13 +33,13 @@ trait MintsApiTokens
     /**
      * @param list<string> $scopes
      */
-    protected function mintToken(array $scopes): string
+    protected function mintToken(array $scopes, string $username = 'unittest'): string
     {
         /** @var Registry $doctrine */
         $doctrine = static::getContainer()->get('doctrine');
         $entityManager = $doctrine->getManager();
 
-        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => 'unittest']);
+        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
         self::assertInstanceOf(User::class, $user);
 
         $plaintext = ApiTokenService::PREFIX . bin2hex(random_bytes(32));
@@ -50,6 +53,23 @@ trait MintsApiTokens
     protected function requestWithToken(string $path, string $bearer): int
     {
         $this->client->request(Request::METHOD_GET, $path, [], [], ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json']);
+
+        return $this->client->getResponse()->getStatusCode();
+    }
+
+    /**
+     * @param array<string, mixed> $json
+     */
+    protected function postJsonWithToken(string $path, string $bearer, array $json): int
+    {
+        $this->client->request(
+            Request::METHOD_POST,
+            $path,
+            [],
+            [],
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
+            json_encode($json, JSON_THROW_ON_ERROR),
+        );
 
         return $this->client->getResponse()->getStatusCode();
     }
