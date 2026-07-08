@@ -29,6 +29,7 @@ ADRs are historical records: bodies are not rewritten when reality moves on. Whe
 | [ADR-019](ADR-019-session-storage-and-lock-contention.md) | Session Storage and Lock-Contention Strategy | Accepted (files + early lock-release; Valkey deferred) | 2026-07-04 |
 | [ADR-020](ADR-020-subticket-ticket-resolution.md) | Jira Subticket Sync and Ticket→Project Resolution | Accepted | 2026-07-04 |
 | [ADR-021](ADR-021-api-token-authentication.md) | API Token Authentication with Fine-Grained Scopes | Accepted | 2026-07-04 |
+| [ADR-022](ADR-022-v2-api-layer-and-response-dtos.md) | v2 API layer with typed response DTOs | Proposed | 2026-07-06 |
 
 ## ADR Format
 
