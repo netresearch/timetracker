@@ -327,6 +327,93 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('completes a partial day typed in the date cell to an ISO date on Enter (#572)', async () => {
+    vi.setSystemTime(new Date('2026-07-08T12:00:00'))
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'date')
+    fireEvent.input(editor, { target: { value: '7' } })
+    fireEvent.keyDown(editor, { key: 'Enter' }) // commit → type-the-day completion → auto-save
+
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 1, date: '2026-07-07' })),
+    )
+
+    unmount()
+  })
+
+  it('seeds the date editor with a typed digit and completes it on Enter (seedChar + autocomplete)', async () => {
+    vi.setSystemTime(new Date('2026-07-08T12:00:00'))
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const dateCell = container.querySelector<HTMLElement>('td[data-col-key="date"]')!
+    dateCell.focus()
+    fireEvent.keyDown(dateCell, { key: '5' }) // printable key opens the editor seeded with '5'
+    const editor = dateCell.querySelector<HTMLInputElement>('input.inline-date-input')!
+    expect(editor.value).toBe('5')
+    fireEvent.keyDown(editor, { key: 'Enter' })
+
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ date: '2026-07-05' })),
+    )
+
+    unmount()
+  })
+
+  it('shows a grey ghost preview of the completed date while typing in the date cell (#572)', async () => {
+    vi.setSystemTime(new Date('2026-07-08T12:00:00'))
+    mockApi()
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'date')
+    fireEvent.input(editor, { target: { value: '7' } })
+    const dateCell = container.querySelector<HTMLElement>('td[data-col-key="date"]')!
+    await waitFor(() => expect(dateCell.querySelector('.inline-date-ghost')?.textContent).toBe('2026-07-07'))
+    // The typed value is never disturbed by the ghost.
+    expect(editor.value).toBe('7')
+
+    unmount()
+  })
+
+  it('opens the calendar from the date cell; picking a day commits its ISO without a premature save (#572)', async () => {
+    // DEFAULT_ENTRY's date (2026-06-16) pins the calendar to June 2026.
+    mockApi()
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const dateCell = container.querySelector<HTMLElement>('td[data-col-key="date"]')!
+    dateCell.focus()
+    fireEvent.keyDown(dateCell, { key: 'Enter' })
+    const trigger = dateCell.querySelector<HTMLButtonElement>('.inline-date-trigger')!
+    expect(trigger).not.toBeNull()
+    fireEvent.click(trigger)
+
+    const day = await waitFor(() => {
+      const el = document.querySelector('button[data-iso="2026-06-20"]')
+      expect(el).not.toBeNull()
+
+      return el as HTMLButtonElement
+    })
+    // Opening the calendar neither saved nor tore down the editor.
+    expect(postJson).not.toHaveBeenCalled()
+    expect(dateCell.querySelector('input.inline-date-input')).not.toBeNull()
+
+    fireEvent.click(day)
+    await waitFor(() =>
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 1, date: '2026-06-20' })),
+    )
+
+    unmount()
+  })
+
   it('parses a terse start time to H:i before saving', async () => {
     mockApi()
     postJson.mockResolvedValue({})

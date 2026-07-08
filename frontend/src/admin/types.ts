@@ -38,6 +38,14 @@ export interface FieldDef {
   activeOnly?: boolean
   /** Optional explanatory tooltip shown as an ⓘ next to the field label. */
   help?: () => string
+  /**
+   * For a `date` field only: opt into the enhanced inline date editor — a
+   * body-portalled calendar popover (mouse) plus "type-the-day" autocomplete
+   * (partial input like "7" completes to today's month/year on commit) with a
+   * grey ghost preview while typing. Off by default so admin date cells stay a
+   * plain ISO text input; set true only for the worklog date column.
+   */
+  enhancedDate?: boolean
 }
 
 export type FormValues = Record<string, string | number | boolean | number[]>

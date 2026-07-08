@@ -2243,6 +2243,56 @@ kbd {
   gap: 0.25rem;
 }
 
+/* ---- Enhanced inline date editor (worklog): calendar trigger + ghost --------
+   Layered inside the [data-inline-editing] cell (its own positioning context),
+   mirroring the DateField enhancements but sized for a dense grid row. The input
+   still overlays the cell (.inline-editor, inset:0); it only reserves room on the
+   right so the typed ISO value never slides under the calendar trigger. */
+.data-table td[data-inline-editing] .inline-editor.inline-date-input {
+  padding-right: 1.9rem;
+}
+
+/* Grey completion preview — non-interactive, tucked left of the trigger so it
+   never intercepts a click. */
+.inline-date-ghost {
+  position: absolute;
+  top: 50%;
+  right: 2rem;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Calendar trigger, vertically centred against the cell's right edge. Compact
+   like the combobox trigger (the keyboard path is type-the-day autocomplete). */
+.inline-date-trigger {
+  position: absolute;
+  top: 50%;
+  right: 0.15rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  min-height: 1.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.inline-date-trigger:hover {
+  background: var(--color-accent-soft);
+}
+
+.inline-date-trigger .action-ico {
+  width: 1rem;
+  height: 1rem;
+}
+
 /* ---- Ark Combobox inline chip editor (single + multi) ----
    In edit mode the cell LIFTS into an obviously typeable search field: a surface
    fill + an accent inner border + a focus ring, a leading magnifier, an italic
