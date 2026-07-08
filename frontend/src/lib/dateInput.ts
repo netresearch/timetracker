@@ -18,12 +18,20 @@ import { dateFormat, fieldOrder, formatWith, isRealIsoDate, type DateFormatPref 
  * A 2-digit year expands to the current century (2000 + n) — no 19xx pivot.
  *
  * @returns canonical ISO yyyy-mm-dd, or null when the digits can't form a real
- *   calendar date. Empty / digit-less input returns todayIso.
+ *   calendar date. Empty input returns todayIso; a non-empty digit-less typo
+ *   returns null (so the host flags it rather than defaulting to today).
  */
 export function parseDateInput(raw: string, todayIso: string, pref: DateFormatPref = dateFormat()): string | null {
+  // A truly empty field means "today" (the type-the-day convenience). A NON-empty
+  // value with no digits (e.g. "x") is a typo, not a request for today — reject it
+  // so callers' `?? raw` fall-through surfaces it to the host's own validation
+  // instead of silently overwriting a real date with today.
+  if (raw.trim() === '') {
+    return todayIso
+  }
   const digits = raw.replace(/\D/g, '')
   if (digits === '') {
-    return todayIso
+    return null
   }
 
   // fieldOrder returns null for plain ISO (the default) — treat that as [y,m,d].
@@ -78,4 +86,20 @@ export function previewDateInput(raw: string, todayIso: string, pref: DateFormat
   const iso = parseDateInput(raw, todayIso, pref)
 
   return iso === null ? '' : formatWith(iso, pref)
+}
+
+/**
+ * The grey ghost-preview text to show beside a type-the-day input: the completed
+ * date in the active format, but only while it differs from what's typed — an
+ * empty field and a value already showing its final form both yield '' (no
+ * redundant echo). Shared by DateField and the inline-grid date editor.
+ */
+export function dateGhost(raw: string, todayIso: string, pref: DateFormatPref = dateFormat()): string {
+  const t = raw.trim()
+  if (t === '') {
+    return ''
+  }
+  const preview = previewDateInput(raw, todayIso, pref)
+
+  return preview !== '' && preview !== raw ? preview : ''
 }

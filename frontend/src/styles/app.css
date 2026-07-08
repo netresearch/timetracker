@@ -4445,8 +4445,8 @@ th[aria-sort='descending'] .th-sort-glyph {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2rem;
-  min-height: 2rem;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   border-radius: 6px;

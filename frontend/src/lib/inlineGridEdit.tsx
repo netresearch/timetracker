@@ -1,19 +1,23 @@
-import { Popover } from '@ark-ui/solid/popover'
 import { createMemo, createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
 import { createStore, produce } from 'solid-js/store'
-import { Portal } from 'solid-js/web'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
-import { Calendar } from '../components/Calendar'
-import { dateFormat, isRealIsoDate } from './dateFormat'
-import { parseDateInput, previewDateInput } from './dateInput'
+import { DatePopover } from '../components/DatePopover'
+import { isRealIsoDate, type DateFormatPref } from './dateFormat'
+import { dateGhost, parseDateInput } from './dateInput'
 import { isoDate } from './format'
 import { getEnterBehavior } from './gridEditPref'
 import type { ActivateKey, GridMoveHandle } from './gridNavigation'
-import { CalendarIcon } from './icons'
 import { m } from '../paraglide/messages.js'
 
 export type Row = Record<string, unknown>
+
+// The inline grid date editor is ISO-only: it shows the ISO value + a fixed
+// "YYYY-MM-DD" placeholder, so it must PARSE keystrokes ISO-first regardless of
+// the user's display-format preference (which only governs read-only leaves and
+// the modal form). Pinning to this pref keeps the parse order matching the
+// affordance the cell shows.
+const ISO_PREF: DateFormatPref = { mode: 'iso', pattern: '' }
 
 // Field types that get a compact in-cell editor; everything else (multiselect,
 // locked relation columns) stays modal-only.
@@ -106,7 +110,7 @@ export function InlineEditor(props: {
     // A completion that isn't a real date falls through as the raw text so the
     // host's own validation flags it (no auto-save) rather than saving garbage.
     if (isEnhancedDate()) {
-      return isRealIsoDate(raw) ? raw : (parseDateInput(raw, today(), dateFormat()) ?? raw)
+      return isRealIsoDate(raw) ? raw : (parseDateInput(raw, today(), ISO_PREF) ?? raw)
     }
     if (props.field.type === 'number' || (props.field.type === 'select' && props.field.stringValue !== true)) {
       return Number(raw)
@@ -118,19 +122,9 @@ export function InlineEditor(props: {
   // Grey ghost of the completed date while typing a partial value (enhanced date
   // only) — shown only when the completion differs from what's typed, so a fully
   // typed date shows no redundant echo. Reads the value signal, so it re-renders
-  // as the user types without disturbing the typed text.
-  const dateGhost = createMemo(() => {
-    if (!isEnhancedDate()) {
-      return ''
-    }
-    const raw = (value() as string).trim()
-    if (raw === '') {
-      return ''
-    }
-    const preview = previewDateInput(raw, today(), dateFormat())
-
-    return preview !== '' && preview !== raw ? preview : ''
-  })
+  // as the user types without disturbing the typed text. ISO-pinned to match the
+  // cell's ISO value + placeholder (see ISO_PREF).
+  const dateGhostText = createMemo(() => (isEnhancedDate() ? dateGhost(value() as string, today(), ISO_PREF) : ''))
 
   const finish = (direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => {
     if (done) {
@@ -162,6 +156,14 @@ export function InlineEditor(props: {
     } else if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
+      // The input keeps focus while the calendar is open (autoFocus=false), so its
+      // own keydown owns Escape: the first Escape closes ONLY the calendar (typed
+      // text survives), a second Escape cancels the cell edit.
+      if (isEnhancedDate() && calOpen()) {
+        setCalOpen(false)
+
+        return
+      }
       cancel()
     }
   }
@@ -204,45 +206,40 @@ export function InlineEditor(props: {
           value={value() as string}
           onInput={(e) => setValue(e.currentTarget.value)}
           onKeyDown={onKeyDown}
-          onBlur={() => finish()}
+          // Blur commits (click-away) — EXCEPT when focus moves into the calendar,
+          // which is body-portalled: the calendar's Today link / arrow nav call
+          // button.focus() programmatically, and committing a partial value there
+          // would tear the editor down. Only a real focus-OUT commits.
+          onBlur={(event) => {
+            const next = (event.relatedTarget as HTMLElement | null) ?? (document.activeElement as HTMLElement | null)
+            if (next?.closest('[data-date-popup]')) {
+              return
+            }
+            finish()
+          }}
         />
-        <Show when={dateGhost() !== ''}>
-          <span class="inline-date-ghost" aria-hidden="true">{dateGhost()}</span>
+        <Show when={dateGhostText() !== ''}>
+          <span class="inline-date-ghost" aria-hidden="true">{dateGhostText()}</span>
         </Show>
         <span id={dateHintId} class="visually-hidden">{m.tracking_date_format_hint()}</span>
-        <Popover.Root
+        <DatePopover
           open={calOpen()}
-          onOpenChange={(details) => setCalOpen(details.open)}
+          onOpenChange={setCalOpen}
+          triggerClass="inline-date-trigger"
+          triggerTabIndex={-1}
           autoFocus={false}
-          positioning={{ placement: 'bottom-end', gutter: 4, flip: true, fitViewport: true }}
-        >
-          <Popover.Trigger
-            type="button"
-            class="inline-date-trigger"
-            aria-label={m.date_open_calendar()}
-            tabindex={-1}
-            onMouseDown={(event) => event.preventDefault()}
-          >
-            <CalendarIcon />
-          </Popover.Trigger>
-          <Portal>
-            <Popover.Positioner class="date-popover-positioner" data-date-popup>
-              <Popover.Content
-                class="date-popover"
-                onMouseDown={(event) => event.preventDefault()}
-              >
-                <Calendar
-                  value={isRealIsoDate(value() as string) ? value() as string : ''}
-                  todayIso={today()}
-                  // Selecting a day fills the ISO value and commits through the
-                  // same guarded finish() as the keyboard path (the 'done' guard
-                  // makes this a single commit, never a double).
-                  onSelect={(iso) => { setValue(iso); setCalOpen(false); finish() }}
-                />
-              </Popover.Content>
-            </Popover.Positioner>
-          </Portal>
-        </Popover.Root>
+          // The focused input owns Escape (first closes the calendar, a second
+          // cancels), and closing must not restore focus to the trigger — either
+          // would blur the input into a premature commit / cell cancel.
+          closeOnEscape={false}
+          restoreFocus={false}
+          value={isRealIsoDate(value() as string) ? value() as string : ''}
+          todayIso={today()}
+          // Selecting a day fills the ISO value and commits through the same
+          // guarded finish() as the keyboard path (the 'done' guard makes this a
+          // single commit, never a double).
+          onSelect={(iso) => { setValue(iso); setCalOpen(false); finish() }}
+        />
       </Match>
       <Match when={true}>
         <input

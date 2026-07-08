@@ -90,6 +90,25 @@ describe('DateField', () => {
     })
   })
 
+  it('autocomplete commits today when the field is left empty', () => {
+    freezeClock('2026-07-08')
+    const onChange = vi.fn()
+    const { container } = render(() => <DateField value="" onChange={onChange} autocomplete />)
+    const input = container.querySelector('input.date-field') as HTMLInputElement
+    fireEvent.input(input, { target: { value: '' } })
+    fireEvent.change(input)
+    expect(onChange).toHaveBeenCalledWith('2026-07-08')
+  })
+
+  it('hides the ghost once a full date is typed', async () => {
+    freezeClock('2026-07-08')
+    const { container } = render(() => <DateField value="" onChange={vi.fn()} autocomplete />)
+    const input = container.querySelector('input.date-field') as HTMLInputElement
+    // A fully-typed date in the active (DE) format shows no redundant ghost echo.
+    fireEvent.input(input, { target: { value: '07.07.2026' } })
+    await waitFor(() => expect(container.querySelector('.date-field-ghost')).toBeNull())
+  })
+
   it('renders a persistent format hint when enhanced', () => {
     const { container } = render(() => <DateField value="" onChange={vi.fn()} autocomplete />)
     expect(container.querySelector('.field-hint')?.textContent).toBe('DD.MM.YYYY')

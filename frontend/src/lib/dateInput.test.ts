@@ -22,9 +22,8 @@ describe('parseDateInput — ISO mode (default, day rightmost, read right-to-lef
   })
 
   it.each([
-    ['', TODAY],
-    ['   ', TODAY],
-    ['abc', TODAY],
+    ['', TODAY], // a truly empty field means "today"
+    ['   ', TODAY], // whitespace-only is still empty → today
     ['7', '2026-07-07'],
     ['708', '2026-07-08'],
     ['0708', '2026-07-08'],
@@ -36,6 +35,7 @@ describe('parseDateInput — ISO mode (default, day rightmost, read right-to-lef
   })
 
   it.each([
+    ['abc'], // a non-empty, digit-less typo is rejected (not silently → today)
     ['1332'], // day 32 does not exist
     ['9913'], // month 99 does not exist
   ])('rejects %j → null', (raw) => {

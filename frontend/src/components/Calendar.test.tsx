@@ -108,6 +108,53 @@ describe('Calendar', () => {
     unmount()
   })
 
+  it('clamps the day when PageDown lands on a shorter month', async () => {
+    // 31 Aug → Sep has only 30 days, so the focus clamps to 30 Sep.
+    const { container, getByText, unmount } = render(() => (
+      <Calendar value="2026-08-31" todayIso={TODAY} onSelect={() => {}} />
+    ))
+
+    fireEvent.keyDown(focusedDay(container)!, { key: 'PageDown' })
+    await flushFocus()
+    expect(getByText('September 2026')).toBeInTheDocument()
+    expect(document.activeElement).toBe(dayButton(container, '2026-09-30'))
+    unmount()
+  })
+
+  it('Home/End jump to the start (Monday) and end (Sunday) of the focused week', async () => {
+    // 2026-07-15 is a Wednesday; its week runs Mon 13 → Sun 19.
+    const { container, unmount } = render(() => (
+      <Calendar value="2026-07-15" todayIso={TODAY} onSelect={() => {}} />
+    ))
+
+    const start = focusedDay(container)!
+    start.focus()
+
+    fireEvent.keyDown(start, { key: 'Home' })
+    await flushFocus()
+    expect(document.activeElement).toBe(dayButton(container, '2026-07-13'))
+
+    fireEvent.keyDown(document.activeElement!, { key: 'End' })
+    await flushFocus()
+    expect(document.activeElement).toBe(dayButton(container, '2026-07-19'))
+    unmount()
+  })
+
+  it('the Today link returns focus to today after navigating to another month', async () => {
+    const { container, getByLabelText, getByText, unmount } = render(() => (
+      <Calendar value="2026-07-15" todayIso={TODAY} onSelect={() => {}} />
+    ))
+
+    fireEvent.click(getByLabelText('Next month'))
+    expect(getByText('August 2026')).toBeInTheDocument()
+
+    fireEvent.click(container.querySelector('.calendar-today-link')!)
+    await flushFocus()
+    expect(getByText('July 2026')).toBeInTheDocument()
+    expect(document.activeElement).toBe(dayButton(container, TODAY))
+    unmount()
+  })
+
   it('has no accessibility violations', async () => {
     vi.useRealTimers() // axe-core drives internal timers; don't run it under fake ones
     const { container, unmount } = render(() => (

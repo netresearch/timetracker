@@ -1,13 +1,9 @@
-import { Popover } from '@ark-ui/solid/popover'
 import { createEffect, createMemo, createSignal, Show } from 'solid-js'
-import { Portal } from 'solid-js/web'
 
 import { dateFormatPlaceholder, formatUserDate, parseUserDate } from '../lib/dateFormat'
-import { parseDateInput, previewDateInput } from '../lib/dateInput'
+import { dateGhost, parseDateInput } from '../lib/dateInput'
 import { isoDate } from '../lib/format'
-import { CalendarIcon } from '../lib/icons'
-import { m } from '../paraglide/messages.js'
-import { Calendar } from './Calendar'
+import { DatePopover } from './DatePopover'
 
 interface DateFieldProps {
   /** ISO yyyy-mm-dd, or '' for no date. */
@@ -65,18 +61,8 @@ export function DateField(props: DateFieldProps) {
 
   // Grey ghost of the completed date while typing a partial value — only when it
   // differs from what's typed (so a fully-typed date shows no redundant echo).
-  const ghost = createMemo(() => {
-    if (props.autocomplete !== true) {
-      return ''
-    }
-    const raw = text().trim()
-    if (raw === '') {
-      return ''
-    }
-    const preview = previewDateInput(raw, today())
-
-    return preview !== '' && preview !== raw ? preview : ''
-  })
+  // Reads the active date-format pref (matching the input's display format).
+  const ghost = createMemo(() => (props.autocomplete === true ? dateGhost(text(), today()) : ''))
 
   const applyIso = (iso: string): void => {
     setInvalid(false)
@@ -138,33 +124,15 @@ export function DateField(props: DateFieldProps) {
           <span class="date-field-ghost" aria-hidden="true">{ghost()}</span>
         </Show>
         <Show when={props.calendar === true}>
-          <Popover.Root
+          <DatePopover
             open={open()}
-            onOpenChange={(details) => setOpen(details.open)}
-            positioning={{ placement: 'bottom-end', gutter: 4, flip: true, fitViewport: true }}
-          >
-            <Popover.Trigger
-              type="button"
-              class="date-field-trigger"
-              aria-label={m.date_open_calendar()}
-              disabled={props.disabled}
-              // Keep focus on the input so opening the calendar never blur-commits.
-              onMouseDown={(event) => event.preventDefault()}
-            >
-              <CalendarIcon />
-            </Popover.Trigger>
-            <Portal>
-              <Popover.Positioner class="date-popover-positioner" data-date-popup>
-                <Popover.Content
-                  class="date-popover"
-                  // A click inside the calendar must not blur-commit/steal focus.
-                  onMouseDown={(event) => event.preventDefault()}
-                >
-                  <Calendar value={props.value} todayIso={today()} onSelect={pickFromCalendar} />
-                </Popover.Content>
-              </Popover.Positioner>
-            </Portal>
-          </Popover.Root>
+            onOpenChange={setOpen}
+            triggerClass="date-field-trigger"
+            disabled={props.disabled}
+            value={props.value}
+            todayIso={today()}
+            onSelect={pickFromCalendar}
+          />
         </Show>
       </span>
       <span class="field-hint">{dateFormatPlaceholder()}</span>

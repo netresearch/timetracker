@@ -410,6 +410,24 @@ describe('Tracking (Worklog grid)', () => {
     await waitFor(() =>
       expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 1, date: '2026-06-20' })),
     )
+    // Picking a day commits exactly once — no double-commit from the calendar's
+    // onSelect finish() plus a stray blur/keyboard path.
+    expect(postJson).toHaveBeenCalledTimes(1)
+
+    unmount()
+  })
+
+  it('hides the date ghost once a full ISO date is typed in the grid (#572)', async () => {
+    vi.setSystemTime(new Date('2026-07-08T12:00:00'))
+    mockApi()
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'date')
+    fireEvent.input(editor, { target: { value: '2026-07-07' } })
+    const dateCell = container.querySelector<HTMLElement>('td[data-col-key="date"]')!
+    // A complete ISO date matches its own display, so no redundant ghost echo.
+    await waitFor(() => expect(dateCell.querySelector('.inline-date-ghost')).toBeNull())
 
     unmount()
   })
