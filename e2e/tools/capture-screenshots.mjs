@@ -28,6 +28,7 @@ function readArgs(argv) {
     rowSelector: 'table.tracking-table tbody tr',
     fullPage: true,
     login: true,
+    clock: process.env.E2E_SCREENSHOT_CLOCK ?? '',
     viewports: [],
   };
 
@@ -65,6 +66,9 @@ function readArgs(argv) {
         break;
       case 'row-selector':
         args.rowSelector = value;
+        break;
+      case 'clock':
+        args.clock = value;
         break;
       case 'viewport':
         args.viewports.push(...parseViewports(value));
@@ -181,6 +185,8 @@ Options:
                               Viewport, repeatable or comma-separated
   --wait-for SELECTOR         Selector that must be present before capture
   --row-selector SELECTOR     Optional row/data selector; pass "" to disable
+  --clock ISO                 Freeze the browser clock (e.g. 2024-01-15T12:00:00,
+                              to match the e2e stack's frozen server time)
   --no-login                  Capture without logging in
   --no-full-page              Capture viewport only
 `);
@@ -193,6 +199,11 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ baseURL: args.baseUrl });
 
 try {
+  if (args.clock !== '') {
+    // Match the e2e stack's frozen server time so "future" client-clock logic
+    // (e.g. the worklog's future-entry cue) renders deterministically.
+    await page.clock.install({ time: new Date(args.clock) });
+  }
   if (args.login) {
     await login(page, args);
   }
