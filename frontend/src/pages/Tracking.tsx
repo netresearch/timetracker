@@ -505,7 +505,7 @@ export default function Tracking() {
   // row/content changes. A direct measured scan is intentionally used here:
   // auto table layout plus display changes are not guaranteed to be perfectly
   // monotonic at every rung, and 15 probes is cheap enough for correctness.
-  const MAX_THIN = 14
+  const MAX_THIN = 8
   function applyThinLevel(table: HTMLElement, level: number): void {
     for (let i = 1; i <= MAX_THIN; i++) {
       table.classList.toggle('is-thin-' + i, i <= level)
