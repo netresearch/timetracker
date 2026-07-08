@@ -194,6 +194,15 @@ main {
   padding: 1rem 2rem;
 }
 
+/* The worklog is a wide, horizontally-thinning data grid, not reading-width
+   prose — let it use the full viewport at EVERY density, not only Compact
+   (see the density override below). Otherwise the 76rem cap starves the table
+   on wide screens and the fit-thinning truncates content while the space sits
+   unused outside <main> (#worklog-width). */
+main:has(.tracking) {
+  max-width: none;
+}
+
 .today-button {
   background: var(--color-surface);
   border: 1px solid var(--color-accent);
@@ -714,9 +723,13 @@ main {
 /* Date field whose typed value couldn't be parsed (in the user's date format or
    ISO). The :focus-visible variant keeps the danger outline while the field is
    focused — it out-specifies the generic input:focus-visible accent rule. */
-.field input.date-field[aria-invalid='true'],
-.field input.date-field[aria-invalid='true']:focus-visible {
+/* The border now lives on the pill wrap, so an unparseable value tints the wrap
+   (and the focus ring stays on the input inside it). */
+.date-field-wrap:has(> input.date-field[aria-invalid='true']) {
   border-color: var(--color-danger, #c0392b);
+}
+
+.date-field-wrap > input.date-field[aria-invalid='true']:focus-visible {
   outline: 2px solid var(--color-danger, #c0392b);
   outline-offset: -1px;
 }
@@ -2220,7 +2233,7 @@ kbd {
   visibility: hidden;
 }
 
-.data-table td[data-inline-editing] .inline-editor:not(.inline-check):not(.inline-tags) {
+.data-table td[data-inline-editing] .inline-editor:not(.inline-check):not(.inline-tags):not(.inline-date-input) {
   inset: 0;
   padding: 0 var(--cell-pad-x);
   position: absolute;
@@ -2243,49 +2256,71 @@ kbd {
   gap: 0.25rem;
 }
 
-/* ---- Enhanced inline date editor (worklog): calendar trigger + ghost --------
-   Layered inside the [data-inline-editing] cell (its own positioning context),
-   mirroring the DateField enhancements but sized for a dense grid row. The input
-   still overlays the cell (.inline-editor, inset:0); it only reserves room on the
-   right so the typed ISO value never slides under the calendar trigger. */
-.data-table td[data-inline-editing] .inline-editor.inline-date-input {
-  padding-right: 1.9rem;
-}
-
-/* Grey completion preview — non-interactive, tucked left of the trigger so it
-   never intercepts a click. */
-.inline-date-ghost {
+/* ---- Enhanced inline date editor (worklog) — Variant A (design #572) --------
+   A distinct accent-bordered pill that BREAKS OUT of the narrow date column and
+   overlays the neighbours (shadow), so the digits + completion ghost + calendar
+   trigger all get room even after the date column has been thinned. It is
+   position:absolute anchored to the cell's left edge and sized to its content
+   (width:max-content), so the hidden .inline-ghost keeps holding the column
+   width — the table never reflows. */
+.inline-date-editor {
   position: absolute;
   top: 50%;
-  right: 2rem;
+  left: var(--cell-pad-x);
   transform: translateY(-50%);
+  z-index: 5;
+  display: inline-flex;
+  align-items: stretch;
+  width: max-content;
+  max-width: min(22rem, 60vw);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-accent);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.16);
+  overflow: hidden;
+}
+
+/* The input sits INSIDE the pill (static, borderless, transparent) — not the
+   absolute cell-filling overlay the other editors use (excluded from that rule
+   above). Mono digits keep the ISO date aligned. */
+.data-table td[data-inline-editing] .inline-date-editor .inline-date-input {
+  position: static;
+  /* Fits the full ISO date "2026-07-08" (10 chars) plus a little slack. */
+  width: 11ch;
+  min-width: 11ch;
+  padding: 0.28rem 0 0.28rem 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Grey completion preview — inline, right after the digits (never intercepts a
+   click). */
+.inline-date-ghost {
+  align-self: center;
+  padding: 0 0.5rem 0 0.15rem;
   color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
   white-space: nowrap;
 }
 
-/* Calendar trigger, vertically centred against the cell's right edge. Compact
-   like the combobox trigger (the keyboard path is type-the-day autocomplete). */
+/* Calendar trigger: an attached segment with its own left separator + subtle
+   fill, matching the Vorlage's 📅 button. */
 .inline-date-trigger {
-  position: absolute;
-  top: 50%;
-  right: 0.15rem;
-  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.6rem;
-  min-height: 1.6rem;
-  padding: 0;
+  min-width: 2rem;
+  padding: 0 0.4rem;
   border: 0;
-  border-radius: 6px;
-  background: transparent;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-accent-soft);
   color: var(--color-accent);
   cursor: pointer;
 }
 
 .inline-date-trigger:hover {
-  background: var(--color-accent-soft);
+  background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
 }
 
 .inline-date-trigger .action-ico {
@@ -4415,50 +4450,61 @@ th[aria-sort='descending'] .th-sort-glyph {
 /* Positioning context for the calendar trigger + ghost preview. The input keeps
    its own box; the trigger is tucked against its right edge and the ghost floats
    as a non-interactive suffix, so neither shifts the input's layout. */
+/* Form date field — the same accent-bordered pill as the inline-grid editor
+   (Variant A, design #572), so forms and grid read consistently: digits, an
+   inline grey completion ghost, then an attached 📅 segment. Sized to content,
+   not stretched, like a native date control. */
 .date-field-wrap {
-  position: relative;
   display: inline-flex;
-  align-items: center;
-  width: 100%;
+  align-items: stretch;
+  width: max-content;
+  max-width: 100%;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-accent);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .date-field-wrap > input.date-field {
-  width: 100%;
-  /* Clear the 44px trigger (2.75rem) at right:0.15rem — i.e. it reaches 2.9rem
-     from the edge — so typed text never slides under it. */
-  padding-right: 3.1rem;
+  /* Fits the full date ("2026-07-08" / "08.07.2026") plus a little slack. */
+  width: 11ch;
+  min-width: 11ch;
+  border: 0;
+  background: transparent;
+  padding: 0.34rem 0 0.34rem 0.55rem;
+  font-variant-numeric: tabular-nums;
+  outline: none;
 }
 
-/* Grey completion preview shown while typing a partial date. aria-hidden and
+/* Grey completion preview — inline, right after the digits. aria-hidden and
    pointer-events:none so it's purely visual and never intercepts a click. */
 .date-field-ghost {
-  position: absolute;
-  /* Right-anchored just left of the trigger (which reaches 2.9rem from the edge). */
-  right: 3.1rem;
+  align-self: center;
+  padding: 0 0.5rem 0 0.15rem;
   color: var(--color-text-muted);
   font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
   white-space: nowrap;
 }
 
 .date-field-trigger {
-  position: absolute;
-  right: 0.15rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
-  padding: 0;
+  padding: 0 0.4rem;
   border: 0;
-  border-radius: 6px;
-  background: transparent;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-accent-soft);
   color: var(--color-accent);
   cursor: pointer;
 }
 
 .date-field-trigger:hover {
-  background: var(--color-accent-soft);
+  background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
 }
 
 .date-field-trigger:disabled {
