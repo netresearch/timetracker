@@ -9,21 +9,13 @@ declare(strict_types=1);
 
 namespace Tests\Controller\Api\V2;
 
-use App\Entity\ApiToken;
-use App\Entity\User;
-use App\Service\ApiToken\ApiTokenService;
-use DateTimeImmutable;
-use Doctrine\Bundle\DoctrineBundle\Registry;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\MintsApiTokens;
 
-use function array_values;
 use function assert;
-use function bin2hex;
-use function hash;
 use function is_array;
 use function json_decode;
-use function random_bytes;
 
 /**
  * GET /api/v2/time-balance (ADR-022): session and PAT access, scope gate,
@@ -33,6 +25,8 @@ use function random_bytes;
  */
 final class GetTimeBalanceActionTest extends AbstractWebTestCase
 {
+    use MintsApiTokens;
+
     public function testSessionRequestReturnsBalance(): void
     {
         $this->client->request(Request::METHOD_GET, '/api/v2/time-balance');
@@ -62,32 +56,5 @@ final class GetTimeBalanceActionTest extends AbstractWebTestCase
         $status = $this->requestWithToken('/api/v2/time-balance', $this->mintToken(['entries:read']));
 
         self::assertSame(403, $status);
-    }
-
-    /**
-     * @param list<string> $scopes
-     */
-    private function mintToken(array $scopes): string
-    {
-        /** @var Registry $doctrine */
-        $doctrine = self::getContainer()->get('doctrine');
-        $entityManager = $doctrine->getManager();
-
-        $user = $entityManager->getRepository(User::class)->findOneBy(['username' => 'unittest']);
-        self::assertInstanceOf(User::class, $user);
-
-        $plaintext = ApiTokenService::PREFIX . bin2hex(random_bytes(32));
-        $token = new ApiToken($user, 'test', hash('sha256', $plaintext), array_values($scopes), new DateTimeImmutable(), null, null, null);
-        $entityManager->persist($token);
-        $entityManager->flush();
-
-        return $plaintext;
-    }
-
-    private function requestWithToken(string $path, string $bearer): int
-    {
-        $this->client->request(Request::METHOD_GET, $path, [], [], ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json']);
-
-        return $this->client->getResponse()->getStatusCode();
     }
 }

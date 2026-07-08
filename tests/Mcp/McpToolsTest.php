@@ -14,6 +14,7 @@ use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\User;
 use App\Mcp\Tool\DeleteEntryTool;
+use App\Mcp\Tool\GetDayTool;
 use App\Mcp\Tool\GetTicketInfoTool;
 use App\Mcp\Tool\GetTimeBalanceTool;
 use App\Mcp\Tool\ListActivitiesTool;
@@ -34,6 +35,7 @@ use function array_is_list;
 use function array_keys;
 use function array_values;
 use function basename;
+use function count;
 use function dirname;
 use function glob;
 use function is_string;
@@ -307,7 +309,7 @@ final class McpToolsTest extends AbstractWebTestCase
         self::getContainer()->get(GetTicketInfoTool::class)->getTicketInfo(1);
     }
 
-    public function testLogTimeReturnsTicketInfoAndBalance(): void
+    public function testLogTimeReturnsTicketInfoDayAndBalance(): void
     {
         $this->useToken(['entries:write']);
 
@@ -317,6 +319,42 @@ final class McpToolsTest extends AbstractWebTestCase
         self::assertArrayHasKey('balance', $result);
         self::assertIsArray($result['balance']);
         self::assertArrayHasKey('today', $result['balance']);
+        // The booked day so far — the created entry must be in it.
+        self::assertArrayHasKey('day', $result);
+        self::assertIsArray($result['day']);
+        self::assertIsList($result['day']['entries']);
+        self::assertGreaterThanOrEqual(45, $result['day']['total_minutes']);
+    }
+
+    public function testGetDayReturnsTheBookedDay(): void
+    {
+        $this->useToken(['entries:read', 'entries:write']);
+        $created = self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', ticket: 'SA-7', durationMinutes: 30);
+        self::assertIsArray($created['result'] ?? null);
+
+        $day = self::getContainer()->get(GetDayTool::class)->getDay();
+
+        self::assertArrayHasKey('date', $day);
+        self::assertIsList($day['entries']);
+        self::assertNotEmpty($day['entries']);
+        self::assertGreaterThanOrEqual(30, $day['total_minutes']);
+        self::assertSame(count($day['entries']), $day['count']);
+    }
+
+    public function testGetDayRejectsAnInvalidDate(): void
+    {
+        $this->useToken(['entries:read']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(GetDayTool::class)->getDay('2026-13-99');
+    }
+
+    public function testGetDayIsDeniedWithoutScope(): void
+    {
+        $this->useToken(['reporting:read']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(GetDayTool::class)->getDay();
     }
 
     /**
@@ -337,6 +375,7 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $results = [
             'delete_entry' => null, // called last — it removes the entry
+            'get_day' => $container->get(GetDayTool::class)->getDay(),
             'get_ticket_info' => $container->get(GetTicketInfoTool::class)->getTicketInfo($entryId),
             'get_time_balance' => $container->get(GetTimeBalanceTool::class)->getTimeBalance(),
             'list_activities' => $container->get(ListActivitiesTool::class)->listActivities(),
