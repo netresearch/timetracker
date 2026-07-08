@@ -687,6 +687,42 @@ paths:
                     items:
                       type: string
 
+  /api/v2/day:
+    get:
+      summary: The caller's own time entries and booked total for one day, default today (ADR-022 Phase 2; requires entries:read for tokens)
+      tags:
+        - Summary
+      parameters:
+        - in: query
+          name: date
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2026-07-06"
+      responses:
+        '422':
+          description: Invalid date
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  entries:
+                    type: array
+                    items:
+                      type: object
+                      description: One time entry (same row shape as the tracking grid)
+                  count:
+                    type: integer
+                  total_minutes:
+                    type: integer
+
   /api/v2/entries/{id}/summary:
     get:
       summary: Per-scope booking totals and estimate verdict for one of the caller's own entries (ADR-022; requires reporting:read for tokens). Foreign entries read as 404.

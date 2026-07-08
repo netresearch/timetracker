@@ -756,6 +756,23 @@ A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracke
 
 `status` per period: `behind` (IST below the SOLL accrued so far), `over` (IST above the whole period's SOLL), else `ok`.
 
+### GET /api/v2/day
+**Purpose**: The caller's own time entries and booked total for one day (default: today) — the tracking grid's day view as data (ADR-022 Phase 2; also returned by `log_time` as `day` and by the `get_day` MCP tool)
+
+**Authentication**: Session, or Bearer PAT with `entries:read`
+
+**Parameters**: `date` (query, optional): `YYYY-MM-DD`; invalid dates answer `422`
+
+**Response (200 OK)**:
+```json
+{
+  "date": "2026-07-06",
+  "entries": [ { "id": 4711, "date": "06/07/2026", "start": "09:00", "end": "10:00", "duration": 60, "ticket": "SA-11", "...": "..." } ],
+  "count": 1,
+  "total_minutes": 60
+}
+```
+
 ### GET /api/v2/entries/{id}/summary
 **Purpose**: Per-scope booking totals and estimate verdict for one of the caller's own entries (ADR-022; the tracking UI's "Info" popup and the `get_ticket_info` MCP tool)
 

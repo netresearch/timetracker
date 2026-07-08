@@ -18,6 +18,7 @@ use App\Mcp\ScopeGuard;
 use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
 use App\Service\ClockInterface;
+use App\Service\DaySummaryService;
 use App\Service\EntrySummaryService;
 use App\Service\TimeBalanceService;
 use Mcp\Capability\Attribute\McpTool;
@@ -58,6 +59,7 @@ final readonly class LogTimeTool
         private ClockInterface $clock,
         private EntrySummaryService $entrySummaryService,
         private TimeBalanceService $timeBalanceService,
+        private DaySummaryService $daySummaryService,
     ) {
     }
 
@@ -120,12 +122,14 @@ final readonly class LogTimeTool
         $result = [] === $body ? ['success' => true] : $body;
 
         // Return the same context the user sees in the UI after a booking: the
-        // ticket's per-scope totals ("Info" popup) and the running time balance,
-        // both carrying any warnings the agent should surface.
+        // ticket's per-scope totals ("Info" popup), the booked day so far (so
+        // out-of-band bookings are visible without a second call), and the
+        // running time balance with any warnings the agent should surface.
         $entryId = $this->createdEntryId($body);
         if (null !== $entryId) {
             $result['ticket_info'] = $this->entrySummaryService->forEntry($entryId, (int) $user->getId())?->jsonSerialize();
         }
+        $result['day'] = $this->daySummaryService->forUser($user, $dto->date)->jsonSerialize();
         $result['balance'] = $this->timeBalanceService->forUser($user)->jsonSerialize();
 
         return $result;
