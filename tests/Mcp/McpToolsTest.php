@@ -24,11 +24,21 @@ use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
 use App\Security\ApiToken\ApiAccessToken;
+use Mcp\Capability\Attribute\McpTool;
 use Mcp\Exception\ToolCallException;
+use ReflectionClass;
 use Tests\AbstractWebTestCase;
 
 use function array_column;
+use function array_is_list;
+use function array_keys;
 use function array_values;
+use function basename;
+use function dirname;
+use function glob;
+use function is_string;
+use function sort;
+use function sprintf;
 
 /**
  * Integration tests for the MCP tools (ADR-021 Phase 5), exercised through the
@@ -44,10 +54,10 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $result = self::getContainer()->get(ListActivitiesTool::class)->listActivities();
 
-        self::assertNotEmpty($result);
-        self::assertArrayHasKey('id', $result[0]);
-        self::assertArrayHasKey('name', $result[0]);
-        self::assertArrayHasKey('needs_ticket', $result[0]);
+        self::assertNotEmpty($result['activities']);
+        self::assertArrayHasKey('id', $result['activities'][0]);
+        self::assertArrayHasKey('name', $result['activities'][0]);
+        self::assertArrayHasKey('needs_ticket', $result['activities'][0]);
     }
 
     public function testListActivitiesIsDeniedWithoutScope(): void
@@ -71,8 +81,8 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $result = self::getContainer()->get(ListProjectsTool::class)->listProjects();
 
-        self::assertNotEmpty($result);
-        self::assertContains(1, array_column($result, 'id'));
+        self::assertNotEmpty($result['projects']);
+        self::assertContains(1, array_column($result['projects'], 'id'));
     }
 
     public function testListProjectsIsDeniedWithoutScope(): void
@@ -89,7 +99,8 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $result = self::getContainer()->get(ListRecentEntriesTool::class)->listRecentEntries(30);
 
-        self::assertIsList($result);
+        self::assertArrayHasKey('entries', $result);
+        self::assertIsList($result['entries']);
     }
 
     public function testListRecentEntriesIsDeniedWithoutScope(): void
@@ -306,6 +317,72 @@ final class McpToolsTest extends AbstractWebTestCase
         self::assertArrayHasKey('balance', $result);
         self::assertIsArray($result['balance']);
         self::assertArrayHasKey('today', $result['balance']);
+    }
+
+    /**
+     * MCP structuredContent must be a JSON object at the top level — a bare
+     * array is rejected by strict clients (#573). Calls every registered tool
+     * and asserts an object-shaped (string-keyed) result; the reflection sweep
+     * below forces any future tool to join this guard.
+     */
+    public function testEveryToolReturnsATopLevelJsonObject(): void
+    {
+        $this->useToken(['entries:read', 'entries:write', 'projects:read', 'activities:read', 'reporting:read']);
+        $container = self::getContainer();
+
+        $created = $container->get(LogTimeTool::class)->logTime(project: '1', activity: '1', ticket: 'SA-5', durationMinutes: 15);
+        self::assertIsArray($created['result'] ?? null);
+        $entryId = $created['result']['id'];
+        self::assertIsInt($entryId);
+
+        $results = [
+            'delete_entry' => null, // called last — it removes the entry
+            'get_ticket_info' => $container->get(GetTicketInfoTool::class)->getTicketInfo($entryId),
+            'get_time_balance' => $container->get(GetTimeBalanceTool::class)->getTimeBalance(),
+            'list_activities' => $container->get(ListActivitiesTool::class)->listActivities(),
+            'list_projects' => $container->get(ListProjectsTool::class)->listProjects(),
+            'list_recent_entries' => $container->get(ListRecentEntriesTool::class)->listRecentEntries(),
+            'log_time' => $created,
+        ];
+        $results['delete_entry'] = $container->get(DeleteEntryTool::class)->deleteEntry($entryId);
+
+        foreach ($results as $tool => $result) {
+            self::assertIsArray($result, sprintf('%s: expected an array result', $tool));
+            self::assertNotSame([], $result, sprintf('%s: an empty result cannot prove object shape', $tool));
+            self::assertFalse(array_is_list($result), sprintf('%s must return a top-level JSON object, never a bare array (#573)', $tool));
+        }
+
+        $covered = array_keys($results);
+        sort($covered);
+        self::assertSame($this->declaredToolNames(), $covered, 'every #[McpTool] must be covered by this object-shape guard — add new tools here');
+    }
+
+    /**
+     * All tool names declared via #[McpTool] under src/Mcp/Tool, sorted.
+     *
+     * @return list<string>
+     */
+    private function declaredToolNames(): array
+    {
+        $names = [];
+        $files = glob(dirname(__DIR__, 2) . '/src/Mcp/Tool/*.php');
+        self::assertNotFalse($files);
+        foreach ($files as $file) {
+            /** @var class-string $class */
+            $class = 'App\\Mcp\\Tool\\' . basename($file, '.php');
+            foreach (new ReflectionClass($class)->getMethods() as $method) {
+                foreach ($method->getAttributes(McpTool::class) as $attribute) {
+                    $name = $attribute->newInstance()->name;
+                    if (is_string($name)) {
+                        $names[] = $name;
+                    }
+                }
+            }
+        }
+
+        sort($names);
+
+        return $names;
     }
 
     /**
