@@ -1695,6 +1695,23 @@ kbd {
   vertical-align: bottom;
 }
 
+/* Description absorbs EXACTLY the leftover width (the table is width:100%):
+   width:100% claims all slack after the other columns take their natural
+   width, and max-width:0 keeps the cell's own content out of the auto-layout
+   intrinsic sizing — so a long description can never blow the table wide, and
+   the ellipsis sits at the real column boundary instead of a guessed ch cap
+   (which clipped text right next to empty space in the same cell). min-width
+   keeps a readable floor; below it the table overflows and the thinning rungs
+   shrink the OTHER columns before the scroll safety-net engages. */
+.tracking-table td[data-col-key='description'],
+.tracking-table thead th[data-col-key='description'] {
+  width: 100%;
+  max-width: 0;
+  min-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Level 1 — tighten the x-padding one density tier before touching content.
    The density-scoped variants are needed because the density rules carry higher
    specificity than this class pair (attribute + class vs two classes). */
@@ -1736,14 +1753,13 @@ kbd {
 /* Levels 3+ — the pre-existing content ladder, shifted by the two new rungs. */
 .tracking-table.is-thin-3 .dt-full { display: none; }
 .tracking-table.is-thin-3 .dt-compact { display: inline; }
-.tracking-table.is-thin-4 [data-col-key='description'] .cell-trunc { max-width: 30ch; }
-.tracking-table.is-thin-5 [data-col-key='description'] .cell-trunc { max-width: 22ch; }
+/* Description no longer needs thinning rungs: the absorb pattern above sizes
+   it to the actual leftover width continuously, at every level. Levels 4, 5,
+   7, 9 and 11 are intentionally empty rungs now (the fit loop probes them
+   harmlessly); the remaining rungs shed the OTHER columns. */
 .tracking-table.is-thin-6 [data-col-key='project'] .tag-label { max-width: 18ch; }
 .tracking-table.is-thin-6 [data-col-key='customer'] .tag-label { max-width: 15ch; }
-.tracking-table.is-thin-7 [data-col-key='description'] .cell-trunc { max-width: 16ch; }
-.tracking-table.is-thin-9 [data-col-key='description'] .cell-trunc { max-width: 12ch; }
 .tracking-table.is-thin-10 [data-col-key='ticket'] .ticket-link { max-width: 10ch; }
-.tracking-table.is-thin-11 [data-col-key='description'] .cell-trunc { max-width: 9ch; }
 .tracking-table.is-thin-12 [data-col-key='duration'] { display: none; }
 .tracking-table.is-thin-13 [data-col-key='project'] .tag-label { max-width: 10ch; }
 .tracking-table.is-thin-13 [data-col-key='customer'] .tag-label { max-width: 11ch; }
