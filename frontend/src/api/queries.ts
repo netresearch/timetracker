@@ -324,7 +324,7 @@ export function trackingTicketSystemsQuery() {
   }
 }
 
-/** Summary scope row from POST /getSummary (minutes for total/own/estimation). */
+/** Summary scope row from GET /api/v2/entries/{id}/summary (minutes for total/own/estimation). */
 export interface SummaryScope {
   scope: string
   name: string

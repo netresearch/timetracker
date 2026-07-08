@@ -6,16 +6,24 @@ import type { AppConfig } from './config'
 import { setPaletteOpen } from './lib/commandPalette'
 import { setShortcutsHelpOpen } from './lib/shortcutsHelp'
 
-interface SummaryPeriod {
-  duration: number
-  /** Expected ("Soll") minutes through today; absent on older backends. */
-  target?: number
+/** One period from GET /api/v2/time-balance (ADR-022). */
+interface BalancePeriod {
+  /** Worked minutes (IST). */
+  ist: number
+  /** Expected minutes for the whole period. */
+  soll_total: number
+  /** Expected ("Soll") minutes accrued through today. */
+  soll_so_far: number
+  /** ist − soll_so_far, server-computed. */
+  diff: number
+  status: 'ok' | 'behind' | 'over'
 }
 
-interface TimeSummary {
-  today: SummaryPeriod
-  week: SummaryPeriod
-  month: SummaryPeriod
+interface TimeBalance {
+  today: BalancePeriod
+  week: BalancePeriod
+  month: BalancePeriod
+  warnings: string[]
 }
 
 type WorktimeStatus = 'ok' | 'under' | 'neutral'
@@ -102,9 +110,11 @@ function setBadge(loggedIn: boolean, userName: string): void {
 /**
  * Paint one worktime total from IST vs SOLL: tint the sidebar badge (is-ok /
  * is-under) and fill its row in the detail popover (IST / SOLL / signed Δ).
+ * SOLL is the "through today" figure (soll_so_far), so mid-week or mid-month
+ * the comparison stays like-with-like.
  */
-function applyWorktimeStatus(period: string, data: SummaryPeriod): void {
-  const status = worktimeStatus(data.duration, data.target)
+function applyWorktimeStatus(period: string, data: BalancePeriod): void {
+  const status = worktimeStatus(data.ist, data.soll_so_far)
   const item = document.querySelector(`.worktime-item[data-period="${period}"]`)
   const row = document.querySelector(`.worktime-detail-row[data-period="${period}"]`)
   for (const element of [item, row]) {
@@ -122,17 +132,9 @@ function applyWorktimeStatus(period: string, data: SummaryPeriod): void {
       cell.textContent = text
     }
   }
-  set('[data-wd="ist"]', formatDuration(data.duration))
-  // No target (weekend/holiday, or an older backend that omits it): show the
-  // actual, but leave SOLL/Δ as placeholders rather than implying a 0:00 target.
-  if (data.target === undefined) {
-    set('[data-wd="soll"]', '–')
-    set('[data-wd="delta"]', '–')
-
-    return
-  }
-  set('[data-wd="soll"]', `/ ${formatDuration(data.target)}`)
-  set('[data-wd="delta"]', formatSignedDuration(data.duration - data.target))
+  set('[data-wd="ist"]', formatDuration(data.ist))
+  set('[data-wd="soll"]', `/ ${formatDuration(data.soll_so_far)}`)
+  set('[data-wd="delta"]', formatSignedDuration(data.diff))
 }
 
 /**
@@ -228,14 +230,14 @@ export function wireWorktimeDetail(): void {
 // sums (loaded once on init) go stale until a full page reload (#446).
 export async function updateWorktime(): Promise<void> {
   try {
-    const summary = await getJson<TimeSummary>('/getTimeSummary')
-    setText('worktime-day', formatDuration(summary.today.duration))
-    setText('worktime-week', formatDuration(summary.week.duration))
+    const summary = await getJson<TimeBalance>('/api/v2/time-balance')
+    setText('worktime-day', formatDuration(summary.today.ist))
+    setText('worktime-week', formatDuration(summary.week.ist))
     // Month shows person-days only; the hours stay in the title for reference.
-    setText('worktime-month', formatDays(summary.month.duration))
+    setText('worktime-month', formatDays(summary.month.ist))
     const month = document.getElementById('worktime-month')
     if (month !== null) {
-      month.title = formatDuration(summary.month.duration)
+      month.title = formatDuration(summary.month.ist)
     }
     // Tint each total by IST vs SOLL and fill the detail popover (sidebar only;
     // the elements are absent/plain in the top bar, so this is a harmless no-op).

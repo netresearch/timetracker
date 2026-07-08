@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createEffect, createMemo, createSignal, For, on, onCleanup, onMount, Show, type JSX } from 'solid-js'
 
-import { apiErrorMessage, postForm, postJson, ValidationError } from '../api/client'
+import { apiErrorMessage, getJson, postForm, postJson, ValidationError } from '../api/client'
 import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, upsertSavedEntry, type NamedOption, type SavedEntryResult, type SummaryScope, type TrackingEntry } from '../api/queries'
 import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
@@ -899,9 +899,8 @@ export default function Tracking() {
   }
 
   // Alt+I: per-customer/project/activity/ticket totals for the cursor row (or
-  // the latest entry). /getSummary is a legacy endpoint that reads form params
-  // ($request->request->get('id')), so it must be POSTed as form-encoded — a
-  // JSON body leaves `id` null and the server answers all-zero totals.
+  // the latest entry), from GET /api/v2/entries/{id}/summary (ADR-022; also
+  // carries `estimate` and `warnings` beyond the four scopes shown here).
   async function showInfo(entry?: TrackingEntry): Promise<void> {
     const target = entry ?? activeOrLatestEntry()
     if (target === undefined) {
@@ -909,7 +908,7 @@ export default function Tracking() {
     }
     setPageError('')
     try {
-      const result = JSON.parse(await postForm('/getSummary', { id: num(target.id) })) as Record<string, SummaryScope>
+      const result = await getJson<Record<string, SummaryScope>>(`/api/v2/entries/${num(target.id)}/summary`)
       setSummary([result.customer, result.project, result.activity, result.ticket].filter((scope): scope is SummaryScope => scope != null))
     } catch (caught) {
       setPageError(apiErrorMessage(caught, m.app_load_error()))

@@ -28,12 +28,16 @@ interface MockData {
   projects?: unknown[]
   activities?: unknown[]
   ticketSystems?: unknown[]
+  summary?: unknown
 }
 
 function mockTracking(data: MockData): void {
   getJson.mockImplementation((path: string) => {
     if (path.startsWith('/getData/days/')) {
       return Promise.resolve(data.entries ?? [])
+    }
+    if (/^\/api\/v2\/entries\/\d+\/summary$/.test(path)) {
+      return Promise.resolve(data.summary ?? {})
     }
     switch (path) {
       case '/getCustomers':
@@ -377,7 +381,7 @@ describe('Tracking (Worklog grid)', () => {
 
     await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.anything()))
     // The save also re-pulls the server header's totals (otherwise stale until F5).
-    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/getTimeSummary'))
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/api/v2/time-balance'))
 
     unmount()
   })
@@ -642,23 +646,27 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('Alt+I requests the summary as form-encoded (legacy $request->request) and shows it', async () => {
-    mockApi()
-    // /getSummary reads form params, so the client uses postForm and returns the
-    // JSON *text*; a JSON body would leave the server's id null → all-zero totals.
-    postForm.mockResolvedValue(JSON.stringify({
-      customer: { scope: 'customer', name: 'ACME', entries: 5, total: 300, own: 120, estimation: 0 },
-      project: { scope: 'project', name: 'Site', entries: 3, total: 180, own: 90, estimation: 600 },
-      activity: { scope: 'activity', name: 'Dev', entries: 2, total: 120, own: 60, estimation: 0 },
-      ticket: { scope: 'ticket', name: 'ABC-1', entries: 1, total: 60, own: 60, estimation: 0 },
-    }))
+  it('Alt+I fetches the v2 entry summary and shows it', async () => {
+    mockTracking({
+      entries: [{ entry: DEFAULT_ENTRY }],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+      summary: {
+        customer: { scope: 'customer', name: 'ACME', entries: 5, total: 300, own: 120, estimation: 0 },
+        project: { scope: 'project', name: 'Site', entries: 3, total: 180, own: 90, estimation: 600 },
+        activity: { scope: 'activity', name: 'Dev', entries: 2, total: 120, own: 60, estimation: 0 },
+        ticket: { scope: 'ticket', name: 'ABC-1', entries: 1, total: 60, own: 60, estimation: 0 },
+        estimate: { estimation: 600, booked_total: 180, percent: 30, status: 'ok' },
+        warnings: [],
+      },
+    })
     const { getByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
 
     fireEvent.keyDown(document, { key: 'i', altKey: true })
 
-    expect(postForm).toHaveBeenCalledWith('/getSummary', { id: 1 })
-    expect(postJson).not.toHaveBeenCalledWith('/getSummary', expect.anything())
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/api/v2/entries/1/summary'))
     // The summary dialog is portalled to document.body → query via screen.
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('ACME')).toBeInTheDocument()
@@ -771,16 +779,13 @@ describe('Tracking (Worklog grid)', () => {
       projects: [{ project: { id: 4, name: 'Site' } }],
       activities: [{ activity: { id: 5, name: 'Dev' } }],
     })
-    postForm.mockResolvedValue(JSON.stringify({
-      customer: { scope: 'customer', name: 'ACME', entries: 1, total: 60, own: 60, estimation: 0 },
-    }))
     const { container, getByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Second' })).toBeInTheDocument())
 
     focusBodyRow(container, 1) // cursor on the 2nd row (id 2)
     fireEvent.keyDown(document, { key: 'i', altKey: true })
 
-    expect(postForm).toHaveBeenCalledWith('/getSummary', { id: 2 })
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/api/v2/entries/2/summary'))
 
     unmount()
   })
