@@ -16,6 +16,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 
 use function array_map;
+use function array_values;
 use function max;
 use function min;
 
@@ -49,9 +50,9 @@ final readonly class ListRecentEntriesTool
 
         $days = max(1, min(90, $days));
 
-        return ['entries' => array_map(
+        return ['entries' => array_values(array_map(
             static fn (Entry $entry): array => $entry->toArray(),
             $this->entryRepository->getEntriesByUser($user, $days, false),
-        )];
+        ))];
     }
 }
