@@ -1658,6 +1658,11 @@ kbd {
    shared admin/summary tables are untouched. */
 .tracking-table td, .tracking-table th { white-space: nowrap; }
 .tracking-table .dt-mid, .tracking-table .dt-short { display: none; }
+.tracking-table .th-icon { display: none; }
+.tracking-table .th-icon .action-ico {
+  height: 1.1em;
+  width: 1.1em;
+}
 .tracking-table .cell-trunc,
 .tracking-table [data-col-key='project'] .tag-label,
 .tracking-table [data-col-key='customer'] .tag-label,
@@ -1690,6 +1695,22 @@ kbd {
 .tracking-table.is-thin-2 .action-set { display: none; }
 .tracking-table.is-thin-2 .action-menu { display: inline-flex; }
 .tracking-table.is-thin-2 .row-actions .action-slot-hidden { display: none; }
+.tracking-table.is-thin-2 thead [data-col-key='actions'] .th-icon,
+.tracking-table.is-thin-3 thead [data-col-key='date'] .th-icon {
+  display: inline-flex;
+  justify-content: center;
+  vertical-align: text-bottom;
+}
+.tracking-table.is-thin-2 thead [data-col-key='actions'] .th-label,
+.tracking-table.is-thin-3 thead [data-col-key='date'] .th-label {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
 /* Levels 3+ — the pre-existing content ladder, shifted by the two new rungs. */
 .tracking-table.is-thin-3 .dt-full { display: none; }
 .tracking-table.is-thin-3 .dt-mid { display: inline; }

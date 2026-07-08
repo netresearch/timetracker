@@ -51,9 +51,10 @@ export function ProlongIcon(): JSX.Element {
   return <Icon><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></Icon>
 }
 
-// Info: an "i" in a circle — show the summary for this entry's ticket.
+// Info: a document with list lines — show the summary for this entry's ticket.
+// Kept deliberately non-circular so it cannot be confused with Prolong's clock.
 export function InfoIcon(): JSX.Element {
-  return <Icon><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 7.5h.01" /></Icon>
+  return <Icon><path d="M7 3h7l3 3v15H7z" /><path d="M14 3v4h3" /><path d="M9 11h6" /><path d="M9 15h6" /><path d="M9 19h4" /></Icon>
 }
 
 // Refresh: a circular arrow — reload the worklog entries.
@@ -71,6 +72,16 @@ export function ResetIcon(): JSX.Element {
 // stroked circles would render as hollow rings.
 export function KebabIcon(): JSX.Element {
   return <Icon><circle cx="12" cy="5" r="1.8" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none" /><circle cx="12" cy="19" r="1.8" fill="currentColor" stroke="none" /></Icon>
+}
+
+// Calendar: compact column header for dates.
+export function CalendarIcon(): JSX.Element {
+  return <Icon><path d="M7 3v4M17 3v4" /><path d="M4 8h16" /><path d="M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" /></Icon>
+}
+
+// Tools: compact column header for row actions.
+export function ToolsIcon(): JSX.Element {
+  return <Icon><path d="M14.7 6.3a4 4 0 0 0-5 5L4 17v3h3l5.7-5.7a4 4 0 0 0 5-5l-2.4 2.4-2.8-2.8z" /></Icon>
 }
 
 // Passkey (person + key): the standard passkey glyph, from Google's Material
