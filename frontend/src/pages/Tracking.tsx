@@ -1218,7 +1218,7 @@ export default function Tracking() {
                               data-row-id={String(id)}
                               data-col-key={col.key}
                               data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
-                              title={col.key === 'date' ? dateParts(str(editor.overlayRow(entry).date)).full : undefined}
+                              title={col.key === 'date' ? displayDate(str(editor.overlayRow(entry).date)) : undefined}
                               onDblClick={() => { if (editable) editor.beginEdit(id, col.key) }}
                             >
                               <Show
