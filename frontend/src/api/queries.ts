@@ -334,6 +334,21 @@ export interface SummaryScope {
   estimation: number
 }
 
+/** Full response of GET /api/v2/entries/{id}/summary (ADR-022). */
+export interface EntrySummaryResponse {
+  customer: SummaryScope
+  project: SummaryScope
+  activity: SummaryScope
+  ticket: SummaryScope
+  estimate: {
+    estimation: number
+    booked_total: number
+    percent: number | null
+    status: 'none' | 'ok' | 'near' | 'over'
+  }
+  warnings: string[]
+}
+
 /** Shared filter shape for every interpretation view. */
 export interface InterpretationFilters {
   datestart: string

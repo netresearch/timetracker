@@ -30,6 +30,7 @@ use Symfony\Contracts\Service\Attribute\Required;
 
 use function assert;
 use function is_array;
+use function sprintf;
 
 final class GetSummaryAction extends BaseController
 {
@@ -67,7 +68,7 @@ final class GetSummaryAction extends BaseController
 
         $entryId = $request->request->get('id');
         if (null === $entryId || '' === $entryId || false === $entryId) {
-            return $this->deprecated(new JsonResponse($data));
+            return $this->deprecated(new JsonResponse($data), null);
         }
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
@@ -80,7 +81,7 @@ final class GetSummaryAction extends BaseController
         if (!$entry instanceof Entry || $entry->getUser()?->getId() !== $userId) {
             $message = $this->translator->trans('No entry for id.');
 
-            return $this->deprecated(new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND));
+            return $this->deprecated(new Error($message, \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND), (int) $entryId);
         }
 
         $data = $objectRepository->getEntrySummary((int) $entryId, $userId, $data);
@@ -105,7 +106,7 @@ final class GetSummaryAction extends BaseController
             }
         }
 
-        return $this->deprecated(new JsonResponse($data));
+        return $this->deprecated(new JsonResponse($data), (int) $entryId);
     }
 
     /**
@@ -118,10 +119,14 @@ final class GetSummaryAction extends BaseController
      *
      * @return T
      */
-    private function deprecated(\Symfony\Component\HttpFoundation\Response $response): \Symfony\Component\HttpFoundation\Response
+    private function deprecated(\Symfony\Component\HttpFoundation\Response $response, ?int $entryId): \Symfony\Component\HttpFoundation\Response
     {
         $response->headers->set('Deprecation', 'true');
-        $response->headers->set('Link', '</api/v2/entries/{id}/summary>; rel="successor-version"');
+        // A concrete URI only — '{id}' URI templates are not valid in a Link
+        // target, so without an entry id the header carries no Link.
+        if (null !== $entryId) {
+            $response->headers->set('Link', sprintf('</api/v2/entries/%d/summary>; rel="successor-version"', $entryId));
+        }
 
         return $response;
     }
