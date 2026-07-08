@@ -124,11 +124,17 @@ npm run e2e            # playwright test
 npm run e2e:headed     # with browser window
 npm run e2e:ui         # Playwright UI mode
 npm run e2e:debug      # step debugger
+npm run screenshots -- --route /ui/tracking --out docs/images/pr-574 --name worklog
 ```
 
 `E2E_BASE_URL` overrides the target (default `http://localhost:8766`,
 [playwright.config.ts](../playwright.config.ts)); outside CI, Playwright
 starts the stack itself via `make e2e-up` if it is not already running.
+
+The screenshot helper in [e2e/tools/capture-screenshots.mjs](../e2e/tools/capture-screenshots.mjs)
+logs in with the E2E defaults, waits for the target UI selector, and captures
+desktop/reduced viewport PNGs. Use `npm run screenshots -- --help` for routes,
+credentials, selectors, output names, and viewport overrides.
 
 Backend coverage during e2e runs is optional: start the stack with
 `COVERAGE_ENABLED=1 XDEBUG_MODE=coverage` and fetch the report from

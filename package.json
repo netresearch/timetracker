@@ -13,6 +13,7 @@
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
     "e2e:ui": "playwright test --ui",
-    "e2e:debug": "playwright test --debug"
+    "e2e:debug": "playwright test --debug",
+    "screenshots": "node e2e/tools/capture-screenshots.mjs"
   }
 }
