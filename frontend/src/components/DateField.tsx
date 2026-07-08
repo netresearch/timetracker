@@ -107,6 +107,9 @@ export function DateField(props: DateFieldProps) {
       disabled={props.disabled}
       aria-invalid={invalid() ? 'true' : undefined}
       placeholder={dateFormatPlaceholder()}
+      // Width follows the content so custom date patterns (up to 32 chars) are
+      // never clipped; the CSS min-width keeps ISO/DE compact.
+      size={Math.max(dateFormatPlaceholder().length, text().length, 10)}
       value={text()}
       onInput={(e) => {
         setText(e.currentTarget.value)

@@ -4473,19 +4473,21 @@ th[aria-sort='descending'] .th-sort-glyph {
 
 /* The input inside the pill is borderless/outline-less, so the wrap carries the
    keyboard focus indicator (WCAG 2.4.7); the danger variant wins when invalid. */
-.date-field-wrap:focus-within {
+.date-field-wrap:has(> input.date-field:focus-visible) {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
 
-.date-field-wrap:has(> input.date-field[aria-invalid='true']):focus-within {
+.date-field-wrap:has(> input.date-field[aria-invalid='true']:focus-visible) {
   outline-color: var(--color-danger, #c0392b);
 }
 
 .date-field-wrap > input.date-field {
-  /* Fits the full date ("2026-07-08" / "08.07.2026") plus a little slack. */
-  width: 12ch;
-  min-width: 12ch;
+  /* Width follows the input's `size` attribute (set from the active format's
+     placeholder in DateField), so custom date patterns up to 32 chars are not
+     clipped; a floor keeps ISO/DE compact. */
+  min-width: 10ch;
+  max-width: 100%;
   border: 0;
   background: transparent;
   padding: 0.34rem 0.4rem 0.34rem 0.55rem;
