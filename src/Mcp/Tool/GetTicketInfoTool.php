@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tool;
 
+use App\Dto\Response\EntrySummaryDto;
 use App\Mcp\ScopeGuard;
 use App\Service\EntrySummaryService;
 use Mcp\Capability\Attribute\McpTool;
@@ -47,10 +48,10 @@ final readonly class GetTicketInfoTool
         $user = $this->scopeGuard->requireScope('reporting:read');
 
         $info = $this->entrySummaryService->forEntry($entryId, (int) $user->getId());
-        if (null === $info) {
+        if (!$info instanceof EntrySummaryDto) {
             throw new ToolCallException(sprintf('No entry with id %d.', $entryId));
         }
 
-        return $info;
+        return $info->jsonSerialize();
     }
 }

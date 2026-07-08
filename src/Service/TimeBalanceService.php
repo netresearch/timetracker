@@ -9,8 +9,11 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\Response\PeriodBalanceDto;
+use App\Dto\Response\TimeBalanceDto;
 use App\Entity\Contract;
 use App\Entity\User;
+use App\Enum\BalanceStatus;
 use App\Enum\Period;
 use App\Repository\ContractRepository;
 use App\Repository\EntryRepository;
@@ -20,7 +23,9 @@ use DateTimeInterface;
 use Doctrine\DBAL\Connection;
 use Doctrine\Persistence\ManagerRegistry;
 
+use function abs;
 use function assert;
+use function intdiv;
 use function is_string;
 use function max;
 use function min;
@@ -29,13 +34,14 @@ use function substr;
 
 /**
  * The authenticated user's worked-vs-target balance for today/week/month
- * (ADR-021 Phase 5, the get_time_balance MCP tool + log_time enrichment).
+ * (ADR-021 Phase 5 / ADR-022 — the get_time_balance MCP tool, the
+ * GET /api/v2/time-balance endpoint, and the log_time enrichment).
  *
  * For each period it reports IST (worked minutes), SOLL for the whole period and
- * SOLL through today ("so far"), the difference, and a status the agent can act
- * on: `behind` when IST < SOLL-so-far, `over` when IST > SOLL-total, else `ok`.
- * SOLL comes from the user's contracts minus public holidays, the same source as
- * /getTimeSummary and the /ui/month balance.
+ * SOLL through today ("so far"), the difference, and a status the consumer can
+ * act on: `behind` when IST < SOLL-so-far, `over` when IST > SOLL-total, else
+ * `ok`. SOLL comes from the user's contracts minus public holidays, the same
+ * source as /getTimeSummary and the /ui/month balance.
  */
 final readonly class TimeBalanceService
 {
@@ -47,15 +53,7 @@ final readonly class TimeBalanceService
     ) {
     }
 
-    /**
-     * @return array{
-     *     today: array{ist: int, soll_total: int, soll_so_far: int, diff: int, status: string},
-     *     week:  array{ist: int, soll_total: int, soll_so_far: int, diff: int, status: string},
-     *     month: array{ist: int, soll_total: int, soll_so_far: int, diff: int, status: string},
-     *     warnings: list<string>
-     * }
-     */
-    public function forUser(User $user): array
+    public function forUser(User $user): TimeBalanceDto
     {
         $userId = (int) $user->getId();
         $today = $this->clock->today();
@@ -75,15 +73,15 @@ final readonly class TimeBalanceService
         ];
 
         $warnings = [];
-        foreach ($periods as $label => $p) {
-            if ('behind' === $p['status']) {
-                $warnings[] = sprintf('%s: behind target by %s (worked %s, expected %s so far).', $label, $this->hm(-$p['diff']), $this->hm($p['ist']), $this->hm($p['soll_so_far']));
-            } elseif ('over' === $p['status']) {
-                $warnings[] = sprintf('%s: over target (worked %s, target %s).', $label, $this->hm($p['ist']), $this->hm($p['soll_total']));
+        foreach ($periods as $label => $period) {
+            if (BalanceStatus::Behind === $period->status) {
+                $warnings[] = sprintf('%s: behind target by %s (worked %s, expected %s so far).', $label, $this->hm(-$period->diff), $this->hm($period->ist), $this->hm($period->sollSoFar));
+            } elseif (BalanceStatus::Over === $period->status) {
+                $warnings[] = sprintf('%s: over target (worked %s, target %s).', $label, $this->hm($period->ist), $this->hm($period->sollTotal));
             }
         }
 
-        return $periods + ['warnings' => $warnings];
+        return new TimeBalanceDto($periods['today'], $periods['week'], $periods['month'], $warnings);
     }
 
     /** Minutes as "Hh Mm" (e.g. 95 → "1h 35m"). */
@@ -98,29 +96,27 @@ final readonly class TimeBalanceService
      * @param array{duration: int, count: int} $work
      * @param Contract[]                       $contracts
      * @param array<string, true>              $holidays
-     *
-     * @return array{ist: int, soll_total: int, soll_so_far: int, diff: int, status: string}
      */
-    private function period(array $work, array $contracts, array $holidays, DateTimeImmutable $start, DateTimeImmutable $end, DateTimeImmutable $today): array
+    private function period(array $work, array $contracts, array $holidays, DateTimeImmutable $start, DateTimeImmutable $end, DateTimeImmutable $today): PeriodBalanceDto
     {
         $ist = $work['duration'];
         $sollTotal = $this->expectedWorkTimeCalculator->minutesForRange($contracts, $holidays, $start, $end);
         $sollSoFar = $this->expectedWorkTimeCalculator->minutesForRange($contracts, $holidays, $start, min($today, $end));
 
-        $status = 'ok';
+        $status = BalanceStatus::Ok;
         if ($ist > $sollTotal && $sollTotal > 0) {
-            $status = 'over';
+            $status = BalanceStatus::Over;
         } elseif ($ist < $sollSoFar) {
-            $status = 'behind';
+            $status = BalanceStatus::Behind;
         }
 
-        return [
-            'ist' => $ist,
-            'soll_total' => $sollTotal,
-            'soll_so_far' => $sollSoFar,
-            'diff' => $ist - $sollSoFar,
-            'status' => $status,
-        ];
+        return new PeriodBalanceDto(
+            ist: $ist,
+            sollTotal: $sollTotal,
+            sollSoFar: $sollSoFar,
+            diff: $ist - $sollSoFar,
+            status: $status,
+        );
     }
 
     /**

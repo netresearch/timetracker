@@ -9,21 +9,25 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\Response\EntrySummaryDto;
+use App\Dto\Response\EstimateDto;
+use App\Dto\Response\ScopeSummaryDto;
 use App\Entity\Entry;
+use App\Enum\EstimateStatus;
 use App\Repository\EntryRepository;
 
-use function is_int;
-use function is_string;
+use function round;
 use function sprintf;
 
 /**
  * The per-scope booking aggregation shown in the tracking UI's "Info" (I) popup
  * for an entry — Customer / Project / Activity / Ticket, each with the user's own
  * booked minutes, everyone's total, and (project only) the estimate (ADR-021
- * Phase 5, the get_ticket_info MCP tool + log_time enrichment).
+ * Phase 5 / ADR-022 — the get_ticket_info MCP tool, the
+ * GET /api/v2/entries/{id}/summary endpoint, and the log_time enrichment).
  *
  * Wraps EntryRepository::getEntrySummary and adds a project-estimate status the
- * agent can act on: `over` at/above the estimate, `near` from 90 %, else `ok`
+ * consumer can act on: `over` at/above the estimate, `near` from 90 %, else `ok`
  * (or `none` when the project has no estimate).
  */
 final readonly class EntrySummaryService
@@ -35,22 +39,14 @@ final readonly class EntrySummaryService
     }
 
     /**
-     * @return array{
-     *     customer: array<string, mixed>,
-     *     project: array<string, mixed>,
-     *     activity: array<string, mixed>,
-     *     ticket: array<string, mixed>,
-     *     estimate: array{estimation: int, booked_total: int, percent: int|null, status: string},
-     *     warnings: list<string>
-     * }|null null when the entry does not exist
+     * Scoped to the caller's own entries: getEntrySummary aggregates the
+     * customer/project/activity/ticket totals across all users, so returning a
+     * summary for an entry the caller does not own would leak other users'
+     * scope names and totals (IDOR). "Not owned" reads as "not found" (null).
      */
-    public function forEntry(int $entryId, int $userId): ?array
+    public function forEntry(int $entryId, int $userId): ?EntrySummaryDto
     {
         $entry = $this->entryRepository->find($entryId);
-        // Scope to the caller's own entries: getEntrySummary aggregates the
-        // customer/project/activity/ticket totals across all users, so returning
-        // a summary for an entry the caller does not own would leak other users'
-        // scope names and totals (IDOR). Treat "not owned" as "not found".
         if (!$entry instanceof Entry || $entry->getUser()?->getId() !== $userId) {
             return null;
         }
@@ -63,57 +59,46 @@ final readonly class EntrySummaryService
         ];
 
         $summary = $this->entryRepository->getEntrySummary($entryId, $userId, $seed);
-        $project = $summary['project'] ?? [];
+        $project = ScopeSummaryDto::fromRow('project', $summary['project'] ?? []);
         $estimate = $this->estimate($project);
 
-        return [
-            'customer' => $summary['customer'] ?? [],
-            'project' => $project,
-            'activity' => $summary['activity'] ?? [],
-            'ticket' => $summary['ticket'] ?? [],
-            'estimate' => $estimate,
-            'warnings' => $this->warnings($project, $estimate),
-        ];
+        return new EntrySummaryDto(
+            customer: ScopeSummaryDto::fromRow('customer', $summary['customer'] ?? []),
+            project: $project,
+            activity: ScopeSummaryDto::fromRow('activity', $summary['activity'] ?? []),
+            ticket: ScopeSummaryDto::fromRow('ticket', $summary['ticket'] ?? []),
+            estimate: $estimate,
+            warnings: $this->warnings($project->name, $estimate),
+        );
     }
 
     /**
-     * @param array<string, mixed>                                                         $project
-     * @param array{estimation: int, booked_total: int, percent: int|null, status: string} $estimate
-     *
      * @return list<string>
      */
-    private function warnings(array $project, array $estimate): array
+    private function warnings(string $projectName, EstimateDto $estimate): array
     {
-        $name = is_string($project['name'] ?? null) ? $project['name'] : 'project';
+        $name = '' !== $projectName ? $projectName : 'project';
 
-        return match ($estimate['status']) {
-            'over' => [sprintf('Project "%s" is over its estimate (%d%% — %d of %d min booked).', $name, (int) $estimate['percent'], $estimate['booked_total'], $estimate['estimation'])],
-            'near' => [sprintf('Project "%s" is near its estimate (%d%%).', $name, (int) $estimate['percent'])],
+        return match ($estimate->status) {
+            EstimateStatus::Over => [sprintf('Project "%s" is over its estimate (%d%% — %d of %d min booked).', $name, (int) $estimate->percent, $estimate->bookedTotal, $estimate->estimation)],
+            EstimateStatus::Near => [sprintf('Project "%s" is near its estimate (%d%%).', $name, (int) $estimate->percent)],
             default => [],
         };
     }
 
-    /**
-     * @param array<string, mixed> $project
-     *
-     * @return array{estimation: int, booked_total: int, percent: int|null, status: string}
-     */
-    private function estimate(array $project): array
+    private function estimate(ScopeSummaryDto $project): EstimateDto
     {
-        $estimation = is_int($project['estimation'] ?? null) ? $project['estimation'] : 0;
-        $total = is_int($project['total'] ?? null) ? $project['total'] : 0;
-
-        if ($estimation <= 0) {
-            return ['estimation' => 0, 'booked_total' => $total, 'percent' => null, 'status' => 'none'];
+        if ($project->estimation <= 0) {
+            return new EstimateDto(estimation: 0, bookedTotal: $project->total, percent: null, status: EstimateStatus::None);
         }
 
-        $percent = (int) round($total / $estimation * 100);
+        $percent = (int) round($project->total / $project->estimation * 100);
         $status = match (true) {
-            $total >= $estimation => 'over',
-            $percent >= self::NEAR_THRESHOLD_PERCENT => 'near',
-            default => 'ok',
+            $project->total >= $project->estimation => EstimateStatus::Over,
+            $percent >= self::NEAR_THRESHOLD_PERCENT => EstimateStatus::Near,
+            default => EstimateStatus::Ok,
         };
 
-        return ['estimation' => $estimation, 'booked_total' => $total, 'percent' => $percent, 'status' => $status];
+        return new EstimateDto(estimation: $project->estimation, bookedTotal: $project->total, percent: $percent, status: $status);
     }
 }

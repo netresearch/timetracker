@@ -91,9 +91,10 @@ describe('updateWorktime', () => {
   it('tints each total by IST vs SOLL and fills the detail popover', async () => {
     renderWorktime()
     vi.mocked(getJson).mockResolvedValue({
-      today: { duration: 450, target: 420 },
-      week: { duration: 1935, target: 2400 },
-      month: { duration: 5760, target: 9600 },
+      today: { ist: 450, soll_total: 420, soll_so_far: 420, diff: 30, status: 'over' },
+      week: { ist: 1935, soll_total: 2400, soll_so_far: 2400, diff: -465, status: 'behind' },
+      month: { ist: 5760, soll_total: 9600, soll_so_far: 9600, diff: -3840, status: 'behind' },
+      warnings: [],
     })
 
     await updateWorktime()
@@ -110,12 +111,13 @@ describe('updateWorktime', () => {
     expect(row.querySelector('[data-wd="delta"]')?.textContent).toBe('+0:30')
   })
 
-  it('leaves a period neutral when the backend omits its target', async () => {
+  it('leaves a period neutral when its SOLL so far is zero (weekend/holiday)', async () => {
     renderWorktime()
     vi.mocked(getJson).mockResolvedValue({
-      today: { duration: 450 },
-      week: { duration: 1935 },
-      month: { duration: 5760 },
+      today: { ist: 450, soll_total: 0, soll_so_far: 0, diff: 450, status: 'over' },
+      week: { ist: 1935, soll_total: 0, soll_so_far: 0, diff: 1935, status: 'over' },
+      month: { ist: 5760, soll_total: 0, soll_so_far: 0, diff: 5760, status: 'over' },
+      warnings: [],
     })
 
     await updateWorktime()

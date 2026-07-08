@@ -714,53 +714,66 @@ A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracke
 
 **Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
 
-### POST /getSummary
-**Purpose**: Generate time summary report
+### POST /getSummary — deprecated
+**Deprecated** (ADR-022): superseded by [`GET /api/v2/entries/{id}/summary`](#get-apiv2entriesidsummary); removal in v7. Responses carry a `Deprecation: true` header.
 
-**Method**: `POST` only (route `_getSummary_attr`, `methods: ['POST']`)
+**Purpose**: Per-scope booking totals (customer/project/activity/ticket) for one of the caller's own time entries — the tracking UI's "Info" popup
 
-**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
+**Method**: `POST` only (route `_getSummary_attr`, `methods: ['POST']`), form-encoded `id`
 
-**Response (200 OK)**:
-```json
-{
-  "summary": {
-    "totalHours": 160.5,
-    "totalMinutes": 9630,
-    "averageDaily": 8.0,
-    "workingDays": 20
-  },
-  "breakdown": [
-    {
-      "customer": "Customer Name",
-      "project": "Project Name",
-      "hours": 40.0,
-      "percentage": 25.0
-    }
-  ]
-}
-```
+**Authentication**: Required (`IS_AUTHENTICATED_FULLY`); scoped to the caller's own entries — a foreign or unknown entry id answers `404`
 
-### GET /getTimeSummary
-**Purpose**: Get time summary for current user
+**Response (200 OK)**: `customer` / `project` / `activity` / `ticket` objects, each `{scope, name, entries, total, own, estimation}` (minutes); `project.quota` is a formatted percentage string when the project has an estimate
+
+### GET /getTimeSummary — deprecated
+**Deprecated** (ADR-022): superseded by [`GET /api/v2/time-balance`](#get-apiv2time-balance); removal in v7. Responses carry a `Deprecation: true` header.
+
+**Purpose**: Get worked minutes and target for today/week/month
 
 **Response (200 OK)**:
 ```json
 {
-  "today": {
-    "hours": 8.5,
-    "minutes": 510
-  },
-  "week": {
-    "hours": 42.0,
-    "minutes": 2520
-  },
-  "month": {
-    "hours": 168.0,
-    "minutes": 10080
-  }
+  "today": { "duration": 450, "count": 3, "target": 480 },
+  "week": { "duration": 1935, "count": 12, "target": 2400 },
+  "month": { "duration": 5760, "count": 40, "target": 9600 }
 }
 ```
+
+### GET /api/v2/time-balance
+**Purpose**: The authenticated user's worked-vs-target balance for today, this week and this month (ADR-022; same numbers as the header display and the `get_time_balance` MCP tool)
+
+**Authentication**: Session, or Bearer PAT with `reporting:read`
+
+**Response (200 OK)**:
+```json
+{
+  "today": { "ist": 450, "soll_total": 480, "soll_so_far": 480, "diff": -30, "status": "behind" },
+  "week": { "ist": 1935, "soll_total": 2400, "soll_so_far": 960, "diff": 975, "status": "ok" },
+  "month": { "ist": 5760, "soll_total": 9600, "soll_so_far": 1440, "diff": 4320, "status": "ok" },
+  "warnings": ["today: behind target by 0h 30m (worked 7h 30m, expected 8h 00m so far)."]
+}
+```
+
+`status` per period: `behind` (IST below the SOLL accrued so far), `over` (IST above the whole period's SOLL), else `ok`.
+
+### GET /api/v2/entries/{id}/summary
+**Purpose**: Per-scope booking totals and estimate verdict for one of the caller's own entries (ADR-022; the tracking UI's "Info" popup and the `get_ticket_info` MCP tool)
+
+**Authentication**: Session, or Bearer PAT with `reporting:read`. Owner-scoped: a foreign or unknown entry id answers `404` (no existence disclosure).
+
+**Response (200 OK)**:
+```json
+{
+  "customer": { "scope": "customer", "name": "ACME", "entries": 5, "total": 300, "own": 120, "estimation": 0 },
+  "project": { "scope": "project", "name": "Site", "entries": 3, "total": 180, "own": 90, "estimation": 600 },
+  "activity": { "scope": "activity", "name": "Dev", "entries": 2, "total": 120, "own": 60, "estimation": 0 },
+  "ticket": { "scope": "ticket", "name": "ABC-1", "entries": 1, "total": 60, "own": 60, "estimation": 0 },
+  "estimate": { "estimation": 600, "booked_total": 180, "percent": 30, "status": "ok" },
+  "warnings": []
+}
+```
+
+`estimate.status`: `none` (no estimate), `ok`, `near` (≥ 90 %), `over` (at/above the estimate). `total` spans all users; `own` is the caller's share.
 
 ### GET /getTicketTimeSummary/{ticket}
 **Purpose**: Get time summary for specific ticket

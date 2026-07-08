@@ -36,6 +36,6 @@ final readonly class GetTimeBalanceTool
     {
         $user = $this->scopeGuard->requireScope('reporting:read');
 
-        return $this->timeBalanceService->forUser($user);
+        return $this->timeBalanceService->forUser($user)->jsonSerialize();
     }
 }

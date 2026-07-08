@@ -169,6 +169,8 @@ test.describe('Time Summary', () => {
   test('/getTimeSummary should return correct format', async ({ page }) => {
     const response = await page.request.get('/getTimeSummary');
     expect(response.ok()).toBe(true);
+    // Deprecated v1 endpoint (ADR-022) — signalled per response until removal in v7.
+    expect(response.headers()['deprecation']).toBe('true');
 
     const data = await response.json();
 
@@ -187,6 +189,21 @@ test.describe('Time Summary', () => {
       week: data.week.duration,
       month: data.month.duration,
     });
+  });
+
+  test('/api/v2/time-balance should return the v2 balance shape', async ({ page }) => {
+    const response = await page.request.get('/api/v2/time-balance');
+    expect(response.ok()).toBe(true);
+
+    const data = await response.json();
+
+    expect(data).toHaveProperty('warnings');
+    for (const period of ['today', 'week', 'month'] as const) {
+      expect(data).toHaveProperty(period);
+      for (const key of ['ist', 'soll_total', 'soll_so_far', 'diff', 'status'] as const) {
+        expect(data[period]).toHaveProperty(key);
+      }
+    }
   });
 
   test('/getTicketTimeSummary should return ticket times', async ({ page }) => {

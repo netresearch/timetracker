@@ -9,79 +9,78 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
-use App\Entity\Entry;
+use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\CreatesTestEntries;
 
-use function assert;
-use function is_array;
+use function json_decode;
 
 /**
+ * POST /getSummary — deprecated v1 endpoint (ADR-022): quota formatting and
+ * the backported owner scoping (a foreign entry id reads as 404).
+ *
  * @internal
  *
  * @coversNothing
  */
 final class DefaultControllerSummaryTest extends AbstractWebTestCase
 {
+    use CreatesTestEntries;
+
     public function testGetSummaryActionWithProjectEstimationComputesQuota(): void
     {
-        $container = $this->client->getContainer();
-        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
-        $doctrine = $container->get('doctrine');
-        $em = $doctrine->getManager();
-        $entry = $em->getRepository(Entry::class)->findOneBy([]);
-        if (null === $entry) {
-            self::markTestSkipped('No entries found in the database.');
-        }
+        $project = $this->requestOwnProjectSummary(estimation: 300);
 
-        $project = $entry->getProject();
-        self::assertNotNull($project, 'Project should not be null');
-        // Ensure estimation is set to a non-zero value
-        $project->setEstimation(300);
-
-        $em->persist($project);
-        $em->flush();
-
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/getSummary', ['id' => $entry->getId()]);
-        $this->assertStatusCode(200);
-
-        $response = json_decode((string) $this->client->getResponse()->getContent(), true);
-        self::assertIsArray($response);
-        self::assertArrayHasKey('project', $response);
-        assert(is_array($response['project']));
-        self::assertArrayHasKey('quota', $response['project']);
-        $quota = $response['project']['quota'];
+        self::assertArrayHasKey('quota', $project);
+        $quota = $project['quota'];
         // When estimation is set, quota should be a percentage string
         self::assertIsString($quota);
         self::assertStringEndsWith('%', $quota);
+        // Deprecated endpoint (ADR-022 §5) — consumers see it at call time.
+        self::assertSame('true', $this->client->getResponse()->headers->get('Deprecation'));
     }
 
     public function testGetSummaryActionWithoutEstimationLeavesZeroQuota(): void
     {
-        $container = $this->client->getContainer();
-        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
-        $doctrine = $container->get('doctrine');
-        $em = $doctrine->getManager();
-        $entry = $em->getRepository(Entry::class)->findOneBy([]);
-        if (null === $entry) {
-            self::markTestSkipped('No entries found in the database.');
-        }
+        $project = $this->requestOwnProjectSummary(estimation: 0);
 
+        // Without estimation set, quota remains numeric zero according to default data
+        self::assertSame(0, $project['quota'] ?? 0);
+    }
+
+    public function testGetSummaryActionForeignEntryReadsAsNotFound(): void
+    {
+        // Owned by 'developer' (id 2), requested by the session user 'unittest'
+        // (id 1): the ADR-022 §5 backport scopes v1 to the caller's own entries.
+        $entry = $this->createEntryFor('developer');
+
+        $this->client->request(Request::METHOD_POST, '/getSummary', ['id' => $entry->getId()]);
+
+        $this->assertStatusCode(404);
+    }
+
+    /**
+     * Creates an entry owned by the session user, pins its project estimation,
+     * POSTs /getSummary for it and returns the decoded `project` scope row.
+     *
+     * @return array<mixed>
+     */
+    private function requestOwnProjectSummary(int $estimation): array
+    {
+        $entry = $this->createEntryFor('unittest', ticket: 'SA-21', description: 'summary quota test entry');
         $project = $entry->getProject();
         self::assertNotNull($project, 'Project should not be null');
-        // Remove estimation (set to 0)
-        $project->setEstimation(0);
+        $project->setEstimation($estimation);
+        $this->testEntityManager()->flush();
 
-        $em->persist($project);
-        $em->flush();
-
-        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/getSummary', ['id' => $entry->getId()]);
+        $this->client->request(Request::METHOD_POST, '/getSummary', ['id' => $entry->getId()]);
         $this->assertStatusCode(200);
 
         $response = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($response);
         self::assertArrayHasKey('project', $response);
-        assert(is_array($response['project']));
-        // Without estimation set, quota remains numeric zero according to default data
-        self::assertSame(0, $response['project']['quota'] ?? 0);
+        self::assertIsArray($response['project']);
+
+        return $response['project'];
     }
 }
