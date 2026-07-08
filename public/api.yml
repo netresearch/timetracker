@@ -737,6 +737,8 @@ paths:
           schema:
             type: integer
       responses:
+        '403':
+          description: Not an admin, or the token lacks projects:write
         '404':
           description: No project for id
         '200':
@@ -758,6 +760,8 @@ paths:
           schema:
             type: integer
       responses:
+        '403':
+          description: Not an admin, or the token lacks projects:write
         '404':
           description: No project for id
         '200':
@@ -815,6 +819,8 @@ paths:
           schema:
             type: integer
       responses:
+        '403':
+          description: Not an admin, or the token lacks customers:write
         '404':
           description: No customer for id
         '200':
@@ -836,6 +842,8 @@ paths:
           schema:
             type: integer
       responses:
+        '403':
+          description: Not an admin, or the token lacks customers:write
         '404':
           description: No customer for id
         '200':
@@ -901,6 +909,8 @@ paths:
           schema:
             type: integer
       responses:
+        '403':
+          description: Not an admin, or the token lacks users:write
         '404':
           description: No user for id
         '200':
@@ -922,6 +932,8 @@ paths:
           schema:
             type: integer
       responses:
+        '403':
+          description: Not an admin, or the token lacks users:write
         '404':
           description: No user for id
         '200':

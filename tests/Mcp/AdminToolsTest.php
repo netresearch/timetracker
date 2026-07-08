@@ -116,7 +116,7 @@ final class AdminToolsTest extends AbstractWebTestCase
     {
         $this->useToken(['projects:write']);
 
-        $result = self::getContainer()->get(SetProjectActiveTool::class)->setProjectActive('1', false);
+        $result = self::getContainer()->get(SetProjectActiveTool::class)->setProjectActive('Das Kuchenbacken', false);
 
         self::assertIsArray($result['project']);
         self::assertFalse($result['project']['active']);

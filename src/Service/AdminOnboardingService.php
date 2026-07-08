@@ -27,6 +27,8 @@ use Doctrine\Persistence\ManagerRegistry;
 use InvalidArgumentException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+use function array_diff;
+use function array_map;
 use function array_unique;
 use function array_values;
 use function count;
@@ -223,7 +225,10 @@ final readonly class AdminOnboardingService
         /** @var list<Team> $teams */
         $teams = $this->managerRegistry->getRepository(Team::class)->findBy(['id' => $teamIds]);
         if (count($teams) !== count($teamIds)) {
-            throw new InvalidArgumentException(sprintf('Could not find team(s) with ID(s): %s.', implode(', ', $teamIds)));
+            $foundIds = array_map(static fn (Team $team): int => (int) $team->getId(), $teams);
+            $missing = array_diff($teamIds, $foundIds);
+
+            throw new InvalidArgumentException(sprintf('Could not find team(s) with ID(s): %s.', implode(', ', $missing)));
         }
 
         return $teams;
