@@ -228,6 +228,7 @@
   "tracking_class_daybreak": "Смена дня",
   "tracking_class_pause": "Перерыв",
   "tracking_class_overlap": "Пересечение времени",
+  "tracking_future_divider": "Будущее",
   "tracking_invalid_time": "Введите корректное время начала и окончания.",
   "tracking_time_order": "Время начала должно быть раньше времени окончания.",
   "tracking_actions": "Действия",

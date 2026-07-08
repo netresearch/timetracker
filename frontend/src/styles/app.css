@@ -86,6 +86,13 @@
   --color-class-pause: #9aa0a6;
   --color-class-overlap: var(--color-danger);
 
+  /* Future worklog entries (day after today): a cool tint on the row plus a
+     labeled divider band, distinct from the teal day-break cue. */
+  --color-future-tint: light-dark(#eef4fb, #182430);
+  --color-future-band-bg: light-dark(#dceaf6, #14202b);
+  --color-future-band-text: light-dark(#245377, #8fbde2);
+  --color-future-band-line: light-dark(#9cc3e3, #2c4459);
+
   /* Sidebar worktime IST-vs-SOLL status — reuse the success/warning text tokens
      (AAA-contrast) so "at/over target" vs "under target" stays distinct from the
      teal accent and matches the rest of the palette. */
@@ -2138,6 +2145,25 @@ kbd {
 /* Unsaved new row (Add/Continue) — a faint tint marks it until it saves. */
 .tracking-row.is-new > td {
   background: var(--color-accent-soft, #fff6e5);
+}
+
+/* Future entries: a subtle cool tint (secondary, redundant cue) — the labeled
+   divider band below carries the non-colour meaning. */
+.tracking-row.is-future > td {
+  background: var(--color-future-tint);
+}
+
+/* Full-width band separating future entries (above) from today/past (below). */
+.tracking-divider > td {
+  padding: 0.2rem 0.75rem;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-future-band-text);
+  background: var(--color-future-band-bg);
+  border-block: 1px solid var(--color-future-band-line);
 }
 
 .ticket-link {

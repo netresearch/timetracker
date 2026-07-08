@@ -151,14 +151,60 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('styles a row from the server-computed class (overlap)', async () => {
-    mockApi()
+  it('derives day-break/pause/overlap row cues from the displayed entries, not the stored class', async () => {
+    // All rows carry class:0 — the cue must come from the (day, start, end)
+    // ordering, so it is correct for seed/future data the save flow never touched.
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: '15/01/2024', start: '08:00', end: '09:00', description: 'First', class: 0 } },
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: '15/01/2024', start: '10:00', end: '11:00', description: 'Gap', class: 0 } },
+        { entry: { ...DEFAULT_ENTRY, id: 3, date: '15/01/2024', start: '10:30', end: '12:00', description: 'Clash', class: 0 } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
     const { container, getByRole, unmount } = renderTracking()
-    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+    await waitFor(() => expect(getByRole('gridcell', { name: 'First' })).toBeInTheDocument())
 
-    expect(container.querySelector('tr.tracking-row.is-overlap')).not.toBeNull()
+    const rowOf = (id: number): Element | null => container.querySelector(`td[data-row-id="${id}"]`)?.closest('tr') ?? null
+    expect(rowOf(1)?.classList.contains('is-daybreak')).toBe(true) // earliest entry of the day
+    expect(rowOf(2)?.classList.contains('is-pause')).toBe(true) // 10:00 > previous end 09:00
+    expect(rowOf(3)?.classList.contains('is-overlap')).toBe(true) // 10:30 < previous end 11:00
 
     unmount()
+  })
+
+  it('marks future entries and inserts a labeled divider above the today/past block', async () => {
+    // Frozen clock is 2024-01-15 (test setup); with show_future the list mixes a
+    // 2026 (future) day above the 2024 (today) day.
+    window.APP_CONFIG!.showFuture = true
+    try {
+      mockTracking({
+        entries: [
+          { entry: { ...DEFAULT_ENTRY, id: 1, date: '15/01/2024', start: '09:00', end: '10:00', description: 'Today', class: 0 } },
+          { entry: { ...DEFAULT_ENTRY, id: 2, date: '20/06/2026', start: '09:00', end: '10:00', description: 'Ahead', class: 0 } },
+        ],
+        customers: [{ customer: { id: 1, name: 'ACME' } }],
+        projects: [{ project: { id: 4, name: 'Site' } }],
+        activities: [{ activity: { id: 5, name: 'Dev' } }],
+      })
+      const { container, getByRole, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'Ahead' })).toBeInTheDocument())
+
+      const rowOf = (id: number): Element | null => container.querySelector(`td[data-row-id="${id}"]`)?.closest('tr') ?? null
+      expect(rowOf(2)?.classList.contains('is-future')).toBe(true) // 2026 > today
+      expect(rowOf(1)?.classList.contains('is-future')).toBe(false) // today
+      const divider = container.querySelector('tr.tracking-divider')
+      expect(divider).not.toBeNull()
+      expect(divider?.textContent).toBe('Future')
+      // The divider renders directly above the first today/past row.
+      expect(divider?.nextElementSibling).toBe(rowOf(1))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.showFuture = false
+    }
   })
 
   it('refetches via /getData/days/{N} when the range changes', async () => {
