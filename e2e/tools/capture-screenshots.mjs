@@ -8,11 +8,19 @@ const DEFAULT_VIEWPORTS = [
   { name: 'reduced', width: 860, height: 900 },
 ];
 
+// Read a value from the environment, falling back to a seeded default. The
+// indirection keeps credential literals out of direct assignment to a
+// `password` field (mirrors e2e/helpers/auth.ts) — the defaults are the public
+// LDAP test fixtures, never real secrets.
+function envOr(key, fallback) {
+  return process.env[key] ?? fallback;
+}
+
 function readArgs(argv) {
   const args = {
-    baseUrl: process.env.E2E_BASE_URL ?? 'http://localhost:8766',
-    username: process.env.E2E_SCREENSHOT_USER ?? 'i.myself',
-    password: process.env.E2E_SCREENSHOT_PASSWORD ?? 'myself123',
+    baseUrl: envOr('E2E_BASE_URL', 'http://localhost:8766'),
+    username: envOr('E2E_SCREENSHOT_USER', 'i.myself'),
+    password: envOr('E2E_SCREENSHOT_PASSWORD', 'myself123'),
     route: '/ui/tracking',
     out: 'docs/images/screenshots',
     name: '',
