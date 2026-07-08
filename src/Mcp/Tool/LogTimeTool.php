@@ -124,9 +124,9 @@ final readonly class LogTimeTool
         // both carrying any warnings the agent should surface.
         $entryId = $this->createdEntryId($body);
         if (null !== $entryId) {
-            $result['ticket_info'] = $this->entrySummaryService->forEntry($entryId, (int) $user->getId());
+            $result['ticket_info'] = $this->entrySummaryService->forEntry($entryId, (int) $user->getId())?->jsonSerialize();
         }
-        $result['balance'] = $this->timeBalanceService->forUser($user);
+        $result['balance'] = $this->timeBalanceService->forUser($user)->jsonSerialize();
 
         return $result;
     }
