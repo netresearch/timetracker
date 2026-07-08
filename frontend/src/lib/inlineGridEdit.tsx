@@ -1,12 +1,23 @@
-import { createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
+import { createMemo, createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
 import { createStore, produce } from 'solid-js/store'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
+import { DatePopover } from '../components/DatePopover'
+import { isRealIsoDate, type DateFormatPref } from './dateFormat'
+import { dateGhost, parseDateInput } from './dateInput'
+import { isoDate } from './format'
 import { getEnterBehavior } from './gridEditPref'
 import type { ActivateKey, GridMoveHandle } from './gridNavigation'
 import { m } from '../paraglide/messages.js'
 
 export type Row = Record<string, unknown>
+
+// The inline grid date editor is ISO-only: it shows the ISO value + a fixed
+// "YYYY-MM-DD" placeholder, so it must PARSE keystrokes ISO-first regardless of
+// the user's display-format preference (which only governs read-only leaves and
+// the modal form). Pinning to this pref keeps the parse order matching the
+// affordance the cell shows.
+const ISO_PREF: DateFormatPref = { mode: 'iso', pattern: '' }
 
 // Field types that get a compact in-cell editor; everything else (multiselect,
 // locked relation columns) stays modal-only.
@@ -73,11 +84,18 @@ export function InlineEditor(props: {
   onCancel: () => void
 }) {
   const isCheckbox = (): boolean => props.field.type === 'checkbox'
+  // Enhanced date cell (opt-in): calendar popover + type-the-day autocomplete.
+  const isEnhancedDate = (): boolean => props.field.type === 'date' && props.field.enhancedDate === true
   const [value, setValue] = createSignal<string | boolean>(isCheckbox() ? Boolean(props.initial) : String(props.initial ?? ''))
   let control: HTMLInputElement | HTMLSelectElement | undefined
   // Stable id linking the date input to its visually-hidden format hint, so the
   // required YYYY-MM-DD format is announced (a placeholder alone is not reliable).
   const dateHintId = createUniqueId()
+  // Calendar popover open state (enhanced date only).
+  const [calOpen, setCalOpen] = createSignal(false)
+  // "Now" for the calendar + autocomplete — the same source the grid uses, so a
+  // frozen clock in tests is honoured.
+  const today = (): string => isoDate(new Date())
   // Guards against a second commit: the keydown move already committed, and the
   // editor then unmounts and blurs — the blur must not re-commit.
   let done = false
@@ -87,12 +105,26 @@ export function InlineEditor(props: {
       return value() as boolean
     }
     const raw = value() as string
+    // Enhanced date: a value already in ISO shape commits verbatim; otherwise run
+    // type-the-day completion ("7" → the 7th of today's month/year, "" → today).
+    // A completion that isn't a real date falls through as the raw text so the
+    // host's own validation flags it (no auto-save) rather than saving garbage.
+    if (isEnhancedDate()) {
+      return isRealIsoDate(raw) ? raw : (parseDateInput(raw, today(), ISO_PREF) ?? raw)
+    }
     if (props.field.type === 'number' || (props.field.type === 'select' && props.field.stringValue !== true)) {
       return Number(raw)
     }
 
     return raw
   }
+
+  // Grey ghost of the completed date while typing a partial value (enhanced date
+  // only) — shown only when the completion differs from what's typed, so a fully
+  // typed date shows no redundant echo. Reads the value signal, so it re-renders
+  // as the user types without disturbing the typed text. ISO-pinned to match the
+  // cell's ISO value + placeholder (see ISO_PREF).
+  const dateGhostText = createMemo(() => (isEnhancedDate() ? dateGhost(value() as string, today(), ISO_PREF) : ''))
 
   const finish = (direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => {
     if (done) {
@@ -124,6 +156,14 @@ export function InlineEditor(props: {
     } else if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
+      // The input keeps focus while the calendar is open (autoFocus=false), so its
+      // own keydown owns Escape: the first Escape closes ONLY the calendar (typed
+      // text survives), a second Escape cancels the cell edit.
+      if (isEnhancedDate() && calOpen()) {
+        setCalOpen(false)
+
+        return
+      }
       cancel()
     }
   }
@@ -147,6 +187,58 @@ export function InlineEditor(props: {
           onInput={(e) => setValue(e.currentTarget.checked)}
           onKeyDown={onKeyDown}
           onBlur={() => finish()}
+        />
+      </Match>
+      <Match when={isEnhancedDate()}>
+        {/* ISO text input (kept yyyy-mm-dd throughout, like the plain date cell)
+            with a body-portalled calendar and type-the-day autocomplete layered
+            on top. The trigger + calendar preventDefault their mousedown so a
+            click never blurs the input (which would finish() + unmount the editor
+            before the click resolves); autoFocus={false} keeps the input focused
+            when the popover opens so the same race can't happen on open. */}
+        <input
+          ref={(el) => { control = el }}
+          type="text"
+          placeholder="YYYY-MM-DD"
+          aria-describedby={dateHintId}
+          class="inline-editor inline-date-input"
+          aria-label={props.label}
+          value={value() as string}
+          onInput={(e) => setValue(e.currentTarget.value)}
+          onKeyDown={onKeyDown}
+          // Blur commits (click-away) — EXCEPT when focus moves into the calendar,
+          // which is body-portalled: the calendar's Today link / arrow nav call
+          // button.focus() programmatically, and committing a partial value there
+          // would tear the editor down. Only a real focus-OUT commits.
+          onBlur={(event) => {
+            const next = (event.relatedTarget as HTMLElement | null) ?? (document.activeElement as HTMLElement | null)
+            if (next?.closest('[data-date-popup]')) {
+              return
+            }
+            finish()
+          }}
+        />
+        <Show when={dateGhostText() !== ''}>
+          <span class="inline-date-ghost" aria-hidden="true">{dateGhostText()}</span>
+        </Show>
+        <span id={dateHintId} class="visually-hidden">{m.tracking_date_format_hint()}</span>
+        <DatePopover
+          open={calOpen()}
+          onOpenChange={setCalOpen}
+          triggerClass="inline-date-trigger"
+          triggerTabIndex={-1}
+          autoFocus={false}
+          // The focused input owns Escape (first closes the calendar, a second
+          // cancels), and closing must not restore focus to the trigger — either
+          // would blur the input into a premature commit / cell cancel.
+          closeOnEscape={false}
+          restoreFocus={false}
+          value={isRealIsoDate(value() as string) ? value() as string : ''}
+          todayIso={today()}
+          // Selecting a day fills the ISO value and commits through the same
+          // guarded finish() as the keyboard path (the 'done' guard makes this a
+          // single commit, never a double).
+          onSelect={(iso) => { setValue(iso); setCalOpen(false); finish() }}
         />
       </Match>
       <Match when={true}>
@@ -600,13 +692,14 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     return cell ? Number(cell.getAttribute('data-row-id')) : null
   }
 
-  // A ChipSelect editor body-portals its listbox outside the table; focus inside
-  // it must read as "still editing the row", not "left the table".
-  const inChipSelectPopup = (node: EventTarget | null): boolean =>
-    node instanceof HTMLElement && node.closest('[data-chipselect-popup]') !== null
+  // A ChipSelect editor (data-chipselect-popup) and the enhanced date editor's
+  // calendar (data-date-popup) both body-portal their popup outside the table;
+  // focus inside either must read as "still editing the row", not "left the table".
+  const inEditorPopup = (node: EventTarget | null): boolean =>
+    node instanceof HTMLElement && node.closest('[data-chipselect-popup], [data-date-popup]') !== null
 
   function onTableFocusIn(event: FocusEvent): void {
-    if (inChipSelectPopup(event.target)) {
+    if (inEditorPopup(event.target)) {
       return // focusing the portalled popup doesn't leave the current row
     }
     const id = rowIdOf(event.target)
@@ -621,7 +714,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
 
   function flushIfFocusLeftTable(): void {
     const active = document.activeElement
-    if (tableEl === undefined || (active !== null && (tableEl.contains(active) || inChipSelectPopup(active)))) {
+    if (tableEl === undefined || (active !== null && (tableEl.contains(active) || inEditorPopup(active)))) {
       return
     }
     if (lastFocusedRowId !== null) {

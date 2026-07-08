@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render } from '@solidjs/testing-library'
+import { cleanup, fireEvent, render, waitFor } from '@solidjs/testing-library'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AppConfig } from '../config'
@@ -18,11 +18,19 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
 })
 
 function renderField(value: string, onChange = vi.fn()): { input: HTMLInputElement; onChange: ReturnType<typeof vi.fn> } {
   const { container } = render(() => <DateField value={value} onChange={onChange} />)
   return { input: container.querySelector('input.date-field') as HTMLInputElement, onChange }
+}
+
+// Only Date is faked so zag/Ark's own timers (used by the calendar popover) keep
+// running on the real clock.
+function freezeClock(iso: string): void {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(`${iso}T12:00:00`))
 }
 
 describe('DateField', () => {
@@ -59,5 +67,67 @@ describe('DateField', () => {
     fireEvent.change(input)
     expect(onChange).not.toHaveBeenCalled()
     expect(input.getAttribute('aria-invalid')).toBe('true')
+  })
+
+  it('autocomplete completes a partial day to today\'s month/year on commit', () => {
+    freezeClock('2026-07-08')
+    const onChange = vi.fn()
+    const { container } = render(() => <DateField value="" onChange={onChange} autocomplete />)
+    const input = container.querySelector('input.date-field') as HTMLInputElement
+    fireEvent.input(input, { target: { value: '7' } })
+    fireEvent.change(input)
+    expect(onChange).toHaveBeenCalledWith('2026-07-07')
+    expect(input.value).toBe('07.07.2026')
+  })
+
+  it('shows a grey ghost of the completed date while typing', async () => {
+    freezeClock('2026-07-08')
+    const { container } = render(() => <DateField value="" onChange={vi.fn()} autocomplete />)
+    const input = container.querySelector('input.date-field') as HTMLInputElement
+    fireEvent.input(input, { target: { value: '7' } })
+    await waitFor(() => {
+      expect(container.querySelector('.date-field-ghost')?.textContent).toBe('07.07.2026')
+    })
+  })
+
+  it('autocomplete commits today when the field is left empty', () => {
+    freezeClock('2026-07-08')
+    const onChange = vi.fn()
+    const { container } = render(() => <DateField value="" onChange={onChange} autocomplete />)
+    const input = container.querySelector('input.date-field') as HTMLInputElement
+    fireEvent.input(input, { target: { value: '' } })
+    fireEvent.change(input)
+    expect(onChange).toHaveBeenCalledWith('2026-07-08')
+  })
+
+  it('hides the ghost once a full date is typed', async () => {
+    freezeClock('2026-07-08')
+    const { container } = render(() => <DateField value="" onChange={vi.fn()} autocomplete />)
+    const input = container.querySelector('input.date-field') as HTMLInputElement
+    // A fully-typed date in the active (DE) format shows no redundant ghost echo.
+    fireEvent.input(input, { target: { value: '07.07.2026' } })
+    await waitFor(() => expect(container.querySelector('.date-field-ghost')).toBeNull())
+  })
+
+  it('renders a persistent format hint when enhanced', () => {
+    const { container } = render(() => <DateField value="" onChange={vi.fn()} autocomplete />)
+    expect(container.querySelector('.field-hint')?.textContent).toBe('DD.MM.YYYY')
+  })
+
+  it('calendar trigger opens the picker and choosing a day commits its ISO', async () => {
+    const onChange = vi.fn()
+    // A seeded value pins the calendar to July 2026 regardless of the real clock.
+    const { container } = render(() => <DateField value="2026-07-15" onChange={onChange} calendar />)
+    const trigger = container.querySelector('.date-field-trigger') as HTMLButtonElement
+    fireEvent.click(trigger)
+
+    const day = await waitFor(() => {
+      const el = document.querySelector('button[data-iso="2026-07-20"]')
+      expect(el).not.toBeNull()
+
+      return el as HTMLButtonElement
+    })
+    fireEvent.click(day)
+    expect(onChange).toHaveBeenCalledWith('2026-07-20')
   })
 })

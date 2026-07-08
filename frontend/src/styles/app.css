@@ -2243,6 +2243,56 @@ kbd {
   gap: 0.25rem;
 }
 
+/* ---- Enhanced inline date editor (worklog): calendar trigger + ghost --------
+   Layered inside the [data-inline-editing] cell (its own positioning context),
+   mirroring the DateField enhancements but sized for a dense grid row. The input
+   still overlays the cell (.inline-editor, inset:0); it only reserves room on the
+   right so the typed ISO value never slides under the calendar trigger. */
+.data-table td[data-inline-editing] .inline-editor.inline-date-input {
+  padding-right: 1.9rem;
+}
+
+/* Grey completion preview — non-interactive, tucked left of the trigger so it
+   never intercepts a click. */
+.inline-date-ghost {
+  position: absolute;
+  top: 50%;
+  right: 2rem;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Calendar trigger, vertically centred against the cell's right edge. Compact
+   like the combobox trigger (the keyboard path is type-the-day autocomplete). */
+.inline-date-trigger {
+  position: absolute;
+  top: 50%;
+  right: 0.15rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  min-height: 1.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.inline-date-trigger:hover {
+  background: var(--color-accent-soft);
+}
+
+.inline-date-trigger .action-ico {
+  width: 1rem;
+  height: 1rem;
+}
+
 /* ---- Ark Combobox inline chip editor (single + multi) ----
    In edit mode the cell LIFTS into an obviously typeable search field: a surface
    fill + an accent inner border + a focus ring, a leading magnifier, an italic
@@ -4229,4 +4279,200 @@ th[aria-sort='descending'] .th-sort-glyph {
 
 .shortcuts-full-help {
   font-size: 0.9rem;
+}
+
+/* ── Calendar (day picker grid) ─────────────────────────────────────────────
+   Self-contained month grid used by the date fields. Monday-first, 44px touch
+   targets, design tokens only. Text stays >= 7:1 in both schemes (AAA); the
+   selected day uses the darker --color-accent-text so white/near-black day text
+   clears 7:1, and future days reuse the shared --color-future-tint. */
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text);
+  max-width: 22rem;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.calendar-title {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.calendar-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.calendar-nav:hover {
+  background: var(--color-accent-soft);
+}
+
+.calendar-weekrow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-weekday {
+  padding: 0.25rem 0;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.calendar-cell {
+  display: flex;
+}
+
+.calendar-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.calendar-day:hover {
+  background: var(--color-accent-soft);
+}
+
+.calendar-day[data-outside] {
+  color: var(--color-text-muted);
+}
+
+.calendar-day[data-future] {
+  background: var(--color-future-tint);
+}
+
+/* Today: an accent ring (>= 3:1 UI component), day text stays full-contrast. */
+.calendar-day[data-today] {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+/* Selected: filled with the darker accent so the day text clears 7:1 both ways. */
+.calendar-day[data-selected] {
+  background: var(--color-accent-text);
+  color: light-dark(#ffffff, #10171a);
+  font-weight: 600;
+}
+
+.calendar-day[data-selected][data-future] {
+  background: var(--color-accent-text);
+}
+
+.calendar-today-link {
+  align-self: center;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-link);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.calendar-today-link:hover {
+  text-decoration: underline;
+}
+
+/* ---- DateField calendar/autocomplete enhancements (opt-in) ---------------- */
+
+/* Positioning context for the calendar trigger + ghost preview. The input keeps
+   its own box; the trigger is tucked against its right edge and the ghost floats
+   as a non-interactive suffix, so neither shifts the input's layout. */
+.date-field-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+}
+
+.date-field-wrap > input.date-field {
+  width: 100%;
+  /* Clear the 44px trigger (2.75rem) at right:0.15rem — i.e. it reaches 2.9rem
+     from the edge — so typed text never slides under it. */
+  padding-right: 3.1rem;
+}
+
+/* Grey completion preview shown while typing a partial date. aria-hidden and
+   pointer-events:none so it's purely visual and never intercepts a click. */
+.date-field-ghost {
+  position: absolute;
+  /* Right-anchored just left of the trigger (which reaches 2.9rem from the edge). */
+  right: 3.1rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.date-field-trigger {
+  position: absolute;
+  right: 0.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.date-field-trigger:hover {
+  background: var(--color-accent-soft);
+}
+
+.date-field-trigger:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.date-field-trigger .action-ico {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Body-portalled calendar popup — same stacking layer as the combobox popup so
+   it floats above modals (100/101) and the first-run hint (1100). */
+.date-popover-positioner {
+  z-index: 1200;
 }

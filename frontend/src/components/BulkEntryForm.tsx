@@ -104,11 +104,11 @@ export function BulkEntryForm(props: { onSaved?: () => void }) {
         <div class="field-row">
           <label class="field">
             <span>{m.extras_start_date()}</span>
-            <DateField value={startDate()} onChange={setStartDate} />
+            <DateField value={startDate()} onChange={setStartDate} calendar autocomplete />
           </label>
           <label class="field">
             <span>{m.extras_end_date()}</span>
-            <DateField value={endDate()} onChange={setEndDate} />
+            <DateField value={endDate()} onChange={setEndDate} calendar autocomplete />
           </label>
         </div>
 

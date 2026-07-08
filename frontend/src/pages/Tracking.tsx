@@ -163,7 +163,7 @@ function addMinutes(hi: string, mins: number): string {
 
 // The editable fields drive the in-cell editor; duration is server-derived.
 const FIELDS: FieldDef[] = [
-  { name: 'date', label: () => m.tracking_col_date(), type: 'date', required: true },
+  { name: 'date', label: () => m.tracking_col_date(), type: 'date', required: true, enhancedDate: true },
   { name: 'start', label: () => m.tracking_col_start(), type: 'text', required: true },
   { name: 'end', label: () => m.tracking_col_end(), type: 'text', required: true },
   { name: 'ticket', label: () => m.tracking_col_ticket(), type: 'text' },
