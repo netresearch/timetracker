@@ -178,7 +178,7 @@ const isFieldToken = (token: Token): token is Extract<Token, { field: 'y' | 'm' 
 /** The order the y/m/d fields appear in the active display format (first
  *  occurrence of each), or null when the format is plain ISO (only ISO input is
  *  then accepted) or doesn't carry all three fields. */
-function fieldOrder(pref: DateFormatPref): ('y' | 'm' | 'd')[] | null {
+export function fieldOrder(pref: DateFormatPref): ('y' | 'm' | 'd')[] | null {
   if (pref.mode === 'iso') {
     return null
   }
@@ -208,7 +208,7 @@ function fieldOrder(pref: DateFormatPref): ('y' | 'm' | 'd')[] | null {
 }
 
 /** True when iso (a yyyy-mm-dd string) names a real calendar date (rejects 2026-02-30). */
-function isRealIsoDate(iso: string): boolean {
+export function isRealIsoDate(iso: string): boolean {
   const [year, month, day] = iso.split('-').map(Number)
   const date = new Date(Date.UTC(year!, month! - 1, day!))
 
