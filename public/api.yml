@@ -663,9 +663,86 @@ paths:
                     project:
                       $ref: '#/components/schemas/ProjectInfo'
 
+  /api/v2/time-balance:
+    get:
+      summary: The authenticated user's worked-vs-target balance for today, this week and this month (ADR-022; requires reporting:read for tokens)
+      tags:
+        - Summary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  today:
+                    $ref: '#/components/schemas/PeriodBalance'
+                  week:
+                    $ref: '#/components/schemas/PeriodBalance'
+                  month:
+                    $ref: '#/components/schemas/PeriodBalance'
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+
+  /api/v2/entries/{id}/summary:
+    get:
+      summary: Per-scope booking totals and estimate verdict for one of the caller's own entries (ADR-022; requires reporting:read for tokens). Foreign entries read as 404.
+      tags:
+        - Summary
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '404':
+          description: No entry for id (unknown or not owned by the caller)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoEntryForId'
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: '#/components/schemas/ScopeSummary'
+                  project:
+                    $ref: '#/components/schemas/ScopeSummary'
+                  activity:
+                    $ref: '#/components/schemas/ScopeSummary'
+                  ticket:
+                    $ref: '#/components/schemas/ScopeSummary'
+                  estimate:
+                    type: object
+                    properties:
+                      estimation:
+                        type: integer
+                      booked_total:
+                        type: integer
+                      percent:
+                        type: integer
+                        nullable: true
+                      status:
+                        type: string
+                        enum: [none, ok, near, over]
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+
   /getSummary:
     post:
-      summary: Returns a summary about the customer, project,activity and ticket
+      deprecated: true
+      summary: Returns a summary about the customer, project, activity and ticket. Deprecated (ADR-022) — superseded by GET /api/v2/entries/{id}/summary; removal in v7. Scoped to the caller's own entries.
       tags:
         - Summary
       requestBody:
@@ -732,7 +809,8 @@ paths:
 
   /getTimeSummary:
     get:
-      summary: Return a time summary for an entry
+      deprecated: true
+      summary: Return a time summary for an entry. Deprecated (ADR-022) — superseded by GET /api/v2/time-balance; removal in v7.
       tags:
         - Summary
       responses:
@@ -2732,6 +2810,56 @@ components:
         count:
           type: boolean
           example: true
+
+    PeriodBalance:
+      type: object
+      description: One balance period (ADR-022) — worked minutes vs the expected minutes for the whole period and accrued through today
+      properties:
+        ist:
+          type: integer
+          description: Worked minutes
+          example: 420
+        soll_total:
+          type: integer
+          description: Expected minutes for the whole period
+          example: 2400
+        soll_so_far:
+          type: integer
+          description: Expected minutes accrued through today
+          example: 480
+        diff:
+          type: integer
+          description: ist minus soll_so_far
+          example: -60
+        status:
+          type: string
+          enum: [ok, behind, over]
+
+    ScopeSummary:
+      type: object
+      description: One aggregation scope of an entry summary (ADR-022) — the caller's own minutes vs everyone's total
+      properties:
+        scope:
+          type: string
+          enum: [customer, project, activity, ticket]
+        name:
+          type: string
+          example: Website relaunch
+        entries:
+          type: integer
+          example: 12
+        total:
+          type: integer
+          description: Booked minutes across all users
+          example: 5400
+        own:
+          type: integer
+          description: The caller's own booked minutes
+          example: 1200
+        estimation:
+          type: integer
+          description: Estimated minutes (project scope only, 0 elsewhere)
+          example: 12000
 
     UnauthorizedResponse:
       type: object

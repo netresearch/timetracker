@@ -22,6 +22,7 @@ use App\Service\ClockInterface;
 use App\Service\Util\ExpectedWorkTimeCalculator;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Deprecated;
 use Doctrine\DBAL\Connection;
 use Exception;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -66,6 +67,7 @@ final class GetTimeSummaryAction extends BaseController
      */
     #[RequireScope('reporting:read')]
     #[Route(path: '/getTimeSummary', name: 'time_summary_attr', methods: ['GET'])]
+    #[Deprecated(message: 'superseded by GET /api/v2/time-balance (ADR-022); removal in v7')]
     public function __invoke(#[CurrentUser] ?User $user = null): JsonResponse|RedirectResponse
     {
         if (!$user instanceof User) {
@@ -87,7 +89,12 @@ final class GetTimeSummaryAction extends BaseController
             'month' => $month + ['target' => $target['month']],
         ];
 
-        return new JsonResponse($data);
+        $response = new JsonResponse($data);
+        // Deprecated endpoint (ADR-022 §5) — signal at call time.
+        $response->headers->set('Deprecation', 'true');
+        $response->headers->set('Link', '</api/v2/time-balance>; rel="successor-version"');
+
+        return $response;
     }
 
     /**
