@@ -687,6 +687,262 @@ paths:
                     items:
                       type: string
 
+  /api/v2/projects:
+    post:
+      summary: Onboard a new, active project (ADR-022 Phase 3; admin role required, tokens additionally need projects:write)
+      tags:
+        - Administration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, customer_id]
+              properties:
+                name:
+                  type: string
+                  example: Website relaunch
+                customer_id:
+                  type: integer
+                  example: 1
+                jira_id:
+                  type: string
+                  description: Ticket prefix (capital letters)
+                  example: ABC
+                global:
+                  type: boolean
+                  default: false
+      responses:
+        '422':
+          description: Validation failure
+        '403':
+          description: Not an admin, or the token lacks projects:write
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProject'
+
+  /api/v2/projects/{id}/activate:
+    post:
+      summary: Activate a project (ADR-022 Phase 3; admin + projects:write)
+      tags:
+        - Administration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '403':
+          description: Not an admin, or the token lacks projects:write
+        '404':
+          description: No project for id
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProject'
+
+  /api/v2/projects/{id}/deactivate:
+    post:
+      summary: Deactivate (offboard) a project — no longer bookable, entries stay (ADR-022 Phase 3; admin + projects:write)
+      tags:
+        - Administration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '403':
+          description: Not an admin, or the token lacks projects:write
+        '404':
+          description: No project for id
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProject'
+
+  /api/v2/customers:
+    post:
+      summary: Onboard a new, active customer (ADR-022 Phase 3; admin role required, tokens additionally need customers:write)
+      tags:
+        - Administration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: ACME GmbH
+                global:
+                  type: boolean
+                  default: false
+                team_ids:
+                  type: array
+                  description: Required unless global
+                  items:
+                    type: integer
+      responses:
+        '422':
+          description: Validation failure
+        '403':
+          description: Not an admin, or the token lacks customers:write
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCustomer'
+
+  /api/v2/customers/{id}/activate:
+    post:
+      summary: Activate a customer (ADR-022 Phase 3; admin + customers:write)
+      tags:
+        - Administration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '403':
+          description: Not an admin, or the token lacks customers:write
+        '404':
+          description: No customer for id
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCustomer'
+
+  /api/v2/customers/{id}/deactivate:
+    post:
+      summary: Deactivate (offboard) a customer (ADR-022 Phase 3; admin + customers:write)
+      tags:
+        - Administration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '403':
+          description: Not an admin, or the token lacks customers:write
+        '404':
+          description: No customer for id
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCustomer'
+
+  /api/v2/users:
+    post:
+      summary: Onboard a new, active user account authenticating against the directory (ADR-022 Phase 3; admin role required, tokens additionally need users:write)
+      tags:
+        - Administration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, abbr]
+              properties:
+                username:
+                  type: string
+                  example: jane.doe
+                abbr:
+                  type: string
+                  description: At most 3 characters
+                  example: JDO
+                type:
+                  type: string
+                  enum: [USER, DEV, PL, ADMIN]
+                  default: DEV
+                locale:
+                  type: string
+                  default: de
+                team_ids:
+                  type: array
+                  description: At least one team
+                  items:
+                    type: integer
+      responses:
+        '422':
+          description: Validation failure
+        '403':
+          description: Not an admin, or the token lacks users:write
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+
+  /api/v2/users/{id}/activate:
+    post:
+      summary: Activate a user account (ADR-022 Phase 3; admin + users:write)
+      tags:
+        - Administration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '403':
+          description: Not an admin, or the token lacks users:write
+        '404':
+          description: No user for id
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+
+  /api/v2/users/{id}/deactivate:
+    post:
+      summary: Deactivate (offboard) a user account — login and tokens stop working, bookings stay (ADR-022 Phase 3; admin + users:write)
+      tags:
+        - Administration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '403':
+          description: Not an admin, or the token lacks users:write
+        '404':
+          description: No user for id
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+
   /api/v2/day:
     get:
       summary: The caller's own time entries and booked total for one day, default today (ADR-022 Phase 2; requires entries:read for tokens)
@@ -2870,6 +3126,66 @@ components:
         status:
           type: string
           enum: [ok, behind, over]
+
+    AdminProject:
+      type: object
+      properties:
+        project:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            customer_id:
+              type: integer
+              nullable: true
+            jira_id:
+              type: string
+            active:
+              type: boolean
+            global:
+              type: boolean
+
+    AdminCustomer:
+      type: object
+      properties:
+        customer:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            active:
+              type: boolean
+            global:
+              type: boolean
+            team_ids:
+              type: array
+              items:
+                type: integer
+
+    AdminUser:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            username:
+              type: string
+            abbr:
+              type: string
+            type:
+              type: string
+            active:
+              type: boolean
+            team_ids:
+              type: array
+              items:
+                type: integer
 
     ScopeSummary:
       type: object

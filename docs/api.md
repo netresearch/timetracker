@@ -773,6 +773,16 @@ A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracke
 }
 ```
 
+### Admin onboarding (ADR-022 Phase 3)
+
+**Endpoints**: `POST /api/v2/projects`, `POST /api/v2/customers`, `POST /api/v2/users` (onboard, created active), plus `POST /api/v2/{projects|customers|users}/{id}/activate` and `.../deactivate` (offboard — the record stays, it just stops being bookable / able to log in)
+
+**Authentication**: Admin session, or Bearer PAT of an admin with the matching write scope (`projects:write` / `customers:write` / `users:write`) — both gates apply; a write scope on a non-admin token stays forbidden
+
+**Bodies** (JSON): projects `{name, customer_id, jira_id?, global?}`; customers `{name, global?, team_ids?}` (a non-global customer needs at least one team); users `{username, abbr (≤3 chars), type?, locale?, team_ids}` (at least one team; the account authenticates against the directory — no local password)
+
+**Responses**: `201` with `{project: {...}}` / `{customer: {...}}` / `{user: {...}}`; toggles answer `200` with the same shape; `422 {message}` on validation failure, `404` on unknown id. MCP mirrors: `onboard_project`, `onboard_customer`, `onboard_user`, `set_project_active`, `set_customer_active`, `set_user_active`.
+
 ### GET /api/v2/entries/{id}/summary
 **Purpose**: Per-scope booking totals and estimate verdict for one of the caller's own entries (ADR-022; the tracking UI's "Info" popup and the `get_ticket_info` MCP tool)
 

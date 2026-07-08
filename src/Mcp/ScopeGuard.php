@@ -14,7 +14,9 @@ use App\Security\ApiToken\ApiAccessToken;
 use App\ValueObject\ApiScope;
 use Mcp\Exception\ToolCallException;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 
+use function in_array;
 use function sprintf;
 
 /**
@@ -28,8 +30,10 @@ use function sprintf;
  */
 final readonly class ScopeGuard
 {
-    public function __construct(private Security $security)
-    {
+    public function __construct(
+        private Security $security,
+        private RoleHierarchyInterface $roleHierarchy,
+    ) {
     }
 
     /**
@@ -50,6 +54,31 @@ final readonly class ScopeGuard
         $user = $token->getUser();
         if (!$user instanceof User) {
             throw new ToolCallException('No authenticated user for this token.');
+        }
+
+        return $user;
+    }
+
+    /**
+     * Both gates for admin tools (ADR-022 Phase 3): the token must grant the
+     * scope AND the owning user must hold ROLE_ADMIN — mirroring the
+     * #[IsGranted('ROLE_ADMIN')] + #[RequireScope] pair on the v2 endpoints.
+     * A scope can narrow but never expand what the user may do.
+     *
+     * @throws ToolCallException if not PAT-authenticated, the scope is missing,
+     *                           or the user is not an admin
+     */
+    public function requireAdminScope(string $scope): User
+    {
+        $user = $this->requireScope($scope);
+
+        // Vote on the TOKEN's roles expanded through the role hierarchy (e.g.
+        // ROLE_SUPER_ADMIN => ROLE_ADMIN) — the same input and semantics as the
+        // #[IsGranted('ROLE_ADMIN')] check on the v2 endpoints.
+        $token = $this->security->getToken();
+        $roles = $token instanceof ApiAccessToken ? $token->getRoleNames() : [];
+        if (!in_array('ROLE_ADMIN', $this->roleHierarchy->getReachableRoleNames($roles), true)) {
+            throw new ToolCallException('This tool requires an administrator account.');
         }
 
         return $user;

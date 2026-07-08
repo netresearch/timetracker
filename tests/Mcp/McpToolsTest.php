@@ -21,6 +21,12 @@ use App\Mcp\Tool\ListActivitiesTool;
 use App\Mcp\Tool\ListProjectsTool;
 use App\Mcp\Tool\ListRecentEntriesTool;
 use App\Mcp\Tool\LogTimeTool;
+use App\Mcp\Tool\OnboardCustomerTool;
+use App\Mcp\Tool\OnboardProjectTool;
+use App\Mcp\Tool\OnboardUserTool;
+use App\Mcp\Tool\SetCustomerActiveTool;
+use App\Mcp\Tool\SetProjectActiveTool;
+use App\Mcp\Tool\SetUserActiveTool;
 use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
@@ -29,11 +35,11 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Exception\ToolCallException;
 use ReflectionClass;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\ActsAsApiTokenUser;
 
 use function array_column;
 use function array_is_list;
 use function array_keys;
-use function array_values;
 use function basename;
 use function count;
 use function dirname;
@@ -50,6 +56,8 @@ use function sprintf;
  */
 final class McpToolsTest extends AbstractWebTestCase
 {
+    use ActsAsApiTokenUser;
+
     public function testListActivitiesReturnsEntriesWithReadScope(): void
     {
         $this->useToken(['activities:read']);
@@ -365,7 +373,7 @@ final class McpToolsTest extends AbstractWebTestCase
      */
     public function testEveryToolReturnsATopLevelJsonObject(): void
     {
-        $this->useToken(['entries:read', 'entries:write', 'projects:read', 'activities:read', 'reporting:read']);
+        $this->useToken(['entries:read', 'entries:write', 'projects:read', 'projects:write', 'activities:read', 'reporting:read', 'customers:write', 'users:write']);
         $container = self::getContainer();
 
         $created = $container->get(LogTimeTool::class)->logTime(project: '1', activity: '1', ticket: 'SA-5', durationMinutes: 15);
@@ -376,6 +384,12 @@ final class McpToolsTest extends AbstractWebTestCase
         $results = [
             'delete_entry' => null, // called last — it removes the entry
             'get_day' => $container->get(GetDayTool::class)->getDay(),
+            'onboard_customer' => $container->get(OnboardCustomerTool::class)->onboardCustomer(name: 'Guard Customer', global: true),
+            'onboard_project' => $container->get(OnboardProjectTool::class)->onboardProject(name: 'Guard Project', customer: '1'),
+            'onboard_user' => $container->get(OnboardUserTool::class)->onboardUser(username: 'guard.user', abbr: 'GRD', teamIds: [1]),
+            'set_customer_active' => $container->get(SetCustomerActiveTool::class)->setCustomerActive('1', true),
+            'set_project_active' => $container->get(SetProjectActiveTool::class)->setProjectActive('1', true),
+            'set_user_active' => $container->get(SetUserActiveTool::class)->setUserActive('developer', true),
             'get_ticket_info' => $container->get(GetTicketInfoTool::class)->getTicketInfo($entryId),
             'get_time_balance' => $container->get(GetTimeBalanceTool::class)->getTimeBalance(),
             'list_activities' => $container->get(ListActivitiesTool::class)->listActivities(),
@@ -422,21 +436,5 @@ final class McpToolsTest extends AbstractWebTestCase
         sort($names);
 
         return $names;
-    }
-
-    /**
-     * Replace the session token from setUp() with a stateless PAT carrying the
-     * given scopes, acting as fixture user 1.
-     *
-     * @param list<string> $scopes
-     */
-    private function useToken(array $scopes): void
-    {
-        $container = self::getContainer();
-        $user = $container->get(UserRepository::class)->find(1);
-        self::assertInstanceOf(User::class, $user);
-
-        $token = new ApiAccessToken($user, array_values($user->getRoles()), $scopes);
-        $container->get('security.token_storage')->setToken($token);
     }
 }
