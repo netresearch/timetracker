@@ -767,7 +767,7 @@ A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracke
 ```json
 {
   "date": "2026-07-06",
-  "entries": [ { "id": 4711, "date": "06/07/2026", "start": "09:00", "end": "10:00", "duration": 60, "ticket": "SA-11", "...": "..." } ],
+  "entries": [ { "id": 4711, "date": "06/07/2026", "start": "09:00", "end": "10:00", "duration": "01:00", "durationMinutes": 60, "ticket": "SA-11", "...": "..." } ],
   "count": 1,
   "total_minutes": 60
 }

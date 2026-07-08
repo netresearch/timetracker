@@ -320,6 +320,7 @@ final class McpToolsTest extends AbstractWebTestCase
         self::assertIsArray($result['balance']);
         self::assertArrayHasKey('today', $result['balance']);
         // The booked day so far — the created entry must be in it.
+        self::assertArrayHasKey('day', $result);
         self::assertIsArray($result['day']);
         self::assertIsList($result['day']['entries']);
         self::assertGreaterThanOrEqual(45, $result['day']['total_minutes']);

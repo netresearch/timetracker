@@ -37,10 +37,10 @@ final readonly class GetDayAction
             return new JsonResponse(['message' => 'Authentication required'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $date = $request->query->get('date');
+        $date = $request->query->getString('date');
 
         try {
-            $summary = $this->daySummaryService->forUser($user, null !== $date ? (string) $date : null);
+            $summary = $this->daySummaryService->forUser($user, '' !== $date ? $date : null);
         } catch (InvalidArgumentException $invalidArgumentException) {
             return new JsonResponse(['message' => $invalidArgumentException->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
