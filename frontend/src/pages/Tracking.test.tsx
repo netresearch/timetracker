@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@solidjs/testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { setDateFormat } from '../lib/dateFormat'
 import { renderWithProviders } from '../test/renderWithProviders'
 import Tracking from './Tracking'
 
@@ -74,6 +75,7 @@ function renderTracking() {
 }
 
 beforeEach(() => {
+  setDateFormat({ mode: 'iso', pattern: 'DD.MM.YYYY' })
   // Freeze the clock (Date only — leave setTimeout/Interval real so waitFor still
   // polls) to noon on the seeded test date. Several toolbar actions read the wall
   // clock — Prolong sets the entry's end to "now" and aborts when now precedes the
@@ -86,6 +88,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup() // unmount even after a throwing test, so a body-portalled combobox + body-inert can't leak into the next test
+  setDateFormat({ mode: 'iso', pattern: 'DD.MM.YYYY' })
   // The day range now persists to localStorage — clear it so a range change in
   // one test doesn't leak into the next (which expects the DEFAULT_DAYS range).
   localStorage.clear()
@@ -587,19 +590,53 @@ describe('Tracking (Worklog grid)', () => {
     const { container, getByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Newest' })).toBeInTheDocument())
 
-    // Dates render in ISO (yyyy-mm-dd), one consistent format everywhere.
-    // The date cell renders three responsive widths (full / MM-DD / weekday);
-    // read the full-date span rather than the whole cell's concatenated text.
+    // Dates render in ISO (yyyy-mm-dd) at full width; read the full-date span
+    // rather than the whole cell's concatenated text.
     const dates = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-full')).map((el) => el.textContent)
     expect(dates).toEqual(['2026-06-16', '2026-06-15', '2026-06-14'])
 
-    // The narrower rungs keep orienting information: month-day, then the localized
-    // weekday — never a bare day-of-month, which reads as noise (issue #520).
-    const mids = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-mid')).map((el) => el.textContent)
-    expect(mids).toEqual(['06-16', '06-15', '06-14'])
-    const shorts = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-short')).map((el) => el.textContent)
-    // 2026-06-16 is a Tuesday (en test locale).
-    expect(shorts).toEqual(['Tue', 'Mon', 'Sun'])
+    // The compact rung keeps identifying information: two-digit day+month in
+    // local order, always zero-padded, never weekday-only or a bare
+    // day-of-month (issue #520).
+    const compacts = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-compact')).map((el) => el.textContent)
+    expect(compacts).toEqual(['06/16', '06/15', '06/14'])
+
+    unmount()
+  })
+
+  it('keeps compact date rungs in the selected local date order', async () => {
+    setDateFormat({ mode: 'custom', pattern: 'DD.MM.YYYY' })
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', start: '10:00', description: 'Custom date', class: 0 } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Custom date' })).toBeInTheDocument())
+
+    const dateCell = container.querySelector('tbody tr td[data-col-key="date"]')
+    expect(dateCell?.querySelector('.dt-full')).toHaveTextContent('16.06.2026')
+    expect(dateCell?.querySelector('.dt-compact')).toHaveTextContent('16.06.')
+    expect(dateCell).toHaveAttribute('title', '16.06.2026')
+
+    unmount()
+  })
+
+  it('keeps reduced date and action headers accessible while showing icon headers', async () => {
+    mockApi()
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    const table = container.querySelector('table.tracking-table')
+    table?.classList.add('is-thin-2', 'is-thin-3')
+
+    const dateHeader = getByRole('columnheader', { name: 'Date' })
+    const actionsHeader = getByRole('columnheader', { name: 'Actions' })
+    expect(dateHeader.querySelector('.th-icon')).toHaveAttribute('aria-hidden', 'true')
+    expect(actionsHeader.querySelector('.th-icon')).toHaveAttribute('aria-hidden', 'true')
 
     unmount()
   })
@@ -949,8 +986,9 @@ describe('Tracking (Worklog grid)', () => {
 
       return pop as HTMLElement
     })
-    // Saved latest row: Continue, Prolong, Info, Delete.
-    expect(menu.querySelectorAll("[role='menuitem']").length).toBe(4)
+    // Saved latest row: Info keeps its slot before the optional Prolong action.
+    expect(Array.from(menu.querySelectorAll("[role='menuitem']")).map((item) => item.textContent?.trim()))
+      .toEqual(['Continue', 'Info', 'Prolong', 'Delete'])
 
     // Choosing Continue clones the row (same effect as the icon button) and closes the menu.
     // The popup starts visibility:hidden and is revealed on the next frame once positioned,

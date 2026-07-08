@@ -6,15 +6,14 @@ import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQu
 import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { num, str } from '../lib/coerce'
-import { formatUserDate } from '../lib/dateFormat'
+import { dateFormat, formatUserDate } from '../lib/dateFormat'
 import { formatMinutes } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
-import { smallestFittingLevel } from '../lib/fitLevel'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
-import { ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, TrashIcon } from '../lib/icons'
+import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { PageDialog } from '../components/PageDialog'
 import { sessionExpired } from '../lib/session'
@@ -145,33 +144,77 @@ function displayDate(value: string): string {
   return formatUserDate(dmyToIso(value) ?? value)
 }
 
-// Localized short weekday ("Fri" / "Fr.") — one formatter per page load, the
-// app locale never changes without a reload. Construct and format in UTC (the
-// same pattern as dateFormat.ts formatAuto) so a DST transition or timezone
-// mismatch can never shift a date-only value onto the neighbouring weekday.
-let weekdayFormat: Intl.DateTimeFormat | undefined
-function shortWeekday(iso: string): string {
-  weekdayFormat ??= new Intl.DateTimeFormat(appConfig().locale, { weekday: 'short', timeZone: 'UTC' })
+// Construct compact date-only values in UTC (the same pattern as dateFormat.ts
+// formatAuto) so a DST transition or timezone mismatch can never shift a value
+// onto the neighbouring calendar day.
+function dateFromIso(iso: string): Date {
   const [year, month, day] = iso.split('-').map(Number)
 
-  return weekdayFormat.format(new Date(Date.UTC(year!, month! - 1, day!)))
+  return new Date(Date.UTC(year!, month! - 1, day!))
 }
 
-// Three widths of the same date so the responsive table can shrink the Date
-// column purely in CSS: full (the user's preferred format), then MM-DD, then the
-// weekday. The narrowest rung is the weekday, not the bare day-of-month — a lone
-// "03" says nothing without its month/year, while "Fri" orients the reader in a
-// recent-entries worklog (issue #520).
-function dateParts(value: string): { full: string; mid: string; short: string } {
+let compactFormatterLocale: string | null = null
+let compactFormatter: Intl.DateTimeFormat | undefined
+
+// Day+month in the active locale's order, always zero-padded to two digits
+// (e.g. `05.01.` / `15.01.`, not `5.1.` / `15.1.`) — a ragged mix of one- and
+// two-digit fields is hard to scan down a column.
+function compactDateByLocale(iso: string): string {
+  const locale = appConfig().locale
+  if (compactFormatterLocale !== locale) {
+    compactFormatterLocale = locale
+    compactFormatter = undefined
+  }
+  compactFormatter ??= new Intl.DateTimeFormat(locale, { month: '2-digit', day: '2-digit', timeZone: 'UTC' })
+
+  return compactFormatter.format(dateFromIso(iso))
+}
+
+// Same two-digit day+month, but following a user's custom pattern for the field
+// order and separator instead of the locale default.
+function customCompactDate(iso: string): string {
+  const pref = dateFormat()
+  const pattern = pref.mode === 'custom' ? pref.pattern : ''
+  const firstDay = pattern.search(/D|%d|%D/)
+  const firstMonth = pattern.search(/M|%m/)
+  const [, month, day] = iso.split('-')
+  const dayFirst = firstDay >= 0 && (firstMonth < 0 || firstDay < firstMonth)
+  const separator = pattern.includes('/') ? '/' : pattern.includes('.') ? '.' : pattern.includes(' ') ? ' ' : '-'
+  const trailing = separator === '.' ? separator : ''
+
+  return dayFirst
+    ? `${day!}${separator}${month!}${trailing}`
+    : `${month!}${separator}${day!}${trailing}`
+}
+
+// Two widths of the same date so the responsive table can shrink the Date
+// column purely in CSS: full (the user's preferred format) and a compact
+// two-digit day+month that still identifies a calendar date — never
+// weekday-only or a bare day-of-month, both ambiguous beyond a very small
+// visible range (issue #520).
+function dateParts(value: string): { full: string; compact: string } {
   const full = displayDate(value)
   const iso = dmyToIso(value) ?? value
   const match = /^(\d{4}-\d{2}-\d{2})/.exec(iso)
   const isoDate = match?.[1]
   if (isoDate !== undefined) {
-    return { full, mid: isoDate.slice(5), short: shortWeekday(isoDate) }
+    const compact = dateFormat().mode === 'custom' ? customCompactDate(isoDate) : compactDateByLocale(isoDate)
+
+    return { full, compact }
   }
 
-  return { full, mid: full, short: full }
+  return { full, compact: full }
+}
+
+function ColumnHeader(props: { label: string; icon?: JSX.Element }): JSX.Element {
+  return (
+    <>
+      <span class="th-label">{props.label}</span>
+      <Show when={props.icon !== undefined}>
+        <span class="th-icon" aria-hidden="true">{props.icon}</span>
+      </Show>
+    </>
+  )
 }
 
 // One icon button in the row-actions cell — same shape for Continue/Prolong/Info/
@@ -362,14 +405,16 @@ export default function Tracking() {
   // tightens padding / collapses the actions / shortens the date / truncates a
   // column / hides a low-value column, in priority order — see app.css) until
   // the table no longer overflows its scroll container. Cells are nowrap, so
-  // this fires BEFORE anything wraps. Width is monotonic in the level, so a
-  // binary search finds the minimal fitting level in ~4 reflows instead of a
-  // ~14-step linear scan. Re-run on container resize AND on row/content changes.
+  // this fires BEFORE anything wraps. Re-run on container resize AND on
+  // row/content changes. A direct measured scan is intentionally used here:
+  // auto table layout plus display changes are not guaranteed to be perfectly
+  // monotonic at every rung, and 15 probes is cheap enough for correctness.
   const MAX_THIN = 14
   function applyThinLevel(table: HTMLElement, level: number): void {
     for (let i = 1; i <= MAX_THIN; i++) {
       table.classList.toggle('is-thin-' + i, i <= level)
     }
+    table.dataset.fitLevel = String(level)
   }
   function fitTrackingTable(): void {
     const scroll = scrollEl()
@@ -380,11 +425,12 @@ export default function Tracking() {
     // clientWidth is stable across the search (thinning changes only the table's
     // own width), so read it once — the per-probe reflow is driven by scrollWidth.
     const clientWidth = scroll.clientWidth
-    const level = smallestFittingLevel(MAX_THIN, (candidate) => {
+    for (let candidate = 0; candidate <= MAX_THIN; candidate += 1) {
       applyThinLevel(table, candidate)
-      return scroll.scrollWidth > clientWidth + 1
-    })
-    applyThinLevel(table, level)
+      if (scroll.scrollWidth <= clientWidth + 1) {
+        break
+      }
+    }
   }
   // Manage the ResizeObserver reactively: it (re)binds whenever the scroll
   // element becomes available and disconnects when it goes away or remounts.
@@ -708,10 +754,9 @@ export default function Tracking() {
 
       return (
         <>
-          {/* Three widths; the responsive table CSS shows exactly one per column width. */}
+          {/* Two widths; the responsive table CSS shows exactly one per column width. */}
           <span class="dt dt-full">{parts.full}</span>
-          <span class="dt dt-mid">{parts.mid}</span>
-          <span class="dt dt-short">{parts.short}</span>
+          <span class="dt dt-compact">{parts.compact}</span>
           <Show when={classLabel(entry.class) !== ''}>
             <span class="visually-hidden"> ({classLabel(entry.class)})</span>
           </Show>
@@ -1141,8 +1186,14 @@ export default function Tracking() {
           >
             <thead>
               <tr>
-                <For each={visibleColumns()}>{(col) => <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>{col.label()}</th>}</For>
-                <th scope="col" data-col-key="actions">{m.tracking_actions()}</th>
+                <For each={visibleColumns()}>
+                  {(col) => (
+                    <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>
+                      <ColumnHeader label={col.label()} icon={col.key === 'date' ? <CalendarIcon /> : undefined} />
+                    </th>
+                  )}
+                </For>
+                <th scope="col" data-col-key="actions"><ColumnHeader label={m.tracking_actions()} icon={<ToolsIcon />} /></th>
               </tr>
             </thead>
             <tbody>
@@ -1167,6 +1218,7 @@ export default function Tracking() {
                               data-row-id={String(id)}
                               data-col-key={col.key}
                               data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
+                              title={col.key === 'date' ? displayDate(str(editor.overlayRow(entry).date)) : undefined}
                               onDblClick={() => { if (editable) editor.beginEdit(id, col.key) }}
                             >
                               <Show
@@ -1226,13 +1278,13 @@ export default function Tracking() {
                             {/* Per-row Continue / Prolong / Info — only for saved entries. */}
                             <Show when={id > 0}>
                               <RowAction label={m.tracking_continue()} keyshortcut={rowShortcut('Alt+C')} onClick={() => continueEntry(entry)}><ContinueIcon /></RowAction>
+                              <RowAction label={m.tracking_info()} keyshortcut={rowShortcut('Alt+I')} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
                               {/* Prolong rewrites the row's end to now — only meaningful on the
                                   LATEST entry; on an older row it would silently overwrite a past
                                   end with the current time, so it's hidden there. */}
                               <Show when={isLatestEntry(entry)}>
                                 <RowAction label={m.tracking_prolong()} keyshortcut={rowShortcut('Alt+P')} onClick={() => void prolongLast(entry)}><ProlongIcon /></RowAction>
                               </Show>
-                              <RowAction label={m.tracking_info()} keyshortcut={rowShortcut('Alt+I')} onClick={() => void showInfo(entry)}><InfoIcon /></RowAction>
                             </Show>
                             <RowAction label={m.admin_delete()} danger onClick={() => setPendingDelete(entry)}><TrashIcon /></RowAction>
                           </span>
@@ -1260,10 +1312,10 @@ export default function Tracking() {
                               <div class="action-menu-pop" role="menu" ref={positionActionsMenu}>
                                 <Show when={id > 0}>
                                   <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); continueEntry(entry) }}><ContinueIcon /> {m.tracking_continue()}</button>
+                                  <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); void showInfo(entry) }}><InfoIcon /> {m.tracking_info()}</button>
                                   <Show when={isLatestEntry(entry)}>
                                     <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); void prolongLast(entry) }}><ProlongIcon /> {m.tracking_prolong()}</button>
                                   </Show>
-                                  <button type="button" role="menuitem" onClick={() => { closeActionsMenu(); void showInfo(entry) }}><InfoIcon /> {m.tracking_info()}</button>
                                 </Show>
                                 <button type="button" role="menuitem" class="is-danger" onClick={() => { closeActionsMenu(); setPendingDelete(entry) }}><TrashIcon /> {m.admin_delete()}</button>
                               </div>
