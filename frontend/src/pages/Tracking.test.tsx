@@ -590,18 +590,16 @@ describe('Tracking (Worklog grid)', () => {
     const { container, getByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'Newest' })).toBeInTheDocument())
 
-    // Dates render in ISO (yyyy-mm-dd), one consistent format everywhere.
-    // The date cell renders three responsive widths (full / MM-DD / weekday);
-    // read the full-date span rather than the whole cell's concatenated text.
+    // Dates render in ISO (yyyy-mm-dd) at full width; read the full-date span
+    // rather than the whole cell's concatenated text.
     const dates = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-full')).map((el) => el.textContent)
     expect(dates).toEqual(['2026-06-16', '2026-06-15', '2026-06-14'])
 
-    // The narrower rungs keep identifying information: month-day in local order,
-    // never weekday-only or a bare day-of-month (issue #520).
-    const mids = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-mid')).map((el) => el.textContent)
-    expect(mids).toEqual(['06-16', '06-15', '06-14'])
-    const shorts = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-short')).map((el) => el.textContent)
-    expect(shorts).toEqual(['6/16', '6/15', '6/14'])
+    // The compact rung keeps identifying information: two-digit day+month in
+    // local order, always zero-padded, never weekday-only or a bare
+    // day-of-month (issue #520).
+    const compacts = Array.from(container.querySelectorAll('tbody tr td[data-col-key="date"] .dt-compact')).map((el) => el.textContent)
+    expect(compacts).toEqual(['06/16', '06/15', '06/14'])
 
     unmount()
   })
@@ -621,8 +619,7 @@ describe('Tracking (Worklog grid)', () => {
 
     const dateCell = container.querySelector('tbody tr td[data-col-key="date"]')
     expect(dateCell?.querySelector('.dt-full')).toHaveTextContent('16.06.2026')
-    expect(dateCell?.querySelector('.dt-mid')).toHaveTextContent('16.06.')
-    expect(dateCell?.querySelector('.dt-short')).toHaveTextContent('16.6.')
+    expect(dateCell?.querySelector('.dt-compact')).toHaveTextContent('16.06.')
     expect(dateCell).toHaveAttribute('title', '16.06.2026')
 
     unmount()

@@ -154,62 +154,56 @@ function dateFromIso(iso: string): Date {
 }
 
 let compactFormatterLocale: string | null = null
-let compactFormatterNumeric: Intl.DateTimeFormat | undefined
-let compactFormatter2Digit: Intl.DateTimeFormat | undefined
+let compactFormatter: Intl.DateTimeFormat | undefined
 
-function compactDateByLocale(iso: string, width: '2-digit' | 'numeric'): string {
+// Day+month in the active locale's order, always zero-padded to two digits
+// (e.g. `05.01.` / `15.01.`, not `5.1.` / `15.1.`) — a ragged mix of one- and
+// two-digit fields is hard to scan down a column.
+function compactDateByLocale(iso: string): string {
   const locale = appConfig().locale
   if (compactFormatterLocale !== locale) {
     compactFormatterLocale = locale
-    compactFormatterNumeric = undefined
-    compactFormatter2Digit = undefined
+    compactFormatter = undefined
   }
-  if (width === 'numeric') {
-    compactFormatterNumeric ??= new Intl.DateTimeFormat(locale, { month: 'numeric', day: 'numeric', timeZone: 'UTC' })
+  compactFormatter ??= new Intl.DateTimeFormat(locale, { month: '2-digit', day: '2-digit', timeZone: 'UTC' })
 
-    return compactFormatterNumeric.format(dateFromIso(iso))
-  }
-  compactFormatter2Digit ??= new Intl.DateTimeFormat(locale, { month: '2-digit', day: '2-digit', timeZone: 'UTC' })
-
-  return compactFormatter2Digit.format(dateFromIso(iso))
+  return compactFormatter.format(dateFromIso(iso))
 }
 
-function customCompactDate(iso: string, padded: boolean): string {
+// Same two-digit day+month, but following a user's custom pattern for the field
+// order and separator instead of the locale default.
+function customCompactDate(iso: string): string {
   const pref = dateFormat()
   const pattern = pref.mode === 'custom' ? pref.pattern : ''
   const firstDay = pattern.search(/D|%d|%D/)
   const firstMonth = pattern.search(/M|%m/)
   const [, month, day] = iso.split('-')
-  const monthText = padded ? month! : String(Number(month))
-  const dayText = padded ? day! : String(Number(day))
   const dayFirst = firstDay >= 0 && (firstMonth < 0 || firstDay < firstMonth)
   const separator = pattern.includes('/') ? '/' : pattern.includes('.') ? '.' : pattern.includes(' ') ? ' ' : '-'
   const trailing = separator === '.' ? separator : ''
 
   return dayFirst
-    ? `${dayText}${separator}${monthText}${trailing}`
-    : `${monthText}${separator}${dayText}${trailing}`
+    ? `${day!}${separator}${month!}${trailing}`
+    : `${month!}${separator}${day!}${trailing}`
 }
 
-// Three widths of the same date so the responsive table can shrink the Date
-// column purely in CSS: full (the user's preferred format), then compact
-// month+day variants that still identify a calendar date. The narrowest rung is
-// never weekday-only or a bare day-of-month — both are ambiguous beyond a very
-// small visible range (issue #520).
-function dateParts(value: string): { full: string; mid: string; short: string } {
+// Two widths of the same date so the responsive table can shrink the Date
+// column purely in CSS: full (the user's preferred format) and a compact
+// two-digit day+month that still identifies a calendar date — never
+// weekday-only or a bare day-of-month, both ambiguous beyond a very small
+// visible range (issue #520).
+function dateParts(value: string): { full: string; compact: string } {
   const full = displayDate(value)
   const iso = dmyToIso(value) ?? value
   const match = /^(\d{4}-\d{2}-\d{2})/.exec(iso)
   const isoDate = match?.[1]
   if (isoDate !== undefined) {
-    if (dateFormat().mode === 'custom') {
-      return { full, mid: customCompactDate(isoDate, true), short: customCompactDate(isoDate, false) }
-    }
+    const compact = dateFormat().mode === 'custom' ? customCompactDate(isoDate) : compactDateByLocale(isoDate)
 
-    return { full, mid: isoDate.slice(5), short: compactDateByLocale(isoDate, 'numeric') }
+    return { full, compact }
   }
 
-  return { full, mid: full, short: full }
+  return { full, compact: full }
 }
 
 function ColumnHeader(props: { label: string; icon?: JSX.Element }): JSX.Element {
@@ -760,10 +754,9 @@ export default function Tracking() {
 
       return (
         <>
-          {/* Three widths; the responsive table CSS shows exactly one per column width. */}
+          {/* Two widths; the responsive table CSS shows exactly one per column width. */}
           <span class="dt dt-full">{parts.full}</span>
-          <span class="dt dt-mid">{parts.mid}</span>
-          <span class="dt dt-short">{parts.short}</span>
+          <span class="dt dt-compact">{parts.compact}</span>
           <Show when={classLabel(entry.class) !== ''}>
             <span class="visually-hidden"> ({classLabel(entry.class)})</span>
           </Show>

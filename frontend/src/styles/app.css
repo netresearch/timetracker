@@ -1657,7 +1657,7 @@ kbd {
    final safety net AND the no-JS fallback. Scoped to .tracking-table so the
    shared admin/summary tables are untouched. */
 .tracking-table td, .tracking-table th { white-space: nowrap; }
-.tracking-table .dt-mid, .tracking-table .dt-short { display: none; }
+.tracking-table .dt-compact { display: none; }
 .tracking-table .th-icon { display: none; }
 .tracking-table .th-icon .action-ico {
   height: 1.1em;
@@ -1713,14 +1713,12 @@ kbd {
 }
 /* Levels 3+ — the pre-existing content ladder, shifted by the two new rungs. */
 .tracking-table.is-thin-3 .dt-full { display: none; }
-.tracking-table.is-thin-3 .dt-mid { display: inline; }
+.tracking-table.is-thin-3 .dt-compact { display: inline; }
 .tracking-table.is-thin-4 [data-col-key='description'] .cell-trunc { max-width: 30ch; }
 .tracking-table.is-thin-5 [data-col-key='description'] .cell-trunc { max-width: 22ch; }
 .tracking-table.is-thin-6 [data-col-key='project'] .tag-label { max-width: 18ch; }
 .tracking-table.is-thin-6 [data-col-key='customer'] .tag-label { max-width: 15ch; }
 .tracking-table.is-thin-7 [data-col-key='description'] .cell-trunc { max-width: 16ch; }
-.tracking-table.is-thin-8 .dt-mid { display: none; }
-.tracking-table.is-thin-8 .dt-short { display: inline; }
 .tracking-table.is-thin-9 [data-col-key='description'] .cell-trunc { max-width: 12ch; }
 .tracking-table.is-thin-10 [data-col-key='ticket'] .ticket-link { max-width: 10ch; }
 .tracking-table.is-thin-11 [data-col-key='description'] .cell-trunc { max-width: 9ch; }
