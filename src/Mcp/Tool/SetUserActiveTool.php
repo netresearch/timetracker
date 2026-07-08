@@ -45,9 +45,13 @@ final readonly class SetUserActiveTool
         #[Schema(description: 'true to activate, false to offboard.')]
         bool $active,
     ): array {
-        $this->scopeGuard->requireAdminScope('users:write');
+        $actingUser = $this->scopeGuard->requireAdminScope('users:write');
 
         $entity = $this->adminEntityResolver->user($user);
+        // Lockout guard: an admin must not deactivate their own account.
+        if (!$active && $entity->getId() === $actingUser->getId()) {
+            throw new ToolCallException('You cannot deactivate your own account.');
+        }
         $dto = $this->adminOnboardingService->setUserActive((int) $entity->getId(), $active);
         if (!$dto instanceof UserDto) {
             throw new ToolCallException('The user could not be updated.');

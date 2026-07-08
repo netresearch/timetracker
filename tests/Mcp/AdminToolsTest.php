@@ -102,6 +102,16 @@ final class AdminToolsTest extends AbstractWebTestCase
         self::assertFalse($result['user']['active']);
     }
 
+    public function testAdminCannotDeactivateOwnAccountViaTool(): void
+    {
+        // The token acts as 'unittest' — self-deactivation would lock the
+        // admin out.
+        $this->useToken(['users:write']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(SetUserActiveTool::class)->setUserActive('unittest', false);
+    }
+
     public function testOffboardProjectByName(): void
     {
         $this->useToken(['projects:write']);

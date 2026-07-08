@@ -10,11 +10,13 @@ declare(strict_types=1);
 namespace App\Controller\Api\V2;
 
 use App\Dto\Response\UserDto;
+use App\Entity\User;
 use App\Security\ApiToken\RequireScope;
 use App\Service\AdminOnboardingService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
@@ -31,8 +33,13 @@ final readonly class SetUserActiveAction
     #[IsGranted('ROLE_ADMIN')]
     #[RequireScope('users:write')]
     #[Route(path: '/api/v2/users/{id}/{action}', name: 'api_v2_users_active', requirements: ['id' => '\d+', 'action' => 'activate|deactivate'], methods: ['POST'])]
-    public function __invoke(int $id, string $action): JsonResponse
+    public function __invoke(int $id, string $action, #[CurrentUser] ?User $actingUser = null): JsonResponse
     {
+        // Lockout guard: an admin must not deactivate their own account.
+        if ('deactivate' === $action && $actingUser instanceof User && $id === (int) $actingUser->getId()) {
+            return new JsonResponse(['message' => 'You cannot deactivate your own account.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $user = $this->adminOnboardingService->setUserActive($id, 'activate' === $action);
         if (!$user instanceof UserDto) {
             return new JsonResponse(['message' => 'No user for id.'], Response::HTTP_NOT_FOUND);

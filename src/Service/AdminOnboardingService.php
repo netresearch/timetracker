@@ -23,12 +23,12 @@ use App\Entity\Project;
 use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\UserType;
-use App\Repository\ProjectRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use InvalidArgumentException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-use function assert;
+use function array_unique;
+use function array_values;
 use function count;
 use function implode;
 use function sprintf;
@@ -76,14 +76,6 @@ final readonly class AdminOnboardingService
             throw new InvalidArgumentException('Please choose a customer.');
         }
 
-        if ('' !== $jiraId) {
-            $projectRepository = $this->managerRegistry->getRepository(Project::class);
-            assert($projectRepository instanceof ProjectRepository);
-            if (0 === $projectRepository->isValidJiraPrefix($jiraId)) {
-                throw new InvalidArgumentException('Please provide a valid ticket prefix with only capital letters.');
-            }
-        }
-
         $project = new Project();
         $project->setName(trim($projectOnboardDto->name))
             ->setCustomer($customer)
@@ -110,10 +102,6 @@ final readonly class AdminOnboardingService
             global: $customerOnboardDto->global,
             teams: $customerOnboardDto->team_ids,
         ));
-
-        if (!$customerOnboardDto->global && [] === $customerOnboardDto->team_ids) {
-            throw new InvalidArgumentException('Every customer must belong to at least one team if it is not global.');
-        }
 
         $customer = new Customer();
         $customer->setName(trim($customerOnboardDto->name))
@@ -227,6 +215,7 @@ final readonly class AdminOnboardingService
      */
     private function resolveTeams(array $teamIds): array
     {
+        $teamIds = array_values(array_unique($teamIds));
         if ([] === $teamIds) {
             return [];
         }

@@ -84,6 +84,15 @@ final class AdminOnboardingActionsTest extends AbstractWebTestCase
         self::assertFalse($data['user']['active']);
     }
 
+    public function testAdminCannotDeactivateOwnAccount(): void
+    {
+        // Session user 'unittest' is id 1 — self-deactivation would lock the
+        // admin out; reactivating yourself stays allowed.
+        $this->client->request(Request::METHOD_POST, '/api/v2/users/1/deactivate');
+
+        $this->assertStatusCode(422);
+    }
+
     public function testToggleUnknownProjectIsNotFound(): void
     {
         $this->client->request(Request::METHOD_POST, '/api/v2/projects/999999/deactivate');
