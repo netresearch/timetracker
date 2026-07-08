@@ -4424,15 +4424,17 @@ th[aria-sort='descending'] .th-sort-glyph {
 
 .date-field-wrap > input.date-field {
   width: 100%;
-  /* Room for the trigger button so typed text never slides under it. */
-  padding-right: 2.4rem;
+  /* Clear the 44px trigger (2.75rem) at right:0.15rem — i.e. it reaches 2.9rem
+     from the edge — so typed text never slides under it. */
+  padding-right: 3.1rem;
 }
 
 /* Grey completion preview shown while typing a partial date. aria-hidden and
    pointer-events:none so it's purely visual and never intercepts a click. */
 .date-field-ghost {
   position: absolute;
-  right: 2.6rem;
+  /* Right-anchored just left of the trigger (which reaches 2.9rem from the edge). */
+  right: 3.1rem;
   color: var(--color-text-muted);
   font-size: 0.85rem;
   pointer-events: none;
