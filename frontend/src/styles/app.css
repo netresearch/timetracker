@@ -2272,12 +2272,18 @@ kbd {
   display: inline-flex;
   align-items: stretch;
   width: max-content;
-  max-width: min(22rem, 60vw);
-  background: var(--color-surface);
+  max-width: min(22em, 60vw);
+  background-color: var(--color-surface);
   border: 1.5px solid var(--color-accent);
   border-radius: 6px;
   box-shadow: 0 6px 20px rgb(0 0 0 / 0.16);
   overflow: hidden;
+}
+
+/* The pill paints over the cell (its own surface + accent border), so it must
+   carry the cell's invalid signal itself. */
+.data-table td.is-invalid .inline-date-editor {
+  border-color: var(--color-danger, #c0392b);
 }
 
 /* The input sits INSIDE the pill (static, borderless, transparent) — not the
@@ -2286,9 +2292,9 @@ kbd {
 .data-table td[data-inline-editing] .inline-date-editor .inline-date-input {
   position: static;
   /* Fits the full ISO date "2026-07-08" (10 chars) plus a little slack. */
-  width: 11ch;
-  min-width: 11ch;
-  padding: 0.28rem 0 0.28rem 0.5rem;
+  width: 12ch;
+  min-width: 12ch;
+  padding: 0.28rem 0.4rem 0.28rem 0.5rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2314,13 +2320,13 @@ kbd {
   border: 0;
   border-left: 1px solid var(--color-border);
   border-radius: 0;
-  background: var(--color-accent-soft);
+  background-color: var(--color-accent-soft);
   color: var(--color-accent);
   cursor: pointer;
 }
 
 .inline-date-trigger:hover {
-  background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
+  background-color: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
 }
 
 .inline-date-trigger .action-ico {
@@ -4459,19 +4465,30 @@ th[aria-sort='descending'] .th-sort-glyph {
   align-items: stretch;
   width: max-content;
   max-width: 100%;
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   border: 1.5px solid var(--color-accent);
   border-radius: 6px;
   overflow: hidden;
 }
 
+/* The input inside the pill is borderless/outline-less, so the wrap carries the
+   keyboard focus indicator (WCAG 2.4.7); the danger variant wins when invalid. */
+.date-field-wrap:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.date-field-wrap:has(> input.date-field[aria-invalid='true']):focus-within {
+  outline-color: var(--color-danger, #c0392b);
+}
+
 .date-field-wrap > input.date-field {
   /* Fits the full date ("2026-07-08" / "08.07.2026") plus a little slack. */
-  width: 11ch;
-  min-width: 11ch;
+  width: 12ch;
+  min-width: 12ch;
   border: 0;
   background: transparent;
-  padding: 0.34rem 0 0.34rem 0.55rem;
+  padding: 0.34rem 0.4rem 0.34rem 0.55rem;
   font-variant-numeric: tabular-nums;
   outline: none;
 }
@@ -4498,13 +4515,13 @@ th[aria-sort='descending'] .th-sort-glyph {
   border: 0;
   border-left: 1px solid var(--color-border);
   border-radius: 0;
-  background: var(--color-accent-soft);
+  background-color: var(--color-accent-soft);
   color: var(--color-accent);
   cursor: pointer;
 }
 
 .date-field-trigger:hover {
-  background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
+  background-color: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
 }
 
 .date-field-trigger:disabled {
