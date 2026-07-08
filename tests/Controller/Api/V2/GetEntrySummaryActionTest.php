@@ -9,15 +9,9 @@ declare(strict_types=1);
 
 namespace Tests\Controller\Api\V2;
 
-use App\Entity\Activity;
-use App\Entity\Customer;
-use App\Entity\Entry;
-use App\Entity\Project;
-use App\Entity\User;
-use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\CreatesTestEntries;
 
 use function assert;
 use function is_array;
@@ -32,9 +26,11 @@ use function sprintf;
  */
 final class GetEntrySummaryActionTest extends AbstractWebTestCase
 {
+    use CreatesTestEntries;
+
     public function testOwnEntryReturnsScopesAndEstimate(): void
     {
-        $entryId = $this->createEntryFor('unittest');
+        $entryId = (int) $this->createEntryFor('unittest', description: 'summary test entry')->getId();
 
         $this->client->request(Request::METHOD_GET, sprintf('/api/v2/entries/%d/summary', $entryId));
         $this->assertStatusCode(200);
@@ -58,7 +54,7 @@ final class GetEntrySummaryActionTest extends AbstractWebTestCase
     {
         // Owned by user 'developer' (id 2), requested by the session user
         // 'unittest' (id 1) — must be 404, not a cross-user disclosure (IDOR).
-        $entryId = $this->createEntryFor('developer');
+        $entryId = (int) $this->createEntryFor('developer', description: 'foreign entry')->getId();
 
         $this->client->request(Request::METHOD_GET, sprintf('/api/v2/entries/%d/summary', $entryId));
 
@@ -70,38 +66,5 @@ final class GetEntrySummaryActionTest extends AbstractWebTestCase
         $this->client->request(Request::METHOD_GET, '/api/v2/entries/999999/summary');
 
         $this->assertStatusCode(404);
-    }
-
-    private function createEntryFor(string $username): int
-    {
-        /** @var Registry $doctrine */
-        $doctrine = self::getContainer()->get('doctrine');
-        $entityManager = $doctrine->getManager();
-        assert($entityManager instanceof EntityManagerInterface);
-
-        $owner = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
-        self::assertInstanceOf(User::class, $owner);
-        $project = $entityManager->getRepository(Project::class)->find(1);
-        self::assertInstanceOf(Project::class, $project);
-        $customer = $project->getCustomer();
-        self::assertInstanceOf(Customer::class, $customer);
-        $activity = $entityManager->getRepository(Activity::class)->find(1);
-        self::assertInstanceOf(Activity::class, $activity);
-
-        $entry = new Entry();
-        $entry->setUser($owner)
-            ->setCustomer($customer)
-            ->setProject($project)
-            ->setActivity($activity)
-            ->setTicket('SA-42')
-            ->setDescription('summary test entry')
-            ->setDay('2026-07-06')
-            ->setStart('09:00:00')
-            ->setEnd('10:00:00')
-            ->setDuration(60);
-        $entityManager->persist($entry);
-        $entityManager->flush();
-
-        return (int) $entry->getId();
     }
 }

@@ -9,17 +9,10 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
-use App\Entity\Activity;
-use App\Entity\Customer;
-use App\Entity\Entry;
-use App\Entity\Project;
-use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\CreatesTestEntries;
 
-use function assert;
-use function is_array;
 use function json_decode;
 
 /**
@@ -32,24 +25,14 @@ use function json_decode;
  */
 final class DefaultControllerSummaryTest extends AbstractWebTestCase
 {
+    use CreatesTestEntries;
+
     public function testGetSummaryActionWithProjectEstimationComputesQuota(): void
     {
-        $entry = $this->createEntryFor('unittest');
-        $project = $entry->getProject();
-        self::assertNotNull($project, 'Project should not be null');
-        // Ensure estimation is set to a non-zero value
-        $project->setEstimation(300);
-        $this->entityManager()->flush();
+        $project = $this->requestOwnProjectSummary(estimation: 300);
 
-        $this->client->request(Request::METHOD_POST, '/getSummary', ['id' => $entry->getId()]);
-        $this->assertStatusCode(200);
-
-        $response = json_decode((string) $this->client->getResponse()->getContent(), true);
-        self::assertIsArray($response);
-        self::assertArrayHasKey('project', $response);
-        assert(is_array($response['project']));
-        self::assertArrayHasKey('quota', $response['project']);
-        $quota = $response['project']['quota'];
+        self::assertArrayHasKey('quota', $project);
+        $quota = $project['quota'];
         // When estimation is set, quota should be a percentage string
         self::assertIsString($quota);
         self::assertStringEndsWith('%', $quota);
@@ -59,22 +42,10 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
 
     public function testGetSummaryActionWithoutEstimationLeavesZeroQuota(): void
     {
-        $entry = $this->createEntryFor('unittest');
-        $project = $entry->getProject();
-        self::assertNotNull($project, 'Project should not be null');
-        // Remove estimation (set to 0)
-        $project->setEstimation(0);
-        $this->entityManager()->flush();
+        $project = $this->requestOwnProjectSummary(estimation: 0);
 
-        $this->client->request(Request::METHOD_POST, '/getSummary', ['id' => $entry->getId()]);
-        $this->assertStatusCode(200);
-
-        $response = json_decode((string) $this->client->getResponse()->getContent(), true);
-        self::assertIsArray($response);
-        self::assertArrayHasKey('project', $response);
-        assert(is_array($response['project']));
         // Without estimation set, quota remains numeric zero according to default data
-        self::assertSame(0, $response['project']['quota'] ?? 0);
+        self::assertSame(0, $project['quota'] ?? 0);
     }
 
     public function testGetSummaryActionForeignEntryReadsAsNotFound(): void
@@ -88,43 +59,28 @@ final class DefaultControllerSummaryTest extends AbstractWebTestCase
         $this->assertStatusCode(404);
     }
 
-    private function createEntryFor(string $username): Entry
+    /**
+     * Creates an entry owned by the session user, pins its project estimation,
+     * POSTs /getSummary for it and returns the decoded `project` scope row.
+     *
+     * @return array<mixed>
+     */
+    private function requestOwnProjectSummary(int $estimation): array
     {
-        $entityManager = $this->entityManager();
+        $entry = $this->createEntryFor('unittest', ticket: 'SA-21', description: 'summary quota test entry');
+        $project = $entry->getProject();
+        self::assertNotNull($project, 'Project should not be null');
+        $project->setEstimation($estimation);
+        $this->testEntityManager()->flush();
 
-        $owner = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
-        self::assertInstanceOf(User::class, $owner);
-        $project = $entityManager->getRepository(Project::class)->find(1);
-        self::assertInstanceOf(Project::class, $project);
-        $customer = $project->getCustomer();
-        self::assertInstanceOf(Customer::class, $customer);
-        $activity = $entityManager->getRepository(Activity::class)->find(1);
-        self::assertInstanceOf(Activity::class, $activity);
+        $this->client->request(Request::METHOD_POST, '/getSummary', ['id' => $entry->getId()]);
+        $this->assertStatusCode(200);
 
-        $entry = new Entry();
-        $entry->setUser($owner)
-            ->setCustomer($customer)
-            ->setProject($project)
-            ->setActivity($activity)
-            ->setTicket('SA-21')
-            ->setDescription('summary quota test entry')
-            ->setDay('2026-07-06')
-            ->setStart('09:00:00')
-            ->setEnd('10:00:00')
-            ->setDuration(60);
-        $entityManager->persist($entry);
-        $entityManager->flush();
+        $response = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($response);
+        self::assertArrayHasKey('project', $response);
+        self::assertIsArray($response['project']);
 
-        return $entry;
-    }
-
-    private function entityManager(): EntityManagerInterface
-    {
-        /** @var \Doctrine\Bundle\DoctrineBundle\Registry $doctrine */
-        $doctrine = $this->client->getContainer()->get('doctrine');
-        $entityManager = $doctrine->getManager();
-        assert($entityManager instanceof EntityManagerInterface);
-
-        return $entityManager;
+        return $response['project'];
     }
 }
