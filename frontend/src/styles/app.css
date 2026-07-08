@@ -2153,11 +2153,12 @@ kbd {
   background: var(--color-future-tint);
 }
 
-/* Full-width band separating future entries (above) from today/past (below). */
+/* Full-width band separating future entries (above) from today/past (below).
+   em (not rem) so the band tracks the --font-scale text-size preference (ADR-014). */
 .tracking-divider > td {
-  padding: 0.2rem 0.75rem;
+  padding: 0.2em 0.75em;
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 0.72em;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

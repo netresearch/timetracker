@@ -43,34 +43,33 @@ type RowCue = '' | 'is-daybreak' | 'is-pause' | 'is-overlap'
 // the day break; a later one is a pause (gap after the previous) or an overlap
 // (starts before the previous ended), else plain.
 function deriveRowCues(entries: TrackingEntry[]): Map<number, RowCue> {
-  const saved = entries.filter((entry) => num(entry.id) > 0 && str(entry.date) !== '')
-  const ascending = [...saved].sort((a, b) => {
-    const ka = `${dmyToIso(str(a.date)) ?? str(a.date)} ${str(a.start)}`
-    const kb = `${dmyToIso(str(b.date)) ?? str(b.date)} ${str(b.start)}`
-    if (ka !== kb) {
-      return ka < kb ? -1 : 1
-    }
+  // Parse each row's id/day/start/end ONCE, then sort by the precomputed key —
+  // so dmyToIso/str don't re-run inside the O(n log n) comparator.
+  const rows = entries
+    .filter((entry) => num(entry.id) > 0 && str(entry.date) !== '')
+    .map((entry) => {
+      const day = dmyToIso(str(entry.date)) ?? str(entry.date)
+      const start = str(entry.start)
 
-    return num(a.id) - num(b.id)
-  })
+      return { id: num(entry.id), day, start, end: str(entry.end), key: `${day} ${start}` }
+    })
+    .sort((a, b) => (a.key !== b.key ? (a.key < b.key ? -1 : 1) : a.id - b.id))
 
   const cues = new Map<number, RowCue>()
   let previousDay = ''
   let previousEnd = ''
-  for (const entry of ascending) {
-    const day = dmyToIso(str(entry.date)) ?? str(entry.date)
-    const start = str(entry.start)
+  for (const row of rows) {
     let cue: RowCue = ''
-    if (day !== previousDay) {
+    if (row.day !== previousDay) {
       cue = 'is-daybreak'
-    } else if (start > previousEnd) {
+    } else if (row.start > previousEnd) {
       cue = 'is-pause'
-    } else if (start < previousEnd) {
+    } else if (row.start < previousEnd) {
       cue = 'is-overlap'
     }
-    cues.set(num(entry.id), cue)
-    previousDay = day
-    previousEnd = str(entry.end)
+    cues.set(row.id, cue)
+    previousDay = row.day
+    previousEnd = row.end
   }
 
   return cues
