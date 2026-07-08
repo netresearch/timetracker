@@ -21,6 +21,14 @@ type Cell = HTMLTableCellElement
 const INTERACTIVE = 'button, a[href], input, select, textarea'
 const FALLBACK_PAGE_ROWS = 10
 
+// Rows that carry no entry data and must be skipped by vertical nav and the
+// page-edge landing (a save-error row beneath an entry, or a `.grid-divider`
+// section band). They keep the grid roles the sync loop assigns, so they only
+// need to be invisible to movement, not to the ARIA structure.
+function isNonDataRow(row: HTMLTableRowElement | undefined): boolean {
+  return row?.classList.contains('row-error') === true || row?.classList.contains('grid-divider') === true
+}
+
 /** How a cell edit was triggered: Enter/F2 open an empty editor; 'type' opens
  *  one seeded with the printable character the user pressed. */
 export type ActivateKey = 'Enter' | 'F2' | 'type'
@@ -189,7 +197,7 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   function dataRows(): HTMLTableRowElement[] {
     const body = table.tBodies[0]
 
-    return body ? Array.from(body.rows).filter((row) => !row.classList.contains('row-error')) : []
+    return body ? Array.from(body.rows).filter((row) => !isNonDataRow(row)) : []
   }
 
   // After a page change (onPageEdge), land on the last data row (came up from
@@ -208,12 +216,13 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     }
   }
 
-  // The next row index in a vertical direction, skipping non-data (.row-error)
-  // rows — so ArrowUp/Down (and an editor's commit-move) step entry-to-entry and
-  // never land on a 1-cell error row, which would collapse the cursor's column to 0.
+  // The next row index in a vertical direction, skipping non-data rows (see
+  // isNonDataRow) — so ArrowUp/Down (and an editor's commit-move) step
+  // entry-to-entry and never land on a 1-cell band/error row, which would
+  // collapse the cursor's column to 0.
   function verticalStep(fromRow: number, dir: -1 | 1): number {
     let next = fromRow + dir
-    while (table.rows[next]?.classList.contains('row-error')) {
+    while (isNonDataRow(table.rows[next])) {
       next += dir
     }
     // Ran off the end (only error rows that way) → don't move, so we never clamp

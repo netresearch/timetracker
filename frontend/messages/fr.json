@@ -228,6 +228,7 @@
   "tracking_class_daybreak": "Changement de jour",
   "tracking_class_pause": "Pause",
   "tracking_class_overlap": "Chevauchement horaire",
+  "tracking_future_divider": "À venir",
   "tracking_invalid_time": "Veuillez saisir des heures de début et de fin valides.",
   "tracking_time_order": "L'heure de début doit être antérieure à l'heure de fin.",
   "tracking_actions": "Actions",

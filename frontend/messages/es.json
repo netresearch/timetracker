@@ -228,6 +228,7 @@
   "tracking_class_daybreak": "Cambio de día",
   "tracking_class_pause": "Pausa",
   "tracking_class_overlap": "Solapamiento de tiempo",
+  "tracking_future_divider": "Futuro",
   "tracking_invalid_time": "Introduzca una hora de inicio y de fin válidas.",
   "tracking_time_order": "La hora de inicio debe ser anterior a la de fin.",
   "tracking_actions": "Acciones",

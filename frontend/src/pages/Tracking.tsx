@@ -7,7 +7,7 @@ import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { num, str } from '../lib/coerce'
 import { dateFormat, formatUserDate } from '../lib/dateFormat'
-import { formatMinutes } from '../lib/format'
+import { formatMinutes, isoDate } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
@@ -32,8 +32,73 @@ const MAX_DAYS = 366
 // Widen target for the range-aware empty state (the largest preset window).
 const WIDEN_DAYS = 35
 
-// Server-computed EntryClass → row modifier (drives the row borders).
-const CLASS_ROW: Record<number, string> = { 2: 'is-daybreak', 4: 'is-pause', 8: 'is-overlap' }
+type RowCue = '' | 'is-daybreak' | 'is-pause' | 'is-overlap'
+
+// Day-break / pause / overlap are a pure function of the displayed entries'
+// (day, start, end) ordering, so derive them on the client from the rows we
+// actually render. This is correct for ANY data — seed, import, future-dated —
+// unlike the persisted `class` column, which is only (re)computed server-side
+// when an entry is saved and is therefore stale/absent otherwise.
+// Mirrors BaseTrackingController::calculateClasses: a day's earliest entry is
+// the day break; a later one is a pause (gap after the previous) or an overlap
+// (starts before the previous ended), else plain.
+// Normalise a worklog date to an ISO day (YYYY-MM-DD), accepting both the
+// grid's dd/mm/YYYY format and an already-ISO value (imported/seed rows).
+function toIsoDay(dateValue: string | null): string | null {
+  const value = str(dateValue)
+  const iso = dmyToIso(value)
+  if (iso !== null) {
+    return iso
+  }
+
+  return /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : null
+}
+
+function deriveRowCues(entries: TrackingEntry[]): Map<number, RowCue> {
+  // Parse each row's id/day/start/end ONCE, then sort by the precomputed key —
+  // so parsing doesn't re-run inside the O(n log n) comparator.
+  const rows = entries
+    .filter((entry) => num(entry.id) > 0 && str(entry.date) !== '')
+    .map((entry) => {
+      const day = toIsoDay(entry.date) ?? str(entry.date)
+      const start = str(entry.start)
+
+      return { id: num(entry.id), day, start, end: str(entry.end), key: `${day} ${start}` }
+    })
+    .sort((a, b) => (a.key !== b.key ? (a.key < b.key ? -1 : 1) : a.id - b.id))
+
+  const cues = new Map<number, RowCue>()
+  let previousDay = ''
+  let previousEnd = ''
+  for (const row of rows) {
+    let cue: RowCue = ''
+    if (row.day !== previousDay) {
+      cue = 'is-daybreak'
+    } else if (row.start !== '' && previousEnd !== '') {
+      // Only a fully-timed pair yields pause/overlap — mirrors the backend,
+      // which skips the comparison when a start/end is missing (otherwise a
+      // blank previous end would mark every later same-day row a pause).
+      if (row.start > previousEnd) {
+        cue = 'is-pause'
+      } else if (row.start < previousEnd) {
+        cue = 'is-overlap'
+      }
+    }
+    cues.set(row.id, cue)
+    previousDay = row.day
+    previousEnd = row.end
+  }
+
+  return cues
+}
+
+// An entry sits in the future when its calendar day is after the local today
+// (same client-clock convention as Month.tsx — no server-timezone skew).
+function isFutureDay(dateValue: string | null, todayIso: string): boolean {
+  const day = toIsoDay(dateValue)
+
+  return day !== null && day > todayIso
+}
 
 // Build the /tracking/save body shared by inline-save and Prolong. A non-positive
 // id is omitted so the server creates a new entry.
@@ -124,14 +189,14 @@ const COLUMNS: { key: string; label: () => string; numeric?: boolean }[] = [
   { key: 'duration', label: () => m.tracking_col_duration(), numeric: true },
 ]
 
-// Non-colour cue for the row class (WCAG 1.4.1 / 1.3.1).
-function classLabel(entryClass: number): string {
-  switch (entryClass) {
-    case 2:
+// Non-colour cue for the derived row cue (WCAG 1.4.1 / 1.3.1).
+function cueLabel(cue: RowCue): string {
+  switch (cue) {
+    case 'is-daybreak':
       return m.tracking_class_daybreak()
-    case 4:
+    case 'is-pause':
       return m.tracking_class_pause()
-    case 8:
+    case 'is-overlap':
       return m.tracking_class_overlap()
     default:
       return ''
@@ -400,6 +465,37 @@ export default function Tracking() {
   // The grid's move handle — used to restore cell focus after a row is deleted.
   let gridHandle: GridMoveHandle | null = null
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
+
+  // Day-break/pause/overlap cues, derived from the rendered rows (see
+  // deriveRowCues) instead of the persisted `class` — so they are correct for
+  // future-dated and never-saved-through-the-app entries too.
+  const rowCues = createMemo<Map<number, RowCue>>(() => deriveRowCues(rows()))
+  // Local today (client clock, per Month.tsx convention) — future entries are
+  // days strictly after it. Only relevant when the user opted into show-future.
+  const todayIso = isoDate(new Date())
+  const rowIsFuture = (entry: TrackingEntry): boolean =>
+    appConfig().showFuture && num(entry.id) > 0 && isFutureDay(entry.date, todayIso)
+  // Rows render newest-first, so any future block sits at the top. The "Zukunft"
+  // divider renders directly above the first non-future (today/past) entry that
+  // follows the future block; null when nothing (or everything) is future.
+  const futureDividerBeforeId = createMemo<number | null>(() => {
+    if (!appConfig().showFuture) {
+      return null
+    }
+    let sawFuture = false
+    for (const entry of rows()) {
+      if (num(entry.id) <= 0) {
+        continue
+      }
+      const future = isFutureDay(entry.date, todayIso)
+      if (sawFuture && !future) {
+        return num(entry.id)
+      }
+      sawFuture = sawFuture || future
+    }
+
+    return null
+  })
 
   // Progressive responsive thinning: raise .is-thin-N on the table (each level
   // tightens padding / collapses the actions / shortens the date / truncates a
@@ -757,8 +853,8 @@ export default function Tracking() {
           {/* Two widths; the responsive table CSS shows exactly one per column width. */}
           <span class="dt dt-full">{parts.full}</span>
           <span class="dt dt-compact">{parts.compact}</span>
-          <Show when={classLabel(entry.class) !== ''}>
-            <span class="visually-hidden"> ({classLabel(entry.class)})</span>
+          <Show when={cueLabel(rowCues().get(num(entry.id)) ?? '') !== ''}>
+            <span class="visually-hidden"> ({cueLabel(rowCues().get(num(entry.id)) ?? '')})</span>
           </Show>
         </>
       )
@@ -1203,7 +1299,16 @@ export default function Tracking() {
 
                   return (
                     <>
-                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : CLASS_ROW[entry.class] ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id) }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
+                    {/* Labeled band marking where future entries end and today/past
+                        begin — a non-colour cue paired with the .is-future tint.
+                        A non-data row (grid-divider) so keyboard nav skips it, but it
+                        stays in the a11y tree so the "future" label reaches AT. */}
+                    <Show when={futureDividerBeforeId() === id}>
+                      <tr class="tracking-divider grid-divider">
+                        <td colspan={visibleColumns().length + 1}>{m.tracking_future_divider()}</td>
+                      </tr>
+                    </Show>
+                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : rowCues().get(id) ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id), 'is-future': rowIsFuture(entry) }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
                       <For each={visibleColumns()}>
                         {(col) => {
                           const editable = FIELD_BY_KEY.has(col.key)
