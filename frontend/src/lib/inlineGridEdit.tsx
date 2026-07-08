@@ -196,38 +196,43 @@ export function InlineEditor(props: {
             click never blurs the input (which would finish() + unmount the editor
             before the click resolves); autoFocus={false} keeps the input focused
             when the popover opens so the same race can't happen on open. */}
-        <input
-          ref={(el) => { control = el }}
-          type="text"
-          placeholder="YYYY-MM-DD"
-          aria-describedby={dateHintId}
-          class="inline-editor inline-date-input"
-          aria-label={props.label}
-          value={value() as string}
-          onInput={(e) => setValue(e.currentTarget.value)}
-          onKeyDown={onKeyDown}
-          // Blur commits (click-away) — EXCEPT when focus moves into the calendar,
-          // which is body-portalled: the calendar's Today link / arrow nav call
-          // button.focus() programmatically, and committing a partial value there
-          // would tear the editor down. Only a real focus-OUT commits.
-          onBlur={(event) => {
-            const next = (event.relatedTarget as HTMLElement | null) ?? (document.activeElement as HTMLElement | null)
-            if (next?.closest('[data-date-popup]')) {
-              return
-            }
-            finish()
-          }}
-        />
-        <Show when={dateGhostText() !== ''}>
-          <span class="inline-date-ghost" aria-hidden="true">{dateGhostText()}</span>
-        </Show>
-        <span id={dateHintId} class="visually-hidden">{m.tracking_date_format_hint()}</span>
-        <DatePopover
-          open={calOpen()}
-          onOpenChange={setCalOpen}
-          triggerClass="inline-date-trigger"
-          triggerTabIndex={-1}
-          autoFocus={false}
+        {/* Variant-A editor (design #572): a distinct accent-bordered pill that
+            breaks OUT of the narrow date column and overlays the neighbours
+            (with a shadow), so the digits, the grey completion ghost and the
+            calendar trigger all get room. It stays position:absolute, so the
+            hidden .inline-ghost still holds the column width — no table reflow. */}
+        <span class="inline-date-editor">
+          <input
+            ref={(el) => { control = el }}
+            type="text"
+            placeholder="YYYY-MM-DD"
+            aria-describedby={dateHintId}
+            class="inline-editor inline-date-input"
+            aria-label={props.label}
+            value={value() as string}
+            onInput={(e) => setValue(e.currentTarget.value)}
+            onKeyDown={onKeyDown}
+            // Blur commits (click-away) — EXCEPT when focus moves into the calendar,
+            // which is body-portalled: the calendar's Today link / arrow nav call
+            // button.focus() programmatically, and committing a partial value there
+            // would tear the editor down. Only a real focus-OUT commits.
+            onBlur={(event) => {
+              const next = (event.relatedTarget as HTMLElement | null) ?? (document.activeElement as HTMLElement | null)
+              if (next?.closest('[data-date-popup]')) {
+                return
+              }
+              finish()
+            }}
+          />
+          <Show when={dateGhostText() !== ''}>
+            <span class="inline-date-ghost" aria-hidden="true">{dateGhostText()}</span>
+          </Show>
+          <DatePopover
+            open={calOpen()}
+            onOpenChange={setCalOpen}
+            triggerClass="inline-date-trigger"
+            triggerTabIndex={-1}
+            autoFocus={false}
           // The focused input owns Escape (first closes the calendar, a second
           // cancels), and closing must not restore focus to the trigger — either
           // would blur the input into a premature commit / cell cancel.
@@ -239,7 +244,9 @@ export function InlineEditor(props: {
           // guarded finish() as the keyboard path (the 'done' guard makes this a
           // single commit, never a double).
           onSelect={(iso) => { setValue(iso); setCalOpen(false); finish() }}
-        />
+          />
+        </span>
+        <span id={dateHintId} class="visually-hidden">{m.tracking_date_format_hint()}</span>
       </Match>
       <Match when={true}>
         <input
