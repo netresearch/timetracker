@@ -15,6 +15,7 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use DateTimeImmutable;
 use Exception;
+use InvalidArgumentException;
 
 use function ctype_digit;
 
@@ -42,6 +43,11 @@ final readonly class SyncRunRequestMapper
      */
     public function parseRange(WorklogSyncRunDto $worklogSyncRunDto): array
     {
+        // DateTimeImmutable('') silently resolves to "now" — reject it as malformed.
+        if ('' === $worklogSyncRunDto->from || '' === $worklogSyncRunDto->to) {
+            throw new InvalidArgumentException('Empty date in from/to');
+        }
+
         $from = null !== $worklogSyncRunDto->from ? new DateTimeImmutable($worklogSyncRunDto->from) : new DateTimeImmutable('first day of this month');
         $to = null !== $worklogSyncRunDto->to ? new DateTimeImmutable($worklogSyncRunDto->to) : new DateTimeImmutable('today');
 
@@ -58,6 +64,10 @@ final readonly class SyncRunRequestMapper
     {
         if ('sync' !== $worklogSyncRunDto->type || null === $worklogSyncRunDto->since) {
             return null;
+        }
+
+        if ('' === $worklogSyncRunDto->since) {
+            throw new InvalidArgumentException('Empty since value');
         }
 
         if (ctype_digit($worklogSyncRunDto->since)) {

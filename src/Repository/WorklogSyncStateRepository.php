@@ -45,6 +45,7 @@ class WorklogSyncStateRepository extends ServiceEntityRepository
             ->where('s.status IN (:parked)')
             ->setParameter('parked', self::PARKED_STATUSES)
             ->orderBy('s.lastSyncedAt', 'DESC')
+            ->addOrderBy('s.id', 'DESC')
             ->setMaxResults($limit);
 
         if ($user instanceof User) {
