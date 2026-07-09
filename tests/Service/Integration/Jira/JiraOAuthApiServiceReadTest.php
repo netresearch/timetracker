@@ -12,6 +12,7 @@ namespace Tests\Service\Integration\Jira;
 use App\DTO\Jira\JiraWorkLog;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Security\TokenEncryptionService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -32,9 +33,10 @@ final class JiraOAuthApiServiceReadTest extends TestCase
     use TokenEncryptionTestTrait;
 
     /**
-     * @param array<string, mixed> $getResponses url => decoded response
+     * @param array<string, mixed>        $getResponses   url => decoded response (the string '404' simulates a 404)
+     * @param array<string, list<object>> $arrayResponses url => decoded array response
      */
-    private function serviceWithCannedResponses(array $getResponses, mixed $searchResponse = null): JiraOAuthApiService
+    private function serviceWithCannedResponses(array $getResponses, mixed $searchResponse = null, array $arrayResponses = []): JiraOAuthApiService
     {
         $user = self::createStub(User::class);
         $ticketSystem = self::createStub(TicketSystem::class);
@@ -42,9 +44,10 @@ final class JiraOAuthApiServiceReadTest extends TestCase
         $router = self::createStub(RouterInterface::class);
         $tokenEncryptionService = $this->createTokenEncryptionService();
 
-        return new class($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService, $getResponses, $searchResponse) extends JiraOAuthApiService {
+        return new class($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService, $getResponses, $searchResponse, $arrayResponses) extends JiraOAuthApiService {
             /**
-             * @param array<string, mixed> $getResponses
+             * @param array<string, mixed>        $getResponses
+             * @param array<string, list<object>> $arrayResponses
              */
             public function __construct(
                 User $user,
@@ -54,13 +57,29 @@ final class JiraOAuthApiServiceReadTest extends TestCase
                 TokenEncryptionService $tokenEncryptionService,
                 private readonly array $getResponses,
                 private readonly mixed $searchResponse,
+                private readonly array $arrayResponses,
             ) {
                 parent::__construct($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService);
             }
 
             protected function get(string $url): mixed
             {
-                return $this->getResponses[$url] ?? new stdClass();
+                $response = $this->getResponses[$url] ?? new stdClass();
+                if ('404' === $response) {
+                    throw new JiraApiInvalidResourceException('404 - Resource is not available: (' . $url . ')', 404);
+                }
+
+                return $response;
+            }
+
+            /**
+             * @param array<string, mixed> $data
+             *
+             * @return list<object>
+             */
+            protected function getResponseArray(string $url, array $data = []): array
+            {
+                return $this->arrayResponses[$url] ?? [];
             }
 
             /**
@@ -152,5 +171,60 @@ final class JiraOAuthApiServiceReadTest extends TestCase
 
         self::assertSame('abc', $identity->accountId);
         self::assertSame('jdoe', $identity->name);
+    }
+
+    public function testGetIssueWorklogReturnsSingleWorklog(): void
+    {
+        $service = $this->serviceWithCannedResponses([
+            'issue/ABC-1/worklog/77' => (object) ['id' => '77', 'started' => '2026-07-08T09:00:00.000+0200', 'timeSpentSeconds' => 600, 'updated' => '2026-07-08T10:00:00.000+0200'],
+        ]);
+
+        $workLog = $service->getIssueWorklog('ABC-1', 77);
+
+        self::assertSame(77, $workLog?->id);
+        self::assertSame('2026-07-08T10:00:00.000+0200', $workLog->updated);
+    }
+
+    public function testGetIssueWorklogReturnsNullOn404(): void
+    {
+        $service = $this->serviceWithCannedResponses(['issue/ABC-1/worklog/77' => '404']);
+
+        self::assertNull($service->getIssueWorklog('ABC-1', 77));
+    }
+
+    public function testGetWorklogsUpdatedSinceParsesFeedPage(): void
+    {
+        $service = $this->serviceWithCannedResponses([
+            'worklog/updated?since=1000' => (object) [
+                'values' => [(object) ['worklogId' => 11], (object) ['worklogId' => 12]],
+                'until' => 2000,
+                'lastPage' => false,
+            ],
+        ]);
+
+        $page = $service->getWorklogsUpdatedSince(1000);
+
+        self::assertSame([11, 12], $page->worklogIds);
+        self::assertSame(2000, $page->until);
+        self::assertFalse($page->lastPage);
+    }
+
+    public function testGetWorklogsByIdsPostsToWorklogList(): void
+    {
+        $service = $this->serviceWithCannedResponses([], arrayResponses: [
+            'worklog/list' => [(object) ['id' => '11', 'issueId' => 10001, 'timeSpentSeconds' => 60], (object) ['id' => '12', 'issueId' => 10002, 'timeSpentSeconds' => 120]],
+        ]);
+
+        $workLogs = $service->getWorklogsByIds([11, 12]);
+
+        self::assertCount(2, $workLogs);
+        self::assertSame('10001', $workLogs[0]->issueId);
+    }
+
+    public function testGetIssueKeyByIdResolvesKey(): void
+    {
+        $service = $this->serviceWithCannedResponses(['issue/10001?fields=key' => (object) ['key' => 'ABC-1']]);
+
+        self::assertSame('ABC-1', $service->getIssueKeyById('10001'));
     }
 }

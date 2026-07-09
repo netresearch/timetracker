@@ -159,6 +159,12 @@ final class JiraWorkLogTest extends TestCase
         self::assertNull($workLog->authorEmail);
     }
 
+    public function testFromApiResponseParsesIssueId(): void
+    {
+        self::assertSame('10042', JiraWorkLog::fromApiResponse((object) ['id' => 1, 'issueId' => 10042])->issueId);
+        self::assertNull(JiraWorkLog::fromApiResponse((object) ['id' => 1])->issueId);
+    }
+
     // ==================== JiraSearchResult tests ====================
 
     public function testJiraSearchResultConstructorDefaults(): void

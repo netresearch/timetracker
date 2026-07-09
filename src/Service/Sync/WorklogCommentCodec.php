@@ -31,4 +31,19 @@ class WorklogCommentCodec
     {
         return trim(str_replace(["\r\n", "\r"], "\n", $comment));
     }
+
+    /**
+     * Inverse of encode() for pulls: extracts the description from a TT-format
+     * comment ("#<id>: <activity>: <description>"); non-TT comments pass through.
+     */
+    public static function decode(string $comment): string
+    {
+        $normalized = self::normalize($comment);
+
+        if (1 === preg_match('/^#\d+: [^:]*?: (?<description>.*)$/s', $normalized, $matches)) {
+            return $matches['description'];
+        }
+
+        return $normalized;
+    }
 }

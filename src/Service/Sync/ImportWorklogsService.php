@@ -152,7 +152,7 @@ class ImportWorklogsService extends AbstractSyncRunService
         }
     }
 
-    private function processWorklog(ImportRunContext $importRunContext, string $issueKey, JiraWorkLog $jiraWorkLog): void
+    public function processWorklog(ImportRunContext $importRunContext, string $issueKey, JiraWorkLog $jiraWorkLog): void
     {
         $syncRun = $importRunContext->syncRun;
 

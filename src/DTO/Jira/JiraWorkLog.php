@@ -25,6 +25,7 @@ final readonly class JiraWorkLog
         public ?string $authorAccountId = null,
         public ?string $authorName = null,
         public ?string $authorEmail = null,
+        public ?string $issueId = null,
     ) {
     }
 
@@ -51,6 +52,7 @@ final readonly class JiraWorkLog
             authorAccountId: isset($author['accountId']) && is_string($author['accountId']) ? $author['accountId'] : null,
             authorName: isset($author['name']) && is_string($author['name']) ? $author['name'] : null,
             authorEmail: isset($author['emailAddress']) && is_string($author['emailAddress']) ? $author['emailAddress'] : null,
+            issueId: isset($data['issueId']) && is_scalar($data['issueId']) ? (string) $data['issueId'] : null,
         );
     }
 

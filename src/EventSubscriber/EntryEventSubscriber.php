@@ -14,10 +14,12 @@ use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\TicketSystemType;
+use App\Enum\WriteOutcome;
 use App\Event\EntryEvent;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Cache\QueryCacheService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Service\Sync\WorklogWriteService;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -52,6 +54,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
         private readonly ManagerRegistry $managerRegistry,
         private readonly QueryCacheService $queryCacheService,
+        private readonly WorklogWriteService $worklogWriteService,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
@@ -94,7 +97,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $this->invalidateUserEntryCache($entry);
 
-        // Sync on every update (v4 parity): updateEntryJiraWorkLog creates a
+        // Sync on every update (v4 parity): the lease-checked push creates a
         // new worklog or updates the existing one based on the worklog id,
         // so entries that were never synced are caught up on their next save.
         if ($this->shouldAutoSync($entry)) {
@@ -230,8 +233,8 @@ class EntryEventSubscriber implements EventSubscriberInterface
             }
 
             try {
-                $this->jiraOAuthApiFactory->create($user, $ticketSystem)
-                    ->deleteEntryJiraWorkLog($entry);
+                $api = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
+                $this->worklogWriteService->delete($api, $entry);
             } catch (JiraApiException $jiraApiException) {
                 // Keep trying the remaining systems — a failure on one (auth,
                 // network, wrong instance) must not prevent cleanup on another.
@@ -398,15 +401,20 @@ class EntryEventSubscriber implements EventSubscriberInterface
             && $entry->getInternalJiraTicketOriginalKey() !== $entry->getTicket()
             && null !== $previousEntry->getWorklogId()
         ) {
-            $api->deleteEntryJiraWorkLog($previousEntry);
+            $this->worklogWriteService->delete($api, $previousEntry);
             $entry->setWorklogId(null);
         }
 
-        $api->updateEntryJiraWorkLog($entry);
+        $outcome = $this->worklogWriteService->push($api, $entry, $ticketSystem);
+        if (WriteOutcome::LEASE_LOST === $outcome) {
+            $this->logger?->info('Worklog push parked as conflict: remote changed since last sync', ['entry' => $entry->getId()]);
+        } elseif (WriteOutcome::REMOTE_MISSING === $outcome) {
+            $this->logger?->info('Worklog push parked: remote worklog gone (orphaned)', ['entry' => $entry->getId()]);
+        }
 
-        // updateEntryJiraWorkLog sets the worklog id and the synced flag on
-        // the already-persisted entity; flush them or the next sync would
-        // create a duplicate worklog.
+        // The push sets the worklog id and the synced flag on the
+        // already-persisted entity (and may change sync state rows);
+        // flush them or the next sync would create a duplicate worklog.
         $this->managerRegistry->getManager()->flush();
     }
 }

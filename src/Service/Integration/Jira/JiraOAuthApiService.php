@@ -14,6 +14,7 @@ use App\DTO\Jira\JiraIssueKeySearchResult;
 use App\DTO\Jira\JiraSearchResult;
 use App\DTO\Jira\JiraUserIdentity;
 use App\DTO\Jira\JiraWorkLog;
+use App\DTO\Jira\JiraWorklogFeedPage;
 use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\Project;
@@ -568,6 +569,81 @@ class JiraOAuthApiService
     }
 
     /**
+     * Single worklog read — the lease comparand (ADR-023 §1). Null when the worklog is gone.
+     *
+     * @throws JiraApiException
+     */
+    public function getIssueWorklog(string $issueKey, int $worklogId): ?JiraWorkLog
+    {
+        try {
+            $response = $this->get(sprintf(JiraWorkLogService::WORKLOG_ITEM_URL_TEMPLATE, $issueKey, $worklogId));
+        } catch (JiraApiInvalidResourceException) {
+            return null;
+        }
+
+        return is_object($response) ? JiraWorkLog::fromApiResponse($response) : null;
+    }
+
+    /**
+     * @throws JiraApiException
+     */
+    public function getWorklogsUpdatedSince(int $sinceMillis): JiraWorklogFeedPage
+    {
+        $response = $this->get('worklog/updated?since=' . $sinceMillis);
+
+        return JiraWorklogFeedPage::fromApiResponse(is_object($response) ? $response : new stdClass());
+    }
+
+    /**
+     * @throws JiraApiException
+     */
+    public function getDeletedWorklogsSince(int $sinceMillis): JiraWorklogFeedPage
+    {
+        $response = $this->get('worklog/deleted?since=' . $sinceMillis);
+
+        return JiraWorklogFeedPage::fromApiResponse(is_object($response) ? $response : new stdClass());
+    }
+
+    /**
+     * Bulk worklog fetch for feed ids (POST worklog/list returns a JSON array).
+     *
+     * @param list<int> $ids
+     *
+     * @throws JiraApiException
+     *
+     * @return list<JiraWorkLog>
+     */
+    public function getWorklogsByIds(array $ids): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+
+        $workLogs = [];
+        foreach ($this->getResponseArray('worklog/list', ['ids' => $ids]) as $workLog) {
+            $workLogs[] = JiraWorkLog::fromApiResponse($workLog);
+        }
+
+        return $workLogs;
+    }
+
+    /**
+     * Resolves a numeric issue id (as found in feed worklogs) to the issue key.
+     *
+     * @throws JiraApiException
+     */
+    public function getIssueKeyById(string $issueId): ?string
+    {
+        try {
+            $response = $this->get(sprintf('issue/%s?fields=key', $issueId));
+        } catch (JiraApiInvalidResourceException) {
+            return null;
+        }
+
+        return is_object($response) && isset($response->key) && is_string($response->key) ? $response->key : null;
+    }
+
+    /**
      * Collects the issues linked to an epic including their nested subtasks.
      *
      * @throws JiraApiException
@@ -711,6 +787,46 @@ class JiraOAuthApiService
         }
 
         return $decoded;
+    }
+
+    /**
+     * Like getResponse(), for endpoints returning a JSON array (e.g. POST worklog/list).
+     *
+     * @param array<string, mixed> $data
+     *
+     * @throws JiraApiException
+     * @throws JiraApiInvalidResourceException
+     *
+     * @return list<object>
+     */
+    protected function getResponseArray(string $url, array $data = []): array
+    {
+        $additionalParameter = [];
+        if ([] !== $data) {
+            $additionalParameter = [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'body' => json_encode($data),
+            ];
+        }
+
+        try {
+            $response = $this->getClient()->request('POST', $url, $additionalParameter);
+        } catch (GuzzleException $guzzleException) {
+            if (401 === $guzzleException->getCode()) {
+                $this->throwUnauthorizedRedirect();
+            } elseif (404 === $guzzleException->getCode()) {
+                $message = '404 - Resource is not available: (' . $url . ')';
+                throw new JiraApiInvalidResourceException($message, 404, null, $guzzleException);
+            } else {
+                throw new JiraApiException('Unknown Guzzle exception: ' . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
+            }
+        }
+
+        $decoded = json_decode((string) $response->getBody(), false, 512, JSON_THROW_ON_ERROR);
+
+        return is_array($decoded) ? array_values(array_filter($decoded, is_object(...))) : [];
     }
 
     /**
