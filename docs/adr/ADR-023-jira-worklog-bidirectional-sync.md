@@ -1,6 +1,6 @@
 # ADR-023: Jira Worklog Import and Bidirectional Sync
 
-**Status:** Accepted — design approved 2026-07-09; Phases 1 (verify) + 2 (import) implemented, Phases 3–4 pending.
+**Status:** Accepted — Phases 1–3 (verify, import, bidirectional sync) implemented; Phase 4 (API/MCP/UI surfaces) pending.
 **Date:** 2026-07-09
 **Relates to:** [ADR-003](ADR-003-jira-integration-architecture.md) (push-sync architecture this ADR extends to a pull/reconcile model), [ADR-017](ADR-017-jira-cloud-oauth2.md) (Server/Cloud dual auth the I/O layer reuses), [ADR-020](ADR-020-subticket-ticket-resolution.md) (ticket→project resolution used for imported worklogs; precedent for pull-direction sync and designated-token auth), [ADR-021](ADR-021-api-token-authentication.md) (PAT scopes for the new endpoints), [ADR-022](ADR-022-v2-api-layer-and-response-dtos.md) (v2 API + MCP tool pattern the new surfaces follow).
 
@@ -31,6 +31,8 @@ Structural gaps a pull direction must solve:
 Neither side is globally authoritative. Either side may edit a worklog; every **remote write requires a lease check**: the write proceeds only if the remote worklog's `updated` timestamp still equals the last-synced base state. A mismatch means a sync is missing — the item is re-reconciled with fresh remote data first (git's "pull before push").
 
 Jira's REST API has no conditional writes (`If-Match`), so the lease is **read-compare-then-write** (GET worklog → compare `updated` → PUT/DELETE). The ~seconds race window between compare and write is accepted and documented; it converts today's silent clobber into a bounded race for human-timescale edits.
+
+Implementation note (Phase 3): lease-checked writes wrap the legacy write path. Entries created before ADR-023 have no base; their first lease-era write performs the write and seeds the base ("base bootstrapping") instead of parking. Local deletes are pushed without a lease check — the local entry is already gone, so there is nothing to park a conflict against.
 
 ### 2. Reconciliation core: persisted three-way diff, field-scoped
 
@@ -102,6 +104,8 @@ Server/Cloud differences remain in the ADR-017 `DeploymentType` branch; paginati
 - Cron incremental sync → a **designated sync user** configured per ticket system (a TT user with connected OAuth and broad Jira browse permission; ADR-020's project-lead-token precedent).
 - Writes → the **entry owner's** token when connected; fallback to the sync user (requires Jira "Edit All Worklogs"). Shadow users never have tokens; their entries write via the sync user or stay TT-only when `bookTime` is off.
 
+Implementation note (Phase 3): unattended cron import requires both a sync user and a per-ticket-system default import activity (`ticket_systems.sync_default_activity_id`); without it, Jira-born worklogs surface as `remote_only` items for manual import.
+
 ### 6. Surfaces (all thin adapters over the one engine, per ADR-022)
 
 - **Console:** `tt:sync-worklogs [--ticket-system=X] [--dry-run] [--since=]` — cron heartbeat for ongoing sync, modeled on `tt:sync-subtickets`.
@@ -145,4 +149,4 @@ Server/Cloud differences remain in the ADR-017 `DeploymentType` branch; paginati
 2. ~~User.type semantics vs a new shadow-user flag~~ **Resolved (Phase 2):** UserType is UNKNOWN/USER/DEV/PL/ADMIN; shadow = active=false + password null, type stays USER.
 3. ~~Container wiring status of the refactored stack~~ **Resolved (Phase 1), decision amended:** the refactored stack is container-excluded AND writes a different comment format (`Customer | Project | Activity | description`) than production. Phase 1 therefore puts read methods on the legacy `JiraOAuthApiService` (wired, dual Server/Cloud via `JiraCloudApiService`) instead of wiring the refactored stack. Revisit when the lease-checked write service lands (Phase 3).
 4. Internal-ticket-system mirror interaction (§7).
-5. Jira Server/DC vs Cloud availability and pagination behavior of `worklog/updated`, `worklog/list`, `worklog/deleted` on the instances in use.
+5. ~~Jira Server/DC vs Cloud availability and pagination behavior of `worklog/updated`, `worklog/list`, `worklog/deleted` on the instances in use~~ **Resolved (Phase 3):** implemented against the documented Server/DC + Cloud shape (`values[].worklogId`, `until`, `lastPage`); page cap 20 with explicit TRUNCATED reporting.
