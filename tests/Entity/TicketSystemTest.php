@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Entity;
 
+use App\Entity\Activity;
 use App\Entity\TicketSystem;
+use App\Entity\User;
 use App\Enum\DeploymentType;
 use App\Enum\TicketSystemType;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -325,5 +327,24 @@ final class TicketSystemTest extends TestCase
         self::assertSame('client-id-123', $ticketSystem->getOauth2ClientId());
         self::assertSame('client-secret-456', $ticketSystem->getOauth2ClientSecret());
         self::assertSame('cloud-789', $ticketSystem->getCloudId());
+    }
+
+    // ==================== Sync configuration tests ====================
+
+    public function testSyncConfigurationAccessors(): void
+    {
+        $ticketSystem = new TicketSystem();
+
+        self::assertNull($ticketSystem->getSyncUser());
+        self::assertNull($ticketSystem->getSyncDefaultActivity());
+        self::assertNull($ticketSystem->getWorklogSyncCursor());
+
+        $user = new User();
+        $activity = new Activity();
+        $ticketSystem->setSyncUser($user)->setSyncDefaultActivity($activity)->setWorklogSyncCursor(1751871600000);
+
+        self::assertSame($user, $ticketSystem->getSyncUser());
+        self::assertSame($activity, $ticketSystem->getSyncDefaultActivity());
+        self::assertSame(1751871600000, $ticketSystem->getWorklogSyncCursor());
     }
 }
