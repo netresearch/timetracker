@@ -141,8 +141,8 @@ Server/Cloud differences remain in the ADR-017 `DeploymentType` branch; paginati
 
 ## Verification points before implementation
 
-1. Exact comment/description projection the current push writes to Jira (diff must match it).
+1. ~~Exact comment/description projection the current push writes to Jira~~ **Resolved (Phase 1):** `#<entryId>: <activityName>: <description>` with fallbacks `no activity specified` / `no description given` (`JiraOAuthApiService::getTicketSystemWorkLogComment`). `WorklogCommentCodec` reproduces it; the entry ID embedded in every pushed comment is a secondary identity anchor.
 2. `User.type` semantics vs a new shadow-user flag.
-3. Container wiring status of the refactored stack and the staleness of the ADR-003 encryption blocker.
+3. ~~Container wiring status of the refactored stack~~ **Resolved (Phase 1), decision amended:** the refactored stack is container-excluded AND writes a different comment format (`Customer | Project | Activity | description`) than production. Phase 1 therefore puts read methods on the legacy `JiraOAuthApiService` (wired, dual Server/Cloud via `JiraCloudApiService`) instead of wiring the refactored stack. Revisit when the lease-checked write service lands (Phase 3).
 4. Internal-ticket-system mirror interaction (§7).
 5. Jira Server/DC vs Cloud availability and pagination behavior of `worklog/updated`, `worklog/list`, `worklog/deleted` on the instances in use.
