@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Project;
+use App\Entity\TicketSystem;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -124,5 +125,20 @@ class ProjectRepository extends ServiceEntityRepository
     public function isValidJiraPrefix(string $jiraId): int
     {
         return (int) preg_match('/^([A-Z]+[A-Z0-9]*[, ]*)*$/', $jiraId);
+    }
+
+    /**
+     * All projects booking on the given ticket system (ADR-023 import: ticket→project resolution).
+     *
+     * @return list<Project>
+     */
+    public function findByTicketSystem(TicketSystem $ticketSystem): array
+    {
+        /** @var list<Project> */
+        return $this->createQueryBuilder('p')
+            ->where('p.ticketSystem = :ticketSystem')
+            ->setParameter('ticketSystem', $ticketSystem)
+            ->getQuery()
+            ->getResult();
     }
 }

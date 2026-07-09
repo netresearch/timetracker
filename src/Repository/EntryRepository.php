@@ -1264,6 +1264,44 @@ class EntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Entry already linked to the given Jira worklog on this ticket system, if any (import dedupe).
+     */
+    public function findOneByWorklogIdAndTicketSystem(int $worklogId, TicketSystem $ticketSystem): ?Entry
+    {
+        /** @var Entry|null */
+        return $this->createQueryBuilder('e')
+            ->join('e.project', 'p')
+            ->where('e.worklogId = :worklogId')
+            ->andWhere('p.ticketSystem = :ticketSystem')
+            ->setParameter('worklogId', $worklogId)
+            ->setParameter('ticketSystem', $ticketSystem)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Unlinked entry matching user+ticket+day+duration — the ADR-023 probable-duplicate heuristic.
+     */
+    public function findUnlinkedDuplicate(User $user, string $ticket, DateTimeInterface $day, int $durationMinutes): ?Entry
+    {
+        /** @var Entry|null */
+        return $this->createQueryBuilder('e')
+            ->where('e.user = :user')
+            ->andWhere('e.ticket = :ticket')
+            ->andWhere('e.day = :day')
+            ->andWhere('e.duration = :duration')
+            ->andWhere('e.worklogId IS NULL')
+            ->setParameter('user', $user)
+            ->setParameter('ticket', $ticket)
+            ->setParameter('day', $day->format('Y-m-d'))
+            ->setParameter('duration', $durationMinutes)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
      * Gets entry summary data for display.
      *
      * @param array<string, array<string, mixed>> $data
