@@ -1,6 +1,6 @@
 # ADR-023: Jira Worklog Import and Bidirectional Sync
 
-**Status:** Proposed — design approved 2026-07-09, implementation not started.
+**Status:** Accepted — design approved 2026-07-09; Phase 1 (schema, reconciliation core, verify) implemented, Phases 2–4 pending.
 **Date:** 2026-07-09
 **Relates to:** [ADR-003](ADR-003-jira-integration-architecture.md) (push-sync architecture this ADR extends to a pull/reconcile model), [ADR-017](ADR-017-jira-cloud-oauth2.md) (Server/Cloud dual auth the I/O layer reuses), [ADR-020](ADR-020-subticket-ticket-resolution.md) (ticket→project resolution used for imported worklogs; precedent for pull-direction sync and designated-token auth), [ADR-021](ADR-021-api-token-authentication.md) (PAT scopes for the new endpoints), [ADR-022](ADR-022-v2-api-layer-and-response-dtos.md) (v2 API + MCP tool pattern the new surfaces follow).
 
