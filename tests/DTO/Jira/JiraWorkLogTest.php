@@ -126,6 +126,39 @@ final class JiraWorkLogTest extends TestCase
         self::assertFalse($worklog->hasValidId());
     }
 
+    public function testFromApiResponseParsesAuthorAndUpdated(): void
+    {
+        $response = (object) [
+            'id' => '1001',
+            'comment' => 'work',
+            'started' => '2026-07-08T09:00:00.000+0200',
+            'timeSpentSeconds' => 3600,
+            'updated' => '2026-07-08T10:15:30.000+0200',
+            'author' => (object) [
+                'accountId' => 'abc-123',
+                'name' => 'jdoe',
+                'emailAddress' => 'jdoe@example.com',
+            ],
+        ];
+
+        $workLog = JiraWorkLog::fromApiResponse($response);
+
+        self::assertSame('2026-07-08T10:15:30.000+0200', $workLog->updated);
+        self::assertSame('abc-123', $workLog->authorAccountId);
+        self::assertSame('jdoe', $workLog->authorName);
+        self::assertSame('jdoe@example.com', $workLog->authorEmail);
+    }
+
+    public function testFromApiResponseWithoutAuthorYieldsNulls(): void
+    {
+        $workLog = JiraWorkLog::fromApiResponse((object) ['id' => 1]);
+
+        self::assertNull($workLog->updated);
+        self::assertNull($workLog->authorAccountId);
+        self::assertNull($workLog->authorName);
+        self::assertNull($workLog->authorEmail);
+    }
+
     // ==================== JiraSearchResult tests ====================
 
     public function testJiraSearchResultConstructorDefaults(): void

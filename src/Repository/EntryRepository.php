@@ -14,6 +14,7 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
+use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\Period;
 use App\Service\ClockInterface;
@@ -1219,6 +1220,40 @@ class EntryRepository extends ServiceEntityRepository
             ->orderBy('e.day', 'DESC')
             ->addOrderBy('e.start', 'DESC')
             ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        assert(is_array($result) && array_is_list($result));
+        /** @var list<Entry> $result */
+
+        return $result;
+    }
+
+    /**
+     * Entries eligible for worklog verification/sync (ADR-023): the user's entries in the
+     * day range whose project books on the given ticket system, with a ticket set.
+     * Internal-mirror remaps are excluded (interaction deferred by ADR-023).
+     *
+     * @return list<Entry>
+     */
+    public function findJiraSyncCandidates(User $user, TicketSystem $ticketSystem, DateTimeInterface $from, DateTimeInterface $to): array
+    {
+        $result = $this->createQueryBuilder('e')
+            ->join('e.project', 'p')
+            ->where('e.user = :user')
+            ->andWhere('p.ticketSystem = :ticketSystem')
+            ->andWhere('e.day >= :fromDay')
+            ->andWhere('e.day <= :toDay')
+            ->andWhere('e.ticket IS NOT NULL')
+            ->andWhere('e.ticket != :emptyString')
+            ->andWhere('e.internalJiraTicketOriginalKey IS NULL OR e.internalJiraTicketOriginalKey = :emptyString')
+            ->setParameter('user', $user)
+            ->setParameter('ticketSystem', $ticketSystem)
+            ->setParameter('emptyString', '')
+            ->setParameter('fromDay', $from->format('Y-m-d'))
+            ->setParameter('toDay', $to->format('Y-m-d'))
+            ->orderBy('e.day', 'ASC')
+            ->addOrderBy('e.start', 'ASC')
             ->getQuery()
             ->getResult();
 
