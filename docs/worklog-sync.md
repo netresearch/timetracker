@@ -22,7 +22,7 @@ Ongoing cron sync needs two settings on the `ticket_systems` row:
 1. **Sync user** (`sync_user_id`) — a TT user with a connected Jira OAuth token ([ADR-017](adr/ADR-017-jira-cloud-oauth2.md)) and broad Jira browse permission (plus "Edit All Worklogs" for fallback writes). The feeds are read with this user's token; writes prefer the entry owner's token and fall back to the sync user.
 2. **Default import activity** (`sync_default_activity_id`) — the activity assigned to auto-imported Jira-born worklogs. Optional: without it, unmatched worklogs surface as `remote_only` items and are never imported unattended.
 
-The admin-form pickers for these fields arrive with the Phase 4 UI; until then set the columns directly, e.g.:
+The ticket-system admin save endpoint accepts both fields (`syncUserId`, `syncDefaultActivityId`; `null` clears them); the admin-form pickers arrive with the Phase 4b UI. Alternatively set the columns directly, e.g.:
 
 ```sql
 UPDATE ticket_systems SET sync_user_id = 42, sync_default_activity_id = 7 WHERE id = 1;
@@ -66,7 +66,54 @@ True conflicts are never auto-resolved — they are parked for a human. Every ru
 | `error` | Item-level failure (e.g. unresolvable issue id); the run continues. |
 | `truncated` | Feed page cap hit; remaining changes come with the next run. |
 
-Until the Phase 4 conflict UI/API lands, inspect parked items via the command output or the `sync_run` / `sync_run_item` and `worklog_sync_state` tables.
+Inspect parked items via the command output, the [API & MCP surfaces](#api--mcp) below, or the `sync_run` / `sync_run_item` and `worklog_sync_state` tables; the side-by-side conflict UI arrives with Phase 4b.
+
+## API & MCP
+
+The engine is also exposed over the v2 REST API and as MCP tools (ADR-023 §6). PAT tokens ([ADR-021](adr/ADR-021-api-token-authentication.md)) need the `sync:read` / `sync:write` scopes; session-authenticated users bypass scopes but not the role/ownership checks. Runs execute inline — the response carries the finished run with its counters and noteworthy items.
+
+### v2 REST endpoints
+
+| Endpoint | Scope | Purpose |
+|---|---|---|
+| `POST /api/v2/worklog-sync/runs` | `sync:write` | Start a run. Body: `{"type": "verify"\|"import"\|"sync", "ticket_system_id": N, "from"?, "to"?, "users"?: [...], "default_activity_id"?, "dry_run"?, "since"?}`. Date range defaults to the current month; `since` (sync only) overrides the cursor. Non-admins may `verify` for themselves and `import` only with `users` set to exactly their own username; `sync` requires an admin. Answers `201` with the run body. |
+| `GET /api/v2/worklog-sync/runs/{id}` | `sync:read` | One run with status, counters, and per-worklog findings (the import report). Non-admins see only runs they triggered. |
+| `GET /api/v2/worklog-sync/conflicts` | `sync:read` | Parked conflicts/orphans awaiting resolution: `{"conflicts": [...], "count": N}`. Non-admins see only their own entries; admins see all and may filter with `?user=<username>`. |
+| `POST /api/v2/worklog-sync/conflicts/{id}/resolve` | `sync:write` | Body `{"winner": "local"\|"remote"}` — local force-pushes the entry to Jira (recreating the worklog for orphans), remote pulls the live Jira worklog (or, for orphans, accepts the deletion by removing the entry). Owner or admin only; answers `{"resolved": true, "action": ..., "conflict_id": N}`, or `422` with the reason when the resolution could not be applied. |
+
+### MCP tools
+
+The same operations for agents, guarded by the same scopes and authorization matrix:
+
+| Tool | Scope | Purpose |
+|---|---|---|
+| `sync_jira_worklogs(type, ticketSystemId, from?, to?, users?, defaultActivityId?, dryRun?, since?)` | `sync:write` | Trigger a verify / import / sync run; returns the finished run. |
+| `get_sync_run(runId)` | `sync:read` | Inspect a run's counters and findings. |
+| `list_sync_conflicts(user?)` | `sync:read` | List parked conflicts/orphans (`user` filter is admin-only). |
+| `resolve_sync_conflict(conflictId, winner)` | `sync:write` | Resolve one parked conflict; failures raise a tool error with the reason. |
+
+### Examples
+
+Start a verify run for July (read-only comparison, nothing is written):
+
+```bash
+curl -s -X POST https://timetracker.example.org/api/v2/worklog-sync/runs \
+  -H "Authorization: Bearer tt_pat_..." \
+  -H "Content-Type: application/json" \
+  -d '{"type": "verify", "ticket_system_id": 1, "from": "2026-07-01", "to": "2026-07-31"}'
+```
+
+List parked conflicts, then resolve one in favor of the Jira side:
+
+```bash
+curl -s https://timetracker.example.org/api/v2/worklog-sync/conflicts \
+  -H "Authorization: Bearer tt_pat_..."
+
+curl -s -X POST https://timetracker.example.org/api/v2/worklog-sync/conflicts/42/resolve \
+  -H "Authorization: Bearer tt_pat_..." \
+  -H "Content-Type: application/json" \
+  -d '{"winner": "remote"}'
+```
 
 ## Rollback / disable
 
