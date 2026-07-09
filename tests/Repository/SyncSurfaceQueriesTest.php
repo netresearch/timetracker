@@ -9,21 +9,17 @@ declare(strict_types=1);
 
 namespace Tests\Repository;
 
-use App\Entity\Entry;
-use App\Entity\Project;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
-use App\Entity\User;
 use App\Entity\WorklogSyncState;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
 use App\Enum\WorklogSyncStatus;
 use App\Repository\SyncRunRepository;
 use App\Repository\WorklogSyncStateRepository;
-use DateTime;
 use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\CreatesWorklogSyncFixtures;
 
 use function array_map;
 use function assert;
@@ -35,42 +31,13 @@ use function assert;
  */
 final class SyncSurfaceQueriesTest extends AbstractWebTestCase
 {
-    private EntityManagerInterface $entityManager;
-
-    private TicketSystem $ticketSystem;
-
-    private Project $project;
-
-    private User $admin;
-
-    private User $developer;
+    use CreatesWorklogSyncFixtures;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
-        assert($entityManager instanceof EntityManagerInterface);
-        $this->entityManager = $entityManager;
-
-        $ticketSystem = $this->entityManager->find(TicketSystem::class, 1);
-        assert($ticketSystem instanceof TicketSystem);
-        $this->ticketSystem = $ticketSystem;
-
-        $project = $this->entityManager->find(Project::class, 2);
-        assert($project instanceof Project);
-        $project->setTicketSystem($this->ticketSystem);
-        $this->project = $project;
-
-        $admin = $this->entityManager->find(User::class, 1);
-        assert($admin instanceof User);
-        $this->admin = $admin;
-
-        $developer = $this->entityManager->find(User::class, 2);
-        assert($developer instanceof User);
-        $this->developer = $developer;
-
-        $this->entityManager->flush();
+        $this->setUpWorklogSyncFixtures();
     }
 
     public function testFindLatestOrdersNewestFirst(): void
@@ -124,18 +91,18 @@ final class SyncSurfaceQueriesTest extends AbstractWebTestCase
 
     public function testFindParkedReturnsOnlyParkedStates(): void
     {
-        $conflict = $this->createState(
-            $this->createEntry($this->developer, '2026-06-15'),
+        $conflict = $this->createSyncState(
+            $this->createSyncEntry($this->developer, '2026-06-15'),
             WorklogSyncStatus::CONFLICT,
             new DateTimeImmutable('2026-07-01 08:00:00'),
         );
-        $orphaned = $this->createState(
-            $this->createEntry($this->developer, '2026-06-16'),
+        $orphaned = $this->createSyncState(
+            $this->createSyncEntry($this->developer, '2026-06-16'),
             WorklogSyncStatus::ORPHANED,
             new DateTimeImmutable('2026-07-02 08:00:00'),
         );
-        $inSync = $this->createState(
-            $this->createEntry($this->developer, '2026-06-17'),
+        $inSync = $this->createSyncState(
+            $this->createSyncEntry($this->developer, '2026-06-17'),
             WorklogSyncStatus::IN_SYNC,
             new DateTimeImmutable('2026-07-03 08:00:00'),
         );
@@ -159,13 +126,13 @@ final class SyncSurfaceQueriesTest extends AbstractWebTestCase
 
     public function testFindParkedFiltersByUser(): void
     {
-        $developerState = $this->createState(
-            $this->createEntry($this->developer, '2026-06-15'),
+        $developerState = $this->createSyncState(
+            $this->createSyncEntry($this->developer, '2026-06-15'),
             WorklogSyncStatus::CONFLICT,
             new DateTimeImmutable('2026-07-01 08:00:00'),
         );
-        $adminState = $this->createState(
-            $this->createEntry($this->admin, '2026-06-16'),
+        $adminState = $this->createSyncState(
+            $this->createSyncEntry($this->admin, '2026-06-16'),
             WorklogSyncStatus::CONFLICT,
             new DateTimeImmutable('2026-07-02 08:00:00'),
         );
@@ -183,13 +150,13 @@ final class SyncSurfaceQueriesTest extends AbstractWebTestCase
 
     public function testFindParkedByIdRejectsInSyncRows(): void
     {
-        $conflict = $this->createState(
-            $this->createEntry($this->developer, '2026-06-15'),
+        $conflict = $this->createSyncState(
+            $this->createSyncEntry($this->developer, '2026-06-15'),
             WorklogSyncStatus::CONFLICT,
             new DateTimeImmutable('2026-07-01 08:00:00'),
         );
-        $inSync = $this->createState(
-            $this->createEntry($this->developer, '2026-06-16'),
+        $inSync = $this->createSyncState(
+            $this->createSyncEntry($this->developer, '2026-06-16'),
             WorklogSyncStatus::IN_SYNC,
             new DateTimeImmutable('2026-07-02 08:00:00'),
         );
@@ -220,28 +187,5 @@ final class SyncSurfaceQueriesTest extends AbstractWebTestCase
         $this->entityManager->persist($syncRun);
 
         return $syncRun;
-    }
-
-    private function createEntry(User $user, string $day): Entry
-    {
-        $entry = new Entry()
-            ->setUser($user)->setProject($this->project)->setTicket('TIM-1')
-            ->setDay(new DateTime($day))->setStart('09:00:00')->setEnd('10:00:00');
-        $entry->setDuration(60);
-        $this->entityManager->persist($entry);
-
-        return $entry;
-    }
-
-    private function createState(Entry $entry, WorklogSyncStatus $status, DateTimeImmutable $lastSyncedAt): WorklogSyncState
-    {
-        $state = new WorklogSyncState()
-            ->setEntry($entry)
-            ->setTicketSystem($this->ticketSystem)
-            ->setStatus($status)
-            ->setLastSyncedAt($lastSyncedAt);
-        $this->entityManager->persist($state);
-
-        return $state;
     }
 }

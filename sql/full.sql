@@ -332,6 +332,70 @@ CREATE TABLE `users_ticket_systems` (
 
 
 --
+-- Tabellenstruktur für Tabelle `sync_runs` (ADR-023)
+--
+CREATE TABLE `sync_runs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ticket_system_id` int(11) NOT NULL,
+  `triggered_by_id` int(11) NOT NULL,
+  `type` varchar(16) NOT NULL,
+  `status` varchar(16) NOT NULL,
+  `scope` json NOT NULL,
+  `counters` json NOT NULL,
+  `continuation` json DEFAULT NULL,
+  `started_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  `finished_at` datetime DEFAULT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  KEY `idx_sync_runs_ticket_system` (`ticket_system_id`),
+  KEY `idx_sync_runs_triggered_by` (`triggered_by_id`),
+  CONSTRAINT `fk_sync_runs_ticket_system` FOREIGN KEY (`ticket_system_id`) REFERENCES `ticket_systems` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_sync_runs_triggered_by` FOREIGN KEY (`triggered_by_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Tabellenstruktur für Tabelle `sync_run_items` (ADR-023)
+--
+CREATE TABLE `sync_run_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sync_run_id` int(11) NOT NULL,
+  `entry_id` int(11) DEFAULT NULL,
+  `kind` varchar(32) NOT NULL,
+  `issue_key` varchar(50) DEFAULT NULL,
+  `remote_worklog_id` bigint(20) DEFAULT NULL,
+  `author` varchar(255) DEFAULT NULL,
+  `reason` varchar(255) NOT NULL,
+  `payload` json DEFAULT NULL,
+  `created_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  KEY `idx_sync_run_items_run_kind` (`sync_run_id`,`kind`),
+  KEY `idx_sync_run_items_entry` (`entry_id`),
+  CONSTRAINT `fk_sync_run_items_run` FOREIGN KEY (`sync_run_id`) REFERENCES `sync_runs` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_sync_run_items_entry` FOREIGN KEY (`entry_id`) REFERENCES `entries` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Tabellenstruktur für Tabelle `worklog_sync_state` (ADR-023)
+--
+CREATE TABLE `worklog_sync_state` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `entry_id` int(11) NOT NULL,
+  `ticket_system_id` int(11) NOT NULL,
+  `last_sync_run_id` int(11) DEFAULT NULL,
+  `status` varchar(16) NOT NULL,
+  `base_payload` json NOT NULL,
+  `base_updated_at` varchar(40) NOT NULL,
+  `conflict_remote_payload` json DEFAULT NULL,
+  `last_synced_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_worklog_sync_state_entry` (`entry_id`),
+  KEY `idx_worklog_sync_state_status` (`status`),
+  CONSTRAINT `fk_wss_entry` FOREIGN KEY (`entry_id`) REFERENCES `entries` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_wss_ticket_system` FOREIGN KEY (`ticket_system_id`) REFERENCES `ticket_systems` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_wss_last_run` FOREIGN KEY (`last_sync_run_id`) REFERENCES `sync_runs` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+--
 -- Tabellenstruktur für Tabelle `contracts`
 --
 CREATE TABLE `contracts` (
@@ -376,7 +440,14 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20260624_AddUserActive',         '2026-06-24 00:00:01', 0),
 ('DoctrineMigrations\\Version20260625_AddEntriesActivityIndexes', '2026-06-25 00:00:00', 0),
 ('DoctrineMigrations\\Version20260702_AddUserPassword',       '2026-07-02 00:00:00', 0),
-('DoctrineMigrations\\Version20260702_AddUserTwoFactor',      '2026-07-02 00:00:01', 0);
+('DoctrineMigrations\\Version20260702_AddUserTwoFactor',      '2026-07-02 00:00:01', 0),
+('DoctrineMigrations\\Version20260703_AddWebauthnCredentials',  '2026-07-03 00:00:00', 0),
+('DoctrineMigrations\\Version20260704_AddApiTokens',            '2026-07-04 00:00:00', 0),
+('DoctrineMigrations\\Version20260704_AddProjectSubticketsSyncedAt', '2026-07-04 00:00:01', 0),
+('DoctrineMigrations\\Version20260704_LastActivityIndexesAscLooseScan', '2026-07-04 00:00:02', 0),
+('DoctrineMigrations\\Version20260709_WorklogSyncFoundation',   '2026-07-09 00:00:00', 0),
+('DoctrineMigrations\\Version20260709_UserTicketsystemRemoteAccountId', '2026-07-09 00:00:01', 0),
+('DoctrineMigrations\\Version20260709_TicketSystemSyncConfig',  '2026-07-09 00:00:02', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------

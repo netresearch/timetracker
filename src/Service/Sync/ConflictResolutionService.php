@@ -100,7 +100,15 @@ class ConflictResolutionService
             return new ResolutionResult(false, '', 'push skipped: entry has no pushable ticket');
         }
 
-        // forcePush's base refresh already set IN_SYNC and cleared the conflict payload.
+        // forcePush's base refresh sets IN_SYNC and clears the conflict payload —
+        // but it can no-op (worklog id missing after a zero-duration delete, or the
+        // fresh read 404ing in a race). A still-parked state must not report success.
+        if (WorklogSyncStatus::IN_SYNC !== $state->getStatus()) {
+            $this->entityManager->flush();
+
+            return new ResolutionResult(false, '', 'push succeeded but the sync base could not be refreshed; conflict remains parked — re-run resolution');
+        }
+
         $this->entityManager->flush();
 
         return new ResolutionResult(true, $wasOrphaned ? 'recreated_local' : 'pushed_local');

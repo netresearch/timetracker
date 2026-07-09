@@ -9,22 +9,16 @@ declare(strict_types=1);
 
 namespace Tests\Controller\Api\V2;
 
-use App\Entity\Entry;
-use App\Entity\Project;
-use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\WorklogSyncState;
 use App\Enum\WorklogSyncStatus;
 use App\Service\Sync\ConflictResolutionService;
 use App\ValueObject\Sync\ResolutionResult;
-use DateTime;
-use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\CreatesWorklogSyncFixtures;
 use Tests\Traits\MintsApiTokens;
 
-use function assert;
 use function count;
 use function json_decode;
 use function json_encode;
@@ -43,50 +37,20 @@ use const JSON_THROW_ON_ERROR;
  */
 final class WorklogSyncConflictActionsTest extends AbstractWebTestCase
 {
+    use CreatesWorklogSyncFixtures;
     use MintsApiTokens;
-
-    private EntityManagerInterface $entityManager;
-
-    private TicketSystem $ticketSystem;
-
-    private Project $project;
-
-    private User $admin;
-
-    private User $developer;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
-        assert($entityManager instanceof EntityManagerInterface);
-        $this->entityManager = $entityManager;
-
-        $ticketSystem = $this->entityManager->find(TicketSystem::class, 1);
-        assert($ticketSystem instanceof TicketSystem);
-        $this->ticketSystem = $ticketSystem;
-
-        $project = $this->entityManager->find(Project::class, 2);
-        assert($project instanceof Project);
-        $project->setTicketSystem($this->ticketSystem);
-        $this->project = $project;
-
-        $admin = $this->entityManager->find(User::class, 1);
-        assert($admin instanceof User);
-        $this->admin = $admin;
-
-        $developer = $this->entityManager->find(User::class, 2);
-        assert($developer instanceof User);
-        $this->developer = $developer;
-
-        $this->entityManager->flush();
+        $this->setUpWorklogSyncFixtures();
     }
 
     public function testListOwnConflictsAsNonAdmin(): void
     {
-        $developerState = $this->createState($this->createEntry($this->developer, '2026-06-15'), WorklogSyncStatus::CONFLICT);
-        $adminState = $this->createState($this->createEntry($this->admin, '2026-06-16'), WorklogSyncStatus::ORPHANED);
+        $developerState = $this->createSyncState($this->createSyncEntry($this->developer, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $adminState = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-16'), WorklogSyncStatus::ORPHANED);
         $this->entityManager->flush();
 
         $this->logInSession('developer');
@@ -110,8 +74,8 @@ final class WorklogSyncConflictActionsTest extends AbstractWebTestCase
 
     public function testAdminSeesAllAndCanFilterByUser(): void
     {
-        $developerState = $this->createState($this->createEntry($this->developer, '2026-06-15'), WorklogSyncStatus::CONFLICT);
-        $adminState = $this->createState($this->createEntry($this->admin, '2026-06-16'), WorklogSyncStatus::CONFLICT);
+        $developerState = $this->createSyncState($this->createSyncEntry($this->developer, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $adminState = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-16'), WorklogSyncStatus::CONFLICT);
         $this->entityManager->flush();
 
         $this->client->request(Request::METHOD_GET, '/api/v2/worklog-sync/conflicts');
@@ -148,7 +112,7 @@ final class WorklogSyncConflictActionsTest extends AbstractWebTestCase
 
     public function testResolveDelegatesAndReturnsAction(): void
     {
-        $state = $this->createState($this->createEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $state = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
         $this->entityManager->flush();
         $stateId = (int) $state->getId();
 
@@ -174,7 +138,7 @@ final class WorklogSyncConflictActionsTest extends AbstractWebTestCase
 
     public function testResolveForeignConflict403ForNonAdmin(): void
     {
-        $state = $this->createState($this->createEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $state = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
         $this->entityManager->flush();
 
         $this->logInSession('developer');
@@ -192,7 +156,7 @@ final class WorklogSyncConflictActionsTest extends AbstractWebTestCase
 
     public function testResolveFailureReturns422WithReason(): void
     {
-        $state = $this->createState($this->createEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $state = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
         $this->entityManager->flush();
 
         $resolutionMock = $this->createMock(ConflictResolutionService::class);
@@ -210,7 +174,7 @@ final class WorklogSyncConflictActionsTest extends AbstractWebTestCase
 
     public function testResolveRequiresWriteScope(): void
     {
-        $state = $this->createState($this->createEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $state = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
         $this->entityManager->flush();
 
         $status = $this->postJsonWithToken(
@@ -264,28 +228,5 @@ final class WorklogSyncConflictActionsTest extends AbstractWebTestCase
         }
 
         return $ids;
-    }
-
-    private function createEntry(User $user, string $day): Entry
-    {
-        $entry = new Entry()
-            ->setUser($user)->setProject($this->project)->setTicket('TIM-1')
-            ->setDay(new DateTime($day))->setStart('09:00:00')->setEnd('10:00:00');
-        $entry->setDuration(60);
-        $this->entityManager->persist($entry);
-
-        return $entry;
-    }
-
-    private function createState(Entry $entry, WorklogSyncStatus $status): WorklogSyncState
-    {
-        $state = new WorklogSyncState()
-            ->setEntry($entry)
-            ->setTicketSystem($this->ticketSystem)
-            ->setStatus($status)
-            ->setLastSyncedAt(new DateTimeImmutable('2026-07-01 08:00:00'));
-        $this->entityManager->persist($state);
-
-        return $state;
     }
 }

@@ -9,10 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Mcp;
 
-use App\Entity\Entry;
-use App\Entity\Project;
 use App\Entity\SyncRun;
-use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\WorklogSyncState;
 use App\Enum\SyncRunStatus;
@@ -26,14 +23,12 @@ use App\Service\Sync\ConflictResolutionService;
 use App\Service\Sync\SyncWorklogsService;
 use App\Service\Sync\VerifyWorklogsService;
 use App\ValueObject\Sync\ResolutionResult;
-use DateTime;
 use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use Mcp\Exception\ToolCallException;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\ActsAsApiTokenUser;
+use Tests\Traits\CreatesWorklogSyncFixtures;
 
-use function assert;
 use function count;
 
 /**
@@ -47,43 +42,13 @@ use function count;
 final class WorklogSyncToolsTest extends AbstractWebTestCase
 {
     use ActsAsApiTokenUser;
-
-    private EntityManagerInterface $entityManager;
-
-    private TicketSystem $ticketSystem;
-
-    private Project $project;
-
-    private User $admin;
-
-    private User $developer;
+    use CreatesWorklogSyncFixtures;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
-        assert($entityManager instanceof EntityManagerInterface);
-        $this->entityManager = $entityManager;
-
-        $ticketSystem = $this->entityManager->find(TicketSystem::class, 1);
-        assert($ticketSystem instanceof TicketSystem);
-        $this->ticketSystem = $ticketSystem;
-
-        $project = $this->entityManager->find(Project::class, 2);
-        assert($project instanceof Project);
-        $project->setTicketSystem($this->ticketSystem);
-        $this->project = $project;
-
-        $admin = $this->entityManager->find(User::class, 1);
-        assert($admin instanceof User);
-        $this->admin = $admin;
-
-        $developer = $this->entityManager->find(User::class, 2);
-        assert($developer instanceof User);
-        $this->developer = $developer;
-
-        $this->entityManager->flush();
+        $this->setUpWorklogSyncFixtures();
     }
 
     public function testSyncToolTriggersVerify(): void
@@ -162,8 +127,8 @@ final class WorklogSyncToolsTest extends AbstractWebTestCase
 
     public function testListConflictsForcesSelfForNonAdmin(): void
     {
-        $developerState = $this->createState($this->createEntry($this->developer, '2026-06-15'), WorklogSyncStatus::CONFLICT);
-        $adminState = $this->createState($this->createEntry($this->admin, '2026-06-16'), WorklogSyncStatus::ORPHANED);
+        $developerState = $this->createSyncState($this->createSyncEntry($this->developer, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $adminState = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-16'), WorklogSyncStatus::ORPHANED);
         $this->entityManager->flush();
 
         $this->useToken(['sync:read'], 'developer');
@@ -188,7 +153,7 @@ final class WorklogSyncToolsTest extends AbstractWebTestCase
 
     public function testResolveDelegates(): void
     {
-        $state = $this->createState($this->createEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $state = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
         $this->entityManager->flush();
         $stateId = (int) $state->getId();
 
@@ -212,7 +177,7 @@ final class WorklogSyncToolsTest extends AbstractWebTestCase
 
     public function testResolveFailureThrowsToolCallException(): void
     {
-        $state = $this->createState($this->createEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
+        $state = $this->createSyncState($this->createSyncEntry($this->admin, '2026-06-15'), WorklogSyncStatus::CONFLICT);
         $this->entityManager->flush();
 
         $resolutionMock = $this->createMock(ConflictResolutionService::class);
@@ -261,28 +226,5 @@ final class WorklogSyncToolsTest extends AbstractWebTestCase
         $this->entityManager->flush();
 
         return $syncRun;
-    }
-
-    private function createEntry(User $user, string $day): Entry
-    {
-        $entry = new Entry()
-            ->setUser($user)->setProject($this->project)->setTicket('TIM-1')
-            ->setDay(new DateTime($day))->setStart('09:00:00')->setEnd('10:00:00');
-        $entry->setDuration(60);
-        $this->entityManager->persist($entry);
-
-        return $entry;
-    }
-
-    private function createState(Entry $entry, WorklogSyncStatus $status): WorklogSyncState
-    {
-        $state = new WorklogSyncState()
-            ->setEntry($entry)
-            ->setTicketSystem($this->ticketSystem)
-            ->setStatus($status)
-            ->setLastSyncedAt(new DateTimeImmutable('2026-07-01 08:00:00'));
-        $this->entityManager->persist($state);
-
-        return $state;
     }
 }

@@ -151,7 +151,11 @@ final class ConflictResolutionServiceTest extends TestCase
         $this->worklogWriteService->expects(self::once())
             ->method('forcePush')
             ->with($this->api, $entry, $this->ticketSystem)
-            ->willReturn(WriteOutcome::WRITTEN);
+            ->willReturnCallback(static function () use ($state): WriteOutcome {
+                $state->setStatus(WorklogSyncStatus::IN_SYNC); // refreshBase side effect
+
+                return WriteOutcome::WRITTEN;
+            });
         $this->entityManager->expects(self::once())->method('flush');
 
         $result = $this->service->resolve($state, 'local', $this->actor);
@@ -166,12 +170,33 @@ final class ConflictResolutionServiceTest extends TestCase
 
         $this->worklogWriteService->expects(self::once())
             ->method('forcePush')
-            ->willReturn(WriteOutcome::WRITTEN);
+            ->willReturnCallback(static function () use ($state): WriteOutcome {
+                $state->setStatus(WorklogSyncStatus::IN_SYNC); // refreshBase side effect
+
+                return WriteOutcome::WRITTEN;
+            });
 
         $result = $this->service->resolve($state, 'local', $this->actor);
 
         self::assertTrue($result->resolved);
         self::assertSame('recreated_local', $result->action);
+    }
+
+    public function testLocalWinsWithFailedBaseRefreshStaysParked(): void
+    {
+        $state = $this->parkedState(WorklogSyncStatus::CONFLICT);
+
+        // forcePush reports WRITTEN but does NOT touch the state — the
+        // refreshBase no-op case (post-write 404 race / missing worklog id).
+        $this->worklogWriteService->expects(self::once())
+            ->method('forcePush')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $result = $this->service->resolve($state, 'local', $this->actor);
+
+        self::assertFalse($result->resolved);
+        self::assertStringContainsString('remains parked', $result->reason);
+        self::assertSame(WorklogSyncStatus::CONFLICT, $state->getStatus());
     }
 
     public function testRemoteWinsPullsLiveRemote(): void
