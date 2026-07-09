@@ -20,6 +20,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 #[ORM\Entity(repositoryClass: WorklogSyncStateRepository::class)]
 #[ORM\Table(name: 'worklog_sync_state')]
+#[ORM\Index(name: 'idx_worklog_sync_state_status', columns: ['status'])]
 class WorklogSyncState extends Base
 {
     #[ORM\Id]
