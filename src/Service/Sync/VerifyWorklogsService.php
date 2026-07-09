@@ -17,6 +17,7 @@ use App\Entity\User;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
+use App\Enum\WorklogField;
 use App\Repository\EntryRepository;
 use App\Repository\WorklogSyncStateRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
@@ -128,10 +129,12 @@ class VerifyWorklogsService
             }
 
             foreach ($issueWorklogs as $jiraWorkLog) {
-                if (null === $jiraWorkLog->id || !$myself->matchesWorklogAuthor($jiraWorkLog)) {
+                if (null === $jiraWorkLog->id) {
                     continue;
                 }
-
+                if (!$myself->matchesWorklogAuthor($jiraWorkLog)) {
+                    continue;
+                }
                 try {
                     $snapshot = $this->remoteWorklogNormalizer->normalize($jiraWorkLog, $issueKey);
                 } catch (InvalidArgumentException $exception) {
@@ -139,8 +142,10 @@ class VerifyWorklogsService
                     $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $jiraWorkLog->id, reason: substr($exception->getMessage(), 0, 255));
                     continue;
                 }
-
-                if ($snapshot->startedTimestamp < $rangeFrom || $snapshot->startedTimestamp > $rangeTo) {
+                if ($snapshot->startedTimestamp < $rangeFrom) {
+                    continue;
+                }
+                if ($snapshot->startedTimestamp > $rangeTo) {
                     continue;
                 }
 
@@ -191,7 +196,7 @@ class VerifyWorklogsService
                     entry: $entry,
                     reason: $decision->reason,
                     payload: [
-                        'fields' => array_map(static fn ($field) => $field->value, $decision->fields),
+                        'fields' => array_map(static fn (WorklogField $field) => $field->value, $decision->fields),
                         'local' => $local->toArray(),
                         'remote' => $remote?->toArray(),
                     ],

@@ -26,19 +26,19 @@ class ReconciliationService
 {
     public function reconcile(?WorklogSnapshot $base, ?WorklogSnapshot $local, ?WorklogSnapshot $remote): ReconciliationDecision
     {
-        if (null === $local && null === $remote) {
+        if (!$local instanceof WorklogSnapshot && !$remote instanceof WorklogSnapshot) {
             return new ReconciliationDecision(SyncAction::NONE, [], 'nothing on either side');
         }
 
-        if (null === $local) {
+        if (!$local instanceof WorklogSnapshot) {
             return new ReconciliationDecision(SyncAction::CREATE_LOCAL, [], 'remote worklog has no matching entry');
         }
 
-        if (null === $remote) {
+        if (!$remote instanceof WorklogSnapshot) {
             return new ReconciliationDecision(SyncAction::REMOTE_MISSING, [], 'linked remote worklog not found');
         }
 
-        if (null === $base) {
+        if (!$base instanceof WorklogSnapshot) {
             $diff = $local->diff($remote);
             if ([] === $diff) {
                 return new ReconciliationDecision(SyncAction::NONE, [], 'equal without base');

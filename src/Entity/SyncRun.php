@@ -60,7 +60,7 @@ class SyncRun extends Base
     protected ?DateTimeImmutable $finishedAt = null;
 
     /** @var Collection<int, SyncRunItem> */
-    #[ORM\OneToMany(mappedBy: 'syncRun', targetEntity: SyncRunItem::class, cascade: ['persist'])]
+    #[ORM\OneToMany(targetEntity: SyncRunItem::class, mappedBy: 'syncRun', cascade: ['persist'])]
     protected Collection $items;
 
     public function __construct()

@@ -29,7 +29,7 @@ class WorklogSyncState extends Base
     protected ?int $id = null;
 
     #[ORM\OneToOne(targetEntity: Entry::class)]
-    #[ORM\JoinColumn(name: 'entry_id', referencedColumnName: 'id', nullable: false, unique: true, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(name: 'entry_id', referencedColumnName: 'id', unique: true, nullable: false, onDelete: 'CASCADE')]
     protected ?Entry $entry = null;
 
     #[ORM\ManyToOne(targetEntity: TicketSystem::class)]
