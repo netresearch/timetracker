@@ -101,4 +101,14 @@ final class TtVerifyWorklogsCommandTest extends TestCase
 
         self::assertSame(1, $exitCode);
     }
+
+    public function testInvalidFromDateFailsWithMessage(): void
+    {
+        $tester = $this->commandTester(self::createStub(User::class), self::createStub(TicketSystem::class), $this->completedRun());
+
+        $exitCode = $tester->execute(['username' => 'jdoe', 'ticket-system' => '1', '--from' => 'not-a-date']);
+
+        self::assertSame(1, $exitCode);
+        self::assertStringContainsString('Invalid date', $tester->getDisplay());
+    }
 }

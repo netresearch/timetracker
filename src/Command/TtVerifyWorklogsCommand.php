@@ -16,6 +16,7 @@ use App\Enum\SyncRunStatus;
 use App\Service\Sync\VerifyWorklogsService;
 use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -65,8 +66,14 @@ class TtVerifyWorklogsCommand extends Command
             return 1;
         }
 
-        $fromDate = null !== $from ? new DateTimeImmutable($from) : new DateTimeImmutable('first day of this month');
-        $toDate = null !== $to ? new DateTimeImmutable($to) : new DateTimeImmutable('today');
+        try {
+            $fromDate = null !== $from ? new DateTimeImmutable($from) : new DateTimeImmutable('first day of this month');
+            $toDate = null !== $to ? new DateTimeImmutable($to) : new DateTimeImmutable('today');
+        } catch (Exception) {
+            $symfonyStyle->error(sprintf('Invalid date in --from/--to (expected Y-m-d): %s / %s', $from ?? '-', $to ?? '-'));
+
+            return 1;
+        }
 
         $syncRun = $this->verifyWorklogsService->verify($user, $system, $fromDate, $toDate);
 

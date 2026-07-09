@@ -76,7 +76,7 @@ final class JiraOAuthApiServiceReadTest extends TestCase
     public function testGetIssueWorklogsParsesWorklogArray(): void
     {
         $service = $this->serviceWithCannedResponses([
-            'issue/ABC-1/worklog?maxResults=1000' => (object) [
+            'issue/ABC-1/worklog?maxResults=1000&startAt=0' => (object) [
                 'worklogs' => [
                     (object) ['id' => '1', 'started' => '2026-07-08T09:00:00.000+0200', 'timeSpentSeconds' => 3600],
                     (object) ['id' => '2', 'started' => '2026-07-08T11:00:00.000+0200', 'timeSpentSeconds' => 1800],
@@ -93,9 +93,33 @@ final class JiraOAuthApiServiceReadTest extends TestCase
 
     public function testGetIssueWorklogsToleratesMalformedResponse(): void
     {
-        $service = $this->serviceWithCannedResponses(['issue/ABC-1/worklog?maxResults=1000' => (object) ['unexpected' => true]]);
+        $service = $this->serviceWithCannedResponses(['issue/ABC-1/worklog?maxResults=1000&startAt=0' => (object) ['unexpected' => true]]);
 
         self::assertSame([], $service->getIssueWorklogs('ABC-1'));
+    }
+
+    public function testGetIssueWorklogsPaginatesUntilTotal(): void
+    {
+        $service = $this->serviceWithCannedResponses([
+            'issue/ABC-1/worklog?maxResults=1000&startAt=0' => (object) [
+                'total' => 3,
+                'worklogs' => [
+                    (object) ['id' => '1', 'started' => '2026-07-08T09:00:00.000+0200', 'timeSpentSeconds' => 3600],
+                    (object) ['id' => '2', 'started' => '2026-07-08T11:00:00.000+0200', 'timeSpentSeconds' => 1800],
+                ],
+            ],
+            'issue/ABC-1/worklog?maxResults=1000&startAt=2' => (object) [
+                'total' => 3,
+                'worklogs' => [
+                    (object) ['id' => '3', 'started' => '2026-07-08T13:00:00.000+0200', 'timeSpentSeconds' => 900],
+                ],
+            ],
+        ]);
+
+        $workLogs = $service->getIssueWorklogs('ABC-1');
+
+        self::assertCount(3, $workLogs);
+        self::assertSame([1, 2, 3], array_map(static fn (JiraWorkLog $workLog): ?int => $workLog->id, $workLogs));
     }
 
     public function testSearchIssueKeysCollectsKeysAndDetectsTruncation(): void

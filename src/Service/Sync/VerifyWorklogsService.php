@@ -119,7 +119,15 @@ class VerifyWorklogsService
         /** @var array<int, array{snapshot: WorklogSnapshot, updated: ?string, author: ?string}> $remoteByWorklogId */
         $remoteByWorklogId = [];
         foreach ($searchResult->keys as $issueKey) {
-            foreach ($api->getIssueWorklogs($issueKey) as $jiraWorkLog) {
+            try {
+                $issueWorklogs = $api->getIssueWorklogs($issueKey);
+            } catch (Throwable $throwable) {
+                $syncRun->incrementCounter('errors');
+                $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, reason: substr('worklog fetch failed: ' . $throwable->getMessage(), 0, 255));
+                continue;
+            }
+
+            foreach ($issueWorklogs as $jiraWorkLog) {
                 if (null === $jiraWorkLog->id || !$myself->matchesWorklogAuthor($jiraWorkLog)) {
                     continue;
                 }

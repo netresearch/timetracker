@@ -506,18 +506,27 @@ class JiraOAuthApiService
      */
     public function getIssueWorklogs(string $issueKey): array
     {
-        $response = $this->get(sprintf('issue/%s/worklog?maxResults=1000', $issueKey));
-
-        if (!is_object($response) || !isset($response->worklogs) || !is_array($response->worklogs)) {
-            return [];
-        }
-
         $workLogs = [];
-        foreach ($response->worklogs as $workLog) {
-            if (is_object($workLog)) {
-                $workLogs[] = JiraWorkLog::fromApiResponse($workLog);
+        $startAt = 0;
+
+        do {
+            $response = $this->get(sprintf('issue/%s/worklog?maxResults=1000&startAt=%d', $issueKey, $startAt));
+
+            if (!is_object($response) || !isset($response->worklogs) || !is_array($response->worklogs)) {
+                return $workLogs;
             }
-        }
+
+            $pageSize = 0;
+            foreach ($response->worklogs as $workLog) {
+                ++$pageSize;
+                if (is_object($workLog)) {
+                    $workLogs[] = JiraWorkLog::fromApiResponse($workLog);
+                }
+            }
+
+            $total = isset($response->total) && is_numeric($response->total) ? (int) $response->total : null;
+            $startAt += $pageSize;
+        } while ($pageSize > 0 && null !== $total && $startAt < $total);
 
         return $workLogs;
     }

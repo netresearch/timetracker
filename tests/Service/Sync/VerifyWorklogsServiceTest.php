@@ -34,6 +34,7 @@ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Symfony\Component\Clock\MockClock;
 
 #[CoversClass(VerifyWorklogsService::class)]
@@ -269,5 +270,32 @@ final class VerifyWorklogsServiceTest extends TestCase
         self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
         self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
         self::assertSame(SyncItemKind::ERROR, $syncRun->getItems()->toArray()[0]->getKind());
+    }
+
+    public function testIssueFetchFailureRecordsErrorAndContinuesWithOtherIssues(): void
+    {
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->api->method('getMyself')->willReturn(new JiraUserIdentity(accountId: 'me'));
+        $this->api->method('searchIssueKeysWithWorklogs')->willReturn(new JiraIssueKeySearchResult(['ABC-1', 'ABC-2'], false));
+        $healthy = new JiraWorkLog(id: 6006, started: '2026-06-10T14:00:00.000+0200', timeSpentSeconds: 600, authorAccountId: 'me');
+        $this->api->method('getIssueWorklogs')->willReturnCallback(
+            static function (string $issueKey) use ($healthy): array {
+                if ('ABC-1' === $issueKey) {
+                    throw new RuntimeException('issue gone');
+                }
+
+                return [$healthy];
+            },
+        );
+
+        $syncRun = $this->verify();
+
+        self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
+        self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['remote_only'] ?? 0);
+        $kinds = array_map(static fn ($item) => $item->getKind(), $syncRun->getItems()->toArray());
+        self::assertContains(SyncItemKind::ERROR, $kinds);
+        self::assertContains(SyncItemKind::REMOTE_ONLY, $kinds);
     }
 }
