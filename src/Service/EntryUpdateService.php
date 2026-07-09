@@ -105,7 +105,14 @@ final readonly class EntryUpdateService
         $currentStart = $entry->getStart()->format('H:i');
         $currentEnd = $entry->getEnd()->format('H:i');
 
-        if (null !== $durationMinutes && $durationMinutes > 0) {
+        // Guarded here (not only via DTO constraints): the MCP path calls this
+        // service without a validated request DTO, and silently ignoring a
+        // non-positive duration would masquerade as "kept the times".
+        if (null !== $durationMinutes && $durationMinutes <= 0) {
+            throw new InvalidArgumentException('durationMinutes must be positive.');
+        }
+
+        if (null !== $durationMinutes) {
             $startTime = null !== $start ? trim($start) : $currentStart;
             $endMinutes = $this->minutesOfDay($startTime) + $durationMinutes;
             if ($endMinutes >= self::MINUTES_PER_DAY) {
