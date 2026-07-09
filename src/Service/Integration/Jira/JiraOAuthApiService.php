@@ -10,7 +10,9 @@ declare(strict_types=1);
 namespace App\Service\Integration\Jira;
 
 use App\DTO\Jira\JiraIssue;
+use App\DTO\Jira\JiraIssueKeySearchResult;
 use App\DTO\Jira\JiraSearchResult;
+use App\DTO\Jira\JiraUserIdentity;
 use App\DTO\Jira\JiraWorkLog;
 use App\Entity\Activity;
 use App\Entity\Entry;
@@ -33,12 +35,16 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
+use stdClass;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Throwable;
 use UnexpectedValueException;
 
 use function assert;
+use function count;
+use function is_array;
+use function is_numeric;
 use function is_object;
 use function is_string;
 use function sprintf;
@@ -489,6 +495,67 @@ class JiraOAuthApiService
         }
 
         return $subtickets;
+    }
+
+    /**
+     * Reads all worklogs of one issue (ADR-023 read path 3).
+     *
+     * @throws JiraApiException
+     *
+     * @return list<JiraWorkLog>
+     */
+    public function getIssueWorklogs(string $issueKey): array
+    {
+        $response = $this->get(sprintf('issue/%s/worklog?maxResults=1000', $issueKey));
+
+        if (!is_object($response) || !isset($response->worklogs) || !is_array($response->worklogs)) {
+            return [];
+        }
+
+        $workLogs = [];
+        foreach ($response->worklogs as $workLog) {
+            if (is_object($workLog)) {
+                $workLogs[] = JiraWorkLog::fromApiResponse($workLog);
+            }
+        }
+
+        return $workLogs;
+    }
+
+    /**
+     * JQL search returning issue keys only, with explicit truncation reporting (ADR-023 read path 2).
+     *
+     * @throws JiraApiException
+     */
+    public function searchIssueKeysWithWorklogs(string $jql, int $limit = 500): JiraIssueKeySearchResult
+    {
+        $response = $this->searchTicket($jql, ['key'], $limit);
+
+        $keys = [];
+        if (is_object($response) && isset($response->issues) && is_array($response->issues)) {
+            foreach ($response->issues as $issue) {
+                if (is_object($issue) && isset($issue->key) && is_string($issue->key)) {
+                    $keys[] = $issue->key;
+                }
+            }
+        }
+
+        $total = is_object($response) && isset($response->total) && is_numeric($response->total) ? (int) $response->total : null;
+        $truncated = count($keys) >= $limit || (null !== $total && $total > count($keys));
+
+        return new JiraIssueKeySearchResult($keys, $truncated);
+    }
+
+    /**
+     * The Jira account behind the current token (GET myself) — for author filtering.
+     *
+     * @throws JiraApiException
+     */
+    public function getMyself(): JiraUserIdentity
+    {
+        $response = $this->get('myself');
+
+        return JiraUserIdentity::fromApiResponse(is_object($response) ? $response : new stdClass());
     }
 
     /**
