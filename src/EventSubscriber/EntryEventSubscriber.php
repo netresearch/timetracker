@@ -97,7 +97,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $this->invalidateUserEntryCache($entry);
 
-        // Sync on every update (v4 parity): updateEntryJiraWorkLog creates a
+        // Sync on every update (v4 parity): the lease-checked push creates a
         // new worklog or updates the existing one based on the worklog id,
         // so entries that were never synced are caught up on their next save.
         if ($this->shouldAutoSync($entry)) {
