@@ -11,7 +11,9 @@ namespace App\Controller\Admin;
 
 use App\Controller\BaseController;
 use App\Dto\TicketSystemSaveDto;
+use App\Entity\Activity;
 use App\Entity\TicketSystem;
+use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\TicketSystemRepository;
@@ -82,6 +84,11 @@ final class SaveTicketSystemAction extends BaseController
         // only applies when editing.
         $storedSecrets = null !== $id ? $this->captureStoredSecrets($ticketSystem) : null;
 
+        $syncConfigurationError = $this->applySyncConfiguration($ticketSystem, $ticketSystemSaveDto);
+        if ($syncConfigurationError instanceof Error) {
+            return $syncConfigurationError;
+        }
+
         try {
             $this->objectMapper->map($ticketSystemSaveDto, $ticketSystem);
 
@@ -103,6 +110,35 @@ final class SaveTicketSystemAction extends BaseController
         // save response must not echo password/keys/OAuth secrets back to the
         // browser (they were just persisted server-side).
         return new JsonResponse($ticketSystem->toSafeArray());
+    }
+
+    /**
+     * Resolve the worklog sync configuration relations (ADR-023 §5). The admin
+     * form always sends the full config, so a null id clears the setting;
+     * an unknown id is rejected with 422.
+     */
+    private function applySyncConfiguration(TicketSystem $ticketSystem, TicketSystemSaveDto $dto): ?Error
+    {
+        $syncUser = null;
+        if (null !== $dto->syncUserId) {
+            $syncUser = $this->doctrineRegistry->getRepository(User::class)->find($dto->syncUserId);
+            if (!$syncUser instanceof User) {
+                return new Error($this->translate('Unknown sync user.'), \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        }
+
+        $syncDefaultActivity = null;
+        if (null !== $dto->syncDefaultActivityId) {
+            $syncDefaultActivity = $this->doctrineRegistry->getRepository(Activity::class)->find($dto->syncDefaultActivityId);
+            if (!$syncDefaultActivity instanceof Activity) {
+                return new Error($this->translate('Unknown sync default activity.'), \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        }
+
+        $ticketSystem->setSyncUser($syncUser);
+        $ticketSystem->setSyncDefaultActivity($syncDefaultActivity);
+
+        return null;
     }
 
     /**
