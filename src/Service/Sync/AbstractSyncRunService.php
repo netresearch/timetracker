@@ -17,6 +17,7 @@ use App\Enum\SyncRunStatus;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
+use RuntimeException;
 use Throwable;
 
 use function substr;
@@ -41,15 +42,30 @@ abstract class AbstractSyncRunService
     {
         $this->entityManager->persist($syncRun);
 
+        $failure = null;
+
         try {
             $body();
             $syncRun->setStatus(SyncRunStatus::COMPLETED);
         } catch (Throwable $throwable) {
+            $failure = $throwable;
             $syncRun->setStatus(SyncRunStatus::FAILED);
-            $this->addItem($syncRun, SyncItemKind::ERROR, reason: substr($throwable->getMessage(), 0, 255));
+            // Only touch the (unit-of-work) collection while the manager is still usable —
+            // a persist that violated a DB constraint closes the EM mid-run.
+            if ($this->entityManager->isOpen()) {
+                $this->addItem($syncRun, SyncItemKind::ERROR, reason: substr($throwable->getMessage(), 0, 255));
+            }
         }
 
         $syncRun->setFinishedAt($this->now());
+
+        if ($failure instanceof Throwable && !$this->entityManager->isOpen()) {
+            // A persisted row was rejected by the database and closed the manager; the run
+            // record cannot be saved through it. Surface the real cause rather than the
+            // opaque EntityManagerClosed a retry flush would throw.
+            throw new RuntimeException('Sync run aborted: the entity manager closed mid-run (a persisted row was rejected by the database). Original error: ' . $failure->getMessage(), 0, $failure);
+        }
+
         $this->entityManager->flush();
 
         return $syncRun;

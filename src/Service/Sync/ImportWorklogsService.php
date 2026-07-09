@@ -36,6 +36,7 @@ use Throwable;
 
 use function array_key_exists;
 use function in_array;
+use function mb_substr;
 use function spl_object_id;
 use function sprintf;
 use function substr;
@@ -333,7 +334,7 @@ class ImportWorklogsService extends AbstractSyncRunService
             ->setProject($project)
             ->setActivity($importRunContext->activity)
             ->setTicket($worklogSnapshot->issueKey)
-            ->setDescription($worklogSnapshot->comment)
+            ->setDescription(mb_substr($worklogSnapshot->comment, 0, Entry::DESCRIPTION_MAX_LENGTH))
             ->setDay($times['day']->format('Y-m-d'))
             ->setStart($times['start']->format('H:i:s'))
             ->setEnd($times['end']->format('H:i:s'))

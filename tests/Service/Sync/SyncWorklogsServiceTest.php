@@ -73,6 +73,7 @@ final class SyncWorklogsServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
+        $this->entityManager->method('isOpen')->willReturn(true);
         $this->entryRepository = $this->createMock(EntryRepository::class);
         $this->syncStateRepository = $this->createMock(WorklogSyncStateRepository::class);
         $this->api = $this->createMock(JiraOAuthApiService::class);

@@ -26,6 +26,12 @@ use function sprintf;
 class Entry extends Base
 {
     /**
+     * Maximum length of the `description` column (varchar(255)). Sync writers must
+     * cap remote worklog comments to this before persisting under strict SQL mode.
+     */
+    public const int DESCRIPTION_MAX_LENGTH = 255;
+
+    /**
      * Non-persisted runtime flag indicating if the entry is billable based on external labels.
      */
     protected ?bool $billable = null;

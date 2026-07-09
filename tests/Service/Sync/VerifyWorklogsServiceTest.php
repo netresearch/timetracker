@@ -64,6 +64,7 @@ final class VerifyWorklogsServiceTest extends TestCase
         $this->apiFactory = $this->createMock(JiraOAuthApiFactory::class);
         $this->api = $this->createMock(JiraOAuthApiService::class);
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
+        $this->entityManager->method('isOpen')->willReturn(true);
         $this->apiFactory->method('create')->willReturn($this->api);
         $this->user = self::createStub(User::class);
         $this->ticketSystem = self::createStub(TicketSystem::class);
