@@ -9,6 +9,7 @@ use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\TicketSystemType;
+use App\Enum\WriteOutcome;
 use App\Event\EntryEvent;
 use App\EventSubscriber\EntryEventSubscriber;
 use App\Exception\Integration\Jira\JiraApiException;
@@ -16,6 +17,7 @@ use App\Repository\TicketSystemRepository;
 use App\Service\Cache\QueryCacheService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
+use App\Service\Sync\WorklogWriteService;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Exception;
@@ -38,6 +40,7 @@ final class EntryEventSubscriberTest extends TestCase
     private ManagerRegistry&MockObject $managerRegistry;
     private ObjectManager&MockObject $objectManager;
     private QueryCacheService&MockObject $queryCacheService;
+    private WorklogWriteService&MockObject $worklogWriteService;
     private LoggerInterface&MockObject $logger;
     private EntryEventSubscriber $subscriber;
 
@@ -49,12 +52,14 @@ final class EntryEventSubscriberTest extends TestCase
         $this->objectManager = $this->createMock(ObjectManager::class);
         $this->managerRegistry->method('getManager')->willReturn($this->objectManager);
         $this->queryCacheService = $this->createMock(QueryCacheService::class);
+        $this->worklogWriteService = $this->createMock(WorklogWriteService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->subscriber = new EntryEventSubscriber(
             $this->jiraOAuthApiFactory,
             $this->managerRegistry,
             $this->queryCacheService,
+            $this->worklogWriteService,
             $this->logger,
         );
     }
@@ -104,6 +109,8 @@ final class EntryEventSubscriberTest extends TestCase
     {
         $this->jiraOAuthApiFactory->expects(self::never())
             ->method('create');
+        $this->worklogWriteService->expects(self::never())
+            ->method('push');
     }
 
     public function testGetSubscribedEventsReturnsCorrectEvents(): void
@@ -159,9 +166,10 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->expectJiraApiCreatedFor($user, $ticketSystem);
 
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('updateEntryJiraWorkLog')
-            ->with($entry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, self::anything())
+            ->willReturn(WriteOutcome::WRITTEN);
 
         $this->objectManager->expects(self::once())
             ->method('flush');
@@ -253,8 +261,8 @@ final class EntryEventSubscriberTest extends TestCase
         $exception = new Exception('Jira API error');
         $this->jiraOAuthApiFactory->method('create')
             ->willReturn($this->jiraOAuthApiService);
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('updateEntryJiraWorkLog')
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
             ->willThrowException($exception);
 
         $this->logger->expects(self::once())
@@ -288,9 +296,10 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->expectJiraApiCreatedFor($user, $ticketSystem);
 
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('updateEntryJiraWorkLog')
-            ->with($entry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, self::anything())
+            ->willReturn(WriteOutcome::WRITTEN);
 
         $this->objectManager->expects(self::once())
             ->method('flush');
@@ -310,9 +319,10 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->expectJiraApiCreatedFor($user, $ticketSystem);
 
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('updateEntryJiraWorkLog')
-            ->with($entry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, self::anything())
+            ->willReturn(WriteOutcome::WRITTEN);
 
         $this->objectManager->expects(self::once())
             ->method('flush');
@@ -343,8 +353,8 @@ final class EntryEventSubscriberTest extends TestCase
         $exception = new Exception('Jira API error');
         $this->jiraOAuthApiFactory->method('create')
             ->willReturn($this->jiraOAuthApiService);
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('updateEntryJiraWorkLog')
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
             ->willThrowException($exception);
 
         // Error, not warning: prod's fingers_crossed(action_level: error) handler
@@ -380,9 +390,9 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->expectJiraApiCreatedFor($user, $ticketSystem);
 
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('deleteEntryJiraWorkLog')
-            ->with($entry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, $entry);
 
         $this->objectManager->expects(self::once())
             ->method('flush');
@@ -421,8 +431,8 @@ final class EntryEventSubscriberTest extends TestCase
         $exception = new Exception('Jira API error');
         $this->jiraOAuthApiFactory->method('create')
             ->willReturn($this->jiraOAuthApiService);
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('deleteEntryJiraWorkLog')
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
             ->willThrowException($exception);
 
         // Error, not warning: a warning is swallowed by prod's fingers_crossed
@@ -470,9 +480,9 @@ final class EntryEventSubscriberTest extends TestCase
             ->method('create')
             ->with($user, $ownSystem)
             ->willReturn($this->jiraOAuthApiService);
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('deleteEntryJiraWorkLog')
-            ->with($entry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, $entry);
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryDeleted($event);
@@ -515,7 +525,7 @@ final class EntryEventSubscriberTest extends TestCase
         $this->jiraOAuthApiFactory->expects(self::exactly(2))
             ->method('create')
             ->willReturn($this->jiraOAuthApiService);
-        $this->jiraOAuthApiService->method('deleteEntryJiraWorkLog')
+        $this->worklogWriteService->method('delete')
             ->willThrowException(new JiraApiException('boom', 500));
 
         // The unresolved failure surfaces at error level.
@@ -586,6 +596,7 @@ final class EntryEventSubscriberTest extends TestCase
             $this->jiraOAuthApiFactory,
             $this->managerRegistry,
             $this->queryCacheService,
+            $this->worklogWriteService,
         );
 
         // Just verify it doesn't throw - logger is optional
@@ -654,9 +665,10 @@ final class EntryEventSubscriberTest extends TestCase
         $this->jiraOAuthApiService->expects(self::never())
             ->method('createTicket');
 
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('updateEntryJiraWorkLog')
-            ->with($entry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, self::anything())
+            ->willReturn(WriteOutcome::WRITTEN);
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
@@ -680,9 +692,10 @@ final class EntryEventSubscriberTest extends TestCase
             ->with($entry)
             ->willReturn((object) ['key' => 'OPSDHL-99']);
 
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('updateEntryJiraWorkLog')
-            ->with($entry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, self::anything())
+            ->willReturn(WriteOutcome::WRITTEN);
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
@@ -705,6 +718,9 @@ final class EntryEventSubscriberTest extends TestCase
             ->with('project = OPSDHL AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
 
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryUpdated($event);
 
@@ -723,8 +739,8 @@ final class EntryEventSubscriberTest extends TestCase
         $this->jiraOAuthApiService->method('searchTicket')
             ->willReturn((object) ['issues' => [(object) ['key' => '']]]);
 
-        $this->jiraOAuthApiService->expects(self::never())
-            ->method('updateEntryJiraWorkLog');
+        $this->worklogWriteService->expects(self::never())
+            ->method('push');
 
         $this->logger->expects(self::once())
             ->method('error')
@@ -794,17 +810,77 @@ final class EntryEventSubscriberTest extends TestCase
         $this->jiraOAuthApiFactory->method('create')
             ->willReturn($this->jiraOAuthApiService);
 
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('deleteEntryJiraWorkLog')
-            ->with($previousEntry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, $previousEntry);
 
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('updateEntryJiraWorkLog')
-            ->with($entry);
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, self::anything())
+            ->willReturn(WriteOutcome::WRITTEN);
 
         $event = new EntryEvent($entry, ['previous' => $previousEntry]);
         $this->subscriber->onEntryUpdated($event);
 
         self::assertNull($entry->getWorklogId());
+    }
+
+    public function testLeaseLostLogsParkedConflictAndDoesNotThrow(): void
+    {
+        [$entry, $user, $ticketSystem] = $this->createSyncableEntry(synced: true, worklogId: 12345);
+
+        $this->expectJiraApiCreatedFor($user, $ticketSystem);
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, self::anything())
+            ->willReturn(WriteOutcome::LEASE_LOST);
+
+        $this->objectManager->expects(self::once())
+            ->method('flush');
+
+        $messages = [];
+        $this->logger->method('info')
+            ->willReturnCallback(static function (string $message) use (&$messages): void {
+                $messages[] = $message;
+            });
+        $this->logger->expects(self::never())
+            ->method('error');
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryUpdated($event);
+
+        $parked = array_values(array_filter(
+            $messages,
+            static fn (string $message): bool => str_contains($message, 'parked as conflict'),
+        ));
+        self::assertCount(1, $parked);
+    }
+
+    public function testRemoteMissingLogsOrphaned(): void
+    {
+        [$entry, $user, $ticketSystem] = $this->createSyncableEntry(synced: true, worklogId: 12345);
+
+        $this->expectJiraApiCreatedFor($user, $ticketSystem);
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, self::anything())
+            ->willReturn(WriteOutcome::REMOTE_MISSING);
+
+        $messages = [];
+        $this->logger->method('info')
+            ->willReturnCallback(static function (string $message) use (&$messages): void {
+                $messages[] = $message;
+            });
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryUpdated($event);
+
+        $orphaned = array_values(array_filter(
+            $messages,
+            static fn (string $message): bool => str_contains($message, 'orphaned'),
+        ));
+        self::assertCount(1, $orphaned);
     }
 }
