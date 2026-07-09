@@ -93,8 +93,9 @@ final readonly class EntryUpdateService
 
     /**
      * Resolve the new start/end, keeping the entry's current times unless the
-     * caller overrides them. A duration re-derives the end from the (new or
-     * current) start; an explicit start+end wins; otherwise both are kept.
+     * caller overrides them. An explicit start+end pair wins (same precedence
+     * as log_time); otherwise a duration re-derives the end from the (new or
+     * current) start; otherwise the current times are kept.
      *
      * @throws InvalidArgumentException on a malformed time or a day overrun
      *
@@ -110,6 +111,12 @@ final readonly class EntryUpdateService
         // non-positive duration would masquerade as "kept the times".
         if (null !== $durationMinutes && $durationMinutes <= 0) {
             throw new InvalidArgumentException('durationMinutes must be positive.');
+        }
+
+        // Precedence matches log_time: an explicit start+end pair wins over a
+        // duration, so callers providing both forms get deterministic behavior.
+        if (null !== $start && null !== $end) {
+            return [trim($start), trim($end)];
         }
 
         if (null !== $durationMinutes) {

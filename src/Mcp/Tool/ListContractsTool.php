@@ -33,7 +33,7 @@ final readonly class ListContractsTool
      * per-weekday hours are managed in the admin UI. Requires an administrator
      * account and the contracts:read scope.
      *
-     * @return array{contracts: list<array{id: int, user_id: int|null, start: string, end: string|null}>}
+     * @return array{contracts: list<array{id: int, user_id: int, start: string, end: string|null}>}
      */
     #[McpTool(name: 'list_contracts', description: 'List employment contracts (admin only).')]
     public function listContracts(): array
@@ -43,7 +43,7 @@ final readonly class ListContractsTool
         return ['contracts' => array_values(array_map(
             static fn (Contract $contract): array => [
                 'id' => (int) $contract->getId(),
-                'user_id' => $contract->getUser()->getId(),
+                'user_id' => (int) $contract->getUser()->getId(),
                 'start' => $contract->getStart()->format('Y-m-d'),
                 'end' => $contract->getEnd()?->format('Y-m-d'),
             ],

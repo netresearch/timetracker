@@ -32,7 +32,7 @@ final readonly class ListPresetsTool
      * List booking presets (customer/project/activity/description templates).
      * Use a preset's name or id with `bulk_log_time`.
      *
-     * @return array{presets: list<array{id: int, name: string, customer_id: int, project_id: int, activity_id: int, description: string}>}
+     * @return array{presets: list<array{id: int, name: string, customer_id: int|null, project_id: int, activity_id: int|null, description: string}>}
      */
     #[McpTool(name: 'list_presets', description: 'List booking presets (templates for bulk_log_time).')]
     public function listPresets(): array
@@ -43,9 +43,9 @@ final readonly class ListPresetsTool
             static fn (Preset $preset): array => [
                 'id' => (int) $preset->getId(),
                 'name' => $preset->getName(),
-                'customer_id' => (int) $preset->getCustomerId(),
+                'customer_id' => $preset->getCustomerId(),
                 'project_id' => $preset->getProjectId(),
-                'activity_id' => (int) $preset->getActivityId(),
+                'activity_id' => $preset->getActivityId(),
                 'description' => $preset->getDescription(),
             ],
             $this->presetRepository->findAll(),
