@@ -51,6 +51,7 @@
             <file>tests/Entity/HolidayTest.php</file>
             <file>tests/Entity/PresetTest.php</file>
             <file>tests/Entity/ProjectTest.php</file>
+            <file>tests/Entity/SyncRunTest.php</file>
             <file>tests/Entity/TicketTest.php</file>
             <file>tests/Entity/UserTest.php</file>
             <file>tests/Entity/UserTicketsystemTest.php</file>

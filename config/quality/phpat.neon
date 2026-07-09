@@ -15,6 +15,10 @@ parameters:
     # never trigger in this level-0 pass
     reportUnmatchedIgnoredErrors: false
     treatPhpDocTypesAsCertain: false
+    # keep in sync with phpstan.neon: entities keep `?X $prop = null` until
+    # persisted (fluent setter pattern) even for NOT NULL columns/associations
+    doctrine:
+        allowNullablePropertyForRequiredField: true
     phpat:
         show_rule_names: true
         # PHP built-ins (DateTime, Throwable, attributes, …) are not

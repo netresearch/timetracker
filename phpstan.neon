@@ -17,6 +17,9 @@ parameters:
     doctrine:
         objectManagerLoader: null
         repositoryClass: Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository
+        # Entities keep `?X $prop = null` until persisted (fluent setter pattern)
+        # even for NOT NULL columns/associations (e.g. the ADR-023 sync entities).
+        allowNullablePropertyForRequiredField: true
 
     # Strict rules are enabled via extension-installer
 
