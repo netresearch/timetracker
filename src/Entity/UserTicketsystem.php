@@ -16,6 +16,7 @@ use SensitiveParameter;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users_ticket_systems')]
+#[ORM\Index(name: 'idx_uts_remote_account', columns: ['ticket_system_id', 'remote_account_id'])]
 class UserTicketsystem extends Base
 {
     /**
