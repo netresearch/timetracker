@@ -9,10 +9,10 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\SyncRunStatus;
+use App\Service\Sync\SyncRunConsoleRenderer;
 use App\Service\Sync\VerifyWorklogsService;
 use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
@@ -25,7 +25,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-use function is_string;
 use function sprintf;
 
 #[AsCommand(name: 'tt:verify-worklogs', description: 'Compare TimeTracker entries with Jira worklogs (read-only, ADR-023)')]
@@ -34,6 +33,7 @@ class TtVerifyWorklogsCommand extends Command
     public function __construct(
         private readonly VerifyWorklogsService $verifyWorklogsService,
         private readonly ManagerRegistry $managerRegistry,
+        private readonly SyncRunConsoleRenderer $syncRunConsoleRenderer,
     ) {
         parent::__construct();
     }
@@ -77,40 +77,8 @@ class TtVerifyWorklogsCommand extends Command
 
         $syncRun = $this->verifyWorklogsService->verify($user, $system, $fromDate, $toDate);
 
-        $this->render($symfonyStyle, $syncRun);
+        $this->syncRunConsoleRenderer->render($symfonyStyle, $syncRun, 'Verify');
 
         return SyncRunStatus::COMPLETED === $syncRun->getStatus() ? Command::SUCCESS : 1;
-    }
-
-    private function render(SymfonyStyle $symfonyStyle, SyncRun $syncRun): void
-    {
-        $scope = $syncRun->getScope();
-        $scopeFrom = $scope['from'] ?? null;
-        $scopeTo = $scope['to'] ?? null;
-
-        $symfonyStyle->section(sprintf(
-            'Verify run #%d — %s (%s to %s)',
-            $syncRun->getId() ?? 0,
-            $syncRun->getStatus()->value,
-            is_string($scopeFrom) ? $scopeFrom : '?',
-            is_string($scopeTo) ? $scopeTo : '?',
-        ));
-
-        $rows = [];
-        foreach ($syncRun->getCounters() as $key => $count) {
-            $rows[] = [$key, $count];
-        }
-
-        $symfonyStyle->table(['result', 'count'], $rows);
-
-        foreach ($syncRun->getItems() as $item) {
-            $symfonyStyle->writeln(sprintf(
-                ' <comment>%-18s</comment> %s %s %s',
-                $item->getKind()->value,
-                $item->getIssueKey() ?? '-',
-                null !== $item->getRemoteWorklogId() ? '(worklog ' . $item->getRemoteWorklogId() . ')' : '',
-                $item->getReason(),
-            ));
-        }
     }
 }

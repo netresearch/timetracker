@@ -40,23 +40,13 @@ class TicketProjectResolver
     {
         $projects = $this->projectsFor($ticketSystem);
 
-        $subticketOwners = [];
-        foreach ($projects as $project) {
-            $subtickets = array_map(trim(...), explode(',', $project->getSubtickets() ?? ''));
-            foreach ($subtickets as $subticket) {
-                if ('' !== $subticket && 0 === strcasecmp($subticket, $issueKey)) {
-                    $subticketOwners[] = $project;
-                    break;
-                }
-            }
-        }
-
-        if (1 === count($subticketOwners)) {
-            return new ProjectResolution($subticketOwners[0], 'exact subticket match');
-        }
-
-        if (count($subticketOwners) > 1) {
-            return new ProjectResolution(null, sprintf('ambiguous: %d projects list %s as subticket', count($subticketOwners), $issueKey));
+        $subticketOwners = $this->subticketOwners($projects, $issueKey);
+        if ([] !== $subticketOwners) {
+            return $this->decide(
+                $subticketOwners,
+                'exact subticket match',
+                sprintf('ambiguous: %d projects list %s as subticket', count($subticketOwners), $issueKey),
+            );
         }
 
         $prefix = strstr($issueKey, '-', true);
@@ -64,7 +54,57 @@ class TicketProjectResolver
             return new ProjectResolution(null, sprintf('no project resolvable: %s has no key prefix', $issueKey));
         }
 
-        $prefixOwners = [];
+        $prefixOwners = $this->prefixOwners($projects, $prefix);
+        if ([] !== $prefixOwners) {
+            return $this->decide(
+                $prefixOwners,
+                'jira_id prefix match',
+                sprintf('ambiguous: %d projects claim prefix %s', count($prefixOwners), $prefix),
+            );
+        }
+
+        return new ProjectResolution(null, sprintf('no project for prefix %s on this ticket system', $prefix));
+    }
+
+    /**
+     * @param non-empty-list<Project> $candidates
+     */
+    private function decide(array $candidates, string $matchReason, string $ambiguousReason): ProjectResolution
+    {
+        return 1 === count($candidates)
+            ? new ProjectResolution($candidates[0], $matchReason)
+            : new ProjectResolution(null, $ambiguousReason);
+    }
+
+    /**
+     * @param list<Project> $projects
+     *
+     * @return list<Project>
+     */
+    private function subticketOwners(array $projects, string $issueKey): array
+    {
+        $owners = [];
+        foreach ($projects as $project) {
+            $subtickets = array_map(trim(...), explode(',', $project->getSubtickets() ?? ''));
+            foreach ($subtickets as $subticket) {
+                if ('' !== $subticket && 0 === strcasecmp($subticket, $issueKey)) {
+                    $owners[] = $project;
+                    break;
+                }
+            }
+        }
+
+        return $owners;
+    }
+
+    /**
+     * @param list<Project> $projects
+     *
+     * @return list<Project>
+     */
+    private function prefixOwners(array $projects, string $prefix): array
+    {
+        $owners = [];
         foreach ($projects as $project) {
             $jiraId = $project->getJiraId();
             if (null === $jiraId) {
@@ -76,19 +116,11 @@ class TicketProjectResolver
 
             $allowedPrefixes = array_map(trim(...), explode(',', $jiraId));
             if (in_array($prefix, $allowedPrefixes, true)) {
-                $prefixOwners[] = $project;
+                $owners[] = $project;
             }
         }
 
-        if (1 === count($prefixOwners)) {
-            return new ProjectResolution($prefixOwners[0], 'jira_id prefix match');
-        }
-
-        if (count($prefixOwners) > 1) {
-            return new ProjectResolution(null, sprintf('ambiguous: %d projects claim prefix %s', count($prefixOwners), $prefix));
-        }
-
-        return new ProjectResolution(null, sprintf('no project for prefix %s on this ticket system', $prefix));
+        return $owners;
     }
 
     /**

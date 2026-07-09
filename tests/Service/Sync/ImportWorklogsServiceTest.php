@@ -37,6 +37,7 @@ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use RuntimeException;
 use Symfony\Component\Clock\MockClock;
 
@@ -305,5 +306,36 @@ final class ImportWorklogsServiceTest extends TestCase
         self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
         self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
         self::assertSame(1, $syncRun->getCounters()['created'] ?? 0);
+    }
+
+    public function testZeroDurationWorklogIsSkipped(): void
+    {
+        $zero = new JiraWorkLog(id: 5009, comment: 'zero', started: '2026-06-10T09:00:00.000+0200', timeSpentSeconds: 0, authorAccountId: 'acc-jdoe');
+        $this->stubRemote(['TIM-1'], ['TIM-1' => [$zero]]);
+
+        $syncRun = $this->import();
+
+        self::assertSame(1, $syncRun->getCounters()['skipped_zero_duration'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['created'] ?? 0);
+    }
+
+    public function testDayClassRecalcUsesShadowUserIdAssignedAtFlush(): void
+    {
+        $shadow = new User()->setUsername('ghost')->setActive(false);
+        $this->stubRemote(['TIM-1'], ['TIM-1' => [$this->worklog()]]);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn(null);
+        $this->entryRepository->method('findUnlinkedDuplicate')->willReturn(null);
+        $this->projectResolver->method('resolve')->willReturn(new ProjectResolution($this->project, 'prefix'));
+        $this->authorMapper->method('remoteKey')->willReturn('acc-ghost');
+        $this->authorMapper->method('find')->willReturn(null);
+        $this->authorMapper->method('createShadow')->willReturn($shadow);
+        // Simulate Doctrine assigning the AUTO id at flush time — before the fix,
+        // recalculate() received 0 because getId() was still null when the key was built.
+        $this->entityManager->method('flush')->willReturnCallback(static function () use ($shadow): void {
+            new ReflectionProperty(User::class, 'id')->setValue($shadow, 55);
+        });
+        $this->dayClassService->expects(self::once())->method('recalculate')->with(55, '2026-06-10');
+
+        $this->import();
     }
 }

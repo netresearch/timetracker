@@ -1240,7 +1240,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $result = $this->createQueryBuilder('e')
             ->join('e.project', 'p')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->andWhere('p.ticketSystem = :ticketSystem')
             ->andWhere('e.day >= :fromDay')
             ->andWhere('e.day <= :toDay')
@@ -1287,9 +1287,9 @@ class EntryRepository extends ServiceEntityRepository
     {
         /** @var Entry|null */
         return $this->createQueryBuilder('e')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->andWhere('e.ticket = :ticket')
-            ->andWhere('e.day = :day')
+            ->andWhere(self::WHERE_DAY)
             ->andWhere('e.duration = :duration')
             ->andWhere('e.worklogId IS NULL')
             ->setParameter('user', $user)

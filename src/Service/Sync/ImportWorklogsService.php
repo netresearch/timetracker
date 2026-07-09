@@ -9,12 +9,12 @@ declare(strict_types=1);
 
 namespace App\Service\Sync;
 
+use App\DTO\Jira\JiraWorkLog;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\SyncRun;
-use App\Entity\SyncRunItem;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\WorklogSyncState;
@@ -36,6 +36,7 @@ use Throwable;
 
 use function array_key_exists;
 use function in_array;
+use function spl_object_id;
 use function sprintf;
 use function substr;
 
@@ -43,18 +44,19 @@ use function substr;
  * ADR-023 Phase 2: imports Jira worklogs as pre-synced TT entries. Never dispatches
  * EntryEvent — imported entries must not echo back to Jira as new worklogs.
  */
-class ImportWorklogsService
+class ImportWorklogsService extends AbstractSyncRunService
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        EntityManagerInterface $entityManager,
         private readonly EntryRepository $entryRepository,
         private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
         private readonly RemoteWorklogNormalizer $remoteWorklogNormalizer,
         private readonly TicketProjectResolver $ticketProjectResolver,
         private readonly JiraAuthorMapper $jiraAuthorMapper,
         private readonly DayClassService $dayClassService,
-        private readonly ClockInterface $clock,
+        ClockInterface $clock,
     ) {
+        parent::__construct($entityManager, $clock);
     }
 
     /**
@@ -82,22 +84,14 @@ class ImportWorklogsService
                 'users' => $targetUsernames,
             ])
             ->setCounters([])
-            ->setStartedAt(DateTimeImmutable::createFromInterface($this->clock->now()));
+            ->setStartedAt($this->now());
 
-        $this->entityManager->persist($syncRun);
-
-        try {
-            $this->run($syncRun, $triggeredBy, $ticketSystem, $from, $to, $defaultActivityId, $targetUsernames, $dryRun);
-            $syncRun->setStatus(SyncRunStatus::COMPLETED);
-        } catch (Throwable $throwable) {
-            $syncRun->setStatus(SyncRunStatus::FAILED);
-            $this->addItem($syncRun, SyncItemKind::ERROR, reason: substr($throwable->getMessage(), 0, 255));
-        }
-
-        $syncRun->setFinishedAt(DateTimeImmutable::createFromInterface($this->clock->now()));
-        $this->entityManager->flush();
-
-        return $syncRun;
+        return $this->executeRun(
+            $syncRun,
+            function () use ($syncRun, $triggeredBy, $ticketSystem, $from, $to, $defaultActivityId, $targetUsernames, $dryRun): void {
+                $this->run($syncRun, $triggeredBy, $ticketSystem, $from, $to, $defaultActivityId, $targetUsernames, $dryRun);
+            },
+        );
     }
 
     /**
@@ -126,16 +120,15 @@ class ImportWorklogsService
             $this->addItem($syncRun, SyncItemKind::TRUNCATED, reason: 'issue search hit its result cap; import may be incomplete — narrow the date range and re-run');
         }
 
-        $rangeFrom = $from->setTime(0, 0)->getTimestamp();
-        $rangeTo = $to->setTime(23, 59, 59)->getTimestamp();
-
-        /** @var array<string, ?User> $authorCache */
-        $authorCache = [];
-        /** @var array<string, true> $shadowAnnounced */
-        $shadowAnnounced = [];
-        /** @var array<string, array{userId: int, day: string}> $affectedDays */
-        $affectedDays = [];
-        $createdSinceFlush = 0;
+        $importRunContext = new ImportRunContext(
+            syncRun: $syncRun,
+            ticketSystem: $ticketSystem,
+            activity: $activity,
+            targetUsernames: $targetUsernames,
+            dryRun: $dryRun,
+            rangeFrom: $from->setTime(0, 0)->getTimestamp(),
+            rangeTo: $to->setTime(23, 59, 59)->getTimestamp(),
+        );
 
         foreach ($searchResult->keys as $issueKey) {
             try {
@@ -146,205 +139,236 @@ class ImportWorklogsService
                 continue;
             }
 
-            $unresolvedAnnounced = false;
-
             foreach ($issueWorklogs as $jiraWorkLog) {
-                if (null === $jiraWorkLog->id) {
-                    continue;
-                }
-
-                try {
-                    $snapshot = $this->remoteWorklogNormalizer->normalize($jiraWorkLog, $issueKey);
-                } catch (InvalidArgumentException $exception) {
-                    $syncRun->incrementCounter('errors');
-                    $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $jiraWorkLog->id, reason: substr($exception->getMessage(), 0, 255));
-                    continue;
-                }
-                if ($snapshot->startedTimestamp < $rangeFrom) {
-                    continue;
-                }
-                if ($snapshot->startedTimestamp > $rangeTo) {
-                    continue;
-                }
-
-                if ($this->entryRepository->findOneByWorklogIdAndTicketSystem($jiraWorkLog->id, $ticketSystem) instanceof Entry) {
-                    $syncRun->incrementCounter('already_linked');
-                    continue;
-                }
-
-                $remoteKey = $this->jiraAuthorMapper->remoteKey($jiraWorkLog);
-                if (null === $remoteKey) {
-                    $syncRun->incrementCounter('errors');
-                    $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $jiraWorkLog->id, reason: 'worklog has no author identity');
-                    continue;
-                }
-
-                if (!array_key_exists($remoteKey, $authorCache)) {
-                    $authorCache[$remoteKey] = $this->jiraAuthorMapper->find($jiraWorkLog, $ticketSystem);
-                }
-
-                $user = $authorCache[$remoteKey];
-
-                if ([] !== $targetUsernames && (!$user instanceof User || !in_array($user->getUsername(), $targetUsernames, true))) {
-                    $syncRun->incrementCounter('skipped_author');
-                    continue;
-                }
-
-                if (!$user instanceof User) {
-                    if (!isset($shadowAnnounced[$remoteKey])) {
-                        $shadowAnnounced[$remoteKey] = true;
-                        $this->addItem(
-                            $syncRun,
-                            SyncItemKind::SHADOW_USER_CREATED,
-                            issueKey: $issueKey,
-                            author: $remoteKey,
-                            reason: ($dryRun ? 'dry-run: would create shadow user for ' : 'created shadow user for ') . $remoteKey,
-                        );
-                        $syncRun->incrementCounter('shadow_users_created');
-                    }
-
-                    if ($dryRun) {
-                        $syncRun->incrementCounter('would_create');
-                        continue;
-                    }
-
-                    $user = $this->jiraAuthorMapper->createShadow($jiraWorkLog, $ticketSystem);
-                    $authorCache[$remoteKey] = $user;
-                }
-
-                $resolution = $this->ticketProjectResolver->resolve($issueKey, $ticketSystem);
-                $project = $resolution->project;
-                if (!$project instanceof Project) {
-                    $syncRun->incrementCounter('unresolved_project');
-                    if (!$unresolvedAnnounced) {
-                        $unresolvedAnnounced = true;
-                        $this->addItem($syncRun, SyncItemKind::UNRESOLVED_PROJECT, issueKey: $issueKey, reason: substr($resolution->reason, 0, 255));
-                    }
-
-                    continue;
-                }
-
-                $day = new DateTime()->setTimestamp($snapshot->startedTimestamp);
-                $start = clone $day;
-                $end = (clone $start)->modify(sprintf('+%d minutes', $snapshot->durationMinutes));
-                if ($end->format('Y-m-d') !== $day->format('Y-m-d')) {
-                    $syncRun->incrementCounter('errors');
-                    $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $jiraWorkLog->id, reason: 'worklog crosses midnight; import manually');
-                    continue;
-                }
-
-                $duplicate = $this->entryRepository->findUnlinkedDuplicate($user, $issueKey, $day, $snapshot->durationMinutes);
-                if ($duplicate instanceof Entry) {
-                    $syncRun->incrementCounter('probable_duplicate');
-                    $this->addItem(
-                        $syncRun,
-                        SyncItemKind::PROBABLE_DUPLICATE,
-                        issueKey: $issueKey,
-                        remoteWorklogId: $jiraWorkLog->id,
-                        entry: $duplicate,
-                        author: $remoteKey,
-                        reason: sprintf('unlinked entry %d matches user+ticket+day+duration', (int) $duplicate->getId()),
-                        payload: ['remote' => $snapshot->toArray(), 'updated' => $jiraWorkLog->updated],
-                    );
-                    continue;
-                }
-
-                if ($dryRun) {
-                    $syncRun->incrementCounter('would_create');
-                    continue;
-                }
-
-                $this->createEntry($syncRun, $user, $project, $activity, $ticketSystem, $issueKey, $jiraWorkLog->id, $snapshot, $jiraWorkLog->updated, $day, $start, $end);
-                $dayKey = $user->getId() . '|' . $day->format('Y-m-d');
-                $affectedDays[$dayKey] = ['userId' => (int) $user->getId(), 'day' => $day->format('Y-m-d')];
-
-                ++$createdSinceFlush;
-                if ($createdSinceFlush >= 100) {
-                    $this->entityManager->flush();
-                    $createdSinceFlush = 0;
-                }
+                $this->processWorklog($importRunContext, $issueKey, $jiraWorkLog);
             }
         }
 
         $this->entityManager->flush();
 
-        foreach ($affectedDays as $affected) {
-            $this->dayClassService->recalculate($affected['userId'], $affected['day']);
+        // Ids exist only after the flush above — freshly created shadow users have none before.
+        foreach ($importRunContext->affectedDays as $affected) {
+            $this->dayClassService->recalculate((int) $affected['user']->getId(), $affected['day']);
         }
     }
 
+    private function processWorklog(ImportRunContext $importRunContext, string $issueKey, JiraWorkLog $jiraWorkLog): void
+    {
+        $syncRun = $importRunContext->syncRun;
+
+        if (null === $jiraWorkLog->id) {
+            return;
+        }
+
+        try {
+            $snapshot = $this->remoteWorklogNormalizer->normalize($jiraWorkLog, $issueKey);
+        } catch (InvalidArgumentException $exception) {
+            $syncRun->incrementCounter('errors');
+            $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $jiraWorkLog->id, reason: substr($exception->getMessage(), 0, 255));
+
+            return;
+        }
+
+        if ($snapshot->startedTimestamp < $importRunContext->rangeFrom || $snapshot->startedTimestamp > $importRunContext->rangeTo) {
+            return;
+        }
+
+        if ($snapshot->durationMinutes <= 0) {
+            $syncRun->incrementCounter('skipped_zero_duration');
+
+            return;
+        }
+
+        if ($this->entryRepository->findOneByWorklogIdAndTicketSystem($jiraWorkLog->id, $importRunContext->ticketSystem) instanceof Entry) {
+            $syncRun->incrementCounter('already_linked');
+
+            return;
+        }
+
+        $user = $this->resolveAuthor($importRunContext, $issueKey, $jiraWorkLog);
+        if (!$user instanceof User) {
+            return;
+        }
+
+        $project = $this->resolveProject($importRunContext, $issueKey);
+        if (!$project instanceof Project) {
+            return;
+        }
+
+        $times = $this->buildTimes($snapshot);
+        if (null === $times) {
+            $syncRun->incrementCounter('errors');
+            $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $jiraWorkLog->id, reason: 'worklog crosses midnight; import manually');
+
+            return;
+        }
+
+        $duplicate = $this->entryRepository->findUnlinkedDuplicate($user, $issueKey, $times['day'], $snapshot->durationMinutes);
+        if ($duplicate instanceof Entry) {
+            $syncRun->incrementCounter('probable_duplicate');
+            $this->addItem(
+                $syncRun,
+                SyncItemKind::PROBABLE_DUPLICATE,
+                issueKey: $issueKey,
+                remoteWorklogId: $jiraWorkLog->id,
+                entry: $duplicate,
+                author: $this->jiraAuthorMapper->remoteKey($jiraWorkLog),
+                reason: sprintf('unlinked entry %d matches user+ticket+day+duration', (int) $duplicate->getId()),
+                payload: ['remote' => $snapshot->toArray(), 'updated' => $jiraWorkLog->updated],
+            );
+
+            return;
+        }
+
+        if ($importRunContext->dryRun) {
+            $syncRun->incrementCounter('would_create');
+
+            return;
+        }
+
+        $this->createEntry($importRunContext, $user, $project, $jiraWorkLog, $snapshot, $times);
+    }
+
+    /**
+     * Maps the worklog author to a TT user; handles the target filter, dry-run
+     * accounting and shadow creation. Null = this worklog is not imported.
+     */
+    private function resolveAuthor(ImportRunContext $importRunContext, string $issueKey, JiraWorkLog $jiraWorkLog): ?User
+    {
+        $syncRun = $importRunContext->syncRun;
+
+        $remoteKey = $this->jiraAuthorMapper->remoteKey($jiraWorkLog);
+        if (null === $remoteKey) {
+            $syncRun->incrementCounter('errors');
+            $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $jiraWorkLog->id, reason: 'worklog has no author identity');
+
+            return null;
+        }
+
+        if (!array_key_exists($remoteKey, $importRunContext->authorCache)) {
+            $importRunContext->authorCache[$remoteKey] = $this->jiraAuthorMapper->find($jiraWorkLog, $importRunContext->ticketSystem);
+        }
+
+        $user = $importRunContext->authorCache[$remoteKey];
+
+        if ([] !== $importRunContext->targetUsernames && (!$user instanceof User || !in_array($user->getUsername(), $importRunContext->targetUsernames, true))) {
+            $syncRun->incrementCounter('skipped_author');
+
+            return null;
+        }
+
+        if ($user instanceof User) {
+            return $user;
+        }
+
+        if (!isset($importRunContext->shadowAnnounced[$remoteKey])) {
+            $importRunContext->shadowAnnounced[$remoteKey] = true;
+            $this->addItem(
+                $syncRun,
+                SyncItemKind::SHADOW_USER_CREATED,
+                issueKey: $issueKey,
+                author: $remoteKey,
+                reason: ($importRunContext->dryRun ? 'dry-run: would create shadow user for ' : 'created shadow user for ') . $remoteKey,
+            );
+            $syncRun->incrementCounter('shadow_users_created');
+        }
+
+        if ($importRunContext->dryRun) {
+            $syncRun->incrementCounter('would_create');
+
+            return null;
+        }
+
+        $user = $this->jiraAuthorMapper->createShadow($jiraWorkLog, $importRunContext->ticketSystem);
+        $importRunContext->authorCache[$remoteKey] = $user;
+
+        return $user;
+    }
+
+    private function resolveProject(ImportRunContext $importRunContext, string $issueKey): ?Project
+    {
+        $resolution = $this->ticketProjectResolver->resolve($issueKey, $importRunContext->ticketSystem);
+        if ($resolution->project instanceof Project) {
+            return $resolution->project;
+        }
+
+        $importRunContext->syncRun->incrementCounter('unresolved_project');
+        if (!isset($importRunContext->unresolvedAnnounced[$issueKey])) {
+            $importRunContext->unresolvedAnnounced[$issueKey] = true;
+            $this->addItem($importRunContext->syncRun, SyncItemKind::UNRESOLVED_PROJECT, issueKey: $issueKey, reason: substr($resolution->reason, 0, 255));
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{day: DateTime, start: DateTime, end: DateTime}|null null when the worklog crosses midnight
+     */
+    private function buildTimes(WorklogSnapshot $worklogSnapshot): ?array
+    {
+        $day = new DateTime()->setTimestamp($worklogSnapshot->startedTimestamp);
+        $start = clone $day;
+        $end = (clone $start)->modify(sprintf('+%d minutes', $worklogSnapshot->durationMinutes));
+
+        if ($end->format('Y-m-d') !== $day->format('Y-m-d')) {
+            return null;
+        }
+
+        return ['day' => $day, 'start' => $start, 'end' => $end];
+    }
+
+    /**
+     * @param array{day: DateTime, start: DateTime, end: DateTime} $times
+     */
     private function createEntry(
-        SyncRun $syncRun,
+        ImportRunContext $importRunContext,
         User $user,
         Project $project,
-        Activity $activity,
-        TicketSystem $ticketSystem,
-        string $issueKey,
-        int $worklogId,
-        WorklogSnapshot $snapshot,
-        ?string $remoteUpdated,
-        DateTime $day,
-        DateTime $start,
-        DateTime $end,
+        JiraWorkLog $jiraWorkLog,
+        WorklogSnapshot $worklogSnapshot,
+        array $times,
     ): void {
         $entry = new Entry();
         $entry->setUser($user)
             ->setProject($project)
-            ->setActivity($activity)
-            ->setTicket($issueKey)
-            ->setDescription($snapshot->comment)
-            ->setDay($day->format('Y-m-d'))
-            ->setStart($start->format('H:i:s'))
-            ->setEnd($end->format('H:i:s'))
+            ->setActivity($importRunContext->activity)
+            ->setTicket($worklogSnapshot->issueKey)
+            ->setDescription($worklogSnapshot->comment)
+            ->setDay($times['day']->format('Y-m-d'))
+            ->setStart($times['start']->format('H:i:s'))
+            ->setEnd($times['end']->format('H:i:s'))
             ->setClass(EntryClass::PLAIN)
-            ->setWorklogId($worklogId);
+            ->setWorklogId((int) $jiraWorkLog->id);
 
         $customer = $project->getCustomer();
         if ($customer instanceof Customer) {
             $entry->setCustomer($customer);
         }
 
-        $entry->setDuration($snapshot->durationMinutes);
+        $entry->setDuration($worklogSnapshot->durationMinutes);
         $entry->setSyncedToTicketsystem(true);
 
         $this->entityManager->persist($entry);
 
         $syncState = new WorklogSyncState()
             ->setEntry($entry)
-            ->setTicketSystem($ticketSystem)
+            ->setTicketSystem($importRunContext->ticketSystem)
             ->setStatus(WorklogSyncStatus::IN_SYNC)
-            ->setBasePayload($snapshot->toArray())
-            ->setBaseUpdatedAt($remoteUpdated ?? '')
-            ->setLastSyncedAt(DateTimeImmutable::createFromInterface($this->clock->now()))
-            ->setLastSyncRun($syncRun);
+            ->setBasePayload($worklogSnapshot->toArray())
+            ->setBaseUpdatedAt($jiraWorkLog->updated ?? '')
+            ->setLastSyncedAt($this->now())
+            ->setLastSyncRun($importRunContext->syncRun);
         $this->entityManager->persist($syncState);
 
-        $syncRun->incrementCounter('created');
-    }
+        $importRunContext->syncRun->incrementCounter('created');
 
-    /**
-     * @param array<string, mixed>|null $payload
-     */
-    private function addItem(
-        SyncRun $syncRun,
-        SyncItemKind $kind,
-        ?string $issueKey = null,
-        ?int $remoteWorklogId = null,
-        ?Entry $entry = null,
-        ?string $author = null,
-        string $reason = '',
-        ?array $payload = null,
-    ): void {
-        $syncRun->addItem(
-            new SyncRunItem()
-                ->setKind($kind)
-                ->setIssueKey($issueKey)
-                ->setRemoteWorklogId($remoteWorklogId)
-                ->setEntry($entry)
-                ->setAuthor($author)
-                ->setReason($reason)
-                ->setPayload($payload)
-                ->setCreatedAt(DateTimeImmutable::createFromInterface($this->clock->now())),
-        );
+        $dayString = $times['day']->format('Y-m-d');
+        $importRunContext->affectedDays[spl_object_id($user) . '|' . $dayString] = ['user' => $user, 'day' => $dayString];
+
+        ++$importRunContext->createdSinceFlush;
+        if ($importRunContext->createdSinceFlush >= 100) {
+            $this->entityManager->flush();
+            $importRunContext->createdSinceFlush = 0;
+        }
     }
 }

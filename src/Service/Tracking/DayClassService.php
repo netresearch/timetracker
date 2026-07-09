@@ -50,11 +50,13 @@ class DayClassService
             return;
         }
 
+        $dirty = false;
+
         $firstEntry = $entries[0];
         if (EntryClass::DAYBREAK !== $firstEntry->getClass()) {
             $firstEntry->setClass(EntryClass::DAYBREAK);
             $objectManager->persist($firstEntry);
-            $objectManager->flush();
+            $dirty = true;
         }
 
         $counter = count($entries);
@@ -81,8 +83,12 @@ class DayClassService
             if ($entryClass !== $entry->getClass()) {
                 $entry->setClass($entryClass);
                 $objectManager->persist($entry);
-                $objectManager->flush();
+                $dirty = true;
             }
+        }
+
+        if ($dirty) {
+            $objectManager->flush();
         }
     }
 }

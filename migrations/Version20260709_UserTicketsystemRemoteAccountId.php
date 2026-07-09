@@ -27,7 +27,7 @@ final class Version20260709_UserTicketsystemRemoteAccountId extends AbstractMigr
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP INDEX idx_uts_remote_account ON users_ticket_systems');
+        $this->addSql('DROP INDEX IF EXISTS idx_uts_remote_account ON users_ticket_systems');
         $this->addSql('ALTER TABLE users_ticket_systems DROP COLUMN remote_account_id');
     }
 }

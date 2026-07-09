@@ -16,6 +16,7 @@ use App\Entity\User;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
 use App\Service\Sync\ImportWorklogsService;
+use App\Service\Sync\SyncRunConsoleRenderer;
 use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
@@ -47,7 +48,7 @@ final class TtImportWorklogsCommandTest extends TestCase
             static fn (string $className): ObjectRepository => User::class === $className ? $userRepository : $ticketSystemRepository,
         );
 
-        return new CommandTester(new TtImportWorklogsCommand($importService, $managerRegistry));
+        return new CommandTester(new TtImportWorklogsCommand($importService, $managerRegistry, new SyncRunConsoleRenderer()));
     }
 
     /**
