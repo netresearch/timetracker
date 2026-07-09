@@ -1,6 +1,6 @@
 # ADR-023: Jira Worklog Import and Bidirectional Sync
 
-**Status:** Accepted — design approved 2026-07-09; Phase 1 (schema, reconciliation core, verify) implemented, Phases 2–4 pending.
+**Status:** Accepted — design approved 2026-07-09; Phases 1 (verify) + 2 (import) implemented, Phases 3–4 pending.
 **Date:** 2026-07-09
 **Relates to:** [ADR-003](ADR-003-jira-integration-architecture.md) (push-sync architecture this ADR extends to a pull/reconcile model), [ADR-017](ADR-017-jira-cloud-oauth2.md) (Server/Cloud dual auth the I/O layer reuses), [ADR-020](ADR-020-subticket-ticket-resolution.md) (ticket→project resolution used for imported worklogs; precedent for pull-direction sync and designated-token auth), [ADR-021](ADR-021-api-token-authentication.md) (PAT scopes for the new endpoints), [ADR-022](ADR-022-v2-api-layer-and-response-dtos.md) (v2 API + MCP tool pattern the new surfaces follow).
 
@@ -73,7 +73,7 @@ The reconciliation core is a pure service — `(base, local, remote) → action`
 
 ### 3. Author mapping: auto-match with shadow users
 
-`UserTicketsystem` gains a `remote_account_id` column (Jira accountId / username). Auto-match by username/email fills it on first sight; thereafter it is the persistent mapping table. Authors with no TT account get a **shadow user**: a regular `users` row flagged non-login-capable, with a `UserTicketsystem` row carrying `remote_account_id` and no tokens. Shadow users make non-TT-users' time bookable and analyzable (use case 3); an admin view lists them.
+`UserTicketsystem` gains a `remote_account_id` column (Jira accountId / username). Auto-match by username/email fills it on first sight; thereafter it is the persistent mapping table. Authors with no TT account get a **shadow user**: a regular `users` row flagged non-login-capable, with a `UserTicketsystem` row carrying `remote_account_id` and no tokens. Shadow users make non-TT-users' time bookable and analyzable (use case 3); an admin view lists them. Implementation note (Phase 2): TT users have no email column; auto-match compares the Jira author name and the email localpart against TT usernames. Shadow users are ordinary rows with active = false (blocks login and lead assignment) — no dedicated flag column was needed.
 
 ### 4. Run model: `sync_run` + `sync_run_item`, chunked and resumable
 
@@ -142,7 +142,7 @@ Server/Cloud differences remain in the ADR-017 `DeploymentType` branch; paginati
 ## Verification points before implementation
 
 1. ~~Exact comment/description projection the current push writes to Jira~~ **Resolved (Phase 1):** `#<entryId>: <activityName>: <description>` with fallbacks `no activity specified` / `no description given` (`JiraOAuthApiService::getTicketSystemWorkLogComment`). `WorklogCommentCodec` reproduces it; the entry ID embedded in every pushed comment is a secondary identity anchor.
-2. `User.type` semantics vs a new shadow-user flag.
+2. ~~User.type semantics vs a new shadow-user flag~~ **Resolved (Phase 2):** UserType is UNKNOWN/USER/DEV/PL/ADMIN; shadow = active=false + password null, type stays USER.
 3. ~~Container wiring status of the refactored stack~~ **Resolved (Phase 1), decision amended:** the refactored stack is container-excluded AND writes a different comment format (`Customer | Project | Activity | description`) than production. Phase 1 therefore puts read methods on the legacy `JiraOAuthApiService` (wired, dual Server/Cloud via `JiraCloudApiService`) instead of wiring the refactored stack. Revisit when the lease-checked write service lands (Phase 3).
 4. Internal-ticket-system mirror interaction (§7).
 5. Jira Server/DC vs Cloud availability and pagination behavior of `worklog/updated`, `worklog/list`, `worklog/deleted` on the instances in use.
