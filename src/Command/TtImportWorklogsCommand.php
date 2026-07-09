@@ -12,8 +12,8 @@ namespace App\Command;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\SyncRunStatus;
+use App\Service\Sync\ImportWorklogsService;
 use App\Service\Sync\SyncRunConsoleRenderer;
-use App\Service\Sync\VerifyWorklogsService;
 use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
@@ -27,19 +27,22 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function sprintf;
 
-#[AsCommand(name: 'tt:verify-worklogs', description: 'Compare TimeTracker entries with Jira worklogs (read-only, ADR-023)')]
-class TtVerifyWorklogsCommand extends Command
+#[AsCommand(name: 'tt:import-worklogs', description: 'Import Jira worklogs as pre-synced entries (ADR-023)')]
+class TtImportWorklogsCommand extends Command
 {
     public function __construct(
-        private readonly VerifyWorklogsService $verifyWorklogsService,
+        private readonly ImportWorklogsService $importWorklogsService,
         private readonly ManagerRegistry $managerRegistry,
         private readonly SyncRunConsoleRenderer $syncRunConsoleRenderer,
     ) {
         parent::__construct();
     }
 
+    /**
+     * @param list<string> $users
+     */
     public function __invoke(
-        #[Argument(description: 'TimeTracker username', name: 'username')]
+        #[Argument(description: 'TimeTracker username whose Jira token performs the read', name: 'username')]
         string $username,
         #[Argument(description: 'Ticket system ID', name: 'ticket-system')]
         string $ticketSystem,
@@ -49,8 +52,20 @@ class TtVerifyWorklogsCommand extends Command
         ?string $from = null,
         #[Option(description: 'End date (Y-m-d); default: today', name: 'to')]
         ?string $to = null,
+        #[Option(description: 'Only import for these TT usernames (repeatable); default: everyone (shadow users created for unknowns)', name: 'user')]
+        array $users = [],
+        #[Option(description: 'Activity ID assigned to imported entries (required)', name: 'default-activity')]
+        ?string $defaultActivity = null,
+        #[Option(description: 'Preview only: counters and parked items, no writes', name: 'dry-run')]
+        bool $dryRun = false,
     ): int {
         $symfonyStyle = new SymfonyStyle($input, $output);
+
+        if (null === $defaultActivity || '' === $defaultActivity) {
+            $symfonyStyle->error('--default-activity=<ID> is required (activity assigned to imported entries)');
+
+            return 1;
+        }
 
         $user = $this->managerRegistry->getRepository(User::class)->findOneBy(['username' => $username]);
         if (!$user instanceof User) {
@@ -75,9 +90,9 @@ class TtVerifyWorklogsCommand extends Command
             return 1;
         }
 
-        $syncRun = $this->verifyWorklogsService->verify($user, $system, $fromDate, $toDate);
+        $syncRun = $this->importWorklogsService->import($user, $system, $fromDate, $toDate, (int) $defaultActivity, $users, $dryRun);
 
-        $this->syncRunConsoleRenderer->render($symfonyStyle, $syncRun, 'Verify');
+        $this->syncRunConsoleRenderer->render($symfonyStyle, $syncRun, 'Import');
 
         return SyncRunStatus::COMPLETED === $syncRun->getStatus() ? Command::SUCCESS : 1;
     }

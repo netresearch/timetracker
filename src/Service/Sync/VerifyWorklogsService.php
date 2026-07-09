@@ -11,7 +11,6 @@ namespace App\Service\Sync;
 
 use App\Entity\Entry;
 use App\Entity\SyncRun;
-use App\Entity\SyncRunItem;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\SyncItemKind;
@@ -36,7 +35,7 @@ use function substr;
  * ADR-023 verify: the reconciliation engine with all writes disabled. Reads TT and Jira,
  * writes ONLY a SyncRun report — never entries, never sync state, never Jira.
  */
-class VerifyWorklogsService
+class VerifyWorklogsService extends AbstractSyncRunService
 {
     /** @var array<string, string> SyncAction value => counter key */
     private const array ACTION_COUNTERS = [
@@ -60,15 +59,16 @@ class VerifyWorklogsService
     ];
 
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        EntityManagerInterface $entityManager,
         private readonly EntryRepository $entryRepository,
         private readonly WorklogSyncStateRepository $worklogSyncStateRepository,
         private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
         private readonly EntryWorklogProjector $entryWorklogProjector,
         private readonly RemoteWorklogNormalizer $remoteWorklogNormalizer,
         private readonly ReconciliationService $reconciliationService,
-        private readonly ClockInterface $clock,
+        ClockInterface $clock,
     ) {
+        parent::__construct($entityManager, $clock);
     }
 
     public function verify(User $user, TicketSystem $ticketSystem, DateTimeImmutable $from, DateTimeImmutable $to): SyncRun
@@ -80,22 +80,11 @@ class VerifyWorklogsService
             ->setTriggeredBy($user)
             ->setScope(['from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d'), 'dry_run' => true])
             ->setCounters([])
-            ->setStartedAt(DateTimeImmutable::createFromInterface($this->clock->now()));
+            ->setStartedAt($this->now());
 
-        $this->entityManager->persist($syncRun);
-
-        try {
+        return $this->executeRun($syncRun, function () use ($syncRun, $user, $ticketSystem, $from, $to): void {
             $this->run($syncRun, $user, $ticketSystem, $from, $to);
-            $syncRun->setStatus(SyncRunStatus::COMPLETED);
-        } catch (Throwable $throwable) {
-            $syncRun->setStatus(SyncRunStatus::FAILED);
-            $this->addItem($syncRun, SyncItemKind::ERROR, reason: substr($throwable->getMessage(), 0, 255));
-        }
-
-        $syncRun->setFinishedAt(DateTimeImmutable::createFromInterface($this->clock->now()));
-        $this->entityManager->flush();
-
-        return $syncRun;
+        });
     }
 
     private function run(SyncRun $syncRun, User $user, TicketSystem $ticketSystem, DateTimeImmutable $from, DateTimeImmutable $to): void
@@ -217,31 +206,5 @@ class VerifyWorklogsService
                 payload: ['remote' => $remoteData['snapshot']->toArray(), 'updated' => $remoteData['updated']],
             );
         }
-    }
-
-    /**
-     * @param array<string, mixed>|null $payload
-     */
-    private function addItem(
-        SyncRun $syncRun,
-        SyncItemKind $kind,
-        ?string $issueKey = null,
-        ?int $remoteWorklogId = null,
-        ?Entry $entry = null,
-        ?string $author = null,
-        string $reason = '',
-        ?array $payload = null,
-    ): void {
-        $syncRun->addItem(
-            new SyncRunItem()
-                ->setKind($kind)
-                ->setIssueKey($issueKey)
-                ->setRemoteWorklogId($remoteWorklogId)
-                ->setEntry($entry)
-                ->setAuthor($author)
-                ->setReason($reason)
-                ->setPayload($payload)
-                ->setCreatedAt(DateTimeImmutable::createFromInterface($this->clock->now())),
-        );
     }
 }

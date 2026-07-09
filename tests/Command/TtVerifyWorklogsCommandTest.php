@@ -15,6 +15,7 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
+use App\Service\Sync\SyncRunConsoleRenderer;
 use App\Service\Sync\VerifyWorklogsService;
 use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
@@ -48,7 +49,7 @@ final class TtVerifyWorklogsCommandTest extends TestCase
             $verifyService->method('verify')->willReturn($syncRun);
         }
 
-        return new CommandTester(new TtVerifyWorklogsCommand($verifyService, $managerRegistry));
+        return new CommandTester(new TtVerifyWorklogsCommand($verifyService, $managerRegistry, new SyncRunConsoleRenderer()));
     }
 
     private function completedRun(): SyncRun

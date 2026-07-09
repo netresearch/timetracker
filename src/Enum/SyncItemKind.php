@@ -23,6 +23,8 @@ enum SyncItemKind: string
     case MERGEABLE = 'mergeable';
     case CONFLICT = 'conflict';
     case PROBABLE_DUPLICATE = 'probable_duplicate';
+    case UNRESOLVED_PROJECT = 'unresolved_project';
+    case SHADOW_USER_CREATED = 'shadow_user_created';
     case TRUNCATED = 'truncated';
     case ERROR = 'error';
 }

@@ -1240,7 +1240,7 @@ class EntryRepository extends ServiceEntityRepository
     {
         $result = $this->createQueryBuilder('e')
             ->join('e.project', 'p')
-            ->where('e.user = :user')
+            ->where(self::WHERE_USER)
             ->andWhere('p.ticketSystem = :ticketSystem')
             ->andWhere('e.day >= :fromDay')
             ->andWhere('e.day <= :toDay')
@@ -1261,6 +1261,44 @@ class EntryRepository extends ServiceEntityRepository
         /** @var list<Entry> $result */
 
         return $result;
+    }
+
+    /**
+     * Entry already linked to the given Jira worklog on this ticket system, if any (import dedupe).
+     */
+    public function findOneByWorklogIdAndTicketSystem(int $worklogId, TicketSystem $ticketSystem): ?Entry
+    {
+        /** @var Entry|null */
+        return $this->createQueryBuilder('e')
+            ->join('e.project', 'p')
+            ->where('e.worklogId = :worklogId')
+            ->andWhere('p.ticketSystem = :ticketSystem')
+            ->setParameter('worklogId', $worklogId)
+            ->setParameter('ticketSystem', $ticketSystem)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Unlinked entry matching user+ticket+day+duration — the ADR-023 probable-duplicate heuristic.
+     */
+    public function findUnlinkedDuplicate(User $user, string $ticket, DateTimeInterface $day, int $durationMinutes): ?Entry
+    {
+        /** @var Entry|null */
+        return $this->createQueryBuilder('e')
+            ->where(self::WHERE_USER)
+            ->andWhere('e.ticket = :ticket')
+            ->andWhere(self::WHERE_DAY)
+            ->andWhere('e.duration = :duration')
+            ->andWhere('e.worklogId IS NULL')
+            ->setParameter('user', $user)
+            ->setParameter('ticket', $ticket)
+            ->setParameter('day', $day->format('Y-m-d'))
+            ->setParameter('duration', $durationMinutes)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     /**
