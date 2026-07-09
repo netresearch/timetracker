@@ -63,6 +63,12 @@ class UserTicketsystem extends Base
     #[ORM\Column(name: 'avoidconnection', type: 'boolean', options: ['default' => false])]
     protected bool $avoidConnection = false;
 
+    /**
+     * Jira account identity (Cloud accountId or Server username) this TT user maps to (ADR-023 §3).
+     */
+    #[ORM\Column(name: 'remote_account_id', type: 'string', length: 255, nullable: true)]
+    protected ?string $remoteAccountId = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -179,6 +185,21 @@ class UserTicketsystem extends Base
     public function setAvoidConnection(bool $avoidConnection): static
     {
         $this->avoidConnection = $avoidConnection;
+
+        return $this;
+    }
+
+    public function getRemoteAccountId(): ?string
+    {
+        return $this->remoteAccountId;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setRemoteAccountId(?string $remoteAccountId): static
+    {
+        $this->remoteAccountId = $remoteAccountId;
 
         return $this;
     }

@@ -314,9 +314,11 @@ CREATE TABLE `users_ticket_systems` (
   `refresh_token` TEXT NULL,
   `token_expires_at` DATETIME NULL,
   `avoidconnection` TINYINT(1) unsigned DEFAULT '0' NOT NULL,
+  `remote_account_id` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_user_id_idx` (`user_id`),
   KEY `fk_ticket_system_id_idx` (`ticket_system_id`),
+  KEY `idx_uts_remote_account` (`ticket_system_id`, `remote_account_id`),
   CONSTRAINT `fk_ticket_system_id` FOREIGN KEY (`ticket_system_id`) REFERENCES `ticket_systems` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

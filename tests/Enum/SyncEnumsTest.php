@@ -37,7 +37,7 @@ final class SyncEnumsTest extends TestCase
     public function testSyncItemKindValues(): void
     {
         self::assertSame(
-            ['remote_only', 'local_only', 'never_synced', 'diverged', 'local_dirty', 'remote_dirty', 'mergeable', 'conflict', 'probable_duplicate', 'truncated', 'error'],
+            ['remote_only', 'local_only', 'never_synced', 'diverged', 'local_dirty', 'remote_dirty', 'mergeable', 'conflict', 'probable_duplicate', 'unresolved_project', 'shadow_user_created', 'truncated', 'error'],
             array_column(SyncItemKind::cases(), 'value'),
         );
     }
