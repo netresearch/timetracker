@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace App\Mcp;
 
+use App\Entity\Activity;
 use App\Entity\Customer;
+use App\Entity\Preset;
 use App\Entity\Project;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
@@ -40,6 +42,32 @@ final readonly class AdminEntityResolver
         }
 
         return $project;
+    }
+
+    /**
+     * @throws ToolCallException when the activity cannot be resolved
+     */
+    public function activity(string $input): Activity
+    {
+        $activity = $this->find(Activity::class, $input, 'name');
+        if (!$activity instanceof Activity) {
+            throw new ToolCallException(sprintf('Unknown activity "%s" — use list_activities to see valid names/ids.', trim($input)));
+        }
+
+        return $activity;
+    }
+
+    /**
+     * @throws ToolCallException when the preset cannot be resolved
+     */
+    public function preset(string $input): Preset
+    {
+        $preset = $this->find(Preset::class, $input, 'name');
+        if (!$preset instanceof Preset) {
+            throw new ToolCallException(sprintf('Unknown preset "%s" — use list_presets to see valid names/ids.', trim($input)));
+        }
+
+        return $preset;
     }
 
     /**
