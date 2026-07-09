@@ -15,6 +15,7 @@ use App\Entity\WorklogSyncState;
 use App\Repository\WorklogSyncStateRepository;
 use App\Security\ApiToken\RequireScope;
 use App\Service\Sync\ConflictResolutionService;
+use App\Service\Sync\SyncRunAuthorization;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -34,6 +35,7 @@ final readonly class ResolveWorklogSyncConflictAction
         private WorklogSyncStateRepository $worklogSyncStateRepository,
         private ConflictResolutionService $conflictResolutionService,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private SyncRunAuthorization $syncRunAuthorization,
     ) {
     }
 
@@ -50,9 +52,7 @@ final readonly class ResolveWorklogSyncConflictAction
             return new JsonResponse(['message' => 'Conflict not found.'], Response::HTTP_NOT_FOUND);
         }
 
-        if (!$this->authorizationChecker->isGranted('ROLE_ADMIN')
-            && $state->getEntry()?->getUser()?->getId() !== $user->getId()
-        ) {
+        if (!$this->syncRunAuthorization->canResolve($user, $this->authorizationChecker->isGranted('ROLE_ADMIN'), $state)) {
             return new JsonResponse(['message' => 'Not your conflict.'], Response::HTTP_FORBIDDEN);
         }
 

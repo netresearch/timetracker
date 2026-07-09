@@ -14,6 +14,7 @@ use App\Entity\SyncRun;
 use App\Entity\User;
 use App\Repository\SyncRunRepository;
 use App\Security\ApiToken\RequireScope;
+use App\Service\Sync\SyncRunAuthorization;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -29,6 +30,7 @@ final readonly class GetWorklogSyncRunAction
     public function __construct(
         private SyncRunRepository $syncRunRepository,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private SyncRunAuthorization $syncRunAuthorization,
     ) {
     }
 
@@ -45,7 +47,7 @@ final readonly class GetWorklogSyncRunAction
             return new JsonResponse(['message' => 'Run not found.'], Response::HTTP_NOT_FOUND);
         }
 
-        if (!$this->authorizationChecker->isGranted('ROLE_ADMIN') && $syncRun->getTriggeredBy()?->getId() !== $user->getId()) {
+        if (!$this->syncRunAuthorization->canSeeRun($user, $this->authorizationChecker->isGranted('ROLE_ADMIN'), $syncRun)) {
             return new JsonResponse(['message' => 'Not your run.'], Response::HTTP_FORBIDDEN);
         }
 
