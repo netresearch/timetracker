@@ -783,6 +783,18 @@ A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracke
 
 **Responses**: `201` with `{project: {...}}` / `{customer: {...}}` / `{user: {...}}`; toggles answer `200` with the same shape; `422 {message}` on validation failure, `404` on unknown id. MCP mirrors: `onboard_project`, `onboard_customer`, `onboard_user`, `set_project_active`, `set_customer_active`, `set_user_active`.
 
+### PATCH /api/v2/entries/{id}
+
+**Purpose**: Partial edit of one of the caller's own entries (ADR-022 Phase 4; MCP mirror: `update_entry`). Omitted fields keep their value; a duration re-derives the end from the start.
+
+**Authentication**: Session, or Bearer PAT with `entries:write`. Owner-scoped — foreign/unknown ids answer `404`; invalid times `422 {message}`.
+
+### POST /api/v2/bulk-entries
+
+**Purpose**: Bulk-fill a date range from a preset — the UI's "Massen-Eintragung" (ADR-022 Phase 4; MCP mirror: `bulk_log_time`). Body: `{preset_id, start_date, end_date, use_contract?, skip_weekend?, skip_holidays?, start_time?, end_time?}`; answers `201 {success, message}` or `422 {message}`.
+
+**Authentication**: Session, or Bearer PAT with `entries:write`
+
 ### GET /api/v2/entries/{id}/summary
 **Purpose**: Per-scope booking totals and estimate verdict for one of the caller's own entries (ADR-022; the tracking UI's "Info" popup and the `get_ticket_info` MCP tool)
 

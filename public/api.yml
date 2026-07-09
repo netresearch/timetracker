@@ -943,6 +943,94 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminUser'
 
+  /api/v2/entries/{id}:
+    patch:
+      summary: Partial edit of one of the caller's own entries (ADR-022 Phase 4; requires entries:write for tokens). Omitted fields keep their value; foreign entries read as 404.
+      tags:
+        - Worklog
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: integer
+                activity_id:
+                  type: integer
+                ticket:
+                  type: string
+                description:
+                  type: string
+                date:
+                  type: string
+                  format: date
+                durationMinutes:
+                  type: integer
+                  description: Re-derives the end from the start
+                start:
+                  type: string
+                  example: "09:00"
+                end:
+                  type: string
+                  example: "10:30"
+      responses:
+        '404':
+          description: No entry for id (unknown or not owned by the caller)
+        '422':
+          description: Validation failure
+        '200':
+          description: The updated entry
+
+  /api/v2/bulk-entries:
+    post:
+      summary: Bulk-fill a date range from a preset — the UI's "Massen-Eintragung" (ADR-022 Phase 4; requires entries:write for tokens)
+      tags:
+        - Worklog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [preset_id, start_date, end_date]
+              properties:
+                preset_id:
+                  type: integer
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                use_contract:
+                  type: boolean
+                  default: true
+                skip_weekend:
+                  type: boolean
+                  default: true
+                skip_holidays:
+                  type: boolean
+                  default: true
+                start_time:
+                  type: string
+                  example: "09:00"
+                end_time:
+                  type: string
+                  example: "17:00"
+      responses:
+        '422':
+          description: Validation failure (unknown preset, bad range)
+        '201':
+          description: Created — a summary message of what was booked
+
   /api/v2/day:
     get:
       summary: The caller's own time entries and booked total for one day, default today (ADR-022 Phase 2; requires entries:read for tokens)
