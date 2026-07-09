@@ -175,6 +175,37 @@ final class WorklogWriteServiceTest extends TestCase
         self::assertSame(77, $entry->getWorklogId());
     }
 
+    public function testForcePushSkipsLeaseAndWrites(): void
+    {
+        $entry = $this->entry('ABC-1', 77);
+        $state = new WorklogSyncState()->setBaseUpdatedAt('U0');
+
+        $this->syncStateRepository->method('findOneBy')->willReturn($state);
+        // Exactly one remote GET — the post-write base refresh, never a lease compare.
+        $this->api->expects(self::once())
+            ->method('getIssueWorklog')
+            ->with('ABC-1', 77)
+            ->willReturn($this->remote('U9'));
+        $this->api->expects(self::once())->method('updateEntryJiraWorkLog');
+
+        $outcome = $this->service->forcePush($this->api, $entry, $this->ticketSystem);
+
+        self::assertSame(WriteOutcome::WRITTEN, $outcome);
+        self::assertSame('U9', $state->getBaseUpdatedAt());
+        self::assertSame(WorklogSyncStatus::IN_SYNC, $state->getStatus());
+        self::assertNull($state->getConflictRemotePayload());
+    }
+
+    public function testForcePushEmptyTicketSkips(): void
+    {
+        $this->api->expects(self::never())->method('getIssueWorklog');
+        $this->api->expects(self::never())->method('updateEntryJiraWorkLog');
+
+        $outcome = $this->service->forcePush($this->api, $this->entry('', 77), $this->ticketSystem);
+
+        self::assertSame(WriteOutcome::SKIPPED, $outcome);
+    }
+
     public function testMissingStateBootstrapsBase(): void
     {
         $entry = $this->entry('ABC-1', 77);

@@ -81,6 +81,24 @@ class WorklogWriteService
         return WriteOutcome::WRITTEN;
     }
 
+    /**
+     * Forced lease-era write (ADR-023 §2 conflict resolution): identical to push() but
+     * skips the lease comparison. The legacy write nulls a stale worklogId and re-creates,
+     * so this also covers orphaned recreation.
+     */
+    public function forcePush(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
+    {
+        $ticket = $entry->getTicket();
+        if ('' === $ticket || '0' === $ticket) {
+            return WriteOutcome::SKIPPED;
+        }
+
+        $api->updateEntryJiraWorkLog($entry);
+        $this->refreshBase($api, $entry, $ticketSystem);
+
+        return WriteOutcome::WRITTEN;
+    }
+
     public function delete(JiraOAuthApiService $api, Entry $entry): void
     {
         $api->deleteEntryJiraWorkLog($entry);
