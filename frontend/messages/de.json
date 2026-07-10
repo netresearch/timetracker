@@ -579,6 +579,8 @@
   "worklogsync_to": "Bis",
   "worklogsync_default_activity": "Standardtätigkeit",
   "worklogsync_ticket_system": "Ticketsystem",
+  "worklogsync_ticket_system_sync_user": "Sync-Benutzer",
+  "worklogsync_ticket_system_sync_activity": "Sync-Standardtätigkeit",
   "worklogsync_preview": "Vorschau",
   "worklogsync_execute": "Import ausführen",
   "worklogsync_dryrun_note": "Nur Vorschau — es wurde noch nichts importiert.",

@@ -359,13 +359,17 @@ export function adminEntities(): EntityDescriptor[] {
         },
         { name: 'oauth2ClientId', label: () => m.admin_f_oauth2_client_id(), type: 'text' },
         { name: 'oauth2ClientSecret', label: () => m.admin_f_oauth2_client_secret(), type: 'text' },
+        // Worklog sync (ADR-023): the service account whose worklogs are booked and
+        // the fallback activity for imported entries. Both nullable ("—" clears them).
+        { name: 'sync_user', label: () => m.worklogsync_ticket_system_sync_user(), type: 'select', source: 'users', activeOnly: false },
+        { name: 'sync_default_activity', label: () => m.worklogsync_ticket_system_sync_activity(), type: 'select', source: 'activities' },
       ],
       rowLabel: (row) => str(row.name),
       // Credentials are not returned by the list (server-side filtered), so the
       // form opens them blank; the backend keeps the stored value when a field
       // is submitted blank (see SaveTicketSystemAction preserve-on-blank).
       toForm: (row) => row === null
-        ? { id: 0, name: '', type: 'JIRA', bookTime: false, url: '', ticketUrl: '', login: '', password: '', publicKey: '', privateKey: '', oauthConsumerKey: '', oauthConsumerSecret: '', deploymentType: 'SERVER', oauth2ClientId: '', oauth2ClientSecret: '' }
+        ? { id: 0, name: '', type: 'JIRA', bookTime: false, url: '', ticketUrl: '', login: '', password: '', publicKey: '', privateKey: '', oauthConsumerKey: '', oauthConsumerSecret: '', deploymentType: 'SERVER', oauth2ClientId: '', oauth2ClientSecret: '', sync_user: 0, sync_default_activity: 0 }
         : {
             id: num(row.id), name: str(row.name), type: str(pick(row, 'type')) || 'JIRA',
             bookTime: bool(pick(row, 'bookTime', 'book_time')),
@@ -374,8 +378,17 @@ export function adminEntities(): EntityDescriptor[] {
             oauthConsumerKey: '', oauthConsumerSecret: '',
             deploymentType: str(pick(row, 'deploymentType', 'deployment_type')) || 'SERVER',
             oauth2ClientId: str(pick(row, 'oauth2ClientId', 'oauth2_client_id')), oauth2ClientSecret: '',
+            // Base::toArray emits the relation id under both camel/snake keys.
+            sync_user: num(pick(row, 'syncUser', 'sync_user')),
+            sync_default_activity: num(pick(row, 'syncDefaultActivity', 'sync_default_activity')),
           },
-      toPayload: (v) => ({ ...v }),
+      // The two sync selects carry snake_case form names; map them to the DTO's
+      // camelCase ids (TicketSystemSaveDto). 0 ("—") clears the relation → null.
+      toPayload: (v) => ({
+        ...v,
+        syncUserId: num(v.sync_user) > 0 ? num(v.sync_user) : null,
+        syncDefaultActivityId: num(v.sync_default_activity) > 0 ? num(v.sync_default_activity) : null,
+      }),
     },
     {
       key: 'activities',
