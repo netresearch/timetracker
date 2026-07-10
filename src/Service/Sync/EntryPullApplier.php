@@ -19,6 +19,7 @@ use App\ValueObject\Sync\WorklogSnapshot;
 use DateTime;
 
 use function in_array;
+use function mb_substr;
 use function sprintf;
 
 /**
@@ -87,7 +88,8 @@ class EntryPullApplier
         }
 
         if ($pullComment) {
-            $entry->setDescription(WorklogCommentCodec::decode($remote->comment));
+            // $remote->comment is already the decoded description (RemoteWorklogNormalizer).
+            $entry->setDescription(mb_substr($remote->comment, 0, Entry::DESCRIPTION_MAX_LENGTH));
         }
 
         $dayAfter = $entry->getDay()->format('Y-m-d');

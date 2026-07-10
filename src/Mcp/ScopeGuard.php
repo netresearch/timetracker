@@ -72,15 +72,26 @@ final readonly class ScopeGuard
     {
         $user = $this->requireScope($scope);
 
-        // Vote on the TOKEN's roles expanded through the role hierarchy (e.g.
-        // ROLE_SUPER_ADMIN => ROLE_ADMIN) — the same input and semantics as the
-        // #[IsGranted('ROLE_ADMIN')] check on the v2 endpoints.
-        $token = $this->security->getToken();
-        $roles = $token instanceof ApiAccessToken ? $token->getRoleNames() : [];
-        if (!in_array('ROLE_ADMIN', $this->roleHierarchy->getReachableRoleNames($roles), true)) {
+        if (!$this->isAdmin()) {
             throw new ToolCallException('This tool requires an administrator account.');
         }
 
         return $user;
+    }
+
+    /**
+     * Whether the current token's user holds ROLE_ADMIN — the boolean twin of
+     * requireAdminScope() for tools whose behaviour narrows (rather than
+     * fails) for non-admins. Votes on the TOKEN's roles expanded through the
+     * role hierarchy (e.g. ROLE_SUPER_ADMIN => ROLE_ADMIN) — the same input
+     * and semantics as the #[IsGranted('ROLE_ADMIN')] check on the v2
+     * endpoints.
+     */
+    public function isAdmin(): bool
+    {
+        $token = $this->security->getToken();
+        $roles = $token instanceof ApiAccessToken ? $token->getRoleNames() : [];
+
+        return in_array('ROLE_ADMIN', $this->roleHierarchy->getReachableRoleNames($roles), true);
     }
 }

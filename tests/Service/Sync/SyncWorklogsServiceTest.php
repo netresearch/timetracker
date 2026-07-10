@@ -34,7 +34,6 @@ use App\Service\Sync\JiraAuthorMapper;
 use App\Service\Sync\ReconciliationService;
 use App\Service\Sync\RemoteWorklogNormalizer;
 use App\Service\Sync\SyncWorklogsService;
-use App\Service\Sync\WorklogCommentCodec;
 use App\Service\Sync\WorklogWriteService;
 use App\Service\Tracking\DayClassService;
 use App\ValueObject\Sync\PullResult;
@@ -73,6 +72,7 @@ final class SyncWorklogsServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
+        $this->entityManager->method('isOpen')->willReturn(true);
         $this->entryRepository = $this->createMock(EntryRepository::class);
         $this->syncStateRepository = $this->createMock(WorklogSyncStateRepository::class);
         $this->api = $this->createMock(JiraOAuthApiService::class);
@@ -100,7 +100,7 @@ final class SyncWorklogsServiceTest extends TestCase
         );
 
         $this->syncUser = new User()->setUsername('syncbot');
-        $this->projector = new EntryWorklogProjector(new WorklogCommentCodec());
+        $this->projector = new EntryWorklogProjector();
         $this->ticketSystem = $this->makeTicketSystem($this->syncUser, 1000);
 
         $this->service = new SyncWorklogsService(

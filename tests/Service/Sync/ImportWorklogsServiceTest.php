@@ -25,6 +25,7 @@ use App\Enum\SyncRunStatus;
 use App\Repository\EntryRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
+use App\Service\Sync\EntryWorklogProjector;
 use App\Service\Sync\ImportWorklogsService;
 use App\Service\Sync\JiraAuthorMapper;
 use App\Service\Sync\RemoteWorklogNormalizer;
@@ -63,6 +64,7 @@ final class ImportWorklogsServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
+        $this->entityManager->method('isOpen')->willReturn(true);
         $this->entryRepository = $this->createMock(EntryRepository::class);
         $this->api = $this->createMock(JiraOAuthApiService::class);
         $this->projectResolver = $this->createMock(TicketProjectResolver::class);
@@ -96,6 +98,7 @@ final class ImportWorklogsServiceTest extends TestCase
             $this->entryRepository,
             $apiFactory,
             new RemoteWorklogNormalizer(),
+            new EntryWorklogProjector(),
             $this->projectResolver,
             $this->authorMapper,
             $this->dayClassService,
@@ -166,6 +169,33 @@ final class ImportWorklogsServiceTest extends TestCase
         $states = array_values(array_filter($this->persisted, static fn (object $o): bool => $o instanceof WorklogSyncState));
         self::assertCount(1, $states);
         self::assertSame('2026-06-10T10:00:00.000+0200', $states[0]->getBaseUpdatedAt());
+    }
+
+    public function testLongWorklogCommentTruncatedToColumnLimit(): void
+    {
+        $longComment = str_repeat('x', 400);
+        $worklog = new JiraWorkLog(
+            id: 5001,
+            comment: $longComment,
+            started: '2026-06-10T09:00:00.000+0200',
+            timeSpentSeconds: 3600,
+            updated: '2026-06-10T10:00:00.000+0200',
+            authorAccountId: 'acc-jdoe',
+            authorName: 'jdoe',
+        );
+        $this->stubRemote(['TIM-1'], ['TIM-1' => [$worklog]]);
+        $this->projectResolver->method('resolve')->willReturn(new ProjectResolution($this->project, 'prefix'));
+        $this->authorMapper->method('remoteKey')->willReturn('acc-jdoe');
+        $this->authorMapper->method('find')->willReturn($this->author);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn(null);
+        $this->entryRepository->method('findUnlinkedDuplicate')->willReturn(null);
+
+        $this->import();
+
+        $entries = array_values(array_filter($this->persisted, static fn (object $o): bool => $o instanceof Entry));
+        self::assertCount(1, $entries);
+        // varchar(255) column under strict SQL mode would otherwise close the EntityManager.
+        self::assertSame(Entry::DESCRIPTION_MAX_LENGTH, mb_strlen($entries[0]->getDescription()));
     }
 
     public function testAlreadyLinkedWorklogIsSkipped(): void

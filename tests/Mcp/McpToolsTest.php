@@ -12,10 +12,17 @@ namespace Tests\Mcp;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
+use App\Entity\SyncRun;
+use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\WorklogSyncState;
+use App\Enum\SyncRunStatus;
+use App\Enum\SyncRunType;
+use App\Enum\WorklogSyncStatus;
 use App\Mcp\Tool\BulkLogTimeTool;
 use App\Mcp\Tool\DeleteEntryTool;
 use App\Mcp\Tool\GetDayTool;
+use App\Mcp\Tool\GetSyncRunTool;
 use App\Mcp\Tool\GetTicketInfoTool;
 use App\Mcp\Tool\GetTimeBalanceTool;
 use App\Mcp\Tool\ListActivitiesTool;
@@ -24,6 +31,7 @@ use App\Mcp\Tool\ListCustomersTool;
 use App\Mcp\Tool\ListPresetsTool;
 use App\Mcp\Tool\ListProjectsTool;
 use App\Mcp\Tool\ListRecentEntriesTool;
+use App\Mcp\Tool\ListSyncConflictsTool;
 use App\Mcp\Tool\ListTeamsTool;
 use App\Mcp\Tool\ListTicketSystemsTool;
 use App\Mcp\Tool\ListUsersTool;
@@ -31,17 +39,23 @@ use App\Mcp\Tool\LogTimeTool;
 use App\Mcp\Tool\OnboardCustomerTool;
 use App\Mcp\Tool\OnboardProjectTool;
 use App\Mcp\Tool\OnboardUserTool;
+use App\Mcp\Tool\ResolveSyncConflictTool;
 use App\Mcp\Tool\SaveContractTool;
 use App\Mcp\Tool\SaveTeamTool;
 use App\Mcp\Tool\SaveTicketSystemTool;
 use App\Mcp\Tool\SetCustomerActiveTool;
 use App\Mcp\Tool\SetProjectActiveTool;
 use App\Mcp\Tool\SetUserActiveTool;
+use App\Mcp\Tool\SyncJiraWorklogsTool;
 use App\Mcp\Tool\UpdateEntryTool;
 use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
 use App\Security\ApiToken\ApiAccessToken;
+use App\Service\Sync\ConflictResolutionService;
+use App\Service\Sync\VerifyWorklogsService;
+use App\ValueObject\Sync\ResolutionResult;
+use DateTimeImmutable;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Exception\ToolCallException;
 use ReflectionClass;
@@ -388,8 +402,10 @@ final class McpToolsTest extends AbstractWebTestCase
             'entries:read', 'entries:write', 'projects:read', 'projects:write', 'activities:read', 'reporting:read',
             'customers:read', 'customers:write', 'users:read', 'users:write', 'teams:read', 'teams:write',
             'presets:read', 'ticketsystems:read', 'ticketsystems:write', 'contracts:read', 'contracts:write',
+            'sync:read', 'sync:write',
         ]);
         $container = self::getContainer();
+        [$syncRun, $syncState] = $this->prepareSyncToolFixtures();
 
         $created = $container->get(LogTimeTool::class)->logTime(project: '1', activity: '1', ticket: 'SA-5', durationMinutes: 15);
         self::assertIsArray($created['result'] ?? null);
@@ -400,6 +416,7 @@ final class McpToolsTest extends AbstractWebTestCase
             'delete_entry' => null, // called last — it removes the entry
             'bulk_log_time' => $container->get(BulkLogTimeTool::class)->bulkLogTime(preset: '1', startDate: '2026-07-06', endDate: '2026-07-06', useContract: false, skipWeekend: false, skipHolidays: false, startTime: '09:00', endTime: '10:00'),
             'get_day' => $container->get(GetDayTool::class)->getDay(),
+            'get_sync_run' => $container->get(GetSyncRunTool::class)->getSyncRun((int) $syncRun->getId()),
             'get_ticket_info' => $container->get(GetTicketInfoTool::class)->getTicketInfo($entryId),
             'get_time_balance' => $container->get(GetTimeBalanceTool::class)->getTimeBalance(),
             'list_activities' => $container->get(ListActivitiesTool::class)->listActivities(),
@@ -408,6 +425,7 @@ final class McpToolsTest extends AbstractWebTestCase
             'list_presets' => $container->get(ListPresetsTool::class)->listPresets(),
             'list_projects' => $container->get(ListProjectsTool::class)->listProjects(),
             'list_recent_entries' => $container->get(ListRecentEntriesTool::class)->listRecentEntries(),
+            'list_sync_conflicts' => $container->get(ListSyncConflictsTool::class)->listSyncConflicts(),
             'list_teams' => $container->get(ListTeamsTool::class)->listTeams(),
             'list_ticketsystems' => $container->get(ListTicketSystemsTool::class)->listTicketSystems(),
             'list_users' => $container->get(ListUsersTool::class)->listUsers(),
@@ -415,12 +433,14 @@ final class McpToolsTest extends AbstractWebTestCase
             'onboard_customer' => $container->get(OnboardCustomerTool::class)->onboardCustomer(name: 'Guard Customer', global: true),
             'onboard_project' => $container->get(OnboardProjectTool::class)->onboardProject(name: 'Guard Project', customer: '1'),
             'onboard_user' => $container->get(OnboardUserTool::class)->onboardUser(username: 'guard.user', abbr: 'GRD', teamIds: [1]),
+            'resolve_sync_conflict' => $container->get(ResolveSyncConflictTool::class)->resolveSyncConflict((int) $syncState->getId(), 'local'),
             'save_contract' => $container->get(SaveContractTool::class)->saveContract(user: 'noContract', start: '2020-01-01', end: '2020-12-31'),
             'save_team' => $container->get(SaveTeamTool::class)->saveTeam(name: 'Guard-Team', leadUser: 'unittest'),
             'save_ticketsystem' => $container->get(SaveTicketSystemTool::class)->saveTicketSystem(name: 'Guard-TS', type: 'JIRA'),
             'set_customer_active' => $container->get(SetCustomerActiveTool::class)->setCustomerActive('1', true),
             'set_project_active' => $container->get(SetProjectActiveTool::class)->setProjectActive('1', true),
             'set_user_active' => $container->get(SetUserActiveTool::class)->setUserActive('developer', true),
+            'sync_jira_worklogs' => $container->get(SyncJiraWorklogsTool::class)->syncJiraWorklogs(type: 'verify', ticketSystemId: 1),
             'update_entry' => $container->get(UpdateEntryTool::class)->updateEntry(entryId: $entryId, description: 'edited via guard'),
         ];
         $results['delete_entry'] = $container->get(DeleteEntryTool::class)->deleteEntry($entryId);
@@ -434,6 +454,72 @@ final class McpToolsTest extends AbstractWebTestCase
         $covered = array_keys($results);
         sort($covered);
         self::assertSame($this->declaredToolNames(), $covered, 'every #[McpTool] must be covered by this object-shape guard — add new tools here');
+    }
+
+    /**
+     * A persisted run + parked conflict state for the sync tools, with the
+     * Jira-touching services mocked in the container (ADR-023 §6).
+     *
+     * @return array{SyncRun, WorklogSyncState}
+     */
+    private function prepareSyncToolFixtures(): array
+    {
+        $container = self::getContainer();
+        $em = $container->get('doctrine')->getManager();
+
+        $ticketSystem = $em->find(TicketSystem::class, 1);
+        self::assertInstanceOf(TicketSystem::class, $ticketSystem);
+        $unittest = $container->get(UserRepository::class)->find(1);
+        self::assertInstanceOf(User::class, $unittest);
+        $project = $container->get(ProjectRepository::class)->find(1);
+        self::assertNotNull($project);
+
+        $syncRun = new SyncRun()
+            ->setType(SyncRunType::VERIFY)
+            ->setStatus(SyncRunStatus::COMPLETED)
+            ->setTicketSystem($ticketSystem)
+            ->setTriggeredBy($unittest)
+            ->setScope([])
+            ->setCounters([])
+            ->setStartedAt(new DateTimeImmutable('2026-07-08 09:00:00'));
+        $em->persist($syncRun);
+
+        $conflictEntry = new Entry()
+            ->setUser($unittest)
+            ->setProject($project)
+            ->setTicket('SA-42')
+            ->setDay('2026-07-06')
+            ->setStart('11:00:00')
+            ->setEnd('12:00:00');
+        $conflictEntry->setDuration(60);
+        $em->persist($conflictEntry);
+
+        $syncState = new WorklogSyncState()
+            ->setEntry($conflictEntry)
+            ->setTicketSystem($ticketSystem)
+            ->setStatus(WorklogSyncStatus::CONFLICT)
+            ->setLastSyncedAt(new DateTimeImmutable('2026-07-01 08:00:00'));
+        $em->persist($syncState);
+        $em->flush();
+
+        $verifyStub = self::createStub(VerifyWorklogsService::class);
+        $verifyStub->method('verify')->willReturn(
+            new SyncRun()
+                ->setType(SyncRunType::VERIFY)
+                ->setStatus(SyncRunStatus::COMPLETED)
+                ->setTicketSystem($ticketSystem)
+                ->setTriggeredBy($unittest)
+                ->setScope([])
+                ->setCounters([])
+                ->setStartedAt(new DateTimeImmutable('2026-07-09 10:00:00')),
+        );
+        $container->set(VerifyWorklogsService::class, $verifyStub);
+
+        $resolutionStub = self::createStub(ConflictResolutionService::class);
+        $resolutionStub->method('resolve')->willReturn(new ResolutionResult(true, 'pushed_local'));
+        $container->set(ConflictResolutionService::class, $resolutionStub);
+
+        return [$syncRun, $syncState];
     }
 
     /**

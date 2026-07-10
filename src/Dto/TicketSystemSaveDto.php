@@ -37,6 +37,10 @@ final readonly class TicketSystemSaveDto
         public string $deploymentType = 'SERVER',
         public ?string $oauth2ClientId = null,
         public ?string $oauth2ClientSecret = null,
+        #[Map(if: false)]
+        public ?int $syncUserId = null,
+        #[Map(if: false)]
+        public ?int $syncDefaultActivityId = null,
     ) {
     }
 }
