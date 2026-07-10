@@ -28,15 +28,6 @@ final class SyncRunContext
     /** @var array<string, array{user: User, day: string}> (user, day) pairs needing day-class recalculation */
     public array $affectedDays = [];
 
-    /** @var array<int, JiraOAuthApiService> api instances keyed by entry-owner user id */
-    public array $userApiCache = [];
-
-    /** @var array<string, ?string> issue id => issue key lookup cache */
-    public array $issueKeyCache = [];
-
-    /** Highest feed `until` value seen; the next cursor of a completed real run. */
-    public int $newCursor = 0;
-
     public function __construct(
         public readonly SyncRun $syncRun,
         public readonly TicketSystem $ticketSystem,

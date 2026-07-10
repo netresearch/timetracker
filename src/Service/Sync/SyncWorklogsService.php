@@ -9,13 +9,14 @@ declare(strict_types=1);
 
 namespace App\Service\Sync;
 
+use App\DTO\Jira\JiraUserIdentity;
 use App\DTO\Jira\JiraWorkLog;
-use App\DTO\Jira\JiraWorklogFeedPage;
 use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\UserTicketsystem;
 use App\Entity\WorklogSyncState;
 use App\Enum\SyncAction;
 use App\Enum\SyncItemKind;
@@ -25,19 +26,22 @@ use App\Enum\WorklogField;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Repository\EntryRepository;
+use App\Repository\UserTicketsystemRepository;
 use App\Repository\WorklogSyncStateRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Tracking\DayClassService;
 use App\ValueObject\Sync\WorklogSnapshot;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 use Psr\Clock\ClockInterface;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
+use Throwable;
 
-use function array_chunk;
-use function array_key_exists;
 use function array_map;
 use function array_values;
+use function date;
+use function in_array;
 use function spl_object_id;
 use function sprintf;
 use function substr;
@@ -45,81 +49,306 @@ use function substr;
 use const PHP_INT_MAX;
 
 /**
- * ADR-023 Phase 3: incremental bidirectional sync. Consumes Jira's worklog/updated and
- * worklog/deleted feeds from a per-ticket-system cursor and executes the reconciliation
- * matrix with real writes: lease-checked pushes, pulls/merges into TT, delete/move
- * handling, and optional unattended import of unmatched remote worklogs. Never
- * dispatches EntryEvent — sync writes must not echo back to Jira.
+ * ADR-023 (amended): opt-in, per-user bidirectional sync. Every Jira operation runs under an
+ * accountable person's own token — the author's when they opted their own worklogs in
+ * (`users_ticket_systems.sync_enabled`), else a PO's when the PO opted into sync-all
+ * (`sync_all`, PO is ROLE_PL/ADMIN) and can see the worklog. There is no central sync user,
+ * no cursor and no worklog feed: a date window is rescanned per run, idempotent via worklog id.
+ * Jira's own permission model is the access control. Never dispatches EntryEvent — sync writes
+ * must not echo back to Jira.
  */
 class SyncWorklogsService extends AbstractSyncRunService
 {
-    private const int MAX_FEED_PAGES = 20;
-
-    private const int WORKLOG_ID_CHUNK_SIZE = 1000;
-
     public function __construct(
         EntityManagerInterface $entityManager,
         private readonly EntryRepository $entryRepository,
         private readonly WorklogSyncStateRepository $worklogSyncStateRepository,
         private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
         private readonly EntryWorklogProjector $entryWorklogProjector,
-        private readonly RemoteWorklogNormalizer $remoteWorklogNormalizer,
+        private readonly RemoteWorklogReader $remoteWorklogReader,
         private readonly ReconciliationService $reconciliationService,
         private readonly WorklogWriteService $worklogWriteService,
         private readonly EntryPullApplier $entryPullApplier,
         private readonly ImportWorklogsService $importWorklogsService,
         private readonly JiraAuthorMapper $jiraAuthorMapper,
         private readonly DayClassService $dayClassService,
+        private readonly UserTicketsystemRepository $userTicketsystemRepository,
+        private readonly RoleHierarchyInterface $roleHierarchy,
         ClockInterface $clock,
     ) {
         parent::__construct($entityManager, $clock);
     }
 
+    /**
+     * ADR-023 amendment: superseded by {@see syncTicketSystem()}. Retained with its original
+     * signature only so the not-yet-reworked command and API mapper keep compiling until Tasks
+     * 5/6 migrate them; it will be removed then. The cursor override is ignored — a rolling
+     * 30-day window is rescanned.
+     *
+     * @param int|null $sinceMillisOverride ignored (kept for signature compatibility)
+     */
     public function sync(TicketSystem $ticketSystem, ?int $sinceMillisOverride = null, bool $dryRun = false): SyncRun
     {
-        $syncUser = $ticketSystem->getSyncUser();
-        $since = $sinceMillisOverride ?? $ticketSystem->getWorklogSyncCursor();
+        $to = $this->now();
+        $runs = $this->syncTicketSystem($ticketSystem, $to->modify('-30 days'), $to, $dryRun);
 
+        return $runs[0] ?? $this->emptyRun($ticketSystem, $dryRun);
+    }
+
+    /**
+     * Sync one target user's worklogs under an accountable token owner (ADR-023 amendment).
+     * When the owner is the target it is a self-sync; otherwise a PO acts under their own token.
+     */
+    public function syncUser(User $targetUser, User $tokenOwner, TicketSystem $ticketSystem, DateTimeImmutable $from, DateTimeImmutable $to, bool $dryRun = false): SyncRun
+    {
         $syncRun = new SyncRun()
             ->setType(SyncRunType::SYNC)
             ->setStatus(SyncRunStatus::RUNNING)
             ->setTicketSystem($ticketSystem)
-            ->setScope(['since' => $since, 'dry_run' => $dryRun])
+            ->setTriggeredBy($tokenOwner)
+            ->setScope([
+                'from' => $from->format('Y-m-d'),
+                'to' => $to->format('Y-m-d'),
+                'dry_run' => $dryRun,
+                'target' => $targetUser->getUsername(),
+            ])
             ->setCounters([])
             ->setStartedAt($this->now());
 
-        if ($syncUser instanceof User) {
-            $syncRun->setTriggeredBy($syncUser);
-        }
-
-        return $this->executeRun($syncRun, function () use ($syncRun, $ticketSystem, $syncUser, $since, $dryRun): void {
-            $this->run($syncRun, $ticketSystem, $syncUser, $since, $dryRun);
+        return $this->executeRun($syncRun, function () use ($syncRun, $targetUser, $tokenOwner, $ticketSystem, $from, $to, $dryRun): void {
+            $api = $this->jiraOAuthApiFactory->create($tokenOwner, $ticketSystem);
+            $context = new SyncRunContext($syncRun, $ticketSystem, $api, $dryRun);
+            [$jql, $matchesAuthor] = $this->buildRead($api, $targetUser, $tokenOwner, $ticketSystem, $from, $to);
+            $this->runUserSync($context, $targetUser, $matchesAuthor, $jql, $from, $to);
         });
     }
 
-    private function run(SyncRun $syncRun, TicketSystem $ticketSystem, ?User $syncUser, ?int $since, bool $dryRun): void
+    /**
+     * Cron entry point: run both opt-in passes for a ticket system and return every run.
+     *
+     * @return list<SyncRun>
+     */
+    public function syncTicketSystem(TicketSystem $ticketSystem, DateTimeImmutable $from, DateTimeImmutable $to, bool $dryRun = false): array
     {
-        if (!$syncUser instanceof User) {
-            throw new InvalidArgumentException('No sync user configured for ticket system ' . (int) $ticketSystem->getId());
+        $runs = [];
+
+        // Pass 1 — self-sync: authors who opted their own worklogs in, under their own token.
+        $selfEnabled = $this->userTicketsystemRepository->findSyncEnabled($ticketSystem);
+        foreach ($selfEnabled as $userTicketsystem) {
+            $user = $userTicketsystem->getUser();
+            if ($user instanceof User) {
+                $runs[] = $this->syncUser($user, $user, $ticketSystem, $from, $to, $dryRun);
+            }
         }
 
-        if (null === $since) {
-            throw new InvalidArgumentException('No cursor yet; pass --since for the first run');
+        // Pass 2 — PO sync-all: cover everyone else the PO can see, under the PO's token.
+        $excludeAuthorKeys = $this->selfEnabledAuthorKeys($selfEnabled);
+        foreach ($this->userTicketsystemRepository->findSyncAllOwners($ticketSystem) as $ownerTicketsystem) {
+            $partyOwner = $ownerTicketsystem->getUser();
+            if (!$partyOwner instanceof User) {
+                continue;
+            }
+            if (!$this->isProjectOwner($partyOwner)) {
+                continue;
+            }
+
+            foreach ($this->discoverPoAuthors($partyOwner, $ticketSystem, $excludeAuthorKeys, $from, $to) as $authorUser) {
+                $runs[] = $this->syncUser($authorUser, $partyOwner, $ticketSystem, $from, $to, $dryRun);
+            }
         }
 
-        $api = $this->jiraOAuthApiFactory->create($syncUser, $ticketSystem);
-        $context = new SyncRunContext($syncRun, $ticketSystem, $api, $dryRun);
+        return $runs;
+    }
 
-        $updatedIds = $this->collectFeed($context, $since, static fn (int $cursor): JiraWorklogFeedPage => $api->getWorklogsUpdatedSince($cursor));
-        $deletedIds = $this->collectFeed($context, $since, static fn (int $cursor): JiraWorklogFeedPage => $api->getDeletedWorklogsSince($cursor));
+    /**
+     * Whether the user is a project owner (ROLE_PL or ROLE_ADMIN) — gates PO sync-all.
+     */
+    private function isProjectOwner(User $user): bool
+    {
+        $reachable = $this->roleHierarchy->getReachableRoleNames($user->getRoles());
 
-        $this->processUpdatedWorklogs($context, $updatedIds);
+        return in_array('ROLE_PL', $reachable, true) || in_array('ROLE_ADMIN', $reachable, true);
+    }
 
-        foreach ($deletedIds as $deletedId) {
-            $this->processDeletedWorklog($context, $deletedId);
+    /**
+     * The remote author keys of self-sync-enabled users — excluded from PO coverage.
+     *
+     * @param list<UserTicketsystem> $selfEnabled
+     *
+     * @return array<string, true>
+     */
+    private function selfEnabledAuthorKeys(array $selfEnabled): array
+    {
+        $keys = [];
+        foreach ($selfEnabled as $userTicketsystem) {
+            $remoteAccountId = $userTicketsystem->getRemoteAccountId();
+            if (null !== $remoteAccountId && '' !== $remoteAccountId) {
+                $keys[$remoteAccountId] = true;
+            }
+
+            $username = $userTicketsystem->getUser()?->getUsername();
+            if (null !== $username && '' !== $username) {
+                $keys[$username] = true;
+            }
         }
 
-        $this->handleUnmatched($context);
+        return $keys;
+    }
+
+    /**
+     * Read the PO-visible worklogs (broad, date-only) and map each covered author to a TT
+     * or shadow user. Self-sync-enabled authors are excluded (pass 1 owns them).
+     *
+     * @param array<string, true> $excludeAuthorKeys
+     *
+     * @return list<User>
+     */
+    private function discoverPoAuthors(User $partyOwner, TicketSystem $ticketSystem, array $excludeAuthorKeys, DateTimeImmutable $from, DateTimeImmutable $to): array
+    {
+        $api = $this->jiraOAuthApiFactory->create($partyOwner, $ticketSystem);
+        $jql = sprintf('worklogDate >= "%s" AND worklogDate <= "%s"', $from->format('Y-m-d'), $to->format('Y-m-d'));
+
+        /** @var array<string, JiraWorkLog> $representatives one worklog per covered author key */
+        $representatives = [];
+        $matchesAuthor = static function (JiraWorkLog $jiraWorkLog) use ($excludeAuthorKeys, &$representatives): bool {
+            $key = $jiraWorkLog->authorAccountId ?? $jiraWorkLog->authorName;
+            if (null === $key || isset($excludeAuthorKeys[$key])) {
+                return false;
+            }
+
+            $representatives[$key] ??= $jiraWorkLog;
+
+            return true;
+        };
+
+        // The reader applies range + normalization; its returned records tell us which author
+        // keys actually have an in-range worklog, so we skip authors with nothing to sync.
+        $records = $this->remoteWorklogReader->readForAuthor($api, $matchesAuthor, $jql, $from, $to, static function (): void {});
+        $survivingKeys = [];
+        foreach ($records as $record) {
+            $author = $record['author'];
+            if (null !== $author) {
+                $survivingKeys[$author] = true;
+            }
+        }
+
+        $authors = [];
+        foreach ($representatives as $key => $representative) {
+            if (!isset($survivingKeys[$key])) {
+                continue;
+            }
+
+            $author = $this->jiraAuthorMapper->find($representative, $ticketSystem) ?? $this->jiraAuthorMapper->createShadow($representative, $ticketSystem);
+            $authors[spl_object_id($author)] = $author;
+        }
+
+        return array_values($authors);
+    }
+
+    /**
+     * Build the target's read JQL and author predicate — self via currentUser(), a PO target
+     * via the target's remote identity.
+     *
+     * @return array{string, callable(JiraWorkLog): bool}
+     */
+    private function buildRead(JiraOAuthApiService $api, User $targetUser, User $tokenOwner, TicketSystem $ticketSystem, DateTimeImmutable $from, DateTimeImmutable $to): array
+    {
+        if ($targetUser === $tokenOwner) {
+            $myself = $api->getMyself();
+            $jql = sprintf(
+                'worklogAuthor = currentUser() AND worklogDate >= "%s" AND worklogDate <= "%s"',
+                $from->format('Y-m-d'),
+                $to->format('Y-m-d'),
+            );
+
+            return [$jql, $myself->matchesWorklogAuthor(...)];
+        }
+
+        $identity = $this->targetIdentity($targetUser, $ticketSystem);
+        $jql = sprintf(
+            'worklogAuthor = "%s" AND worklogDate >= "%s" AND worklogDate <= "%s"',
+            $identity->accountId ?? $identity->name ?? '',
+            $from->format('Y-m-d'),
+            $to->format('Y-m-d'),
+        );
+
+        return [$jql, $identity->matchesWorklogAuthor(...)];
+    }
+
+    /**
+     * The target's Jira identity for this ticket system — durable remote_account_id, username fallback.
+     */
+    private function targetIdentity(User $targetUser, TicketSystem $ticketSystem): JiraUserIdentity
+    {
+        $remoteAccountId = null;
+        foreach ($targetUser->getUserTicketsystems() as $userTicketsystem) {
+            if ($userTicketsystem->getTicketSystem() === $ticketSystem) {
+                $remoteAccountId = $userTicketsystem->getRemoteAccountId();
+                break;
+            }
+        }
+
+        return new JiraUserIdentity(accountId: $remoteAccountId, name: $targetUser->getUsername());
+    }
+
+    /**
+     * Reconcile the target's TT entries against their remote worklogs and execute every
+     * matrix row under the run's token (ADR-023 §2, minus the feed).
+     *
+     * @param callable(JiraWorkLog): bool $matchesAuthor
+     */
+    private function runUserSync(SyncRunContext $context, User $targetUser, callable $matchesAuthor, string $jql, DateTimeImmutable $from, DateTimeImmutable $to): void
+    {
+        $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
+            $context->api,
+            $matchesAuthor,
+            $jql,
+            $from,
+            $to,
+            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($context): void {
+                $this->onRemoteNotice($context->syncRun, $type, $issueKey, $throwable, $worklogId);
+            },
+        );
+
+        $entries = $this->entryRepository->findJiraSyncCandidates($targetUser, $context->ticketSystem, $from, $to);
+        $absentWorklogIds = [];
+
+        foreach ($entries as $entry) {
+            $worklogId = $entry->getWorklogId();
+            if (null !== $worklogId && $worklogId > 0 && isset($remoteByWorklogId[$worklogId])) {
+                $record = $remoteByWorklogId[$worklogId];
+                unset($remoteByWorklogId[$worklogId]);
+                $worklog = $this->synthesizeWorklog($worklogId, $record);
+                $this->reconcileAndExecute($context, $entry, $record['snapshot'], $worklog, $record['issueKey']);
+
+                continue;
+            }
+
+            if (null !== $worklogId && $worklogId > 0) {
+                $absentWorklogIds[] = $worklogId;
+
+                continue;
+            }
+
+            // Never synced: create the worklog remotely under the token owner.
+            $this->handlePush($context, $entry, (string) $entry->getTicket());
+        }
+
+        // Whatever remains on the remote side has no matching entry — pool it for move-detection
+        // (delete-by-absence relink) and unattended import.
+        foreach ($remoteByWorklogId as $worklogId => $record) {
+            $context->unmatchedRemote[$worklogId] = [
+                'worklog' => $this->synthesizeWorklog($worklogId, $record),
+                'snapshot' => $record['snapshot'],
+                'issueKey' => $record['issueKey'],
+            ];
+        }
+
+        foreach ($absentWorklogIds as $worklogId) {
+            $this->processDeletedWorklog($context, $worklogId);
+        }
+
+        $this->handleUnmatched($context, $targetUser);
 
         $this->entityManager->flush();
 
@@ -127,114 +356,42 @@ class SyncWorklogsService extends AbstractSyncRunService
         foreach ($context->affectedDays as $affected) {
             $this->dayClassService->recalculate((int) $affected['user']->getId(), $affected['day']);
         }
-
-        // Inside the run body so a FAILED run never advances the cursor.
-        if (!$dryRun && $context->newCursor > 0) {
-            $ticketSystem->setWorklogSyncCursor($context->newCursor);
-        }
     }
 
     /**
-     * Pages through one feed following `until` while !lastPage, deduplicating ids.
+     * Rebuild a JiraWorkLog from a reader record so the shared handlers (which are worklog-centric)
+     * can run without a second remote fetch.
      *
-     * @param callable(int): JiraWorklogFeedPage $fetchPage
-     *
-     * @return list<int>
+     * @param array{snapshot: WorklogSnapshot, updated: ?string, author: ?string, issueKey: string} $record
      */
-    private function collectFeed(SyncRunContext $context, int $since, callable $fetchPage): array
+    private function synthesizeWorklog(int $worklogId, array $record): JiraWorkLog
     {
-        /** @var array<int, int> $ids */
-        $ids = [];
-        $cursor = $since;
+        $snapshot = $record['snapshot'];
 
-        for ($page = 0; $page < self::MAX_FEED_PAGES; ++$page) {
-            $feedPage = $fetchPage($cursor);
-            foreach ($feedPage->worklogIds as $worklogId) {
-                $ids[$worklogId] = $worklogId;
-            }
-
-            if ($feedPage->until > $context->newCursor) {
-                $context->newCursor = $feedPage->until;
-            }
-
-            if ($feedPage->lastPage) {
-                return array_values($ids);
-            }
-
-            $cursor = $feedPage->until;
-        }
-
-        $this->addItem($context->syncRun, SyncItemKind::TRUNCATED, reason: 'worklog feed page cap (20) hit; remaining changes are picked up by the next run');
-
-        return array_values($ids);
+        return new JiraWorkLog(
+            id: $worklogId,
+            comment: $snapshot->comment,
+            started: date('Y-m-d\TH:i:s.000O', $snapshot->startedTimestamp),
+            timeSpentSeconds: $snapshot->durationMinutes * 60,
+            updated: $record['updated'],
+            authorAccountId: $record['author'],
+            authorName: $record['author'],
+        );
     }
 
     /**
-     * @param list<int> $updatedIds
+     * Translate a reader notice into a sync-run report item.
      */
-    private function processUpdatedWorklogs(SyncRunContext $context, array $updatedIds): void
+    private function onRemoteNotice(SyncRun $syncRun, string $type, ?string $issueKey, ?Throwable $throwable, ?int $worklogId): void
     {
-        foreach (array_chunk($updatedIds, self::WORKLOG_ID_CHUNK_SIZE) as $chunk) {
-            foreach ($context->api->getWorklogsByIds($chunk) as $worklog) {
-                $this->processUpdatedWorklog($context, $worklog);
-            }
-        }
-    }
-
-    private function processUpdatedWorklog(SyncRunContext $context, JiraWorkLog $worklog): void
-    {
-        if (null === $worklog->id) {
-            return;
-        }
-
-        $issueKey = $this->resolveIssueKey($context, $worklog);
-        if (null === $issueKey) {
-            return; // already recorded as an error item
-        }
-
-        try {
-            $snapshot = $this->remoteWorklogNormalizer->normalize($worklog, $issueKey);
-        } catch (InvalidArgumentException $invalidArgumentException) {
-            $context->syncRun->incrementCounter('errors');
-            $this->addItem($context->syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $worklog->id, reason: substr($invalidArgumentException->getMessage(), 0, 255));
+        if ('truncated' === $type) {
+            $this->addItem($syncRun, SyncItemKind::TRUNCATED, reason: 'issue search hit its result cap; remaining changes are picked up by the next run');
 
             return;
         }
 
-        $entry = $this->entryRepository->findOneByWorklogIdAndTicketSystem($worklog->id, $context->ticketSystem);
-        if ($entry instanceof Entry) {
-            $this->reconcileAndExecute($context, $entry, $snapshot, $worklog, $issueKey);
-
-            return;
-        }
-
-        $context->unmatchedRemote[$worklog->id] = ['worklog' => $worklog, 'snapshot' => $snapshot, 'issueKey' => $issueKey];
-    }
-
-    /**
-     * Resolves the feed worklog's numeric issue id to the issue key (cached);
-     * records an error item when unresolvable.
-     */
-    private function resolveIssueKey(SyncRunContext $context, JiraWorkLog $worklog): ?string
-    {
-        $issueId = $worklog->issueId;
-        $issueKey = null;
-        if (null !== $issueId && '' !== $issueId) {
-            if (!array_key_exists($issueId, $context->issueKeyCache)) {
-                $context->issueKeyCache[$issueId] = $context->api->getIssueKeyById($issueId);
-            }
-
-            $issueKey = $context->issueKeyCache[$issueId];
-        }
-
-        if (null === $issueKey) {
-            $context->syncRun->incrementCounter('errors');
-            $this->addItem($context->syncRun, SyncItemKind::ERROR, remoteWorklogId: $worklog->id, reason: sprintf('issue key unresolvable for issue id %s', $issueId ?? '?'));
-
-            return null;
-        }
-
-        return $issueKey;
+        $syncRun->incrementCounter('errors');
+        $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $worklogId, reason: substr($throwable?->getMessage() ?? '', 0, 255));
     }
 
     /**
@@ -294,7 +451,7 @@ class SyncWorklogsService extends AbstractSyncRunService
             return;
         }
 
-        $outcome = $this->worklogWriteService->push($this->apiForEntry($context, $entry), $entry, $context->ticketSystem);
+        $outcome = $this->worklogWriteService->push($context->api, $entry, $context->ticketSystem);
         $this->handleWriteOutcome($context, $entry, $issueKey, $outcome, 'pushed');
     }
 
@@ -348,7 +505,7 @@ class SyncWorklogsService extends AbstractSyncRunService
         $this->queueAffectedDays($context, $entry, $pullResult->affectedDays);
 
         // The lease write re-GETs and refreshes the base itself on WRITTEN.
-        $outcome = $this->worklogWriteService->push($this->apiForEntry($context, $entry), $entry, $context->ticketSystem);
+        $outcome = $this->worklogWriteService->push($context->api, $entry, $context->ticketSystem);
         $this->handleWriteOutcome($context, $entry, $issueKey, $outcome, 'merged');
     }
 
@@ -401,6 +558,10 @@ class SyncWorklogsService extends AbstractSyncRunService
         );
     }
 
+    /**
+     * A linked entry whose remote worklog is absent from the rescanned window — a remote delete
+     * (or a move: a delete+create pair with identical start and duration is a relink).
+     */
     private function processDeletedWorklog(SyncRunContext $context, int $deletedWorklogId): void
     {
         $entry = $this->entryRepository->findOneByWorklogIdAndTicketSystem($deletedWorklogId, $context->ticketSystem);
@@ -442,7 +603,7 @@ class SyncWorklogsService extends AbstractSyncRunService
         }
 
         $context->syncRun->incrementCounter('orphaned');
-        $this->addItem($context->syncRun, SyncItemKind::LOCAL_ONLY, issueKey: $entry->getTicket(), remoteWorklogId: $deletedWorklogId, entry: $entry, reason: 'remote worklog deleted; local entry modified — parked');
+        $this->addItem($context->syncRun, SyncItemKind::LOCAL_ONLY, issueKey: $entry->getTicket(), remoteWorklogId: $deletedWorklogId, entry: $entry, reason: 'remote worklog absent; local entry modified — parked');
     }
 
     private function deleteLocalEntry(SyncRunContext $context, Entry $entry, int $deletedWorklogId): void
@@ -459,7 +620,7 @@ class SyncWorklogsService extends AbstractSyncRunService
             $context->affectedDays[spl_object_id($user) . '|' . $day] = ['user' => $user, 'day' => $day];
         }
 
-        $this->addItem($context->syncRun, SyncItemKind::LOCAL_ONLY, issueKey: $entry->getTicket(), remoteWorklogId: $deletedWorklogId, entry: $entry, reason: 'remote worklog deleted; local entry removed');
+        $this->addItem($context->syncRun, SyncItemKind::LOCAL_ONLY, issueKey: $entry->getTicket(), remoteWorklogId: $deletedWorklogId, entry: $entry, reason: 'remote worklog absent; local entry removed');
         $this->entityManager->remove($entry); // sync state cascades on delete
         $context->syncRun->incrementCounter('deleted_local');
     }
@@ -500,9 +661,10 @@ class SyncWorklogsService extends AbstractSyncRunService
     }
 
     /**
-     * Imports (or reports) remote worklogs that matched no entry and no move.
+     * Imports (or reports) remote worklogs that matched no entry and no move. Attribution is
+     * constrained to the target user so a PO run books colleagues' work to the right person.
      */
-    private function handleUnmatched(SyncRunContext $context): void
+    private function handleUnmatched(SyncRunContext $context, User $targetUser): void
     {
         if ([] === $context->unmatchedRemote) {
             return;
@@ -526,11 +688,12 @@ class SyncWorklogsService extends AbstractSyncRunService
             return;
         }
 
+        $targetUsername = $targetUser->getUsername();
         $importRunContext = new ImportRunContext(
             syncRun: $context->syncRun,
             ticketSystem: $context->ticketSystem,
             activity: $activity,
-            targetUsernames: [],
+            targetUsernames: null !== $targetUsername ? [$targetUsername] : [],
             dryRun: $context->dryRun,
             rangeFrom: 0,
             rangeTo: PHP_INT_MAX,
@@ -543,35 +706,6 @@ class SyncWorklogsService extends AbstractSyncRunService
         foreach ($importRunContext->affectedDays as $key => $affected) {
             $context->affectedDays[$key] = $affected;
         }
-    }
-
-    /**
-     * Pushes with the entry owner's token when connected, else the run's sync-user api.
-     */
-    private function apiForEntry(SyncRunContext $context, Entry $entry): JiraOAuthApiService
-    {
-        $owner = $entry->getUser();
-        if (!$owner instanceof User) {
-            return $context->api;
-        }
-
-        $ownerId = (int) $owner->getId();
-        if (isset($context->userApiCache[$ownerId])) {
-            return $context->userApiCache[$ownerId];
-        }
-
-        $api = $context->api;
-        foreach ($owner->getUserTicketsystems() as $userTicketsystem) {
-            if ($userTicketsystem->getTicketSystem() === $context->ticketSystem
-                && '' !== $userTicketsystem->getAccessToken()
-                && !$userTicketsystem->getAvoidConnection()
-            ) {
-                $api = $this->jiraOAuthApiFactory->create($owner, $context->ticketSystem);
-                break;
-            }
-        }
-
-        return $context->userApiCache[$ownerId] = $api;
     }
 
     private function seedState(SyncRunContext $context, Entry $entry, WorklogSnapshot $snapshot, string $updated): void
@@ -604,5 +738,22 @@ class SyncWorklogsService extends AbstractSyncRunService
         foreach ($days as $day) {
             $context->affectedDays[spl_object_id($user) . '|' . $day] = ['user' => $user, 'day' => $day];
         }
+    }
+
+    /**
+     * An empty completed run — the deprecated {@see sync()} shim always returns a run even when
+     * nothing is opted in.
+     */
+    private function emptyRun(TicketSystem $ticketSystem, bool $dryRun): SyncRun
+    {
+        $syncRun = new SyncRun()
+            ->setType(SyncRunType::SYNC)
+            ->setStatus(SyncRunStatus::RUNNING)
+            ->setTicketSystem($ticketSystem)
+            ->setScope(['dry_run' => $dryRun])
+            ->setCounters([])
+            ->setStartedAt($this->now());
+
+        return $this->executeRun($syncRun, static function (): void {});
     }
 }
