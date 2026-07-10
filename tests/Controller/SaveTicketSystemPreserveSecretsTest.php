@@ -11,7 +11,6 @@ namespace Tests\Controller;
 
 use App\Entity\Activity;
 use App\Entity\TicketSystem;
-use App\Entity\User;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
 
@@ -169,22 +168,16 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
             'id' => 1,
             'name' => 'testSystem',
             'type' => 'JIRA',
-            'syncUserId' => 2,
             'syncDefaultActivityId' => 1,
         ], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(200);
 
-        // toSafeArray() emits the relations as ids (camelCase + snake_case).
+        // toSafeArray() emits the relation as ids (camelCase + snake_case).
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $this->client->getResponse()->getContent(), true);
-        self::assertSame(2, $body['sync_user']);
         self::assertSame(1, $body['sync_default_activity']);
 
         $ticketSystem = $this->refetchTicketSystem();
-
-        $syncUser = $ticketSystem->getSyncUser();
-        self::assertInstanceOf(User::class, $syncUser);
-        self::assertSame(2, $syncUser->getId());
 
         $syncDefaultActivity = $ticketSystem->getSyncDefaultActivity();
         self::assertInstanceOf(Activity::class, $syncDefaultActivity);
@@ -207,11 +200,10 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
 
         $ticketSystem = $this->refetchTicketSystem();
 
-        self::assertNull($ticketSystem->getSyncUser());
         self::assertNull($ticketSystem->getSyncDefaultActivity());
     }
 
-    public function testSaveRejectsUnknownSyncUser(): void
+    public function testSaveRejectsUnknownSyncDefaultActivity(): void
     {
         $this->logInSession('unittest');
 
@@ -219,7 +211,7 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
             'id' => 1,
             'name' => 'testSystem',
             'type' => 'JIRA',
-            'syncUserId' => 999,
+            'syncDefaultActivityId' => 999,
         ], [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
     }
@@ -233,12 +225,9 @@ final class SaveTicketSystemPreserveSecretsTest extends AbstractWebTestCase
 
         $ticketSystem = $em->getRepository(TicketSystem::class)->find(1);
         self::assertInstanceOf(TicketSystem::class, $ticketSystem);
-        $syncUser = $em->getRepository(User::class)->find(2);
-        self::assertInstanceOf(User::class, $syncUser);
         $syncDefaultActivity = $em->getRepository(Activity::class)->find(1);
         self::assertInstanceOf(Activity::class, $syncDefaultActivity);
 
-        $ticketSystem->setSyncUser($syncUser);
         $ticketSystem->setSyncDefaultActivity($syncDefaultActivity);
 
         $em->persist($ticketSystem);

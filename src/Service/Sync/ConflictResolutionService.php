@@ -72,7 +72,7 @@ class ConflictResolutionService
     }
 
     /**
-     * Entry owner if connected, else the ticket system's sync user, else the acting user.
+     * Entry owner if connected, else the acting user.
      */
     private function tokenUser(Entry $entry, TicketSystem $ticketSystem, User $actor): User
     {
@@ -88,7 +88,7 @@ class ConflictResolutionService
             }
         }
 
-        return $ticketSystem->getSyncUser() ?? $actor;
+        return $actor;
     }
 
     private function resolveLocalWins(JiraOAuthApiService $api, WorklogSyncState $state, Entry $entry, TicketSystem $ticketSystem): ResolutionResult

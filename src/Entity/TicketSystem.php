@@ -106,24 +106,11 @@ class TicketSystem extends Base
     protected ?string $cloudId = null;
 
     /**
-     * TT user whose Jira token runs unattended incremental sync (ADR-023 §5).
-     */
-    #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(name: 'sync_user_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
-    protected ?User $syncUser = null;
-
-    /**
      * Activity assigned to worklogs auto-imported by cron sync; null disables unattended import.
      */
     #[ORM\ManyToOne(targetEntity: Activity::class)]
     #[ORM\JoinColumn(name: 'sync_default_activity_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     protected ?Activity $syncDefaultActivity = null;
-
-    /**
-     * Jira worklog/updated cursor (epoch milliseconds, Jira's `until`), advanced only after completed runs.
-     */
-    #[ORM\Column(name: 'worklog_sync_cursor', type: 'bigint', nullable: true)]
-    protected ?int $worklogSyncCursor = null;
 
     /**
      * Credential fields that must never leave the server. They are needed only
@@ -446,21 +433,6 @@ class TicketSystem extends Base
         return $this;
     }
 
-    public function getSyncUser(): ?User
-    {
-        return $this->syncUser;
-    }
-
-    /**
-     * @return $this
-     */
-    public function setSyncUser(?User $syncUser): static
-    {
-        $this->syncUser = $syncUser;
-
-        return $this;
-    }
-
     public function getSyncDefaultActivity(): ?Activity
     {
         return $this->syncDefaultActivity;
@@ -472,21 +444,6 @@ class TicketSystem extends Base
     public function setSyncDefaultActivity(?Activity $syncDefaultActivity): static
     {
         $this->syncDefaultActivity = $syncDefaultActivity;
-
-        return $this;
-    }
-
-    public function getWorklogSyncCursor(): ?int
-    {
-        return $this->worklogSyncCursor;
-    }
-
-    /**
-     * @return $this
-     */
-    public function setWorklogSyncCursor(?int $worklogSyncCursor): static
-    {
-        $this->worklogSyncCursor = $worklogSyncCursor;
 
         return $this;
     }

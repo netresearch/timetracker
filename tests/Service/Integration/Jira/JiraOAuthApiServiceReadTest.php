@@ -191,40 +191,4 @@ final class JiraOAuthApiServiceReadTest extends TestCase
 
         self::assertNull($service->getIssueWorklog('ABC-1', 77));
     }
-
-    public function testGetWorklogsUpdatedSinceParsesFeedPage(): void
-    {
-        $service = $this->serviceWithCannedResponses([
-            'worklog/updated?since=1000' => (object) [
-                'values' => [(object) ['worklogId' => 11], (object) ['worklogId' => 12]],
-                'until' => 2000,
-                'lastPage' => false,
-            ],
-        ]);
-
-        $page = $service->getWorklogsUpdatedSince(1000);
-
-        self::assertSame([11, 12], $page->worklogIds);
-        self::assertSame(2000, $page->until);
-        self::assertFalse($page->lastPage);
-    }
-
-    public function testGetWorklogsByIdsPostsToWorklogList(): void
-    {
-        $service = $this->serviceWithCannedResponses([], arrayResponses: [
-            'worklog/list' => [(object) ['id' => '11', 'issueId' => 10001, 'timeSpentSeconds' => 60], (object) ['id' => '12', 'issueId' => 10002, 'timeSpentSeconds' => 120]],
-        ]);
-
-        $workLogs = $service->getWorklogsByIds([11, 12]);
-
-        self::assertCount(2, $workLogs);
-        self::assertSame('10001', $workLogs[0]->issueId);
-    }
-
-    public function testGetIssueKeyByIdResolvesKey(): void
-    {
-        $service = $this->serviceWithCannedResponses(['issue/10001?fields=key' => (object) ['key' => 'ABC-1']]);
-
-        self::assertSame('ABC-1', $service->getIssueKeyById('10001'));
-    }
 }

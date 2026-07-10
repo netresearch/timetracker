@@ -152,14 +152,10 @@ CREATE TABLE `ticket_systems` (
   `oauth2_client_id` VARCHAR(255) NULL,
   `oauth2_client_secret` VARCHAR(255) NULL,
   `cloud_id` VARCHAR(64) NULL,
-  `sync_user_id` INT NULL DEFAULT NULL,
   `sync_default_activity_id` INT NULL DEFAULT NULL,
-  `worklog_sync_cursor` BIGINT NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
-  KEY `fk_ts_sync_user` (`sync_user_id`),
   KEY `fk_ts_sync_activity` (`sync_default_activity_id`),
-  CONSTRAINT `fk_ts_sync_user` FOREIGN KEY (`sync_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_ts_sync_activity` FOREIGN KEY (`sync_default_activity_id`) REFERENCES `activities` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
@@ -322,6 +318,8 @@ CREATE TABLE `users_ticket_systems` (
   `token_expires_at` DATETIME NULL,
   `avoidconnection` TINYINT(1) unsigned DEFAULT '0' NOT NULL,
   `remote_account_id` varchar(255) DEFAULT NULL,
+  `sync_enabled` TINYINT(1) NOT NULL DEFAULT '0',
+  `sync_all` TINYINT(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `fk_user_id_idx` (`user_id`),
   KEY `fk_ticket_system_id_idx` (`ticket_system_id`),

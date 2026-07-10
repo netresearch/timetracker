@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Service\Sync;
 
+use App\DTO\Jira\JiraWorkLog;
 use App\Entity\Entry;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
@@ -23,7 +24,6 @@ use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\ValueObject\Sync\WorklogSnapshot;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 use Psr\Clock\ClockInterface;
 use Throwable;
 
@@ -64,7 +64,7 @@ class VerifyWorklogsService extends AbstractSyncRunService
         private readonly WorklogSyncStateRepository $worklogSyncStateRepository,
         private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
         private readonly EntryWorklogProjector $entryWorklogProjector,
-        private readonly RemoteWorklogNormalizer $remoteWorklogNormalizer,
+        private readonly RemoteWorklogReader $remoteWorklogReader,
         private readonly ReconciliationService $reconciliationService,
         ClockInterface $clock,
     ) {
@@ -98,53 +98,16 @@ class VerifyWorklogsService extends AbstractSyncRunService
             $from->format('Y-m-d'),
             $to->format('Y-m-d'),
         );
-        $searchResult = $api->searchIssueKeysWithWorklogs($jql);
-        if ($searchResult->truncated) {
-            $this->addItem($syncRun, SyncItemKind::TRUNCATED, reason: 'issue search hit its result cap; report may be incomplete');
-        }
-
-        $rangeFrom = $from->setTime(0, 0)->getTimestamp();
-        $rangeTo = $to->setTime(23, 59, 59)->getTimestamp();
-
-        /** @var array<int, array{snapshot: WorklogSnapshot, updated: ?string, author: ?string}> $remoteByWorklogId */
-        $remoteByWorklogId = [];
-        foreach ($searchResult->keys as $issueKey) {
-            try {
-                $issueWorklogs = $api->getIssueWorklogs($issueKey);
-            } catch (Throwable $throwable) {
-                $syncRun->incrementCounter('errors');
-                $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, reason: substr('worklog fetch failed: ' . $throwable->getMessage(), 0, 255));
-                continue;
-            }
-
-            foreach ($issueWorklogs as $jiraWorkLog) {
-                if (null === $jiraWorkLog->id) {
-                    continue;
-                }
-                if (!$myself->matchesWorklogAuthor($jiraWorkLog)) {
-                    continue;
-                }
-                try {
-                    $snapshot = $this->remoteWorklogNormalizer->normalize($jiraWorkLog, $issueKey);
-                } catch (InvalidArgumentException $exception) {
-                    $syncRun->incrementCounter('errors');
-                    $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $jiraWorkLog->id, reason: substr($exception->getMessage(), 0, 255));
-                    continue;
-                }
-                if ($snapshot->startedTimestamp < $rangeFrom) {
-                    continue;
-                }
-                if ($snapshot->startedTimestamp > $rangeTo) {
-                    continue;
-                }
-
-                $remoteByWorklogId[$jiraWorkLog->id] = [
-                    'snapshot' => $snapshot,
-                    'updated' => $jiraWorkLog->updated,
-                    'author' => $jiraWorkLog->authorAccountId ?? $jiraWorkLog->authorName,
-                ];
-            }
-        }
+        $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
+            $api,
+            static fn (JiraWorkLog $jiraWorkLog): bool => $myself->matchesWorklogAuthor($jiraWorkLog),
+            $jql,
+            $from,
+            $to,
+            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun): void {
+                $this->onRemoteNotice($syncRun, $type, $issueKey, $throwable, $worklogId);
+            },
+        );
 
         // --- Local side.
         $entries = $this->entryRepository->findJiraSyncCandidates($user, $ticketSystem, $from, $to);
@@ -206,5 +169,26 @@ class VerifyWorklogsService extends AbstractSyncRunService
                 payload: ['remote' => $remoteData['snapshot']->toArray(), 'updated' => $remoteData['updated']],
             );
         }
+    }
+
+    /**
+     * Translate a reader notice into a verify report item (no writes).
+     */
+    private function onRemoteNotice(SyncRun $syncRun, string $type, ?string $issueKey, ?Throwable $throwable, ?int $worklogId): void
+    {
+        if ('truncated' === $type) {
+            $this->addItem($syncRun, SyncItemKind::TRUNCATED, reason: 'issue search hit its result cap; report may be incomplete');
+
+            return;
+        }
+
+        $syncRun->incrementCounter('errors');
+        if (null === $worklogId) {
+            $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, reason: substr('worklog fetch failed: ' . ($throwable?->getMessage() ?? ''), 0, 255));
+
+            return;
+        }
+
+        $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, remoteWorklogId: $worklogId, reason: substr($throwable?->getMessage() ?? '', 0, 255));
     }
 }

@@ -110,6 +110,16 @@ Server/Cloud differences remain in the ADR-017 `DeploymentType` branch; paginati
 
 Implementation note (Phase 3): unattended cron import requires both a sync user and a per-ticket-system default import activity (`ticket_systems.sync_default_activity_id`); without it, Jira-born worklogs surface as `remote_only` items for manual import.
 
+**Amendment (2026-07-10): opt-in per-user sync replaces the central sync user.** The central "sync user" token model above is superseded. Responsibility for every Jira operation is now explicit and self-service: each op runs under an accountable person's own token, chosen by three token/responsibility rules:
+
+1. Author opted in (`users_ticket_systems.sync_enabled` on their own row) → synced under the **author's** token; author is responsible.
+2. Else a PO opted into sync-all (`sync_all` on the PO's row, PO is ROLE_PL/ADMIN) and the PO's Jira token can see the worklog → synced under the **PO's** token; PO is responsible.
+3. Else → not synced.
+
+Writes are full bidirectional and **Jira-permission-gated**: what a token may do in Jira, TT lets it do — TT adds no extra permission gate beyond the opt-in. A lease failure still parks a conflict; a Jira-permission denial surfaces as an error item.
+
+**Schema change:** `users_ticket_systems` gains `sync_enabled` and `sync_all` (both bool, default 0); `ticket_systems.sync_user_id` and `ticket_systems.worklog_sync_cursor` are **dropped**. `ticket_systems.sync_default_activity_id` is kept (default activity for imported worklogs). The incremental cursor is dropped entirely: instead of advancing a per-ticket-system cursor, the cron rescans a bounded date window each run, which stays idempotent via worklog id (§4). This removes the anonymous background account and the "acting on someone's behalf" write fallback; the dead feed read methods (`getWorklogsUpdatedSince`/`getDeletedWorklogsSince`/`getWorklogsByIds`) are removed with the cursor.
+
 ### 6. Surfaces (all thin adapters over the one engine, per ADR-022)
 
 - **Console:** `tt:sync-worklogs [--ticket-system=X] [--dry-run] [--since=]` — cron heartbeat for ongoing sync, modeled on `tt:sync-subtickets`.

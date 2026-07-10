@@ -51,6 +51,17 @@ final class WorklogSyncToolsTest extends AbstractWebTestCase
         $this->setUpWorklogSyncFixtures();
     }
 
+    public function testSyncToolRejectsMultipleTargets(): void
+    {
+        $this->useToken(['sync:write']);
+
+        $this->expectException(ToolCallException::class);
+        $this->expectExceptionMessageMatches('/single user/');
+
+        $tool = self::getContainer()->get(SyncJiraWorklogsTool::class);
+        $tool->syncJiraWorklogs('sync', 1, users: ['developer', 'unittest']);
+    }
+
     public function testSyncToolTriggersVerify(): void
     {
         $verifyMock = $this->createMock(VerifyWorklogsService::class);
@@ -79,27 +90,59 @@ final class WorklogSyncToolsTest extends AbstractWebTestCase
             ->syncJiraWorklogs(type: 'verify', ticketSystemId: 1);
     }
 
-    public function testSyncToolSyncTypeRequiresAdmin(): void
+    public function testSyncToolSelfSyncAllowedForNonAdmin(): void
+    {
+        $syncMock = $this->createMock(SyncWorklogsService::class);
+        $syncMock->expects(self::once())
+            ->method('syncUser')
+            ->with(
+                self::callback(static fn (User $target): bool => 'developer' === $target->getUsername()),
+                self::callback(static fn (User $tokenOwner): bool => 'developer' === $tokenOwner->getUsername()),
+                self::anything(),
+                self::anything(),
+                self::anything(),
+                self::anything(),
+            )
+            ->willReturn($this->cannedRun(SyncRunType::SYNC, $this->developer));
+        self::getContainer()->set(SyncWorklogsService::class, $syncMock);
+
+        $this->useToken(['sync:write'], 'developer');
+
+        $result = self::getContainer()->get(SyncJiraWorklogsTool::class)
+            ->syncJiraWorklogs(type: 'sync', ticketSystemId: 1);
+
+        self::assertSame('sync', $result['type']);
+    }
+
+    public function testSyncToolSyncAnotherUserRequiresAdmin(): void
     {
         $this->useToken(['sync:write'], 'developer');
 
         $this->expectException(ToolCallException::class);
         self::getContainer()->get(SyncJiraWorklogsTool::class)
-            ->syncJiraWorklogs(type: 'sync', ticketSystemId: 1);
+            ->syncJiraWorklogs(type: 'sync', ticketSystemId: 1, users: ['unittest']);
     }
 
     public function testSyncToolSyncTypeAllowedForAdmin(): void
     {
         $syncMock = $this->createMock(SyncWorklogsService::class);
         $syncMock->expects(self::once())
-            ->method('sync')
+            ->method('syncUser')
+            ->with(
+                self::callback(static fn (User $target): bool => 'developer' === $target->getUsername()),
+                self::callback(static fn (User $tokenOwner): bool => 'unittest' === $tokenOwner->getUsername()),
+                self::anything(),
+                self::anything(),
+                self::anything(),
+                self::anything(),
+            )
             ->willReturn($this->cannedRun(SyncRunType::SYNC, $this->admin));
         self::getContainer()->set(SyncWorklogsService::class, $syncMock);
 
         $this->useToken(['sync:write']);
 
         $result = self::getContainer()->get(SyncJiraWorklogsTool::class)
-            ->syncJiraWorklogs(type: 'sync', ticketSystemId: 1);
+            ->syncJiraWorklogs(type: 'sync', ticketSystemId: 1, users: ['developer']);
 
         self::assertSame('sync', $result['type']);
     }

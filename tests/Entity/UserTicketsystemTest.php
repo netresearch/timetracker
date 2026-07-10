@@ -46,6 +46,33 @@ final class UserTicketsystemTest extends TestCase
         self::assertSame($user, $userTicketsystem->getUser());
     }
 
+    public function testSyncFlagsDefaultToFalse(): void
+    {
+        $userTicketsystem = new UserTicketsystem();
+
+        self::assertFalse($userTicketsystem->getSyncEnabled());
+        self::assertFalse($userTicketsystem->getSyncAll());
+    }
+
+    public function testSyncFlagsGettersAndSetters(): void
+    {
+        $userTicketsystem = new UserTicketsystem();
+
+        $result = $userTicketsystem
+            ->setSyncEnabled(true)
+            ->setSyncAll(true);
+
+        self::assertSame($userTicketsystem, $result);
+        self::assertTrue($userTicketsystem->getSyncEnabled());
+        self::assertTrue($userTicketsystem->getSyncAll());
+
+        $userTicketsystem->setSyncEnabled(false);
+        $userTicketsystem->setSyncAll(false);
+
+        self::assertFalse($userTicketsystem->getSyncEnabled());
+        self::assertFalse($userTicketsystem->getSyncAll());
+    }
+
     public function testRefreshTokenAndExpiryAreNullByDefault(): void
     {
         $userTicketsystem = new UserTicketsystem();

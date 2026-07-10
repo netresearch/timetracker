@@ -123,12 +123,32 @@ export async function postForm(
  * App\Response\Error envelope ({message}) or a plain-text business-rule
  * message; both are surfaced as ApiError.message.
  */
-export async function postJson<T = unknown>(
+export function postJson<T = unknown>(
+  path: string,
+  payload: Record<string, unknown>,
+): Promise<T> {
+  return sendJson<T>('POST', path, payload)
+}
+
+/**
+ * PUTs a typed JSON body — the idempotent counterpart to {@link postJson} for
+ * the v2 endpoints that model a set/replace (e.g. the worklog-sync preferences).
+ * Same #[MapRequestPayload] binding and error contract as postJson.
+ */
+export function putJson<T = unknown>(
+  path: string,
+  payload: Record<string, unknown>,
+): Promise<T> {
+  return sendJson<T>('PUT', path, payload)
+}
+
+async function sendJson<T>(
+  method: 'POST' | 'PUT',
   path: string,
   payload: Record<string, unknown>,
 ): Promise<T> {
   const response = await fetch(path, {
-    method: 'POST',
+    method,
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     credentials: 'same-origin',
     body: JSON.stringify(payload),

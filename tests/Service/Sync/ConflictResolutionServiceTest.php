@@ -64,9 +64,7 @@ final class ConflictResolutionServiceTest extends TestCase
         $apiFactory = $this->createMock(JiraOAuthApiFactory::class);
         $apiFactory->method('create')->willReturn($this->api);
 
-        $syncUser = new User()->setId(9)->setUsername('syncbot');
         $this->ticketSystem = $this->createMock(TicketSystem::class);
-        $this->ticketSystem->method('getSyncUser')->willReturn($syncUser);
 
         $this->actor = new User()->setId(1)->setUsername('admin');
 

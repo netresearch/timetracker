@@ -17,14 +17,15 @@ use DateTimeImmutable;
 use Exception;
 use InvalidArgumentException;
 
-use function ctype_digit;
 use function trim;
 
 /**
- * Maps a worklog sync run request onto the engine (ADR-023 §6): parses the
- * date range and cursor override, and dispatches to the verify/import/sync
- * service. Shared by the v2 create action and the MCP sync tool so the
- * parsing and dispatch logic exists exactly once.
+ * Maps a worklog sync run request onto the engine (ADR-023 §6, amended):
+ * parses the date range and dispatches to the verify/import/sync service.
+ * Shared by the v2 create action and the MCP sync tool so the parsing and
+ * dispatch logic exists exactly once. A sync run targets a single user under
+ * the caller's own token — the author when they self-sync, or a PO acting on a
+ * named target.
  */
 final readonly class SyncRunRequestMapper
 {
@@ -58,30 +59,9 @@ final readonly class SyncRunRequestMapper
     }
 
     /**
-     * Cursor override for sync runs — Y-m-d or epoch milliseconds, like the
-     * tt:sync-worklogs command's --since option.
-     *
-     * @throws Exception on a malformed date string
-     */
-    public function parseSince(WorklogSyncRunDto $worklogSyncRunDto): ?int
-    {
-        if ('sync' !== $worklogSyncRunDto->type || null === $worklogSyncRunDto->since) {
-            return null;
-        }
-
-        if ('' === trim($worklogSyncRunDto->since)) {
-            throw new InvalidArgumentException('Blank since value');
-        }
-
-        if (ctype_digit($worklogSyncRunDto->since)) {
-            return (int) $worklogSyncRunDto->since;
-        }
-
-        return new DateTimeImmutable($worklogSyncRunDto->since)->getTimestamp() * 1000;
-    }
-
-    /**
-     * Start the requested run inline and return the finished SyncRun.
+     * Start the requested run inline and return the finished SyncRun. A sync
+     * run always runs under $user's token: it targets $syncTarget when given
+     * (a PO acting on a named user), otherwise $user themselves (self-sync).
      */
     public function dispatch(
         WorklogSyncRunDto $worklogSyncRunDto,
@@ -89,7 +69,7 @@ final readonly class SyncRunRequestMapper
         TicketSystem $ticketSystem,
         DateTimeImmutable $from,
         DateTimeImmutable $to,
-        ?int $sinceMillis,
+        ?User $syncTarget = null,
     ): SyncRun {
         return match ($worklogSyncRunDto->type) {
             'verify' => $this->verifyWorklogsService->verify($user, $ticketSystem, $from, $to),
@@ -102,7 +82,7 @@ final readonly class SyncRunRequestMapper
                 $worklogSyncRunDto->users,
                 $worklogSyncRunDto->dry_run,
             ),
-            default => $this->syncWorklogsService->sync($ticketSystem, $sinceMillis, $worklogSyncRunDto->dry_run),
+            default => $this->syncWorklogsService->syncUser($syncTarget ?? $user, $user, $ticketSystem, $from, $to, $worklogSyncRunDto->dry_run),
         };
     }
 }

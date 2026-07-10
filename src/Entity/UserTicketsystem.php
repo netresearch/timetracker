@@ -10,11 +10,12 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Model\Base;
+use App\Repository\UserTicketsystemRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use SensitiveParameter;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: UserTicketsystemRepository::class)]
 #[ORM\Table(name: 'users_ticket_systems')]
 #[ORM\Index(name: 'idx_uts_remote_account', columns: ['ticket_system_id', 'remote_account_id'])]
 class UserTicketsystem extends Base
@@ -69,6 +70,18 @@ class UserTicketsystem extends Base
      */
     #[ORM\Column(name: 'remote_account_id', type: 'string', length: 255, nullable: true)]
     protected ?string $remoteAccountId = null;
+
+    /**
+     * Author opted their own worklogs into unattended cron sync under their own token (ADR-023 amendment).
+     */
+    #[ORM\Column(name: 'sync_enabled', type: 'boolean', options: ['default' => false])]
+    protected bool $syncEnabled = false;
+
+    /**
+     * PO (ROLE_PL/ADMIN) opted into syncing all worklogs their token can access in Jira (ADR-023 amendment).
+     */
+    #[ORM\Column(name: 'sync_all', type: 'boolean', options: ['default' => false])]
+    protected bool $syncAll = false;
 
     public function getId(): ?int
     {
@@ -201,6 +214,36 @@ class UserTicketsystem extends Base
     public function setRemoteAccountId(?string $remoteAccountId): static
     {
         $this->remoteAccountId = $remoteAccountId;
+
+        return $this;
+    }
+
+    public function getSyncEnabled(): bool
+    {
+        return $this->syncEnabled;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setSyncEnabled(bool $syncEnabled): static
+    {
+        $this->syncEnabled = $syncEnabled;
+
+        return $this;
+    }
+
+    public function getSyncAll(): bool
+    {
+        return $this->syncAll;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setSyncAll(bool $syncAll): static
+    {
+        $this->syncAll = $syncAll;
 
         return $this;
     }
