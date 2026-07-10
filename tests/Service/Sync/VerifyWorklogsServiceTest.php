@@ -25,6 +25,7 @@ use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Sync\EntryWorklogProjector;
 use App\Service\Sync\ReconciliationService;
 use App\Service\Sync\RemoteWorklogNormalizer;
+use App\Service\Sync\RemoteWorklogReader;
 use App\Service\Sync\VerifyWorklogsService;
 use DateTime;
 use DateTimeImmutable;
@@ -74,7 +75,7 @@ final class VerifyWorklogsServiceTest extends TestCase
             $this->syncStateRepository,
             $this->apiFactory,
             new EntryWorklogProjector(),
-            new RemoteWorklogNormalizer(),
+            new RemoteWorklogReader(new RemoteWorklogNormalizer()),
             new ReconciliationService(),
             new MockClock('2026-07-09 12:00:00'),
         );
