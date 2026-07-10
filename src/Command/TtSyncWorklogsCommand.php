@@ -24,10 +24,16 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-use function ctype_digit;
 use function sprintf;
+use function trim;
 
-#[AsCommand(name: 'tt:sync-worklogs', description: 'Incremental bidirectional Jira worklog sync (ADR-023)')]
+/**
+ * ADR-023 (amended): the cron entry point for opt-in per-user Jira worklog sync. Runs both passes
+ * for one ticket system — self-sync for authors who opted their own worklogs in, then PO sync-all
+ * for everyone a sync-all PO can see — each under its own accountable token. No cursor, no
+ * `--since`, no `--user`: a rolling date window is rescanned, idempotent via worklog id.
+ */
+#[AsCommand(name: 'tt:sync-worklogs', description: 'Opt-in per-user + PO bidirectional Jira worklog sync (ADR-023)')]
 class TtSyncWorklogsCommand extends Command
 {
     public function __construct(
@@ -43,9 +49,11 @@ class TtSyncWorklogsCommand extends Command
         string $ticketSystemId,
         InputInterface $input,
         OutputInterface $output,
-        #[Option(description: 'Cursor override: Y-m-d date or epoch milliseconds; default: stored cursor', name: 'since')]
-        ?string $since = null,
-        #[Option(description: 'Preview only: counters and parked items, no writes, cursor not advanced', name: 'dry-run')]
+        #[Option(description: 'Start date (Y-m-d); default: 30 days ago', name: 'from')]
+        ?string $from = null,
+        #[Option(description: 'End date (Y-m-d); default: today', name: 'to')]
+        ?string $to = null,
+        #[Option(description: 'Preview only: counters and parked items, no writes', name: 'dry-run')]
         bool $dryRun = false,
     ): int {
         $symfonyStyle = new SymfonyStyle($input, $output);
@@ -57,25 +65,37 @@ class TtSyncWorklogsCommand extends Command
             return 1;
         }
 
-        $sinceMillis = null;
-        if (null !== $since) {
-            if (ctype_digit($since)) {
-                $sinceMillis = (int) $since;
-            } else {
-                try {
-                    $sinceMillis = new DateTimeImmutable($since)->getTimestamp() * 1000;
-                } catch (Exception) {
-                    $symfonyStyle->error(sprintf('Invalid --since (expected Y-m-d or epoch milliseconds): %s', $since));
+        if ((null !== $from && '' === trim($from)) || (null !== $to && '' === trim($to))) {
+            $symfonyStyle->error('Invalid date in --from/--to: must not be blank (expected Y-m-d)');
 
-                    return 1;
-                }
+            return 1;
+        }
+
+        try {
+            $fromDate = null !== $from ? new DateTimeImmutable($from) : new DateTimeImmutable('today')->modify('-30 days');
+            $toDate = null !== $to ? new DateTimeImmutable($to) : new DateTimeImmutable('today');
+        } catch (Exception) {
+            $symfonyStyle->error(sprintf('Invalid date in --from/--to (expected Y-m-d): %s / %s', $from ?? '-', $to ?? '-'));
+
+            return 1;
+        }
+
+        $runs = $this->syncWorklogsService->syncTicketSystem($system, $fromDate, $toDate, $dryRun);
+
+        if ([] === $runs) {
+            $symfonyStyle->note('Nothing to sync: no user opted in and no PO opted into sync-all for this ticket system.');
+
+            return Command::SUCCESS;
+        }
+
+        $failed = false;
+        foreach ($runs as $syncRun) {
+            $this->syncRunConsoleRenderer->render($symfonyStyle, $syncRun, 'Sync');
+            if (SyncRunStatus::FAILED === $syncRun->getStatus()) {
+                $failed = true;
             }
         }
 
-        $syncRun = $this->syncWorklogsService->sync($system, $sinceMillis, $dryRun);
-
-        $this->syncRunConsoleRenderer->render($symfonyStyle, $syncRun, 'Sync');
-
-        return SyncRunStatus::COMPLETED === $syncRun->getStatus() ? Command::SUCCESS : 1;
+        return $failed ? 1 : Command::SUCCESS;
     }
 }
