@@ -566,6 +566,43 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame($po, $runs[0]->getTriggeredBy());
     }
 
+    public function testOverlappingSyncAllPosCoverAnAuthorOnlyOnce(): void
+    {
+        $poOne = new User()->setUsername('po.one');
+        $poTwo = new User()->setUsername('po.two');
+        $covered = new User()->setUsername('colleague');
+        $this->userTicketsystemRepository->method('findSyncEnabled')->willReturn([]);
+        $this->userTicketsystemRepository->method('findSyncAllOwners')->willReturn([
+            new UserTicketsystem()->setUser($poOne)->setTicketSystem($this->ticketSystem),
+            new UserTicketsystem()->setUser($poTwo)->setTicketSystem($this->ticketSystem),
+        ]);
+        $this->roleHierarchy->method('getReachableRoleNames')->willReturn(['ROLE_PL', 'ROLE_USER']);
+
+        // Both POs' broad reads see the same worklog by the same author.
+        $this->publish('TIM-9', new JiraWorkLog(
+            id: 77,
+            comment: 'work',
+            started: '2026-06-10T09:00:00.000+0200',
+            timeSpentSeconds: 3600,
+            updated: 'U1',
+            authorAccountId: 'colleague-acc',
+            authorName: 'colleague',
+            issueId: '10009',
+        ));
+        $this->authorMapper->method('find')->willReturn($covered);
+
+        $runs = $this->service->syncTicketSystem(
+            $this->ticketSystem,
+            new DateTimeImmutable('2026-06-01'),
+            new DateTimeImmutable('2026-06-30'),
+        );
+
+        // The first PO takes responsibility; the second must not produce a duplicate run.
+        self::assertCount(1, $runs);
+        self::assertSame('po.one', $runs[0]->getTriggeredBy()?->getUsername());
+        self::assertSame('colleague', $runs[0]->getScope()['target'] ?? null);
+    }
+
     public function testSyncTicketSystemPoSkipsSelfEnabledAuthors(): void
     {
         $po = new User()->setUsername('po');

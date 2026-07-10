@@ -80,22 +80,6 @@ class SyncWorklogsService extends AbstractSyncRunService
     }
 
     /**
-     * ADR-023 amendment: superseded by {@see syncTicketSystem()}. Retained with its original
-     * signature only so the not-yet-reworked command and API mapper keep compiling until Tasks
-     * 5/6 migrate them; it will be removed then. The cursor override is ignored — a rolling
-     * 30-day window is rescanned.
-     *
-     * @param int|null $sinceMillisOverride ignored (kept for signature compatibility)
-     */
-    public function sync(TicketSystem $ticketSystem, ?int $sinceMillisOverride = null, bool $dryRun = false): SyncRun
-    {
-        $to = $this->now();
-        $runs = $this->syncTicketSystem($ticketSystem, $to->modify('-30 days'), $to, $dryRun);
-
-        return $runs[0] ?? $this->emptyRun($ticketSystem, $dryRun);
-    }
-
-    /**
      * Sync one target user's worklogs under an accountable token owner (ADR-023 amendment).
      * When the owner is the target it is a self-sync; otherwise a PO acts under their own token.
      */
@@ -142,7 +126,11 @@ class SyncWorklogsService extends AbstractSyncRunService
         }
 
         // Pass 2 — PO sync-all: cover everyone else the PO can see, under the PO's token.
+        // Authors already covered by an earlier PO are skipped, so overlapping sync-all
+        // POs don't produce duplicate runs / redundant Jira calls for the same author:
+        // the first PO (repository order) takes responsibility for a shared author.
         $excludeAuthorKeys = $this->selfEnabledAuthorKeys($selfEnabled);
+        $coveredAuthors = [];
         foreach ($this->userTicketsystemRepository->findSyncAllOwners($ticketSystem) as $ownerTicketsystem) {
             $partyOwner = $ownerTicketsystem->getUser();
             if (!$partyOwner instanceof User) {
@@ -153,6 +141,12 @@ class SyncWorklogsService extends AbstractSyncRunService
             }
 
             foreach ($this->discoverPoAuthors($partyOwner, $ticketSystem, $excludeAuthorKeys, $from, $to) as $authorUser) {
+                $authorKey = $authorUser->getId() ?? spl_object_id($authorUser);
+                if (isset($coveredAuthors[$authorKey])) {
+                    continue;
+                }
+
+                $coveredAuthors[$authorKey] = true;
                 $runs[] = $this->syncUser($authorUser, $partyOwner, $ticketSystem, $from, $to, $dryRun);
             }
         }
@@ -738,22 +732,5 @@ class SyncWorklogsService extends AbstractSyncRunService
         foreach ($days as $day) {
             $context->affectedDays[spl_object_id($user) . '|' . $day] = ['user' => $user, 'day' => $day];
         }
-    }
-
-    /**
-     * An empty completed run — the deprecated {@see sync()} shim always returns a run even when
-     * nothing is opted in.
-     */
-    private function emptyRun(TicketSystem $ticketSystem, bool $dryRun): SyncRun
-    {
-        $syncRun = new SyncRun()
-            ->setType(SyncRunType::SYNC)
-            ->setStatus(SyncRunStatus::RUNNING)
-            ->setTicketSystem($ticketSystem)
-            ->setScope(['dry_run' => $dryRun])
-            ->setCounters([])
-            ->setStartedAt($this->now());
-
-        return $this->executeRun($syncRun, static function (): void {});
     }
 }
