@@ -26,7 +26,6 @@ use App\Service\Sync\EntryWorklogProjector;
 use App\Service\Sync\ReconciliationService;
 use App\Service\Sync\RemoteWorklogNormalizer;
 use App\Service\Sync\VerifyWorklogsService;
-use App\Service\Sync\WorklogCommentCodec;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -74,7 +73,7 @@ final class VerifyWorklogsServiceTest extends TestCase
             $this->entryRepository,
             $this->syncStateRepository,
             $this->apiFactory,
-            new EntryWorklogProjector(new WorklogCommentCodec()),
+            new EntryWorklogProjector(),
             new RemoteWorklogNormalizer(),
             new ReconciliationService(),
             new MockClock('2026-07-09 12:00:00'),

@@ -24,6 +24,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+use function mb_strlen;
+
 #[CoversClass(EntryPullApplier::class)]
 #[AllowMockObjectsWithoutExpectations]
 final class EntryPullApplierTest extends TestCase
@@ -68,12 +70,14 @@ final class EntryPullApplierTest extends TestCase
         );
     }
 
-    public function testCommentPullDecodesTtFormat(): void
+    public function testCommentPullSetsDecodedDescriptionVerbatim(): void
     {
+        // The snapshot the applier receives is already decoded (RemoteWorklogNormalizer);
+        // the applier writes it into the description without re-decoding.
         $this->ticketProjectResolver->expects(self::never())->method('resolve');
 
         $entry = $this->entry();
-        $remote = $this->snapshot(comment: '#42: Dev: new text');
+        $remote = $this->snapshot(comment: 'new text');
 
         $pullResult = $this->entryPullApplier->apply($entry, $remote, [WorklogField::COMMENT], $this->ticketSystem());
 
@@ -82,6 +86,17 @@ final class EntryPullApplierTest extends TestCase
         self::assertSame('2026-06-15', $entry->getDay()->format('Y-m-d'));
         self::assertSame('09:00:00', $entry->getStart()->format('H:i:s'));
         self::assertSame(['2026-06-15'], $pullResult->affectedDays);
+    }
+
+    public function testCommentPullTruncatesToColumnLimit(): void
+    {
+        $this->ticketProjectResolver->expects(self::never())->method('resolve');
+
+        $entry = $this->entry();
+        $pullResult = $this->entryPullApplier->apply($entry, $this->snapshot(comment: str_repeat('y', 400)), [WorklogField::COMMENT], $this->ticketSystem());
+
+        self::assertTrue($pullResult->applied);
+        self::assertSame(255, mb_strlen($entry->getDescription()));
     }
 
     public function testStartedPullMovesDayAndReportsBothDays(): void

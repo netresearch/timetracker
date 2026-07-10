@@ -12,7 +12,6 @@ namespace Tests\Service\Sync;
 use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Service\Sync\EntryWorklogProjector;
-use App\Service\Sync\WorklogCommentCodec;
 use DateTime;
 use PHPUnit\Framework\TestCase;
 
@@ -22,7 +21,7 @@ final class EntryWorklogProjectorTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->projector = new EntryWorklogProjector(new WorklogCommentCodec());
+        $this->projector = new EntryWorklogProjector();
     }
 
     private function entryStub(): Entry
@@ -49,6 +48,6 @@ final class EntryWorklogProjectorTest extends TestCase
         self::assertSame('ABC-1', $snapshot->issueKey);
         self::assertSame(new DateTime('2026-07-08 09:30:00')->getTimestamp(), $snapshot->startedTimestamp);
         self::assertSame(90, $snapshot->durationMinutes);
-        self::assertSame('#42: Development: fixed it', $snapshot->comment);
+        self::assertSame('fixed it', $snapshot->comment);
     }
 }

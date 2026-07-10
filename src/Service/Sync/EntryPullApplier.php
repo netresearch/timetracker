@@ -88,7 +88,8 @@ class EntryPullApplier
         }
 
         if ($pullComment) {
-            $entry->setDescription(mb_substr(WorklogCommentCodec::decode($remote->comment), 0, Entry::DESCRIPTION_MAX_LENGTH));
+            // $remote->comment is already the decoded description (RemoteWorklogNormalizer).
+            $entry->setDescription(mb_substr($remote->comment, 0, Entry::DESCRIPTION_MAX_LENGTH));
         }
 
         $dayAfter = $entry->getDay()->format('Y-m-d');

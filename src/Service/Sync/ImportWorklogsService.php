@@ -52,6 +52,7 @@ class ImportWorklogsService extends AbstractSyncRunService
         private readonly EntryRepository $entryRepository,
         private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
         private readonly RemoteWorklogNormalizer $remoteWorklogNormalizer,
+        private readonly EntryWorklogProjector $entryWorklogProjector,
         private readonly TicketProjectResolver $ticketProjectResolver,
         private readonly JiraAuthorMapper $jiraAuthorMapper,
         private readonly DayClassService $dayClassService,
@@ -351,11 +352,14 @@ class ImportWorklogsService extends AbstractSyncRunService
 
         $this->entityManager->persist($entry);
 
+        // Base is the entry's OWN projection, not the raw remote — so the imported entry
+        // reads back as in_sync (identical to what a verify/push would project) even when
+        // the description was truncated to the column limit.
         $syncState = new WorklogSyncState()
             ->setEntry($entry)
             ->setTicketSystem($importRunContext->ticketSystem)
             ->setStatus(WorklogSyncStatus::IN_SYNC)
-            ->setBasePayload($worklogSnapshot->toArray())
+            ->setBasePayload($this->entryWorklogProjector->project($entry)->toArray())
             ->setBaseUpdatedAt($jiraWorkLog->updated ?? '')
             ->setLastSyncedAt($this->now())
             ->setLastSyncRun($importRunContext->syncRun);

@@ -22,7 +22,6 @@ use App\Service\Sync\ConflictResolutionService;
 use App\Service\Sync\EntryPullApplier;
 use App\Service\Sync\EntryWorklogProjector;
 use App\Service\Sync\RemoteWorklogNormalizer;
-use App\Service\Sync\WorklogCommentCodec;
 use App\Service\Sync\WorklogWriteService;
 use App\Service\Tracking\DayClassService;
 use App\ValueObject\Sync\PullResult;
@@ -76,7 +75,7 @@ final class ConflictResolutionServiceTest extends TestCase
             $apiFactory,
             $this->worklogWriteService,
             $this->entryPullApplier,
-            new EntryWorklogProjector(new WorklogCommentCodec()),
+            new EntryWorklogProjector(),
             new RemoteWorklogNormalizer(),
             $this->dayClassService,
             new MockClock('2026-07-09 12:00:00'),

@@ -39,7 +39,7 @@ class RemoteWorklogNormalizer
             issueKey: $issueKey,
             startedTimestamp: $started->getTimestamp(),
             durationMinutes: intdiv(($jiraWorkLog->timeSpentSeconds ?? 0) + 30, 60),
-            comment: WorklogCommentCodec::normalize($jiraWorkLog->comment ?? ''),
+            comment: WorklogCommentCodec::decode($jiraWorkLog->comment ?? ''),
         );
     }
 }

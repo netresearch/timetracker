@@ -25,6 +25,7 @@ use App\Enum\SyncRunStatus;
 use App\Repository\EntryRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
+use App\Service\Sync\EntryWorklogProjector;
 use App\Service\Sync\ImportWorklogsService;
 use App\Service\Sync\JiraAuthorMapper;
 use App\Service\Sync\RemoteWorklogNormalizer;
@@ -97,6 +98,7 @@ final class ImportWorklogsServiceTest extends TestCase
             $this->entryRepository,
             $apiFactory,
             new RemoteWorklogNormalizer(),
+            new EntryWorklogProjector(),
             $this->projectResolver,
             $this->authorMapper,
             $this->dayClassService,
