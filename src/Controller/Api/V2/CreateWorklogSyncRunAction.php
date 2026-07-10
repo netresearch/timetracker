@@ -26,10 +26,11 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
- * Start a worklog verify/import/sync run against a ticket system (ADR-023
- * §6). Runs execute inline — the response carries the finished run with its
- * counters and findings. Non-admins may verify themselves and import only
- * their own worklogs; sync runs require the admin role.
+ * Start a worklog verify/import/sync run against a ticket system (ADR-023 §6,
+ * amended). Runs execute inline — the response carries the finished run with
+ * its counters and findings. Non-admins may verify themselves, import only
+ * their own worklogs, and sync only themselves; a PL/admin caller may sync a
+ * named target under their own token.
  */
 final readonly class CreateWorklogSyncRunAction
 {
@@ -61,24 +62,32 @@ final readonly class CreateWorklogSyncRunAction
 
         try {
             [$from, $to] = $this->syncRunRequestMapper->parseRange($worklogSyncRunDto);
-            $sinceMillis = $this->syncRunRequestMapper->parseSince($worklogSyncRunDto);
         } catch (Exception) {
-            return new JsonResponse(['message' => 'Invalid date in from/to/since (expected Y-m-d).'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            return new JsonResponse(['message' => 'Invalid date in from/to (expected Y-m-d).'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ('import' === $worklogSyncRunDto->type && null === $worklogSyncRunDto->default_activity_id) {
             return new JsonResponse(['message' => 'default_activity_id is required for import runs.'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $syncRun = $this->syncRunRequestMapper->dispatch($worklogSyncRunDto, $user, $ticketSystem, $from, $to, $sinceMillis);
+        $syncTarget = null;
+        if ('sync' === $worklogSyncRunDto->type && [] !== $worklogSyncRunDto->users) {
+            $syncTarget = $this->managerRegistry->getRepository(User::class)->findOneBy(['username' => $worklogSyncRunDto->users[0]]);
+            if (!$syncTarget instanceof User) {
+                return new JsonResponse(['message' => 'Target user not found.'], Response::HTTP_NOT_FOUND);
+            }
+        }
+
+        $syncRun = $this->syncRunRequestMapper->dispatch($worklogSyncRunDto, $user, $ticketSystem, $from, $to, $syncTarget);
 
         return new JsonResponse(SyncRunDto::fromEntity($syncRun), Response::HTTP_CREATED);
     }
 
     /**
-     * The authorization matrix (ADR-023 §6): admins may start anything;
-     * non-admins may verify themselves, import only their own username, and
-     * never sync.
+     * The authorization matrix (ADR-023 §6, amended): admins may start
+     * anything; non-admins may verify themselves, import only their own
+     * username, and sync only themselves — syncing a named target needs
+     * PL/admin.
      */
     private function authorize(WorklogSyncRunDto $worklogSyncRunDto, User $user): ?JsonResponse
     {
@@ -88,7 +97,7 @@ final readonly class CreateWorklogSyncRunAction
         }
 
         $message = 'sync' === $worklogSyncRunDto->type
-            ? 'Admin role required for sync runs.'
+            ? 'Admin role required to sync another user.'
             : 'Non-admin imports are limited to your own user.';
 
         return new JsonResponse(['message' => $message], Response::HTTP_FORBIDDEN);

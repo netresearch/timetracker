@@ -12,9 +12,11 @@ namespace Tests\Controller\Api\V2;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\UserTicketsystem;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
 use App\Service\Sync\ImportWorklogsService;
+use App\Service\Sync\SyncWorklogsService;
 use App\Service\Sync\VerifyWorklogsService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -86,16 +88,123 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
         self::assertSame(403, $status);
     }
 
-    public function testNonAdminCannotTriggerSync(): void
+    public function testCreateSyncRunSyncsSelf(): void
     {
+        $syncMock = $this->createMock(SyncWorklogsService::class);
+        $syncMock->expects(self::once())
+            ->method('syncUser')
+            ->with(
+                self::callback(static fn (User $target): bool => 'developer' === $target->getUsername()),
+                self::callback(static fn (User $tokenOwner): bool => 'developer' === $tokenOwner->getUsername()),
+                self::anything(),
+                self::anything(),
+                self::anything(),
+                self::anything(),
+            )
+            ->willReturn($this->cannedRun(SyncRunType::SYNC, 'developer'));
+        self::getContainer()->set(SyncWorklogsService::class, $syncMock);
+
         $this->logInSession('developer');
 
         $this->postJson(['type' => 'sync', 'ticket_system_id' => 1]);
 
+        $this->assertStatusCode(201);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($data);
+        self::assertSame('sync', $data['type']);
+    }
+
+    public function testAdminCanSyncAnotherUserUnderOwnToken(): void
+    {
+        $syncMock = $this->createMock(SyncWorklogsService::class);
+        $syncMock->expects(self::once())
+            ->method('syncUser')
+            ->with(
+                self::callback(static fn (User $target): bool => 'developer' === $target->getUsername()),
+                self::callback(static fn (User $tokenOwner): bool => 'unittest' === $tokenOwner->getUsername()),
+                self::anything(),
+                self::anything(),
+                self::anything(),
+                self::anything(),
+            )
+            ->willReturn($this->cannedRun(SyncRunType::SYNC, 'unittest'));
+        self::getContainer()->set(SyncWorklogsService::class, $syncMock);
+
+        $this->postJson(['type' => 'sync', 'ticket_system_id' => 1, 'users' => ['developer']]);
+
+        $this->assertStatusCode(201);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($data);
+        self::assertSame('sync', $data['type']);
+    }
+
+    public function testNonAdminCannotSyncAnotherUser(): void
+    {
+        $this->logInSession('developer');
+
+        $this->postJson(['type' => 'sync', 'ticket_system_id' => 1, 'users' => ['unittest']]);
+
         $this->assertStatusCode(403);
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
-        self::assertSame('Admin role required for sync runs.', $data['message']);
+        self::assertSame('Admin role required to sync another user.', $data['message']);
+    }
+
+    public function testGetPreferences(): void
+    {
+        $this->connectUser('developer', syncEnabled: true);
+
+        $this->logInSession('developer');
+        $this->client->request(Request::METHOD_GET, '/api/v2/worklog-sync/preferences');
+
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($data);
+        self::assertFalse($data['can_sync_all']);
+        self::assertIsList($data['preferences']);
+        self::assertCount(1, $data['preferences']);
+        $preference = $data['preferences'][0];
+        self::assertIsArray($preference);
+        self::assertSame(1, $preference['ticket_system_id']);
+        self::assertTrue($preference['sync_enabled']);
+        self::assertFalse($preference['sync_all']);
+    }
+
+    public function testPutPreferencesSelf(): void
+    {
+        $connectionId = (int) $this->connectUser('developer')->getId();
+
+        $this->logInSession('developer');
+        $this->putJson(['ticket_system_id' => 1, 'sync_enabled' => true]);
+
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($data);
+        self::assertTrue($data['sync_enabled']);
+        self::assertTrue($this->reloadConnection($connectionId)->getSyncEnabled());
+    }
+
+    public function testPutSyncAllRequiresPl(): void
+    {
+        $developerId = (int) $this->connectUser('developer')->getId();
+
+        $this->logInSession('developer');
+        $this->putJson(['ticket_system_id' => 1, 'sync_enabled' => true, 'sync_all' => true]);
+
+        $this->assertStatusCode(403);
+        self::assertFalse($this->reloadConnection($developerId)->getSyncAll());
+
+        // A privileged (admin/PL) caller may opt into sync-all.
+        $adminId = (int) $this->connectUser('unittest')->getId();
+
+        $this->logInSession('unittest');
+        $this->putJson(['ticket_system_id' => 1, 'sync_enabled' => true, 'sync_all' => true]);
+
+        $this->assertStatusCode(200);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($data);
+        self::assertTrue($data['sync_all']);
+        self::assertTrue($this->reloadConnection($adminId)->getSyncAll());
     }
 
     public function testNonAdminSelfImportAllowed(): void
@@ -326,6 +435,53 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
             ['HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
             json_encode($json, JSON_THROW_ON_ERROR),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $json
+     */
+    private function putJson(array $json): void
+    {
+        $this->client->request(
+            Request::METHOD_PUT,
+            '/api/v2/worklog-sync/preferences',
+            [],
+            [],
+            ['HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
+            json_encode($json, JSON_THROW_ON_ERROR),
+        );
+    }
+
+    /**
+     * Connect a fixture user to ticket system 1 with the given opt-in flags.
+     */
+    private function connectUser(string $username, bool $syncEnabled = false, bool $syncAll = false): UserTicketsystem
+    {
+        $userTicketsystem = new UserTicketsystem()
+            ->setUser($this->user($username))
+            ->setTicketSystem($this->ticketSystem())
+            ->setAccessToken('token')
+            ->setTokenSecret('secret')
+            ->setSyncEnabled($syncEnabled)
+            ->setSyncAll($syncAll);
+        $this->entityManager->persist($userTicketsystem);
+        $this->entityManager->flush();
+
+        return $userTicketsystem;
+    }
+
+    /**
+     * Re-read a connection from the database, detaching stale in-memory state
+     * left over from the request lifecycle, so persistence is asserted against
+     * the row that was actually written.
+     */
+    private function reloadConnection(int $id): UserTicketsystem
+    {
+        $this->entityManager->clear();
+        $userTicketsystem = $this->entityManager->find(UserTicketsystem::class, $id);
+        self::assertInstanceOf(UserTicketsystem::class, $userTicketsystem);
+
+        return $userTicketsystem;
     }
 
     /**

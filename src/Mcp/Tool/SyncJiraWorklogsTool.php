@@ -12,6 +12,7 @@ namespace App\Mcp\Tool;
 use App\Dto\Response\SyncRunDto;
 use App\Dto\WorklogSyncRunDto;
 use App\Entity\TicketSystem;
+use App\Entity\User;
 use App\Mcp\ScopeGuard;
 use App\Service\Sync\SyncRunAuthorization;
 use App\Service\Sync\SyncRunRequestMapper;
@@ -26,10 +27,10 @@ use function count;
 
 /**
  * MCP tool: start a worklog verify/import/sync run against a Jira ticket
- * system (ADR-023 §6). Runs execute inline — the result carries the finished
- * run with its counters and per-worklog findings. Non-admins may verify
- * themselves and import only their own worklogs; sync runs require an
- * administrator account.
+ * system (ADR-023 §6, amended). Runs execute inline — the result carries the
+ * finished run with its counters and per-worklog findings. Non-admins may
+ * verify themselves, import only their own worklogs, and sync only themselves;
+ * a PL/admin account may sync a named target under its own token.
  */
 final readonly class SyncJiraWorklogsTool
 {
@@ -46,8 +47,10 @@ final readonly class SyncJiraWorklogsTool
      * Start a worklog run: "verify" compares timetracker entries against Jira
      * worklogs without writing anything, "import" pulls Jira worklogs into
      * timetracker entries (set dryRun to preview first), "sync" runs the
-     * bidirectional lease-checked sync (admin only). Items the engine cannot
-     * decide on its own are parked and appear in list_sync_conflicts.
+     * bidirectional lease-checked sync for a single user under your own token
+     * (yourself by default; a PL/admin may sync a named target via users[0]).
+     * Items the engine cannot decide on its own are parked and appear in
+     * list_sync_conflicts.
      *
      * @param list<string> $users
      *
@@ -56,7 +59,7 @@ final readonly class SyncJiraWorklogsTool
      *
      * @return array<string, mixed> the finished run with counters and findings
      */
-    #[McpTool(name: 'sync_jira_worklogs', description: 'Start a worklog run against a Jira ticket system: "verify" (read-only comparison), "import" (Jira → timetracker; dryRun previews), or "sync" (bidirectional, admin only). Parked items land in list_sync_conflicts.')]
+    #[McpTool(name: 'sync_jira_worklogs', description: 'Start a worklog run against a Jira ticket system: "verify" (read-only comparison), "import" (Jira → timetracker; dryRun previews), or "sync" (bidirectional, single target under your own token; yourself by default, a named target needs PL/admin). Parked items land in list_sync_conflicts.')]
     public function syncJiraWorklogs(
         #[Schema(description: 'Run type: "verify", "import", or "sync".')]
         string $type,
@@ -66,14 +69,12 @@ final readonly class SyncJiraWorklogsTool
         ?string $from = null,
         #[Schema(description: 'Range end as YYYY-MM-DD (default: today).')]
         ?string $to = null,
-        #[Schema(description: 'Usernames to import worklogs for (import only). Non-admins may only pass their own username.')]
+        #[Schema(description: 'Usernames to import worklogs for (import); or the single target username to sync in users[0] (sync). Non-admins may only pass their own username.')]
         array $users = [],
         #[Schema(description: 'Activity id assigned to imported entries (required for import).', minimum: 1)]
         ?int $defaultActivityId = null,
         #[Schema(description: 'Preview without writing anything (import/sync).')]
         bool $dryRun = false,
-        #[Schema(description: 'Cursor override for sync runs: YYYY-MM-DD or epoch milliseconds.')]
-        ?string $since = null,
     ): array {
         $user = $this->scopeGuard->requireScope('sync:write');
 
@@ -85,7 +86,6 @@ final readonly class SyncJiraWorklogsTool
             users: $users,
             default_activity_id: $defaultActivityId,
             dry_run: $dryRun,
-            since: $since,
         );
         $violations = $this->validator->validate($worklogSyncRunDto);
         if (count($violations) > 0) {
@@ -93,7 +93,7 @@ final readonly class SyncJiraWorklogsTool
         }
 
         if (!$this->syncRunAuthorization->canTrigger($user, false, $type, $users)) {
-            // Sync runs and foreign imports need an administrator account.
+            // Foreign imports and syncing another target need an administrator account.
             $this->scopeGuard->requireAdminScope('sync:write');
         }
 
@@ -106,14 +106,21 @@ final readonly class SyncJiraWorklogsTool
             throw new ToolCallException('defaultActivityId is required for import runs.');
         }
 
-        try {
-            [$fromDate, $toDate] = $this->syncRunRequestMapper->parseRange($worklogSyncRunDto);
-            $sinceMillis = $this->syncRunRequestMapper->parseSince($worklogSyncRunDto);
-        } catch (Exception) {
-            throw new ToolCallException('Invalid date in from/to/since (expected Y-m-d).');
+        $syncTarget = null;
+        if ('sync' === $type && [] !== $users) {
+            $syncTarget = $this->managerRegistry->getRepository(User::class)->findOneBy(['username' => $users[0]]);
+            if (!$syncTarget instanceof User) {
+                throw new ToolCallException('Target user not found.');
+            }
         }
 
-        $syncRun = $this->syncRunRequestMapper->dispatch($worklogSyncRunDto, $user, $ticketSystem, $fromDate, $toDate, $sinceMillis);
+        try {
+            [$fromDate, $toDate] = $this->syncRunRequestMapper->parseRange($worklogSyncRunDto);
+        } catch (Exception) {
+            throw new ToolCallException('Invalid date in from/to (expected Y-m-d).');
+        }
+
+        $syncRun = $this->syncRunRequestMapper->dispatch($worklogSyncRunDto, $user, $ticketSystem, $fromDate, $toDate, $syncTarget);
 
         return SyncRunDto::fromEntity($syncRun)->jsonSerialize();
     }

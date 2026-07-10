@@ -12,9 +12,10 @@ namespace App\Dto;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Request body of POST /api/v2/worklog-sync/runs (ADR-023 §6): which run to
- * start against which ticket system, with an optional date range, user
- * filter (import), and cursor override (sync).
+ * Request body of POST /api/v2/worklog-sync/runs (ADR-023 §6, amended): which
+ * run to start against which ticket system, with an optional date range and
+ * user filter. For import, `users` lists the target usernames; for a
+ * single-target sync, `users[0]` is the target a PO acts on under their token.
  */
 final readonly class WorklogSyncRunDto
 {
@@ -33,7 +34,6 @@ final readonly class WorklogSyncRunDto
         #[Assert\Positive]
         public ?int $default_activity_id = null,
         public bool $dry_run = false,
-        public ?string $since = null,
     ) {
     }
 }

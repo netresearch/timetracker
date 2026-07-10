@@ -14,16 +14,18 @@ use App\Entity\User;
 use App\Entity\WorklogSyncState;
 
 /**
- * The ADR-023 §6 authorization matrix, shared by the v2 actions and the MCP
- * tools: admins may do anything; non-admins may verify themselves, import
- * only their own username, and see/resolve only their own runs and entries.
+ * The ADR-023 §6 authorization matrix (amended), shared by the v2 actions and
+ * the MCP tools: admins may do anything; non-admins may verify themselves,
+ * import only their own username, sync only themselves, and see/resolve only
+ * their own runs and entries.
  */
 final readonly class SyncRunAuthorization
 {
     /**
      * May $user start a run of $type against $users?
      *
-     * @param list<string> $users usernames an import run targets
+     * @param list<string> $users usernames a run targets (import), or the
+     *                            single target of a sync in $users[0]
      */
     public function canTrigger(User $user, bool $isAdmin, string $type, array $users): bool
     {
@@ -32,7 +34,9 @@ final readonly class SyncRunAuthorization
         }
 
         if ('sync' === $type) {
-            return false;
+            // A manual self-sync is always allowed (the opt-in flag governs the
+            // cron, not manual triggers); syncing another target needs PL/ADMIN.
+            return [] === $users || [$user->getUsername()] === $users;
         }
 
         if ('import' === $type) {
