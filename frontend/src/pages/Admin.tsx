@@ -1,5 +1,5 @@
 import { useLocation, useNavigate, useParams } from '@solidjs/router'
-import { createEffect, For, Show } from 'solid-js'
+import { createEffect, For, Match, Show, Switch } from 'solid-js'
 
 import { adminEntities } from '../admin/entities'
 import { useOptionSources } from '../admin/options'
@@ -7,9 +7,12 @@ import { AdminCrudShell } from '../components/AdminCrudShell'
 import { activeNavLink } from '../header'
 import { m } from '../paraglide/messages.js'
 import AdminStatus from './AdminStatus'
+import WorklogSync from './WorklogSync'
 
-// A non-CRUD sub-page (read-only diagnostics) shown alongside the entity tabs.
+// Non-CRUD sub-pages shown alongside the entity tabs: read-only diagnostics and
+// the worklog-sync area. Their keys are distinct from any entity key.
 const STATUS_KEY = 'status'
+const WORKLOG_SYNC_KEY = 'worklog-sync'
 
 // Remembers the entity the Admin URL last selected. When a page-level modal
 // (e.g. /ui/settings) opens over Admin, App.tsx re-renders Admin as the modal's
@@ -38,6 +41,9 @@ export default function Admin() {
     const key = params.entity ?? (onAdminRoute() ? undefined : lastAdminEntity)
     if (key === STATUS_KEY) {
       return STATUS_KEY
+    }
+    if (key === WORKLOG_SYNC_KEY) {
+      return WORKLOG_SYNC_KEY
     }
 
     return entities.find((entity) => entity.key === key)?.key ?? entities[0]!.key
@@ -107,18 +113,32 @@ export default function Admin() {
         >
           {m.admin_status()}
         </button>
+        <button
+          type="button"
+          class="admin-subnav-link"
+          classList={{ 'is-active': activeKey() === WORKLOG_SYNC_KEY }}
+          aria-current={activeKey() === WORKLOG_SYNC_KEY ? 'page' : undefined}
+          onClick={() => navigate(`/admin/${WORKLOG_SYNC_KEY}`)}
+        >
+          {m.worklogsync_admin_title()}
+        </button>
       </nav>
 
       {/* keyed on the active entity so the shell remounts on switch — its sort,
           filter and any open edit form reset instead of bleeding across
           entities (and binding an open form to the wrong save endpoint). */}
-      <Show when={activeKey() === STATUS_KEY} fallback={
+      <Switch fallback={
         <Show when={activeKey()} keyed>
           <AdminCrudShell descriptor={active()} options={lookup} />
         </Show>
       }>
-        <AdminStatus />
-      </Show>
+        <Match when={activeKey() === STATUS_KEY}>
+          <AdminStatus />
+        </Match>
+        <Match when={activeKey() === WORKLOG_SYNC_KEY}>
+          <WorklogSync />
+        </Match>
+      </Switch>
     </section>
   )
 }
