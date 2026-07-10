@@ -2,6 +2,7 @@ import { createSignal, For, Show } from 'solid-js'
 
 import { SecuritySection } from '../components/SecuritySection'
 import { WorklogImportSection } from '../components/WorklogImportSection'
+import { WorklogSyncPreferences } from '../components/WorklogSyncPreferences'
 import { apiErrorMessage, postForm } from '../api/client'
 import { appConfig, type AppConfig } from '../config'
 import { dateFormat, setDateFormat, formatWith, validatePattern, type DateFormatMode } from '../lib/dateFormat'
@@ -193,6 +194,10 @@ export default function Settings() {
       {/* Self-service Jira worklog import (ADR-023 use case 1) — a separate
           per-account operation that drives the v2 worklog-sync endpoints. */}
       <WorklogImportSection />
+
+      {/* Per-user sync opt-in (ADR-023 amendment): the caller opts their own
+          worklogs into the nightly sync; a PO can opt into sync-all. */}
+      <WorklogSyncPreferences />
 
       {/* Device-local UI preferences — localStorage only, apply instantly.
           Deliberately OUTSIDE the save form: nothing here is submitted. The

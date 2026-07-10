@@ -1,4 +1,4 @@
-import { getJson, postJson } from './client'
+import { getJson, postJson, putJson } from './client'
 
 // ── Worklog-sync DTOs (ADR-023 §6) ───────────────────────────────────────────
 // Snake_case, mirroring the Phase 4a backend DTOs (SyncRunDto / SyncRunItemDto /
@@ -69,11 +69,36 @@ export interface CreateRunPayload {
   since?: string
 }
 
-/** Base cache keys — callers invalidate `worklogSyncKeys.runs` / `.conflicts`
- *  after a write; the per-query factories append their params/id under them. */
+/** The caller's opt-in flags for one connected Jira ticket system
+ *  (WorklogSyncPreferenceDto). Mirrors the ADR-023-amendment preferences DTO. */
+export interface WorklogSyncPreference {
+  ticket_system_id: number
+  ticket_system_name: string
+  sync_enabled: boolean
+  sync_all: boolean
+}
+
+/** GET /api/v2/worklog-sync/preferences body: the caller's per-ticket-system
+ *  flags plus whether they may offer the PO "sync all I can access" toggle. */
+export interface WorklogSyncPreferences {
+  preferences: WorklogSyncPreference[]
+  can_sync_all: boolean
+}
+
+/** Body for PUT /api/v2/worklog-sync/preferences — always the caller's own row.
+ *  `sync_all` is sent only by a PL/admin (omitted leaves it unchanged). */
+export interface PutPreferencePayload {
+  ticket_system_id: number
+  sync_enabled: boolean
+  sync_all?: boolean
+}
+
+/** Base cache keys — callers invalidate `worklogSyncKeys.runs` / `.conflicts` /
+ *  `.preferences` after a write; the per-query factories append their params/id. */
 export const worklogSyncKeys = {
   runs: ['worklog-sync', 'runs'] as const,
   conflicts: ['worklog-sync', 'conflicts'] as const,
+  preferences: ['worklog-sync', 'preferences'] as const,
 }
 
 // ── Query factories ({queryKey, queryFn}, per the src/api/queries.ts convention) ─
@@ -115,7 +140,20 @@ export function syncConflictsQuery(user?: string) {
   }
 }
 
+/** GET /api/v2/worklog-sync/preferences — the caller's per-ticket-system flags. */
+export function worklogSyncPreferencesQuery() {
+  return {
+    queryKey: [...worklogSyncKeys.preferences] as const,
+    queryFn: () => getJson<WorklogSyncPreferences>('/api/v2/worklog-sync/preferences'),
+  }
+}
+
 // ── Write helpers (plain async; the caller invalidates the matching key) ──────
+
+/** PUT /api/v2/worklog-sync/preferences — set the caller's own opt-in flags. */
+export function putWorklogSyncPreferences(payload: PutPreferencePayload): Promise<WorklogSyncPreference> {
+  return putJson<WorklogSyncPreference>('/api/v2/worklog-sync/preferences', { ...payload })
+}
 
 /** POST /api/v2/worklog-sync/runs — trigger a run; returns the created SyncRun. */
 export function createSyncRun(payload: CreateRunPayload): Promise<SyncRun> {
