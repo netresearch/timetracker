@@ -573,6 +573,8 @@
   "status_subsystem_jira_desc": "Worklog synchronization with Jira.",
   "worklogsync_import_title": "Import Jira worklogs",
   "worklogsync_import_intro": "Import your logged time from Jira into the tracker.",
+  "worklogsync_import_done": "Import complete.",
+  "worklogsync_import_error": "Import failed.",
   "worklogsync_from": "From",
   "worklogsync_to": "To",
   "worklogsync_default_activity": "Default activity",

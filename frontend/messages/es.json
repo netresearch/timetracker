@@ -573,6 +573,8 @@
   "status_subsystem_jira_desc": "Sincronización de worklogs con Jira.",
   "worklogsync_import_title": "Importar registros de trabajo de Jira",
   "worklogsync_import_intro": "Importe el tiempo que registró en Jira al registro de tiempo.",
+  "worklogsync_import_done": "Importación completada.",
+  "worklogsync_import_error": "Error en la importación.",
   "worklogsync_from": "Desde",
   "worklogsync_to": "Hasta",
   "worklogsync_default_activity": "Actividad predeterminada",
