@@ -18,6 +18,7 @@ use Exception;
 use InvalidArgumentException;
 
 use function ctype_digit;
+use function trim;
 
 /**
  * Maps a worklog sync run request onto the engine (ADR-023 §6): parses the
@@ -43,9 +44,11 @@ final readonly class SyncRunRequestMapper
      */
     public function parseRange(WorklogSyncRunDto $worklogSyncRunDto): array
     {
-        // DateTimeImmutable('') silently resolves to "now" — reject it as malformed.
-        if ('' === $worklogSyncRunDto->from || '' === $worklogSyncRunDto->to) {
-            throw new InvalidArgumentException('Empty date in from/to');
+        // DateTimeImmutable('') and whitespace-only both silently resolve to "now" — reject.
+        if ((null !== $worklogSyncRunDto->from && '' === trim($worklogSyncRunDto->from))
+            || (null !== $worklogSyncRunDto->to && '' === trim($worklogSyncRunDto->to))
+        ) {
+            throw new InvalidArgumentException('Blank date in from/to');
         }
 
         $from = null !== $worklogSyncRunDto->from ? new DateTimeImmutable($worklogSyncRunDto->from) : new DateTimeImmutable('first day of this month');
@@ -66,8 +69,8 @@ final readonly class SyncRunRequestMapper
             return null;
         }
 
-        if ('' === $worklogSyncRunDto->since) {
-            throw new InvalidArgumentException('Empty since value');
+        if ('' === trim($worklogSyncRunDto->since)) {
+            throw new InvalidArgumentException('Blank since value');
         }
 
         if (ctype_digit($worklogSyncRunDto->since)) {

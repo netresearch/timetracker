@@ -175,6 +175,17 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
     }
 
+    public function testWhitespaceOnlyDateStringsRejected(): void
+    {
+        $this->postJson([
+            'type' => 'verify',
+            'ticket_system_id' => 1,
+            'from' => '   ',
+        ]);
+
+        $this->assertStatusCode(422);
+    }
+
     public function testGetRunReturnsBody(): void
     {
         $run = $this->persistRun('developer');
