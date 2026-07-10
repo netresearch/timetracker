@@ -580,7 +580,6 @@
   "worklogsync_to": "Au",
   "worklogsync_default_activity": "Activité par défaut",
   "worklogsync_ticket_system": "Système de tickets",
-  "worklogsync_ticket_system_sync_user": "Utilisateur de synchronisation",
   "worklogsync_ticket_system_sync_activity": "Activité par défaut de synchronisation",
   "worklogsync_preview": "Aperçu",
   "worklogsync_execute": "Exécuter l'import",

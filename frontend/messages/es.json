@@ -580,7 +580,6 @@
   "worklogsync_to": "Hasta",
   "worklogsync_default_activity": "Actividad predeterminada",
   "worklogsync_ticket_system": "Sistema de tickets",
-  "worklogsync_ticket_system_sync_user": "Usuario de sincronización",
   "worklogsync_ticket_system_sync_activity": "Actividad predeterminada de sincronización",
   "worklogsync_preview": "Vista previa",
   "worklogsync_execute": "Ejecutar importación",

@@ -6,7 +6,6 @@ namespace Tests\Entity;
 
 use App\Entity\Activity;
 use App\Entity\TicketSystem;
-use App\Entity\User;
 use App\Enum\DeploymentType;
 use App\Enum\TicketSystemType;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -335,16 +334,11 @@ final class TicketSystemTest extends TestCase
     {
         $ticketSystem = new TicketSystem();
 
-        self::assertNull($ticketSystem->getSyncUser());
         self::assertNull($ticketSystem->getSyncDefaultActivity());
-        self::assertNull($ticketSystem->getWorklogSyncCursor());
 
-        $user = new User();
         $activity = new Activity();
-        $ticketSystem->setSyncUser($user)->setSyncDefaultActivity($activity)->setWorklogSyncCursor(1751871600000);
+        $ticketSystem->setSyncDefaultActivity($activity);
 
-        self::assertSame($user, $ticketSystem->getSyncUser());
         self::assertSame($activity, $ticketSystem->getSyncDefaultActivity());
-        self::assertSame(1751871600000, $ticketSystem->getWorklogSyncCursor());
     }
 }

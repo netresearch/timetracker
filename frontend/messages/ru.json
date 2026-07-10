@@ -580,7 +580,6 @@
   "worklogsync_to": "По",
   "worklogsync_default_activity": "Действие по умолчанию",
   "worklogsync_ticket_system": "Система тикетов",
-  "worklogsync_ticket_system_sync_user": "Пользователь синхронизации",
   "worklogsync_ticket_system_sync_activity": "Действие синхронизации по умолчанию",
   "worklogsync_preview": "Предпросмотр",
   "worklogsync_execute": "Выполнить импорт",

@@ -14,7 +14,6 @@ use App\DTO\Jira\JiraIssueKeySearchResult;
 use App\DTO\Jira\JiraSearchResult;
 use App\DTO\Jira\JiraUserIdentity;
 use App\DTO\Jira\JiraWorkLog;
-use App\DTO\Jira\JiraWorklogFeedPage;
 use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\Project;
@@ -582,65 +581,6 @@ class JiraOAuthApiService
         }
 
         return is_object($response) ? JiraWorkLog::fromApiResponse($response) : null;
-    }
-
-    /**
-     * @throws JiraApiException
-     */
-    public function getWorklogsUpdatedSince(int $sinceMillis): JiraWorklogFeedPage
-    {
-        $response = $this->get('worklog/updated?since=' . $sinceMillis);
-
-        return JiraWorklogFeedPage::fromApiResponse(is_object($response) ? $response : new stdClass());
-    }
-
-    /**
-     * @throws JiraApiException
-     */
-    public function getDeletedWorklogsSince(int $sinceMillis): JiraWorklogFeedPage
-    {
-        $response = $this->get('worklog/deleted?since=' . $sinceMillis);
-
-        return JiraWorklogFeedPage::fromApiResponse(is_object($response) ? $response : new stdClass());
-    }
-
-    /**
-     * Bulk worklog fetch for feed ids (POST worklog/list returns a JSON array).
-     *
-     * @param list<int> $ids
-     *
-     * @throws JiraApiException
-     *
-     * @return list<JiraWorkLog>
-     */
-    public function getWorklogsByIds(array $ids): array
-    {
-        if ([] === $ids) {
-            return [];
-        }
-
-        $workLogs = [];
-        foreach ($this->getResponseArray('worklog/list', ['ids' => $ids]) as $workLog) {
-            $workLogs[] = JiraWorkLog::fromApiResponse($workLog);
-        }
-
-        return $workLogs;
-    }
-
-    /**
-     * Resolves a numeric issue id (as found in feed worklogs) to the issue key.
-     *
-     * @throws JiraApiException
-     */
-    public function getIssueKeyById(string $issueId): ?string
-    {
-        try {
-            $response = $this->get(sprintf('issue/%s?fields=key', $issueId));
-        } catch (JiraApiInvalidResourceException) {
-            return null;
-        }
-
-        return is_object($response) && isset($response->key) && is_string($response->key) ? $response->key : null;
     }
 
     /**

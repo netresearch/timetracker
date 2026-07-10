@@ -920,17 +920,13 @@ describe('Admin status page', () => {
 })
 
 describe('Admin ticket-system sync configuration', () => {
-  it('exposes the sync-user and sync-default-activity selects with source options', async () => {
+  it('exposes the sync-default-activity select with source options', async () => {
     mockEndpoints()
     const { getByRole, unmount } = renderAdmin('/admin/ticketsystems')
     await waitFor(() => expect(getByRole('gridcell', { name: 'Jira' })).toBeInTheDocument())
 
     fireEvent.click(getByRole('button', { name: 'Edit' }))
     const dialog = await screen.findByRole('dialog')
-
-    // The sync-user select is populated from the shared users source (jdoe).
-    const syncUser = within(dialog).getByRole('combobox', { name: 'Sync user' })
-    expect(within(syncUser).getByRole('option', { name: 'jdoe' })).toBeInTheDocument()
 
     // The sync-default-activity select is populated from the activities source (Dev).
     const syncActivity = within(dialog).getByRole('combobox', { name: 'Sync default activity' })
@@ -939,7 +935,7 @@ describe('Admin ticket-system sync configuration', () => {
     unmount()
   })
 
-  it('saves the ticketsystem sync config as syncUserId/syncDefaultActivityId', async () => {
+  it('saves the ticketsystem sync config as syncDefaultActivityId', async () => {
     mockEndpoints()
     postJson.mockResolvedValue({ success: true })
     const { getByRole, unmount } = renderAdmin('/admin/ticketsystems')
@@ -948,27 +944,24 @@ describe('Admin ticket-system sync configuration', () => {
     fireEvent.click(getByRole('button', { name: 'Edit' }))
     const dialog = await screen.findByRole('dialog')
 
-    fireEvent.input(within(dialog).getByRole('combobox', { name: 'Sync user' }), { target: { value: '3' } })
     fireEvent.input(within(dialog).getByRole('combobox', { name: 'Sync default activity' }), { target: { value: '5' } })
     fireEvent.submit(dialog.querySelector('form') as HTMLFormElement)
 
-    // The camelCase DTO field names (TicketSystemSaveDto) travel, not the form's snake keys.
+    // The camelCase DTO field name (TicketSystemSaveDto) travels, not the form's snake key.
     await waitFor(() =>
-      expect(postJson).toHaveBeenCalledWith('/ticketsystem/save', expect.objectContaining({ syncUserId: 3, syncDefaultActivityId: 5 })),
+      expect(postJson).toHaveBeenCalledWith('/ticketsystem/save', expect.objectContaining({ syncDefaultActivityId: 5 })),
     )
 
     unmount()
   })
 
   it('clears the sync config to null when the "— none —" option is chosen', async () => {
-    // A ticket system that already has a sync user/activity assigned; clearing the
+    // A ticket system that already has a sync activity assigned; clearing the
     // select must emit null (not 0) so the backend SET NULLs the relation.
     getJson.mockImplementation((path: string) => {
       switch (path) {
         case '/getTicketSystems':
-          return Promise.resolve([{ ticketSystem: { id: 6, name: 'Jira', type: 'JIRA', bookTime: true, url: 'https://x', syncUser: 3, sync_user: 3, syncDefaultActivity: 5, sync_default_activity: 5 } }])
-        case '/getAllUsers':
-          return Promise.resolve([{ user: { id: 3, username: 'jdoe', abbr: 'JD', type: 'DEV', active: true, teams: [] } }])
+          return Promise.resolve([{ ticketSystem: { id: 6, name: 'Jira', type: 'JIRA', bookTime: true, url: 'https://x', syncDefaultActivity: 5, sync_default_activity: 5 } }])
         case '/getActivities':
           return Promise.resolve([{ activity: { id: 5, name: 'Dev', needsTicket: false, factor: 1 } }])
         default:
@@ -983,13 +976,13 @@ describe('Admin ticket-system sync configuration', () => {
     const dialog = await screen.findByRole('dialog')
 
     // Pre-seeded from the row, then cleared via the "—" option (value 0).
-    const syncUser = within(dialog).getByRole('combobox', { name: 'Sync user' }) as HTMLSelectElement
-    expect(syncUser.value).toBe('3')
-    fireEvent.input(syncUser, { target: { value: '0' } })
+    const syncActivity = within(dialog).getByRole('combobox', { name: 'Sync default activity' }) as HTMLSelectElement
+    expect(syncActivity.value).toBe('5')
+    fireEvent.input(syncActivity, { target: { value: '0' } })
     fireEvent.submit(dialog.querySelector('form') as HTMLFormElement)
 
     await waitFor(() =>
-      expect(postJson).toHaveBeenCalledWith('/ticketsystem/save', expect.objectContaining({ syncUserId: null, syncDefaultActivityId: 5 })),
+      expect(postJson).toHaveBeenCalledWith('/ticketsystem/save', expect.objectContaining({ syncDefaultActivityId: null })),
     )
 
     unmount()

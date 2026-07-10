@@ -13,7 +13,6 @@ use App\Controller\BaseController;
 use App\Dto\TicketSystemSaveDto;
 use App\Entity\Activity;
 use App\Entity\TicketSystem;
-use App\Entity\User;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\TicketSystemRepository;
@@ -113,20 +112,12 @@ final class SaveTicketSystemAction extends BaseController
     }
 
     /**
-     * Resolve the worklog sync configuration relations (ADR-023 §5). The admin
-     * form always sends the full config, so a null id clears the setting;
-     * an unknown id is rejected with 422.
+     * Resolve the worklog sync default activity (ADR-023 §5, opt-in amendment).
+     * The admin form always sends the full config, so a null id clears the
+     * setting; an unknown id is rejected with 422.
      */
     private function applySyncConfiguration(TicketSystem $ticketSystem, TicketSystemSaveDto $dto): ?Error
     {
-        $syncUser = null;
-        if (null !== $dto->syncUserId) {
-            $syncUser = $this->doctrineRegistry->getRepository(User::class)->find($dto->syncUserId);
-            if (!$syncUser instanceof User) {
-                return new Error($this->translate('Unknown sync user.'), \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-        }
-
         $syncDefaultActivity = null;
         if (null !== $dto->syncDefaultActivityId) {
             $syncDefaultActivity = $this->doctrineRegistry->getRepository(Activity::class)->find($dto->syncDefaultActivityId);
@@ -135,7 +126,6 @@ final class SaveTicketSystemAction extends BaseController
             }
         }
 
-        $ticketSystem->setSyncUser($syncUser);
         $ticketSystem->setSyncDefaultActivity($syncDefaultActivity);
 
         return null;

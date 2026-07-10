@@ -580,7 +580,6 @@
   "worklogsync_to": "To",
   "worklogsync_default_activity": "Default activity",
   "worklogsync_ticket_system": "Ticket system",
-  "worklogsync_ticket_system_sync_user": "Sync user",
   "worklogsync_ticket_system_sync_activity": "Sync default activity",
   "worklogsync_preview": "Preview",
   "worklogsync_execute": "Execute import",
