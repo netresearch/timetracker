@@ -92,7 +92,7 @@ export function WorklogImportSection(): JSX.Element {
               onChange={(event) => setTicketSystemId(Number(event.currentTarget.value))}
             >
               <option value={0}>—</option>
-              <For each={ticketSystems.data}>
+              <For each={ticketSystems.data ?? []}>
                 {(option) => <option value={option.id}>{option.label}</option>}
               </For>
             </select>
@@ -116,7 +116,7 @@ export function WorklogImportSection(): JSX.Element {
               onChange={(event) => setActivityId(Number(event.currentTarget.value))}
             >
               <option value={0}>—</option>
-              <For each={activities.data}>
+              <For each={activities.data ?? []}>
                 {(option) => <option value={option.id}>{option.label}</option>}
               </For>
             </select>

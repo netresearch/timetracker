@@ -575,6 +575,7 @@
   "worklogsync_import_intro": "Импортируйте своё зафиксированное в Jira время в систему учёта.",
   "worklogsync_import_done": "Импорт завершён.",
   "worklogsync_import_error": "Сбой импорта.",
+  "worklogsync_run_error": "Запуск синхронизации не удался.",
   "worklogsync_from": "С",
   "worklogsync_to": "По",
   "worklogsync_default_activity": "Действие по умолчанию",

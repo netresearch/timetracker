@@ -31,6 +31,9 @@ export function ConflictList(props: { user?: string } = {}): JSX.Element {
   async function resolve(id: number, winner: 'local' | 'remote'): Promise<void> {
     setBusyId(id)
     setError('')
+    // Clear the previous success so the live region re-announces (and doesn't
+    // linger from an earlier resolve masking a later failure).
+    setResolved(false)
     try {
       await resolveConflict(id, winner)
       setResolved(true)

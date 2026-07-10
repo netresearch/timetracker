@@ -15,7 +15,6 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Repository\SyncRunRepository;
 use App\Security\ApiToken\RequireScope;
-use App\Service\Sync\SyncRunAuthorization;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,9 +23,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
-use function array_filter;
 use function array_map;
-use function array_values;
 use function count;
 use function max;
 use function min;
@@ -42,7 +39,6 @@ final readonly class ListWorklogSyncRunsAction
         private SyncRunRepository $syncRunRepository,
         private ManagerRegistry $managerRegistry,
         private AuthorizationCheckerInterface $authorizationChecker,
-        private SyncRunAuthorization $syncRunAuthorization,
     ) {
     }
 
@@ -65,14 +61,10 @@ final readonly class ListWorklogSyncRunsAction
 
         $limit = max(1, min(100, $request->query->getInt('limit', 20)));
 
-        $runs = $this->syncRunRepository->findLatest($limit, $ticketSystem);
-
-        if (!$this->authorizationChecker->isGranted('ROLE_ADMIN')) {
-            $runs = array_values(array_filter(
-                $runs,
-                fn (SyncRun $syncRun): bool => $this->syncRunAuthorization->canSeeRun($user, false, $syncRun),
-            ));
-        }
+        // Non-admins are filtered to their own runs in the query, so the limit
+        // bounds their own runs (post-limit filtering could return zero).
+        $ownerFilter = $this->authorizationChecker->isGranted('ROLE_ADMIN') ? null : $user;
+        $runs = $this->syncRunRepository->findLatest($limit, $ticketSystem, $ownerFilter);
 
         $dtos = array_map(
             static fn (SyncRun $syncRun): SyncRunDto => SyncRunDto::fromEntity($syncRun, false),

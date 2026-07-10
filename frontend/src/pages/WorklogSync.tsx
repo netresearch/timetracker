@@ -11,6 +11,7 @@ import {
   type CreateRunPayload,
   type SyncRun,
 } from '../api/worklogSync'
+import { ConflictList } from '../components/ConflictList'
 import { DateField } from '../components/DateField'
 import { SyncRunSummary } from '../components/SyncRunSummary'
 import { hasRole } from '../config'
@@ -130,7 +131,7 @@ function WorklogSyncArea(): JSX.Element {
       // A new run belongs at the top of the history — refresh it.
       void queryClient.invalidateQueries({ queryKey: worklogSyncKeys.runs })
     } catch (caught) {
-      setError(apiErrorMessage(caught, m.worklogsync_import_error()))
+      setError(apiErrorMessage(caught, m.worklogsync_run_error()))
     } finally {
       setBusy(false)
     }
@@ -163,7 +164,7 @@ function WorklogSyncArea(): JSX.Element {
                 onChange={(event) => setTicketSystemId(Number(event.currentTarget.value))}
               >
                 <option value={0}>—</option>
-                <For each={ticketSystems.data}>{(option) => <option value={option.id}>{option.label}</option>}</For>
+                <For each={ticketSystems.data ?? []}>{(option) => <option value={option.id}>{option.label}</option>}</For>
               </select>
             </label>
 
@@ -232,7 +233,7 @@ function WorklogSyncArea(): JSX.Element {
               onChange={(event) => setHistoryFilter(Number(event.currentTarget.value))}
             >
               <option value={0}>—</option>
-              <For each={ticketSystems.data}>{(option) => <option value={option.id}>{option.label}</option>}</For>
+              <For each={ticketSystems.data ?? []}>{(option) => <option value={option.id}>{option.label}</option>}</For>
             </select>
           </label>
         </div>
@@ -252,7 +253,7 @@ function WorklogSyncArea(): JSX.Element {
               </tr>
             </thead>
             <tbody>
-              <For each={runs.data?.runs}>
+              <For each={runs.data?.runs ?? []}>
                 {(run) => (
                   <tr aria-current={selectedRunId() === run.id ? 'true' : undefined}>
                     <td>
@@ -287,10 +288,11 @@ function WorklogSyncArea(): JSX.Element {
         </Show>
       </section>
 
-      {/* Region 3 — conflict resolution. The <ConflictList> component is Task 7's
-          deliverable (ADR-023 §2); it embeds here under this heading once built. */}
+      {/* Region 3 — conflict resolution (ADR-023 §2). Admins see every user's
+          parked conflicts here (ConflictList defaults to all when no user filter). */}
       <section class="status-group">
         <h2 class="status-group-title">{m.worklogsync_conflicts_title()}</h2>
+        <ConflictList />
       </section>
     </div>
   )

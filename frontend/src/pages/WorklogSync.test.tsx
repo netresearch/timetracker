@@ -61,6 +61,11 @@ vi.mock('../api/worklogSync', () => ({
         ],
       }),
   }),
+  syncConflictsQuery: (user?: string) => ({
+    queryKey: ['worklog-sync', 'conflicts', { user }],
+    queryFn: () => Promise.resolve({ conflicts: [], count: 0 }),
+  }),
+  resolveConflict: () => Promise.resolve({ resolved: true, action: 'pulled_remote', conflict_id: 1 }),
   worklogSyncKeys: {
     runs: ['worklog-sync', 'runs'],
     conflicts: ['worklog-sync', 'conflicts'],

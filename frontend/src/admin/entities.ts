@@ -384,11 +384,17 @@ export function adminEntities(): EntityDescriptor[] {
           },
       // The two sync selects carry snake_case form names; map them to the DTO's
       // camelCase ids (TicketSystemSaveDto). 0 ("—") clears the relation → null.
-      toPayload: (v) => ({
-        ...v,
-        syncUserId: num(v.sync_user) > 0 ? num(v.sync_user) : null,
-        syncDefaultActivityId: num(v.sync_default_activity) > 0 ? num(v.sync_default_activity) : null,
-      }),
+      toPayload: (v) => {
+        // Map the two select fields onto the DTO's camelCase names and drop the
+        // snake_case form keys so the payload isn't sent with duplicate fields.
+        const { sync_user: syncUser, sync_default_activity: syncActivity, ...rest } = v
+
+        return {
+          ...rest,
+          syncUserId: num(syncUser) > 0 ? num(syncUser) : null,
+          syncDefaultActivityId: num(syncActivity) > 0 ? num(syncActivity) : null,
+        }
+      },
     },
     {
       key: 'activities',

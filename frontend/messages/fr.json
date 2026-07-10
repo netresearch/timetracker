@@ -575,6 +575,7 @@
   "worklogsync_import_intro": "Importez le temps que vous avez saisi dans Jira vers le suivi du temps.",
   "worklogsync_import_done": "Import terminé.",
   "worklogsync_import_error": "Échec de l'import.",
+  "worklogsync_run_error": "L'exécution de la synchronisation a échoué.",
   "worklogsync_from": "Du",
   "worklogsync_to": "Au",
   "worklogsync_default_activity": "Activité par défaut",

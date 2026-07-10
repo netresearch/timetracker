@@ -575,6 +575,7 @@
   "worklogsync_import_intro": "Importieren Sie Ihre in Jira erfassten Zeiten in die Zeiterfassung.",
   "worklogsync_import_done": "Import abgeschlossen.",
   "worklogsync_import_error": "Import fehlgeschlagen.",
+  "worklogsync_run_error": "Sync-Lauf fehlgeschlagen.",
   "worklogsync_from": "Von",
   "worklogsync_to": "Bis",
   "worklogsync_default_activity": "Standardtätigkeit",
