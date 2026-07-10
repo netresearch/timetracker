@@ -615,5 +615,14 @@
   "worklogsync_no_runs": "Aucune exécution pour l'instant.",
   "worklogsync_users": "Utilisateurs",
   "worklogsync_since": "Depuis",
-  "worklogsync_all_users": "Tous les utilisateurs"
+  "worklogsync_all_users": "Tous les utilisateurs",
+  "worklogsync_conflict_ticket": "Ticket",
+  "worklogsync_conflict_day": "Jour",
+  "worklogsync_conflict_time": "Heure",
+  "worklogsync_conflict_duration": "Durée (min)",
+  "worklogsync_conflict_description": "Description",
+  "worklogsync_conflict_comment": "Commentaire",
+  "worklogsync_conflict_started": "Début",
+  "worklogsync_remote_deleted": "Worklog distant supprimé",
+  "worklogsync_resolve_error": "Impossible de résoudre le conflit."
 }

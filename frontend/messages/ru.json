@@ -615,5 +615,14 @@
   "worklogsync_no_runs": "Пока нет запусков.",
   "worklogsync_users": "Пользователи",
   "worklogsync_since": "С момента",
-  "worklogsync_all_users": "Все пользователи"
+  "worklogsync_all_users": "Все пользователи",
+  "worklogsync_conflict_ticket": "Тикет",
+  "worklogsync_conflict_day": "День",
+  "worklogsync_conflict_time": "Время",
+  "worklogsync_conflict_duration": "Длительность (мин)",
+  "worklogsync_conflict_description": "Описание",
+  "worklogsync_conflict_comment": "Комментарий",
+  "worklogsync_conflict_started": "Начало",
+  "worklogsync_remote_deleted": "Удалённый worklog отсутствует",
+  "worklogsync_resolve_error": "Не удалось разрешить конфликт."
 }
