@@ -322,6 +322,8 @@ CREATE TABLE `users_ticket_systems` (
   `token_expires_at` DATETIME NULL,
   `avoidconnection` TINYINT(1) unsigned DEFAULT '0' NOT NULL,
   `remote_account_id` varchar(255) DEFAULT NULL,
+  `sync_enabled` TINYINT(1) NOT NULL DEFAULT '0',
+  `sync_all` TINYINT(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `fk_user_id_idx` (`user_id`),
   KEY `fk_ticket_system_id_idx` (`ticket_system_id`),
