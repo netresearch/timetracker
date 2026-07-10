@@ -51,6 +51,17 @@ final class WorklogSyncToolsTest extends AbstractWebTestCase
         $this->setUpWorklogSyncFixtures();
     }
 
+    public function testSyncToolRejectsMultipleTargets(): void
+    {
+        $this->useToken(['sync:write']);
+
+        $this->expectException(ToolCallException::class);
+        $this->expectExceptionMessageMatches('/single user/');
+
+        $tool = self::getContainer()->get(SyncJiraWorklogsTool::class);
+        $tool->syncJiraWorklogs('sync', 1, users: ['developer', 'unittest']);
+    }
+
     public function testSyncToolTriggersVerify(): void
     {
         $verifyMock = $this->createMock(VerifyWorklogsService::class);

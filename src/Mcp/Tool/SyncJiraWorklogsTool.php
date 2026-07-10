@@ -92,6 +92,10 @@ final readonly class SyncJiraWorklogsTool
             throw new ToolCallException((string) $violations->get(0)->getMessage());
         }
 
+        if ('sync' === $type && count($users) > 1) {
+            throw new ToolCallException('A sync run targets a single user; pass at most one username in users.');
+        }
+
         if (!$this->syncRunAuthorization->canTrigger($user, false, $type, $users)) {
             // Foreign imports and syncing another target need an administrator account.
             $this->scopeGuard->requireAdminScope('sync:write');

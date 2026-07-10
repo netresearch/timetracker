@@ -25,6 +25,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
+use function count;
+
 /**
  * Start a worklog verify/import/sync run against a ticket system (ADR-023 §6,
  * amended). Runs execute inline — the response carries the finished run with
@@ -72,6 +74,11 @@ final readonly class CreateWorklogSyncRunAction
 
         $syncTarget = null;
         if ('sync' === $worklogSyncRunDto->type && [] !== $worklogSyncRunDto->users) {
+            // A sync run has exactly one target; reject extra names instead of ignoring them.
+            if (count($worklogSyncRunDto->users) > 1) {
+                return new JsonResponse(['message' => 'A sync run targets a single user; pass at most one username.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
             $syncTarget = $this->managerRegistry->getRepository(User::class)->findOneBy(['username' => $worklogSyncRunDto->users[0]]);
             if (!$syncTarget instanceof User) {
                 return new JsonResponse(['message' => 'Target user not found.'], Response::HTTP_NOT_FOUND);

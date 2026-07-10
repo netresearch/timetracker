@@ -88,22 +88,29 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
         self::assertSame(403, $status);
     }
 
-    public function testCreateSyncRunSyncsSelf(): void
+    /**
+     * Container-mocks SyncWorklogsService expecting one syncUser($target, $tokenOwner, ...) call.
+     */
+    private function expectSyncUser(string $target, string $tokenOwner): void
     {
         $syncMock = $this->createMock(SyncWorklogsService::class);
         $syncMock->expects(self::once())
             ->method('syncUser')
             ->with(
-                self::callback(static fn (User $target): bool => 'developer' === $target->getUsername()),
-                self::callback(static fn (User $tokenOwner): bool => 'developer' === $tokenOwner->getUsername()),
+                self::callback(static fn (User $user): bool => $target === $user->getUsername()),
+                self::callback(static fn (User $user): bool => $tokenOwner === $user->getUsername()),
                 self::anything(),
                 self::anything(),
                 self::anything(),
                 self::anything(),
             )
-            ->willReturn($this->cannedRun(SyncRunType::SYNC, 'developer'));
+            ->willReturn($this->cannedRun(SyncRunType::SYNC, $tokenOwner));
         self::getContainer()->set(SyncWorklogsService::class, $syncMock);
+    }
 
+    public function testCreateSyncRunSyncsSelf(): void
+    {
+        $this->expectSyncUser('developer', 'developer');
         $this->logInSession('developer');
 
         $this->postJson(['type' => 'sync', 'ticket_system_id' => 1]);
@@ -116,19 +123,7 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
 
     public function testAdminCanSyncAnotherUserUnderOwnToken(): void
     {
-        $syncMock = $this->createMock(SyncWorklogsService::class);
-        $syncMock->expects(self::once())
-            ->method('syncUser')
-            ->with(
-                self::callback(static fn (User $target): bool => 'developer' === $target->getUsername()),
-                self::callback(static fn (User $tokenOwner): bool => 'unittest' === $tokenOwner->getUsername()),
-                self::anything(),
-                self::anything(),
-                self::anything(),
-                self::anything(),
-            )
-            ->willReturn($this->cannedRun(SyncRunType::SYNC, 'unittest'));
-        self::getContainer()->set(SyncWorklogsService::class, $syncMock);
+        $this->expectSyncUser('developer', 'unittest');
 
         $this->postJson(['type' => 'sync', 'ticket_system_id' => 1, 'users' => ['developer']]);
 
@@ -136,6 +131,17 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
         self::assertSame('sync', $data['type']);
+    }
+
+    public function testSyncWithMultipleTargetsRejected(): void
+    {
+        $this->postJson(['type' => 'sync', 'ticket_system_id' => 1, 'users' => ['developer', 'unittest']]);
+
+        $this->assertStatusCode(422);
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($data);
+        self::assertIsString($data['message']);
+        self::assertStringContainsString('single user', $data['message']);
     }
 
     public function testNonAdminCannotSyncAnotherUser(): void
@@ -182,6 +188,20 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
         self::assertIsArray($data);
         self::assertTrue($data['sync_enabled']);
         self::assertTrue($this->reloadConnection($connectionId)->getSyncEnabled());
+    }
+
+    public function testPutPreferencesOnAvoidConnectionRowReturns404(): void
+    {
+        $connection = $this->connectUser('developer');
+        $connection->setAvoidConnection(true);
+        $this->entityManager->flush();
+
+        $this->logInSession('developer');
+        $this->putJson(['ticket_system_id' => 1, 'sync_enabled' => true]);
+
+        // avoidConnection rows are "not connected" for GET — PUT must agree.
+        $this->assertStatusCode(404);
+        self::assertFalse($this->reloadConnection((int) $connection->getId())->getSyncEnabled());
     }
 
     public function testPutSyncAllRequiresPl(): void

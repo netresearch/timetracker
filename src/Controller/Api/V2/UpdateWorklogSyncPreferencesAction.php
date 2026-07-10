@@ -74,7 +74,8 @@ final readonly class UpdateWorklogSyncPreferencesAction
     private function findConnection(User $user, TicketSystem $ticketSystem): ?UserTicketsystem
     {
         foreach ($user->getUserTicketsystems() as $userTicketsystem) {
-            if ($userTicketsystem->getTicketSystem() === $ticketSystem) {
+            // avoidConnection rows are "not connected" — consistent with the GET listing.
+            if ($userTicketsystem->getTicketSystem() === $ticketSystem && !$userTicketsystem->getAvoidConnection()) {
                 return $userTicketsystem;
             }
         }

@@ -532,17 +532,9 @@ final class SyncWorklogsServiceTest extends TestCase
         }
     }
 
-    public function testSyncTicketSystemPoCoversNonEnabledAuthors(): void
+    /** One remote worklog authored by 'colleague-acc' on TIM-9 — the PO-coverage fixture. */
+    private function publishColleagueWorklog(): void
     {
-        $po = new User()->setUsername('po');
-        $covered = new User()->setUsername('colleague');
-        $this->userTicketsystemRepository->method('findSyncEnabled')->willReturn([]);
-        $this->userTicketsystemRepository->method('findSyncAllOwners')->willReturn([
-            new UserTicketsystem()->setUser($po)->setTicketSystem($this->ticketSystem),
-        ]);
-        $this->roleHierarchy->method('getReachableRoleNames')->willReturn(['ROLE_PL', 'ROLE_USER']);
-
-        // The PO's broad read sees one worklog authored by 'colleague-acc'.
         $this->publish('TIM-9', new JiraWorkLog(
             id: 77,
             comment: 'work',
@@ -553,6 +545,19 @@ final class SyncWorklogsServiceTest extends TestCase
             authorName: 'colleague',
             issueId: '10009',
         ));
+    }
+
+    public function testSyncTicketSystemPoCoversNonEnabledAuthors(): void
+    {
+        $po = new User()->setUsername('po');
+        $covered = new User()->setUsername('colleague');
+        $this->userTicketsystemRepository->method('findSyncEnabled')->willReturn([]);
+        $this->userTicketsystemRepository->method('findSyncAllOwners')->willReturn([
+            new UserTicketsystem()->setUser($po)->setTicketSystem($this->ticketSystem),
+        ]);
+        $this->roleHierarchy->method('getReachableRoleNames')->willReturn(['ROLE_PL', 'ROLE_USER']);
+
+        $this->publishColleagueWorklog();
         $this->authorMapper->method('find')->willReturn($covered);
 
         $runs = $this->service->syncTicketSystem(
@@ -579,16 +584,7 @@ final class SyncWorklogsServiceTest extends TestCase
         $this->roleHierarchy->method('getReachableRoleNames')->willReturn(['ROLE_PL', 'ROLE_USER']);
 
         // Both POs' broad reads see the same worklog by the same author.
-        $this->publish('TIM-9', new JiraWorkLog(
-            id: 77,
-            comment: 'work',
-            started: '2026-06-10T09:00:00.000+0200',
-            timeSpentSeconds: 3600,
-            updated: 'U1',
-            authorAccountId: 'colleague-acc',
-            authorName: 'colleague',
-            issueId: '10009',
-        ));
+        $this->publishColleagueWorklog();
         $this->authorMapper->method('find')->willReturn($covered);
 
         $runs = $this->service->syncTicketSystem(

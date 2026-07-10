@@ -35,6 +35,7 @@ use App\ValueObject\Sync\WorklogSnapshot;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 use Throwable;
 
@@ -75,6 +76,7 @@ class SyncWorklogsService extends AbstractSyncRunService
         private readonly UserTicketsystemRepository $userTicketsystemRepository,
         private readonly RoleHierarchyInterface $roleHierarchy,
         ClockInterface $clock,
+        private readonly ?LoggerInterface $logger = null,
     ) {
         parent::__construct($entityManager, $clock);
     }
@@ -217,7 +219,12 @@ class SyncWorklogsService extends AbstractSyncRunService
 
         // The reader applies range + normalization; its returned records tell us which author
         // keys actually have an in-range worklog, so we skip authors with nothing to sync.
-        $records = $this->remoteWorklogReader->readForAuthor($api, $matchesAuthor, $jql, $from, $to, static function (): void {});
+        // Discovery problems must not be silent: a truncated search or failed issue
+        // fetch means some authors may be missing from this PO pass — log them.
+        $onNotice = function (string $type, ?string $issueKey = null): void {
+            $this->logger?->warning('PO sync-all author discovery notice', ['type' => $type, 'issue' => $issueKey]);
+        };
+        $records = $this->remoteWorklogReader->readForAuthor($api, $matchesAuthor, $jql, $from, $to, $onNotice);
         $survivingKeys = [];
         foreach ($records as $record) {
             $author = $record['author'];
