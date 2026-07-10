@@ -1,6 +1,6 @@
 # ADR-023: Jira Worklog Import and Bidirectional Sync
 
-**Status:** Accepted — Phases 1–4a (verify, import, bidirectional sync, API/MCP surfaces) implemented; Phase 4b (SPA UI) pending.
+**Status:** Accepted — fully implemented (Phases 1–4).
 **Date:** 2026-07-09
 **Relates to:** [ADR-003](ADR-003-jira-integration-architecture.md) (push-sync architecture this ADR extends to a pull/reconcile model), [ADR-017](ADR-017-jira-cloud-oauth2.md) (Server/Cloud dual auth the I/O layer reuses), [ADR-020](ADR-020-subticket-ticket-resolution.md) (ticket→project resolution used for imported worklogs; precedent for pull-direction sync and designated-token auth), [ADR-021](ADR-021-api-token-authentication.md) (PAT scopes for the new endpoints), [ADR-022](ADR-022-v2-api-layer-and-response-dtos.md) (v2 API + MCP tool pattern the new surfaces follow).
 
@@ -122,6 +122,8 @@ Implementation note (Phase 3): unattended cron import requires both a sync user 
 - **UI (SolidJS):** Settings → Jira self-service import (date range, default activity, dry-run preview → execute); admin/PO area (import for selected users, run history/reports, side-by-side conflict resolution using `conflict_remote_payload`); ticket system admin form (sync user picker, cursor display/reset).
 
 Implementation note (Phase 4a): the dedicated worklog-sync:* scopes were reconciled to the existing ADR-021 taxonomy — `sync:read` guards run/conflict reads, `sync:write` guards run triggers and conflict resolution. Session-authenticated users bypass PAT scopes (per ADR-021); the authorization matrix (self-verify/self-import for users, sync triggers and foreign operations for admins) is enforced in the actions and tools themselves.
+
+Implementation note (Phase 4b): the SolidJS UI ships the self-service import (Settings), the admin sync area (run history, triggers, ticket-system sync config), and the conflict-resolution screen, all against the v2 endpoints; a list-runs endpoint was added to back the run history.
 
 ### 7. Edge-case rules
 

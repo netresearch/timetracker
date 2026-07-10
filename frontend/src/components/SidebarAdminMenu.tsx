@@ -22,6 +22,7 @@ const ADMIN_ICON: Record<string, () => JSX.Element> = {
   activities: () => <path d="M3 12h4l2.5 6 4-13 2.5 7H21" />,
   contracts: () => <><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h5" /></>,
   status: () => <><circle cx="12" cy="12" r="9" /><path d="M12 8v4.5M12 16h.01" /></>,
+  'worklog-sync': () => <><path d="M4 12a8 8 0 0 1 14-5.3L21 9" /><path d="M21 4v5h-5" /><path d="M20 12a8 8 0 0 1-14 5.3L3 15" /><path d="M3 20v-5h5" /></>,
 }
 
 function adminIco(key: string): JSX.Element {
@@ -105,6 +106,17 @@ export function SidebarAdminMenu() {
             onClick={(event) => { event.preventDefault(); navigate('/admin/status') }}
           >
             {adminIco('status')}<span class="sidebar-admin-label">{m.admin_status()}</span>
+          </a>
+        </li>
+        {/* Worklog-sync area (run history, triggers, conflicts) — no add action. */}
+        <li class="sidebar-admin-item" classList={{ 'is-active': activeKey() === 'worklog-sync' }}>
+          <a
+            class="sidebar-admin-link"
+            href="/ui/admin/worklog-sync"
+            aria-current={activeKey() === 'worklog-sync' ? 'page' : undefined}
+            onClick={(event) => { event.preventDefault(); navigate('/admin/worklog-sync') }}
+          >
+            {adminIco('worklog-sync')}<span class="sidebar-admin-label">{m.worklogsync_admin_title()}</span>
           </a>
         </li>
       </ul>

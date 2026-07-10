@@ -66,7 +66,15 @@ True conflicts are never auto-resolved — they are parked for a human. Every ru
 | `error` | Item-level failure (e.g. unresolvable issue id); the run continues. |
 | `truncated` | Feed page cap hit; remaining changes come with the next run. |
 
-Inspect parked items via the command output, the [API & MCP surfaces](#api--mcp) below, or the `sync_run` / `sync_run_item` and `worklog_sync_state` tables; the side-by-side conflict UI arrives with Phase 4b.
+Inspect parked items via the command output, the [UI](#ui), the [API & MCP surfaces](#api--mcp) below, or the `sync_run` / `sync_run_item` and `worklog_sync_state` tables.
+
+## UI
+
+The same engine is driven from the SolidJS UI:
+
+- **Settings → Jira-Zeiten importieren** (self-service): any user imports their own Jira worklogs for a date range with an optional default activity — a dry-run **Preview** first, then **Execute**. Scoped to the signed-in user.
+- **Administration → Worklog sync** (`/ui/admin/worklog-sync`, ROLE_ADMIN): trigger `verify` / `import` / `sync` runs (optionally for named users), browse the run history with per-run counters and items, and resolve parked conflicts side by side (keep local or keep remote).
+- **Administration → Ticket systems**: set the per-ticket-system **sync user** and **default import activity** that the cron pull uses.
 
 ## API & MCP
 

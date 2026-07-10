@@ -231,6 +231,88 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
         $this->assertStatusCode(404);
     }
 
+    public function testListReturnsRunsNewestFirst(): void
+    {
+        $older = $this->seedRun('unittest', '2026-07-01 10:00:00');
+        $newer = $this->seedRun('unittest', '2026-07-02 10:00:00');
+
+        $status = $this->requestWithToken('/api/v2/worklog-sync/runs', $this->mintToken(['sync:read']));
+
+        self::assertSame(200, $status);
+        $data = $this->responseData();
+        $runs = $data['runs'];
+        self::assertIsList($runs);
+        self::assertCount(2, $runs);
+        self::assertSame(2, $data['count']);
+
+        $first = $runs[0];
+        $second = $runs[1];
+        self::assertIsArray($first);
+        self::assertIsArray($second);
+        self::assertSame($newer->getId(), $first['id']);
+        self::assertSame($older->getId(), $second['id']);
+        self::assertArrayNotHasKey('items', $first);
+    }
+
+    public function testListFiltersByTicketSystem(): void
+    {
+        $otherTicketSystem = new TicketSystem();
+        $otherTicketSystem->setName('otherSystem');
+        $otherTicketSystem->setUrl('https://other.example.com');
+        $otherTicketSystem->setTicketUrl('https://other.example.com/browse/{ticket}');
+        $otherTicketSystem->setLogin('other');
+        $otherTicketSystem->setPassword('other');
+        $this->entityManager->persist($otherTicketSystem);
+        $this->entityManager->flush();
+
+        $onDefault = $this->seedRun('unittest', '2026-07-01 10:00:00');
+        $onOther = $this->seedRun('unittest', '2026-07-02 10:00:00', $otherTicketSystem);
+
+        $status = $this->requestWithToken(
+            sprintf('/api/v2/worklog-sync/runs?ticket_system_id=%d', (int) $otherTicketSystem->getId()),
+            $this->mintToken(['sync:read']),
+        );
+
+        self::assertSame(200, $status);
+        $ids = $this->runIds($this->responseData()['runs']);
+        self::assertContains($onOther->getId(), $ids);
+        self::assertNotContains($onDefault->getId(), $ids);
+    }
+
+    public function testListRequiresReadScope(): void
+    {
+        $status = $this->requestWithToken('/api/v2/worklog-sync/runs', $this->mintToken(['sync:write']));
+
+        self::assertSame(403, $status);
+    }
+
+    public function testListNonAdminSeesOnlyOwnRuns(): void
+    {
+        $ownRun = $this->seedRun('developer', '2026-07-02 10:00:00');
+        $adminRun = $this->seedRun('unittest', '2026-07-01 10:00:00');
+
+        $this->logInSession('developer');
+        $this->client->request(Request::METHOD_GET, '/api/v2/worklog-sync/runs');
+
+        $this->assertStatusCode(200);
+        $ids = $this->runIds($this->responseData()['runs']);
+        self::assertContains($ownRun->getId(), $ids);
+        self::assertNotContains($adminRun->getId(), $ids);
+    }
+
+    public function testListRespectsLimit(): void
+    {
+        $this->seedRun('unittest', '2026-07-01 10:00:00');
+        $this->seedRun('unittest', '2026-07-02 10:00:00');
+
+        $status = $this->requestWithToken('/api/v2/worklog-sync/runs?limit=1', $this->mintToken(['sync:read']));
+
+        self::assertSame(200, $status);
+        $runs = $this->responseData()['runs'];
+        self::assertIsList($runs);
+        self::assertCount(1, $runs);
+    }
+
     /**
      * @param array<string, mixed> $json
      */
@@ -278,12 +360,57 @@ final class WorklogSyncRunActionsTest extends AbstractWebTestCase
         return $syncRun;
     }
 
+    private function seedRun(string $username, string $startedAt, ?TicketSystem $ticketSystem = null): SyncRun
+    {
+        $syncRun = new SyncRun()
+            ->setType(SyncRunType::VERIFY)
+            ->setStatus(SyncRunStatus::COMPLETED)
+            ->setTicketSystem($ticketSystem ?? $this->ticketSystem())
+            ->setTriggeredBy($this->user($username))
+            ->setScope([])
+            ->setCounters([])
+            ->setStartedAt(new DateTimeImmutable($startedAt));
+        $this->entityManager->persist($syncRun);
+        $this->entityManager->flush();
+
+        return $syncRun;
+    }
+
     private function ticketSystem(): TicketSystem
     {
         $ticketSystem = $this->entityManager->find(TicketSystem::class, 1);
         assert($ticketSystem instanceof TicketSystem);
 
         return $ticketSystem;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function responseData(): array
+    {
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($data);
+
+        /** @var array<string, mixed> */
+        return $data;
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function runIds(mixed $runs): array
+    {
+        self::assertIsArray($runs);
+
+        $ids = [];
+        foreach ($runs as $run) {
+            self::assertIsArray($run);
+            self::assertIsInt($run['id']);
+            $ids[] = $run['id'];
+        }
+
+        return $ids;
     }
 
     private function user(string $username): User

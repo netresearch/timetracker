@@ -1,6 +1,7 @@
-import { fireEvent, render } from '@solidjs/testing-library'
+import { fireEvent } from '@solidjs/testing-library'
 import { afterEach, describe, expect, it } from 'vitest'
 
+import { renderWithProviders } from '../test/renderWithProviders'
 import Settings from './Settings'
 
 afterEach(() => {
@@ -11,7 +12,7 @@ afterEach(() => {
 
 describe('Settings', () => {
   it('offers exactly the locales the UI ships translations for', () => {
-    const { container, unmount } = render(() => <Settings />)
+    const { container, unmount } = renderWithProviders(() => <Settings />)
 
     // Target the locale select specifically (the page also has a client-side
     // grid-editing preference select).
@@ -25,7 +26,7 @@ describe('Settings', () => {
   })
 
   it('applies the body-font preference to <html> on change', () => {
-    const { container, unmount } = render(() => <Settings />)
+    const { container, unmount } = renderWithProviders(() => <Settings />)
 
     const fontSelect = Array.from(container.querySelectorAll('select')).find((select) =>
       Array.from(select.options).some((option) => option.value === 'dyslexic'),
@@ -44,7 +45,7 @@ describe('Settings grouping', () => {
   // opposite save semantics: account-saved (needs Save) vs device-local
   // (applies instantly). Tests run under the base locale (en).
   it('renders the account and device sections as labeled groups', () => {
-    const { getByRole, getByText, unmount } = render(() => <Settings />)
+    const { getByRole, getByText, unmount } = renderWithProviders(() => <Settings />)
 
     expect(getByRole('group', { name: 'Account' })).toBeInTheDocument()
     expect(getByRole('group', { name: 'This device' })).toBeInTheDocument()
@@ -57,7 +58,7 @@ describe('Settings grouping', () => {
   })
 
   it('scopes the Save button and the account-saved fields to the save form', () => {
-    const { getByRole, unmount } = render(() => <Settings />)
+    const { getByRole, unmount } = renderWithProviders(() => <Settings />)
 
     const account = getByRole('group', { name: 'Account' })
     const form = account.closest('form') as HTMLFormElement
@@ -76,7 +77,7 @@ describe('Settings grouping', () => {
   })
 
   it('keeps the instantly-applied device preferences outside the save form', () => {
-    const { getByRole, unmount } = render(() => <Settings />)
+    const { getByRole, unmount } = renderWithProviders(() => <Settings />)
 
     const device = getByRole('group', { name: 'This device' })
 

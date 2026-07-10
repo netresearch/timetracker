@@ -1,6 +1,7 @@
 import { createSignal, For, Show } from 'solid-js'
 
 import { SecuritySection } from '../components/SecuritySection'
+import { WorklogImportSection } from '../components/WorklogImportSection'
 import { apiErrorMessage, postForm } from '../api/client'
 import { appConfig, type AppConfig } from '../config'
 import { dateFormat, setDateFormat, formatWith, validatePattern, type DateFormatMode } from '../lib/dateFormat'
@@ -188,6 +189,10 @@ export default function Settings() {
       {/* Account security — password change + two-factor. Separate per-account
           server operations, so each posts on its own (not via /settings/save). */}
       <SecuritySection />
+
+      {/* Self-service Jira worklog import (ADR-023 use case 1) — a separate
+          per-account operation that drives the v2 worklog-sync endpoints. */}
+      <WorklogImportSection />
 
       {/* Device-local UI preferences — localStorage only, apply instantly.
           Deliberately OUTSIDE the save form: nothing here is submitted. The
