@@ -68,6 +68,7 @@
   "settings_show_future": "Show future",
   "settings_personio_sync": "Send my working hours to Personio",
   "settings_personio_sync_help": "Exports your recorded working hours to Personio as daily attendances.",
+  "settings_personio_sync_unavailable": "Available once an administrator has configured the Personio connection.",
   "settings_min_entry_duration": "Minimum entry duration (minutes)",
   "settings_min_entry_duration_hint": "A new entry's end pre-fills to its start plus this many minutes. 0 disables it.",
   "settings_grid_enter": "When editing a table cell, Enter…",

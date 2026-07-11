@@ -13,6 +13,9 @@ export interface AppConfig {
    *  (ADR-024): the nightly `tt:export-personio-attendances` only touches opted-in
    *  users. */
   personioSyncEnabled: boolean
+  /** True when an active Personio config exists admin-side. Without one the
+   *  attendance export can't run, so the per-user opt-in is greyed out. */
+  personioConfigured: boolean
   /** Whether TOTP two-factor is already enrolled — toggles the Security section's
    *  enable-vs-disable UI. */
   totpEnabled: boolean

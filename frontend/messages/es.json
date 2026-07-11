@@ -68,6 +68,7 @@
   "settings_show_future": "Mostrar el futuro",
   "settings_personio_sync": "Enviar mis horas de trabajo a Personio",
   "settings_personio_sync_help": "Exporta tus horas de trabajo registradas a Personio como asistencias diarias.",
+  "settings_personio_sync_unavailable": "Disponible cuando un administrador haya configurado la conexión con Personio.",
   "settings_min_entry_duration": "Duración mínima de la entrada (minutos)",
   "settings_min_entry_duration_hint": "El fin de una nueva entrada se rellena con su inicio más estos minutos. 0 lo desactiva.",
   "settings_grid_enter": "Al editar una celda de la tabla, Enter…",
