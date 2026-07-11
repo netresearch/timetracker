@@ -11,6 +11,7 @@ namespace App\Service;
 
 use App\Dto\Response\DaySummaryDto;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Repository\EntryRepository;
 use InvalidArgumentException;
 
@@ -45,7 +46,7 @@ final readonly class DaySummaryService
 
         $entries = [];
         $totalMinutes = 0;
-        foreach ($this->entryRepository->findByDay((int) $user->getId(), $day) as $entry) {
+        foreach ($this->entryRepository->findByDay((int) $user->getId(), $day, EntrySource::HUMAN) as $entry) {
             $entries[] = $entry->toArray();
             $totalMinutes += $entry->getDuration();
         }
