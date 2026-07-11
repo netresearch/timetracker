@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Service\Integration\Jira;
 
+use App\DTO\Jira\JiraIssueKeySearchResult;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\UserTicketsystem;
@@ -29,6 +30,7 @@ use Throwable;
 use function in_array;
 use function is_array;
 use function is_int;
+use function is_object;
 use function is_string;
 use function json_decode;
 use function parse_url;
@@ -117,7 +119,7 @@ class JiraCloudApiService extends JiraOAuthApiService
      * @param array<int, string> $fields
      */
     #[Override]
-    public function searchTicket(string $jql, array $fields, int $limit = 1): mixed
+    public function searchTicket(string $jql, array $fields, int $limit = 1, int $startAt = 0): mixed
     {
         return $this->post(
             'search/jql',
@@ -125,8 +127,64 @@ class JiraCloudApiService extends JiraOAuthApiService
                 'jql' => $jql,
                 'fields' => $fields,
                 'maxResults' => $limit,
+                'startAt' => $startAt,
             ],
         );
+    }
+
+    /**
+     * Cloud `search/jql` is cursor-based, not offset-based: it ignores
+     * `startAt`, never returns `total`, and paginates via
+     * `nextPageToken`/`isLast`. The `startAt` loop of the base class would
+     * re-fetch the first page forever here, so this override threads the page
+     * token instead. `truncated` is only set if the defensive page cap is hit.
+     *
+     * @throws JiraApiException
+     */
+    #[Override]
+    public function searchIssueKeysWithWorklogs(string $jql, int $limit = 500): JiraIssueKeySearchResult
+    {
+        $keys = [];
+        $nextPageToken = null;
+        $truncated = false;
+
+        for ($page = 0;; ++$page) {
+            $body = [
+                'jql' => $jql,
+                'fields' => ['key'],
+                'maxResults' => $limit,
+            ];
+            if (null !== $nextPageToken) {
+                $body['nextPageToken'] = $nextPageToken;
+            }
+
+            $response = $this->post('search/jql', $body);
+
+            if (isset($response->issues) && is_array($response->issues)) {
+                foreach ($response->issues as $issue) {
+                    if (is_object($issue) && isset($issue->key) && is_string($issue->key)) {
+                        $keys[] = $issue->key;
+                    }
+                }
+            }
+
+            $nextPageToken = isset($response->nextPageToken) && is_string($response->nextPageToken) && '' !== $response->nextPageToken
+                ? $response->nextPageToken
+                : null;
+
+            // Cursor exhausted: explicit isLast, or no continuation token.
+            if ((isset($response->isLast) && true === $response->isLast) || null === $nextPageToken) {
+                break;
+            }
+
+            // Defensive stop against a misbehaving API that never terminates.
+            if ($page + 1 >= self::MAX_SEARCH_PAGES) {
+                $truncated = true;
+                break;
+            }
+        }
+
+        return new JiraIssueKeySearchResult($keys, $truncated);
     }
 
     /**

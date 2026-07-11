@@ -22,6 +22,8 @@ use stdClass;
 use Symfony\Component\Routing\RouterInterface;
 use Tests\Traits\TokenEncryptionTestTrait;
 
+use function array_slice;
+
 /**
  * Unit tests for the ADR-023 read methods on the legacy Jira API service.
  *
@@ -85,7 +87,7 @@ final class JiraOAuthApiServiceReadTest extends TestCase
             /**
              * @param array<int, string> $fields
              */
-            public function searchTicket(string $jql, array $fields, int $limit = 1): mixed
+            public function searchTicket(string $jql, array $fields, int $limit = 1, int $startAt = 0): mixed
             {
                 return $this->searchResponse;
             }
@@ -143,15 +145,17 @@ final class JiraOAuthApiServiceReadTest extends TestCase
 
     public function testSearchIssueKeysCollectsKeysAndDetectsTruncation(): void
     {
+        // A server that keeps returning a full page (pageCount == limit) and
+        // never signals the end (no total) drives the offset loop to its
+        // defensive page cap, which is the only path that sets `truncated`.
         $searchResponse = (object) [
-            'total' => 700,
             'issues' => [(object) ['key' => 'ABC-1'], (object) ['key' => 'ABC-2']],
         ];
 
-        $result = $this->serviceWithCannedResponses([], $searchResponse)->searchIssueKeysWithWorklogs('worklogAuthor = currentUser()', 500);
+        $result = $this->serviceWithCannedResponses([], $searchResponse)->searchIssueKeysWithWorklogs('worklogAuthor = currentUser()', 2);
 
-        self::assertSame(['ABC-1', 'ABC-2'], $result->keys);
         self::assertTrue($result->truncated);
+        self::assertSame(['ABC-1', 'ABC-2'], array_slice($result->keys, 0, 2));
     }
 
     public function testSearchIssueKeysNotTruncatedWhenComplete(): void

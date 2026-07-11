@@ -42,7 +42,6 @@ use Throwable;
 use UnexpectedValueException;
 
 use function assert;
-use function count;
 use function is_array;
 use function is_numeric;
 use function is_object;
@@ -56,6 +55,9 @@ use const JSON_THROW_ON_ERROR;
  */
 class JiraOAuthApiService
 {
+    /** Defensive cap on issue-search pagination (ADR-023 read path 2) — an API that never advances stops here. */
+    protected const int MAX_SEARCH_PAGES = 100;
+
     protected string $oAuthCallbackUrl;
 
     protected string $jiraApiUrl = '/rest/api/latest/';
@@ -446,7 +448,7 @@ class JiraOAuthApiService
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
-    public function searchTicket(string $jql, array $fields, int $limit = 1): mixed
+    public function searchTicket(string $jql, array $fields, int $limit = 1, int $startAt = 0): mixed
     {
         return $this->post(
             'search/',
@@ -454,6 +456,7 @@ class JiraOAuthApiService
                 'jql' => $jql,
                 'fields' => $fields,
                 'maxResults' => $limit,
+                'startAt' => $startAt,
             ],
         );
     }
@@ -532,25 +535,50 @@ class JiraOAuthApiService
     }
 
     /**
-     * JQL search returning issue keys only, with explicit truncation reporting (ADR-023 read path 2).
+     * JQL search returning issue keys only, paginated over `startAt` until exhausted
+     * (ADR-023 read path 2). `truncated` is only set if the defensive page cap is hit
+     * with results still pending — the normal path fetches every page.
      *
      * @throws JiraApiException
      */
     public function searchIssueKeysWithWorklogs(string $jql, int $limit = 500): JiraIssueKeySearchResult
     {
-        $response = $this->searchTicket($jql, ['key'], $limit);
-
         $keys = [];
-        if (is_object($response) && isset($response->issues) && is_array($response->issues)) {
-            foreach ($response->issues as $issue) {
-                if (is_object($issue) && isset($issue->key) && is_string($issue->key)) {
-                    $keys[] = $issue->key;
+        $startAt = 0;
+        $truncated = false;
+
+        for ($page = 0;; ++$page) {
+            $response = $this->searchTicket($jql, ['key'], $limit, $startAt);
+
+            $pageCount = 0;
+            if (is_object($response) && isset($response->issues) && is_array($response->issues)) {
+                foreach ($response->issues as $issue) {
+                    ++$pageCount;
+                    if (is_object($issue) && isset($issue->key) && is_string($issue->key)) {
+                        $keys[] = $issue->key;
+                    }
                 }
             }
-        }
 
-        $total = is_object($response) && isset($response->total) && is_numeric($response->total) ? (int) $response->total : null;
-        $truncated = count($keys) >= $limit || (null !== $total && $total > count($keys));
+            $total = is_object($response) && isset($response->total) && is_numeric($response->total) ? (int) $response->total : null;
+            $startAt += $pageCount;
+
+            // A short page is the last page (also covers a missing/absent total).
+            if ($pageCount < $limit) {
+                break;
+            }
+
+            // Reached the known total.
+            if (null !== $total && $startAt >= $total) {
+                break;
+            }
+
+            // Defensive stop against a misbehaving API that never advances/terminates.
+            if ($page + 1 >= self::MAX_SEARCH_PAGES) {
+                $truncated = true;
+                break;
+            }
+        }
 
         return new JiraIssueKeySearchResult($keys, $truncated);
     }
