@@ -35,8 +35,15 @@ final class Version20260711_EntrySourceAttribution extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE entries DROP FOREIGN KEY FK_entries_logged_by, DROP FOREIGN KEY FK_entries_responsible');
-        $this->addSql('DROP INDEX IDX_entries_source ON entries');
-        $this->addSql('ALTER TABLE entries DROP source, DROP logged_by_id, DROP estimated, DROP responsible_user_id, DROP touchpoints');
+        // Guard every drop so a partially-applied down (e.g. an aborted rollback)
+        // can be re-run without failing on an already-removed constraint/index/column.
+        $this->addSql('ALTER TABLE entries DROP FOREIGN KEY IF EXISTS FK_entries_logged_by, DROP FOREIGN KEY IF EXISTS FK_entries_responsible');
+        $this->addSql('ALTER TABLE entries DROP INDEX IF EXISTS IDX_entries_source');
+        $this->addSql('ALTER TABLE entries
+            DROP COLUMN IF EXISTS source,
+            DROP COLUMN IF EXISTS logged_by_id,
+            DROP COLUMN IF EXISTS estimated,
+            DROP COLUMN IF EXISTS responsible_user_id,
+            DROP COLUMN IF EXISTS touchpoints');
     }
 }
