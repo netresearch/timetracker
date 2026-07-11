@@ -863,10 +863,17 @@ class EntryRepository extends ServiceEntityRepository
         ?int $project = null,
         ?int $customer = null,
         ?array $arSort = null,
+        ?EntrySource $source = null,
     ): array {
         $queryBuilder = $this->findEntriesWithRelations();
 
         $this->applyDateRangeCriteria($queryBuilder, $user, $year, $month, $project, $customer);
+
+        if ($source instanceof EntrySource) {
+            $queryBuilder->andWhere('e.source = :source')
+                ->setParameter('source', $source->value);
+        }
+
         $this->applySortOrder($queryBuilder, $arSort);
 
         $result = $queryBuilder->getQuery()->getResult();

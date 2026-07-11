@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use DateTime;
 use Tests\AbstractWebTestCase;
 
 use function assert;
@@ -198,6 +199,45 @@ final class DefaultControllerTest extends AbstractWebTestCase
         self::assertSame(200, $response->getStatusCode());
         $data = json_decode((string) (false !== $response->getContent() ? $response->getContent() : ''), true);
         self::assertArraySubset(['totalWorkTime' => 330], (array) $data);
+    }
+
+    public function testGetDataActionTotalExcludesAgentEntries(): void
+    {
+        // ADR-025: an agent entry in the same filter window must NOT inflate the
+        // human worked total. Seed one alongside the fixtures and assert 330 holds.
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        self::assertInstanceOf(\Doctrine\ORM\EntityManagerInterface::class, $entityManager);
+
+        $user = $entityManager->getRepository(\App\Entity\User::class)->find(2);
+        self::assertInstanceOf(\App\Entity\User::class, $user, 'fixture user 2 missing');
+        $customer = $entityManager->getRepository(\App\Entity\Customer::class)->find(1);
+        self::assertInstanceOf(\App\Entity\Customer::class, $customer, 'fixture customer 1 missing');
+        $project = $entityManager->getRepository(\App\Entity\Project::class)->find(1);
+        self::assertInstanceOf(\App\Entity\Project::class, $project, 'fixture project 1 missing');
+
+        $entityManager->persist(
+            new \App\Entity\Entry()
+                ->setUser($user)->setCustomer($customer)->setProject($project)
+                ->setSource(\App\Enum\EntrySource::AGENT)->setDuration(999)
+                ->setDay(new DateTime('2020-02-10'))
+                ->setStart(new DateTime('11:00'))->setEnd(new DateTime('12:00')),
+        );
+        $entityManager->flush();
+
+        $this->logInSession('unittest');
+        $parameters = [
+            'year' => '2020',
+            'month' => '02',
+            'user' => '2',
+            'customer' => '1',
+            'project' => '1',
+        ];
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/getData', $parameters);
+
+        $response = $this->client->getResponse();
+        self::assertSame(200, $response->getStatusCode());
+        $data = json_decode((string) (false !== $response->getContent() ? $response->getContent() : ''), true);
+        self::assertArraySubset(['totalWorkTime' => 330], (array) $data, 'agent 999 excluded from the human total');
     }
 
     public function testGetDataActionForParameterYearMonthUser(): void

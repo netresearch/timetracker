@@ -12,6 +12,7 @@ namespace App\Controller\Default;
 use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Model\JsonResponse;
 use App\Repository\EntryRepository;
 use App\Security\ApiToken\RequireScope;
@@ -61,12 +62,16 @@ final class GetDataAction extends BaseController
             $filterProject = null !== $project ? (int) $project : null;
             $filterCustomer = null !== $customer ? (int) $customer : null;
 
+            // ADR-025: the tracking-UI worked total is a HUMAN-labour figure —
+            // agent wall-clock entries must never inflate it. Slice to human source.
             $entries = $objectRepository->findByDate(
                 $filterUserId,
                 $filterYear,
                 $filterMonth,
                 $filterProject,
                 $filterCustomer,
+                null,
+                EntrySource::HUMAN,
             );
 
             // Calculate total work time from filtered entries

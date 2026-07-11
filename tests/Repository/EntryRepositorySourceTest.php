@@ -63,6 +63,39 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
         self::assertSame(180, $agentOnly[0]->getDuration());
     }
 
+    public function testFindByDateFiltersBySource(): void
+    {
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+
+        $entryRepository = self::getContainer()->get(EntryRepository::class);
+        self::assertInstanceOf(EntryRepository::class, $entryRepository);
+
+        $user = $entityManager->getRepository(User::class)->findOneBy([]);
+        self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        $userId = (int) $user->getId();
+
+        $entityManager->persist(
+            new Entry()->setUser($user)->setSource(EntrySource::HUMAN)->setDuration(60)
+                ->setDay(new DateTime('2099-07-15'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00')),
+        );
+        $entityManager->persist(
+            new Entry()->setUser($user)->setSource(EntrySource::AGENT)->setDuration(180)
+                ->setDay(new DateTime('2099-07-15'))->setStart(new DateTime('10:00'))->setEnd(new DateTime('13:00')),
+        );
+        $entityManager->flush();
+
+        self::assertCount(2, $entryRepository->findByDate($userId, 2099, 7), 'no source filter returns both (back-compat)');
+
+        $humanOnly = $entryRepository->findByDate($userId, 2099, 7, null, null, null, EntrySource::HUMAN);
+        self::assertCount(1, $humanOnly, 'human filter excludes the agent entry');
+        self::assertSame(60, $humanOnly[0]->getDuration());
+
+        $agentOnly = $entryRepository->findByDate($userId, 2099, 7, null, null, null, EntrySource::AGENT);
+        self::assertCount(1, $agentOnly);
+        self::assertSame(180, $agentOnly[0]->getDuration());
+    }
+
     public function testGetWorkByUserSumsHumanSourceOnly(): void
     {
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
