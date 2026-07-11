@@ -19,10 +19,12 @@ use App\Entity\Project;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\UserTicketsystem;
 use App\Entity\WorklogSyncState;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Repository\EntryRepository;
+use App\Repository\UserRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Sync\EntryWorklogProjector;
@@ -52,7 +54,9 @@ final class ImportWorklogsServiceTest extends TestCase
     private TicketProjectResolver&MockObject $projectResolver;
     private JiraAuthorMapper&MockObject $authorMapper;
     private DayClassService&MockObject $dayClassService;
+    private UserRepository&MockObject $userRepository;
     private ImportWorklogsService $service;
+    private ?string $capturedJql = null;
     private User $triggeredBy;
     private User $author;
     private TicketSystem $ticketSystem;
@@ -70,6 +74,7 @@ final class ImportWorklogsServiceTest extends TestCase
         $this->projectResolver = $this->createMock(TicketProjectResolver::class);
         $this->authorMapper = $this->createMock(JiraAuthorMapper::class);
         $this->dayClassService = $this->createMock(DayClassService::class);
+        $this->userRepository = $this->createMock(UserRepository::class);
 
         $apiFactory = $this->createMock(JiraOAuthApiFactory::class);
         $apiFactory->method('create')->willReturn($this->api);
@@ -88,6 +93,7 @@ final class ImportWorklogsServiceTest extends TestCase
         $this->project = self::createStub(Project::class);
         $this->project->method('getCustomer')->willReturn($customer);
         $this->triggeredBy = self::createStub(User::class);
+        $this->triggeredBy->method('getId')->willReturn(1);
         $this->author = self::createStub(User::class);
         $this->author->method('getId')->willReturn(7);
         $this->author->method('getUsername')->willReturn('jdoe');
@@ -102,6 +108,7 @@ final class ImportWorklogsServiceTest extends TestCase
             $this->projectResolver,
             $this->authorMapper,
             $this->dayClassService,
+            $this->userRepository,
             new MockClock('2026-07-09 12:00:00'),
         );
     }
@@ -367,5 +374,45 @@ final class ImportWorklogsServiceTest extends TestCase
         $this->dayClassService->expects(self::once())->method('recalculate')->with(55, '2026-06-10');
 
         $this->import();
+    }
+
+    public function testNonEmptyTargetScopesSearchJqlByAuthor(): void
+    {
+        $this->captureSearchJql();
+        $target = new User()->setUsername('jdoe');
+        $userTicketsystem = new UserTicketsystem();
+        $userTicketsystem->setTicketSystem($this->ticketSystem)->setRemoteAccountId('acc-jdoe');
+        $target->getUserTicketsystems()->add($userTicketsystem);
+        $this->userRepository->method('findOneByUsername')->willReturnCallback(
+            static fn (string $username): ?User => 'jdoe' === $username ? $target : null,
+        );
+
+        $this->import(targetUsernames: ['jdoe']);
+
+        self::assertIsString($this->capturedJql);
+        self::assertStringContainsString('worklogAuthor IN ("acc-jdoe")', $this->capturedJql);
+        self::assertStringContainsString('worklogDate >= "2026-06-01"', $this->capturedJql);
+    }
+
+    public function testEmptyTargetLeavesSearchJqlAuthorUnrestricted(): void
+    {
+        $this->captureSearchJql();
+
+        $this->import();
+
+        self::assertIsString($this->capturedJql);
+        self::assertStringNotContainsString('worklogAuthor', $this->capturedJql);
+        self::assertStringContainsString('worklogDate >= "2026-06-01"', $this->capturedJql);
+    }
+
+    private function captureSearchJql(): void
+    {
+        $this->api->method('searchIssueKeysWithWorklogs')->willReturnCallback(
+            function (string $jql): JiraIssueKeySearchResult {
+                $this->capturedJql = $jql;
+
+                return new JiraIssueKeySearchResult([], false);
+            },
+        );
     }
 }

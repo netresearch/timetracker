@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Service\Sync;
 
+use App\DTO\Jira\JiraUserIdentity;
 use App\DTO\Jira\JiraWorkLog;
 use App\Entity\Activity;
 use App\Entity\Customer;
@@ -24,6 +25,7 @@ use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
 use App\Enum\WorklogSyncStatus;
 use App\Repository\EntryRepository;
+use App\Repository\UserRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Tracking\DayClassService;
 use App\ValueObject\Sync\WorklogSnapshot;
@@ -35,10 +37,13 @@ use Psr\Clock\ClockInterface;
 use Throwable;
 
 use function array_key_exists;
+use function array_values;
+use function implode;
 use function in_array;
 use function mb_substr;
 use function spl_object_id;
 use function sprintf;
+use function str_replace;
 use function substr;
 
 /**
@@ -56,6 +61,7 @@ class ImportWorklogsService extends AbstractSyncRunService
         private readonly TicketProjectResolver $ticketProjectResolver,
         private readonly JiraAuthorMapper $jiraAuthorMapper,
         private readonly DayClassService $dayClassService,
+        private readonly UserRepository $userRepository,
         ClockInterface $clock,
     ) {
         parent::__construct($entityManager, $clock);
@@ -116,10 +122,10 @@ class ImportWorklogsService extends AbstractSyncRunService
 
         $api = $this->jiraOAuthApiFactory->create($triggeredBy, $ticketSystem);
 
-        $jql = sprintf('worklogDate >= "%s" AND worklogDate <= "%s"', $from->format('Y-m-d'), $to->format('Y-m-d'));
+        $jql = $this->buildAuthorScopedJql($targetUsernames, $triggeredBy, $ticketSystem, $from, $to);
         $searchResult = $api->searchIssueKeysWithWorklogs($jql);
         if ($searchResult->truncated) {
-            $this->addItem($syncRun, SyncItemKind::TRUNCATED, reason: 'issue search hit its result cap; import may be incomplete — narrow the date range and re-run');
+            $this->addItem($syncRun, SyncItemKind::TRUNCATED, reason: 'issue search hit the pagination safety cap; import may be incomplete — narrow the date range and re-run');
         }
 
         $importRunContext = new ImportRunContext(
@@ -152,6 +158,70 @@ class ImportWorklogsService extends AbstractSyncRunService
         foreach ($importRunContext->affectedDays as $affected) {
             $this->dayClassService->recalculate((int) $affected['user']->getId(), $affected['day']);
         }
+    }
+
+    /**
+     * Author-scope the search JQL when a target set is given, so Jira returns only the
+     * targets' worklogs instead of everyone's (mirrors SyncWorklogsService::buildRead).
+     * Empty target set = import-all: the search stays author-unrestricted so resolveAuthor
+     * can shadow-create unknown authors. If no target resolves to an identity the search
+     * also stays unrestricted — the client-side resolveAuthor filter remains the backstop.
+     *
+     * @param list<string> $targetUsernames
+     */
+    private function buildAuthorScopedJql(array $targetUsernames, User $triggeredBy, TicketSystem $ticketSystem, DateTimeImmutable $from, DateTimeImmutable $to): string
+    {
+        $dateClause = sprintf('worklogDate >= "%s" AND worklogDate <= "%s"', $from->format('Y-m-d'), $to->format('Y-m-d'));
+
+        if ([] === $targetUsernames) {
+            return $dateClause;
+        }
+
+        $authorTerms = [];
+        foreach ($targetUsernames as $username) {
+            $user = $this->userRepository->findOneByUsername($username);
+
+            // The token owner is most robustly identified by currentUser().
+            if ($user instanceof User && null !== $user->getId() && $user->getId() === $triggeredBy->getId()) {
+                $authorTerms['currentUser()'] = 'currentUser()';
+
+                continue;
+            }
+
+            $identity = $user instanceof User
+                ? $this->targetIdentity($user, $ticketSystem)
+                : new JiraUserIdentity(name: $username);
+            $value = $identity->accountId ?? $identity->name;
+            if (null === $value || '' === $value) {
+                continue;
+            }
+
+            $quoted = '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $value) . '"';
+            $authorTerms[$quoted] = $quoted;
+        }
+
+        if ([] === $authorTerms) {
+            return $dateClause;
+        }
+
+        return sprintf('worklogAuthor IN (%s) AND %s', implode(', ', array_values($authorTerms)), $dateClause);
+    }
+
+    /**
+     * The target's Jira identity for this ticket system — durable remote_account_id, username
+     * fallback (mirrors SyncWorklogsService::targetIdentity).
+     */
+    private function targetIdentity(User $targetUser, TicketSystem $ticketSystem): JiraUserIdentity
+    {
+        $remoteAccountId = null;
+        foreach ($targetUser->getUserTicketsystems() as $userTicketsystem) {
+            if ($userTicketsystem->getTicketSystem() === $ticketSystem) {
+                $remoteAccountId = $userTicketsystem->getRemoteAccountId();
+                break;
+            }
+        }
+
+        return new JiraUserIdentity(accountId: $remoteAccountId, name: $targetUser->getUsername());
     }
 
     public function processWorklog(ImportRunContext $importRunContext, string $issueKey, JiraWorkLog $jiraWorkLog): void
