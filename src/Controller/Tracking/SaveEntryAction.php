@@ -15,6 +15,7 @@ use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Event\EntryEvent;
 use App\Model\JsonResponse;
 use App\Model\Response;
@@ -23,6 +24,7 @@ use App\Repository\CustomerRepository;
 use App\Repository\EntryRepository;
 use App\Repository\ProjectRepository;
 use App\Response\Error;
+use App\Security\ApiToken\ApiAccessToken;
 use App\Security\ApiToken\RequireScope;
 use App\Service\Util\TicketService;
 use BadMethodCallException;
@@ -32,6 +34,7 @@ use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -49,6 +52,8 @@ final class SaveEntryAction extends BaseTrackingController
 
     private TicketService $ticketService;
 
+    private TokenStorageInterface $tokenStorage;
+
     #[Required]
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
     {
@@ -59,6 +64,12 @@ final class SaveEntryAction extends BaseTrackingController
     public function setTicketService(TicketService $ticketService): void
     {
         $this->ticketService = $ticketService;
+    }
+
+    #[Required]
+    public function setTokenStorage(TokenStorageInterface $tokenStorage): void
+    {
+        $this->tokenStorage = $tokenStorage;
     }
 
     /**
@@ -246,6 +257,30 @@ final class SaveEntryAction extends BaseTrackingController
         $entry->setCustomer($customer);
         $entry->setProject($project);
         $entry->setActivity($activity);
+
+        // SECURITY (ADR-025 §4): agent attribution is trusted ONLY in the API-token
+        // channel. In it the agent logs BOTH streams (source=agent walltime AND the
+        // delegated source=human estimate), so `estimated`/`touchpoints`/`source` are
+        // honoured for either source there, and the token owner is the responsible user.
+        // A session request is ALWAYS a plain human self-log — body source/estimated
+        // ignored, so a person cannot mark work agent and drop it from attendance/ArbZG.
+        // The responsible user is the token owner, never a client-supplied id (IDOR).
+        $isAgentChannel = $this->tokenStorage->getToken() instanceof ApiAccessToken;
+        if ($isAgentChannel) {
+            $source = (null !== $entrySaveDto->source && EntrySource::Valid($entrySaveDto->source))
+                ? EntrySource::from($entrySaveDto->source)
+                : EntrySource::HUMAN;
+            $entry->setSource($source)
+                ->setLoggedBy($user)
+                ->setResponsibleUser($user)
+                ->setEstimated($entrySaveDto->estimated ?? false)
+                ->setTouchpoints($entrySaveDto->touchpoints);
+        } else {
+            $entry->setSource(EntrySource::HUMAN)
+                ->setLoggedBy($user)
+                ->setEstimated(false)
+                ->setTouchpoints(null);
+        }
 
         // Use DTO methods for date/time parsing (supports multiple formats)
         $dateError = $this->applyDay($entry, $entrySaveDto)
