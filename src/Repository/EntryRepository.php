@@ -790,6 +790,11 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder = $this->createQueryBuilder('e')
             ->where(self::WHERE_USER)
             ->andWhere(self::WHERE_DAY)
+            // ADR-025 §6: an agent wall-clock entry never counts as a human
+            // double-booking. Overlap is a human-attendance invariant, so the
+            // query is scoped to human source (YAGNI guard: no caller today, but a
+            // future human non-overlap rule must not reject against agent time).
+            ->andWhere('e.source = :source')
             ->andWhere('(
                 (e.start <= :start AND e.end > :start) OR
                 (e.start < :end AND e.end >= :end) OR
@@ -797,6 +802,7 @@ class EntryRepository extends ServiceEntityRepository
             )')
             ->setParameter('user', $user)
             ->setParameter('day', $day)
+            ->setParameter('source', EntrySource::HUMAN->value)
             ->setParameter('start', $start)
             ->setParameter('end', $end);
 
