@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Controller\Interpretation;
 
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Security\ApiToken\RequireScope;
@@ -60,12 +61,18 @@ final class GroupByCustomerAction extends BaseInterpretationController
                 continue;
             }
             if (!isset($customers[$cid])) {
-                $customers[$cid] = ['id' => $cid, 'name' => $customerEntity->getName(), 'hours' => 0, 'quota' => 0];
+                $customers[$cid] = ['id' => $cid, 'name' => $customerEntity->getName(), 'hours' => 0, 'agentHours' => 0, 'quota' => 0];
             }
 
-            $customers[$cid]['hours'] += $entry->getDuration() / 60;
+            // ADR-025 §7: human and agent hours are distinct columns, never folded.
+            if (EntrySource::AGENT === $entry->getSource()) {
+                $customers[$cid]['agentHours'] += $entry->getDuration() / 60;
+            } else {
+                $customers[$cid]['hours'] += $entry->getDuration() / 60;
+            }
         }
 
+        // Quota is human-first: the share is of the human total.
         $sum = 0;
         foreach ($customers as $c) {
             $sum += $c['hours'];

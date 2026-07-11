@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Controller\Interpretation;
 
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Security\ApiToken\RequireScope;
@@ -53,13 +54,19 @@ final class GroupByTicketAction extends BaseInterpretationController
             $ticket = $entry->getTicket();
             if ('' !== $ticket && '-' !== $ticket) {
                 if (!isset($tickets[$ticket])) {
-                    $tickets[$ticket] = ['id' => $entry->getId(), 'name' => $ticket, 'hours' => 0, 'quota' => 0];
+                    $tickets[$ticket] = ['id' => $entry->getId(), 'name' => $ticket, 'hours' => 0, 'agentHours' => 0, 'quota' => 0];
                 }
 
-                $tickets[$ticket]['hours'] += $entry->getDuration() / 60;
+                // ADR-025 §7: human and agent hours are distinct columns, never folded.
+                if (EntrySource::AGENT === $entry->getSource()) {
+                    $tickets[$ticket]['agentHours'] += $entry->getDuration() / 60;
+                } else {
+                    $tickets[$ticket]['hours'] += $entry->getDuration() / 60;
+                }
             }
         }
 
+        // Quota is human-first: the share is of the human total.
         $sum = 0;
         foreach ($tickets as $t) {
             $sum += $t['hours'];

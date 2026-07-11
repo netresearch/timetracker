@@ -14,6 +14,7 @@ use App\Entity\PersonioAttendanceExport;
 use App\Entity\PersonioConfig;
 use App\Entity\SyncRun;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Exception\Personio\PersonioApiException;
@@ -33,7 +34,9 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
 
+use function array_filter;
 use function array_map;
+use function array_values;
 
 #[CoversClass(AttendanceExportService::class)]
 #[AllowMockObjectsWithoutExpectations]
@@ -73,7 +76,17 @@ final class AttendanceExportServiceTest extends TestCase
 
         $this->entryRepository = $this->createMock(EntryRepository::class);
         $this->entryRepository->method('findByDay')->willReturnCallback(
-            fn (int $userId, string $day): array => $this->entriesByDay[$day] ?? [],
+            function (int $userId, string $day, ?EntrySource $source = null): array {
+                $entries = $this->entriesByDay[$day] ?? [];
+                if ($source instanceof EntrySource) {
+                    $entries = array_values(array_filter(
+                        $entries,
+                        static fn (Entry $entry): bool => $entry->getSource() === $source,
+                    ));
+                }
+
+                return $entries;
+            },
         );
 
         $this->exportRepository = $this->createMock(PersonioAttendanceExportRepository::class);
@@ -122,6 +135,30 @@ final class AttendanceExportServiceTest extends TestCase
         $state = $this->persistedExport();
         self::assertSame(['1001', '1002'], $state->getPeriodIds());
         self::assertCount(2, $state->getBasePayload());
+    }
+
+    public function testAgentIntervalsAreExcludedFromExport(): void
+    {
+        $user = $this->mappedUser();
+        $this->configRepository->method('findActive')->willReturn(new PersonioConfig());
+        // A human WORK interval and an agent wall-clock interval on the same day.
+        $this->entriesByDay['2026-07-01'] = [
+            $this->entry($user, '2026-07-01', '09:00:00', '10:00:00'),
+            $this->entry($user, '2026-07-01', '11:00:00', '13:00:00')->setSource(EntrySource::AGENT),
+        ];
+
+        // Only the human interval becomes a Personio period (ArbZG boundary).
+        $this->client->expects(self::once())
+            ->method('createAttendancePeriod')
+            ->willReturn('1001');
+        $this->client->expects(self::never())->method('updateAttendancePeriod');
+        $this->client->expects(self::never())->method('deleteAttendancePeriod');
+
+        $run = $this->service->exportUser($user, $this->day('2026-07-01'), $this->day('2026-07-01'));
+
+        self::assertSame(SyncRunStatus::COMPLETED, $run->getStatus());
+        self::assertSame(1, $run->getCounters()['created'] ?? 0);
+        self::assertSame(['1001'], $this->persistedExport()->getPeriodIds());
     }
 
     public function testUnchangedDaySkips(): void

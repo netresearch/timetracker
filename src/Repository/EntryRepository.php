@@ -16,6 +16,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\Period;
 use App\Service\ClockInterface;
 use App\Service\Util\TimeCalculationService;
@@ -52,6 +53,8 @@ class EntryRepository extends ServiceEntityRepository
     private const string WHERE_PROJECT = 'e.project = :project';
 
     private const string WHERE_CUSTOMER = 'e.customer = :customer';
+
+    private const string WHERE_SOURCE = 'e.source = :source';
 
     private const string WHERE_DAY_UNTIL_END_OF_MONTH = 'e.day <= :endOfMonth';
 
@@ -401,6 +404,8 @@ class EntryRepository extends ServiceEntityRepository
             e.ticket,
             e.class,
             e.duration,
+            e.source,
+            e.responsible_user_id AS responsible,
             e.internal_jira_ticket_original_key as extTicket,
             u.abbr AS userAbbr,
             c.name AS customerName,
@@ -787,6 +792,11 @@ class EntryRepository extends ServiceEntityRepository
         $queryBuilder = $this->createQueryBuilder('e')
             ->where(self::WHERE_USER)
             ->andWhere(self::WHERE_DAY)
+            // ADR-025 §6: an agent wall-clock entry never counts as a human
+            // double-booking. Overlap is a human-attendance invariant, so the
+            // query is scoped to human source (YAGNI guard: no caller today, but a
+            // future human non-overlap rule must not reject against agent time).
+            ->andWhere(self::WHERE_SOURCE)
             ->andWhere('(
                 (e.start <= :start AND e.end > :start) OR
                 (e.start < :end AND e.end >= :end) OR
@@ -794,6 +804,7 @@ class EntryRepository extends ServiceEntityRepository
             )')
             ->setParameter('user', $user)
             ->setParameter('day', $day)
+            ->setParameter('source', EntrySource::HUMAN->value)
             ->setParameter('start', $start)
             ->setParameter('end', $end);
 
@@ -862,10 +873,17 @@ class EntryRepository extends ServiceEntityRepository
         ?int $project = null,
         ?int $customer = null,
         ?array $arSort = null,
+        ?EntrySource $source = null,
     ): array {
         $queryBuilder = $this->findEntriesWithRelations();
 
         $this->applyDateRangeCriteria($queryBuilder, $user, $year, $month, $project, $customer);
+
+        if ($source instanceof EntrySource) {
+            $queryBuilder->andWhere(self::WHERE_SOURCE)
+                ->setParameter('source', $source->value);
+        }
+
         $this->applySortOrder($queryBuilder, $arSort);
 
         $result = $queryBuilder->getQuery()->getResult();
@@ -999,12 +1017,17 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array{duration: int, count: int}
      */
-    public function getWorkByUser(int $userId, Period $period = Period::DAY): array
+    public function getWorkByUser(int $userId, Period $period = Period::DAY, ?EntrySource $source = null): array
     {
         $queryBuilder = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, COALESCE(SUM(e.duration), 0) as duration')
             ->where(self::WHERE_USER)
             ->setParameter('user', $userId);
+
+        if ($source instanceof EntrySource) {
+            $queryBuilder->andWhere(self::WHERE_SOURCE)
+                ->setParameter('source', $source->value);
+        }
 
         $this->applyPeriodFilter($queryBuilder, $period);
 
@@ -1031,7 +1054,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array<int, array{name: string, total_time: int}>
      */
-    public function getActivitiesWithTime(string $ticket): array
+    public function getActivitiesWithTime(string $ticket, ?EntrySource $source = null): array
     {
         if ('' === $ticket || '0' === $ticket) {
             return [];
@@ -1039,14 +1062,22 @@ class EntryRepository extends ServiceEntityRepository
 
         $connection = $this->getEntityManager()->getConnection();
 
+        // ADR-025: source-aware so a controlling view can slice human vs agent
+        // rather than fold them; null keeps the all-sources total (back-compat).
         $sql = 'SELECT a.name, SUM(e.duration) as total_time
                 FROM entries e
                 LEFT JOIN activities a ON e.activity_id = a.id
-                WHERE e.ticket = ?
-                GROUP BY e.activity_id, a.name
+                WHERE e.ticket = ?';
+        $params = [$ticket];
+        if ($source instanceof EntrySource) {
+            $sql .= ' AND e.source = ?';
+            $params[] = $source->value;
+        }
+
+        $sql .= ' GROUP BY e.activity_id, a.name
                 ORDER BY total_time DESC';
 
-        $result = $connection->executeQuery($sql, [$ticket])->fetchAllAssociative();
+        $result = $connection->executeQuery($sql, $params)->fetchAllAssociative();
 
         return array_map(static function (array $row): array {
             $name = $row['name'];
@@ -1064,7 +1095,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array<int, array{username: string, total_time: int}>
      */
-    public function getUsersWithTime(string $ticket): array
+    public function getUsersWithTime(string $ticket, ?EntrySource $source = null): array
     {
         if ('' === $ticket || '0' === $ticket) {
             return [];
@@ -1072,14 +1103,22 @@ class EntryRepository extends ServiceEntityRepository
 
         $connection = $this->getEntityManager()->getConnection();
 
+        // ADR-025: source-aware so a controlling view can slice human vs agent
+        // rather than fold them; null keeps the all-sources total (back-compat).
         $sql = 'SELECT u.username, SUM(e.duration) as total_time
                 FROM entries e
                 LEFT JOIN users u ON e.user_id = u.id
-                WHERE e.ticket = ?
-                GROUP BY e.user_id, u.username
+                WHERE e.ticket = ?';
+        $params = [$ticket];
+        if ($source instanceof EntrySource) {
+            $sql .= ' AND e.source = ?';
+            $params[] = $source->value;
+        }
+
+        $sql .= ' GROUP BY e.user_id, u.username
                 ORDER BY total_time DESC';
 
-        $result = $connection->executeQuery($sql, [$ticket])->fetchAllAssociative();
+        $result = $connection->executeQuery($sql, $params)->fetchAllAssociative();
 
         return array_map(static function (array $row): array {
             $username = $row['username'];
@@ -1324,9 +1363,9 @@ class EntryRepository extends ServiceEntityRepository
                           c.name as name
                    FROM entries e
                    LEFT JOIN customers c ON e.customer_id = c.id
-                   WHERE e.customer_id = ?';
+                   WHERE e.customer_id = ? AND e.source = ?';
 
-            $result = $connection->executeQuery($sql, [$userId, $entry->getCustomer()->getId()])->fetchAssociative();
+            $result = $connection->executeQuery($sql, [$userId, $entry->getCustomer()->getId(), EntrySource::HUMAN->value])->fetchAssociative();
             if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
@@ -1354,9 +1393,9 @@ class EntryRepository extends ServiceEntityRepository
                           p.name as name, p.estimation as estimation
                    FROM entries e
                    LEFT JOIN projects p ON e.project_id = p.id
-                   WHERE e.project_id = ?';
+                   WHERE e.project_id = ? AND e.source = ?';
 
-            $result = $connection->executeQuery($sql, [$userId, $entry->getProject()->getId()])->fetchAssociative();
+            $result = $connection->executeQuery($sql, [$userId, $entry->getProject()->getId(), EntrySource::HUMAN->value])->fetchAssociative();
             if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
@@ -1386,9 +1425,9 @@ class EntryRepository extends ServiceEntityRepository
                           a.name as name
                    FROM entries e
                    LEFT JOIN activities a ON e.activity_id = a.id
-                   WHERE e.activity_id = ?';
+                   WHERE e.activity_id = ? AND e.source = ?';
 
-            $result = $connection->executeQuery($sql, [$userId, $entry->getActivity()->getId()])->fetchAssociative();
+            $result = $connection->executeQuery($sql, [$userId, $entry->getActivity()->getId(), EntrySource::HUMAN->value])->fetchAssociative();
             if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
@@ -1414,9 +1453,9 @@ class EntryRepository extends ServiceEntityRepository
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own
                    FROM entries e
-                   WHERE e.ticket = ?';
+                   WHERE e.ticket = ? AND e.source = ?';
 
-            $result = $connection->executeQuery($sql, [$userId, $entry->getTicket()])->fetchAssociative();
+            $result = $connection->executeQuery($sql, [$userId, $entry->getTicket(), EntrySource::HUMAN->value])->fetchAssociative();
             if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
@@ -1445,9 +1484,9 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return list<Entry>
      */
-    public function findByDay(int $userId, string $day): array
+    public function findByDay(int $userId, string $day, ?EntrySource $source = null): array
     {
-        $result = $this->createQueryBuilder('e')
+        $queryBuilder = $this->createQueryBuilder('e')
             ->leftJoin('e.user', 'u')
             ->leftJoin('e.customer', 'c')
             ->leftJoin('e.project', 'p')
@@ -1456,9 +1495,14 @@ class EntryRepository extends ServiceEntityRepository
             ->andWhere(self::WHERE_DAY)
             ->setParameter('userId', $userId)
             ->setParameter('day', $day)
-            ->orderBy('e.start', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('e.start', 'ASC');
+
+        if ($source instanceof EntrySource) {
+            $queryBuilder->andWhere(self::WHERE_SOURCE)
+                ->setParameter('source', $source->value);
+        }
+
+        $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
         /** @var list<Entry> $result */

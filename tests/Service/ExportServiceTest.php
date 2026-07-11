@@ -307,6 +307,27 @@ final class ExportServiceTest extends TestCase
         self::assertSame('Test description', $result[0]['description']);
         self::assertSame('2025-01-15 09:00:00', $result[0]['start']);
         self::assertSame('2025-01-15 17:00:00', $result[0]['end']);
+        // ADR-025: a plain entry defaults to human source, no responsible user.
+        self::assertSame('human', $result[0]['source']);
+        self::assertSame('', $result[0]['responsible']);
+    }
+
+    public function testGetEntriesExposesAgentSourceAndResponsible(): void
+    {
+        $user = new User()->setUsername('johndoe');
+        $responsible = new User()->setUsername('pat-owner');
+
+        $entry = $this->createEntry($user)
+            ->setSource(\App\Enum\EntrySource::AGENT)
+            ->setResponsibleUser($responsible);
+
+        $doctrine = $this->createManagerRegistry(filteredEntries: [$entry]);
+        $service = new ExportService($doctrine, $this->createJiraFactory());
+        $result = $service->getEntries($user);
+
+        self::assertCount(1, $result);
+        self::assertSame('agent', $result[0]['source'], 'agent source surfaces as a distinct axis');
+        self::assertSame('pat-owner', $result[0]['responsible'], 'responsible user surfaces for attribution');
     }
 
     public function testGetEntriesWithDateFilters(): void

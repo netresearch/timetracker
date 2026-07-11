@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Architecture;
 
+use App\Security\ApiToken\ApiAccessToken;
 use App\Security\ApiToken\RequireScope;
 use PHPat\Selector\Selector;
 use PHPat\Test\Builder\Rule;
@@ -68,6 +69,10 @@ final class ArchitectureTest
                 // The #[RequireScope] API-token attribute (ADR-021) — a security
                 // attribute controllers declare, analogous to Symfony's #[IsGranted].
                 Selector::classname(RequireScope::class),
+                // The ApiAccessToken security token (ADR-021) — SaveEntryAction
+                // reads it via TokenStorage to gate agent-vs-human attribution
+                // (ADR-025 §4), the same way a controller reads Symfony's token.
+                Selector::classname(ApiAccessToken::class),
             )
             ->because('Controllers depend on the app layers, framework and export/status tooling only');
     }

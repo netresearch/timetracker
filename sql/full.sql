@@ -253,6 +253,11 @@ CREATE TABLE `entries` (
   `class` tinyint unsigned NOT NULL DEFAULT '0',
   `synced_to_ticketsystem` TINYINT(1) DEFAULT 0 NULL,
   `internal_jira_ticket_original_key` VARCHAR(50) NULL,
+  `source` varchar(8) NOT NULL DEFAULT 'human',
+  `logged_by_id` int(11) DEFAULT NULL,
+  `estimated` tinyint(1) NOT NULL DEFAULT 0,
+  `responsible_user_id` int(11) DEFAULT NULL,
+  `touchpoints` JSON DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY (`project_id`),
   KEY (`user_id`),
@@ -266,7 +271,10 @@ CREATE TABLE `entries` (
   KEY `idx_entries_user_project` (`user_id`, `project_id`),
   KEY `idx_entries_user_sync` (`user_id`, `synced_to_ticketsystem`),
   KEY `idx_entries_worklog` (`worklog_id`),
-  KEY `idx_entries_day_start` (`day` DESC, `start` DESC)
+  KEY `idx_entries_day_start` (`day` DESC, `start` DESC),
+  KEY `IDX_entries_source` (`source`),
+  KEY (`logged_by_id`),
+  KEY (`responsible_user_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 --
@@ -276,7 +284,9 @@ ALTER TABLE `entries`
   ADD CONSTRAINT `entries_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`),
   ADD CONSTRAINT `entries_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `entries_ibfk_4` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`),
-  ADD CONSTRAINT `entries_ibfk_5` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`);
+  ADD CONSTRAINT `entries_ibfk_5` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`),
+  ADD CONSTRAINT `FK_entries_logged_by` FOREIGN KEY (`logged_by_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `FK_entries_responsible` FOREIGN KEY (`responsible_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 
 --

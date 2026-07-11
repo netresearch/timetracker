@@ -13,6 +13,7 @@ use App\Entity\PersonioAttendanceExport;
 use App\Entity\PersonioConfig;
 use App\Entity\SyncRun;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
@@ -124,7 +125,9 @@ class AttendanceExportService extends AbstractSyncRunService
     private function exportDay(SyncRun $syncRun, PersonioClient $client, User $user, string $personId, DateTimeImmutable $day, bool $dryRun): void
     {
         $intervals = $this->attendanceProjector->project(
-            $this->entryRepository->findByDay((int) $user->getId(), $day->format('Y-m-d')),
+            // ArbZG boundary (ADR-025 §5): only human labour becomes a Personio WORK
+            // period; agent wall-clock must never be exported as working time.
+            $this->entryRepository->findByDay((int) $user->getId(), $day->format('Y-m-d'), EntrySource::HUMAN),
         );
         $state = $this->exportRepository->findOneByUserAndDay($user, $day);
 

@@ -286,6 +286,10 @@ final class BulkEntryAction extends BaseTrackingController
     ): Entry {
         $entry = new Entry();
         $entry->setUser($user)
+            // ADR-025: the bulk day-break path is a human self-log (source stays
+            // the entity default HUMAN, estimated false); stamp the caller as
+            // loggedBy so this bypass write path is attributed like the main one.
+            ->setLoggedBy($user)
             ->setTicket('')
             ->setDescription($preset->getDescription())
             ->setDay($date->format('Y-m-d'))

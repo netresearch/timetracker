@@ -12,7 +12,9 @@ namespace App\Mcp\Tool;
 use App\Controller\Tracking\SaveEntryAction;
 use App\Dto\EntrySaveDto;
 use App\Entity\Activity;
+use App\Entity\Customer;
 use App\Entity\Project;
+use App\Entity\User;
 use App\Mcp\DecodesActionResponse;
 use App\Mcp\ScopeGuard;
 use App\Repository\ActivityRepository;
@@ -21,6 +23,7 @@ use App\Service\ClockInterface;
 use App\Service\DaySummaryService;
 use App\Service\EntrySummaryService;
 use App\Service\TimeBalanceService;
+use Doctrine\ORM\EntityManagerInterface;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
@@ -53,6 +56,7 @@ final readonly class LogTimeTool
 
     public function __construct(
         private ScopeGuard $scopeGuard,
+        private EntityManagerInterface $entityManager,
         private SaveEntryAction $saveEntryAction,
         private ProjectRepository $projectRepository,
         private ActivityRepository $activityRepository,
@@ -68,6 +72,15 @@ final readonly class LogTimeTool
      * by name or numeric id (use `list_projects` / `list_activities` to discover
      * them). Provide either `durationMinutes` (start defaults to 09:00) or an
      * explicit `start`+`end`. Date defaults to today.
+     *
+     * ADR-025 agent attribution: to record an agent session pass
+     * `agentWalltimeMinutes` (the agent's wall-clock time) together with
+     * `humanMinutes` (the delegated human-effort estimate) and optional
+     * `touchpoints`. This dual-writes a source=agent wall-clock entry AND a
+     * source=human, estimated entry in one call. The responsible user is the
+     * authenticated token owner (never a client-supplied id).
+     *
+     * @param array{prompts?: int, reviews?: int, interventions?: int}|null $touchpoints
      *
      * @throws ToolCallException on unknown project/activity, missing
      *                           duration/time, or a validation failure
@@ -92,12 +105,34 @@ final readonly class LogTimeTool
         ?string $date = null,
         #[Schema(description: 'What was done.')]
         string $description = '',
+        #[Schema(description: 'Agent wall-clock minutes. Pass with humanMinutes to dual-write an agent + delegated human entry (ADR-025).', minimum: 1)]
+        ?int $agentWalltimeMinutes = null,
+        #[Schema(description: 'Delegated human-effort minutes. Required when agentWalltimeMinutes is given.', minimum: 1)]
+        ?int $humanMinutes = null,
+        #[Schema(description: 'Agent interaction counts, e.g. {"prompts":7,"reviews":2,"interventions":1}.')]
+        ?array $touchpoints = null,
     ): array {
         $user = $this->scopeGuard->requireScope('entries:write');
 
         $projectEntity = $this->resolveProject($project);
         $activityEntity = $this->resolveActivity($activity);
         $customer = $projectEntity->getCustomer();
+
+        if (null !== $agentWalltimeMinutes) {
+            return $this->dualWrite(
+                $user,
+                $projectEntity,
+                $activityEntity,
+                $customer,
+                $date ?? $this->clock->now()->format('Y-m-d'),
+                strtoupper(trim($ticket)),
+                $description,
+                $agentWalltimeMinutes,
+                $humanMinutes,
+                $touchpoints,
+                $start,
+            );
+        }
 
         [$startTime, $endTime] = $this->resolveTimes($start, $end, $durationMinutes);
 
@@ -112,12 +147,7 @@ final readonly class LogTimeTool
             activity_id: $activityEntity->getId(),
         );
 
-        $response = ($this->saveEntryAction)($dto, $user);
-        $body = $this->decodeBody($response);
-
-        if ($response->getStatusCode() >= Response::HTTP_BAD_REQUEST) {
-            throw new ToolCallException($this->errorMessage($body, 'Failed to save the time entry.'));
-        }
+        $body = $this->persistEntry($dto, $user);
 
         $result = [] === $body ? ['success' => true] : $body;
 
@@ -133,6 +163,132 @@ final readonly class LogTimeTool
         $result['balance'] = $this->timeBalanceService->forUser($user)->jsonSerialize();
 
         return $result;
+    }
+
+    /**
+     * ADR-025: under its PAT the agent records BOTH its wall-clock time
+     * (source=agent) and the delegated human-effort estimate (source=human,
+     * estimated). SaveEntryAction derives the responsible user from the token
+     * owner and honours source/estimated/touchpoints in the API-token channel,
+     * so NO responsible id is passed here (that would be an IDOR). Both writes
+     * happen in this one tool call so the pair is atomic to the agent.
+     *
+     * @param array{prompts?: int, reviews?: int, interventions?: int}|null $touchpoints
+     *
+     * @throws ToolCallException when humanMinutes is missing or a write fails
+     *
+     * @return array<array-key, mixed>
+     */
+    private function dualWrite(
+        User $user,
+        Project $projectEntity,
+        Activity $activityEntity,
+        ?Customer $customer,
+        string $date,
+        string $ticket,
+        string $description,
+        int $agentWalltimeMinutes,
+        ?int $humanMinutes,
+        ?array $touchpoints,
+        ?string $start,
+    ): array {
+        // Reject non-positive durations up front with a clear message, rather than
+        // letting a 0/negative value fall through to a confusing downstream error.
+        if ($agentWalltimeMinutes <= 0) {
+            throw new ToolCallException('agentWalltimeMinutes must be a positive number of minutes.');
+        }
+
+        if (null === $humanMinutes || $humanMinutes <= 0) {
+            throw new ToolCallException('Provide humanMinutes (a positive delegated human-effort estimate) together with agentWalltimeMinutes.');
+        }
+
+        // Both writes go through SaveEntryAction, which flushes internally. Wrap the
+        // pair in one transaction so a second-write failure rolls the first back —
+        // never leaving an orphan agent entry committed without its human estimate.
+        $writes = $this->entityManager->wrapInTransaction(function () use (
+            $user,
+            $projectEntity,
+            $activityEntity,
+            $customer,
+            $date,
+            $ticket,
+            $description,
+            $agentWalltimeMinutes,
+            $humanMinutes,
+            $touchpoints,
+            $start,
+        ): array {
+            [$agentStart, $agentEnd] = $this->resolveTimes($start, null, $agentWalltimeMinutes);
+            $agentBody = $this->persistEntry(new EntrySaveDto(
+                date: $date,
+                start: $agentStart,
+                end: $agentEnd,
+                ticket: $ticket,
+                description: $description,
+                project_id: $projectEntity->getId(),
+                customer_id: $customer?->getId(),
+                activity_id: $activityEntity->getId(),
+                source: 'agent',
+                estimated: false,
+            ), $user);
+
+            [$humanStart, $humanEnd] = $this->resolveTimes($start, null, $humanMinutes);
+            $humanBody = $this->persistEntry(new EntrySaveDto(
+                date: $date,
+                start: $humanStart,
+                end: $humanEnd,
+                ticket: $ticket,
+                description: $description,
+                project_id: $projectEntity->getId(),
+                customer_id: $customer?->getId(),
+                activity_id: $activityEntity->getId(),
+                source: 'human',
+                estimated: true,
+                touchpoints: $touchpoints,
+            ), $user);
+
+            return ['agent' => $agentBody, 'human' => $humanBody];
+        });
+
+        /** @var array{agent: array<array-key, mixed>, human: array<array-key, mixed>} $writes */
+        $agentBody = $writes['agent'];
+        $humanBody = $writes['human'];
+
+        $result = [
+            'agent' => [] === $agentBody ? ['success' => true] : $agentBody,
+            'human' => [] === $humanBody ? ['success' => true] : $humanBody,
+        ];
+
+        // The delegated human entry is the labour stream the agent reads back.
+        $humanEntryId = $this->createdEntryId($humanBody);
+        if (null !== $humanEntryId) {
+            $result['ticket_info'] = $this->entrySummaryService->forEntry($humanEntryId, (int) $user->getId())?->jsonSerialize();
+        }
+
+        $result['day'] = $this->daySummaryService->forUser($user, $date)->jsonSerialize();
+        $result['balance'] = $this->timeBalanceService->forUser($user)->jsonSerialize();
+
+        return $result;
+    }
+
+    /**
+     * Delegate one entry to SaveEntryAction, decoding its response (and raising
+     * a tool error on a 4xx/5xx).
+     *
+     * @throws ToolCallException on a validation/persistence failure
+     *
+     * @return array<array-key, mixed>
+     */
+    private function persistEntry(EntrySaveDto $dto, User $user): array
+    {
+        $response = ($this->saveEntryAction)($dto, $user);
+        $body = $this->decodeBody($response);
+
+        if ($response->getStatusCode() >= Response::HTTP_BAD_REQUEST) {
+            throw new ToolCallException($this->errorMessage($body, 'Failed to save the time entry.'));
+        }
+
+        return $body;
     }
 
     /**

@@ -11,6 +11,7 @@ namespace App\Service\Tracking;
 
 use App\Entity\Entry;
 use App\Enum\EntryClass;
+use App\Enum\EntrySource;
 use App\Repository\EntryRepository;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -44,7 +45,9 @@ class DayClassService
         $objectManager = $this->managerRegistry->getManager();
         $objectRepository = $objectManager->getRepository(Entry::class);
         assert($objectRepository instanceof EntryRepository);
-        $entries = $objectRepository->findByDay($userId, $day);
+        // Human day shape only (ADR-025 §5): an interleaved agent entry must not
+        // create a phantom pause/overlap in the human tracking timeline.
+        $entries = $objectRepository->findByDay($userId, $day, EntrySource::HUMAN);
 
         if (0 === count($entries)) {
             return;

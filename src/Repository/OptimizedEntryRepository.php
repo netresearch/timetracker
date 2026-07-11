@@ -11,6 +11,7 @@ namespace App\Repository;
 
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\Period;
 use App\Service\ClockInterface;
 use App\Service\TypeSafety\ArrayTypeHelper;
@@ -195,6 +196,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                 (SELECT name FROM activities WHERE id = :activityId LIMIT 1) as activity_name
             FROM entries e
             WHERE (e.customer_id = :customerId OR e.project_id = :projectId OR e.activity_id = :activityId OR e.ticket = :ticket)
+              AND e.source = :source
         ";
 
         $params = [
@@ -203,6 +205,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             'projectId' => $entry->getProject()?->getId() ?? 0,
             'activityId' => $entry->getActivity()?->getId() ?? 0,
             'ticket' => $entry->getTicket(),
+            'source' => EntrySource::HUMAN->value,
         ];
 
         $result = $connection->executeQuery($sql, $params)->fetchAssociative();
@@ -220,9 +223,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @return array{duration: int, count: int}
      */
-    public function getWorkByUserOptimized(int $userId, Period $period = Period::DAY): array
+    public function getWorkByUserOptimized(int $userId, Period $period = Period::DAY, ?EntrySource $source = null): array
     {
-        $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period->value);
+        $cacheKey = sprintf('%s_work_%d_%d_%s', self::CACHE_PREFIX, $userId, $period->value, $source instanceof EntrySource ? $source->value : 'all');
 
         if ($this->cacheItemPool instanceof CacheItemPoolInterface && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult));
@@ -236,6 +239,11 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ->select('COUNT(e.id) as count, SUM(e.duration) as duration')
             ->where(self::WHERE_USER)
             ->setParameter('user', $userId);
+
+        if ($source instanceof EntrySource) {
+            $queryBuilder->andWhere('e.source = :source')
+                ->setParameter('source', $source->value);
+        }
 
         $this->applyPeriodFilter($queryBuilder, $period);
 

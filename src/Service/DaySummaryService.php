@@ -11,6 +11,7 @@ namespace App\Service;
 
 use App\Dto\Response\DaySummaryDto;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Repository\EntryRepository;
 use InvalidArgumentException;
 
@@ -43,13 +44,21 @@ final readonly class DaySummaryService
             throw new InvalidArgumentException(sprintf('Invalid date "%s"; use YYYY-MM-DD.', $day));
         }
 
+        // The day list and its total are the human labour view (attendance-safe).
+        // ADR-025 §7: the agent wall-clock is surfaced as a separate figure via a
+        // distinct query, never folded into the human total.
         $entries = [];
         $totalMinutes = 0;
-        foreach ($this->entryRepository->findByDay((int) $user->getId(), $day) as $entry) {
+        foreach ($this->entryRepository->findByDay((int) $user->getId(), $day, EntrySource::HUMAN) as $entry) {
             $entries[] = $entry->toArray();
             $totalMinutes += $entry->getDuration();
         }
 
-        return new DaySummaryDto(date: $day, entries: $entries, totalMinutes: $totalMinutes);
+        $agentMinutes = 0;
+        foreach ($this->entryRepository->findByDay((int) $user->getId(), $day, EntrySource::AGENT) as $agentEntry) {
+            $agentMinutes += $agentEntry->getDuration();
+        }
+
+        return new DaySummaryDto(date: $day, entries: $entries, totalMinutes: $totalMinutes, agentMinutes: $agentMinutes);
     }
 }
