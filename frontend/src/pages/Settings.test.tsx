@@ -112,6 +112,69 @@ describe('Settings grouping', () => {
     unmount()
   })
 
+  it('preserves a persisted Personio opt-in on save when the control is disabled', async () => {
+    // Personio was configured when the user opted in, then an admin removed the
+    // config: the checkbox renders disabled (so the browser omits it from
+    // FormData), but the persisted opt-in must survive an unrelated save rather
+    // than being silently coerced off.
+    const previousConfigured = window.APP_CONFIG!.personioConfigured
+    const previousEnabled = window.APP_CONFIG!.personioSyncEnabled
+    window.APP_CONFIG!.personioConfigured = false
+    window.APP_CONFIG!.personioSyncEnabled = true
+    postFormMock.mockResolvedValue(JSON.stringify({ success: true, locale: 'en', message: 'ok' }))
+    try {
+      const { container, unmount } = renderWithProviders(() => <Settings />)
+
+      const checkbox = container.querySelector('input[type="checkbox"][name="personio_sync_enabled"]') as HTMLInputElement
+      expect(checkbox.disabled).toBe(true)
+
+      const form = container.querySelector('form') as HTMLFormElement
+      fireEvent.submit(form)
+
+      await waitFor(() => expect(postFormMock).toHaveBeenCalled())
+      const [, body] = postFormMock.mock.calls[0] as [string, Record<string, unknown>]
+      expect(body).toMatchObject({ personio_sync_enabled: 1 })
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.personioConfigured = previousConfigured
+      window.APP_CONFIG!.personioSyncEnabled = previousEnabled
+    }
+  })
+
+  it('disables the Personio opt-in and shows the unavailable hint when Personio is not configured', () => {
+    const previous = window.APP_CONFIG!.personioConfigured
+    window.APP_CONFIG!.personioConfigured = false
+    try {
+      const { container, getByText, unmount } = renderWithProviders(() => <Settings />)
+
+      const checkbox = container.querySelector('input[name="personio_sync_enabled"]') as HTMLInputElement
+      expect(checkbox).not.toBeNull()
+      expect(checkbox.disabled).toBe(true)
+      expect(getByText(/Available once an administrator/)).toBeInTheDocument()
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.personioConfigured = previous
+    }
+  })
+
+  it('enables the Personio opt-in when Personio is configured', () => {
+    const previous = window.APP_CONFIG!.personioConfigured
+    window.APP_CONFIG!.personioConfigured = true
+    try {
+      const { container, unmount } = renderWithProviders(() => <Settings />)
+
+      const checkbox = container.querySelector('input[name="personio_sync_enabled"]') as HTMLInputElement
+      expect(checkbox).not.toBeNull()
+      expect(checkbox.disabled).toBe(false)
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.personioConfigured = previous
+    }
+  })
+
   it('keeps the instantly-applied device preferences outside the save form', () => {
     const { getByRole, unmount } = renderWithProviders(() => <Settings />)
 

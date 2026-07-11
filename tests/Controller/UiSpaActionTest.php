@@ -38,6 +38,8 @@ final class UiSpaActionTest extends AbstractWebTestCase
         self::assertStringContainsString('"roles"', $content);
         self::assertStringContainsString('data-nav="settings"', $content);
         self::assertStringContainsString('data-nav="help"', $content);
+        // Drives the Settings page greying-out of the per-user Personio opt-in.
+        self::assertStringContainsString('"personioConfigured"', $content);
     }
 
     public function testCatchAllServesClientSideRoutes(): void

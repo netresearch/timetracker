@@ -10,7 +10,9 @@ declare(strict_types=1);
 namespace App\Controller\Ui;
 
 use App\Controller\BaseController;
+use App\Entity\PersonioConfig;
 use App\Entity\User;
+use App\Repository\PersonioConfigRepository;
 use App\Service\Security\TwoFactorStatusService;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,8 +31,10 @@ use Twig\Error\SyntaxError;
  */
 final class SpaAction extends BaseController
 {
-    public function __construct(private readonly TwoFactorStatusService $twoFactorStatus)
-    {
+    public function __construct(
+        private readonly TwoFactorStatusService $twoFactorStatus,
+        private readonly PersonioConfigRepository $personioConfigRepository,
+    ) {
     }
 
     /**
@@ -59,6 +63,9 @@ final class SpaAction extends BaseController
             // 2FA state (TOTP OR passkey) drive the SPA's enrolment gate.
             'twoFactorRequired' => (bool) $this->params->get('app_require_two_factor'),
             'hasTwoFactor' => $this->twoFactorStatus->hasTwoFactor($user),
+            // Whether an active admin-side Personio config exists; the SPA greys out
+            // the per-user attendance opt-in when Personio isn't configured (ADR-024).
+            'personioConfigured' => $this->personioConfigRepository->findActive() instanceof PersonioConfig,
         ]);
     }
 }

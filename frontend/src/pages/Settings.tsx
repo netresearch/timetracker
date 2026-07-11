@@ -66,6 +66,10 @@ interface BoolSetting {
   label: () => string
   help?: () => string
   initial: (c: AppConfig) => boolean
+  /** When it returns true the checkbox is greyed out (e.g. Personio unconfigured). */
+  disabled?: (c: AppConfig) => boolean
+  /** Explanatory hint shown in place of `help` while the setting is disabled. */
+  disabledHint?: () => string
 }
 
 const BOOL_SETTINGS: BoolSetting[] = [
@@ -77,6 +81,8 @@ const BOOL_SETTINGS: BoolSetting[] = [
     label: () => m.settings_personio_sync(),
     help: () => m.settings_personio_sync_help(),
     initial: (c) => c.personioSyncEnabled,
+    disabled: (c) => !c.personioConfigured,
+    disabledHint: () => m.settings_personio_sync_unavailable(),
   },
 ]
 
@@ -118,13 +124,20 @@ export default function Settings() {
     const locale = String(data.get('locale') ?? config.locale)
 
     setStatus({ kind: 'saving' })
+    // The checkbox is disabled (and so not submitted) when Personio is
+    // unconfigured; reading FormData would coerce the missing field to 0 and
+    // silently flip a persisted opt-in off. Preserve the stored value whenever
+    // the control was disabled.
+    const personioOptIn = config.personioConfigured
+      ? Boolean(data.get('personio_sync_enabled'))
+      : config.personioSyncEnabled
     try {
       const body = await postForm('/settings/save', {
         locale,
         show_empty_line: data.get('show_empty_line') ? 1 : 0,
         suggest_time: data.get('suggest_time') ? 1 : 0,
         show_future: data.get('show_future') ? 1 : 0,
-        personio_sync_enabled: data.get('personio_sync_enabled') ? 1 : 0,
+        personio_sync_enabled: personioOptIn ? 1 : 0,
         min_entry_duration: Number(data.get('min_entry_duration') ?? config.minEntryDuration),
       })
       const result = JSON.parse(body) as SaveResponse
@@ -174,10 +187,22 @@ export default function Settings() {
           <For each={BOOL_SETTINGS}>
             {(setting) => (
               <label class="field-check">
-                <input type="checkbox" name={setting.name} checked={setting.initial(config)} />
+                <input
+                  type="checkbox"
+                  name={setting.name}
+                  checked={setting.initial(config)}
+                  disabled={setting.disabled?.(config)}
+                />
                 <span>{setting.label()}</span>
-                <Show when={setting.help}>
-                  <small class="field-hint">{setting.help?.()}</small>
+                <Show
+                  when={setting.disabled?.(config) && setting.disabledHint}
+                  fallback={
+                    <Show when={setting.help}>
+                      <small class="field-hint">{setting.help?.()}</small>
+                    </Show>
+                  }
+                >
+                  <small class="field-hint">{setting.disabledHint?.()}</small>
                 </Show>
               </label>
             )}

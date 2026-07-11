@@ -8,7 +8,7 @@ import { CommandPalette } from './CommandPalette'
 
 const appConfigStub: AppConfig = {
   locale: 'de', userId: 1, userName: 'x', appTitle: 'TT', roles: ['ROLE_ADMIN'],
-  showEmptyLine: false, suggestTime: false, showFuture: false, minEntryDuration: 5, personioSyncEnabled: false, logoutUrl: '/logout',
+  showEmptyLine: false, suggestTime: false, showFuture: false, minEntryDuration: 5, personioSyncEnabled: false, personioConfigured: false, logoutUrl: '/logout',
   csrfToken: '', loginPath: '/login', totpEnabled: false, localAccount: true,
   twoFactorRequired: false, hasTwoFactor: false,
 }
