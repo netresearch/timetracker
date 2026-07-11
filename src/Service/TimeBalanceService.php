@@ -14,6 +14,7 @@ use App\Dto\Response\TimeBalanceDto;
 use App\Entity\Contract;
 use App\Entity\User;
 use App\Enum\BalanceStatus;
+use App\Enum\EntrySource;
 use App\Enum\Period;
 use App\Repository\ContractRepository;
 use App\Repository\EntryRepository;
@@ -67,9 +68,9 @@ final readonly class TimeBalanceService
         $holidays = $this->holidayDates(min($weekStart, $monthStart), max($weekEnd, $monthEnd));
 
         $periods = [
-            'today' => $this->period($this->entryRepository->getWorkByUser($userId, Period::DAY), $contracts, $holidays, $today, $today, $today),
-            'week' => $this->period($this->entryRepository->getWorkByUser($userId, Period::WEEK), $contracts, $holidays, $weekStart, $weekEnd, $today),
-            'month' => $this->period($this->entryRepository->getWorkByUser($userId, Period::MONTH), $contracts, $holidays, $monthStart, $monthEnd, $today),
+            'today' => $this->period($this->entryRepository->getWorkByUser($userId, Period::DAY, EntrySource::HUMAN), $contracts, $holidays, $today, $today, $today),
+            'week' => $this->period($this->entryRepository->getWorkByUser($userId, Period::WEEK, EntrySource::HUMAN), $contracts, $holidays, $weekStart, $weekEnd, $today),
+            'month' => $this->period($this->entryRepository->getWorkByUser($userId, Period::MONTH, EntrySource::HUMAN), $contracts, $holidays, $monthStart, $monthEnd, $today),
         ];
 
         $warnings = [];
