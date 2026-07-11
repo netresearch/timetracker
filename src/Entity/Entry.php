@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Enum\EntryClass;
+use App\Enum\EntrySource;
 use App\Exception\InvalidEntryTimeException;
 use App\Model\Base;
 use App\Repository\EntryRepository;
@@ -98,6 +99,24 @@ class Entry extends Base
 
     #[ORM\Column(name: 'class', type: 'smallint', nullable: false, enumType: EntryClass::class, options: ['unsigned' => true, 'default' => 1])]
     protected EntryClass $class = EntryClass::PLAIN;
+
+    #[ORM\Column(name: 'source', type: 'string', length: 8, enumType: EntrySource::class, options: ['default' => 'human'])]
+    protected EntrySource $source = EntrySource::HUMAN;
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'logged_by_id', referencedColumnName: 'id', nullable: true)]
+    protected ?User $loggedBy = null;
+
+    #[ORM\Column(name: 'estimated', type: 'boolean', options: ['default' => false])]
+    protected bool $estimated = false;
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'responsible_user_id', referencedColumnName: 'id', nullable: true)]
+    protected ?User $responsibleUser = null;
+
+    /** @var array{prompts?: int, reviews?: int, interventions?: int}|null */
+    #[ORM\Column(name: 'touchpoints', type: 'json', nullable: true)]
+    protected ?array $touchpoints = null;
 
     /**
      * holds summary from external ticket system; no mapping for ORM required (yet).
@@ -428,9 +447,9 @@ class Entry extends Base
     /**
      * Get array representation of entry object.
      *
-     * @return (int|string|null)[]
+     * @return (bool|int|string|null)[]
      *
-     * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: string, durationMinutes: int, class: int, worklog: int|null, extTicket: string|null}
+     * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: string, durationMinutes: int, class: int, worklog: int|null, extTicket: string|null, source: string, estimated: bool}
      */
     #[Override]
     public function toArray(): array
@@ -465,6 +484,8 @@ class Entry extends Base
             'class' => $this->getClass()->value,
             'worklog' => $this->getWorklogId(),
             'extTicket' => $this->getInternalJiraTicketOriginalKey(),
+            'source' => $this->source->value,
+            'estimated' => $this->estimated,
         ];
     }
 
@@ -514,6 +535,72 @@ class Entry extends Base
     public function getClass(): EntryClass
     {
         return $this->class;
+    }
+
+    public function setSource(EntrySource $source): static
+    {
+        $this->source = $source;
+
+        return $this;
+    }
+
+    public function getSource(): EntrySource
+    {
+        return $this->source;
+    }
+
+    public function setLoggedBy(?User $loggedBy): static
+    {
+        $this->loggedBy = $loggedBy;
+
+        return $this;
+    }
+
+    public function getLoggedBy(): ?User
+    {
+        return $this->loggedBy;
+    }
+
+    public function setEstimated(bool $estimated): static
+    {
+        $this->estimated = $estimated;
+
+        return $this;
+    }
+
+    public function isEstimated(): bool
+    {
+        return $this->estimated;
+    }
+
+    public function setResponsibleUser(?User $responsibleUser): static
+    {
+        $this->responsibleUser = $responsibleUser;
+
+        return $this;
+    }
+
+    public function getResponsibleUser(): ?User
+    {
+        return $this->responsibleUser;
+    }
+
+    /**
+     * @param array{prompts?: int, reviews?: int, interventions?: int}|null $touchpoints
+     */
+    public function setTouchpoints(?array $touchpoints): static
+    {
+        $this->touchpoints = $touchpoints;
+
+        return $this;
+    }
+
+    /**
+     * @return array{prompts?: int, reviews?: int, interventions?: int}|null
+     */
+    public function getTouchpoints(): ?array
+    {
+        return $this->touchpoints;
     }
 
     /**
