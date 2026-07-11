@@ -26,6 +26,9 @@ final readonly class EntrySaveDto
 {
     private const string FORMAT_ISO_DATETIME = 'Y-m-d\TH:i:s';
 
+    /**
+     * @param array{prompts?: int, reviews?: int, interventions?: int}|null $touchpoints
+     */
     public function __construct(
         public ?int $id = null,
         #[Assert\NotBlank(message: 'Date is required')]
@@ -58,6 +61,18 @@ final readonly class EntrySaveDto
         #[Assert\Length(max: 50, maxMessage: 'Ticket cannot be longer than 50 characters')]
         #[Assert\Regex(pattern: '/^[A-Z0-9\-_]*$/i', message: 'Invalid ticket format')]
         public string $extTicket = '',
+
+        // ADR-025 agent-vs-human attribution. These are ADVISORY only: they are
+        // honoured solely in the API-token (agent) channel by SaveEntryAction —
+        // a session request forces source=human/estimated=false and ignores them
+        // (a person cannot self-mark work as agent to escape attendance/ArbZG).
+        // There is deliberately NO responsibleUserId/loggedBy field: the
+        // responsible user is derived server-side from the token owner (a
+        // client-supplied responsible id would be an IDOR).
+        #[Assert\Choice(choices: ['human', 'agent'], message: 'Invalid source')]
+        public ?string $source = null,
+        public ?bool $estimated = null,
+        public ?array $touchpoints = null,
     ) {
     }
 
