@@ -25,7 +25,7 @@ enum EntrySource: string
         };
     }
 
-    public static function Valid(string $value): bool
+    public static function isValid(string $value): bool
     {
         return null !== self::tryFrom($value);
     }

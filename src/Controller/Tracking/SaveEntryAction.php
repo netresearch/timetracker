@@ -267,9 +267,7 @@ final class SaveEntryAction extends BaseTrackingController
         // The responsible user is the token owner, never a client-supplied id (IDOR).
         $isAgentChannel = $this->tokenStorage->getToken() instanceof ApiAccessToken;
         if ($isAgentChannel) {
-            $source = (null !== $entrySaveDto->source && EntrySource::Valid($entrySaveDto->source))
-                ? EntrySource::from($entrySaveDto->source)
-                : EntrySource::HUMAN;
+            $source = EntrySource::tryFrom((string) $entrySaveDto->source) ?? EntrySource::HUMAN;
             $entry->setSource($source)
                 ->setLoggedBy($user)
                 ->setResponsibleUser($user)

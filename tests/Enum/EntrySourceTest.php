@@ -16,9 +16,9 @@ final class EntrySourceTest extends TestCase
         self::assertSame('Human', EntrySource::HUMAN->label());
     }
 
-    public function testValidRejectsUnknown(): void
+    public function testIsValidRejectsUnknown(): void
     {
-        self::assertTrue(EntrySource::Valid('agent'));
-        self::assertFalse(EntrySource::Valid('robot'));
+        self::assertTrue(EntrySource::isValid('agent'));
+        self::assertFalse(EntrySource::isValid('robot'));
     }
 }
