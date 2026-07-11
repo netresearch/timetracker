@@ -85,6 +85,9 @@ final class JiraCloudApiServiceTest extends TestCase
 
     private string $restResponseBody = '{}';
 
+    /** @var list<string> sequential per-request REST bodies (pagination); falls back to restResponseBody when empty */
+    private array $restResponsePages = [];
+
     protected function setUp(): void
     {
         $this->tokenEncryptionService = $this->createTokenEncryptionService();
@@ -367,6 +370,38 @@ final class JiraCloudApiServiceTest extends TestCase
         self::assertSame(5, $decoded['maxResults'] ?? null);
     }
 
+    public function testSearchIssueKeysWithWorklogsPaginatesAcrossPages(): void
+    {
+        $this->givenStoredTokens('access-1', 'refresh-1', '+1 hour');
+        $this->ticketSystem->setCloudId('cloud-id-9');
+        // Cloud `search/jql` is cursor-based: pages carry nextPageToken/isLast,
+        // never startAt/total. The last page sets isLast and omits the token.
+        $this->restResponsePages = [
+            (string) json_encode(['issues' => [['key' => 'K1'], ['key' => 'K2']], 'nextPageToken' => 'p2', 'isLast' => false]),
+            (string) json_encode(['issues' => [['key' => 'K3'], ['key' => 'K4']], 'nextPageToken' => 'p3', 'isLast' => false]),
+            (string) json_encode(['issues' => [['key' => 'K5']], 'isLast' => true]),
+        ];
+
+        $service = $this->createService();
+        $result = $service->searchIssueKeysWithWorklogs('worklogDate >= "2026-06-01"', 2);
+
+        self::assertSame(['K1', 'K2', 'K3', 'K4', 'K5'], $result->keys);
+        self::assertFalse($result->truncated, 'a fully-paginated search is not truncated');
+        self::assertCount(3, $this->restRequests);
+
+        $tokens = [];
+        foreach ($this->restRequests as $request) {
+            self::assertSame('search/jql', $request['url']);
+            $body = $request['options']['body'] ?? null;
+            self::assertIsString($body);
+            $decoded = json_decode($body, true);
+            self::assertIsArray($decoded);
+            $tokens[] = $decoded['nextPageToken'] ?? null;
+        }
+
+        self::assertSame([null, 'p2', 'p3'], $tokens, 'each page threads the previous nextPageToken');
+    }
+
     public function testOAuth1CallbackIsRejected(): void
     {
         $service = $this->createService();
@@ -484,7 +519,11 @@ final class JiraCloudApiServiceTest extends TestCase
         }
 
         if (str_starts_with($base, 'https://api.atlassian.com/ex/')) {
-            return $this->stubClient($this->restRequests, fn (): string => $this->restResponseBody, null);
+            return $this->stubClient(
+                $this->restRequests,
+                fn (): string => [] !== $this->restResponsePages ? (string) array_shift($this->restResponsePages) : $this->restResponseBody,
+                null,
+            );
         }
 
         throw new LogicException('Unrouted client base_uri: ' . $base);

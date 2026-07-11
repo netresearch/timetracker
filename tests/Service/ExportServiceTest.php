@@ -135,7 +135,7 @@ final class ExportServiceTest extends TestCase
             }
 
             /** @param array<int, string> $fields */
-            public function searchTicket(string $jql, array $fields, int $limit = 1): object
+            public function searchTicket(string $jql, array $fields, int $limit = 1, int $startAt = 0): object
             {
                 if ($this->shouldThrow) {
                     throw new Exception('API Error');

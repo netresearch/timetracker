@@ -56,6 +56,9 @@ use const JSON_THROW_ON_ERROR;
  */
 class JiraOAuthApiService
 {
+    /** Defensive cap on issue-search pagination (ADR-023 read path 2) — an API that never advances stops here. */
+    protected const int MAX_SEARCH_PAGES = 100;
+
     protected string $oAuthCallbackUrl;
 
     protected string $jiraApiUrl = '/rest/api/latest/';
@@ -446,7 +449,7 @@ class JiraOAuthApiService
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
      */
-    public function searchTicket(string $jql, array $fields, int $limit = 1): mixed
+    public function searchTicket(string $jql, array $fields, int $limit = 1, int $startAt = 0): mixed
     {
         return $this->post(
             'search/',
@@ -454,6 +457,7 @@ class JiraOAuthApiService
                 'jql' => $jql,
                 'fields' => $fields,
                 'maxResults' => $limit,
+                'startAt' => $startAt,
             ],
         );
     }
@@ -532,14 +536,55 @@ class JiraOAuthApiService
     }
 
     /**
-     * JQL search returning issue keys only, with explicit truncation reporting (ADR-023 read path 2).
+     * JQL search returning issue keys only, paginated over `startAt` until exhausted
+     * (ADR-023 read path 2). `truncated` is only set if the defensive page cap is hit
+     * with results still pending — the normal path fetches every page.
      *
      * @throws JiraApiException
      */
     public function searchIssueKeysWithWorklogs(string $jql, int $limit = 500): JiraIssueKeySearchResult
     {
-        $response = $this->searchTicket($jql, ['key'], $limit);
+        $keys = [];
+        $startAt = 0;
+        $truncated = false;
 
+        for ($page = 0;; ++$page) {
+            $response = $this->searchTicket($jql, ['key'], $limit, $startAt);
+
+            $pageCount = $this->issueCount($response);
+            foreach ($this->extractIssueKeys($response) as $key) {
+                $keys[] = $key;
+            }
+            $total = $this->extractTotal($response);
+            $startAt += $pageCount;
+
+            // A short page is the last page (also covers a missing/absent total).
+            if ($pageCount < $limit) {
+                break;
+            }
+
+            // Reached the known total.
+            if (null !== $total && $startAt >= $total) {
+                break;
+            }
+
+            // Defensive stop against a misbehaving API that never advances/terminates.
+            if ($page + 1 >= self::MAX_SEARCH_PAGES) {
+                $truncated = true;
+                break;
+            }
+        }
+
+        return new JiraIssueKeySearchResult($keys, $truncated);
+    }
+
+    /**
+     * Pull the string issue keys out of a JQL-search response, tolerating any shape.
+     *
+     * @return list<string>
+     */
+    protected function extractIssueKeys(mixed $response): array
+    {
         $keys = [];
         if (is_object($response) && isset($response->issues) && is_array($response->issues)) {
             foreach ($response->issues as $issue) {
@@ -549,10 +594,27 @@ class JiraOAuthApiService
             }
         }
 
-        $total = is_object($response) && isset($response->total) && is_numeric($response->total) ? (int) $response->total : null;
-        $truncated = count($keys) >= $limit || (null !== $total && $total > count($keys));
+        return $keys;
+    }
 
-        return new JiraIssueKeySearchResult($keys, $truncated);
+    /**
+     * Number of issues on a search page (independent of key validity) — drives short-page detection.
+     */
+    protected function issueCount(mixed $response): int
+    {
+        return is_object($response) && isset($response->issues) && is_array($response->issues)
+            ? count($response->issues)
+            : 0;
+    }
+
+    /**
+     * The offset-search `total`, or null when the endpoint omits it (e.g. Cloud `search/jql`).
+     */
+    protected function extractTotal(mixed $response): ?int
+    {
+        return is_object($response) && isset($response->total) && is_numeric($response->total)
+            ? (int) $response->total
+            : null;
     }
 
     /**
