@@ -11,6 +11,7 @@ namespace App\Repository;
 
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\Period;
 use App\Service\ClockInterface;
 use App\Service\TypeSafety\ArrayTypeHelper;
@@ -220,9 +221,9 @@ class OptimizedEntryRepository extends ServiceEntityRepository
      *
      * @return array{duration: int, count: int}
      */
-    public function getWorkByUserOptimized(int $userId, Period $period = Period::DAY): array
+    public function getWorkByUserOptimized(int $userId, Period $period = Period::DAY, ?EntrySource $source = null): array
     {
-        $cacheKey = sprintf('%s_work_%d_%d', self::CACHE_PREFIX, $userId, $period->value);
+        $cacheKey = sprintf('%s_work_%d_%d_%s', self::CACHE_PREFIX, $userId, $period->value, $source instanceof EntrySource ? $source->value : 'all');
 
         if ($this->cacheItemPool instanceof CacheItemPoolInterface && null !== ($cachedResult = $this->getCached($cacheKey))) {
             assert(is_array($cachedResult));
@@ -236,6 +237,11 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             ->select('COUNT(e.id) as count, SUM(e.duration) as duration')
             ->where(self::WHERE_USER)
             ->setParameter('user', $userId);
+
+        if ($source instanceof EntrySource) {
+            $queryBuilder->andWhere('e.source = :source')
+                ->setParameter('source', $source->value);
+        }
 
         $this->applyPeriodFilter($queryBuilder, $period);
 

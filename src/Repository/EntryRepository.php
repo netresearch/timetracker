@@ -16,6 +16,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\Period;
 use App\Service\ClockInterface;
 use App\Service\Util\TimeCalculationService;
@@ -999,12 +1000,17 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array{duration: int, count: int}
      */
-    public function getWorkByUser(int $userId, Period $period = Period::DAY): array
+    public function getWorkByUser(int $userId, Period $period = Period::DAY, ?EntrySource $source = null): array
     {
         $queryBuilder = $this->createQueryBuilder('e')
             ->select('COUNT(e.id) as count, COALESCE(SUM(e.duration), 0) as duration')
             ->where(self::WHERE_USER)
             ->setParameter('user', $userId);
+
+        if ($source instanceof EntrySource) {
+            $queryBuilder->andWhere('e.source = :source')
+                ->setParameter('source', $source->value);
+        }
 
         $this->applyPeriodFilter($queryBuilder, $period);
 
@@ -1445,9 +1451,9 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return list<Entry>
      */
-    public function findByDay(int $userId, string $day): array
+    public function findByDay(int $userId, string $day, ?EntrySource $source = null): array
     {
-        $result = $this->createQueryBuilder('e')
+        $queryBuilder = $this->createQueryBuilder('e')
             ->leftJoin('e.user', 'u')
             ->leftJoin('e.customer', 'c')
             ->leftJoin('e.project', 'p')
@@ -1456,9 +1462,14 @@ class EntryRepository extends ServiceEntityRepository
             ->andWhere(self::WHERE_DAY)
             ->setParameter('userId', $userId)
             ->setParameter('day', $day)
-            ->orderBy('e.start', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('e.start', 'ASC');
+
+        if ($source instanceof EntrySource) {
+            $queryBuilder->andWhere('e.source = :source')
+                ->setParameter('source', $source->value);
+        }
+
+        $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
         /** @var list<Entry> $result */
