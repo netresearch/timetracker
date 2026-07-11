@@ -12,6 +12,7 @@ namespace App\Controller\Default;
 use App\Controller\BaseController;
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Model\JsonResponse;
 use App\Model\Response;
 use App\Repository\EntryRepository;
@@ -62,8 +63,11 @@ final class GetTicketTimeSummaryAction extends BaseController
 
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         assert($objectRepository instanceof EntryRepository);
-        $activities = $objectRepository->getActivitiesWithTime($ticket);
-        $users = $objectRepository->getUsersWithTime($ticket);
+        // ADR-025 §5/§7: the ticket-time breakdown and its grand total are the
+        // human-labour figure — agent wall-clock must never fold into the human
+        // line. Slice both queries to human source.
+        $activities = $objectRepository->getActivitiesWithTime($ticket, EntrySource::HUMAN);
+        $users = $objectRepository->getUsersWithTime($ticket, EntrySource::HUMAN);
 
         if (0 === count($users)) {
             return new Response('There is no information available about this ticket.', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
