@@ -17,4 +17,6 @@ enum SyncRunType: string
     case IMPORT = 'import';
     case SYNC = 'sync';
     case VERIFY = 'verify';
+    case PERSONIO_EXPORT = 'personio_export';
+    case PERSONIO_IMPORT = 'personio_import';
 }
