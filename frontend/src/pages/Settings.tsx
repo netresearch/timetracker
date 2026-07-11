@@ -124,19 +124,20 @@ export default function Settings() {
     const locale = String(data.get('locale') ?? config.locale)
 
     setStatus({ kind: 'saving' })
+    // The checkbox is disabled (and so not submitted) when Personio is
+    // unconfigured; reading FormData would coerce the missing field to 0 and
+    // silently flip a persisted opt-in off. Preserve the stored value whenever
+    // the control was disabled.
+    const personioOptIn = config.personioConfigured
+      ? Boolean(data.get('personio_sync_enabled'))
+      : config.personioSyncEnabled
     try {
       const body = await postForm('/settings/save', {
         locale,
         show_empty_line: data.get('show_empty_line') ? 1 : 0,
         suggest_time: data.get('suggest_time') ? 1 : 0,
         show_future: data.get('show_future') ? 1 : 0,
-        // The checkbox is disabled (and so not submitted) when Personio is
-        // unconfigured; reading FormData would coerce the missing field to 0
-        // and silently flip a persisted opt-in off. Preserve the stored value
-        // whenever the control was disabled.
-        personio_sync_enabled: config.personioConfigured
-          ? (data.get('personio_sync_enabled') ? 1 : 0)
-          : (config.personioSyncEnabled ? 1 : 0),
+        personio_sync_enabled: personioOptIn ? 1 : 0,
         min_entry_duration: Number(data.get('min_entry_duration') ?? config.minEntryDuration),
       })
       const result = JSON.parse(body) as SaveResponse
