@@ -43,6 +43,27 @@ final class GetDayActionTest extends AbstractWebTestCase
         self::assertSame(1, $data['count']);
     }
 
+    public function testDayResponseSplitsHumanAndAgentMinutes(): void
+    {
+        // A human 60-min entry plus an agent 120-min entry on the same day: the
+        // response must report them separately, never as one merged total.
+        $this->createEntryFor('unittest', ticket: 'SA-13', description: 'human day entry');
+
+        $agent = $this->createEntryFor('unittest', ticket: 'SA-14', description: 'agent day entry');
+        $agent->setSource(\App\Enum\EntrySource::AGENT)->setDuration(120);
+        $this->testEntityManager()->flush();
+
+        $this->client->request(Request::METHOD_GET, '/api/v2/day?date=2026-07-06');
+        $this->assertStatusCode(200);
+
+        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($data);
+        self::assertSame(60, $data['human_minutes'], 'human total excludes the agent 120');
+        self::assertSame(120, $data['agent_minutes'], 'agent wall-clock surfaced separately');
+        self::assertSame(60, $data['total_minutes'], 'total_minutes stays the human figure (back-compat)');
+        self::assertSame(1, $data['count'], 'the day list stays human-only');
+    }
+
     public function testForeignEntriesAreNotIncluded(): void
     {
         // Another user's booking on the same day must not appear for the caller.

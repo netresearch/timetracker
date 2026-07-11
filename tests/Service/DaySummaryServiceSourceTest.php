@@ -51,6 +51,15 @@ final class DaySummaryServiceSourceTest extends AbstractWebTestCase
         $summary = $service->forUser($user, $day);
 
         self::assertSame(60, $summary->totalMinutes, 'agent 180 excluded from the human day total');
+        self::assertSame(180, $summary->agentMinutes, 'agent wall-clock surfaced separately');
         self::assertCount(1, $summary->entries);
+
+        // ADR-025 Task 14: the split surfaces in the serialised response, never
+        // as one merged total, and each entry carries its source.
+        $serialised = $summary->jsonSerialize();
+        self::assertSame(60, $serialised['human_minutes']);
+        self::assertSame(180, $serialised['agent_minutes']);
+        self::assertSame(60, $serialised['total_minutes'], 'total_minutes stays the human figure');
+        self::assertSame('human', $summary->entries[0]['source']);
     }
 }

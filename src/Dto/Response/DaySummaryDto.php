@@ -27,11 +27,15 @@ final readonly class DaySummaryDto implements JsonSerializable
         public string $date,
         public array $entries,
         public int $totalMinutes,
+        public int $agentMinutes = 0,
     ) {
     }
 
     /**
-     * @return array{date: string, entries: list<array<string, mixed>>, count: int, total_minutes: int}
+     * ADR-025: human and agent minutes are surfaced separately, never as one
+     * merged total. `total_minutes` stays the human figure (back-compat).
+     *
+     * @return array{date: string, entries: list<array<string, mixed>>, count: int, total_minutes: int, human_minutes: int, agent_minutes: int}
      */
     public function jsonSerialize(): array
     {
@@ -40,6 +44,8 @@ final readonly class DaySummaryDto implements JsonSerializable
             'entries' => $this->entries,
             'count' => count($this->entries),
             'total_minutes' => $this->totalMinutes,
+            'human_minutes' => $this->totalMinutes,
+            'agent_minutes' => $this->agentMinutes,
         ];
     }
 }
