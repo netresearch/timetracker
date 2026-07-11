@@ -194,7 +194,7 @@ export default function Settings() {
                 />
                 <span>{setting.label()}</span>
                 <Show
-                  when={setting.disabled?.(config)}
+                  when={setting.disabled?.(config) && setting.disabledHint}
                   fallback={
                     <Show when={setting.help}>
                       <small class="field-hint">{setting.help?.()}</small>
