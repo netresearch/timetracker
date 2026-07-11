@@ -13,6 +13,7 @@ use App\Controller\BaseController;
 use App\Dto\InterpretationFiltersDto;
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\UserType;
 use App\Exception\InvalidDateFormatException;
 use App\Exception\MissingSearchCriteriaException;
@@ -27,16 +28,24 @@ use function is_string;
 abstract class BaseInterpretationController extends BaseController
 {
     /**
+     * Sum of entry durations. ADR-025: a controlling total must never fold human
+     * and agent labour, so an optional source filter slices the sum to one stream;
+     * null keeps the all-sources behaviour (back-compat).
+     *
      * @param Entry[] $entries
      *
      * @psalm-param array<Entry> $entries
      *
      * @psalm-return int<min, max>
      */
-    protected function calculateSum(array &$entries): int
+    protected function calculateSum(array &$entries, ?EntrySource $source = null): int
     {
         $sum = 0;
         foreach ($entries as $entry) {
+            if ($source instanceof EntrySource && $source !== $entry->getSource()) {
+                continue;
+            }
+
             $sum += $entry->getDuration();
         }
 

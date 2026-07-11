@@ -11,6 +11,7 @@ namespace App\Controller\Interpretation;
 
 use App\Entity\Contract;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\UserType;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
@@ -85,10 +86,16 @@ final class GroupByWorktimeAction extends BaseInterpretationController
 
             $key = $day->format('y-m-d');
             if (!isset($times[$key])) {
-                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'date' => $day, 'hours' => 0.0, 'minutes' => 0.0, 'quota' => 0, 'expected' => 0.0];
+                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'date' => $day, 'hours' => 0.0, 'agentHours' => 0.0, 'minutes' => 0.0, 'agentMinutes' => 0.0, 'quota' => 0, 'expected' => 0.0];
             }
 
-            $times[$key]['minutes'] += $entry->getDuration();
+            // ADR-025 §7: the worked bar and its Soll are human labour; agent
+            // wall-clock is tracked in a distinct column, never folded into either.
+            if (EntrySource::AGENT === $entry->getSource()) {
+                $times[$key]['agentMinutes'] += $entry->getDuration();
+            } else {
+                $times[$key]['minutes'] += $entry->getDuration();
+            }
         }
 
         // For a single user, the per-day Soll is 0 on a public holiday (matching
@@ -97,6 +104,8 @@ final class GroupByWorktimeAction extends BaseInterpretationController
         // 0 throughout, which the chart renders as a plain bar with no Soll.
         $holidayDates = $sollUser instanceof User ? $this->loadHolidayDates($times) : [];
 
+        // The Soll comparison and the quota are human-first; the agent total is a
+        // separate column, so the denominator counts human minutes only.
         $totalMinutes = 0.0;
         foreach ($times as $t) {
             $totalMinutes += $t['minutes'];
@@ -106,6 +115,7 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             $minutes = $time['minutes'];
             $date = $time['date'];
             $time['hours'] = $minutes / 60.0;
+            $time['agentHours'] = $time['agentMinutes'] / 60.0;
             if (!$sollUser instanceof User || isset($holidayDates[$date->format('Y-m-d')])) {
                 $time['expected'] = 0.0;
             } else {
@@ -115,14 +125,14 @@ final class GroupByWorktimeAction extends BaseInterpretationController
                 );
             }
 
-            unset($time['minutes'], $time['date']);
+            unset($time['minutes'], $time['agentMinutes'], $time['date']);
             $time['quota'] = $this->timeCalculationService->formatQuota($minutes, $totalMinutes);
         }
         unset($time);
 
         usort($times, $this->sortByName(...));
         $prepared = array_map(static fn (array $t): array => [
-            'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => $t['hours'], 'quota' => $t['quota'], 'expected' => $t['expected'],
+            'id' => $t['id'], 'name' => $t['name'], 'day' => $t['day'], 'hours' => $t['hours'], 'agentHours' => $t['agentHours'], 'quota' => $t['quota'], 'expected' => $t['expected'],
         ], $times);
 
         $prepared = array_reverse($prepared);

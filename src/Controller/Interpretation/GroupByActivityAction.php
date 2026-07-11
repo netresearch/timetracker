@@ -11,6 +11,7 @@ namespace App\Controller\Interpretation;
 
 use App\Entity\Activity;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Model\JsonResponse;
 use App\Model\Response as ModelResponse;
 use App\Security\ApiToken\RequireScope;
@@ -61,12 +62,18 @@ final class GroupByActivityAction extends BaseInterpretationController
                 continue;
             }
             if (!isset($activities[$aid])) {
-                $activities[$aid] = ['id' => $aid, 'name' => $activityObj->getName(), 'hours' => 0];
+                $activities[$aid] = ['id' => $aid, 'name' => $activityObj->getName(), 'hours' => 0, 'agentHours' => 0];
             }
 
-            $activities[$aid]['hours'] += $entry->getDuration() / 60;
+            // ADR-025 §7: human and agent hours are distinct columns, never folded.
+            if (EntrySource::AGENT === $entry->getSource()) {
+                $activities[$aid]['agentHours'] += $entry->getDuration() / 60;
+            } else {
+                $activities[$aid]['hours'] += $entry->getDuration() / 60;
+            }
         }
 
+        // Quota is human-first: the share is of the human total.
         $total = 0.0;
         foreach ($activities as $a) {
             $total += (float) $a['hours'];
