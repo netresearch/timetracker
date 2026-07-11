@@ -61,11 +61,24 @@ const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
 ]
 
-const BOOL_SETTINGS = [
-  { name: 'show_empty_line', label: () => m.settings_show_empty_line(), initial: (c: AppConfig) => c.showEmptyLine },
-  { name: 'suggest_time', label: () => m.settings_suggest_time(), initial: (c: AppConfig) => c.suggestTime },
-  { name: 'show_future', label: () => m.settings_show_future(), initial: (c: AppConfig) => c.showFuture },
-] as const
+interface BoolSetting {
+  name: string
+  label: () => string
+  help?: () => string
+  initial: (c: AppConfig) => boolean
+}
+
+const BOOL_SETTINGS: BoolSetting[] = [
+  { name: 'show_empty_line', label: () => m.settings_show_empty_line(), initial: (c) => c.showEmptyLine },
+  { name: 'suggest_time', label: () => m.settings_suggest_time(), initial: (c) => c.suggestTime },
+  { name: 'show_future', label: () => m.settings_show_future(), initial: (c) => c.showFuture },
+  {
+    name: 'personio_sync_enabled',
+    label: () => m.settings_personio_sync(),
+    help: () => m.settings_personio_sync_help(),
+    initial: (c) => c.personioSyncEnabled,
+  },
+]
 
 type Status = { kind: 'idle' | 'saving' } | { kind: 'ok' } | { kind: 'error'; message: string }
 
@@ -111,6 +124,7 @@ export default function Settings() {
         show_empty_line: data.get('show_empty_line') ? 1 : 0,
         suggest_time: data.get('suggest_time') ? 1 : 0,
         show_future: data.get('show_future') ? 1 : 0,
+        personio_sync_enabled: data.get('personio_sync_enabled') ? 1 : 0,
         min_entry_duration: Number(data.get('min_entry_duration') ?? config.minEntryDuration),
       })
       const result = JSON.parse(body) as SaveResponse
@@ -162,6 +176,9 @@ export default function Settings() {
               <label class="field-check">
                 <input type="checkbox" name={setting.name} checked={setting.initial(config)} />
                 <span>{setting.label()}</span>
+                <Show when={setting.help}>
+                  <small class="field-hint">{setting.help?.()}</small>
+                </Show>
               </label>
             )}
           </For>

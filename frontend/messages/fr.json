@@ -66,6 +66,8 @@
   "settings_show_empty_line": "Toujours afficher une ligne vide",
   "settings_suggest_time": "Suggérer l'heure",
   "settings_show_future": "Afficher le futur",
+  "settings_personio_sync": "Envoyer mes heures de travail à Personio",
+  "settings_personio_sync_help": "Exporte vos heures de travail enregistrées vers Personio sous forme de présences quotidiennes.",
   "settings_min_entry_duration": "Durée minimale d'une saisie (minutes)",
   "settings_min_entry_duration_hint": "La fin d'une nouvelle saisie est préremplie avec son début plus ce nombre de minutes. 0 désactive cette option.",
   "settings_grid_enter": "Lors de l'édition d'une cellule, Entrée…",

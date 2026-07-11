@@ -424,7 +424,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
      * show_future) are returned as integers (0/1) for the legacy frontend; the
      * remaining flags (active, totp_enabled, local_account) are native booleans.
      *
-     * @return array{show_empty_line: int, suggest_time: int, show_future: int, active: bool, min_entry_duration: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>, totp_enabled: bool, local_account: bool}
+     * @return array{show_empty_line: int, suggest_time: int, show_future: int, active: bool, min_entry_duration: int, personio_sync_enabled: bool, user_name: string, user_id: int, type: string, locale: string, roles: array<string>, totp_enabled: bool, local_account: bool}
      */
     public function getSettings(): array
     {
@@ -434,6 +434,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
             'show_future' => (int) $this->getShowFuture(),
             'active' => $this->getActive(),
             'min_entry_duration' => $this->getMinEntryDuration(),
+            'personio_sync_enabled' => $this->getPersonioSyncEnabled(),
             'user_name' => $this->getUsername() ?? '',
             'user_id' => $this->getId() ?? 0,
             'type' => $this->getType()->value,

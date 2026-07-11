@@ -66,6 +66,8 @@
   "settings_show_empty_line": "Всегда показывать пустую строку",
   "settings_suggest_time": "Предлагать время",
   "settings_show_future": "Показывать будущее",
+  "settings_personio_sync": "Отправлять мои рабочие часы в Personio",
+  "settings_personio_sync_help": "Экспортирует записанные рабочие часы в Personio как ежедневные посещения.",
   "settings_min_entry_duration": "Минимальная длительность записи (в минутах)",
   "settings_min_entry_duration_hint": "Время окончания новой записи предзаполняется временем начала плюс указанные минуты. 0 отключает эту функцию.",
   "settings_grid_enter": "При редактировании ячейки таблицы клавиша Enter…",

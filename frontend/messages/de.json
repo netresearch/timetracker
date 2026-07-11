@@ -66,6 +66,8 @@
   "settings_show_empty_line": "Immer leere Zeile anzeigen",
   "settings_suggest_time": "Zeit vorschlagen",
   "settings_show_future": "Zukunft anzeigen",
+  "settings_personio_sync": "Meine Arbeitszeiten an Personio übertragen",
+  "settings_personio_sync_help": "Überträgt deine erfassten Arbeitszeiten als tägliche Anwesenheiten nach Personio.",
   "settings_min_entry_duration": "Minimale Eintragsdauer (Minuten)",
   "settings_min_entry_duration_hint": "Die Endzeit eines neuen Eintrags wird auf Startzeit plus diese Minuten vorbelegt. 0 deaktiviert dies.",
   "settings_grid_enter": "Beim Bearbeiten einer Tabellenzelle springt Enter…",

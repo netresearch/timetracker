@@ -1,8 +1,25 @@
-import { fireEvent } from '@solidjs/testing-library'
-import { afterEach, describe, expect, it } from 'vitest'
+import { fireEvent, waitFor } from '@solidjs/testing-library'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../test/renderWithProviders'
 import Settings from './Settings'
+
+// Only the write path is mocked: onSubmit posts through postForm, so a spy lets
+// us assert the payload without a network round-trip. apiErrorMessage keeps its
+// real behaviour for the error branch.
+const { postFormMock } = vi.hoisted(() => ({ postFormMock: vi.fn() }))
+vi.mock('../api/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api/client')>()
+
+  return {
+    ...actual,
+    postForm: (...args: unknown[]) => postFormMock(...args) as unknown,
+  }
+})
+
+beforeEach(() => {
+  postFormMock.mockReset()
+})
 
 afterEach(() => {
   localStorage.clear()
@@ -65,13 +82,32 @@ describe('Settings grouping', () => {
     expect(form).not.toBeNull()
 
     // Every account-saved setting is submitted by this form …
-    for (const name of ['show_empty_line', 'suggest_time', 'show_future']) {
+    for (const name of ['show_empty_line', 'suggest_time', 'show_future', 'personio_sync_enabled']) {
       expect(form.querySelector(`input[type="checkbox"][name="${name}"]`)).not.toBeNull()
     }
     expect(form.querySelector('select[name="locale"]')).not.toBeNull()
     expect(form.querySelector('input[name="min_entry_duration"]')).not.toBeNull()
     // … and the (only) Save button lives in the same card.
     expect(form.querySelector('button[type="submit"]')).not.toBeNull()
+
+    unmount()
+  })
+
+  it('includes the Personio attendance opt-in in the save payload', async () => {
+    postFormMock.mockResolvedValue(JSON.stringify({ success: true, locale: 'en', message: 'ok' }))
+    const { container, unmount } = renderWithProviders(() => <Settings />)
+
+    const checkbox = container.querySelector('input[name="personio_sync_enabled"]') as HTMLInputElement
+    expect(checkbox).not.toBeNull()
+    fireEvent.click(checkbox)
+
+    const form = container.querySelector('form') as HTMLFormElement
+    fireEvent.submit(form)
+
+    await waitFor(() => expect(postFormMock).toHaveBeenCalled())
+    const [url, body] = postFormMock.mock.calls[0] as [string, Record<string, unknown>]
+    expect(url).toBe('/settings/save')
+    expect(body).toMatchObject({ personio_sync_enabled: 1 })
 
     unmount()
   })

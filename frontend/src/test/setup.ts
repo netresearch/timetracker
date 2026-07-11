@@ -74,6 +74,7 @@ window.APP_CONFIG = {
   suggestTime: false,
   showFuture: false,
   minEntryDuration: 5,
+  personioSyncEnabled: false,
   totpEnabled: false,
   localAccount: true,
   twoFactorRequired: false,

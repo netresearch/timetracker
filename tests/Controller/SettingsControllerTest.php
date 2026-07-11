@@ -67,6 +67,49 @@ final class SettingsControllerTest extends AbstractWebTestCase
         self::assertArraySubset($expectedDbEntry, $result);
     }
 
+    public function testSaveActionPersistsPersonioSyncEnabled(): void
+    {
+        $this->logInSession('i.myself');
+
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', [
+            'locale' => 'de',
+            'personio_sync_enabled' => 1,
+        ]);
+        $this->assertStatusCode(200);
+
+        $this->assertPersonioSyncEnabled(3, true);
+    }
+
+    public function testSaveActionDefaultsPersonioSyncDisabledWhenOmitted(): void
+    {
+        $this->logInSession('i.myself');
+
+        // First turn it on, then a second save without the field must clear it.
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', [
+            'locale' => 'de',
+            'personio_sync_enabled' => 1,
+        ]);
+        $this->assertStatusCode(200);
+
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/settings/save', [
+            'locale' => 'de',
+        ]);
+        $this->assertStatusCode(200);
+
+        $this->assertPersonioSyncEnabled(3, false);
+    }
+
+    private function assertPersonioSyncEnabled(int $userId, bool $expected): void
+    {
+        self::assertNotNull($this->queryBuilder);
+        $queryBuilder = $this->queryBuilder;
+        $queryBuilder->select('personio_sync_enabled')
+            ->from('users')->where('id = :userId')
+            ->setParameter('userId', $userId);
+
+        self::assertSame($expected, (bool) $queryBuilder->executeQuery()->fetchOne());
+    }
+
     public function testSaveActionRejectsGet(): void
     {
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/settings/save');
