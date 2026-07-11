@@ -27,6 +27,10 @@ use Tests\AbstractWebTestCase;
  */
 final class PersonioConfigCrudTest extends AbstractWebTestCase
 {
+    private const string SAVE_URI = '/personio-config/save';
+    private const string BASE_URL = 'https://api.personio.de';
+    private const string JSON = 'application/json';
+
     /**
      * POST a JSON body, matching what the SPA sends (the controller maps the
      * payload via #[MapRequestPayload], which reads the JSON request body).
@@ -40,7 +44,7 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
             $uri,
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
+            ['CONTENT_TYPE' => self::JSON, 'HTTP_ACCEPT' => self::JSON],
             (string) json_encode($payload),
         );
     }
@@ -66,9 +70,9 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
 
-        $this->postJson('/personio-config/save', [
+        $this->postJson(self::SAVE_URI, [
             'name' => 'Personio',
-            'baseUrl' => 'https://api.personio.de',
+            'baseUrl' => self::BASE_URL,
             'clientId' => 'client-abc',
             'clientSecret' => 'super-secret-value',
             'active' => true,
@@ -80,7 +84,7 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
         self::assertStringNotContainsString('super-secret-value', $body);
 
         $config = $this->refetchByName('Personio');
-        self::assertSame('https://api.personio.de', $config->getBaseUrl());
+        self::assertSame(self::BASE_URL, $config->getBaseUrl());
         self::assertSame('client-abc', $config->getClientId());
 
         // Stored column holds ciphertext, not the plaintext.
@@ -101,10 +105,10 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
         // The admin CRUD frontend posts id: 0 for a new config (toForm(null)
         // emits id: 0). A zero id must create, not be looked up as an existing
         // row and 404 — this is the exact payload the UI sends.
-        $this->postJson('/personio-config/save', [
+        $this->postJson(self::SAVE_URI, [
             'id' => 0,
             'name' => 'Personio',
-            'baseUrl' => 'https://api.personio.de',
+            'baseUrl' => self::BASE_URL,
             'clientId' => 'client-abc',
             'clientSecret' => 'super-secret-value',
             'active' => true,
@@ -122,10 +126,10 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
 
         // On CREATE there is no stored ciphertext to keep, so a blank secret
         // would persist an unauthenticatable config — it must be rejected.
-        $this->postJson('/personio-config/save', [
+        $this->postJson(self::SAVE_URI, [
             'id' => 0,
             'name' => 'Personio',
-            'baseUrl' => 'https://api.personio.de',
+            'baseUrl' => self::BASE_URL,
             'clientId' => 'client-abc',
             'clientSecret' => '',
         ]);
@@ -143,9 +147,9 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
 
-        $this->postJson('/personio-config/save', [
+        $this->postJson(self::SAVE_URI, [
             'name' => 'Personio',
-            'baseUrl' => 'https://api.personio.de',
+            'baseUrl' => self::BASE_URL,
             'clientId' => 'client-abc',
             'clientSecret' => 'first-secret',
         ]);
@@ -157,7 +161,7 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
 
         // Second save with a blank secret must keep the stored ciphertext, and
         // still update the non-secret fields.
-        $this->postJson('/personio-config/save', [
+        $this->postJson(self::SAVE_URI, [
             'id' => $id,
             'name' => 'Personio',
             'baseUrl' => 'https://api.personio.example',
@@ -182,15 +186,15 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
 
         $payload = [
             'name' => 'Personio',
-            'baseUrl' => 'https://api.personio.de',
+            'baseUrl' => self::BASE_URL,
             'clientId' => 'client-abc',
             'clientSecret' => 'secret',
         ];
-        $this->postJson('/personio-config/save', $payload);
+        $this->postJson(self::SAVE_URI, $payload);
         $this->assertStatusCode(200);
 
         // A second, different config reusing the name is rejected with 406.
-        $this->postJson('/personio-config/save', $payload);
+        $this->postJson(self::SAVE_URI, $payload);
         $this->assertStatusCode(406);
     }
 
@@ -198,15 +202,15 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
 
-        $this->postJson('/personio-config/save', [
+        $this->postJson(self::SAVE_URI, [
             'name' => 'Personio',
-            'baseUrl' => 'https://api.personio.de',
+            'baseUrl' => self::BASE_URL,
             'clientId' => 'client-abc',
             'clientSecret' => 'super-secret-value',
         ]);
         $this->assertStatusCode(200);
 
-        $this->client->request(Request::METHOD_GET, '/getPersonioConfigs', [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->client->request(Request::METHOD_GET, '/getPersonioConfigs', [], [], ['HTTP_ACCEPT' => self::JSON]);
         $this->assertStatusCode(200);
 
         $body = (string) $this->client->getResponse()->getContent();
@@ -224,9 +228,9 @@ final class PersonioConfigCrudTest extends AbstractWebTestCase
     {
         $this->logInSession('unittest');
 
-        $this->postJson('/personio-config/save', [
+        $this->postJson(self::SAVE_URI, [
             'name' => 'Personio',
-            'baseUrl' => 'https://api.personio.de',
+            'baseUrl' => self::BASE_URL,
             'clientId' => 'client-abc',
             'clientSecret' => 'secret',
         ]);
