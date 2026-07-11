@@ -13,6 +13,7 @@ use App\Controller\BaseController;
 use App\Entity\Contract;
 use App\Entity\Entry;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\Period;
 use App\Model\JsonResponse;
 use App\Repository\ContractRepository;
@@ -77,9 +78,11 @@ final class GetTimeSummaryAction extends BaseController
         $userId = (int) $user->getId();
         $objectRepository = $this->managerRegistry->getRepository(Entry::class);
         assert($objectRepository instanceof EntryRepository);
-        $today = $objectRepository->getWorkByUser($userId, Period::DAY);
-        $week = $objectRepository->getWorkByUser($userId, Period::WEEK);
-        $month = $objectRepository->getWorkByUser($userId, Period::MONTH);
+        // IST is human labour only (ADR-025 §5): agent wall-clock must never
+        // inflate the header's worked-minutes total or its SOLL balance.
+        $today = $objectRepository->getWorkByUser($userId, Period::DAY, EntrySource::HUMAN);
+        $week = $objectRepository->getWorkByUser($userId, Period::WEEK, EntrySource::HUMAN);
+        $month = $objectRepository->getWorkByUser($userId, Period::MONTH, EntrySource::HUMAN);
 
         $target = $this->targetMinutes($user);
 
