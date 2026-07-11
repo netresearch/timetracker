@@ -225,6 +225,38 @@ final class AttendanceExportServiceTest extends TestCase
         self::assertTrue($this->runHasItem($run, SyncItemKind::CONFLICT));
         // The TT-owned id survives so a later run can retry once the approval is lifted.
         self::assertSame(['1001'], $state->getPeriodIds());
+        // The base still reflects what Personio holds (the OLD value), not the rejected projection —
+        // so the next run diffs again and retries instead of recording the change as in sync.
+        self::assertSame([['start' => 1, 'end' => 2]], $state->getBasePayload());
+    }
+
+    public function testFailedUpdateKeepsOldBaseSoNextRunRetries(): void
+    {
+        $user = $this->mappedUser();
+        $this->configRepository->method('findActive')->willReturn(new PersonioConfig());
+        $this->entriesByDay['2026-07-01'] = [$this->entry($user, '2026-07-01', '09:00:00', '11:00:00')];
+
+        $state = new PersonioAttendanceExport()
+            ->setUser($user)
+            ->setDay($this->day('2026-07-01'))
+            ->setPeriodIds(['1001'])
+            ->setBasePayload([['start' => 1, 'end' => 2]])
+            ->setLastExportedAt(new DateTimeImmutable('2026-06-30 10:00:00'));
+        $this->stateByDay['2026-07-01'] = $state;
+
+        // A transient (non-approval) failure: the PATCH did not land.
+        $this->client->method('updateAttendancePeriod')
+            ->willThrowException(new PersonioApiException('gateway timeout', 500));
+
+        $run = $this->service->exportUser($user, $this->day('2026-07-01'), $this->day('2026-07-01'));
+
+        self::assertSame(SyncRunStatus::COMPLETED, $run->getStatus());
+        self::assertSame(1, $run->getCounters()['errors'] ?? 0);
+        self::assertTrue($this->runHasItem($run, SyncItemKind::ERROR));
+        self::assertSame(['1001'], $state->getPeriodIds());
+        // The write failed, so the base MUST stay the old value — recording the projected interval
+        // here would falsely mark the day in sync and the failed change would never be retried.
+        self::assertSame([['start' => 1, 'end' => 2]], $state->getBasePayload());
     }
 
     public function testNoEmployeeIdFailsRun(): void

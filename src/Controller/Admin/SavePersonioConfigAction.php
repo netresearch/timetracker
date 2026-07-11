@@ -73,6 +73,12 @@ final class SavePersonioConfigAction extends BaseController
         // value", not "wipe it": snapshot the stored ciphertext up front.
         $storedSecret = 0 !== $id ? $personioConfig->getClientSecret() : null;
 
+        // On CREATE there is no stored ciphertext to fall back on, so a blank
+        // secret would persist a config that can never authenticate — reject it.
+        if (0 === $id && '' === $personioConfigSaveDto->clientSecret) {
+            return new Error($this->translate('Client secret is required.'), \Symfony\Component\HttpFoundation\Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $absenceProjectError = $this->applyAbsenceProject($personioConfig, $personioConfigSaveDto);
         if ($absenceProjectError instanceof Error) {
             return $absenceProjectError;

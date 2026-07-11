@@ -31,7 +31,6 @@ use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
-use function array_map;
 use function count;
 use function date_default_timezone_get;
 use function max;
@@ -136,32 +135,35 @@ class AttendanceExportService extends AbstractSyncRunService
         $storedIds = $state instanceof PersonioAttendanceExport ? $state->getPeriodIds() : [];
         $storedPayload = $state instanceof PersonioAttendanceExport ? $state->getBasePayload() : [];
 
-        $resultIds = $this->reconcile($syncRun, $client, $personId, $intervals, $storedIds, $storedPayload, $dryRun);
+        [$resultIds, $resultBases] = $this->reconcile($syncRun, $client, $personId, $intervals, $storedIds, $storedPayload, $dryRun);
 
         if ($dryRun) {
             return;
         }
 
-        $this->persistState($syncRun, $user, $day, $intervals, $resultIds, $state);
+        $this->persistState($syncRun, $user, $day, $resultBases, $resultIds, $state);
     }
 
     /**
      * Positional zip of the stored id set with the projected intervals; returns the id set the day
-     * now owns (created + kept, minus deleted).
+     * now owns (created + kept, minus deleted) AND the base value each retained period actually holds
+     * in Personio — the base is NOT the aspirational projection: a failed write keeps the OLD base so
+     * the next run retries it instead of falsely treating it as in sync.
      *
      * @param list<WorkInterval>                $intervals
      * @param list<string>                      $storedIds
      * @param list<array{start: int, end: int}> $storedPayload
      *
-     * @return list<string>
+     * @return array{0: list<string>, 1: list<array{start: int, end: int}>}
      */
     private function reconcile(SyncRun $syncRun, PersonioClient $client, string $personId, array $intervals, array $storedIds, array $storedPayload, bool $dryRun): array
     {
         $resultIds = [];
+        $resultBases = [];
         $slots = max(count($intervals), count($storedIds));
 
         for ($i = 0; $i < $slots; ++$i) {
-            $id = $this->reconcileSlot(
+            $slot = $this->reconcileSlot(
                 $syncRun,
                 $client,
                 $personId,
@@ -170,18 +172,22 @@ class AttendanceExportService extends AbstractSyncRunService
                 $storedPayload[$i] ?? null,
                 $dryRun,
             );
-            if (null !== $id) {
-                $resultIds[] = $id;
+            if (null !== $slot) {
+                $resultIds[] = $slot['id'];
+                $resultBases[] = $slot['base'];
             }
         }
 
-        return $resultIds;
+        return [$resultIds, $resultBases];
     }
 
     /**
      * @param array{start: int, end: int}|null $base
+     *
+     * @return array{id: string, base: array{start: int, end: int}}|null the retained period id and
+     *                                                                   the base it actually holds in Personio
      */
-    private function reconcileSlot(SyncRun $syncRun, PersonioClient $client, string $personId, ?WorkInterval $interval, ?string $storedId, ?array $base, bool $dryRun): ?string
+    private function reconcileSlot(SyncRun $syncRun, PersonioClient $client, string $personId, ?WorkInterval $interval, ?string $storedId, ?array $base, bool $dryRun): ?array
     {
         if ($interval instanceof WorkInterval && null === $storedId) {
             return $this->createPeriod($syncRun, $client, $personId, $interval, $dryRun);
@@ -192,13 +198,16 @@ class AttendanceExportService extends AbstractSyncRunService
         }
 
         if (null !== $storedId) {
-            return $this->deletePeriod($syncRun, $client, $storedId, $dryRun);
+            return $this->deletePeriod($syncRun, $client, $storedId, $base, $dryRun);
         }
 
         return null;
     }
 
-    private function createPeriod(SyncRun $syncRun, PersonioClient $client, string $personId, WorkInterval $interval, bool $dryRun): ?string
+    /**
+     * @return array{id: string, base: array{start: int, end: int}}|null
+     */
+    private function createPeriod(SyncRun $syncRun, PersonioClient $client, string $personId, WorkInterval $interval, bool $dryRun): ?array
     {
         if ($dryRun) {
             $syncRun->incrementCounter('would_create');
@@ -210,7 +219,8 @@ class AttendanceExportService extends AbstractSyncRunService
             $id = $client->createAttendancePeriod($personId, 'WORK', $this->iso($interval->startTimestamp), $this->iso($interval->endTimestamp));
             $syncRun->incrementCounter('created');
 
-            return $id;
+            // Written: the interval is now the base Personio holds for this period.
+            return ['id' => $id, 'base' => $interval->toArray()];
         } catch (PersonioApiException $personioApiException) {
             $this->handleWriteError($syncRun, $personioApiException, null);
 
@@ -220,33 +230,45 @@ class AttendanceExportService extends AbstractSyncRunService
 
     /**
      * @param array{start: int, end: int}|null $base
+     *
+     * @return array{id: string, base: array{start: int, end: int}}
      */
-    private function updatePeriod(SyncRun $syncRun, PersonioClient $client, string $storedId, WorkInterval $interval, ?array $base, bool $dryRun): string
+    private function updatePeriod(SyncRun $syncRun, PersonioClient $client, string $storedId, WorkInterval $interval, ?array $base, bool $dryRun): array
     {
         if (null !== $base && $interval->toArray() === $base) {
             $syncRun->incrementCounter('in_sync');
 
-            return $storedId;
+            return ['id' => $storedId, 'base' => $base];
         }
 
         if ($dryRun) {
             $syncRun->incrementCounter('would_update');
 
-            return $storedId;
+            return ['id' => $storedId, 'base' => $interval->toArray()];
         }
 
         try {
             $client->updateAttendancePeriod($storedId, $this->iso($interval->startTimestamp), $this->iso($interval->endTimestamp));
             $syncRun->incrementCounter('updated');
+
+            // Patched: the interval is what Personio now holds.
+            return ['id' => $storedId, 'base' => $interval->toArray()];
         } catch (PersonioApiException $personioApiException) {
             $this->handleWriteError($syncRun, $personioApiException, $storedId);
-        }
 
-        // Keep the id whether patched, conflicted or errored — the day still owns this period.
-        return $storedId;
+            // Not written: Personio still holds the OLD base, so keep it — the next run then
+            // sees a diff again and retries instead of falsely recording the change as in sync.
+            // Base unknown (corrupt/legacy state) → a never-matching sentinel forces the retry.
+            return ['id' => $storedId, 'base' => $base ?? ['start' => 0, 'end' => 0]];
+        }
     }
 
-    private function deletePeriod(SyncRun $syncRun, PersonioClient $client, string $storedId, bool $dryRun): ?string
+    /**
+     * @param array{start: int, end: int}|null $base
+     *
+     * @return array{id: string, base: array{start: int, end: int}}|null
+     */
+    private function deletePeriod(SyncRun $syncRun, PersonioClient $client, string $storedId, ?array $base, bool $dryRun): ?array
     {
         if ($dryRun) {
             $syncRun->incrementCounter('would_delete');
@@ -262,8 +284,8 @@ class AttendanceExportService extends AbstractSyncRunService
         } catch (PersonioApiException $personioApiException) {
             $this->handleWriteError($syncRun, $personioApiException, $storedId);
 
-            // Retain the id on conflict/error so a later run retries the removal.
-            return $storedId;
+            // Not deleted: retain the id AND its base so a later run retries the removal.
+            return ['id' => $storedId, 'base' => $base ?? ['start' => 0, 'end' => 0]];
         }
     }
 
@@ -291,14 +313,18 @@ class AttendanceExportService extends AbstractSyncRunService
     /**
      * Upserts (or removes) the day's TT-owned period record after a non-dry write set.
      *
-     * @param list<WorkInterval> $intervals
-     * @param list<string>       $resultIds
+     * The base payload is what each retained period ACTUALLY holds in Personio (per
+     * {@see reconcile}), never the projection — so a write that failed keeps its old base and
+     * gets retried on the next run rather than being silently recorded as in sync.
+     *
+     * @param list<array{start: int, end: int}> $bases
+     * @param list<string>                      $resultIds
      */
-    private function persistState(SyncRun $syncRun, User $user, DateTimeImmutable $day, array $intervals, array $resultIds, ?PersonioAttendanceExport $state): void
+    private function persistState(SyncRun $syncRun, User $user, DateTimeImmutable $day, array $bases, array $resultIds, ?PersonioAttendanceExport $state): void
     {
         // Day emptied and nothing survived: drop the record. If a conflict/error kept an id, keep
         // the record so the retained period stays tracked.
-        if ([] === $intervals && [] === $resultIds) {
+        if ([] === $resultIds) {
             if ($state instanceof PersonioAttendanceExport) {
                 $this->entityManager->remove($state);
             }
@@ -312,7 +338,7 @@ class AttendanceExportService extends AbstractSyncRunService
         }
 
         $state->setPeriodIds($resultIds)
-            ->setBasePayload(array_map(static fn (WorkInterval $workInterval): array => $workInterval->toArray(), $intervals))
+            ->setBasePayload($bases)
             ->setLastExportedAt($this->now())
             ->setLastSyncRun($syncRun);
     }
