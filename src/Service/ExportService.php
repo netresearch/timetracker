@@ -114,6 +114,10 @@ class ExportService
             'ticket' => $entry->getTicket(),
             'ticket_url' => $this->getTicketUrl($entry, $arApi, $currentUser),
             'worklog_url' => $this->getWorklogUrl($entry, $arApi, $currentUser),
+            // ADR-025: keep the source axis and the responsible user on the export
+            // row so controlling can report human vs agent hours side by side.
+            'source' => $entry->getSource()->value,
+            'responsible' => $entry->getResponsibleUser() instanceof User ? $entry->getResponsibleUser()->getUsername() : '',
         ];
     }
 

@@ -402,6 +402,8 @@ class EntryRepository extends ServiceEntityRepository
             e.ticket,
             e.class,
             e.duration,
+            e.source,
+            e.responsible_user_id AS responsible,
             e.internal_jira_ticket_original_key as extTicket,
             u.abbr AS userAbbr,
             c.name AS customerName,

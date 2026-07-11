@@ -96,6 +96,41 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
         self::assertSame(180, $agentOnly[0]->getDuration());
     }
 
+    public function testGetRawDataExposesSourceAndResponsible(): void
+    {
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+
+        $entryRepository = self::getContainer()->get(EntryRepository::class);
+        self::assertInstanceOf(EntryRepository::class, $entryRepository);
+
+        $user = $entityManager->getRepository(User::class)->findOneBy([]);
+        self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        $userId = (int) $user->getId();
+        $day = '2099-08-20';
+
+        $entityManager->persist(
+            new Entry()->setUser($user)->setSource(EntrySource::HUMAN)->setDuration(60)
+                ->setDay(new DateTime($day))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00')),
+        );
+        $entityManager->persist(
+            new Entry()->setUser($user)->setSource(EntrySource::AGENT)->setResponsibleUser($user)->setDuration(180)
+                ->setDay(new DateTime($day))->setStart(new DateTime('10:00'))->setEnd(new DateTime('13:00')),
+        );
+        $entityManager->flush();
+
+        $rows = $entryRepository->getRawData($day, $day, $userId);
+        self::assertCount(2, $rows);
+
+        $sources = array_map(static fn (array $row): mixed => $row['source'], $rows);
+        self::assertContains('human', $sources, 'raw rows carry the source axis');
+        self::assertContains('agent', $sources);
+
+        foreach ($rows as $row) {
+            self::assertArrayHasKey('responsible', $row, 'raw rows carry the responsible attribution');
+        }
+    }
+
     public function testGetWorkByUserSumsHumanSourceOnly(): void
     {
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');

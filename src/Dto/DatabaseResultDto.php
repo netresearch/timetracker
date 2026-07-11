@@ -40,6 +40,10 @@ final readonly class DatabaseResultDto
             'ticket' => self::safeString($row['ticket'] ?? ''),
             'class' => self::safeInt($row['class'] ?? null),
             'duration' => self::safeInt($row['duration'] ?? null),
+            // ADR-025: controlling must slice by source and never fold agent into
+            // human. Surface both so a report can keep the two streams distinct.
+            'source' => self::safeString($row['source'] ?? 'human', 'human'),
+            'responsible' => self::safeInt($row['responsible'] ?? null),
             'extTicket' => self::safeString($row['extTicket'] ?? ''),
             'extTicketUrl' => self::safeString($row['extTicketUrl'] ?? ''),
         ];
