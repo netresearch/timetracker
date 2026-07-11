@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\Controller\Interpretation;
 
 use App\Entity\Contract;
+use App\Entity\Entry;
 use App\Entity\User;
 use App\Enum\EntrySource;
 use App\Enum\UserType;
@@ -77,26 +78,7 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             ? $contractRepository->findBy(['user' => $sollUser], ['start' => 'DESC'])
             : [];
 
-        $times = [];
-        foreach ($entries as $entry) {
-            $day = $entry->getDay();
-            if (!$day instanceof DateTimeInterface) {
-                continue;
-            }
-
-            $key = $day->format('y-m-d');
-            if (!isset($times[$key])) {
-                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'date' => $day, 'hours' => 0.0, 'agentHours' => 0.0, 'minutes' => 0.0, 'agentMinutes' => 0.0, 'quota' => 0, 'expected' => 0.0];
-            }
-
-            // ADR-025 §7: the worked bar and its Soll are human labour; agent
-            // wall-clock is tracked in a distinct column, never folded into either.
-            if (EntrySource::AGENT === $entry->getSource()) {
-                $times[$key]['agentMinutes'] += $entry->getDuration();
-            } else {
-                $times[$key]['minutes'] += $entry->getDuration();
-            }
-        }
+        $times = $this->accumulateDailyTimes($entries);
 
         // For a single user, the per-day Soll is 0 on a public holiday (matching
         // the /ui/month calendar), otherwise the contract's hours for that weekday
@@ -138,6 +120,39 @@ final class GroupByWorktimeAction extends BaseInterpretationController
         $prepared = array_reverse($prepared);
 
         return new JsonResponse($prepared);
+    }
+
+    /**
+     * Bucket the entries by day, splitting human worked minutes from agent
+     * wall-clock. ADR-025 §7: the worked bar and its Soll are human labour; agent
+     * wall-clock is tracked in a distinct column, never folded into either.
+     *
+     * @param list<Entry> $entries
+     *
+     * @return array<string, array{id: null, name: string, day: string, date: DateTimeInterface, hours: float, agentHours: float, minutes: float, agentMinutes: float, quota: int, expected: float}>
+     */
+    private function accumulateDailyTimes(array $entries): array
+    {
+        $times = [];
+        foreach ($entries as $entry) {
+            $day = $entry->getDay();
+            if (!$day instanceof DateTimeInterface) {
+                continue;
+            }
+
+            $key = $day->format('y-m-d');
+            if (!isset($times[$key])) {
+                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'date' => $day, 'hours' => 0.0, 'agentHours' => 0.0, 'minutes' => 0.0, 'agentMinutes' => 0.0, 'quota' => 0, 'expected' => 0.0];
+            }
+
+            if (EntrySource::AGENT === $entry->getSource()) {
+                $times[$key]['agentMinutes'] += $entry->getDuration();
+            } else {
+                $times[$key]['minutes'] += $entry->getDuration();
+            }
+        }
+
+        return $times;
     }
 
     /**
