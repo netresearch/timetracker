@@ -227,9 +227,9 @@ Confirm the `users` table name + `id` column against `sql/full.sql` before final
 - Test: covered by Task 5/6 action tests.
 
 **Interfaces:**
-- Produces: `EntrySaveDto` gains optional `?string $source = null`, `?bool $estimated = null`, `?int $responsibleUserId = null`, `array{prompts?:int,reviews?:int,interventions?:int}|null $touchpoints = null`. (No `loggedBy` on the DTO — it is always the authenticated user, set server-side.)
+- Produces: `EntrySaveDto` gains optional `?string $source = null`, `?bool $estimated = null`, `array{prompts?:int,reviews?:int,interventions?:int}|null $touchpoints = null`. **NO `responsibleUserId` and NO `loggedBy` on the DTO** — both are derived server-side from the authenticated token owner (see Task 5); a client `responsibleUserId` would be an IDOR.
 
-- [ ] **Step 1:** Add the four optional properties to `EntrySaveDto` (constructor-promoted, defaults null) with `#[Assert\Choice(['human','agent'])]` on `source`. Mirror in `BulkEntryDto` (source only — bulk day-break rows are human).
+- [ ] **Step 1:** Add the three optional properties to `EntrySaveDto` (constructor-promoted, defaults null) with `#[Assert\Choice(['human','agent'])]` on `source`. `BulkEntryDto` gets nothing (bulk day-break rows are always human, server-set).
 - [ ] **Step 2: Run** `bin/phpstan analyze` on both DTOs.
 - [ ] **Step 3: Commit** `feat(entry): DTO fields for source attribution`
 
@@ -242,31 +242,44 @@ Confirm the `users` table name + `id` column against `sql/full.sql` before final
 - Test: `tests/Controller/Tracking/SaveEntryActionSourceTest.php`
 
 **Interfaces:**
-- Consumes: `EntrySaveDto` (Task 4), `EntrySource` (Task 1).
-- Produces: a saved `Entry` whose `source` defaults to `HUMAN`, `loggedBy = $user`, `estimated=false`, when the DTO omits them; and honours explicit `source=agent` + touchpoints + `responsibleUserId`.
+- Consumes: `EntrySaveDto` (Task 4), `EntrySource` (Task 1), `App\Security\ApiToken\ApiAccessToken` (ADR-021), `Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface`.
+- Produces: a saved `Entry` whose `source` is `AGENT` **only** when the request is API-token-authenticated AND asks for agent (else `HUMAN`), `loggedBy = $user`, `responsibleUser = $user` for agent entries, `estimated`/`touchpoints` honoured only for agent source. **No client `responsibleUserId`.**
 
-- [ ] **Step 1: Write the failing functional test** — POST a normal entry (JSON, no `source`) asserts persisted `getSource() === EntrySource::HUMAN`, `getLoggedBy()` is the caller; POST with `source=agent`, `estimated=true`, `touchpoints`, `responsibleUserId` asserts they persist and `getResponsibleUser()` resolves.
+- [ ] **Step 1: Write the failing functional tests** (security-critical). The gate is the **auth channel**, not the source value — in the API-token channel the agent legitimately logs BOTH a `source=agent` and a delegated `source=human, estimated=true` entry:
+  - session POST, no `source` → `EntrySource::HUMAN`, `estimated=false`, `touchpoints=null`, `getLoggedBy()`=caller, `getResponsibleUser()`=null.
+  - **session POST with `source=agent` + `estimated=true` (spoof attempt) → still `EntrySource::HUMAN`, `estimated=false`, `touchpoints=null`** (body ignored outside the token channel — a human cannot escape attendance).
+  - API-token POST `source=agent`, `estimated=true`, `touchpoints` → `EntrySource::AGENT`, `estimated=true`, touchpoints set, `getResponsibleUser()`=the token owner.
+  - API-token POST `source=human`, `estimated=true`, `touchpoints` (the delegated human entry) → `EntrySource::HUMAN` **but `estimated=true` + touchpoints honoured**, `getResponsibleUser()`=the token owner.
 - [ ] **Step 2: Run — expect FAIL.**
-- [ ] **Step 3: Implement** in `populateEntry`, after `$entry->setUser($user)` (`:245`):
+- [ ] **Step 3: Implement** in `populateEntry`, after `$entry->setUser($user)` (`:245`). Inject `TokenStorageInterface $tokenStorage` + `use App\Security\ApiToken\ApiAccessToken;`:
 
 ```php
-$source = EntrySource::HUMAN;
-if (null !== $entrySaveDto->source && EntrySource::Valid($entrySaveDto->source)) {
-    $source = EntrySource::from($entrySaveDto->source);
-}
-$entry->setSource($source)
-    ->setLoggedBy($user)
-    ->setEstimated($entrySaveDto->estimated ?? false)
-    ->setTouchpoints($entrySaveDto->touchpoints);
-if (null !== $entrySaveDto->responsibleUserId) {
-    $responsible = $this->userRepository->find($entrySaveDto->responsibleUserId);
-    $entry->setResponsibleUser($responsible instanceof User ? $responsible : $user);
-} elseif (EntrySource::AGENT === $source) {
-    $entry->setResponsibleUser($user); // agent entries are attributable to the token owner
+// SECURITY (ADR-025 §4): agent attribution is trusted ONLY in the API-token
+// channel. In it the agent logs BOTH streams (source=agent walltime AND the
+// delegated source=human estimate), so `estimated`/`touchpoints`/`source` are
+// honoured for either source there, and the token owner is the responsible user.
+// A session request is ALWAYS a plain human self-log — body source/estimated
+// ignored, so a person cannot mark work agent and drop it from attendance/ArbZG.
+// The responsible user is the token owner, never a client-supplied id (IDOR).
+$isAgentChannel = $this->tokenStorage->getToken() instanceof ApiAccessToken;
+if ($isAgentChannel) {
+    $source = (null !== $entrySaveDto->source && EntrySource::Valid($entrySaveDto->source))
+        ? EntrySource::from($entrySaveDto->source)
+        : EntrySource::HUMAN;
+    $entry->setSource($source)
+        ->setLoggedBy($user)
+        ->setResponsibleUser($user)
+        ->setEstimated($entrySaveDto->estimated ?? false)
+        ->setTouchpoints($entrySaveDto->touchpoints);
+} else {
+    $entry->setSource(EntrySource::HUMAN)
+        ->setLoggedBy($user)
+        ->setEstimated(false)
+        ->setTouchpoints(null);
 }
 ```
 
-Inject `UserRepository` if not present. `loggedBy` is always the authenticated `$user` (the agent's PAT user or the human).
+No `responsibleUserId` lookup (dropped in Task 4 — it was an IDOR).
 
 - [ ] **Step 4: Run — expect PASS.** Four gates.
 - [ ] **Step 5: Commit** `feat(entry): persist source attribution in SaveEntryAction`
@@ -299,7 +312,7 @@ Inject `UserRepository` if not present. `loggedBy` is always the authenticated `
 
 - [ ] **Step 1: Write the failing test** — call `logTime` with new args `agentWalltimeMinutes`, `humanMinutes`, `touchpoints`; assert two entries persist: a `source=agent` one with the walltime and a `source=human, estimated=true` one with `humanMinutes`, both `responsibleUser` = the token user. Backward compat: called WITHOUT the agent args → a single `source=human, estimated=false` entry (today's behaviour).
 - [ ] **Step 2: Run — expect FAIL.**
-- [ ] **Step 3: Implement** — add optional `#[McpToolArgument]` params (`agentWalltimeMinutes: ?int`, `humanMinutes: ?int`, `touchpoints: ?array`). When `agentWalltimeMinutes` is present: build+invoke a `source=agent` `EntrySaveDto` (duration = walltime, `estimated=false`) and a `source=human` `EntrySaveDto` (duration = `humanMinutes`, `estimated=true`, `touchpoints`), each with `responsibleUserId = $user->getId()`. When absent: unchanged single human write. Keep both invocations in one tool call so the pair is atomic to the agent.
+- [ ] **Step 3: Implement** — add optional `#[McpToolArgument]` params (`agentWalltimeMinutes: ?int`, `humanMinutes: ?int`, `touchpoints: ?array`). When `agentWalltimeMinutes` is present: build+invoke a `source=agent` `EntrySaveDto` (duration = walltime, `estimated=false`) and a `source=human` `EntrySaveDto` (duration = `humanMinutes`, `estimated=true`, `touchpoints`). **No responsible id is passed** — the tool runs under the agent's PAT (an `ApiAccessToken`), so Task 5 sets `responsibleUser` = the token owner and honours `source`/`estimated`/`touchpoints` for both entries automatically. When absent: unchanged single human write. Keep both invocations in one tool call so the pair is atomic to the agent.
 - [ ] **Step 4: Run — expect PASS.** Four gates.
 - [ ] **Step 5: Commit** `feat(mcp): log_time dual-writes agent walltime + delegated human estimate`
 

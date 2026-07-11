@@ -36,9 +36,15 @@ A person who runs agents will **not** book time manually; they delegate logging 
 
 The agent must **not** invent a "human share" coefficient. It derives the human's involved minutes from **observable interaction signals it actually holds**: the timestamps of the human's turns, time spent in review/approval, and the touchpoint counts (`prompts`, `reviews`, `interventions`, extensible). The `source=human` entry the agent creates carries those signals plus an `estimated=true` flag and the derivation basis — so the figure is an **auditable estimate**, never a hidden fudge. This is the honest form of "the agent splits human vs agent": it splits from facts it observes and marks the uncertainty, rather than asserting an effort it cannot measure. The responsible human can **correct** any agent-logged entry after the fact; the estimate is the default precisely because they usually won't touch it.
 
-### 4. Attribution: responsible human on agent entries
+### 4. Attribution derives from the auth context — never the request body (security-critical)
 
-Every `source=agent` entry references the **responsible** user (who commissioned/owns the run) — the same accountability primitive as the ADR-023 sync opt-in (work is *attributable* to a person without being *performed* by them). "Who, and at what share" is thereby stored: responsible person + the two-stream split.
+`source`, the responsible user, and the `estimated`/`touchpoints` fields are **not trusted from the client**. They would otherwise be forgeable, and both matter for money and the law:
+
+- **`source=agent` is only honoured in the API-token channel** (an ADR-021 PAT — the agent's channel). A session-authenticated request (the web UI) is **always** `source=human`, regardless of what the body says. Otherwise a person could self-mark manual work as `agent` and have it silently dropped from attendance/ArbZG (§5) — a way to hide worked hours.
+- **The responsible user is the authenticated token owner**, taken from the security token — never a client-supplied id. There is no `responsibleUserId` request field; allowing one is an IDOR (attribute agent work to an arbitrary person). Work is *attributable* to the token owner without being *performed* by them — the ADR-023 accountability primitive.
+- **`estimated` / `touchpoints` are honoured only when the resolved `source` is `agent`.** A human-source entry is never marked estimated by the client.
+
+Tighter future control (noted, not built now): a dedicated `entries:write:agent` scope so only agent-issued tokens — not a human's general-purpose PAT — can mint `source=agent`; until then the API-token context is the gate.
 
 ### 5. ArbZG / attendance: human-source only
 
