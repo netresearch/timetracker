@@ -23,6 +23,7 @@ use App\Service\ClockInterface;
 use App\Service\DaySummaryService;
 use App\Service\EntrySummaryService;
 use App\Service\TimeBalanceService;
+use Doctrine\ORM\EntityManagerInterface;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
@@ -55,6 +56,7 @@ final readonly class LogTimeTool
 
     public function __construct(
         private ScopeGuard $scopeGuard,
+        private EntityManagerInterface $entityManager,
         private SaveEntryAction $saveEntryAction,
         private ProjectRepository $projectRepository,
         private ActivityRepository $activityRepository,
@@ -190,38 +192,67 @@ final readonly class LogTimeTool
         ?array $touchpoints,
         ?string $start,
     ): array {
-        if (null === $humanMinutes || $humanMinutes <= 0) {
-            throw new ToolCallException('Provide humanMinutes (the delegated human-effort estimate) together with agentWalltimeMinutes.');
+        // Reject non-positive durations up front with a clear message, rather than
+        // letting a 0/negative value fall through to a confusing downstream error.
+        if ($agentWalltimeMinutes <= 0) {
+            throw new ToolCallException('agentWalltimeMinutes must be a positive number of minutes.');
         }
 
-        [$agentStart, $agentEnd] = $this->resolveTimes($start, null, $agentWalltimeMinutes);
-        $agentBody = $this->persistEntry(new EntrySaveDto(
-            date: $date,
-            start: $agentStart,
-            end: $agentEnd,
-            ticket: $ticket,
-            description: $description,
-            project_id: $projectEntity->getId(),
-            customer_id: $customer?->getId(),
-            activity_id: $activityEntity->getId(),
-            source: 'agent',
-            estimated: false,
-        ), $user);
+        if (null === $humanMinutes || $humanMinutes <= 0) {
+            throw new ToolCallException('Provide humanMinutes (a positive delegated human-effort estimate) together with agentWalltimeMinutes.');
+        }
 
-        [$humanStart, $humanEnd] = $this->resolveTimes($start, null, $humanMinutes);
-        $humanBody = $this->persistEntry(new EntrySaveDto(
-            date: $date,
-            start: $humanStart,
-            end: $humanEnd,
-            ticket: $ticket,
-            description: $description,
-            project_id: $projectEntity->getId(),
-            customer_id: $customer?->getId(),
-            activity_id: $activityEntity->getId(),
-            source: 'human',
-            estimated: true,
-            touchpoints: $touchpoints,
-        ), $user);
+        // Both writes go through SaveEntryAction, which flushes internally. Wrap the
+        // pair in one transaction so a second-write failure rolls the first back —
+        // never leaving an orphan agent entry committed without its human estimate.
+        $writes = $this->entityManager->wrapInTransaction(function () use (
+            $user,
+            $projectEntity,
+            $activityEntity,
+            $customer,
+            $date,
+            $ticket,
+            $description,
+            $agentWalltimeMinutes,
+            $humanMinutes,
+            $touchpoints,
+            $start,
+        ): array {
+            [$agentStart, $agentEnd] = $this->resolveTimes($start, null, $agentWalltimeMinutes);
+            $agentBody = $this->persistEntry(new EntrySaveDto(
+                date: $date,
+                start: $agentStart,
+                end: $agentEnd,
+                ticket: $ticket,
+                description: $description,
+                project_id: $projectEntity->getId(),
+                customer_id: $customer?->getId(),
+                activity_id: $activityEntity->getId(),
+                source: 'agent',
+                estimated: false,
+            ), $user);
+
+            [$humanStart, $humanEnd] = $this->resolveTimes($start, null, $humanMinutes);
+            $humanBody = $this->persistEntry(new EntrySaveDto(
+                date: $date,
+                start: $humanStart,
+                end: $humanEnd,
+                ticket: $ticket,
+                description: $description,
+                project_id: $projectEntity->getId(),
+                customer_id: $customer?->getId(),
+                activity_id: $activityEntity->getId(),
+                source: 'human',
+                estimated: true,
+                touchpoints: $touchpoints,
+            ), $user);
+
+            return ['agent' => $agentBody, 'human' => $humanBody];
+        });
+
+        /** @var array{agent: array<array-key, mixed>, human: array<array-key, mixed>} $writes */
+        $agentBody = $writes['agent'];
+        $humanBody = $writes['human'];
 
         $result = [
             'agent' => [] === $agentBody ? ['success' => true] : $agentBody,
