@@ -67,6 +67,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
     #[ORM\Column(name: 'min_entry_duration', type: 'integer', nullable: false, options: ['default' => 5])]
     protected int $minEntryDuration = 5;
 
+    /** Opt-in to exporting this user's worklogs to Personio as daily attendances (ADR-024). */
+    #[ORM\Column(name: 'personio_sync_enabled', type: 'boolean', options: ['default' => false])]
+    protected bool $personioSyncEnabled = false;
+
+    /** Personio employee id this user maps to; null means unmapped (no export). */
+    #[ORM\Column(name: 'personio_employee_id', type: 'bigint', nullable: true)]
+    protected ?int $personioEmployeeId = null;
+
     /**
      * Symfony `auto` password hash for a LOCAL account (ADR-018 D1).
      * NULL = LDAP account: the credential check is the LDAP bind. When set, the
@@ -314,6 +322,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
         return $this;
     }
 
+    public function getPersonioSyncEnabled(): bool
+    {
+        return $this->personioSyncEnabled;
+    }
+
+    public function setPersonioSyncEnabled(bool $personioSyncEnabled): static
+    {
+        $this->personioSyncEnabled = $personioSyncEnabled;
+
+        return $this;
+    }
+
+    public function getPersonioEmployeeId(): ?int
+    {
+        return $this->personioEmployeeId;
+    }
+
+    public function setPersonioEmployeeId(?int $personioEmployeeId): static
+    {
+        $this->personioEmployeeId = $personioEmployeeId;
+
+        return $this;
+    }
+
     /**
      * Reset teams.
      *
@@ -392,7 +424,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
      * show_future) are returned as integers (0/1) for the legacy frontend; the
      * remaining flags (active, totp_enabled, local_account) are native booleans.
      *
-     * @return array{show_empty_line: int, suggest_time: int, show_future: int, active: bool, min_entry_duration: int, user_name: string, user_id: int, type: string, locale: string, roles: array<string>, totp_enabled: bool, local_account: bool}
+     * @return array{show_empty_line: int, suggest_time: int, show_future: int, active: bool, min_entry_duration: int, personio_sync_enabled: bool, user_name: string, user_id: int, type: string, locale: string, roles: array<string>, totp_enabled: bool, local_account: bool}
      */
     public function getSettings(): array
     {
@@ -402,6 +434,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
             'show_future' => (int) $this->getShowFuture(),
             'active' => $this->getActive(),
             'min_entry_duration' => $this->getMinEntryDuration(),
+            'personio_sync_enabled' => $this->getPersonioSyncEnabled(),
             'user_name' => $this->getUsername() ?? '',
             'user_id' => $this->getId() ?? 0,
             'type' => $this->getType()->value,

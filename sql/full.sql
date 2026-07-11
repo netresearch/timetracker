@@ -43,6 +43,8 @@ CREATE TABLE `users` (
   `show_future` tinyint(1) NOT NULL DEFAULT '1',
   `active` tinyint(1) NOT NULL DEFAULT '1',
   `min_entry_duration` int(11) NOT NULL DEFAULT 5,
+  `personio_sync_enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `personio_employee_id` bigint(20) DEFAULT NULL,
   `locale` char(2) NOT NULL DEFAULT 'de',
   `password` varchar(255) DEFAULT NULL,
   `totp_secret` varchar(255) DEFAULT NULL,
@@ -390,6 +392,41 @@ CREATE TABLE `worklog_sync_state` (
   CONSTRAINT `fk_wss_entry` FOREIGN KEY (`entry_id`) REFERENCES `entries` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_wss_ticket_system` FOREIGN KEY (`ticket_system_id`) REFERENCES `ticket_systems` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_wss_last_run` FOREIGN KEY (`last_sync_run_id`) REFERENCES `sync_runs` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Tabellenstruktur für Tabelle `personio_configs` (ADR-024)
+--
+CREATE TABLE `personio_configs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `absence_project_id` int(11) DEFAULT NULL,
+  `name` varchar(63) NOT NULL,
+  `base_url` varchar(255) NOT NULL,
+  `client_id` varchar(255) NOT NULL,
+  `client_secret` longtext NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_personio_configs_name` (`name`),
+  KEY `idx_personio_configs_absence_project` (`absence_project_id`),
+  CONSTRAINT `fk_personio_configs_project` FOREIGN KEY (`absence_project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Tabellenstruktur für Tabelle `personio_attendance_export` (ADR-024)
+--
+CREATE TABLE `personio_attendance_export` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `last_sync_run_id` int(11) DEFAULT NULL,
+  `day` date NOT NULL,
+  `period_ids` json NOT NULL,
+  `base_payload` json NOT NULL,
+  `last_exported_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_personio_export_user_day` (`user_id`,`day`),
+  KEY `idx_personio_export_user` (`user_id`),
+  CONSTRAINT `fk_personio_export_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_personio_export_run` FOREIGN KEY (`last_sync_run_id`) REFERENCES `sync_runs` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 

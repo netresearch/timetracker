@@ -52,6 +52,7 @@ final class SaveSettingsAction extends BaseController
         $user->setSuggestTime((bool) $request->request->get('suggest_time'));
         $user->setShowFuture((bool) $request->request->get('show_future'));
         $user->setMinEntryDuration((int) $request->request->get('min_entry_duration', 5));
+        $user->setPersonioSyncEnabled((bool) $request->request->get('personio_sync_enabled'));
 
         $normalized = $this->localizationService->normalizeLocale((string) $request->request->get('locale'));
         $user->setLocale($normalized);

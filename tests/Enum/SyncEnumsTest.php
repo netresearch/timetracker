@@ -21,7 +21,10 @@ final class SyncEnumsTest extends TestCase
 {
     public function testSyncRunTypeValues(): void
     {
-        self::assertSame(['import', 'sync', 'verify'], array_column(SyncRunType::cases(), 'value'));
+        self::assertSame(
+            ['import', 'sync', 'verify', 'personio_export', 'personio_import'],
+            array_column(SyncRunType::cases(), 'value'),
+        );
     }
 
     public function testSyncRunStatusValues(): void

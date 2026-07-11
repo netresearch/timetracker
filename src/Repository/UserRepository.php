@@ -175,6 +175,24 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
+     * Users who opted into Personio attendance export and carry a Personio employee id (ADR-024).
+     *
+     * @return list<User>
+     */
+    public function findPersonioExportEnabled(): array
+    {
+        /** @var list<User> $users */
+        $users = $this->createQueryBuilder('user')
+            ->where('user.personioSyncEnabled = true')
+            ->andWhere('user.personioEmployeeId IS NOT NULL')
+            ->orderBy('user.username', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $users;
+    }
+
+    /**
      * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string}}>
      */
     public function getUserById(int $currentUserId): array

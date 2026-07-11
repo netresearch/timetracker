@@ -395,6 +395,55 @@ export function adminEntities(): EntityDescriptor[] {
       },
     },
     {
+      key: 'personio',
+      title: () => m.admin_e_personio(),
+      description: () => m.admin_desc_personio(),
+      listEndpoint: '/getPersonioConfigs',
+      rowKey: 'personio',
+      saveEndpoint: '/personio-config/save',
+      deleteEndpoint: '/personio-config/delete',
+      columns: [
+        { key: 'name', label: () => m.admin_f_name() },
+        { key: 'baseUrl', label: () => m.admin_f_base_url(), render: (row) => str(pick(row, 'baseUrl', 'base_url')) },
+        { key: 'clientId', label: () => m.admin_f_client_id(), render: (row) => str(pick(row, 'clientId', 'client_id')) },
+        { key: 'absence_project', label: () => m.admin_f_absence_project(), render: (row, o) => relPick('projects', 'absenceProject', 'absence_project')(row, o) },
+        { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
+      ],
+      fields: [
+        { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
+        { name: 'baseUrl', label: () => m.admin_f_base_url(), type: 'text', required: true },
+        { name: 'clientId', label: () => m.admin_f_client_id(), type: 'text', required: true },
+        { name: 'clientSecret', label: () => m.admin_f_client_secret(), type: 'text', help: () => m.admin_f_secret_hint() },
+        { name: 'absence_project', label: () => m.admin_f_absence_project(), type: 'select', source: 'projects' },
+        { name: 'active', label: () => m.admin_f_active(), type: 'checkbox' },
+      ],
+      rowLabel: (row) => str(row.name),
+      // The client secret is not returned by the list (server-side filtered), so
+      // the form opens it blank; the backend keeps the stored value when it is
+      // submitted blank (see SavePersonioConfigAction preserve-on-blank).
+      toForm: (row) => row === null
+        ? { id: 0, name: '', baseUrl: '', clientId: '', clientSecret: '', absence_project: 0, active: true }
+        : {
+            id: num(row.id), name: str(row.name),
+            baseUrl: str(pick(row, 'baseUrl', 'base_url')),
+            clientId: str(pick(row, 'clientId', 'client_id')),
+            clientSecret: '',
+            // Base::toArray emits the relation id under both camel/snake keys.
+            absence_project: num(pick(row, 'absenceProject', 'absence_project')),
+            active: bool(row.active),
+          },
+      // Map the absence-project select onto the DTO's camelCase id and drop the
+      // snake_case form key. 0 ("—") clears the relation → null.
+      toPayload: (v) => {
+        const { absence_project: absenceProject, ...rest } = v
+
+        return {
+          ...rest,
+          absenceProjectId: num(absenceProject) > 0 ? num(absenceProject) : null,
+        }
+      },
+    },
+    {
       key: 'activities',
       title: () => m.admin_e_activities(),
       description: () => m.admin_desc_activities(),

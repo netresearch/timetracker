@@ -7,7 +7,7 @@ import { DateField } from './DateField'
 
 const appConfigStub: AppConfig = {
   locale: 'de', userId: 1, userName: 'x', appTitle: '', roles: [],
-  showEmptyLine: false, suggestTime: false, showFuture: false, minEntryDuration: 5, logoutUrl: '',
+  showEmptyLine: false, suggestTime: false, showFuture: false, minEntryDuration: 5, personioSyncEnabled: false, logoutUrl: '',
   csrfToken: '', loginPath: '/login', totpEnabled: false, localAccount: true,
   twoFactorRequired: false, hasTwoFactor: false,
 }

@@ -9,6 +9,10 @@ export interface AppConfig {
   showFuture: boolean
   /** Minutes a new entry's end pre-fills past its start (0 disables; default 5). */
   minEntryDuration: number
+  /** Whether this user opted their worklogs into the Personio attendance export
+   *  (ADR-024): the nightly `tt:export-personio-attendances` only touches opted-in
+   *  users. */
+  personioSyncEnabled: boolean
   /** Whether TOTP two-factor is already enrolled — toggles the Security section's
    *  enable-vs-disable UI. */
   totpEnabled: boolean
