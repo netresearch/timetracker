@@ -131,6 +131,50 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
         }
     }
 
+    public function testGetActivitiesAndUsersWithTimeAreSourceAware(): void
+    {
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+
+        $entryRepository = self::getContainer()->get(EntryRepository::class);
+        self::assertInstanceOf(EntryRepository::class, $entryRepository);
+
+        $user = $entityManager->getRepository(User::class)->findOneBy([]);
+        self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        $ticket = 'TSRC-' . bin2hex(random_bytes(4));
+
+        $entityManager->persist(
+            new Entry()->setUser($user)->setSource(EntrySource::HUMAN)->setDuration(60)->setTicket($ticket)
+                ->setDay(new DateTime('2099-10-01'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00')),
+        );
+        $entityManager->persist(
+            new Entry()->setUser($user)->setSource(EntrySource::AGENT)->setDuration(180)->setTicket($ticket)
+                ->setDay(new DateTime('2099-10-01'))->setStart(new DateTime('10:00'))->setEnd(new DateTime('13:00')),
+        );
+        $entityManager->flush();
+
+        self::assertSame(240, self::sumTotalTime($entryRepository->getActivitiesWithTime($ticket)), 'no filter folds both (back-compat)');
+        self::assertSame(60, self::sumTotalTime($entryRepository->getActivitiesWithTime($ticket, EntrySource::HUMAN)), 'human-only excludes agent');
+        self::assertSame(180, self::sumTotalTime($entryRepository->getActivitiesWithTime($ticket, EntrySource::AGENT)));
+
+        self::assertSame(240, self::sumTotalTime($entryRepository->getUsersWithTime($ticket)), 'no filter folds both (back-compat)');
+        self::assertSame(60, self::sumTotalTime($entryRepository->getUsersWithTime($ticket, EntrySource::HUMAN)), 'human-only excludes agent');
+        self::assertSame(180, self::sumTotalTime($entryRepository->getUsersWithTime($ticket, EntrySource::AGENT)));
+    }
+
+    /**
+     * @param array<int, array{total_time: int, ...}> $rows
+     */
+    private static function sumTotalTime(array $rows): int
+    {
+        $total = 0;
+        foreach ($rows as $row) {
+            $total += $row['total_time'];
+        }
+
+        return $total;
+    }
+
     public function testGetWorkByUserSumsHumanSourceOnly(): void
     {
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');

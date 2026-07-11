@@ -1046,7 +1046,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array<int, array{name: string, total_time: int}>
      */
-    public function getActivitiesWithTime(string $ticket): array
+    public function getActivitiesWithTime(string $ticket, ?EntrySource $source = null): array
     {
         if ('' === $ticket || '0' === $ticket) {
             return [];
@@ -1054,14 +1054,22 @@ class EntryRepository extends ServiceEntityRepository
 
         $connection = $this->getEntityManager()->getConnection();
 
+        // ADR-025: source-aware so a controlling view can slice human vs agent
+        // rather than fold them; null keeps the all-sources total (back-compat).
         $sql = 'SELECT a.name, SUM(e.duration) as total_time
                 FROM entries e
                 LEFT JOIN activities a ON e.activity_id = a.id
-                WHERE e.ticket = ?
-                GROUP BY e.activity_id, a.name
+                WHERE e.ticket = ?';
+        $params = [$ticket];
+        if ($source instanceof EntrySource) {
+            $sql .= ' AND e.source = ?';
+            $params[] = $source->value;
+        }
+
+        $sql .= ' GROUP BY e.activity_id, a.name
                 ORDER BY total_time DESC';
 
-        $result = $connection->executeQuery($sql, [$ticket])->fetchAllAssociative();
+        $result = $connection->executeQuery($sql, $params)->fetchAllAssociative();
 
         return array_map(static function (array $row): array {
             $name = $row['name'];
@@ -1079,7 +1087,7 @@ class EntryRepository extends ServiceEntityRepository
      *
      * @return array<int, array{username: string, total_time: int}>
      */
-    public function getUsersWithTime(string $ticket): array
+    public function getUsersWithTime(string $ticket, ?EntrySource $source = null): array
     {
         if ('' === $ticket || '0' === $ticket) {
             return [];
@@ -1087,14 +1095,22 @@ class EntryRepository extends ServiceEntityRepository
 
         $connection = $this->getEntityManager()->getConnection();
 
+        // ADR-025: source-aware so a controlling view can slice human vs agent
+        // rather than fold them; null keeps the all-sources total (back-compat).
         $sql = 'SELECT u.username, SUM(e.duration) as total_time
                 FROM entries e
                 LEFT JOIN users u ON e.user_id = u.id
-                WHERE e.ticket = ?
-                GROUP BY e.user_id, u.username
+                WHERE e.ticket = ?';
+        $params = [$ticket];
+        if ($source instanceof EntrySource) {
+            $sql .= ' AND e.source = ?';
+            $params[] = $source->value;
+        }
+
+        $sql .= ' GROUP BY e.user_id, u.username
                 ORDER BY total_time DESC';
 
-        $result = $connection->executeQuery($sql, [$ticket])->fetchAllAssociative();
+        $result = $connection->executeQuery($sql, $params)->fetchAllAssociative();
 
         return array_map(static function (array $row): array {
             $username = $row['username'];
