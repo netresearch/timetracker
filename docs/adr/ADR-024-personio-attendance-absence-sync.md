@@ -1,6 +1,6 @@
 # ADR-024: Personio Attendance Export and Absence Import
 
-**Status:** Proposed — design approved 2026-07-10, implementation not started.
+**Status:** Accepted — P1 (attendance export) implemented 2026-07-11; P2 (absence import) + P3 (auto-match/API) pending.
 **Date:** 2026-07-10
 **Relates to:** [ADR-023](ADR-023-jira-worklog-bidirectional-sync.md) (the sync/run/audit infrastructure and the opt-in accountability model this ADR reuses), [ADR-021](ADR-021-api-token-authentication.md) (PAT scopes for any later API surface), [ADR-011](ADR-011-security-architecture.md) (encryption-at-rest via `TokenEncryptionService`).
 
@@ -73,8 +73,8 @@ Each phase is a separate plan → ultracode workflow → PR, per the established
 
 ## Verification points before implementation
 
-1. Personio API v2 coverage of attendances (create/update/delete semantics, approval-state errors) vs v1 — pick the API version per endpoint accordingly.
-2. Exact shape of the time-off/absences payload (per-day breakdown, half-day flags) in the chosen API version.
-3. Whether attendance `PATCH`/update exists in v2 or requires delete+recreate (affects §3's write rule mechanics, not its semantics).
-4. Employees API pagination + the e-mail field's availability for the auto-match.
-5. Rate limits per endpoint (the auth endpoint is documented at 150 req/min; others TBD) — sizing the per-day batching.
+1. ~~Personio API v2 coverage of attendances vs v1~~ **Resolved (P1):** v2 `/v2/attendance-periods` provides full POST/GET/PATCH/DELETE. Approval state is a `status` field (`PENDING`/`CONFIRMED`/`REJECTED`); a write to a confirmed period is rejected and parked as a conflict item.
+2. Exact shape of the time-off/absences payload (per-day breakdown, half-day flags) — **P2**, `/v2/absence-periods` + `/v2/absence-types` (endpoints confirmed present; payload shape to pin in P2).
+3. ~~Whether attendance PATCH exists in v2~~ **Resolved (P1):** PATCH exists — no delete+recreate needed. **Refinement:** v2 has no break-minutes field; breaks are the gaps between `WORK`-type periods (Personio derives the break in its day view). So a day projects to **one WORK period per worked segment** and maps to a *set* of period ids; §3's write rule reconciles that set positionally. Same day-view outcome as "one block + break sum".
+4. Employees API pagination + e-mail availability for auto-match — **P3.** `/v2/persons` is paginated; the list documentation does not confirm an email field, so P3's auto-match may need `firstname.lastname` name matching instead of email-localpart.
+5. ~~Rate limits per endpoint~~ **Resolved (P1):** the auth endpoint is documented at 150 req/min; attendance endpoints are unspecified — `PersonioClient` backs off on HTTP 429 (honoring `Retry-After`, up to 3 attempts).

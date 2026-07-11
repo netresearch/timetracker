@@ -31,7 +31,7 @@ ADRs are historical records: bodies are not rewritten when reality moves on. Whe
 | [ADR-021](ADR-021-api-token-authentication.md) | API Token Authentication with Fine-Grained Scopes | Accepted | 2026-07-04 |
 | [ADR-022](ADR-022-v2-api-layer-and-response-dtos.md) | v2 API layer with typed response DTOs | Accepted | 2026-07-06 |
 | [ADR-023](ADR-023-jira-worklog-bidirectional-sync.md) | Jira Worklog Import and Bidirectional Sync | Accepted (fully implemented) | 2026-07-09 |
-| [ADR-024](ADR-024-personio-attendance-absence-sync.md) | Personio Attendance Export and Absence Import | Proposed | 2026-07-10 |
+| [ADR-024](ADR-024-personio-attendance-absence-sync.md) | Personio Attendance Export and Absence Import | Accepted (P1 done; import/auto-match pending) | 2026-07-10 |
 
 ## ADR Format
 
