@@ -196,7 +196,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                 (SELECT name FROM activities WHERE id = :activityId LIMIT 1) as activity_name
             FROM entries e
             WHERE (e.customer_id = :customerId OR e.project_id = :projectId OR e.activity_id = :activityId OR e.ticket = :ticket)
-              AND e.source = 'human'
+              AND e.source = :source
         ";
 
         $params = [
@@ -205,6 +205,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
             'projectId' => $entry->getProject()?->getId() ?? 0,
             'activityId' => $entry->getActivity()?->getId() ?? 0,
             'ticket' => $entry->getTicket(),
+            'source' => EntrySource::HUMAN->value,
         ];
 
         $result = $connection->executeQuery($sql, $params)->fetchAssociative();

@@ -54,6 +54,8 @@ class EntryRepository extends ServiceEntityRepository
 
     private const string WHERE_CUSTOMER = 'e.customer = :customer';
 
+    private const string WHERE_SOURCE = 'e.source = :source';
+
     private const string WHERE_DAY_UNTIL_END_OF_MONTH = 'e.day <= :endOfMonth';
 
     private const string WHERE_FIELD_TEMPLATE = 'e.%s = :%s';
@@ -794,7 +796,7 @@ class EntryRepository extends ServiceEntityRepository
             // double-booking. Overlap is a human-attendance invariant, so the
             // query is scoped to human source (YAGNI guard: no caller today, but a
             // future human non-overlap rule must not reject against agent time).
-            ->andWhere('e.source = :source')
+            ->andWhere(self::WHERE_SOURCE)
             ->andWhere('(
                 (e.start <= :start AND e.end > :start) OR
                 (e.start < :end AND e.end >= :end) OR
@@ -878,7 +880,7 @@ class EntryRepository extends ServiceEntityRepository
         $this->applyDateRangeCriteria($queryBuilder, $user, $year, $month, $project, $customer);
 
         if ($source instanceof EntrySource) {
-            $queryBuilder->andWhere('e.source = :source')
+            $queryBuilder->andWhere(self::WHERE_SOURCE)
                 ->setParameter('source', $source->value);
         }
 
@@ -1023,7 +1025,7 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('user', $userId);
 
         if ($source instanceof EntrySource) {
-            $queryBuilder->andWhere('e.source = :source')
+            $queryBuilder->andWhere(self::WHERE_SOURCE)
                 ->setParameter('source', $source->value);
         }
 
@@ -1361,9 +1363,9 @@ class EntryRepository extends ServiceEntityRepository
                           c.name as name
                    FROM entries e
                    LEFT JOIN customers c ON e.customer_id = c.id
-                   WHERE e.customer_id = ? AND e.source = \'human\'';
+                   WHERE e.customer_id = ? AND e.source = ?';
 
-            $result = $connection->executeQuery($sql, [$userId, $entry->getCustomer()->getId()])->fetchAssociative();
+            $result = $connection->executeQuery($sql, [$userId, $entry->getCustomer()->getId(), EntrySource::HUMAN->value])->fetchAssociative();
             if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
@@ -1391,9 +1393,9 @@ class EntryRepository extends ServiceEntityRepository
                           p.name as name, p.estimation as estimation
                    FROM entries e
                    LEFT JOIN projects p ON e.project_id = p.id
-                   WHERE e.project_id = ? AND e.source = \'human\'';
+                   WHERE e.project_id = ? AND e.source = ?';
 
-            $result = $connection->executeQuery($sql, [$userId, $entry->getProject()->getId()])->fetchAssociative();
+            $result = $connection->executeQuery($sql, [$userId, $entry->getProject()->getId(), EntrySource::HUMAN->value])->fetchAssociative();
             if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
@@ -1423,9 +1425,9 @@ class EntryRepository extends ServiceEntityRepository
                           a.name as name
                    FROM entries e
                    LEFT JOIN activities a ON e.activity_id = a.id
-                   WHERE e.activity_id = ? AND e.source = \'human\'';
+                   WHERE e.activity_id = ? AND e.source = ?';
 
-            $result = $connection->executeQuery($sql, [$userId, $entry->getActivity()->getId()])->fetchAssociative();
+            $result = $connection->executeQuery($sql, [$userId, $entry->getActivity()->getId(), EntrySource::HUMAN->value])->fetchAssociative();
             if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
@@ -1451,9 +1453,9 @@ class EntryRepository extends ServiceEntityRepository
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own
                    FROM entries e
-                   WHERE e.ticket = ? AND e.source = \'human\'';
+                   WHERE e.ticket = ? AND e.source = ?';
 
-            $result = $connection->executeQuery($sql, [$userId, $entry->getTicket()])->fetchAssociative();
+            $result = $connection->executeQuery($sql, [$userId, $entry->getTicket(), EntrySource::HUMAN->value])->fetchAssociative();
             if (false !== $result) {
                 $entries = $result['entries'] ?? 0;
                 $total = $result['total'] ?? 0;
@@ -1496,7 +1498,7 @@ class EntryRepository extends ServiceEntityRepository
             ->orderBy('e.start', 'ASC');
 
         if ($source instanceof EntrySource) {
-            $queryBuilder->andWhere('e.source = :source')
+            $queryBuilder->andWhere(self::WHERE_SOURCE)
                 ->setParameter('source', $source->value);
         }
 
