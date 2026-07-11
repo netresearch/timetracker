@@ -16,7 +16,7 @@ use App\Service\Security\TokenEncryptionService;
  * Builds a {@see PersonioClient} for a config, decrypting the stored client
  * secret (ADR-024 §2 — encrypted at rest, unlike the plaintext Jira secret).
  */
-final readonly class PersonioClientFactory
+readonly class PersonioClientFactory
 {
     public function __construct(private TokenEncryptionService $tokenEncryptionService)
     {
