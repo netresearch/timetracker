@@ -36,6 +36,12 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
 {
     use ActsAsApiTokenUser;
 
+    private const string DATE = '2024-03-11';
+
+    private const string START = '09:00:00';
+
+    private const string END = '10:00:00';
+
     /**
      * @param array<string, mixed> $overrides
      *
@@ -44,9 +50,9 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
     private function saveParameters(array $overrides = []): array
     {
         return $overrides + [
-            'date' => '2024-03-11',
-            'start' => '09:00:00',
-            'end' => '10:00:00',
+            'date' => self::DATE,
+            'start' => self::START,
+            'end' => self::END,
             'project_id' => 1,
             'customer_id' => 1,
             'activity_id' => 1,
@@ -121,9 +127,9 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
         $user = $this->tokenUser();
 
         $dto = new EntrySaveDto(
-            date: '2024-03-11',
-            start: '09:00:00',
-            end: '10:00:00',
+            date: self::DATE,
+            start: self::START,
+            end: self::END,
             description: 'agent walltime',
             project_id: 1,
             customer_id: 1,
@@ -152,9 +158,9 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
         // (it counts as labour) but estimated/touchpoints are honoured and the
         // token owner is the responsible user.
         $dto = new EntrySaveDto(
-            date: '2024-03-11',
-            start: '09:00:00',
-            end: '10:00:00',
+            date: self::DATE,
+            start: self::START,
+            end: self::END,
             description: 'delegated human estimate',
             project_id: 1,
             customer_id: 1,

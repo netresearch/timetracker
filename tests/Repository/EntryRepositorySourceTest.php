@@ -28,6 +28,14 @@ use Tests\AbstractWebTestCase;
  */
 final class EntryRepositorySourceTest extends AbstractWebTestCase
 {
+    private const string TIME_0900 = '09:00';
+
+    private const string TIME_1000 = '10:00';
+
+    private const string TIME_1300 = '13:00';
+
+    private const string FIXTURE_USER_MISSING = 'fixture user missing';
+
     public function testFindByDayFiltersBySource(): void
     {
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
@@ -37,17 +45,17 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
         self::assertInstanceOf(EntryRepository::class, $entryRepository);
 
         $user = $entityManager->getRepository(User::class)->findOneBy([]);
-        self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        self::assertInstanceOf(User::class, $user, self::FIXTURE_USER_MISSING);
         $userId = (int) $user->getId();
         $day = '2099-06-15';
 
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::HUMAN)->setDuration(60)
-                ->setDay(new DateTime($day))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00')),
+                ->setDay(new DateTime($day))->setStart(new DateTime(self::TIME_0900))->setEnd(new DateTime(self::TIME_1000)),
         );
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::AGENT)->setDuration(180)
-                ->setDay(new DateTime($day))->setStart(new DateTime('10:00'))->setEnd(new DateTime('13:00')),
+                ->setDay(new DateTime($day))->setStart(new DateTime(self::TIME_1000))->setEnd(new DateTime(self::TIME_1300)),
         );
         $entityManager->flush();
 
@@ -72,16 +80,16 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
         self::assertInstanceOf(EntryRepository::class, $entryRepository);
 
         $user = $entityManager->getRepository(User::class)->findOneBy([]);
-        self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        self::assertInstanceOf(User::class, $user, self::FIXTURE_USER_MISSING);
         $userId = (int) $user->getId();
 
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::HUMAN)->setDuration(60)
-                ->setDay(new DateTime('2099-07-15'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00')),
+                ->setDay(new DateTime('2099-07-15'))->setStart(new DateTime(self::TIME_0900))->setEnd(new DateTime(self::TIME_1000)),
         );
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::AGENT)->setDuration(180)
-                ->setDay(new DateTime('2099-07-15'))->setStart(new DateTime('10:00'))->setEnd(new DateTime('13:00')),
+                ->setDay(new DateTime('2099-07-15'))->setStart(new DateTime(self::TIME_1000))->setEnd(new DateTime(self::TIME_1300)),
         );
         $entityManager->flush();
 
@@ -105,17 +113,17 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
         self::assertInstanceOf(EntryRepository::class, $entryRepository);
 
         $user = $entityManager->getRepository(User::class)->findOneBy([]);
-        self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        self::assertInstanceOf(User::class, $user, self::FIXTURE_USER_MISSING);
         $userId = (int) $user->getId();
         $day = '2099-08-20';
 
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::HUMAN)->setDuration(60)
-                ->setDay(new DateTime($day))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00')),
+                ->setDay(new DateTime($day))->setStart(new DateTime(self::TIME_0900))->setEnd(new DateTime(self::TIME_1000)),
         );
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::AGENT)->setResponsibleUser($user)->setDuration(180)
-                ->setDay(new DateTime($day))->setStart(new DateTime('10:00'))->setEnd(new DateTime('13:00')),
+                ->setDay(new DateTime($day))->setStart(new DateTime(self::TIME_1000))->setEnd(new DateTime(self::TIME_1300)),
         );
         $entityManager->flush();
 
@@ -140,16 +148,16 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
         self::assertInstanceOf(EntryRepository::class, $entryRepository);
 
         $user = $entityManager->getRepository(User::class)->findOneBy([]);
-        self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        self::assertInstanceOf(User::class, $user, self::FIXTURE_USER_MISSING);
         $ticket = 'TSRC-' . bin2hex(random_bytes(4));
 
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::HUMAN)->setDuration(60)->setTicket($ticket)
-                ->setDay(new DateTime('2099-10-01'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00')),
+                ->setDay(new DateTime('2099-10-01'))->setStart(new DateTime(self::TIME_0900))->setEnd(new DateTime(self::TIME_1000)),
         );
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::AGENT)->setDuration(180)->setTicket($ticket)
-                ->setDay(new DateTime('2099-10-01'))->setStart(new DateTime('10:00'))->setEnd(new DateTime('13:00')),
+                ->setDay(new DateTime('2099-10-01'))->setStart(new DateTime(self::TIME_1000))->setEnd(new DateTime(self::TIME_1300)),
         );
         $entityManager->flush();
 
@@ -188,7 +196,7 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
         $today = $clock->today();
 
         $user = $entityManager->getRepository(User::class)->findOneBy([]);
-        self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        self::assertInstanceOf(User::class, $user, self::FIXTURE_USER_MISSING);
         $userId = (int) $user->getId();
 
         $baseHuman = $entryRepository->getWorkByUser($userId, Period::DAY, EntrySource::HUMAN)['duration'];
@@ -196,11 +204,11 @@ final class EntryRepositorySourceTest extends AbstractWebTestCase
 
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::HUMAN)->setDuration(60)
-                ->setDay(DateTime::createFromInterface($today))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00')),
+                ->setDay(DateTime::createFromInterface($today))->setStart(new DateTime(self::TIME_0900))->setEnd(new DateTime(self::TIME_1000)),
         );
         $entityManager->persist(
             new Entry()->setUser($user)->setSource(EntrySource::AGENT)->setDuration(180)
-                ->setDay(DateTime::createFromInterface($today))->setStart(new DateTime('10:00'))->setEnd(new DateTime('13:00')),
+                ->setDay(DateTime::createFromInterface($today))->setStart(new DateTime(self::TIME_1000))->setEnd(new DateTime(self::TIME_1300)),
         );
         $entityManager->flush();
 

@@ -29,6 +29,8 @@ use function assert;
  */
 final class BulkEntrySourceTest extends AbstractWebTestCase
 {
+    private const string DATE = '2024-03-11';
+
     public function testBulkEntriesAreHumanSourcedAndStampLoggedBy(): void
     {
         $this->logInSession('unittest');
@@ -37,8 +39,8 @@ final class BulkEntrySourceTest extends AbstractWebTestCase
         // assertion tight; usecontract=0 uses the explicit start/end times.
         $this->client->request(Request::METHOD_POST, '/tracking/bulkentry', [
             'preset' => 1,
-            'startdate' => '2024-03-11',
-            'enddate' => '2024-03-11',
+            'startdate' => self::DATE,
+            'enddate' => self::DATE,
             'starttime' => '09:00:00',
             'endtime' => '10:00:00',
             'usecontract' => 0,
@@ -55,7 +57,7 @@ final class BulkEntrySourceTest extends AbstractWebTestCase
         $entryRepository = $manager->getRepository(Entry::class);
         assert($entryRepository instanceof EntryRepository);
 
-        $entries = $entryRepository->findBy(['user' => 1, 'day' => '2024-03-11']);
+        $entries = $entryRepository->findBy(['user' => 1, 'day' => self::DATE]);
         self::assertNotEmpty($entries, 'bulk entry should have created at least one entry');
 
         foreach ($entries as $entry) {
