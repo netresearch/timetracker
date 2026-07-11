@@ -201,7 +201,10 @@ class ImportWorklogsService extends AbstractSyncRunService
                 ? $this->targetIdentity($user, $ticketSystem)
                 : new JiraUserIdentity(name: $username);
             $value = $identity->accountId ?? $identity->name;
-            if (null === $value || '' === $value) {
+            if (null === $value) {
+                continue;
+            }
+            if ('' === $value) {
                 continue;
             }
 
