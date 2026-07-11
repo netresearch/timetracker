@@ -383,9 +383,7 @@ final class ImportWorklogsServiceTest extends TestCase
         $userTicketsystem = new UserTicketsystem();
         $userTicketsystem->setTicketSystem($this->ticketSystem)->setRemoteAccountId('acc-jdoe');
         $target->getUserTicketsystems()->add($userTicketsystem);
-        $this->userRepository->method('findOneByUsername')->willReturnCallback(
-            static fn (string $username): ?User => 'jdoe' === $username ? $target : null,
-        );
+        $this->userRepository->method('findBy')->willReturn([$target]);
 
         $this->import(targetUsernames: ['jdoe']);
 

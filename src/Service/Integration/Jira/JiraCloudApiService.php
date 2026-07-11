@@ -160,20 +160,14 @@ class JiraCloudApiService extends JiraOAuthApiService
 
             $response = $this->post('search/jql', $body);
 
-            if (isset($response->issues) && is_array($response->issues)) {
-                foreach ($response->issues as $issue) {
-                    if (is_object($issue) && isset($issue->key) && is_string($issue->key)) {
-                        $keys[] = $issue->key;
-                    }
-                }
+            foreach ($this->extractIssueKeys($response) as $key) {
+                $keys[] = $key;
             }
 
-            $nextPageToken = isset($response->nextPageToken) && is_string($response->nextPageToken) && '' !== $response->nextPageToken
-                ? $response->nextPageToken
-                : null;
+            $nextPageToken = $this->extractNextPageToken($response);
 
             // Cursor exhausted: explicit isLast, or no continuation token.
-            if ((isset($response->isLast) && true === $response->isLast) || null === $nextPageToken) {
+            if ($this->isLastPage($response) || null === $nextPageToken) {
                 break;
             }
 
@@ -185,6 +179,24 @@ class JiraCloudApiService extends JiraOAuthApiService
         }
 
         return new JiraIssueKeySearchResult($keys, $truncated);
+    }
+
+    /**
+     * The cursor for the next `search/jql` page, or null when absent/empty.
+     */
+    private function extractNextPageToken(mixed $response): ?string
+    {
+        return is_object($response) && isset($response->nextPageToken) && is_string($response->nextPageToken) && '' !== $response->nextPageToken
+            ? $response->nextPageToken
+            : null;
+    }
+
+    /**
+     * Whether `search/jql` flagged this as the final page.
+     */
+    private function isLastPage(mixed $response): bool
+    {
+        return is_object($response) && isset($response->isLast) && true === $response->isLast;
     }
 
     /**

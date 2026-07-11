@@ -177,9 +177,18 @@ class ImportWorklogsService extends AbstractSyncRunService
             return $dateClause;
         }
 
+        // Fetch every target in one query (avoid N+1 over the loop below).
+        $usersByUsername = [];
+        foreach ($this->userRepository->findBy(['username' => $targetUsernames]) as $user) {
+            $username = $user->getUsername();
+            if (null !== $username) {
+                $usersByUsername[$username] = $user;
+            }
+        }
+
         $authorTerms = [];
         foreach ($targetUsernames as $username) {
-            $user = $this->userRepository->findOneByUsername($username);
+            $user = $usersByUsername[$username] ?? null;
 
             // The token owner is most robustly identified by currentUser().
             if ($user instanceof User && null !== $user->getId() && $user->getId() === $triggeredBy->getId()) {

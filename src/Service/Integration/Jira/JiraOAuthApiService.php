@@ -42,6 +42,7 @@ use Throwable;
 use UnexpectedValueException;
 
 use function assert;
+use function count;
 use function is_array;
 use function is_numeric;
 use function is_object;
@@ -550,17 +551,11 @@ class JiraOAuthApiService
         for ($page = 0;; ++$page) {
             $response = $this->searchTicket($jql, ['key'], $limit, $startAt);
 
-            $pageCount = 0;
-            if (is_object($response) && isset($response->issues) && is_array($response->issues)) {
-                foreach ($response->issues as $issue) {
-                    ++$pageCount;
-                    if (is_object($issue) && isset($issue->key) && is_string($issue->key)) {
-                        $keys[] = $issue->key;
-                    }
-                }
+            $pageCount = $this->issueCount($response);
+            foreach ($this->extractIssueKeys($response) as $key) {
+                $keys[] = $key;
             }
-
-            $total = is_object($response) && isset($response->total) && is_numeric($response->total) ? (int) $response->total : null;
+            $total = $this->extractTotal($response);
             $startAt += $pageCount;
 
             // A short page is the last page (also covers a missing/absent total).
@@ -581,6 +576,45 @@ class JiraOAuthApiService
         }
 
         return new JiraIssueKeySearchResult($keys, $truncated);
+    }
+
+    /**
+     * Pull the string issue keys out of a JQL-search response, tolerating any shape.
+     *
+     * @return list<string>
+     */
+    protected function extractIssueKeys(mixed $response): array
+    {
+        $keys = [];
+        if (is_object($response) && isset($response->issues) && is_array($response->issues)) {
+            foreach ($response->issues as $issue) {
+                if (is_object($issue) && isset($issue->key) && is_string($issue->key)) {
+                    $keys[] = $issue->key;
+                }
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Number of issues on a search page (independent of key validity) — drives short-page detection.
+     */
+    protected function issueCount(mixed $response): int
+    {
+        return is_object($response) && isset($response->issues) && is_array($response->issues)
+            ? count($response->issues)
+            : 0;
+    }
+
+    /**
+     * The offset-search `total`, or null when the endpoint omits it (e.g. Cloud `search/jql`).
+     */
+    protected function extractTotal(mixed $response): ?int
+    {
+        return is_object($response) && isset($response->total) && is_numeric($response->total)
+            ? (int) $response->total
+            : null;
     }
 
     /**
