@@ -1330,7 +1330,7 @@ class EntryRepository extends ServiceEntityRepository
                           c.name as name
                    FROM entries e
                    LEFT JOIN customers c ON e.customer_id = c.id
-                   WHERE e.customer_id = ?';
+                   WHERE e.customer_id = ? AND e.source = \'human\'';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getCustomer()->getId()])->fetchAssociative();
             if (false !== $result) {
@@ -1360,7 +1360,7 @@ class EntryRepository extends ServiceEntityRepository
                           p.name as name, p.estimation as estimation
                    FROM entries e
                    LEFT JOIN projects p ON e.project_id = p.id
-                   WHERE e.project_id = ?';
+                   WHERE e.project_id = ? AND e.source = \'human\'';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getProject()->getId()])->fetchAssociative();
             if (false !== $result) {
@@ -1392,7 +1392,7 @@ class EntryRepository extends ServiceEntityRepository
                           a.name as name
                    FROM entries e
                    LEFT JOIN activities a ON e.activity_id = a.id
-                   WHERE e.activity_id = ?';
+                   WHERE e.activity_id = ? AND e.source = \'human\'';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getActivity()->getId()])->fetchAssociative();
             if (false !== $result) {
@@ -1420,7 +1420,7 @@ class EntryRepository extends ServiceEntityRepository
             $sql = 'SELECT COUNT(e.id) as entries, SUM(e.duration) as total,
                           SUM(CASE WHEN e.user_id = ? THEN e.duration ELSE 0 END) as own
                    FROM entries e
-                   WHERE e.ticket = ?';
+                   WHERE e.ticket = ? AND e.source = \'human\'';
 
             $result = $connection->executeQuery($sql, [$userId, $entry->getTicket()])->fetchAssociative();
             if (false !== $result) {

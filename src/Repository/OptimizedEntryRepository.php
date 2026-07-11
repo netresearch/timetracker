@@ -196,6 +196,7 @@ class OptimizedEntryRepository extends ServiceEntityRepository
                 (SELECT name FROM activities WHERE id = :activityId LIMIT 1) as activity_name
             FROM entries e
             WHERE (e.customer_id = :customerId OR e.project_id = :projectId OR e.activity_id = :activityId OR e.ticket = :ticket)
+              AND e.source = 'human'
         ";
 
         $params = [
