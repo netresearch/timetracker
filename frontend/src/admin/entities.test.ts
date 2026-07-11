@@ -179,6 +179,27 @@ describe('admin entity descriptors', () => {
     }
   })
 
+  it('personio toForm opens the client secret blank and normalizes snake/camel rows', () => {
+    const personio = byKey('personio')
+    expect(personio.toForm(null)).toMatchObject({ id: 0, name: '', baseUrl: '', clientId: '', clientSecret: '', absence_project: 0, active: true })
+
+    const snake = personio.toForm({ id: 2, name: 'P', base_url: 'https://api.personio.de', client_id: 'cid', absence_project: 4, active: true })
+    const camel = personio.toForm({ id: 2, name: 'P', baseUrl: 'https://api.personio.de', clientId: 'cid', absenceProject: 4, active: true })
+    expect(snake).toEqual(camel)
+    // The secret is never echoed back — the field opens blank on edit.
+    expect(snake).toMatchObject({ clientSecret: '', baseUrl: 'https://api.personio.de', clientId: 'cid', absence_project: 4 })
+  })
+
+  it('personio toPayload maps the absence-project select onto absenceProjectId (0 → null)', () => {
+    const personio = byKey('personio')
+    const set = personio.toPayload({ id: 2, name: 'P', baseUrl: 'u', clientId: 'c', clientSecret: 's', absence_project: 4, active: true })
+    expect(set).toMatchObject({ absenceProjectId: 4 })
+    expect(set).not.toHaveProperty('absence_project')
+
+    const cleared = personio.toPayload({ id: 2, name: 'P', baseUrl: 'u', clientId: 'c', clientSecret: '', absence_project: 0, active: true })
+    expect(cleared.absenceProjectId).toBeNull()
+  })
+
   it('every entity has an intro description and key fields carry help tooltips', () => {
     for (const entity of entities) {
       expect(entity.description?.()).toBeTruthy()
