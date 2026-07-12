@@ -66,9 +66,11 @@ class SyncRunRepository extends ServiceEntityRepository
     /**
      * Distinct Jira key PREFIXES (the part before the first '-') of the
      * UNRESOLVED_PROJECT items parked by the most recent $runLimit sync runs of
-     * a ticket system (ADR-026 P1). These are the prefixes with no owning TT
-     * project — the input to the project-import review screen. Sorted for a
-     * stable order; empty when nothing is parked.
+     * a ticket system (ADR-026 P1) — the raw input to the project-import review
+     * screen. A prefix stays listed even after a later import resolves it (the
+     * historical item is never rewritten), so the caller drops prefixes a
+     * project now owns via {@see ProjectRepository::findOwnedJiraIds()}.
+     * Sorted for a stable order; empty when nothing is parked.
      *
      * @return list<string>
      */

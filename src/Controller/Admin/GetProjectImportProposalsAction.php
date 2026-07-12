@@ -12,6 +12,7 @@ namespace App\Controller\Admin;
 use App\DTO\Sync\ProjectImportProposal;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Repository\ProjectRepository;
 use App\Repository\SyncRunRepository;
 use App\Service\Sync\ProjectImportProposalService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -22,7 +23,9 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use function array_diff;
 use function array_map;
+use function array_values;
 
 /**
  * Review screen backend (ADR-026 P1): list the unresolved Jira prefixes parked
@@ -39,6 +42,7 @@ final readonly class GetProjectImportProposalsAction
     public function __construct(
         private ManagerRegistry $managerRegistry,
         private SyncRunRepository $syncRunRepository,
+        private ProjectRepository $projectRepository,
         private ProjectImportProposalService $projectImportProposalService,
     ) {
     }
@@ -61,7 +65,16 @@ final readonly class GetProjectImportProposalsAction
             return new JsonResponse(['message' => 'Ticket system not found.'], Response::HTTP_NOT_FOUND);
         }
 
+        // Parked prefixes still list a prefix a later import already resolved
+        // (the historical sync item is never rewritten). Drop the prefixes a
+        // project now owns on this ticket system, so an imported project stops
+        // being re-proposed — and its Jira/Tempo derivation is skipped too.
         $prefixes = $this->syncRunRepository->findUnresolvedProjectPrefixes($ticketSystem);
+        $owned = $this->projectRepository->findOwnedJiraIds($prefixes, $ticketSystem);
+        if ([] !== $owned) {
+            $prefixes = array_values(array_diff($prefixes, $owned));
+        }
+
         $proposals = $this->projectImportProposalService->proposeForKeys($prefixes, $ticketSystem, $user);
 
         return new JsonResponse([
