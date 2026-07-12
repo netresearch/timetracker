@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App\ValueObject\Sync;
 
 use App\Enum\WorklogField;
+use DateTime;
 use InvalidArgumentException;
 
 use function is_int;
@@ -32,6 +33,20 @@ final readonly class WorklogSnapshot
     public function equals(self $other): bool
     {
         return [] === $this->diff($other);
+    }
+
+    /**
+     * The worklog start as a UTC DateTime. The imported day/start MUST NOT depend
+     * on the runtime's date.timezone: the timestamp is an absolute instant (the
+     * normalizer built it from Jira's ISO `started`, which the NR-JIRA Server
+     * labels `+0000`), so rendering it in UTC recovers the same wall-clock the
+     * worklog carries — on any server config. A fresh mutable DateTime each call,
+     * so callers may clone/modify it.
+     */
+    public function startedAtUtc(): DateTime
+    {
+        // '@'-prefixed constructor is always UTC, independent of the default TZ.
+        return new DateTime('@' . $this->startedTimestamp);
     }
 
     /**
