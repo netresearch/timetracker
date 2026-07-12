@@ -140,6 +140,32 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
+     * The subset of $jiraIds a project already claims on $ticketSystem — the
+     * prefixes to drop from the ADR-026 P1 project-import review because they
+     * now resolve. One query for the whole batch; empty in, empty out.
+     *
+     * @param list<string> $jiraIds
+     *
+     * @return list<string>
+     */
+    public function findOwnedJiraIds(array $jiraIds, TicketSystem $ticketSystem): array
+    {
+        if ([] === $jiraIds) {
+            return [];
+        }
+
+        /** @var list<string> */
+        return $this->createQueryBuilder('p')
+            ->select('DISTINCT p.jiraId')
+            ->where('p.ticketSystem = :ticketSystem')
+            ->andWhere('p.jiraId IN (:jiraIds)')
+            ->setParameter('ticketSystem', $ticketSystem)
+            ->setParameter('jiraIds', $jiraIds)
+            ->getQuery()
+            ->getSingleColumnResult();
+    }
+
+    /**
      * All projects booking on the given ticket system (ADR-023 import: ticket→project resolution).
      *
      * @return list<Project>

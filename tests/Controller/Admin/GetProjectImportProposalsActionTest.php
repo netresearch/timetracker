@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Tests\Controller\Admin;
 
+use App\Entity\Customer;
+use App\Entity\Project;
 use App\Entity\SyncRun;
 use App\Entity\SyncRunItem;
 use App\Entity\TicketSystem;
@@ -94,6 +96,35 @@ final class GetProjectImportProposalsActionTest extends AbstractWebTestCase
         self::assertSame('SRVMO', $error['jira_key']);
         self::assertSame('error', $error['derivation_source']);
         self::assertNull($error['derived_customer_name']);
+    }
+
+    public function testExcludesPrefixesAlreadyOwnedByAProject(): void
+    {
+        // SRVMO and JOT are both parked, but SRVMO was already imported (a
+        // project now owns it on this ticket system). The review must stop
+        // re-proposing SRVMO — and never call Jira/Tempo for it.
+        $this->seedUnresolved(['SRVMO-1', 'JOT-9']);
+        $this->seedProjectOwning('SRVMO');
+
+        $this->stubApiFactory(
+            projectInfo: [
+                'JOT' => ['id' => 23050, 'name' => 'Job Tool', 'categoryName' => 'NR: IT'],
+            ],
+            // SRVMO would throw if it reached the service — it must not.
+            throwKeys: ['SRVMO'],
+            tenant: ['/rest/tempo-accounts/1/account/project/23050' => []],
+        );
+
+        $this->get(self::URI . '?ticketSystem=1');
+        $this->assertStatusCode(200);
+
+        $data = $this->responseData();
+        self::assertCount(1, $data['proposals']);
+
+        $only = $data['proposals'][0];
+        self::assertIsArray($only);
+        self::assertSame('JOT', $only['jira_key']);
+        self::assertSame('category', $only['derivation_source']);
     }
 
     public function testEmptyProposalsWhenNothingParked(): void
@@ -226,6 +257,31 @@ final class GetProjectImportProposalsActionTest extends AbstractWebTestCase
                 ->setCreatedAt(new DateTimeImmutable('2026-07-05 10:00:00'));
             $this->entityManager->persist($item);
         }
+
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Give ticket system 1 a project that already claims $prefix as its jira_id —
+     * the "already imported" state that must exclude the prefix from the review.
+     */
+    private function seedProjectOwning(string $prefix): void
+    {
+        $ticketSystem = $this->entityManager->find(TicketSystem::class, 1);
+        assert($ticketSystem instanceof TicketSystem);
+
+        $customer = new Customer()->setName('Owned Co')->setActive(true)->setGlobal(false);
+        $this->entityManager->persist($customer);
+
+        $project = new Project()
+            ->setName('Already Imported')
+            ->setCustomer($customer)
+            ->setJiraId($prefix)
+            ->setTicketSystem($ticketSystem)
+            ->setActive(true)
+            ->setGlobal(false)
+            ->setEstimation(0);
+        $this->entityManager->persist($project);
 
         $this->entityManager->flush();
     }
