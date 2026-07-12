@@ -155,6 +155,25 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('badges an agent-source / estimated entry in the description cell, and not a plain human row (ADR-025)', async () => {
+    mockApiWith([
+      { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '10:00', description: 'Agent work', source: 'agent', estimated: true } },
+      { entry: { ...DEFAULT_ENTRY, id: 2, start: '11:00', end: '12:00', description: 'Human work', source: 'human', estimated: false } },
+    ])
+    const { getByText, container, unmount } = renderTracking()
+
+    await waitFor(() => expect(getByText('Agent work')).toBeInTheDocument())
+    // The agent row carries both badges; the plain human row carries none.
+    const badges = [...container.querySelectorAll('.entry-badge')].map((el) => el.className)
+    expect(badges.some((c) => c.includes('is-agent'))).toBe(true)
+    expect(badges.some((c) => c.includes('is-estimated'))).toBe(true)
+    // Exactly two badges total (agent + estimated), both on the one agent row —
+    // the human row adds none.
+    expect(badges).toHaveLength(2)
+
+    unmount()
+  })
+
   it('derives day-break/pause/overlap row cues from the displayed entries, not the stored class', async () => {
     // All rows carry class:0 — the cue must come from the (day, start, end)
     // ordering, so it is correct for seed/future data the save flow never touched.

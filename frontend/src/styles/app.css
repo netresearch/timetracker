@@ -602,6 +602,39 @@ main:has(.tracking) {
 .is-neg { color: var(--color-danger-text); }
 .is-pos { color: var(--color-success-text); }
 
+/* ---- ADR-025 entry source/estimated badges ----
+   A small inline marker on an entry row. Text + icon carry the meaning; colour
+   is only a reinforcing cue (WCAG 1.4.1). Both bg/text token pairs are the
+   design system's 7:1 pairs, so contrast holds in light and dark. */
+.entry-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25em;
+  margin-left: 0.4em;
+  padding: 0.05em 0.45em;
+  border-radius: 0.5em;
+  font-family: var(--font-body);
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.entry-badge-icon {
+  font-weight: 700;
+}
+
+.entry-badge.is-agent {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
+
+.entry-badge.is-estimated {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
 .action-button {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

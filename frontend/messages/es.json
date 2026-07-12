@@ -672,5 +672,10 @@
   "projectimport_confirm_error": "No se pudieron confirmar las filas seleccionadas.",
   "projectimport_result_created": "Creado",
   "projectimport_result_existing": "Existente",
-  "projectimport_empty": "No hay prefijos sin resolver."
+  "projectimport_empty": "No hay prefijos sin resolver.",
+  "entry_source_agent": "Agente",
+  "entry_source_agent_hint": "Registrado por un agente (tiempo de máquina), no trabajo humano",
+  "entry_estimated": "estimado",
+  "entry_estimated_hint": "El tiempo humano es una estimación derivada del agente: revísalo antes de contarlo como asistencia",
+  "auswertung_agent_hours": "Horas de agente"
 }

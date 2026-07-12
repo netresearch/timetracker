@@ -125,6 +125,33 @@ describe('Auswertung', () => {
     unmount()
   })
 
+  it('badges an agent/estimated entry in the detail table and shows agent hours beside human (ADR-025)', async () => {
+    getJson.mockImplementation((path: string) => {
+      if (path === '/interpretation/customer')
+        return Promise.resolve([{ id: 1, name: 'ACME', hours: 8, quota: '80.00%', agentHours: 3 }])
+      if (path === '/interpretation/time')
+        return Promise.resolve([{ id: null, name: '26-06-01', day: '01.06.', hours: 4, quota: '100.00%', expected: 8, agentHours: 0 }])
+      if (path === '/interpretation/entries')
+        return Promise.resolve([
+          { entry: { id: 5, date: '01/06/2026', ticket: 'ABC-1', description: 'work', duration: '8:00', quota: '100.00%', source: 'agent', estimated: true } },
+        ])
+      if (path.startsWith('/interpretation/')) return Promise.resolve([])
+
+      return Promise.resolve([])
+    })
+    const { getByText, getByRole, unmount } = renderPage()
+
+    // The detail-table row for the agent-logged entry carries both badges.
+    await waitFor(() => expect(getByRole('gridcell', { name: /ABC-1/ })).toBeInTheDocument())
+    expect(getByText('Agent')).toBeInTheDocument()
+    expect(getByText('estimated')).toBeInTheDocument()
+
+    // The by-customer chart surfaces the agent hours in their own column.
+    expect(getByRole('columnheader', { name: 'Agent hours' })).toBeInTheDocument()
+
+    unmount()
+  })
+
   it('has no automatically detectable accessibility violations', async () => {
     mockEndpoints()
     const { container, getByRole, unmount } = renderPage()

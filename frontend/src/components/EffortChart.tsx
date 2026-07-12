@@ -13,6 +13,10 @@ export interface EffortRow {
    *  boundary: a Soll marker, an over/under colour, and a ghost bar showing the
    *  shortfall. Only the "Effort by day" chart provides it. */
   target?: number
+  /** ADR-025 §7: agent (machine) minutes for the row. When any row carries it,
+   *  the table gains a separate "Agent hours" column — machine time is shown
+   *  beside human labour, never summed into `minutes`. */
+  agentMinutes?: number
 }
 
 /**
@@ -32,6 +36,10 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
   // worked-or-target so a Soll marker beyond the worked time still fits.
   const max = createMemo(() => Math.max(1, ...props.rows.map((row) => Math.max(row.minutes, row.target ?? 0))))
   const pct = (minutes: number): string => `${(minutes / max()) * 100}%`
+
+  // ADR-025 §7: only surface the agent column when agent time actually exists,
+  // so the common (human-only) report stays a three-column table.
+  const hasAgent = createMemo(() => props.rows.some((row) => (row.agentMinutes ?? 0) > 0))
 
   // Optional column sort. Default (null) keeps the server order — value-desc for
   // the grouped charts, chronological for "by day". Clicking a header cycles
@@ -89,6 +97,9 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
                   <span class="th-sort-glyph" aria-hidden="true">{sortGlyph('hours')}</span>
                 </button>
               </th>
+              <Show when={hasAgent()}>
+                <th scope="col" class="numeric">{m.auswertung_agent_hours()}</th>
+              </Show>
               <th scope="col" class="numeric" aria-sort={ariaSort('share')}>
                 <button type="button" class="th-sort" onClick={() => toggleSort('share')}>
                   <span>{m.auswertung_share()}</span>
@@ -130,6 +141,9 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
                         <small class="effort-target">{m.auswertung_of_target({ target: formatMinutes(row.target ?? 0) })}</small>
                       </Show>
                     </td>
+                    <Show when={hasAgent()}>
+                      <td class="numeric">{(row.agentMinutes ?? 0) > 0 ? formatMinutes(row.agentMinutes ?? 0) : '—'}</td>
+                    </Show>
                     <td class="numeric">{row.quota}</td>
                   </tr>
                 )

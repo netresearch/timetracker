@@ -15,6 +15,7 @@ import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
+import { EntrySourceBadge } from '../components/EntrySourceBadge'
 import { PageDialog } from '../components/PageDialog'
 import { sessionExpired } from '../lib/session'
 import { updateWorktime } from '../header'
@@ -867,6 +868,17 @@ export default function Tracking() {
 
     // A truncation box so the responsive thinning can ellipsis free-text columns
     // (Description) — a bare <td> in an auto-layout table can't do text-overflow.
+    // ADR-025: the description cell also carries the source/estimated badge —
+    // source is fixed on the row (not inline-editable), so read the base entry.
+    if (colKey === 'description') {
+      return (
+        <span class="cell-trunc">
+          {displayCell(entry, colKey)}
+          <EntrySourceBadge source={entry.source} estimated={entry.estimated} />
+        </span>
+      )
+    }
+
     return <span class="cell-trunc">{displayCell(entry, colKey)}</span>
   }
 
@@ -971,6 +983,9 @@ export default function Tracking() {
       class: 0,
       worklog: null,
       extTicket: null,
+      // A web-UI row is always a human self-log (ADR-025 §4); never estimated.
+      source: 'human',
+      estimated: false,
       ...seed,
     }
     tempId -= 1
