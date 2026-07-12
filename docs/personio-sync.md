@@ -59,6 +59,16 @@ Re-runs are idempotent, tracked per Personio absence id: an unchanged absence is
 
 Schedule the default form on the same cron as the export; the window is one-directional (vacations lie in the future), so it is wider ahead than behind.
 
+## On-demand triggers (API / MCP)
+
+Besides the console commands, a run can be started under a personal access token
+(scope `sync:write`):
+
+- **v2 API:** `POST /api/v2/personio/runs`. Body: `{"direction":"export"|"import","from":"YYYY-MM-DD","to":"YYYY-MM-DD","dry_run":true,"all_users":true}` (only `direction` is required). `export` pushes attendances, `import` pulls absences. By default the run covers the token owner; `all_users` runs for everyone opted-in and needs an admin token.
+- **MCP tool:** `run_personio_sync` with the same `direction` and self/`allUsers` semantics.
+
+The response carries the finished run(s) with counters and parked items.
+
 ## Deactivating
 
 Clear a user's opt-in in Settings, or set the Personio config inactive. Deactivating stops future exports and imports; it does not remove attendances already sent to Personio, nor absence entries already imported into TimeTracker.
