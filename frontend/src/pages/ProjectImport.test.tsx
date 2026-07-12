@@ -163,6 +163,63 @@ describe('ProjectImport', () => {
     await waitFor(() => expect(screen.getByText('Created')).toBeInTheDocument())
   })
 
+  it('sends the stable Tempo key when the confirmed new customer is still the derived one', async () => {
+    // Customer list WITHOUT 'Netresearch' → the derived 'Netresearch' has no
+    // existing match, so the row defaults to a NEW customer keeping the derived
+    // name, and its stable Tempo key (NR) rides along (ADR-026 P2).
+    getJson.mockImplementation((path: string) => {
+      if (path === '/getTicketSystems') {
+        return Promise.resolve([{ ticketSystem: { id: 1, name: 'Jira Cloud', active: true } }])
+      }
+      if (path === '/getAllCustomers') {
+        return Promise.resolve([{ customer: { id: 6, name: 'Netresearch Solutions', active: true } }])
+      }
+
+      return Promise.resolve([])
+    })
+    confirmProjectImport.mockResolvedValue({ projects: [] })
+    renderWithProviders(() => <ProjectImport />)
+    await selectTicketSystem()
+
+    const confirm = screen.getByLabelText('Confirm — SRVMO') as HTMLInputElement
+    await waitFor(() => expect(confirm).not.toBeDisabled())
+    fireEvent.input(confirm, { target: { checked: true } })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm selected' }))
+
+    await waitFor(() => expect(confirmProjectImport).toHaveBeenCalledTimes(1))
+    expect(confirmProjectImport).toHaveBeenLastCalledWith([
+      {
+        jira_key: 'SRVMO',
+        project_name: 'Server Monitoring',
+        ticket_system_id: 1,
+        customer_name: 'Netresearch',
+        customer_key: 'NR',
+      },
+    ])
+  })
+
+  it('omits the Tempo key when the admin types a different new name', async () => {
+    mockRefs()
+    confirmProjectImport.mockResolvedValue({ projects: [] })
+    renderWithProviders(() => <ProjectImport />)
+    await selectTicketSystem()
+
+    // Override the confident row to a hand-typed different new name — no key.
+    fireEvent.change(screen.getByLabelText('Customer — SRVMO'), { target: { value: 'new' } })
+    fireEvent.input(screen.getByLabelText('New customer name — SRVMO'), {
+      target: { value: 'Totally Different Ltd' },
+    })
+    const confirm = screen.getByLabelText('Confirm — SRVMO') as HTMLInputElement
+    await waitFor(() => expect(confirm).not.toBeDisabled())
+    fireEvent.input(confirm, { target: { checked: true } })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm selected' }))
+
+    await waitFor(() => expect(confirmProjectImport).toHaveBeenCalledTimes(1))
+    expect(confirmProjectImport).toHaveBeenLastCalledWith([
+      { jira_key: 'SRVMO', project_name: 'Server Monitoring', ticket_system_id: 1, customer_name: 'Totally Different Ltd' },
+    ])
+  })
+
   it('does not expose the screen to a non-admin', () => {
     mockRefs()
     window.APP_CONFIG!.roles = ['ROLE_USER']

@@ -37,13 +37,17 @@ export interface ProposalsResponse {
 }
 
 /** One confirmed row for POST /project-import/confirm. Exactly one of
- *  `customer_id` (pick existing) / `customer_name` (create-or-find-by-name). */
+ *  `customer_id` (pick existing) / `customer_name` (create-or-find-by-name).
+ *  `customer_key` is the stable Tempo key (ADR-026 P2), sent only alongside
+ *  `customer_name` when the name is still the derived one, so the created (or
+ *  name-matched) customer is keyed for idempotent re-imports. */
 export interface ConfirmRow {
   jira_key: string
   project_name: string
   ticket_system_id: number
   customer_id?: number
   customer_name?: string
+  customer_key?: string
 }
 
 /** One persisted result row (ProjectImportConfirmationService::confirm). */
