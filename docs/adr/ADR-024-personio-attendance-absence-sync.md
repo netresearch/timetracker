@@ -1,6 +1,6 @@
 # ADR-024: Personio Attendance Export and Absence Import
 
-**Status:** Accepted — P1 (attendance export) implemented 2026-07-11; P2 (absence import) implemented 2026-07-12; P3 employee auto-match (CLI) + API/MCP run triggers implemented 2026-07-12; P3 remainder (frontend employee-match UI) pending.
+**Status:** Accepted — fully implemented. P1 (attendance export) 2026-07-11; P2 (absence import) 2026-07-12; P3 (employee auto-match CLI + review UI, API/MCP run triggers) 2026-07-12.
 **Date:** 2026-07-10
 **Relates to:** [ADR-023](ADR-023-jira-worklog-bidirectional-sync.md) (the sync/run/audit infrastructure and the opt-in accountability model this ADR reuses), [ADR-021](ADR-021-api-token-authentication.md) (PAT scopes for any later API surface), [ADR-011](ADR-011-security-architecture.md) (encryption-at-rest via `TokenEncryptionService`).
 
