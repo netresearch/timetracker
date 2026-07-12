@@ -276,6 +276,23 @@ class CrudController extends BaseController
             if($request->get('id') != 0) {
                 $entry = $doctrine->getRepository('NetresearchTimeTrackerBundle:Entry')
                     ->find($request->get('id'));
+
+                if (!$entry) {
+                    $message = $this->get('translator')->trans('No entry for id.');
+                    return new Error($message, 404);
+                }
+
+                // Security fix: a user may only edit their OWN entry. Without this
+                // an attacker could POST save with another user's entry id and
+                // overwrite it — even reassigning ownership to themselves (setUser
+                // below). Mirrors v6 SaveEntryAction's "already owned by a different
+                // user" guard; unlike delete there is no PL bypass — nobody rewrites
+                // another user's entry.
+                $owner = $entry->getUser();
+                if (!is_object($owner) || $owner->getId() != $this->getUserId($request)) {
+                    $message = $this->get('translator')->trans('You are not allowed to edit this entry.');
+                    return new Error($message, 403);
+                }
             } else {
                 $entry = new Entry();
             }

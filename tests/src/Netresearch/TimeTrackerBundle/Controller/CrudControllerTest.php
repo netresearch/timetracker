@@ -131,6 +131,26 @@ class CrudControllerTest extends BaseTest
         $this->assertStatusCode(403, 'A developer must not be able to delete a foreign entry');
     }
 
+    public function testSaveForeignEntryIsForbidden()
+    {
+        // Security (IDOR fix): a plain developer must not EDIT another user's
+        // entry. 'developer' is loginId 2 (type DEV); entry 2 is owned by user 1
+        // (i.myself, a PL), so it is foreign. Without the ownership guard,
+        // saveAction would load entry 2, reassign it to the developer (setUser)
+        // and overwrite its fields — an IDOR write, worse than the delete one.
+        $this->logInSession('developer');
+        $this->client->request('POST', '/tracking/save', [
+            'id'       => 2,
+            'start'    => '10:00:00',
+            'end'      => '10:30:00',
+            'project'  => 1,
+            'customer' => 1,
+            'activity' => 1,
+            'date'     => '2024-01-01',
+        ]);
+        $this->assertStatusCode(403, 'A developer must not be able to edit a foreign entry');
+    }
+
     //-------------- Bulkentry routes ----------------------------------------
 
     public function testBulkentryActionNonExistendPreset()
