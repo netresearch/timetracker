@@ -648,7 +648,11 @@ main:has(.tracking) {
 
 .entry-badge.is-agent {
   background: var(--color-accent-soft);
-  color: var(--color-accent-text);
+  /* Badge-scoped text colour: the app-wide --color-accent-text clears WCAG AA
+     but the badge holds itself to 7:1 (AAA). On the dark accent-soft ground
+     (#0f3a40) the token's #6fd0dd is 6.91:1 — a shade lighter (#7fd4e0) is
+     7.29:1. Light theme's accent-text already passes 7:1, so it stays. */
+  color: light-dark(var(--color-accent-text), #7fd4e0);
 }
 
 .entry-badge.is-estimated {
