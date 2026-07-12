@@ -604,8 +604,9 @@ main:has(.tracking) {
 
 /* ---- ADR-025 entry source/estimated badges ----
    A small inline marker on an entry row. Text + icon carry the meaning; colour
-   is only a reinforcing cue (WCAG 1.4.1). Both bg/text token pairs are the
-   design system's 7:1 pairs, so contrast holds in light and dark. */
+   is only a reinforcing cue (WCAG 1.4.1). The warning (estimated) token pair
+   clears 7:1 in both themes; the accent (agent) pair clears 7:1 in light and
+   AA (4.5:1) in dark. */
 .entry-badge {
   display: inline-flex;
   align-items: baseline;
