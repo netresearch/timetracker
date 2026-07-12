@@ -157,6 +157,7 @@ CREATE TABLE `ticket_systems` (
   `oauth2_client_secret` VARCHAR(255) NULL,
   `cloud_id` VARCHAR(64) NULL,
   `sync_default_activity_id` INT NULL DEFAULT NULL,
+  `auto_import_unresolved_projects` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
   KEY `fk_ts_sync_activity` (`sync_default_activity_id`),
