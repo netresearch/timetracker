@@ -130,7 +130,9 @@ CREATE TABLE `customers` (
   `name` varchar(255) NOT NULL,
   `active` int(1) unsigned NOT NULL default '0',
   `global` int(1) unsigned NOT NULL default '0',
-  PRIMARY KEY (`id`)
+  `tempo_customer_key` varchar(63) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_customers_tempo_customer_key` (`tempo_customer_key`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 
