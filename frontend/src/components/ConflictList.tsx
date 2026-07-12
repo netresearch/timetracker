@@ -84,6 +84,7 @@ function ConflictCard(props: {
 
   return (
     <li class="conflict-card">
+      <p class="conflict-explainer">{m.worklogsync_conflict_explainer()}</p>
       <div class="conflict-sides">
         <section class="conflict-side conflict-side-local" aria-label={m.worklogsync_conflict_local()}>
           <h3 class="conflict-side-title">{m.worklogsync_conflict_local()}</h3>

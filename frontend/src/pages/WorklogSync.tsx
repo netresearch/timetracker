@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
-import { ticketSystemsQuery } from '../api/queries'
+import { ticketSystemsQuery, usersQuery } from '../api/queries'
 import {
   createSyncRun,
   syncRunQuery,
@@ -88,7 +88,7 @@ function WorklogSyncArea(): JSX.Element {
   const [ticketSystemId, setTicketSystemId] = createSignal(0)
   const [from, setFrom] = createSignal(firstOfMonth())
   const [to, setTo] = createSignal(isoDate(new Date()))
-  const [usersText, setUsersText] = createSignal('')
+  const [selectedUsers, setSelectedUsers] = createSignal<string[]>([])
   const [dryRun, setDryRun] = createSignal(true)
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal('')
@@ -97,6 +97,9 @@ function WorklogSyncArea(): JSX.Element {
   // Run history: an optional ticket-system filter + the run opened for detail.
   const [historyFilter, setHistoryFilter] = createSignal(0)
   const [selectedRunId, setSelectedRunId] = createSignal<number | null>(null)
+
+  // TT users for the target dropdown (empty selection = all users).
+  const userOptions = useQuery(() => usersQuery())
 
   const runs = useQuery(() => syncRunsQuery(historyFilter() > 0 ? historyFilter() : undefined))
   const runDetail = useQuery(() => ({
@@ -107,10 +110,8 @@ function WorklogSyncArea(): JSX.Element {
   const canRun = (): boolean => ticketSystemId() > 0 && !busy()
 
   function buildPayload(): CreateRunPayload {
-    const users = usersText()
-      .split(',')
-      .map((user) => user.trim())
-      .filter((user) => user !== '')
+    // A sync run targets at most one user; verify/import accept several.
+    const users = type() === 'sync' ? selectedUsers().slice(0, 1) : selectedUsers()
 
     return {
       type: type(),
@@ -170,23 +171,41 @@ function WorklogSyncArea(): JSX.Element {
 
             <label class="field">
               <span>{m.worklogsync_from()}</span>
-              <DateField value={from()} onChange={setFrom} disabled={busy()} />
+              <DateField value={from()} onChange={setFrom} disabled={busy()} calendar />
             </label>
 
             <label class="field">
               <span>{m.worklogsync_to()}</span>
-              <DateField value={to()} onChange={setTo} disabled={busy()} />
+              <DateField value={to()} onChange={setTo} disabled={busy()} calendar />
             </label>
 
             <label class="field">
               <span>{m.worklogsync_users()}</span>
-              <input
-                type="text"
-                value={usersText()}
+              <select
+                multiple={type() !== 'sync'}
                 disabled={busy()}
-                placeholder={m.worklogsync_all_users()}
-                onInput={(event) => setUsersText(event.currentTarget.value)}
-              />
+                onChange={(event) => {
+                  // A sync run targets a single user (the backend rejects >1 with 422);
+                  // verify/import accept a multi-selection.
+                  if (type() === 'sync') {
+                    setSelectedUsers(event.currentTarget.value ? [event.currentTarget.value] : [])
+                  } else {
+                    setSelectedUsers(Array.from(event.currentTarget.selectedOptions, (option) => option.value))
+                  }
+                }}
+              >
+                <Show when={type() === 'sync'}>
+                  <option value="" selected={selectedUsers().length === 0}>—</option>
+                </Show>
+                <For each={userOptions.data ?? []}>
+                  {(option) => (
+                    <option value={String(option.label)} selected={selectedUsers().includes(String(option.label))}>
+                      {option.label}
+                    </option>
+                  )}
+                </For>
+              </select>
+              <small class="field-hint">{m.worklogsync_users_hint()}</small>
             </label>
 
             <label class="field-check">
