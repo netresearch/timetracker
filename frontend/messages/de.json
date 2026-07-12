@@ -672,5 +672,10 @@
   "projectimport_confirm_error": "Die ausgewählten Zeilen konnten nicht bestätigt werden.",
   "projectimport_result_created": "Angelegt",
   "projectimport_result_existing": "Vorhanden",
-  "projectimport_empty": "Keine offenen Präfixe."
+  "projectimport_empty": "Keine offenen Präfixe.",
+  "entry_source_agent": "Agent",
+  "entry_source_agent_hint": "Von einem Agenten erfasst (Maschinenzeit), keine menschliche Arbeit",
+  "entry_estimated": "geschätzt",
+  "entry_estimated_hint": "Die menschliche Zeit ist eine vom Agenten abgeleitete Schätzung – vor der Anrechnung als Anwesenheit prüfen",
+  "auswertung_agent_hours": "Agenten-Stunden"
 }

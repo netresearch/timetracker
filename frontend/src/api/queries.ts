@@ -13,6 +13,9 @@ export interface WorktimeRecord {
   quota: string
   /** Expected (Soll) hours for the day, from the contract or a 5×8h default. */
   expected: number
+  /** ADR-025 §7: agent (machine) hours for the day, beside the human `hours`;
+   *  never summed into it. Absent on pre-ADR-025 caches. */
+  agentHours?: number
 }
 
 // Response shape of GET /getHolidays (GetHolidaysAction) — row-wrapped
@@ -151,6 +154,12 @@ export interface TrackingEntry {
   class: number
   worklog: number | null
   extTicket: string | null
+  /** ADR-025: who performed the labour — 'human' or 'agent'. Drives the row
+   *  badge; a machine's wall-clock is never summed into human hours. */
+  source: string
+  /** ADR-025: true when a human-source figure is an agent-derived estimate a
+   *  person should still review before it counts as attendance. */
+  estimated: boolean
 }
 
 interface TrackingEntryRow {
@@ -205,6 +214,10 @@ function savedEntryToRow(saved: SavedEntryResult['result']): TrackingEntryRow {
       class: saved.class,
       worklog: null,
       extTicket: saved.extTicket ?? null,
+      // A web-UI (session) save is always a human self-log — ADR-025 §4 forces
+      // source=human and never marks it estimated, regardless of the body.
+      source: 'human',
+      estimated: false,
     },
   }
 }
@@ -368,6 +381,9 @@ export interface GroupRow {
   name: string
   hours: number
   quota: string
+  /** ADR-025 §7: agent (machine) hours, sliced out beside the human hours and
+   *  never folded into the `hours` total. Absent on pre-ADR-025 caches. */
+  agentHours?: number
 }
 
 export type InterpretationGroup = 'customer' | 'project' | 'ticket' | 'activity' | 'user'
@@ -438,6 +454,10 @@ export interface EntryRecord {
     ticket: string
     duration: string
     quota: string
+    /** ADR-025: labour source ('human' | 'agent') and whether the figure is an
+     *  agent-derived estimate — both drive the row badge. */
+    source: string
+    estimated: boolean
   }
 }
 

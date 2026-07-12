@@ -73,6 +73,37 @@ describe('EffortChart', () => {
     unmount()
   })
 
+  describe('agent hours (ADR-025 §7)', () => {
+    it('adds an Agent-hours column and value beside human hours when agent time exists', () => {
+      const data: EffortRow[] = [
+        { label: 'ACME', minutes: 480, quota: '80.00%', agentMinutes: 90 },
+        { label: 'Globex', minutes: 120, quota: '20.00%', agentMinutes: 0 },
+      ]
+      const { getByRole, getAllByRole, unmount } = render(() => <EffortChart title="Effort by customer" rows={data} />)
+
+      // A four-column header (Name, Hours, Agent hours, Share).
+      expect(getByRole('columnheader', { name: 'Agent hours' })).toBeInTheDocument()
+      expect(getAllByRole('columnheader')).toHaveLength(4)
+      // ACME's agent time shows formatted (1:30, distinct from any human cell);
+      // a zero-agent row shows a dash, never folded into the human hours.
+      expect(getByRole('cell', { name: formatMinutes(90) })).toBeInTheDocument()
+      const dashes = getAllByRole('cell').filter((cell) => cell.textContent === '—')
+      expect(dashes.length).toBe(1)
+      unmount()
+    })
+
+    it('omits the Agent-hours column entirely for a human-only report', () => {
+      const data: EffortRow[] = [
+        { label: 'ACME', minutes: 480, quota: '80.00%', agentMinutes: 0 },
+      ]
+      const { queryByRole, getAllByRole, unmount } = render(() => <EffortChart title="Effort by customer" rows={data} />)
+
+      expect(queryByRole('columnheader', { name: 'Agent hours' })).toBeNull()
+      expect(getAllByRole('columnheader')).toHaveLength(3)
+      unmount()
+    })
+  })
+
   describe('contract Soll (target)', () => {
     // Mon over Soll (8:30 vs 8:00), Tue under (4:00 vs 8:00).
     const dayRows: EffortRow[] = [

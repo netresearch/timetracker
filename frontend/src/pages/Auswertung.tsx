@@ -17,6 +17,7 @@ import {
   usersQuery,
 } from '../api/queries'
 import { EffortChart, type EffortRow } from '../components/EffortChart'
+import { EntrySourceBadge } from '../components/EntrySourceBadge'
 import { OptionSelect } from '../components/OptionSelect'
 import { QueryBoundary } from '../components/QueryBoundary'
 import { appConfig } from '../config'
@@ -108,6 +109,7 @@ function toEffortRows(rows: GroupRow[] | undefined): EffortRow[] {
     label: row.name,
     minutes: Math.round(row.hours * 60),
     quota: row.quota,
+    agentMinutes: Math.round((row.agentHours ?? 0) * 60),
   }))
 }
 
@@ -169,6 +171,7 @@ export default function Auswertung() {
       minutes: Math.round(row.hours * 60),
       quota: row.quota,
       target: Math.round(row.expected * 60),
+      agentMinutes: Math.round((row.agentHours ?? 0) * 60),
     })),
   )
 
@@ -332,7 +335,10 @@ export default function Auswertung() {
                       <tr>
                         <td>{formatUserDate(dmyToIso(record.entry.date ?? '') ?? record.entry.date ?? '')}</td>
                         <td>{record.entry.ticket}</td>
-                        <td>{record.entry.description}</td>
+                        <td>
+                          {record.entry.description}
+                          <EntrySourceBadge source={record.entry.source} estimated={record.entry.estimated} />
+                        </td>
                         <td class="numeric">{record.entry.duration}</td>
                       </tr>
                     )}

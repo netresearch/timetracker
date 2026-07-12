@@ -672,5 +672,10 @@
   "projectimport_confirm_error": "Не удалось подтвердить выбранные строки.",
   "projectimport_result_created": "Создан",
   "projectimport_result_existing": "Существует",
-  "projectimport_empty": "Нет неразрешённых префиксов."
+  "projectimport_empty": "Нет неразрешённых префиксов.",
+  "entry_source_agent": "Агент",
+  "entry_source_agent_hint": "Записано агентом (машинное время), не человеческий труд",
+  "entry_estimated": "оценка",
+  "entry_estimated_hint": "Человеческое время — оценка, выведенная агентом; проверьте до учёта как посещаемость",
+  "auswertung_agent_hours": "Часы агента"
 }

@@ -672,5 +672,10 @@
   "projectimport_confirm_error": "Could not confirm the selected rows.",
   "projectimport_result_created": "Created",
   "projectimport_result_existing": "Existing",
-  "projectimport_empty": "No unresolved prefixes."
+  "projectimport_empty": "No unresolved prefixes.",
+  "entry_source_agent": "Agent",
+  "entry_source_agent_hint": "Recorded by an agent (machine time), not human labour",
+  "entry_estimated": "estimated",
+  "entry_estimated_hint": "Human time is an agent-derived estimate — review before it counts as attendance",
+  "auswertung_agent_hours": "Agent hours"
 }
