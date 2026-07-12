@@ -162,6 +162,98 @@ final class ConfirmProjectImportActionTest extends AbstractWebTestCase
         self::assertCount(0, $this->entityManager->getRepository(Customer::class)->findBy(['name' => 'Ignored Customer']));
     }
 
+    public function testSameTempoKeyCreatesCustomerOnceAcrossConfirms(): void
+    {
+        // ADR-026 P2: two SEPARATE confirms of the same Tempo customer (same
+        // stable key) — even with a drifted name — must resolve to ONE customer.
+        $this->post(['rows' => [[
+            'jira_key' => 'TKA',
+            'project_name' => 'Tempo Alpha',
+            'ticket_system_id' => 1,
+            'customer_name' => 'Deutsche Post AG',
+            'customer_key' => 'DP',
+        ]]]);
+        $this->assertStatusCode(200);
+        $firstCustomerId = $this->responseData()['projects'][0]['customer_id'];
+        self::assertIsInt($firstCustomerId);
+
+        // Second run: SAME key, DRIFTED name -> reuse the keyed customer.
+        $this->post(['rows' => [[
+            'jira_key' => 'TKB',
+            'project_name' => 'Tempo Beta',
+            'ticket_system_id' => 1,
+            'customer_name' => 'Deutsche Post',
+            'customer_key' => 'DP',
+        ]]]);
+        $this->assertStatusCode(200);
+        self::assertSame($firstCustomerId, $this->responseData()['projects'][0]['customer_id']);
+
+        $this->entityManager->clear();
+        $byKey = $this->entityManager->getRepository(Customer::class)->findBy(['tempoCustomerKey' => 'DP']);
+        self::assertCount(1, $byKey);
+        // The first name stands; the drifted name did not rename or duplicate it.
+        self::assertSame('Deutsche Post AG', $byKey[0]->getName());
+    }
+
+    public function testSameTempoKeyTwiceInOneBatchDoesNotDuplicate(): void
+    {
+        // Two rows in ONE batch sharing a key but naming it differently: one customer.
+        $this->post(['rows' => [
+            ['jira_key' => 'BKA', 'project_name' => 'A', 'ticket_system_id' => 1, 'customer_name' => 'Acme Anvils', 'customer_key' => 'ACM'],
+            ['jira_key' => 'BKB', 'project_name' => 'B', 'ticket_system_id' => 1, 'customer_name' => 'Acme Corp', 'customer_key' => 'ACM'],
+        ]]);
+        $this->assertStatusCode(200);
+
+        $data = $this->responseData();
+        self::assertCount(2, $data['projects']);
+        self::assertSame($data['projects'][0]['customer_id'], $data['projects'][1]['customer_id']);
+
+        $this->entityManager->clear();
+        self::assertCount(1, $this->entityManager->getRepository(Customer::class)->findBy(['tempoCustomerKey' => 'ACM']));
+    }
+
+    public function testNameMatchBackfillsTempoKey(): void
+    {
+        // A by-name match onto an existing key-less customer stamps the key so a
+        // later run resolves it by key. Fixture customer 1 has no Tempo key.
+        $this->post(['rows' => [[
+            'jira_key' => 'BFL',
+            'project_name' => 'Backfill',
+            'ticket_system_id' => 1,
+            'customer_name' => 'Der Bäcker von nebenan',
+            'customer_key' => 'BAK',
+        ]]]);
+        $this->assertStatusCode(200);
+        self::assertSame(1, $this->responseData()['projects'][0]['customer_id']);
+
+        $this->entityManager->clear();
+        $customer = $this->entityManager->find(Customer::class, 1);
+        self::assertInstanceOf(Customer::class, $customer);
+        self::assertSame('BAK', $customer->getTempoCustomerKey());
+        // No second customer was created for that name.
+        self::assertCount(1, $this->entityManager->getRepository(Customer::class)->findBy(['name' => 'Der Bäcker von nebenan']));
+    }
+
+    public function testCustomerIdOverrideKeepsIdentityIgnoringTempoKey(): void
+    {
+        // An explicit existing-customer pick keeps its own identity: a stray
+        // customer_key must NOT be stamped onto it (fixture customer 2 stays key-less).
+        $this->post(['rows' => [[
+            'jira_key' => 'OVK',
+            'project_name' => 'Override Keyed',
+            'ticket_system_id' => 1,
+            'customer_id' => 2,
+            'customer_key' => 'SHOULDNOTAPPLY',
+        ]]]);
+        $this->assertStatusCode(200);
+        self::assertSame(2, $this->responseData()['projects'][0]['customer_id']);
+
+        $this->entityManager->clear();
+        $customer = $this->entityManager->find(Customer::class, 2);
+        self::assertInstanceOf(Customer::class, $customer);
+        self::assertNull($customer->getTempoCustomerKey());
+    }
+
     public function testBlankCustomerNameWithoutIdRejected(): void
     {
         $this->post(['rows' => [[
