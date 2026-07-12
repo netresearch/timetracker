@@ -113,4 +113,16 @@ class CustomerRepository extends ServiceEntityRepository
 
         return $result instanceof Customer ? $result : null;
     }
+
+    /**
+     * The customer carrying this stable Tempo customer key (ADR-026 P2), if any —
+     * the idempotency key for the Tempo->Customer upsert: a re-import resolves the
+     * existing Customer by key instead of duplicating it on name drift.
+     */
+    public function findOneByTempoCustomerKey(string $tempoCustomerKey): ?Customer
+    {
+        $result = $this->findOneBy(['tempoCustomerKey' => $tempoCustomerKey]);
+
+        return $result instanceof Customer ? $result : null;
+    }
 }

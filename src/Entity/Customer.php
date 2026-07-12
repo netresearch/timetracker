@@ -17,6 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 #[ORM\Table(name: 'customers')]
+#[ORM\UniqueConstraint(name: 'uniq_customers_tempo_customer_key', columns: ['tempo_customer_key'])]
 class Customer extends Base
 {
     /**
@@ -29,6 +30,15 @@ class Customer extends Base
 
     #[ORM\Column(type: 'string', length: 255)]
     protected string $name = '';
+
+    /**
+     * Stable Tempo customer key (ADR-026 P2): the `customer.key` from the linked
+     * Tempo Account, used to upsert a Customer idempotently across import runs so
+     * name drift never spawns a duplicate. NULL for customers never derived from
+     * Tempo; the UNIQUE index tolerates multiple NULLs (MySQL/MariaDB).
+     */
+    #[ORM\Column(name: 'tempo_customer_key', type: 'string', length: 63, nullable: true)]
+    protected ?string $tempoCustomerKey = null;
 
     /**
      * @var bool
@@ -119,6 +129,26 @@ class Customer extends Base
     public function getName(): ?string
     {
         return $this->name;
+    }
+
+    /**
+     * Get the stable Tempo customer key (ADR-026 P2), or null when never derived.
+     */
+    public function getTempoCustomerKey(): ?string
+    {
+        return $this->tempoCustomerKey;
+    }
+
+    /**
+     * Set the stable Tempo customer key (ADR-026 P2).
+     *
+     * @return $this
+     */
+    public function setTempoCustomerKey(?string $tempoCustomerKey): static
+    {
+        $this->tempoCustomerKey = $tempoCustomerKey;
+
+        return $this;
     }
 
     /**

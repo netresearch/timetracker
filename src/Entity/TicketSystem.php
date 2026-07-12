@@ -113,6 +113,15 @@ class TicketSystem extends Base
     protected ?Activity $syncDefaultActivity = null;
 
     /**
+     * Opt-in gate (ADR-026 P3): when true, a worklog import may ad-hoc auto-create
+     * a Project + derived Customer for an unresolved Jira prefix — but only when
+     * the derivation yields exactly one confident customer. Default false keeps
+     * the park-on-unresolved behaviour, so auto-create (billing data) is opt-in.
+     */
+    #[ORM\Column(name: 'auto_import_unresolved_projects', type: 'boolean', nullable: false, options: ['default' => 0])]
+    protected bool $autoImportUnresolvedProjects = false;
+
+    /**
      * Credential fields that must never leave the server. They are needed only
      * server-side, so both the list endpoint (GetTicketSystemsAction) and the
      * save response (SaveTicketSystemAction) strip them. Base::toArray() emits
@@ -444,6 +453,21 @@ class TicketSystem extends Base
     public function setSyncDefaultActivity(?Activity $syncDefaultActivity): static
     {
         $this->syncDefaultActivity = $syncDefaultActivity;
+
+        return $this;
+    }
+
+    public function getAutoImportUnresolvedProjects(): bool
+    {
+        return $this->autoImportUnresolvedProjects;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setAutoImportUnresolvedProjects(bool $autoImportUnresolvedProjects): static
+    {
+        $this->autoImportUnresolvedProjects = $autoImportUnresolvedProjects;
 
         return $this;
     }

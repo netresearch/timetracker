@@ -170,10 +170,20 @@ function ProjectImportArea(): JSX.Element {
         project_name: (proposal.project_name ?? '').trim() || proposal.jira_id_prefix,
         ticket_system_id: tsId,
       }
+      if (row.choice !== 'new') {
+        out.push({ ...base, customer_id: Number(row.choice) })
+        continue
+      }
+      // Carry the stable Tempo key (ADR-026 P2) only when the new name is still
+      // the derived one — a hand-typed different name gets no key.
+      const newName = row.newName.trim()
+      const derivedName = (proposal.derived_customer_name ?? '').trim()
+      const isDerived =
+        newName !== '' && newName === derivedName && (proposal.derived_customer_key ?? '') !== ''
       out.push(
-        row.choice === 'new'
-          ? { ...base, customer_name: row.newName.trim() }
-          : { ...base, customer_id: Number(row.choice) },
+        isDerived
+          ? { ...base, customer_name: newName, customer_key: proposal.derived_customer_key ?? undefined }
+          : { ...base, customer_name: newName },
       )
     }
 

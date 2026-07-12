@@ -41,6 +41,7 @@ final readonly class ProjectImportConfirmationService
         private ManagerRegistry $managerRegistry,
         private ProjectRepository $projectRepository,
         private CustomerRepository $customerRepository,
+        private CustomerUpserter $customerUpserter,
     ) {
     }
 
@@ -53,8 +54,10 @@ final readonly class ProjectImportConfirmationService
     {
         $objectManager = $this->managerRegistry->getManager();
 
-        /** @var array<string, Customer> $newCustomersByName reuse a to-be-created customer within the batch */
-        $newCustomersByName = [];
+        /** @var array<string, Customer> $customersByName reuse a resolved/created customer by name within the batch */
+        $customersByName = [];
+        /** @var array<string, Customer> $customersByTempoKey reuse a resolved/created customer by stable Tempo key within the batch */
+        $customersByTempoKey = [];
         /** @var array<string, Project> $projectsByKey reuse a to-be-created project within the batch */
         $projectsByKey = [];
 
@@ -75,7 +78,7 @@ final readonly class ProjectImportConfirmationService
                 continue;
             }
 
-            $customer = $this->resolveCustomer($row, $newCustomersByName, $objectManager);
+            $customer = $this->resolveCustomer($row, $customersByName, $customersByTempoKey, $objectManager);
 
             $project = new Project();
             $project->setName(trim($row->project_name))
@@ -140,13 +143,18 @@ final readonly class ProjectImportConfirmationService
     }
 
     /**
-     * Override by id (existing customer) OR resolve by name (found, else created).
+     * Override by id (existing customer, kept as-is) OR resolve-or-create by name,
+     * carrying the row's optional stable Tempo key into the upsert (ADR-026 P2).
      *
-     * @param array<string, Customer> $newCustomersByName
+     * An explicit $customer_id pick keeps its own identity — the Tempo key is NOT
+     * applied to it, so choosing an existing customer never rebrands its key.
+     *
+     * @param array<string, Customer> $customersByName
+     * @param array<string, Customer> $customersByTempoKey
      *
      * @throws InvalidArgumentException on an unknown id or a blank name with no id
      */
-    private function resolveCustomer(ProjectImportConfirmRowDto $row, array &$newCustomersByName, ObjectManager $objectManager): Customer
+    private function resolveCustomer(ProjectImportConfirmRowDto $row, array &$customersByName, array &$customersByTempoKey, ObjectManager $objectManager): Customer
     {
         if (null !== $row->customer_id) {
             $customer = $this->customerRepository->find($row->customer_id);
@@ -162,22 +170,9 @@ final readonly class ProjectImportConfirmationService
             throw new InvalidArgumentException('A customer id or a non-empty customer name is required.');
         }
 
-        if (isset($newCustomersByName[$name])) {
-            return $newCustomersByName[$name];
-        }
+        $tempoKey = trim((string) $row->customer_key);
+        $tempoKey = '' === $tempoKey ? null : $tempoKey;
 
-        $customer = $this->customerRepository->findOneByName($name);
-        if ($customer instanceof Customer) {
-            return $customer;
-        }
-
-        $customer = new Customer();
-        $customer->setName($name)
-            ->setActive(true)
-            ->setGlobal(false);
-        $objectManager->persist($customer);
-        $newCustomersByName[$name] = $customer;
-
-        return $customer;
+        return $this->customerUpserter->upsert($name, $tempoKey, $customersByName, $customersByTempoKey, $objectManager);
     }
 }

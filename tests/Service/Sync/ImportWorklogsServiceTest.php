@@ -23,13 +23,16 @@ use App\Entity\UserTicketsystem;
 use App\Entity\WorklogSyncState;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
+use App\Repository\CustomerRepository;
 use App\Repository\EntryRepository;
 use App\Repository\UserRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
+use App\Service\Sync\CustomerUpserter;
 use App\Service\Sync\EntryWorklogProjector;
 use App\Service\Sync\ImportWorklogsService;
 use App\Service\Sync\JiraAuthorMapper;
+use App\Service\Sync\ProjectImportProposalService;
 use App\Service\Sync\RemoteWorklogNormalizer;
 use App\Service\Sync\TicketProjectResolver;
 use App\Service\Tracking\DayClassService;
@@ -55,6 +58,7 @@ final class ImportWorklogsServiceTest extends TestCase
     private JiraAuthorMapper&MockObject $authorMapper;
     private DayClassService&MockObject $dayClassService;
     private UserRepository&MockObject $userRepository;
+    private CustomerRepository&MockObject $customerRepository;
     private ImportWorklogsService $service;
     private ?string $capturedJql = null;
     private User $triggeredBy;
@@ -75,6 +79,7 @@ final class ImportWorklogsServiceTest extends TestCase
         $this->authorMapper = $this->createMock(JiraAuthorMapper::class);
         $this->dayClassService = $this->createMock(DayClassService::class);
         $this->userRepository = $this->createMock(UserRepository::class);
+        $this->customerRepository = $this->createMock(CustomerRepository::class);
 
         $apiFactory = $this->createMock(JiraOAuthApiFactory::class);
         $apiFactory->method('create')->willReturn($this->api);
@@ -109,7 +114,40 @@ final class ImportWorklogsServiceTest extends TestCase
             $this->authorMapper,
             $this->dayClassService,
             $this->userRepository,
+            // Real proposal service driven through the mocked Jira/Tempo boundary
+            // ($this->api), so the test exercises the true derivation, not a stub.
+            new ProjectImportProposalService($apiFactory),
+            new CustomerUpserter($this->customerRepository),
             new MockClock('2026-07-09 12:00:00'),
+        );
+    }
+
+    /**
+     * A ticket system with the ADR-026 P3 opt-in flag flipped on (the default
+     * $this->ticketSystem stub returns false, so existing tests keep parking).
+     */
+    private function ticketSystemWithAutoImport(): TicketSystem
+    {
+        $ticketSystem = self::createStub(TicketSystem::class);
+        $ticketSystem->method('getAutoImportUnresolvedProjects')->willReturn(true);
+
+        return $ticketSystem;
+    }
+
+    /**
+     * Stub the Tempo account endpoint for a project id with one confident
+     * customer, yielding a SOURCE_TEMPO proposal.
+     */
+    private function stubConfidentTempo(int $projectId, string $customerName, string $customerKey): void
+    {
+        $account = (object) [
+            'id' => 1,
+            'key' => 'ACC1',
+            'name' => 'Account One',
+            'customer' => (object) ['id' => 10, 'key' => $customerKey, 'name' => $customerName],
+        ];
+        $this->api->method('getFromTenant')->willReturnCallback(
+            static fn (string $path): array => str_contains($path, '/account/project/' . $projectId) ? [$account] : [],
         );
     }
 
@@ -144,6 +182,11 @@ final class ImportWorklogsServiceTest extends TestCase
     private function import(array $targetUsernames = [], bool $dryRun = false): SyncRun
     {
         return $this->service->import($this->triggeredBy, $this->ticketSystem, new DateTimeImmutable('2026-06-01'), new DateTimeImmutable('2026-06-30'), 1, $targetUsernames, $dryRun);
+    }
+
+    private function importWith(TicketSystem $ticketSystem, bool $dryRun = false): SyncRun
+    {
+        return $this->service->import($this->triggeredBy, $ticketSystem, new DateTimeImmutable('2026-06-01'), new DateTimeImmutable('2026-06-30'), 1, [], $dryRun);
     }
 
     public function testUnknownActivityFailsRun(): void
@@ -261,6 +304,141 @@ final class ImportWorklogsServiceTest extends TestCase
         $items = $syncRun->getItems()->toArray();
         self::assertCount(1, $items);
         self::assertSame(SyncItemKind::UNRESOLVED_PROJECT, $items[0]->getKind());
+    }
+
+    public function testAutoImportFlagOffParksAndNeverDerives(): void
+    {
+        // The default $this->ticketSystem stub returns false for the P3 flag —
+        // the derivation boundary must not be touched at all.
+        $this->api->expects(self::never())->method('getProjectInfo');
+        $this->stubRemote(['SRVMO-1'], ['SRVMO-1' => [$this->worklog()]]);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn(null);
+        $this->authorMapper->method('remoteKey')->willReturn('acc-jdoe');
+        $this->authorMapper->method('find')->willReturn($this->author);
+        $this->projectResolver->method('resolve')->willReturn(new ProjectResolution(null, 'no project for prefix SRVMO on this ticket system'));
+
+        $syncRun = $this->import();
+
+        self::assertSame(1, $syncRun->getCounters()['unresolved_project'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['auto_imported_project'] ?? 0);
+        self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Project));
+        self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Customer));
+    }
+
+    public function testAutoImportFlagOnConfidentCreatesProjectAndCustomer(): void
+    {
+        $ticketSystem = $this->ticketSystemWithAutoImport();
+        $this->stubRemote(['SRVMO-1'], ['SRVMO-1' => [$this->worklog()]]);
+        $this->api->method('getProjectInfo')->willReturn(['id' => 20350, 'name' => 'Server Monitoring', 'categoryName' => 'NR: IT']);
+        $this->stubConfidentTempo(20350, 'Netresearch', 'NR');
+        $this->customerRepository->method('findOneByTempoCustomerKey')->willReturn(null);
+        $this->customerRepository->method('findOneByName')->willReturn(null);
+        $this->projectResolver->method('resolve')->willReturn(new ProjectResolution(null, 'no project for prefix SRVMO on this ticket system'));
+        $this->authorMapper->method('remoteKey')->willReturn('acc-jdoe');
+        $this->authorMapper->method('find')->willReturn($this->author);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn(null);
+        $this->entryRepository->method('findUnlinkedDuplicate')->willReturn(null);
+
+        $syncRun = $this->importWith($ticketSystem);
+
+        self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
+        self::assertSame(1, $syncRun->getCounters()['auto_imported_project'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['unresolved_project'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['created'] ?? 0);
+
+        $projects = array_values(array_filter($this->persisted, static fn (object $o): bool => $o instanceof Project));
+        self::assertCount(1, $projects);
+        self::assertSame('SRVMO', $projects[0]->getJiraId());
+        self::assertSame('Server Monitoring', $projects[0]->getName());
+
+        $customers = array_values(array_filter($this->persisted, static fn (object $o): bool => $o instanceof Customer));
+        self::assertCount(1, $customers);
+        self::assertSame('Netresearch', $customers[0]->getName());
+        self::assertSame('NR', $customers[0]->getTempoCustomerKey());
+        self::assertSame($customers[0], $projects[0]->getCustomer());
+
+        // The worklog imported onto the auto-created project.
+        $entries = array_values(array_filter($this->persisted, static fn (object $o): bool => $o instanceof Entry));
+        self::assertCount(1, $entries);
+        self::assertSame('SRVMO-1', $entries[0]->getTicket());
+        self::assertSame($projects[0], $entries[0]->getProject());
+
+        $kinds = array_map(static fn ($item) => $item->getKind(), $syncRun->getItems()->toArray());
+        self::assertContains(SyncItemKind::PROJECT_AUTO_IMPORTED, $kinds);
+    }
+
+    public function testAutoImportFlagOnAmbiguousParks(): void
+    {
+        $ticketSystem = $this->ticketSystemWithAutoImport();
+        $this->stubRemote(['NRFE-1'], ['NRFE-1' => [$this->worklog()]]);
+        $this->api->method('getProjectInfo')->willReturn(['id' => 10212, 'name' => 'NR Frontend', 'categoryName' => 'NR: IT']);
+        // Two distinct customers, no single default link -> ambiguous -> park.
+        $accounts = [
+            (object) ['id' => 1, 'key' => 'A1', 'name' => 'Acc 1', 'customer' => (object) ['id' => 10, 'key' => 'NR', 'name' => 'Netresearch']],
+            (object) ['id' => 2, 'key' => 'A2', 'name' => 'Acc 2', 'customer' => (object) ['id' => 20, 'key' => 'NRSO', 'name' => 'Netresearch Solutions']],
+        ];
+        $this->api->method('getFromTenant')->willReturnCallback(
+            static fn (string $path): array => str_contains($path, '/account/project/10212') ? $accounts : [],
+        );
+        $this->projectResolver->method('resolve')->willReturn(new ProjectResolution(null, 'no project for prefix NRFE on this ticket system'));
+        $this->authorMapper->method('remoteKey')->willReturn('acc-jdoe');
+        $this->authorMapper->method('find')->willReturn($this->author);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn(null);
+
+        $syncRun = $this->importWith($ticketSystem);
+
+        self::assertSame(1, $syncRun->getCounters()['unresolved_project'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['auto_imported_project'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['created'] ?? 0);
+        self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Project));
+        self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Customer));
+    }
+
+    public function testAutoImportFlagOnNoneParks(): void
+    {
+        $ticketSystem = $this->ticketSystemWithAutoImport();
+        $this->stubRemote(['SRVMO-1'], ['SRVMO-1' => [$this->worklog()]]);
+        // A real project, but no Tempo customer and no category -> SOURCE_NONE -> park.
+        $this->api->method('getProjectInfo')->willReturn(['id' => 20350, 'name' => 'Server Monitoring', 'categoryName' => null]);
+        $this->api->method('getFromTenant')->willReturn([]);
+        $this->projectResolver->method('resolve')->willReturn(new ProjectResolution(null, 'no project for prefix SRVMO on this ticket system'));
+        $this->authorMapper->method('remoteKey')->willReturn('acc-jdoe');
+        $this->authorMapper->method('find')->willReturn($this->author);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn(null);
+
+        $syncRun = $this->importWith($ticketSystem);
+
+        self::assertSame(1, $syncRun->getCounters()['unresolved_project'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['auto_imported_project'] ?? 0);
+        self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Project));
+        self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Customer));
+    }
+
+    public function testAutoImportDerivesPrefixOncePerRun(): void
+    {
+        $ticketSystem = $this->ticketSystemWithAutoImport();
+        // Two issues sharing the SRVMO prefix — the prefix must be derived once.
+        $this->stubRemote(
+            ['SRVMO-1', 'SRVMO-2'],
+            ['SRVMO-1' => [$this->worklog(5001)], 'SRVMO-2' => [$this->worklog(5002)]],
+        );
+        $this->api->expects(self::once())->method('getProjectInfo')->willReturn(['id' => 20350, 'name' => 'Server Monitoring', 'categoryName' => null]);
+        $this->stubConfidentTempo(20350, 'Netresearch', 'NR');
+        $this->customerRepository->method('findOneByTempoCustomerKey')->willReturn(null);
+        $this->customerRepository->method('findOneByName')->willReturn(null);
+        $this->projectResolver->method('resolve')->willReturn(new ProjectResolution(null, 'no project for prefix SRVMO on this ticket system'));
+        $this->authorMapper->method('remoteKey')->willReturn('acc-jdoe');
+        $this->authorMapper->method('find')->willReturn($this->author);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn(null);
+        $this->entryRepository->method('findUnlinkedDuplicate')->willReturn(null);
+
+        $syncRun = $this->importWith($ticketSystem);
+
+        // Derived once, one project + customer, but both worklogs imported onto it.
+        self::assertSame(1, $syncRun->getCounters()['auto_imported_project'] ?? 0);
+        self::assertSame(2, $syncRun->getCounters()['created'] ?? 0);
+        self::assertCount(1, array_filter($this->persisted, static fn (object $o): bool => $o instanceof Project));
+        self::assertCount(1, array_filter($this->persisted, static fn (object $o): bool => $o instanceof Customer));
     }
 
     public function testProbableDuplicateParks(): void

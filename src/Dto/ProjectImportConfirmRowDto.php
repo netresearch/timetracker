@@ -22,6 +22,12 @@ use Symfony\Component\Validator\Constraints as Assert;
  * {@see \App\Service\Sync\ProjectImportConfirmationService} since it depends on
  * both fields together.
  *
+ * $customer_key is the optional stable Tempo customer key (ADR-026 P2): when a
+ * new-name row was derived from Tempo, the SPA forwards proposal.derived_customer_key
+ * so the created (or name-matched) Customer gets the stable key, making the
+ * mapping idempotent across runs. It is honoured only on the by-name path, never
+ * when $customer_id picks an explicit existing customer (that keeps its identity).
+ *
  * Property names are snake_case to bind directly to the SPA's JSON body (no
  * serializer name converter is configured — see the other request DTOs).
  */
@@ -36,6 +42,7 @@ final readonly class ProjectImportConfirmRowDto
         public int $ticket_system_id = 0,
         public ?int $customer_id = null,
         public ?string $customer_name = null,
+        public ?string $customer_key = null,
     ) {
     }
 }
