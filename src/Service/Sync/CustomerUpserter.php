@@ -93,11 +93,12 @@ final readonly class CustomerUpserter
             return;
         }
 
+        // Only cache under this key if we actually backfilled it — caching a customer that already
+        // holds a DIFFERENT key would create a cache-vs-DB key mismatch.
         $existing = $customer->getTempoCustomerKey();
         if (null === $existing || '' === $existing) {
             $customer->setTempoCustomerKey($tempoKey);
+            $customersByTempoKey[$tempoKey] = $customer;
         }
-
-        $customersByTempoKey[$tempoKey] = $customer;
     }
 }

@@ -444,11 +444,24 @@ class ImportWorklogsService extends AbstractSyncRunService
      */
     private function deriveAndCreateProject(ImportRunContext $importRunContext, string $prefix): ?Project
     {
-        $proposals = $this->projectImportProposalService->proposeForKeys(
-            [$prefix],
-            $importRunContext->ticketSystem,
-            $importRunContext->triggeredBy,
-        );
+        try {
+            $proposals = $this->projectImportProposalService->proposeForKeys(
+                [$prefix],
+                $importRunContext->ticketSystem,
+                $importRunContext->triggeredBy,
+            );
+        } catch (Throwable $throwable) {
+            // A Jira/Tempo failure while deriving must not abort the whole import run — park this prefix.
+            $importRunContext->syncRun->incrementCounter('errors');
+            $this->addItem(
+                $importRunContext->syncRun,
+                SyncItemKind::ERROR,
+                issueKey: $prefix,
+                reason: substr('auto-import proposal derivation failed: ' . $throwable->getMessage(), 0, 255),
+            );
+
+            return null;
+        }
 
         if (1 !== count($proposals)) {
             return null;

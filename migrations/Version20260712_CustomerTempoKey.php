@@ -34,7 +34,7 @@ final class Version20260712_CustomerTempoKey extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP INDEX uniq_customers_tempo_customer_key ON customers');
-        $this->addSql('ALTER TABLE customers DROP COLUMN tempo_customer_key');
+        $this->addSql('DROP INDEX IF EXISTS uniq_customers_tempo_customer_key ON customers');
+        $this->addSql('ALTER TABLE customers DROP COLUMN IF EXISTS tempo_customer_key');
     }
 }
