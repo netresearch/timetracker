@@ -193,6 +193,24 @@ class UserRepository extends ServiceEntityRepository
     }
 
     /**
+     * Users with no Personio employee id yet — the candidates the P3 auto-match
+     * tries to map (ADR-024 §1).
+     *
+     * @return list<User>
+     */
+    public function findWithoutPersonioEmployeeId(): array
+    {
+        /** @var list<User> $users */
+        $users = $this->createQueryBuilder('user')
+            ->where('user.personioEmployeeId IS NULL')
+            ->orderBy('user.username', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $users;
+    }
+
+    /**
      * @return array<int, array{user: array{id:int, username:string, type:string, abbr:string, locale:string}}>
      */
     public function getUserById(int $currentUserId): array

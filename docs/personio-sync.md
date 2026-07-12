@@ -13,7 +13,17 @@ TimeTracker exports each opted-in user's worklogs to Personio as daily **work at
 
 1. **Personio API credential.** In Personio, create an API client (client id + secret) with permission to read/write attendances. Note the base URL (usually `https://api.personio.de`).
 2. **Configure TimeTracker.** As an admin, open **Administration → Personio** and create the config: name, base URL, client id, client secret (stored encrypted; leave the secret field blank on later edits to keep the stored value), and the **absence project** (used by the later absence-import phase). Mark it active.
-3. **Map employees.** Set each participating user's Personio employee id (`users.personio_employee_id`). For P1 this is manual; automatic matching via the Persons API arrives in P3.
+3. **Map employees.** Each participating user needs their Personio employee id (`users.personio_employee_id`). Auto-match it from the Persons API:
+
+   ```bash
+   # preview the proposed matches
+   docker exec timetracker php bin/console tt:match-personio-employees
+
+   # write them
+   docker exec timetracker php bin/console tt:match-personio-employees --apply
+   ```
+
+   Matching is by e-mail localpart or `firstname.lastname`; a username that matches zero or several Personio persons is skipped (never guessed) and stays for manual mapping. Re-runnable — it only ever looks at users without an id yet.
 4. **Users opt in.** Each user enables **Settings → "Meine Arbeitszeiten an Personio übertragen"**. Only opted-in, mapped users are exported.
 
 ## Running the export
