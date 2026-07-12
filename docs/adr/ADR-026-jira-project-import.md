@@ -1,6 +1,6 @@
 # ADR-026: Jira/Tempo Project Import with Derived Customers
 
-**Status:** Proposed — 2026-07-12
+**Status:** Accepted — 2026-07-12 (live-verified against NR-JIRA)
 **Relates to:** [ADR-023](ADR-023-jira-worklog-bidirectional-sync.md) (the worklog import that parks `unresolved_project`), [ADR-020](ADR-020-subticket-ticket-resolution.md) (the `jira_id` prefix → project resolution precedence), [ADR-011](ADR-011-security-architecture.md) (encrypted OAuth credentials).
 
 ## Context
@@ -23,9 +23,11 @@ For each Jira project being imported, derive the TT `Customer` automatically, in
 
 The imported `Project` gets `jira_id` = the Jira project key (prefix), `ticketSystem` = the import's system, `name` = the Jira project name, and `customer` = the derived Customer.
 
-### 2. Ambiguity is parked, never guessed
+### 2. Ambiguity is parked, never guessed — but a default account disambiguates
 
-A prefix already claimed by several TT projects (the `NRFE` case), or a Jira project linked to several Tempo accounts/customers, is **surfaced for a human decision** — mirroring `TicketProjectResolver::decide()` (one candidate → resolve, several → park). The import never auto-picks among candidates.
+A prefix already claimed by several TT projects (the `NRFE` case), or a Jira project linked to several Tempo accounts resolving to **several distinct customers**, is **surfaced for a human decision** — mirroring `TicketProjectResolver::decide()` (one candidate → resolve, several → park). The import never auto-picks among genuinely competing candidates.
+
+One narrowing: a project's Tempo links carry a `defaultAccount: true` flag (`/rest/tempo-accounts/1/link/project/{id}`). When several accounts link but exactly one is the default, the default account's customer is the confident pick; only when the customers still differ with no single default does it park. (Live data: `NRFE` links 4 accounts spanning 2 customers → park unless a default resolves it; `SRVMO`/`SRVACME` link 1 → clean.)
 
 ### 3. Tempo access reuses the Jira OAuth1 token
 
@@ -51,12 +53,14 @@ A `TempoClient` (sibling of the Jira services under `src/Service/Integration/Jir
 - The import path (P3) gains the ability to self-heal `unresolved_project` prefixes, shrinking the parked-worklog backlog over time.
 - A second consumer of the Jira OAuth token (after worklog sync) begins to shape a Tempo integration surface; kept minimal (read-only accounts/links) until a third need appears (YAGNI).
 
-## Verification points before/at implementation
+## Verification — resolved against live NR-JIRA (2026-07-12)
 
-Feasibility confirmed Tempo is installed and the token is reusable; the following need a live call **under a real PO token** — the `TempoClient`'s integration test against NR-JIRA IS this verification, run first in P1:
+All five points were checked with a real read-only Jira PAT; the design holds:
 
-1. **PO-token permission:** does the PO's OAuth token authorise `/rest/tempo-accounts/1/account` (200) or is Browse-Accounts admin-gated (403)? A 403 forces an admin/service token or degrades every derivation to the category/keyword fallback.
-2. **Exact account JSON shape** (`customer`/`category` field names, nesting) — pin against a live response, not the secondary-source docs.
-3. **Data quality:** what fraction of projects have a linked account *with* a customer (else the fallback carries the load).
-4. **Cardinality:** how often one project maps to several accounts/customers (→ must park, not pick).
-5. **Key→id:** the link endpoint takes Jira's numeric `projectId`, not the key — resolve via `/rest/api/2/project/{key}` (which also yields `projectCategory`).
+1. **Token permission — 200 (readable).** `GET /rest/tempo-accounts/1/account` returned 200 with a read-only token (155 accounts) — **not** admin-gated here. Approach for the app: try under the PO token, fall back to category/keyword on a 403.
+2. **Account JSON shape — confirmed.** `customer` = `{id, key, name}` (e.g. `{"id":10,"key":"DP","name":"Deutsche Post AG"}`); `category` = `{id, key, name, categorytype{…}}`. The stable **`customer.key`** is the P2 idempotent upsert key; `customer.name` seeds the TT Customer name.
+3. **Data quality — fallback is mandatory, not optional.** 138/155 accounts carry a customer, but **per project it varies**: `SRVMO`/`SRVACME` link one account (customer *Netresearch* [NR]); **`JOT` links zero accounts** → derivation MUST fall back to its `projectCategory` (*NR: IT*). So the category/keyword fallback is a first-class path, not an edge case.
+4. **Cardinality — ambiguity is real.** `NRFE` links **4 accounts across 2 customers** (Netresearch [NR] + Netresearch Solutions [NRSO]) → park (or resolve via `defaultAccount`, §2). Single-account projects resolve cleanly.
+5. **Key→id + category.** `GET /rest/api/2/project/{key}` yields the numeric `id` (JOT 23050, NRFE 10212, SRVMO 20350, SRVACME 17250) **and** a non-null `projectCategory` on all four — feeding both the link lookup (`/account/project/{id}` or `/link/project/{id}`) and the fallback.
+
+The `TempoClient` unit tests fixture these confirmed shapes; a thin integration test can re-run the live probe when a token is configured.
