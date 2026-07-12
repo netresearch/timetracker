@@ -871,9 +871,11 @@ export default function Tracking() {
     // ADR-025: the description cell also carries the source/estimated badge —
     // source is fixed on the row (not inline-editable), so read the base entry.
     if (colKey === 'description') {
+      // The badge sits OUTSIDE the truncating span (flex, flex:none) so a long
+      // description never clips these row markers off the right edge.
       return (
-        <span class="cell-trunc">
-          {displayCell(entry, colKey)}
+        <span class="cell-desc-badged">
+          <span class="cell-trunc">{displayCell(entry, colKey)}</span>
           <EntrySourceBadge source={entry.source} estimated={entry.estimated} />
         </span>
       )

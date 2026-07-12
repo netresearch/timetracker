@@ -609,7 +609,7 @@ main:has(.tracking) {
    AA (4.5:1) in dark. */
 .entry-badge {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.25em;
   margin-left: 0.4em;
   padding: 0.05em 0.45em;
@@ -619,11 +619,31 @@ main:has(.tracking) {
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
-  vertical-align: baseline;
+  vertical-align: middle;
 }
 
 .entry-badge-icon {
-  font-weight: 700;
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+/* Description cell: the truncating text flexes, the ADR-025 badges stay pinned
+   and visible at the end (never clipped by the ellipsis). */
+.cell-desc-badged {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+}
+
+.cell-desc-badged > .cell-trunc {
+  flex: 1;
+  min-width: 0;
+}
+
+.cell-desc-badged > .entry-badge {
+  flex: none;
 }
 
 .entry-badge.is-agent {
