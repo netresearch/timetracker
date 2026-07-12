@@ -4629,6 +4629,129 @@ th[aria-sort='descending'] .th-sort-glyph {
   color: var(--color-text-muted);
 }
 
+/* ── ADR-026 project-import review ───────────────────────────────────────────
+   The review table reuses .data-table; these add the derivation-source badge
+   (confident / fallback / needs-attention), the per-row customer override
+   controls, and the confirm cell. */
+.project-import {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Source-confidence badge, same pill shape as .sync-status. The three tints map
+   to the same success/warning/danger tokens the rest of the app uses, so the
+   7:1 contrast (both themes) is inherited, not re-derived. */
+.import-source {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+.import-source.is-ok {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+.import-source.is-warn {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+.import-source.is-attention {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+/* Needs-attention rows carry a left bar (a non-colour cue, WCAG 1.4.1) so they
+   stay distinguishable from the zebra/hover backgrounds. */
+.data-table tbody tr.is-attention {
+  box-shadow: inset 3px 0 0 0 var(--color-danger);
+}
+
+.import-derived {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.import-derived-name {
+  font-weight: 600;
+}
+
+.import-candidates {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.import-customer-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 12rem;
+}
+
+/* The in-table select/input are outside a .field wrapper, so they carry the
+   token-based control styling explicitly (44px target, theme-aware). */
+.import-customer-cell select,
+.import-customer-cell input {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  color-scheme: light dark;
+  font: inherit;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  width: 100%;
+}
+.import-customer-cell select:focus-visible,
+.import-customer-cell input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.import-confirm-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* A 44px hit area around the confirm checkbox (the bare control is smaller). */
+.import-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.import-confirm input {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.import-result {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.import-result.is-created {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+.import-result.is-existing {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
+
 .sync-items {
   list-style: none;
   margin: 0;

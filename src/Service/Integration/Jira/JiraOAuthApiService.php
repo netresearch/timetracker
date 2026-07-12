@@ -646,6 +646,74 @@ class JiraOAuthApiService
     }
 
     /**
+     * GET a tenant-absolute path (leading slash) through the OAuth1-signed
+     * client, bypassing the /rest/api/latest/ base so sibling REST namespaces
+     * on the same tenant — notably Tempo's /rest/tempo-accounts/… (ADR-026) —
+     * are reachable with the same token. Guzzle resolves an absolute path
+     * against the base host, replacing the base path; the OAuth1 middleware
+     * signs the effective URL. Returns the json-decoded body (an object or a
+     * list, depending on the endpoint).
+     *
+     * @throws JiraApiException
+     * @throws JiraApiInvalidResourceException
+     */
+    public function getFromTenant(string $absolutePath): mixed
+    {
+        try {
+            $response = $this->getClient()->request('GET', $absolutePath);
+        } catch (GuzzleException $guzzleException) {
+            if (401 === $guzzleException->getCode()) {
+                $this->throwUnauthorizedRedirect();
+            }
+
+            if (404 === $guzzleException->getCode()) {
+                throw new JiraApiInvalidResourceException('404 - Resource is not available: (' . $absolutePath . ')', 404, null, $guzzleException);
+            }
+
+            throw new JiraApiException('Unknown Guzzle exception: ' . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
+        }
+
+        return json_decode((string) $response->getBody(), false, 512, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Fetch a Jira project's id, name and (optional) category name via the
+     * OAuth1-signed client, for ADR-026 customer derivation. Null when the key
+     * is not a project (404) or the response lacks a usable id/name.
+     *
+     * @throws JiraApiException
+     *
+     * @return array{id: int, name: string, categoryName: string|null}|null
+     */
+    public function getProjectInfo(string $key): ?array
+    {
+        try {
+            $response = $this->get(sprintf('project/%s', $key));
+        } catch (JiraApiInvalidResourceException) {
+            return null;
+        }
+
+        if (!is_object($response) || !isset($response->id, $response->name)
+            || !is_numeric($response->id) || !is_string($response->name)) {
+            return null;
+        }
+
+        $categoryName = null;
+        if (isset($response->projectCategory)
+            && is_object($response->projectCategory)
+            && isset($response->projectCategory->name)
+            && is_string($response->projectCategory->name)) {
+            $categoryName = $response->projectCategory->name;
+        }
+
+        return [
+            'id' => (int) $response->id,
+            'name' => $response->name,
+            'categoryName' => $categoryName,
+        ];
+    }
+
+    /**
      * Collects the issues linked to an epic including their nested subtasks.
      *
      * @throws JiraApiException

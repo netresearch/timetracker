@@ -10,8 +10,10 @@ declare(strict_types=1);
 namespace Tests\Repository;
 
 use App\Entity\SyncRun;
+use App\Entity\SyncRunItem;
 use App\Entity\TicketSystem;
 use App\Entity\WorklogSyncState;
+use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
 use App\Enum\WorklogSyncStatus;
@@ -174,6 +176,58 @@ final class SyncSurfaceQueriesTest extends AbstractWebTestCase
         self::assertNull($stateRepository->findParkedById($inSyncId));
     }
 
+    public function testFindUnresolvedProjectPrefixesReturnsDistinctSortedPrefixes(): void
+    {
+        $run = $this->createRun($this->ticketSystem, new DateTimeImmutable('2026-07-05 10:00:00'));
+        // Two keys share the SRVMO prefix (deduped); JOT is distinct; the
+        // REMOTE_ONLY item is a different kind and must be ignored.
+        $this->addItem($run, SyncItemKind::UNRESOLVED_PROJECT, 'SRVMO-1');
+        $this->addItem($run, SyncItemKind::UNRESOLVED_PROJECT, 'SRVMO-2');
+        $this->addItem($run, SyncItemKind::UNRESOLVED_PROJECT, 'JOT-99');
+        $this->addItem($run, SyncItemKind::REMOTE_ONLY, 'NRFE-7');
+        $this->entityManager->flush();
+
+        $syncRunRepository = self::getContainer()->get(SyncRunRepository::class);
+        assert($syncRunRepository instanceof SyncRunRepository);
+
+        self::assertSame(['JOT', 'SRVMO'], $syncRunRepository->findUnresolvedProjectPrefixes($this->ticketSystem));
+    }
+
+    public function testFindUnresolvedProjectPrefixesScopesToTicketSystem(): void
+    {
+        $otherTicketSystem = new TicketSystem();
+        $otherTicketSystem->setName('otherPrefixSystem');
+        $otherTicketSystem->setUrl('https://other-prefix.example.com');
+        $otherTicketSystem->setTicketUrl('https://other-prefix.example.com/browse/{ticket}');
+        $otherTicketSystem->setLogin('other');
+        $otherTicketSystem->setPassword('other');
+        $this->entityManager->persist($otherTicketSystem);
+
+        $ownRun = $this->createRun($this->ticketSystem, new DateTimeImmutable('2026-07-05 10:00:00'));
+        $this->addItem($ownRun, SyncItemKind::UNRESOLVED_PROJECT, 'MINE-1');
+
+        $otherRun = $this->createRun($otherTicketSystem, new DateTimeImmutable('2026-07-05 11:00:00'));
+        $this->addItem($otherRun, SyncItemKind::UNRESOLVED_PROJECT, 'THEIRS-1');
+        $this->entityManager->flush();
+
+        $syncRunRepository = self::getContainer()->get(SyncRunRepository::class);
+        assert($syncRunRepository instanceof SyncRunRepository);
+
+        self::assertSame(['MINE'], $syncRunRepository->findUnresolvedProjectPrefixes($this->ticketSystem));
+        self::assertSame(['THEIRS'], $syncRunRepository->findUnresolvedProjectPrefixes($otherTicketSystem));
+    }
+
+    public function testFindUnresolvedProjectPrefixesEmptyWhenNothingParked(): void
+    {
+        $this->createRun($this->ticketSystem, new DateTimeImmutable('2026-07-05 10:00:00'));
+        $this->entityManager->flush();
+
+        $syncRunRepository = self::getContainer()->get(SyncRunRepository::class);
+        assert($syncRunRepository instanceof SyncRunRepository);
+
+        self::assertSame([], $syncRunRepository->findUnresolvedProjectPrefixes($this->ticketSystem));
+    }
+
     private function createRun(TicketSystem $ticketSystem, DateTimeImmutable $startedAt): SyncRun
     {
         $syncRun = new SyncRun()
@@ -187,5 +241,17 @@ final class SyncSurfaceQueriesTest extends AbstractWebTestCase
         $this->entityManager->persist($syncRun);
 
         return $syncRun;
+    }
+
+    private function addItem(SyncRun $syncRun, SyncItemKind $kind, string $issueKey): SyncRunItem
+    {
+        $item = new SyncRunItem()
+            ->setSyncRun($syncRun)
+            ->setKind($kind)
+            ->setIssueKey($issueKey)
+            ->setCreatedAt(new DateTimeImmutable('2026-07-05 10:00:00'));
+        $this->entityManager->persist($item);
+
+        return $item;
     }
 }

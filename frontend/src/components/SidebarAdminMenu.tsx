@@ -23,6 +23,7 @@ const ADMIN_ICON: Record<string, () => JSX.Element> = {
   contracts: () => <><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h5" /></>,
   status: () => <><circle cx="12" cy="12" r="9" /><path d="M12 8v4.5M12 16h.01" /></>,
   'worklog-sync': () => <><path d="M4 12a8 8 0 0 1 14-5.3L21 9" /><path d="M21 4v5h-5" /><path d="M20 12a8 8 0 0 1-14 5.3L3 15" /><path d="M3 20v-5h5" /></>,
+  'project-import': () => <><path d="M12 3v12" /><path d="M8 11l4 4 4-4" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></>,
 }
 
 function adminIco(key: string): JSX.Element {
@@ -117,6 +118,17 @@ export function SidebarAdminMenu() {
             onClick={(event) => { event.preventDefault(); navigate('/admin/worklog-sync') }}
           >
             {adminIco('worklog-sync')}<span class="sidebar-admin-label">{m.worklogsync_admin_title()}</span>
+          </a>
+        </li>
+        {/* Project-import review (ADR-026 P1): confirm derived customers — no add action. */}
+        <li class="sidebar-admin-item" classList={{ 'is-active': activeKey() === 'project-import' }}>
+          <a
+            class="sidebar-admin-link"
+            href="/ui/admin/project-import"
+            aria-current={activeKey() === 'project-import' ? 'page' : undefined}
+            onClick={(event) => { event.preventDefault(); navigate('/admin/project-import') }}
+          >
+            {adminIco('project-import')}<span class="sidebar-admin-label">{m.projectimport_admin_title()}</span>
           </a>
         </li>
       </ul>

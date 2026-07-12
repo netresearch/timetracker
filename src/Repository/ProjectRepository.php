@@ -128,6 +128,18 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
+     * The project claiming exactly $jiraId on $ticketSystem, if any — the
+     * idempotency key for the ADR-026 project import: a confirmed prefix that a
+     * project already owns is linked, not duplicated.
+     */
+    public function findOneByJiraIdAndTicketSystem(string $jiraId, TicketSystem $ticketSystem): ?Project
+    {
+        $result = $this->findOneBy(['jiraId' => $jiraId, 'ticketSystem' => $ticketSystem]);
+
+        return $result instanceof Project ? $result : null;
+    }
+
+    /**
      * All projects booking on the given ticket system (ADR-023 import: ticket→project resolution).
      *
      * @return list<Project>

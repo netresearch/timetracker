@@ -7,12 +7,15 @@ import { AdminCrudShell } from '../components/AdminCrudShell'
 import { activeNavLink } from '../header'
 import { m } from '../paraglide/messages.js'
 import AdminStatus from './AdminStatus'
+import ProjectImport from './ProjectImport'
 import WorklogSync from './WorklogSync'
 
-// Non-CRUD sub-pages shown alongside the entity tabs: read-only diagnostics and
-// the worklog-sync area. Their keys are distinct from any entity key.
+// Non-CRUD sub-pages shown alongside the entity tabs: read-only diagnostics, the
+// worklog-sync area, and the project-import review. Their keys are distinct from
+// any entity key.
 const STATUS_KEY = 'status'
 const WORKLOG_SYNC_KEY = 'worklog-sync'
+const PROJECT_IMPORT_KEY = 'project-import'
 
 // Remembers the entity the Admin URL last selected. When a page-level modal
 // (e.g. /ui/settings) opens over Admin, App.tsx re-renders Admin as the modal's
@@ -44,6 +47,9 @@ export default function Admin() {
     }
     if (key === WORKLOG_SYNC_KEY) {
       return WORKLOG_SYNC_KEY
+    }
+    if (key === PROJECT_IMPORT_KEY) {
+      return PROJECT_IMPORT_KEY
     }
 
     return entities.find((entity) => entity.key === key)?.key ?? entities[0]!.key
@@ -122,6 +128,15 @@ export default function Admin() {
         >
           {m.worklogsync_admin_title()}
         </button>
+        <button
+          type="button"
+          class="admin-subnav-link"
+          classList={{ 'is-active': activeKey() === PROJECT_IMPORT_KEY }}
+          aria-current={activeKey() === PROJECT_IMPORT_KEY ? 'page' : undefined}
+          onClick={() => navigate(`/admin/${PROJECT_IMPORT_KEY}`)}
+        >
+          {m.projectimport_admin_title()}
+        </button>
       </nav>
 
       {/* keyed on the active entity so the shell remounts on switch — its sort,
@@ -137,6 +152,9 @@ export default function Admin() {
         </Match>
         <Match when={activeKey() === WORKLOG_SYNC_KEY}>
           <WorklogSync />
+        </Match>
+        <Match when={activeKey() === PROJECT_IMPORT_KEY}>
+          <ProjectImport />
         </Match>
       </Switch>
     </section>
