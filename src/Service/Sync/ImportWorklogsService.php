@@ -532,7 +532,7 @@ class ImportWorklogsService extends AbstractSyncRunService
      */
     private function buildTimes(WorklogSnapshot $worklogSnapshot): ?array
     {
-        $day = new DateTime()->setTimestamp($worklogSnapshot->startedTimestamp);
+        $day = $worklogSnapshot->startedAtUtc();
         $start = clone $day;
         $end = (clone $start)->modify(sprintf('+%d minutes', $worklogSnapshot->durationMinutes));
 

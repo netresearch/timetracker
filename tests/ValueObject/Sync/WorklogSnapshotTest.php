@@ -11,6 +11,7 @@ namespace Tests\ValueObject\Sync;
 
 use App\Enum\WorklogField;
 use App\ValueObject\Sync\WorklogSnapshot;
+use DateTime;
 use PHPUnit\Framework\TestCase;
 
 final class WorklogSnapshotTest extends TestCase
@@ -24,6 +25,27 @@ final class WorklogSnapshotTest extends TestCase
     {
         self::assertTrue($this->snapshot()->equals($this->snapshot()));
         self::assertSame([], $this->snapshot()->diff($this->snapshot()));
+    }
+
+    public function testStartedAtUtcIsIndependentOfTheDefaultTimezone(): void
+    {
+        $timestamp = 1751871600;
+        $previous = date_default_timezone_get();
+        // A non-UTC default would have shifted the old `new DateTime()->setTimestamp()`
+        // idiom — the helper must render the same wall-clock regardless.
+        date_default_timezone_set('Europe/Berlin');
+        try {
+            $started = $this->snapshot(started: $timestamp)->startedAtUtc();
+
+            self::assertSame(0, $started->getOffset());
+            self::assertSame(gmdate('Y-m-d H:i:s', $timestamp), $started->format('Y-m-d H:i:s'));
+            // Proof the default TZ would otherwise have shifted it: the Berlin
+            // render of the same instant differs from the UTC wall-clock.
+            $berlinRender = new DateTime()->setTimestamp($timestamp);
+            self::assertNotSame($berlinRender->format('H:i'), $started->format('H:i'));
+        } finally {
+            date_default_timezone_set($previous);
+        }
     }
 
     public function testDiffListsEveryChangedField(): void

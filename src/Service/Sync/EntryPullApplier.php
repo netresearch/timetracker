@@ -56,7 +56,7 @@ class EntryPullApplier
         // Compute new times before mutating (same setTimestamp idiom as import).
         $newDuration = $pullDuration ? $remote->durationMinutes : $entry->getDuration();
         if ($pullStarted) {
-            $start = new DateTime()->setTimestamp($remote->startedTimestamp);
+            $start = $remote->startedAtUtc();
         } else {
             $start = DateTime::createFromInterface($entry->getDay());
             $start->setTime(
