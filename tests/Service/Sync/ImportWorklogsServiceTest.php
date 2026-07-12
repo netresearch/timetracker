@@ -394,6 +394,26 @@ final class ImportWorklogsServiceTest extends TestCase
         self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Customer));
     }
 
+    public function testAutoImportFlagOnNoneParks(): void
+    {
+        $ticketSystem = $this->ticketSystemWithAutoImport();
+        $this->stubRemote(['SRVMO-1'], ['SRVMO-1' => [$this->worklog()]]);
+        // A real project, but no Tempo customer and no category -> SOURCE_NONE -> park.
+        $this->api->method('getProjectInfo')->willReturn(['id' => 20350, 'name' => 'Server Monitoring', 'categoryName' => null]);
+        $this->api->method('getFromTenant')->willReturn([]);
+        $this->projectResolver->method('resolve')->willReturn(new ProjectResolution(null, 'no project for prefix SRVMO on this ticket system'));
+        $this->authorMapper->method('remoteKey')->willReturn('acc-jdoe');
+        $this->authorMapper->method('find')->willReturn($this->author);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn(null);
+
+        $syncRun = $this->importWith($ticketSystem);
+
+        self::assertSame(1, $syncRun->getCounters()['unresolved_project'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['auto_imported_project'] ?? 0);
+        self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Project));
+        self::assertSame([], array_filter($this->persisted, static fn (object $o): bool => $o instanceof Customer));
+    }
+
     public function testAutoImportDerivesPrefixOncePerRun(): void
     {
         $ticketSystem = $this->ticketSystemWithAutoImport();
