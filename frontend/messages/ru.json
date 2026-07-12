@@ -642,5 +642,12 @@
   "worklogsync_conflict_comment": "Комментарий",
   "worklogsync_conflict_started": "Начало",
   "worklogsync_remote_deleted": "Удалённый worklog отсутствует",
-  "worklogsync_resolve_error": "Не удалось разрешить конфликт."
+  "worklogsync_resolve_error": "Не удалось разрешить конфликт.",
+  "worklogsync_users_hint": "Оставьте пустым для всех пользователей; выберите одного или нескольких (Ctrl/Cmd-клик) для конкретных людей.",
+  "worklogsync_conflict_explainer": "Эта запись изменилась и в TimeTracker, и в Jira после последней синхронизации, поэтому её нельзя объединить автоматически. Выберите, какая версия победит — другая будет перезаписана.",
+  "admin_help_personio_name": "Название этого подключения Personio (видно только в списке администратора).",
+  "admin_help_personio_base_url": "Базовый URL API Personio, обычно https://api.personio.de.",
+  "admin_help_personio_client_id": "Идентификатор клиента учётных данных API Personio (Personio → Настройки → API).",
+  "admin_help_personio_absence_project": "Проект TimeTracker, на который списываются импортированные отсутствия (для импорта отсутствий).",
+  "admin_help_personio_active": "Используется только активная конфигурация; отключите, чтобы приостановить всю синхронизацию с Personio."
 }

@@ -410,12 +410,12 @@ export function adminEntities(): EntityDescriptor[] {
         { key: 'active', label: () => m.admin_f_active(), render: (row) => mark(row.active), align: 'center', boolean: true },
       ],
       fields: [
-        { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true },
-        { name: 'baseUrl', label: () => m.admin_f_base_url(), type: 'text', required: true },
-        { name: 'clientId', label: () => m.admin_f_client_id(), type: 'text', required: true },
+        { name: 'name', label: () => m.admin_f_name(), type: 'text', required: true, help: () => m.admin_help_personio_name() },
+        { name: 'baseUrl', label: () => m.admin_f_base_url(), type: 'text', required: true, help: () => m.admin_help_personio_base_url() },
+        { name: 'clientId', label: () => m.admin_f_client_id(), type: 'text', required: true, help: () => m.admin_help_personio_client_id() },
         { name: 'clientSecret', label: () => m.admin_f_client_secret(), type: 'text', help: () => m.admin_f_secret_hint() },
-        { name: 'absence_project', label: () => m.admin_f_absence_project(), type: 'select', source: 'projects' },
-        { name: 'active', label: () => m.admin_f_active(), type: 'checkbox' },
+        { name: 'absence_project', label: () => m.admin_f_absence_project(), type: 'select', source: 'projects', help: () => m.admin_help_personio_absence_project() },
+        { name: 'active', label: () => m.admin_f_active(), type: 'checkbox', help: () => m.admin_help_personio_active() },
       ],
       rowLabel: (row) => str(row.name),
       // The client secret is not returned by the list (server-side filtered), so

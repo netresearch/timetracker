@@ -642,5 +642,12 @@
   "worklogsync_conflict_comment": "Comentario",
   "worklogsync_conflict_started": "Inicio",
   "worklogsync_remote_deleted": "Worklog remoto eliminado",
-  "worklogsync_resolve_error": "No se pudo resolver el conflicto."
+  "worklogsync_resolve_error": "No se pudo resolver el conflicto.",
+  "worklogsync_users_hint": "Déjalo vacío para sincronizar todos los usuarios; selecciona uno o varios (Ctrl/Cmd-clic) para personas concretas.",
+  "worklogsync_conflict_explainer": "Esta entrada cambió tanto en TimeTracker como en Jira desde la última sincronización, por lo que no puede fusionarse automáticamente. Elige qué versión gana — la otra se sobrescribe.",
+  "admin_help_personio_name": "Una etiqueta para esta conexión de Personio (solo visible en la lista de administración).",
+  "admin_help_personio_base_url": "La URL base de la API de Personio, normalmente https://api.personio.de.",
+  "admin_help_personio_client_id": "El ID de cliente de la credencial de la API de Personio (Personio → Ajustes → API).",
+  "admin_help_personio_absence_project": "El proyecto de TimeTracker al que se imputan las ausencias importadas (para la importación de ausencias).",
+  "admin_help_personio_active": "Solo se usa la configuración activa; desactívala para pausar toda la sincronización con Personio."
 }
