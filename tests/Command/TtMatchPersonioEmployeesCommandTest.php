@@ -19,6 +19,7 @@ use App\Service\Personio\PersonioClient;
 use App\Service\Personio\PersonioClientFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -31,10 +32,10 @@ use Symfony\Component\Console\Tester\CommandTester;
 #[AllowMockObjectsWithoutExpectations]
 final class TtMatchPersonioEmployeesCommandTest extends TestCase
 {
-    private PersonioConfigRepository $configRepository;
-    private UserRepository $userRepository;
-    private PersonioClient $client;
-    private EntityManagerInterface $entityManager;
+    private PersonioConfigRepository&MockObject $configRepository;
+    private UserRepository&MockObject $userRepository;
+    private PersonioClient&MockObject $client;
+    private EntityManagerInterface&MockObject $entityManager;
 
     /**
      * @param list<User>                                                                       $users
