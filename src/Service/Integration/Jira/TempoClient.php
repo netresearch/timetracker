@@ -11,6 +11,7 @@ namespace App\Service\Integration\Jira;
 
 use App\DTO\Tempo\TempoAccount;
 use App\DTO\Tempo\TempoAccountLink;
+use App\Exception\Integration\Jira\JiraApiException;
 
 use function is_array;
 use function is_object;
@@ -38,7 +39,7 @@ final readonly class TempoClient
      */
     public function accountsForProject(int $projectId): array
     {
-        $decoded = $this->api->getFromTenant(sprintf('/rest/tempo-accounts/1/account/project/%d', $projectId));
+        $decoded = $this->getOrEmptyOnForbidden(sprintf('/rest/tempo-accounts/1/account/project/%d', $projectId));
 
         return $this->mapList($decoded, TempoAccount::fromApiResponse(...));
     }
@@ -50,9 +51,31 @@ final readonly class TempoClient
      */
     public function linksForProject(int $projectId): array
     {
-        $decoded = $this->api->getFromTenant(sprintf('/rest/tempo-accounts/1/link/project/%d', $projectId));
+        $decoded = $this->getOrEmptyOnForbidden(sprintf('/rest/tempo-accounts/1/link/project/%d', $projectId));
 
         return $this->mapList($decoded, TempoAccountLink::fromApiResponse(...));
+    }
+
+    /**
+     * Signed tenant GET that treats a 403 as "no Tempo visibility here" and
+     * returns an empty body, so the derivation degrades to the Jira category /
+     * keyword fallback rather than aborting (ADR-026 §3 + verification §1: try
+     * under the token, fall back on a 403). Any other failure propagates and is
+     * caught per-key by {@see ProjectImportProposalService}.
+     *
+     * @throws JiraApiException on a non-403 failure
+     */
+    private function getOrEmptyOnForbidden(string $absolutePath): mixed
+    {
+        try {
+            return $this->api->getFromTenant($absolutePath);
+        } catch (JiraApiException $jiraApiException) {
+            if (403 === $jiraApiException->getCode()) {
+                return [];
+            }
+
+            throw $jiraApiException;
+        }
     }
 
     /**

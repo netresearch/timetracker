@@ -18,6 +18,7 @@ use App\Entity\User;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Integration\Jira\TempoClient;
+use Throwable;
 
 use function array_filter;
 use function array_map;
@@ -57,7 +58,15 @@ final readonly class ProjectImportProposalService
 
         $proposals = [];
         foreach ($jiraKeys as $jiraKey) {
-            $proposals[] = $this->propose($jiraKey, $api, $tempo);
+            // Per-key tolerance (ADR-026 P1 review note): a Jira/Tempo failure on
+            // one key must not abort the whole review batch — surface that key as
+            // an error row and keep going. Tempo permission (403) degrades to the
+            // category fallback inside TempoClient, so it never reaches here.
+            try {
+                $proposals[] = $this->propose($jiraKey, $api, $tempo);
+            } catch (Throwable) {
+                $proposals[] = new ProjectImportProposal($jiraKey, null, null, $jiraKey, null, null, ProjectImportProposal::SOURCE_ERROR);
+            }
         }
 
         return $proposals;

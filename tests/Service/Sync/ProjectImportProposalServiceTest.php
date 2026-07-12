@@ -12,6 +12,7 @@ namespace Tests\Service\Sync;
 use App\DTO\Sync\ProjectImportProposal;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Security\TokenEncryptionService;
@@ -237,5 +238,151 @@ final class ProjectImportProposalServiceTest extends TestCase
 
         self::assertSame(ProjectImportProposal::SOURCE_NONE, $proposal->derivationSource);
         self::assertNull($proposal->derivedCustomerName);
+    }
+
+    public function testJiraFailureOnOneKeyYieldsErrorRowAndDoesNotAbortBatch(): void
+    {
+        // GOOD resolves cleanly; BAD throws inside getProjectInfo. The batch must
+        // still return both rows, with BAD flagged as an error (P1 review note).
+        $api = $this->throwingApi(
+            throwKey: 'BAD',
+            goodKey: 'GOOD',
+            goodInfo: ['id' => 42, 'name' => 'Good', 'categoryName' => null],
+            tenant: [
+                '/rest/tempo-accounts/1/account/project/42' => self::decode(
+                    '[{"id":100,"key":"NRIT","name":"NR IT","customer":{"id":9,"key":"NR","name":"Netresearch"}}]',
+                ),
+            ],
+        );
+
+        $factory = self::createStub(JiraOAuthApiFactory::class);
+        $factory->method('create')->willReturn($api);
+        $service = new ProjectImportProposalService($factory);
+
+        $proposals = $this->propose($service, 'GOOD', 'BAD');
+
+        self::assertCount(2, $proposals);
+        self::assertSame(ProjectImportProposal::SOURCE_TEMPO, $proposals[0]->derivationSource);
+        self::assertSame('BAD', $proposals[1]->jiraKey);
+        self::assertSame(ProjectImportProposal::SOURCE_ERROR, $proposals[1]->derivationSource);
+        self::assertNull($proposals[1]->derivedCustomerName);
+        self::assertNull($proposals[1]->projectId);
+    }
+
+    public function testTempoForbiddenDegradesToCategoryNotError(): void
+    {
+        // A Tempo 403 (token lacks Tempo visibility) must fall back to the Jira
+        // category, not surface as an error (ADR-026 §3, verification §1).
+        $api = $this->forbiddenTempoApi(
+            key: 'DP',
+            info: ['id' => 700, 'name' => 'Deutsche Post', 'categoryName' => 'NR: IT'],
+            forbiddenPath: '/rest/tempo-accounts/1/account/project/700',
+        );
+
+        $factory = self::createStub(JiraOAuthApiFactory::class);
+        $factory->method('create')->willReturn($api);
+        $service = new ProjectImportProposalService($factory);
+
+        $proposal = $this->propose($service, 'DP')[0];
+
+        self::assertSame(ProjectImportProposal::SOURCE_CATEGORY, $proposal->derivationSource);
+        self::assertSame('NR: IT', $proposal->derivedCustomerName);
+    }
+
+    /**
+     * An api that throws a JiraApiException from getProjectInfo for $throwKey and
+     * behaves normally for $goodKey.
+     *
+     * @param array{id: int, name: string, categoryName: string|null} $goodInfo
+     * @param array<string, mixed>                                    $tenant
+     */
+    private function throwingApi(string $throwKey, string $goodKey, array $goodInfo, array $tenant): JiraOAuthApiService
+    {
+        $user = self::createStub(User::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
+        $managerRegistry = self::createStub(ManagerRegistry::class);
+        $router = self::createStub(RouterInterface::class);
+        $tokenEncryptionService = $this->createTokenEncryptionService();
+
+        return new class($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService, $throwKey, $goodKey, $goodInfo, $tenant) extends JiraOAuthApiService {
+            /**
+             * @param array{id: int, name: string, categoryName: string|null} $goodInfo
+             * @param array<string, mixed>                                    $tenant
+             */
+            public function __construct(
+                User $user,
+                TicketSystem $ticketSystem,
+                ManagerRegistry $managerRegistry,
+                RouterInterface $router,
+                TokenEncryptionService $tokenEncryptionService,
+                private readonly string $throwKey,
+                private readonly string $goodKey,
+                private readonly array $goodInfo,
+                private readonly array $tenant,
+            ) {
+                parent::__construct($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService);
+            }
+
+            public function getProjectInfo(string $key): ?array
+            {
+                if ($key === $this->throwKey) {
+                    throw new JiraApiException('boom', 500);
+                }
+
+                return $key === $this->goodKey ? $this->goodInfo : null;
+            }
+
+            public function getFromTenant(string $absolutePath): mixed
+            {
+                return $this->tenant[$absolutePath] ?? [];
+            }
+        };
+    }
+
+    /**
+     * An api that resolves $key's project info but answers the Tempo accounts
+     * path with a 403 JiraApiException.
+     *
+     * @param array{id: int, name: string, categoryName: string|null} $info
+     */
+    private function forbiddenTempoApi(string $key, array $info, string $forbiddenPath): JiraOAuthApiService
+    {
+        $user = self::createStub(User::class);
+        $ticketSystem = self::createStub(TicketSystem::class);
+        $managerRegistry = self::createStub(ManagerRegistry::class);
+        $router = self::createStub(RouterInterface::class);
+        $tokenEncryptionService = $this->createTokenEncryptionService();
+
+        return new class($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService, $key, $info, $forbiddenPath) extends JiraOAuthApiService {
+            /**
+             * @param array{id: int, name: string, categoryName: string|null} $info
+             */
+            public function __construct(
+                User $user,
+                TicketSystem $ticketSystem,
+                ManagerRegistry $managerRegistry,
+                RouterInterface $router,
+                TokenEncryptionService $tokenEncryptionService,
+                private readonly string $key,
+                private readonly array $info,
+                private readonly string $forbiddenPath,
+            ) {
+                parent::__construct($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService);
+            }
+
+            public function getProjectInfo(string $key): ?array
+            {
+                return $key === $this->key ? $this->info : null;
+            }
+
+            public function getFromTenant(string $absolutePath): mixed
+            {
+                if ($absolutePath === $this->forbiddenPath) {
+                    throw new JiraApiException('forbidden', 403);
+                }
+
+                return [];
+            }
+        };
     }
 }

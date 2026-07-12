@@ -24,6 +24,9 @@ namespace App\DTO\Sync;
  *    parked for a human ({@see $candidateCustomers}).
  *  - {@see self::SOURCE_NONE}: no Tempo customer and no category.
  *  - {@see self::SOURCE_NOT_A_PROJECT}: the key is not a Jira project.
+ *  - {@see self::SOURCE_ERROR}: deriving this one key threw (Jira/Tempo). The
+ *    key is surfaced with no derived customer so one bad key never kills the
+ *    batch (ADR-026 P1 review note); the review screen flags it for a retry.
  */
 final readonly class ProjectImportProposal
 {
@@ -38,6 +41,8 @@ final readonly class ProjectImportProposal
     public const string SOURCE_NONE = 'none';
 
     public const string SOURCE_NOT_A_PROJECT = 'not-a-project';
+
+    public const string SOURCE_ERROR = 'error';
 
     /**
      * @param list<string> $candidateCustomers competing "Name [KEY]" labels, only for {@see self::SOURCE_AMBIGUOUS}
