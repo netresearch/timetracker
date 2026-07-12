@@ -149,7 +149,7 @@ final readonly class ProjectImportConfirmationService
     private function resolveCustomer(ProjectImportConfirmRowDto $row, array &$newCustomersByName, ObjectManager $objectManager): Customer
     {
         if (null !== $row->customer_id) {
-            $customer = $this->customerRepository->findOneById($row->customer_id);
+            $customer = $this->customerRepository->find($row->customer_id);
             if (!$customer instanceof Customer) {
                 throw new InvalidArgumentException(sprintf('Unknown customer id %d.', $row->customer_id));
             }
