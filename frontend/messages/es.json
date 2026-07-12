@@ -677,5 +677,17 @@
   "entry_source_agent_hint": "Registrado por un agente (tiempo de máquina), no trabajo humano",
   "entry_estimated": "estimado",
   "entry_estimated_hint": "El tiempo humano es una estimación derivada del agente: revísalo antes de contarlo como asistencia",
-  "auswertung_agent_hours": "Horas de agente"
+  "auswertung_agent_hours": "Horas de agente",
+  "personiomatch_admin_title": "Asignación de empleados de Personio",
+  "personiomatch_intro": "Asigna los usuarios de TimeTracker a su id de empleado de Personio. Las coincidencias por correo (fiables) vienen preseleccionadas; revisa las coincidencias por nombre antes de confirmar.",
+  "personiomatch_empty": "No hay usuarios para asignar.",
+  "personiomatch_col_user": "Usuario",
+  "personiomatch_col_person": "Persona de Personio",
+  "personiomatch_col_source": "Coincidencia por",
+  "personiomatch_col_confirm": "Confirmar",
+  "personiomatch_source_email": "Correo",
+  "personiomatch_source_name": "Nombre",
+  "personiomatch_confirm_selected": "Confirmar selección",
+  "personiomatch_confirm_error": "No se pudieron aplicar las asignaciones.",
+  "personiomatch_applied": "{count} asignación(es) aplicada(s)."
 }

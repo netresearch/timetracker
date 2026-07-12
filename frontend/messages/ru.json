@@ -677,5 +677,17 @@
   "entry_source_agent_hint": "Записано агентом (машинное время), не человеческий труд",
   "entry_estimated": "оценка",
   "entry_estimated_hint": "Человеческое время — оценка, выведенная агентом; проверьте до учёта как посещаемость",
-  "auswertung_agent_hours": "Часы агента"
+  "auswertung_agent_hours": "Часы агента",
+  "personiomatch_admin_title": "Сопоставление сотрудников Personio",
+  "personiomatch_intro": "Сопоставьте пользователей TimeTracker с их идентификатором сотрудника Personio. Надёжные совпадения по электронной почте выбраны заранее; проверьте совпадения по имени перед подтверждением.",
+  "personiomatch_empty": "Нет пользователей для сопоставления.",
+  "personiomatch_col_user": "Пользователь",
+  "personiomatch_col_person": "Сотрудник Personio",
+  "personiomatch_col_source": "Совпадение по",
+  "personiomatch_col_confirm": "Подтвердить",
+  "personiomatch_source_email": "Эл. почта",
+  "personiomatch_source_name": "Имя",
+  "personiomatch_confirm_selected": "Подтвердить выбранное",
+  "personiomatch_confirm_error": "Не удалось применить сопоставления.",
+  "personiomatch_applied": "Применено сопоставлений: {count}."
 }
