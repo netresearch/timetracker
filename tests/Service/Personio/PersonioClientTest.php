@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Tests\Service\Personio;
 
+use App\DTO\Personio\AbsencePeriod;
+use App\DTO\Personio\AbsenceType;
 use App\DTO\Personio\AttendancePeriod;
 use App\Exception\Personio\PersonioApiException;
 use App\Service\Personio\PersonioClient;
@@ -30,6 +32,8 @@ use function json_encode;
  */
 #[CoversClass(PersonioClient::class)]
 #[CoversClass(AttendancePeriod::class)]
+#[CoversClass(AbsencePeriod::class)]
+#[CoversClass(AbsenceType::class)]
 #[CoversClass(PersonioApiException::class)]
 final class PersonioClientTest extends TestCase
 {
@@ -147,6 +151,68 @@ final class PersonioClientTest extends TestCase
         $secondQuery = $listRequests[1]['options']['query'] ?? null;
         self::assertIsArray($secondQuery);
         self::assertSame('CUR2', $secondQuery['cursor'] ?? null);
+    }
+
+    public function testListAbsencePeriodsParsesAndSendsWindowFilter(): void
+    {
+        $this->handler = static fn (string $method, string $path): Response => new Response(200, [], (string) json_encode([
+            '_data' => [[
+                'id' => 'abs-1',
+                'person' => ['id' => 'emp-9'],
+                'absence_type' => ['id' => 'type-vac'],
+                'starts_from' => ['date_time' => '2026-07-06T00:00:00.000', 'type' => null],
+                'ends_at' => ['date_time' => '2026-07-08T00:00:00.000', 'type' => 'FIRST_HALF'],
+                'approval' => ['status' => 'APPROVED'],
+                'comment' => 'holiday',
+            ]],
+            '_meta' => ['links' => ['next' => null]],
+        ]));
+
+        $client = $this->createClient();
+        $periods = $client->listAbsencePeriods(
+            'emp-9',
+            new DateTimeImmutable('2026-07-01T00:00:00'),
+            new DateTimeImmutable('2026-07-31T00:00:00'),
+        );
+
+        self::assertCount(1, $periods);
+        self::assertContainsOnlyInstancesOf(AbsencePeriod::class, $periods);
+        self::assertSame('abs-1', $periods[0]->id);
+        self::assertSame('emp-9', $periods[0]->personId);
+        self::assertSame('type-vac', $periods[0]->absenceTypeId);
+        self::assertSame('2026-07-08T00:00:00.000', $periods[0]->endDateTime);
+        self::assertTrue($periods[0]->endsHalf());
+
+        $request = $this->apiRequests()[0];
+        self::assertSame('v2/absence-periods', $request['path']);
+        $query = $request['options']['query'] ?? null;
+        self::assertIsArray($query);
+        self::assertSame('emp-9', $query['person.id'] ?? null);
+        self::assertSame('2026-07-01T00:00:00.000', $query['starts_from.date_time.gte'] ?? null);
+        self::assertSame('2026-07-31T00:00:00.000', $query['starts_from.date_time.lte'] ?? null);
+        self::assertSame(100, $query['limit'] ?? null);
+    }
+
+    public function testListAbsenceTypesParses(): void
+    {
+        $this->handler = static fn (string $method, string $path): Response => new Response(200, [], (string) json_encode([
+            '_data' => [
+                ['id' => 'type-vac', 'name' => 'Urlaub', 'category' => 'PAID_VACATION', 'unit' => 'DAY'],
+                ['id' => 'type-sick', 'name' => 'Krank', 'category' => 'SICK_LEAVE', 'unit' => 'DAY'],
+            ],
+            '_meta' => ['links' => ['next' => null]],
+        ]));
+
+        $client = $this->createClient();
+        $types = $client->listAbsenceTypes();
+
+        self::assertCount(2, $types);
+        self::assertContainsOnlyInstancesOf(AbsenceType::class, $types);
+        self::assertSame('Urlaub', $types[0]->name);
+        self::assertSame('urlaub', $types[0]->normalizedName());
+        self::assertTrue($types[1]->isDayBased());
+
+        self::assertSame('v2/absence-types', $this->apiRequests()[0]['path']);
     }
 
     public function testUpdateAndDeleteHitCorrectPaths(): void

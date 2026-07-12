@@ -1,6 +1,6 @@
 # Personio Sync — Operator Guide
 
-TimeTracker exports each opted-in user's worklogs to Personio as daily **work attendances** (ADR-024 P1). Absence import (Personio → TT) is a later phase.
+TimeTracker exports each opted-in user's worklogs to Personio as daily **work attendances** (ADR-024 P1), and imports their Personio **absences** (vacation/sick) back as TimeTracker day entries (ADR-024 P2). The same per-user opt-in covers both directions.
 
 ## How it works
 
@@ -33,6 +33,22 @@ Schedule the default form on a cron (like `tt:sync-subtickets`); the 14-day roll
 
 Each run is recorded as a `SyncRun` (type `personio_export`, one per user) with per-day counters (`created`, `updated`, `in_sync`, `deleted`, `errors`) and items for anything parked (approved-attendance conflicts, errors). The `--dry-run` form reports `would_create` / `would_update` / `would_delete` without writing.
 
+## Running the absence import
+
+```bash
+# a single user
+docker exec timetracker php bin/console tt:import-personio-absences --user=<username>
+
+# a specific window (default: 30 days back, 90 days ahead)
+docker exec timetracker php bin/console tt:import-personio-absences --from=2026-07-01 --to=2026-09-30
+```
+
+Per opted-in, mapped user the import reads Personio's absence periods in the window and creates **one TimeTracker entry per working day**: start 08:00, duration = the user's contract hours for that weekday (a half-day boundary halves it; a non-working weekday gets no entry), on the configured **absence project**. The activity comes from the Personio absence type name — `urlaub` → Urlaub, `krank` → Krank; a type that matches neither, or an hourly (non-day) type, is **parked** as an `unresolved_absence_type` item rather than guessed. No Jira echo is dispatched for imported absences.
+
+Re-runs are idempotent, tracked per Personio absence id: an unchanged absence is skipped, a changed one is rebuilt, and an absence cancelled in Personio has its entries removed — the rebuild and the removal happen **only while the TimeTracker entries are still the untouched imports**; a locally edited entry parks the case as a conflict instead. Each run is a `SyncRun` (type `personio_import`) with counters (`imported`, `updated`, `in_sync`, `cancelled`, `conflicts`, `unresolved_type`, `no_contract`).
+
+Schedule the default form on the same cron as the export; the window is one-directional (vacations lie in the future), so it is wider ahead than behind.
+
 ## Deactivating
 
-Clear a user's opt-in in Settings, or set the Personio config inactive. Deactivating stops future exports; it does not remove attendances already sent to Personio.
+Clear a user's opt-in in Settings, or set the Personio config inactive. Deactivating stops future exports and imports; it does not remove attendances already sent to Personio, nor absence entries already imported into TimeTracker.

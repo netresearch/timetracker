@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace App\Service\Personio;
 
+use App\DTO\Personio\AbsencePeriod;
+use App\DTO\Personio\AbsenceType;
 use App\DTO\Personio\AttendancePeriod;
 use App\Exception\Personio\PersonioApiException;
 use DateTimeImmutable;
@@ -59,6 +61,15 @@ class PersonioClient
     /** Page size requested from the cursor-paginated list endpoints. */
     private const int PAGE_SIZE = 200;
 
+    /** The absence endpoints cap `limit` at 100 (attendance/persons allow 200). */
+    private const int ABSENCE_PAGE_SIZE = 100;
+
+    /**
+     * Personio absence timestamps are timezone-less (`DateTimeWithoutTimezone`,
+     * e.g. `2026-07-06T00:00:00.000`); the date-range filter takes the same shape.
+     */
+    private const string ABSENCE_DATE_FORMAT = 'Y-m-d\TH:i:s.v';
+
     private ?Client $client = null;
 
     private ?string $accessToken = null;
@@ -91,6 +102,45 @@ class PersonioClient
                 'limit' => self::PAGE_SIZE,
             ],
             static fn (object $item): AttendancePeriod => AttendancePeriod::fromApiResponse($item),
+        );
+    }
+
+    /**
+     * Lists the person's absence periods whose start falls within the window
+     * (ADR-024 §4). Filtered on `starts_from` — mirrors the attendance window.
+     *
+     * @throws PersonioApiException
+     *
+     * @return list<AbsencePeriod>
+     */
+    public function listAbsencePeriods(string $personId, DateTimeImmutable $from, DateTimeImmutable $to): array
+    {
+        return $this->paginate(
+            'v2/absence-periods',
+            [
+                'person.id' => $personId,
+                'starts_from.date_time.gte' => $from->format(self::ABSENCE_DATE_FORMAT),
+                'starts_from.date_time.lte' => $to->format(self::ABSENCE_DATE_FORMAT),
+                'limit' => self::ABSENCE_PAGE_SIZE,
+            ],
+            static fn (object $item): AbsencePeriod => AbsencePeriod::fromApiResponse($item),
+        );
+    }
+
+    /**
+     * Lists all absence types (id -> name/unit), the lookup that resolves a
+     * period's type to a TT activity by name (ADR-024 §4).
+     *
+     * @throws PersonioApiException
+     *
+     * @return list<AbsenceType>
+     */
+    public function listAbsenceTypes(): array
+    {
+        return $this->paginate(
+            'v2/absence-types',
+            ['limit' => self::ABSENCE_PAGE_SIZE],
+            static fn (object $item): AbsenceType => AbsenceType::fromApiResponse($item),
         );
     }
 

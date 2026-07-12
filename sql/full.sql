@@ -442,6 +442,24 @@ CREATE TABLE `personio_attendance_export` (
   CONSTRAINT `fk_personio_export_run` FOREIGN KEY (`last_sync_run_id`) REFERENCES `sync_runs` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Tabellenstruktur für Tabelle `personio_absence_import` (ADR-024 P2)
+--
+CREATE TABLE `personio_absence_import` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `last_sync_run_id` int(11) DEFAULT NULL,
+  `absence_id` varchar(191) NOT NULL,
+  `entry_ids` json NOT NULL,
+  `signature` json NOT NULL,
+  `last_imported_at` datetime NOT NULL COMMENT '(DC2Type:datetime_immutable)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_personio_absence_id` (`absence_id`),
+  KEY `idx_personio_absence_user` (`user_id`),
+  CONSTRAINT `fk_personio_absence_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_personio_absence_run` FOREIGN KEY (`last_sync_run_id`) REFERENCES `sync_runs` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 --
 -- Tabellenstruktur für Tabelle `contracts`
