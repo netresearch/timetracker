@@ -110,7 +110,8 @@ function WorklogSyncArea(): JSX.Element {
   const canRun = (): boolean => ticketSystemId() > 0 && !busy()
 
   function buildPayload(): CreateRunPayload {
-    const users = selectedUsers()
+    // A sync run targets at most one user; verify/import accept several.
+    const users = type() === 'sync' ? selectedUsers().slice(0, 1) : selectedUsers()
 
     return {
       type: type(),
@@ -181,12 +182,21 @@ function WorklogSyncArea(): JSX.Element {
             <label class="field">
               <span>{m.worklogsync_users()}</span>
               <select
-                multiple
+                multiple={type() !== 'sync'}
                 disabled={busy()}
-                onChange={(event) =>
-                  setSelectedUsers(Array.from(event.currentTarget.selectedOptions, (option) => option.value))
-                }
+                onChange={(event) => {
+                  // A sync run targets a single user (the backend rejects >1 with 422);
+                  // verify/import accept a multi-selection.
+                  if (type() === 'sync') {
+                    setSelectedUsers(event.currentTarget.value ? [event.currentTarget.value] : [])
+                  } else {
+                    setSelectedUsers(Array.from(event.currentTarget.selectedOptions, (option) => option.value))
+                  }
+                }}
               >
+                <Show when={type() === 'sync'}>
+                  <option value="" selected={selectedUsers().length === 0}>—</option>
+                </Show>
                 <For each={userOptions.data ?? []}>
                   {(option) => (
                     <option value={String(option.label)} selected={selectedUsers().includes(String(option.label))}>
