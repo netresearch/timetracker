@@ -7,6 +7,7 @@ import { AdminCrudShell } from '../components/AdminCrudShell'
 import { activeNavLink } from '../header'
 import { m } from '../paraglide/messages.js'
 import AdminStatus from './AdminStatus'
+import PersonioEmployeeMatch from './PersonioEmployeeMatch'
 import ProjectImport from './ProjectImport'
 import WorklogSync from './WorklogSync'
 
@@ -16,6 +17,7 @@ import WorklogSync from './WorklogSync'
 const STATUS_KEY = 'status'
 const WORKLOG_SYNC_KEY = 'worklog-sync'
 const PROJECT_IMPORT_KEY = 'project-import'
+const PERSONIO_MATCH_KEY = 'personio-employee-match'
 
 // Remembers the entity the Admin URL last selected. When a page-level modal
 // (e.g. /ui/settings) opens over Admin, App.tsx re-renders Admin as the modal's
@@ -50,6 +52,9 @@ export default function Admin() {
     }
     if (key === PROJECT_IMPORT_KEY) {
       return PROJECT_IMPORT_KEY
+    }
+    if (key === PERSONIO_MATCH_KEY) {
+      return PERSONIO_MATCH_KEY
     }
 
     return entities.find((entity) => entity.key === key)?.key ?? entities[0]!.key
@@ -155,6 +160,9 @@ export default function Admin() {
         </Match>
         <Match when={activeKey() === PROJECT_IMPORT_KEY}>
           <ProjectImport />
+        </Match>
+        <Match when={activeKey() === PERSONIO_MATCH_KEY}>
+          <PersonioEmployeeMatch />
         </Match>
       </Switch>
     </section>

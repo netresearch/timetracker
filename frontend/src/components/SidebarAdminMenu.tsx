@@ -24,6 +24,7 @@ const ADMIN_ICON: Record<string, () => JSX.Element> = {
   status: () => <><circle cx="12" cy="12" r="9" /><path d="M12 8v4.5M12 16h.01" /></>,
   'worklog-sync': () => <><path d="M4 12a8 8 0 0 1 14-5.3L21 9" /><path d="M21 4v5h-5" /><path d="M20 12a8 8 0 0 1-14 5.3L3 15" /><path d="M3 20v-5h5" /></>,
   'project-import': () => <><path d="M12 3v12" /><path d="M8 11l4 4 4-4" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></>,
+  'personio-employee-match': () => <><path d="M16 11a4 4 0 1 0-8 0" /><circle cx="12" cy="7" r="0.5" /><path d="M4 21v-1a4 4 0 0 1 4-4h1" /><path d="M15 19l2 2 4-4" /></>,
 }
 
 function adminIco(key: string): JSX.Element {
@@ -129,6 +130,17 @@ export function SidebarAdminMenu() {
             onClick={(event) => { event.preventDefault(); navigate('/admin/project-import') }}
           >
             {adminIco('project-import')}<span class="sidebar-admin-label">{m.projectimport_admin_title()}</span>
+          </a>
+        </li>
+        {/* Personio employee-match review (ADR-024 P3): confirm user→employee-id — no add action. */}
+        <li class="sidebar-admin-item" classList={{ 'is-active': activeKey() === 'personio-employee-match' }}>
+          <a
+            class="sidebar-admin-link"
+            href="/ui/admin/personio-employee-match"
+            aria-current={activeKey() === 'personio-employee-match' ? 'page' : undefined}
+            onClick={(event) => { event.preventDefault(); navigate('/admin/personio-employee-match') }}
+          >
+            {adminIco('personio-employee-match')}<span class="sidebar-admin-label">{m.personiomatch_admin_title()}</span>
           </a>
         </li>
       </ul>

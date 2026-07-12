@@ -677,5 +677,17 @@
   "entry_source_agent_hint": "Von einem Agenten erfasst (Maschinenzeit), keine menschliche Arbeit",
   "entry_estimated": "geschätzt",
   "entry_estimated_hint": "Die menschliche Zeit ist eine vom Agenten abgeleitete Schätzung – vor der Anrechnung als Anwesenheit prüfen",
-  "auswertung_agent_hours": "Agenten-Stunden"
+  "auswertung_agent_hours": "Agenten-Stunden",
+  "personiomatch_admin_title": "Personio-Mitarbeiterzuordnung",
+  "personiomatch_intro": "TimeTracker-Benutzer ihrer Personio-Mitarbeiter-ID zuordnen. Sichere E-Mail-Treffer sind vorausgewählt; Namens-Treffer vor dem Bestätigen prüfen.",
+  "personiomatch_empty": "Keine Benutzer zuzuordnen.",
+  "personiomatch_col_user": "Benutzer",
+  "personiomatch_col_person": "Personio-Person",
+  "personiomatch_col_source": "Zugeordnet über",
+  "personiomatch_col_confirm": "Bestätigen",
+  "personiomatch_source_email": "E-Mail",
+  "personiomatch_source_name": "Name",
+  "personiomatch_confirm_selected": "Auswahl bestätigen",
+  "personiomatch_confirm_error": "Die Zuordnungen konnten nicht angewendet werden.",
+  "personiomatch_applied": "{count} Zuordnung(en) angewendet."
 }

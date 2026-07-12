@@ -677,5 +677,17 @@
   "entry_source_agent_hint": "Recorded by an agent (machine time), not human labour",
   "entry_estimated": "estimated",
   "entry_estimated_hint": "Human time is an agent-derived estimate — review before it counts as attendance",
-  "auswertung_agent_hours": "Agent hours"
+  "auswertung_agent_hours": "Agent hours",
+  "personiomatch_admin_title": "Personio employee match",
+  "personiomatch_intro": "Match TimeTracker users to their Personio employee id. Confident e-mail matches are pre-selected; review the name matches before confirming.",
+  "personiomatch_empty": "No users to match.",
+  "personiomatch_col_user": "User",
+  "personiomatch_col_person": "Personio person",
+  "personiomatch_col_source": "Matched by",
+  "personiomatch_col_confirm": "Confirm",
+  "personiomatch_source_email": "E-mail",
+  "personiomatch_source_name": "Name",
+  "personiomatch_confirm_selected": "Confirm selected",
+  "personiomatch_confirm_error": "Could not apply the matches.",
+  "personiomatch_applied": "Applied {count} mapping(s)."
 }
