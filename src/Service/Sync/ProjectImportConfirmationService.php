@@ -41,6 +41,7 @@ final readonly class ProjectImportConfirmationService
         private ManagerRegistry $managerRegistry,
         private ProjectRepository $projectRepository,
         private CustomerRepository $customerRepository,
+        private CustomerUpserter $customerUpserter,
     ) {
     }
 
@@ -172,75 +173,6 @@ final readonly class ProjectImportConfirmationService
         $tempoKey = trim((string) $row->customer_key);
         $tempoKey = '' === $tempoKey ? null : $tempoKey;
 
-        return $this->upsertCustomer($name, $tempoKey, $customersByName, $customersByTempoKey, $objectManager);
-    }
-
-    /**
-     * Resolve-or-create a Customer from a name and an optional stable Tempo key,
-     * making the Tempo->Customer mapping idempotent across runs (ADR-026 P2):
-     *
-     *  1. a key given & a customer already carries it -> reuse (name drift ignored);
-     *  2. else match by name -> reuse, backfilling the key when the row had none;
-     *  3. else create a new Customer with the name (+ the key when supplied).
-     *
-     * @param array<string, Customer> $customersByName     within-batch reuse by name
-     * @param array<string, Customer> $customersByTempoKey within-batch reuse by key
-     */
-    private function upsertCustomer(string $name, ?string $tempoKey, array &$customersByName, array &$customersByTempoKey, ObjectManager $objectManager): Customer
-    {
-        if (null !== $tempoKey) {
-            if (isset($customersByTempoKey[$tempoKey])) {
-                return $customersByTempoKey[$tempoKey];
-            }
-
-            $byKey = $this->customerRepository->findOneByTempoCustomerKey($tempoKey);
-            if ($byKey instanceof Customer) {
-                $customersByTempoKey[$tempoKey] = $byKey;
-
-                return $byKey;
-            }
-        }
-
-        $customer = $customersByName[$name] ?? $this->customerRepository->findOneByName($name);
-        if ($customer instanceof Customer) {
-            $this->backfillTempoKey($customer, $tempoKey, $customersByTempoKey);
-            $customersByName[$name] = $customer;
-
-            return $customer;
-        }
-
-        $customer = new Customer();
-        $customer->setName($name)
-            ->setActive(true)
-            ->setGlobal(false);
-        if (null !== $tempoKey) {
-            $customer->setTempoCustomerKey($tempoKey);
-            $customersByTempoKey[$tempoKey] = $customer;
-        }
-
-        $objectManager->persist($customer);
-        $customersByName[$name] = $customer;
-
-        return $customer;
-    }
-
-    /**
-     * Stamp the stable Tempo key onto a name-matched customer that has none, so a
-     * later run resolves it by key. A customer already keyed keeps its key.
-     *
-     * @param array<string, Customer> $customersByTempoKey
-     */
-    private function backfillTempoKey(Customer $customer, ?string $tempoKey, array &$customersByTempoKey): void
-    {
-        if (null === $tempoKey) {
-            return;
-        }
-
-        $existing = $customer->getTempoCustomerKey();
-        if (null === $existing || '' === $existing) {
-            $customer->setTempoCustomerKey($tempoKey);
-        }
-
-        $customersByTempoKey[$tempoKey] = $customer;
+        return $this->customerUpserter->upsert($name, $tempoKey, $customersByName, $customersByTempoKey, $objectManager);
     }
 }
