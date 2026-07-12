@@ -24,6 +24,7 @@ enum SyncItemKind: string
     case CONFLICT = 'conflict';
     case PROBABLE_DUPLICATE = 'probable_duplicate';
     case UNRESOLVED_PROJECT = 'unresolved_project';
+    case PROJECT_AUTO_IMPORTED = 'project_auto_imported';
     case SHADOW_USER_CREATED = 'shadow_user_created';
     case TRUNCATED = 'truncated';
     case ERROR = 'error';

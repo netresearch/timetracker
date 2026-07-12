@@ -11,6 +11,7 @@ namespace App\Service\Sync;
 
 use App\DTO\Jira\JiraUserIdentity;
 use App\DTO\Jira\JiraWorkLog;
+use App\DTO\Sync\ProjectImportProposal;
 use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
@@ -38,13 +39,16 @@ use Throwable;
 
 use function array_key_exists;
 use function array_values;
+use function count;
 use function implode;
 use function in_array;
 use function mb_substr;
 use function spl_object_id;
 use function sprintf;
 use function str_replace;
+use function strstr;
 use function substr;
+use function trim;
 
 /**
  * ADR-023 Phase 2: imports Jira worklogs as pre-synced TT entries. Never dispatches
@@ -62,6 +66,8 @@ class ImportWorklogsService extends AbstractSyncRunService
         private readonly JiraAuthorMapper $jiraAuthorMapper,
         private readonly DayClassService $dayClassService,
         private readonly UserRepository $userRepository,
+        private readonly ProjectImportProposalService $projectImportProposalService,
+        private readonly CustomerUpserter $customerUpserter,
         ClockInterface $clock,
     ) {
         parent::__construct($entityManager, $clock);
@@ -130,6 +136,7 @@ class ImportWorklogsService extends AbstractSyncRunService
 
         $importRunContext = new ImportRunContext(
             syncRun: $syncRun,
+            triggeredBy: $triggeredBy,
             ticketSystem: $ticketSystem,
             activity: $activity,
             targetUsernames: $targetUsernames,
@@ -376,6 +383,14 @@ class ImportWorklogsService extends AbstractSyncRunService
             return $resolution->project;
         }
 
+        // ADR-026 P3: opt-in ad-hoc auto-create of an unresolved prefix's project.
+        // Only reached when the ticket system flips the flag on AND the derivation
+        // yields exactly one confident customer; otherwise it falls through to park.
+        $autoCreated = $this->autoImportProject($importRunContext, $issueKey);
+        if ($autoCreated instanceof Project) {
+            return $autoCreated;
+        }
+
         $importRunContext->syncRun->incrementCounter('unresolved_project');
         if (!isset($importRunContext->unresolvedAnnounced[$issueKey])) {
             $importRunContext->unresolvedAnnounced[$issueKey] = true;
@@ -383,6 +398,120 @@ class ImportWorklogsService extends AbstractSyncRunService
         }
 
         return null;
+    }
+
+    /**
+     * ADR-026 P3 ad-hoc auto-create, gated three ways: the ticket-system opt-in
+     * flag, a derivable Jira prefix, and (inside {@see deriveAndCreateProject})
+     * the confidence check. A dry run never writes billing data, so it never
+     * auto-creates — the prefix parks and is reported as unresolved as today.
+     *
+     * The result (created Project or parked null) caches per prefix so a prefix
+     * is derived once per run, not once per issue.
+     */
+    private function autoImportProject(ImportRunContext $importRunContext, string $issueKey): ?Project
+    {
+        if (!$importRunContext->ticketSystem->getAutoImportUnresolvedProjects()) {
+            return null;
+        }
+
+        if ($importRunContext->dryRun) {
+            return null;
+        }
+
+        $prefix = strstr($issueKey, '-', true);
+        if (false === $prefix || '' === $prefix) {
+            return null;
+        }
+
+        if (array_key_exists($prefix, $importRunContext->autoImportCache)) {
+            return $importRunContext->autoImportCache[$prefix];
+        }
+
+        $project = $this->deriveAndCreateProject($importRunContext, $prefix);
+        $importRunContext->autoImportCache[$prefix] = $project;
+
+        return $project;
+    }
+
+    /**
+     * Derive a proposal for one prefix and auto-create Project + Customer only
+     * when it is confident (ADR-026 P3 safety model): the customer must come
+     * from tempo | tempo-default | category with a non-empty name — ambiguous,
+     * none, error and not-a-project all park (return null). The Customer is
+     * upserted idempotently via the shared {@see CustomerUpserter}, reusing the
+     * P2 stable Tempo key so a re-run resolves the existing customer.
+     */
+    private function deriveAndCreateProject(ImportRunContext $importRunContext, string $prefix): ?Project
+    {
+        $proposals = $this->projectImportProposalService->proposeForKeys(
+            [$prefix],
+            $importRunContext->ticketSystem,
+            $importRunContext->triggeredBy,
+        );
+
+        if (1 !== count($proposals)) {
+            return null;
+        }
+
+        $proposal = $proposals[0];
+        if (!$this->isConfident($proposal)) {
+            return null;
+        }
+
+        $customerName = trim((string) $proposal->derivedCustomerName);
+        $tempoKey = null === $proposal->derivedCustomerKey ? null : trim($proposal->derivedCustomerKey);
+        $tempoKey = '' === $tempoKey ? null : $tempoKey;
+
+        $customer = $this->customerUpserter->upsert(
+            $customerName,
+            $tempoKey,
+            $importRunContext->customersByName,
+            $importRunContext->customersByTempoKey,
+            $this->entityManager,
+        );
+
+        $projectName = null !== $proposal->projectName && '' !== trim($proposal->projectName)
+            ? trim($proposal->projectName)
+            : $prefix;
+
+        $project = new Project();
+        $project->setName($projectName)
+            ->setCustomer($customer)
+            ->setJiraId($prefix)
+            ->setTicketSystem($importRunContext->ticketSystem)
+            ->setActive(true)
+            ->setGlobal(false)
+            ->setEstimation(0);
+        $this->entityManager->persist($project);
+
+        $importRunContext->syncRun->incrementCounter('auto_imported_project');
+        $this->addItem(
+            $importRunContext->syncRun,
+            SyncItemKind::PROJECT_AUTO_IMPORTED,
+            issueKey: $prefix,
+            reason: substr(sprintf('auto-created project %s -> customer "%s" (%s)', $prefix, $customerName, $proposal->derivationSource), 0, 255),
+        );
+
+        return $project;
+    }
+
+    /**
+     * The ADR-026 P3 confidence gate: auto-create only from a single confident
+     * customer — a tempo | tempo-default | category source with a non-empty
+     * derived name. Never from ambiguous, none, error or not-a-project.
+     */
+    private function isConfident(ProjectImportProposal $proposal): bool
+    {
+        if (!in_array($proposal->derivationSource, [
+            ProjectImportProposal::SOURCE_TEMPO,
+            ProjectImportProposal::SOURCE_TEMPO_DEFAULT,
+            ProjectImportProposal::SOURCE_CATEGORY,
+        ], true)) {
+            return false;
+        }
+
+        return null !== $proposal->derivedCustomerName && '' !== trim($proposal->derivedCustomerName);
     }
 
     /**

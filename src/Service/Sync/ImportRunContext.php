@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace App\Service\Sync;
 
 use App\Entity\Activity;
+use App\Entity\Customer;
+use App\Entity\Project;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
 use App\Entity\User;
@@ -30,6 +32,22 @@ final class ImportRunContext
     /** @var array<string, true> issue keys whose unresolved project was already announced */
     public array $unresolvedAnnounced = [];
 
+    /**
+     * Per-run, per-prefix ad-hoc auto-create result (ADR-026 P3): a prefix is
+     * derived once (Tempo/Jira calls are expensive) and both outcomes cache —
+     * the created Project and the parked null. Keyed by Jira prefix; use
+     * array_key_exists to tell "cached null" from "not yet derived".
+     *
+     * @var array<string, ?Project>
+     */
+    public array $autoImportCache = [];
+
+    /** @var array<string, Customer> run-level Tempo-key reuse for P3 auto-created customers (avoids a UNIQUE-key clash on an unflushed key) */
+    public array $customersByTempoKey = [];
+
+    /** @var array<string, Customer> run-level name reuse for P3 auto-created customers */
+    public array $customersByName = [];
+
     /** @var array<string, array{user: User, day: string}> (user, day) pairs needing day-class recalculation */
     public array $affectedDays = [];
 
@@ -40,6 +58,7 @@ final class ImportRunContext
      */
     public function __construct(
         public readonly SyncRun $syncRun,
+        public readonly User $triggeredBy,
         public readonly TicketSystem $ticketSystem,
         public readonly Activity $activity,
         public readonly array $targetUsernames,

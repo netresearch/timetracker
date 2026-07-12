@@ -103,7 +103,7 @@ class SyncWorklogsService extends AbstractSyncRunService
 
         return $this->executeRun($syncRun, function () use ($syncRun, $targetUser, $tokenOwner, $ticketSystem, $from, $to, $dryRun): void {
             $api = $this->jiraOAuthApiFactory->create($tokenOwner, $ticketSystem);
-            $context = new SyncRunContext($syncRun, $ticketSystem, $api, $dryRun);
+            $context = new SyncRunContext($syncRun, $ticketSystem, $api, $dryRun, $tokenOwner);
             [$jql, $matchesAuthor] = $this->buildRead($api, $targetUser, $tokenOwner, $ticketSystem, $from, $to);
             $this->runUserSync($context, $targetUser, $matchesAuthor, $jql, $from, $to);
         });
@@ -692,6 +692,7 @@ class SyncWorklogsService extends AbstractSyncRunService
         $targetUsername = $targetUser->getUsername();
         $importRunContext = new ImportRunContext(
             syncRun: $context->syncRun,
+            triggeredBy: $context->tokenOwner,
             ticketSystem: $context->ticketSystem,
             activity: $activity,
             targetUsernames: null !== $targetUsername ? [$targetUsername] : [],

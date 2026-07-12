@@ -33,6 +33,7 @@ final class SyncRunContext
         public readonly TicketSystem $ticketSystem,
         public readonly JiraOAuthApiService $api,
         public readonly bool $dryRun,
+        public readonly User $tokenOwner,
     ) {
     }
 }
