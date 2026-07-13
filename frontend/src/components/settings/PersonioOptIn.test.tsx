@@ -30,6 +30,32 @@ describe('PersonioOptIn', () => {
     expect(await screen.findByRole('status')).toBeInTheDocument()
   })
 
+  it('stays enabled and keeps focus during its own save, ignoring re-toggles', async () => {
+    let resolveSave!: (value: { personio_sync_enabled: boolean }) => void
+    patchSettings.mockImplementation(
+      () => new Promise((resolve) => { resolveSave = resolve }),
+    )
+    render(() => <PersonioOptIn />)
+
+    const checkbox = screen.getByRole('checkbox')
+    checkbox.focus()
+    fireEvent.click(checkbox)
+
+    // Disabling the focused control mid-save would drop keyboard focus to
+    // <body> (WCAG 2.4.3) — the control must stay enabled and focused.
+    expect(checkbox).not.toBeDisabled()
+    expect(document.activeElement).toBe(checkbox)
+
+    // A toggle while the save is in flight is ignored and snapped back.
+    fireEvent.click(checkbox)
+    expect(patchSettings).toHaveBeenCalledOnce()
+    expect(checkbox).toBeChecked()
+
+    resolveSave({ personio_sync_enabled: true })
+    expect(await screen.findByRole('status')).toBeInTheDocument()
+    expect(checkbox).toBeChecked()
+  })
+
   it('is disabled and never saves when Personio is unconfigured', () => {
     const previous = window.APP_CONFIG!.personioConfigured
     window.APP_CONFIG!.personioConfigured = false

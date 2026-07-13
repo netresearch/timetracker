@@ -42,8 +42,19 @@ export function PersonioOptIn() {
           type="checkbox"
           name="personio_sync_enabled"
           checked={enabled()}
-          disabled={!config.personioConfigured || status().kind === 'saving'}
-          onChange={(event) => void toggle(event.currentTarget.checked)}
+          disabled={!config.personioConfigured}
+          onChange={(event) => {
+            // Not disabled while saving: disabling the focused control would
+            // drop keyboard focus to <body> (WCAG 2.4.3). Re-entrancy is
+            // guarded here instead — toggles during an in-flight save are
+            // ignored and the box snaps back to the pending value.
+            if (status().kind === 'saving') {
+              event.currentTarget.checked = enabled()
+
+              return
+            }
+            void toggle(event.currentTarget.checked)
+          }}
         />
         <span>{m.settings_personio_sync()}</span>
         <Show
