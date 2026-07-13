@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Controller\Api\V2;
 
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\MintsApiTokens;
@@ -78,11 +79,13 @@ final class SettingsActionsTest extends AbstractWebTestCase
             self::assertSame($before[$key], $after[$key], $key);
         }
 
-        // Restore for test isolation (shared fixture user).
-        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', [
-            'suggest_time' => $before['suggest_time'],
-        ]);
-        $this->assertStatusCode(200);
+        // Re-read from the database (identity map dropped): the response above
+        // was serialized from the in-memory entity, so only this proves flush().
+        $this->clearEntityManager();
+        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $persisted = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($persisted);
+        self::assertSame(!$before['suggest_time'], $persisted['suggest_time']);
     }
 
     public function testPatchFullPayloadPersistsAllFields(): void
@@ -106,26 +109,21 @@ final class SettingsActionsTest extends AbstractWebTestCase
         self::assertIsArray($after);
         self::assertSame($payload, $after);
 
-        // Restore.
-        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', $before);
-        $this->assertStatusCode(200);
+        // Re-read from the database (identity map dropped) — proves flush().
+        $this->clearEntityManager();
+        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $persisted = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertSame($payload, $persisted);
     }
 
     public function testPatchNormalizesLocale(): void
     {
-        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
-        $before = json_decode((string) $this->client->getResponse()->getContent(), true);
-        self::assertIsArray($before);
-
         $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', ['locale' => 'xx']);
         $this->assertStatusCode(200);
         $after = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($after);
         // Unknown locales normalize to a supported one — never persisted raw.
         self::assertContains($after['locale'], ['en', 'de', 'es', 'fr', 'ru']);
-
-        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', ['locale' => $before['locale']]);
-        $this->assertStatusCode(200);
     }
 
     public function testPatchMinDurationOutOfRangeIsRejected(): void
@@ -154,5 +152,17 @@ final class SettingsActionsTest extends AbstractWebTestCase
         );
 
         self::assertSame(403, $status);
+    }
+
+    /**
+     * Drop the Doctrine identity map so the next request re-reads from the
+     * database (per-test isolation is a rolled-back transaction, so flushed
+     * writes ARE visible inside the test — unflushed ones vanish here).
+     */
+    private function clearEntityManager(): void
+    {
+        $doctrine = self::getContainer()->get('doctrine');
+        self::assertInstanceOf(ManagerRegistry::class, $doctrine);
+        $doctrine->getManager()->clear();
     }
 }
