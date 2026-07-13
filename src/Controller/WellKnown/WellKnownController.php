@@ -61,7 +61,7 @@ final class WellKnownController extends AbstractController
     #[Route(path: '/.well-known/change-password', name: 'well_known_change_password', methods: ['GET'])]
     public function changePassword(): RedirectResponse
     {
-        return $this->redirect('/ui/settings', Response::HTTP_FOUND);
+        return $this->redirect('/ui/settings/security', Response::HTTP_FOUND);
     }
 
     /**
