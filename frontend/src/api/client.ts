@@ -142,8 +142,20 @@ export function putJson<T = unknown>(
   return sendJson<T>('PUT', path, payload)
 }
 
+/**
+ * PATCHes a typed JSON body — partial updates on the v2 endpoints
+ * ("not sent = unchanged", e.g. /api/v2/settings). Same #[MapRequestPayload]
+ * binding and error contract as postJson.
+ */
+export function patchJson<T = unknown>(
+  path: string,
+  payload: Record<string, unknown>,
+): Promise<T> {
+  return sendJson<T>('PATCH', path, payload)
+}
+
 async function sendJson<T>(
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'PATCH',
   path: string,
   payload: Record<string, unknown>,
 ): Promise<T> {
