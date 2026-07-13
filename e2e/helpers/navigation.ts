@@ -71,11 +71,13 @@ export async function goToBillingPage(page: Page): Promise<void> {
 
 /**
  * Navigate to the SolidJS Settings page via the shared header nav link.
+ * Lands on the default (account) section; the section nav is the marker
+ * that the full settings page has rendered.
  */
 export async function goToSettingsPage(page: Page): Promise<void> {
   await clickHeaderNav(page, NAV_LINKS.settings);
   await page.waitForURL(/\/ui\/settings/, { timeout: 10000 });
-  await page.waitForSelector('form.stack-form', { timeout: 10000 });
+  await page.waitForSelector('.settings-nav', { timeout: 10000 });
 }
 
 /**
