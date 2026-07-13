@@ -21,8 +21,8 @@ type Feedback = { kind: 'ok' | 'error'; message: string } | null
 
 /**
  * Settings → Security. Two independent, per-account server operations that do NOT
- * belong to the batched /settings/save form: a self-service password change (local
- * accounts only) and TOTP two-factor enrolment / removal.
+ * go through the preferences PATCH (/api/v2/settings): a self-service password change
+ * (local accounts only) and TOTP two-factor enrolment / removal.
  *
  * State starts from the server-rendered APP_CONFIG snapshot (`totpEnabled`,
  * `localAccount`) and is updated locally after each operation so the UI reflects the

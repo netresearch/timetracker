@@ -1027,27 +1027,7 @@ string, for use by the Greasemonkey userscript
 
 ## Configuration APIs
 
-### POST /settings/save
-**Purpose**: Save the current user's preferences
-
-**Authentication**: Required (`IS_AUTHENTICATED_FULLY`)
-
-**Form Data** (`application/x-www-form-urlencoded`):
-- `show_empty_line`: Show an empty entry row (0/1)
-- `suggest_time`: Suggest start/end times (0/1)
-- `show_future`: Show future dates (0/1)
-- `min_entry_duration`: Minimum entry duration in minutes (default 5)
-- `locale`: Language preference (normalized by `LocalizationService`)
-
-**Response (200 OK)**:
-```json
-{
-  "success": true,
-  "settings": { },              // User::getSettings() snapshot
-  "locale": "en",
-  "message": "The configuration has been successfully saved."
-}
-```
+User preferences are read and written via `GET /api/v2/settings` and `PATCH /api/v2/settings` (partial update: only the supplied keys change). Authentication: session cookie or a personal access token with the `settings:read` / `settings:write` scope. The legacy `POST /settings/save` endpoint has been removed (replaced by `PATCH /api/v2/settings`).
 
 ---
 
