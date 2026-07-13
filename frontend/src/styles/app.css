@@ -985,8 +985,15 @@ main:has(.tracking) {
   .settings-nav {
     flex-basis: auto;
     flex-direction: row;
+    /* overflow-x: auto makes the strip a paint-clipping scroll container
+       (computed overflow-y becomes auto too). The 4px padding keeps the
+       global 2px/2px-offset :focus-visible outline inside the clip box
+       (WCAG 2.4.7/2.4.13); scroll-padding keeps a keyboard-focused edge
+       link clear of the scroll edges. */
     overflow-x: auto;
+    padding: 4px;
     position: static;
+    scroll-padding-inline: 4px;
     width: 100%;
   }
 
