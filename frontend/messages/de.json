@@ -132,6 +132,7 @@
   "billing_export": "Exportieren",
   "help_title": "Hilfe",
   "help_full": "Vollständige Hilfe",
+  "help_popover_label": "Hilfe: {topic}",
   "help_intro": "Mit TimeTracker erfasst du deine Arbeitszeit. Die Zeiterfassung ist eine Tabelle, in der jede Zeile einen Zeitblock darstellt. Leg zum Start einen Eintrag an und fülle Kunde, Projekt und Tätigkeit aus — sowie ein Ticket, falls vorhanden.",
   "help_usage": "Bedienung",
   "help_usage_add": "Eintrag anlegen: „Eintrag hinzufügen“ klicken oder Alt + A drücken.",

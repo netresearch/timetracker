@@ -132,6 +132,7 @@
   "billing_export": "Exportar",
   "help_title": "Ayuda",
   "help_full": "Ayuda completa",
+  "help_popover_label": "Ayuda: {topic}",
   "help_intro": "TimeTracker es donde registra su tiempo de trabajo. El registro es una tabla en la que cada fila es un bloque de tiempo. Para empezar, añada una entrada y complete su cliente, proyecto y actividad — además de un ticket si lo tiene.",
   "help_usage": "Uso",
   "help_usage_add": "Añadir entrada: haga clic en «Añadir entrada» o pulse Alt + A.",

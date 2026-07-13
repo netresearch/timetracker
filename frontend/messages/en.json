@@ -132,6 +132,7 @@
   "billing_export": "Export",
   "help_title": "Help",
   "help_full": "Full help",
+  "help_popover_label": "Help: {topic}",
   "help_intro": "TimeTracker is where you log your work time. The Worklog is a table where each row is one block of time. To get started, add an entry and fill in its customer, project and activity — plus a ticket if you have one.",
   "help_usage": "Usage",
   "help_usage_add": "Add entry: click \"Add entry\" or press Alt + A.",

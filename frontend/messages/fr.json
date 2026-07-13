@@ -132,6 +132,7 @@
   "billing_export": "Exporter",
   "help_title": "Aide",
   "help_full": "Aide complète",
+  "help_popover_label": "Aide : {topic}",
   "help_intro": "TimeTracker vous permet d'enregistrer votre temps de travail. Le journal est un tableau où chaque ligne représente un bloc de temps. Pour commencer, ajoutez une saisie et renseignez son client, son projet et son activité — ainsi qu'un ticket si vous en avez un.",
   "help_usage": "Utilisation",
   "help_usage_add": "Ajouter une saisie : cliquez sur « Ajouter une saisie » ou appuyez sur Alt + A.",
