@@ -73,4 +73,21 @@ trait MintsApiTokens
 
         return $this->client->getResponse()->getStatusCode();
     }
+
+    /**
+     * @param array<string, mixed> $json
+     */
+    protected function patchJsonWithToken(string $path, string $bearer, array $json): int
+    {
+        $this->client->request(
+            Request::METHOD_PATCH,
+            $path,
+            [],
+            [],
+            ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
+            json_encode($json, JSON_THROW_ON_ERROR),
+        );
+
+        return $this->client->getResponse()->getStatusCode();
+    }
 }

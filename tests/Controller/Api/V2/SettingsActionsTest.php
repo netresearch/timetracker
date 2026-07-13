@@ -57,4 +57,102 @@ final class SettingsActionsTest extends AbstractWebTestCase
 
         self::assertSame(403, $status);
     }
+
+    public function testPatchSingleFieldLeavesOthersUntouched(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $before = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($before);
+        self::assertIsBool($before['suggest_time']);
+
+        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', [
+            'suggest_time' => !$before['suggest_time'],
+        ]);
+        $this->assertStatusCode(200);
+
+        $after = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($after);
+        self::assertSame(!$before['suggest_time'], $after['suggest_time']);
+        // Every other field is untouched — the partial-update guarantee.
+        foreach (['locale', 'show_empty_line', 'show_future', 'min_entry_duration', 'personio_sync_enabled'] as $key) {
+            self::assertSame($before[$key], $after[$key], $key);
+        }
+
+        // Restore for test isolation (shared fixture user).
+        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', [
+            'suggest_time' => $before['suggest_time'],
+        ]);
+        $this->assertStatusCode(200);
+    }
+
+    public function testPatchFullPayloadPersistsAllFields(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $before = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($before);
+
+        $payload = [
+            'locale' => 'en',
+            'show_empty_line' => true,
+            'suggest_time' => false,
+            'show_future' => true,
+            'min_entry_duration' => 15,
+            'personio_sync_enabled' => false,
+        ];
+        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', $payload);
+        $this->assertStatusCode(200);
+
+        $after = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($after);
+        self::assertSame($payload, $after);
+
+        // Restore.
+        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', $before);
+        $this->assertStatusCode(200);
+    }
+
+    public function testPatchNormalizesLocale(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $before = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($before);
+
+        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', ['locale' => 'xx']);
+        $this->assertStatusCode(200);
+        $after = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($after);
+        // Unknown locales normalize to a supported one — never persisted raw.
+        self::assertContains($after['locale'], ['en', 'de', 'es', 'fr', 'ru']);
+
+        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', ['locale' => $before['locale']]);
+        $this->assertStatusCode(200);
+    }
+
+    public function testPatchMinDurationOutOfRangeIsRejected(): void
+    {
+        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', ['min_entry_duration' => 100000]);
+        $this->assertStatusCode(422);
+    }
+
+    public function testTokenWithSettingsWriteMayPatch(): void
+    {
+        $status = $this->patchJsonWithToken(
+            '/api/v2/settings',
+            $this->mintToken(['settings:read', 'settings:write']),
+            [],
+        );
+
+        self::assertSame(200, $status);
+    }
+
+    public function testTokenWithoutSettingsWriteMayNotPatch(): void
+    {
+        $status = $this->patchJsonWithToken(
+            '/api/v2/settings',
+            $this->mintToken(['settings:read']),
+            [],
+        );
+
+        self::assertSame(403, $status);
+    }
 }
