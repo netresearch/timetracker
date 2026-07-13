@@ -52,9 +52,9 @@ const PAGE_TITLES: Record<string, () => string> = {
 const HINT_SEEN_KEY = 'tt-kbd-hint-seen'
 
 // Secondary pages that present as a modal dialog over the page you were on.
-// Deep-linkable: /ui/settings opens the dialog over the last full page (or Month
+// Deep-linkable: /ui/help opens the dialog over the last full page (or Month
 // for a direct visit); closing returns to that page.
-const MODAL_SEGMENTS = new Set(['settings', 'help', 'billing'])
+const MODAL_SEGMENTS = new Set(['help', 'billing'])
 
 const segmentOf = (pathname: string): string =>
   pathname.replace(/^\/ui\/?/, '').split('/')[0] || 'month'
@@ -220,6 +220,7 @@ const BG_PAGES: Record<string, Component> = {
   month: Month,
   tracking: Tracking,
   auswertung: Auswertung,
+  settings: Settings,
   admin: guarded(Admin, () => hasRole('ROLE_ADMIN')),
 }
 
@@ -230,7 +231,7 @@ export default function App() {
       <Route path="/month" component={Month} />
       <Route path="/tracking" component={Tracking} />
       <Route path="/auswertung" component={Auswertung} />
-      <Route path="/settings" component={Settings} />
+      <Route path="/settings/:section?" component={Settings} />
       <Route path="/help" component={Help} />
       <Route path="/billing" component={guarded(Billing, canBill)} />
       <Route path="/admin/:entity?" component={guarded(Admin, () => hasRole('ROLE_ADMIN'))} />

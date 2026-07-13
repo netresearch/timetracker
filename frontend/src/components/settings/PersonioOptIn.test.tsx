@@ -37,6 +37,7 @@ describe('PersonioOptIn', () => {
       render(() => <PersonioOptIn />)
 
       expect(screen.getByRole('checkbox')).toBeDisabled()
+      expect(screen.getByText(/Available once an administrator/)).toBeInTheDocument()
       expect(patchSettings).not.toHaveBeenCalled()
     } finally {
       window.APP_CONFIG!.personioConfigured = previous

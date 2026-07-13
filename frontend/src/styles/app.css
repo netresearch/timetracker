@@ -919,6 +919,82 @@ main:has(.tracking) {
   margin: 0;
 }
 
+/* Settings page shell: section nav (sidebar ≥768px, scrollable strip below).
+   flex-direction is explicit — .settings-page (same specificity, earlier in
+   the file) sets column for its card stack, which now lives in the content
+   pane instead. */
+.settings-layout {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+}
+
+.settings-nav {
+  display: flex;
+  flex: 0 0 200px;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: sticky;
+  top: 1rem;
+}
+
+/* 44px minimum target height (AAA); the tints derive from currentColor so
+   they track both color schemes without new custom properties. Focus uses
+   the global :focus-visible outline like every other link. */
+.settings-nav-link {
+  align-items: center;
+  border-radius: 6px;
+  color: inherit;
+  display: flex;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  text-decoration: none;
+}
+
+.settings-nav-link:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.settings-nav-link[aria-current='page'] {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-weight: 600;
+}
+
+/* The active section's cards stack here — same rhythm .settings-page gave
+   the old single-page card stack. */
+.settings-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1.4rem;
+  min-width: 0;
+}
+
+/* The device section's hint doubles as its "applies instantly" badge. */
+.settings-instant-badge {
+  font-style: italic;
+}
+
+@media (max-width: 767px) {
+  .settings-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .settings-nav {
+    flex-basis: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    position: static;
+    width: 100%;
+  }
+
+  .settings-nav-link {
+    white-space: nowrap;
+  }
+}
+
 .form-actions {
   align-items: center;
   display: flex;
