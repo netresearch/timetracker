@@ -40,11 +40,12 @@ function todayIso(): string {
 }
 
 /**
- * Settings → Security → API tokens (ADR-021 Phase 3). Create a personal access
+ * Settings → API tokens (ADR-021 Phase 3). Create a personal access
  * token (name, scopes, optional expiry), see the plaintext exactly once, list the
  * account's tokens, and revoke them. The scope picker is a resources × actions grid
  * plus a full-access (wildcard) shortcut — the taxonomy comes from the server so the
- * UI never hard-codes the scope list.
+ * UI never hard-codes the scope list. The section heading is the surrounding
+ * TokensSection's legend.
  */
 export function ApiTokenControls(): JSX.Element {
   const [data, { refetch }] = createResource(listApiTokens)
@@ -138,7 +139,6 @@ export function ApiTokenControls(): JSX.Element {
 
   return (
     <div class="security-block">
-      <h3 class="security-heading">{m.settings_apitoken_heading()}</h3>
       <p class="field-hint">{m.settings_apitoken_hint()}</p>
 
       {/* The one-time plaintext of the token just created. */}
