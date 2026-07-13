@@ -14,6 +14,7 @@ import {
   listApiTokens,
   revokeApiToken,
 } from '../lib/apiTokens'
+import { HelpPopover } from './HelpPopover'
 import { m } from '../paraglide/messages.js'
 
 /** A token is spent once revoked or past its expiry — both drop the Revoke action. */
@@ -214,7 +215,10 @@ export function ApiTokenControls(): JSX.Element {
         </label>
 
         <fieldset class="apitoken-scopes-picker">
-          <legend>{m.settings_apitoken_scopes_label()}</legend>
+          <legend>
+            {m.settings_apitoken_scopes_label()}
+            <HelpPopover topic={m.settings_apitoken_scopes_label()}>{m.settings_help_token_scopes()}</HelpPopover>
+          </legend>
 
           <label class="apitoken-wildcard">
             <input

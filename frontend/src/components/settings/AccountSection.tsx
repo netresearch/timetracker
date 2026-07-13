@@ -3,6 +3,7 @@ import { createSignal, For, Show } from 'solid-js'
 import { apiErrorMessage } from '../../api/client'
 import { patchSettings } from '../../api/settings'
 import { appConfig, type AppConfig } from '../../config'
+import { HelpPopover } from '../HelpPopover'
 import { m } from '../../paraglide/messages.js'
 
 // Only the locales the UI actually ships translations for (the same SET as
@@ -96,12 +97,17 @@ export function AccountSection() {
           )}
         </For>
 
-        {/* Server setting: a new entry's end pre-fills to start + this many minutes. */}
-        <label class="field">
-          <span>{m.settings_min_entry_duration()}</span>
-          <input type="number" name="min_entry_duration" min="0" max="1440" step="5" value={config.minEntryDuration} />
+        {/* Server setting: a new entry's end pre-fills to start + this many minutes.
+            A <div class="field"> (not a wrapping <label>) so the help trigger sits
+            beside — not inside — the label and can't focus the input on click. */}
+        <div class="field">
+          <span>
+            <label for="settings-min-entry-duration">{m.settings_min_entry_duration()}</label>
+            <HelpPopover topic={m.settings_min_entry_duration()}>{m.settings_help_min_duration()}</HelpPopover>
+          </span>
+          <input id="settings-min-entry-duration" type="number" name="min_entry_duration" min="0" max="1440" step="5" value={config.minEntryDuration} />
           <small class="field-hint">{m.settings_min_entry_duration_hint()}</small>
-        </label>
+        </div>
       </fieldset>
 
       <div class="form-actions">

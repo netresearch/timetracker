@@ -7,6 +7,7 @@ import { createSyncRun, worklogSyncKeys, type CreateRunPayload, type SyncRun } f
 import { appConfig } from '../config'
 import { isoDate } from '../lib/format'
 import { DateField } from './DateField'
+import { HelpPopover } from './HelpPopover'
 import { SyncRunSummary } from './SyncRunSummary'
 import { m } from '../paraglide/messages.js'
 
@@ -80,7 +81,10 @@ export function WorklogImportSection(): JSX.Element {
   return (
     <div class="stack-form">
       <fieldset class="settings-group">
-        <legend>{m.worklogsync_import_title()}</legend>
+        <legend>
+          {m.worklogsync_import_title()}
+          <HelpPopover topic={m.worklogsync_import_title()}>{m.settings_help_import_dryrun()}</HelpPopover>
+        </legend>
         <p class="settings-section-hint">{m.worklogsync_import_intro()}</p>
 
         <div class="security-block">

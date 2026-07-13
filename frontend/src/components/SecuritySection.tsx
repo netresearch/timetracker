@@ -3,6 +3,7 @@ import { createResource, createSignal, Show, For, type JSX } from 'solid-js'
 import { ApiError, apiErrorMessage, postJson } from '../api/client'
 import { appConfig } from '../config'
 import { deletePasskey, listPasskeys, passkeysSupported, registerPasskey } from '../lib/passkeys'
+import { HelpPopover } from './HelpPopover'
 import { m } from '../paraglide/messages.js'
 
 /** Server response from POST /settings/2fa/totp/start. */
@@ -90,7 +91,10 @@ export function PasskeyControls(props: Readonly<{ onRegistered?: () => void }> =
 
   return (
     <div class="security-block">
-      <h3 class="security-heading">{m.settings_passkey_heading()}</h3>
+      <h3 class="security-heading">
+        {m.settings_passkey_heading()}
+        <HelpPopover topic={m.settings_passkey_heading()}>{m.settings_help_passkeys()}</HelpPopover>
+      </h3>
       <p class="field-hint">{m.settings_passkey_hint()}</p>
 
       <Show when={(passkeys()?.length ?? 0) > 0}>
@@ -267,7 +271,10 @@ export function TwoFactorControls(props: Readonly<{ initiallyEnabled: boolean; o
 
   return (
     <div class="security-block">
-      <h3 class="security-heading">{m.settings_2fa_heading()}</h3>
+      <h3 class="security-heading">
+        {m.settings_2fa_heading()}
+        <HelpPopover topic={m.settings_2fa_heading()}>{m.settings_help_totp()}</HelpPopover>
+      </h3>
 
       {/* Backup codes are shown exactly once, right after a successful enrolment. */}
       <Show when={backupCodes()}>

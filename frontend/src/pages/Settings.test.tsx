@@ -29,7 +29,8 @@ describe('Settings shell', () => {
     const { getByRole, queryByRole, unmount } = renderSettings('/settings/security')
 
     expect(getByRole('group', { name: 'Security' })).toBeInTheDocument()
-    expect(getByRole('heading', { name: 'Two-factor authentication' })).toBeInTheDocument()
+    // Prefix match: the heading's accessible name also carries its help trigger.
+    expect(getByRole('heading', { name: /^Two-factor authentication/ })).toBeInTheDocument()
     // Only the active section mounts — account is gone.
     expect(queryByRole('group', { name: 'Account' })).not.toBeInTheDocument()
 
