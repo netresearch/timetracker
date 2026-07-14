@@ -201,8 +201,8 @@ test.describe('Settings locale reload', () => {
     await goToSettingsPage(page, 'account');
 
     // The section hydrates its locale <select> from GET /api/v2/settings on
-    // mount; wait for that to settle (German default) before changing it, so the
-    // resolving GET can't reset the new selection.
+    // mount; wait for the hydrated German default so the test changes a
+    // settled form from a known baseline, not the pre-hydration value.
     const locale = page.locator('select[name="locale"]');
     await expect(locale).toHaveValue('de');
 
