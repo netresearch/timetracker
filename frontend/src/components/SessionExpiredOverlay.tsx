@@ -130,7 +130,10 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
     try {
       // A passkey is inherently MFA, so this re-establishes a fully-authenticated
       // session in one step. Resume in place (ignore the returned redirect).
-      await loginWithPasskey()
+      // remember=true mirrors the overlay's password path, which always sends
+      // _remember_me — otherwise this re-login would clear an existing
+      // REMEMBERME cookie (Symfony cancels old cookies on every login).
+      await loginWithPasskey(() => true)
       props.onSuccess()
     } catch {
       // Includes the user dismissing the native prompt — a quiet inline message.
@@ -166,7 +169,7 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
         if (!(await passkeyAutofillSupported())) {
           return
         }
-        await loginWithPasskeyAutofill(passkeyAutofill.signal)
+        await loginWithPasskeyAutofill(() => true, passkeyAutofill.signal)
         props.onSuccess()
       } catch (caught) {
         if (caught instanceof ApiError) {
