@@ -3458,6 +3458,16 @@ th[aria-sort='descending'] .th-sort-glyph {
   padding: 0.5rem 1rem;
 }
 
+/* Keep a side gap on the reading-width pages (Month, admin, …) at every
+   density — only the full-bleed worklog grid (main:has(.tracking)) rides the
+   viewport edge. Density still tightens the vertical padding. */
+:root[data-density='compact'] main:not(:has(.tracking)) {
+  padding: 0.5rem 2rem;
+}
+:root[data-density='ultra-compact'] main:not(:has(.tracking)) {
+  padding: 0.25rem 2rem;
+}
+
 :root[data-density='compact'] .admin-page,
 :root[data-density='ultra-compact'] .admin-page {
   max-width: none;
