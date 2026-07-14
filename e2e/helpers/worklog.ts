@@ -28,7 +28,7 @@ export async function openTextEditor(page: Page, row: Locator, colKey: string): 
   return editor;
 }
 
-// Open a relation cell's combobox (Add already opens the first one) and pick its
+// Open a relation cell's combobox (unless it already is open) and pick its
 // first available option, committing it.
 export async function pickFirstOption(page: Page, row: Locator, colKey: string, alreadyOpen = false): Promise<void> {
   if (!alreadyOpen) {
@@ -93,7 +93,7 @@ export async function createWorklogEntry(page: Page): Promise<string> {
   const row = page.locator('tr.tracking-row.is-new').first();
   await expect(row).toBeVisible();
 
-  // Add opens the customer combobox; close it so we can set the plain fields first.
+  // Add opens the ticket editor (#588); close it so we can set the plain fields first.
   await page.keyboard.press('Escape');
 
   // Set explicit start/end/description while the row still lacks its required
