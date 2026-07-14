@@ -2792,6 +2792,14 @@ th[aria-sort='descending'] .th-sort-glyph {
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
 }
 
+/* Stack the sync sections with the same card rhythm the settings page uses
+   (.settings-page gap) so their borders don't touch. */
+.worklog-sync {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
 .status-group {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
