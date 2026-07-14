@@ -5,9 +5,12 @@ import { installFrozenClock, E2E_FROZEN_DATE } from './helpers/clock';
  * E2E tests for user settings.
  *
  * Settings lives in the SolidJS UI
- * (frontend/src/pages/Settings.tsx), served at `/ui/settings`. These tests
- * drive that page and verify that settings are saved correctly and take
- * effect in the worklog grid.
+ * (frontend/src/pages/Settings.tsx), served as a full page at
+ * `/ui/settings/:section` (account | appearance | security | tokens | sync;
+ * unknown/absent falls back to account). These tests drive that page and
+ * verify that settings are saved correctly and take effect in the worklog
+ * grid. Persistence goes through PATCH /api/v2/settings (partial update:
+ * absent fields stay unchanged).
  *
  * Note: Uses frozen clock for consistency with other E2E tests.
  */
@@ -25,10 +28,10 @@ async function loginWithFrozenClock(page: import('@playwright/test').Page, usern
   await expect(page).toHaveURL(/\/ui\//, { timeout: 15000 });
 }
 
-// Helper to navigate to the SolidJS settings page and wait for the form
-async function goToSettingsPage(page: import('@playwright/test').Page) {
-  await page.goto('/ui/settings');
-  await page.waitForSelector('form.stack-form', { timeout: 15000 });
+// Navigate to a settings section and wait for the section nav.
+async function goToSettingsPage(page: import('@playwright/test').Page, section = 'account') {
+  await page.goto(`/ui/settings/${section}`);
+  await page.waitForSelector('.settings-nav', { timeout: 15000 });
 }
 
 // Wait for the SolidJS worklog grid to render before interacting.
@@ -52,52 +55,44 @@ async function setCheckboxValue(page: import('@playwright/test').Page, name: str
   await page.locator(`input[type="checkbox"][name="${name}"]`).setChecked(checked);
 }
 
-// Helper to submit the settings form, wait for the success status, and return
-// the persisted `settings` object echoed by the /settings/save response that
-// the form submission triggered. Reading the response that the UI itself fired
-// verifies persistence without re-saving (which would be circular), and works
-// despite Settings.tsx not hydrating saved state back into the inputs.
+// Submit the account form, wait for the success status, and return the settings
+// echoed by the PATCH /api/v2/settings request the form submission fired.
+// Reading the response that the UI itself fired verifies persistence without
+// re-saving (which would be circular).
 // NOTE: only safe when the locale is left unchanged — a locale change triggers
 // window.location.reload() instead of showing the success status.
 async function saveSettingsViaForm(
   page: import('@playwright/test').Page,
 ): Promise<Record<string, unknown>> {
   const [response] = await Promise.all([
-    page.waitForResponse((r) => r.url().includes('/settings/save') && r.request().method() === 'POST'),
+    page.waitForResponse((r) => r.url().includes('/api/v2/settings') && r.request().method() === 'PATCH'),
     page.locator('form.stack-form button.primary-button').click(),
   ]);
   await page.waitForSelector('.form-status.is-ok', { timeout: 10000 });
-  const result = await response.json();
-  expect(result).toMatchObject({ success: true });
 
-  return result.settings as Record<string, unknown>;
+  return (await response.json()) as Record<string, unknown>;
 }
 
-type BoolSettings = { show_empty_line: number; suggest_time: number; show_future: number };
+type BoolSettings = { show_empty_line: boolean; suggest_time: boolean; show_future: boolean };
 
 // Persist a known boolean settings state via the API and return the echoed
-// `settings` object. The controller reads each field independently and treats
-// an unset field as false, so every request sends all four fields. The JSON
-// response echoes the persisted settings — the authoritative source of truth,
-// since Settings.tsx does not hydrate saved state back into the form inputs.
+// settings object (PATCH partial semantics — booleans stay booleans, absent
+// fields stay unchanged). The JSON response echoes the persisted settings —
+// the authoritative source of truth.
 async function applySettingsApi(
   page: import('@playwright/test').Page,
   settings: BoolSettings,
 ): Promise<Record<string, unknown>> {
-  const response = await page.request.post('/settings/save', {
-    form: { locale: 'de', ...settings },
-  });
+  const response = await page.request.patch('/api/v2/settings', { data: settings });
   expect(response.ok()).toBeTruthy();
-  const result = await response.json();
-  expect(result).toMatchObject({ success: true });
 
-  return result.settings as Record<string, unknown>;
+  return (await response.json()) as Record<string, unknown>;
 }
 
 // All tests in this file share user `i.myself` and toggle the same
 // settings, so they must not run in parallel — neither across describes
 // within the file nor across worker shards. Configuring at file level
-// (outside any describe) covers the three describes below.
+// (outside any describe) covers the describes below.
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Settings Tab', () => {
@@ -109,22 +104,20 @@ test.describe('Settings Tab', () => {
   test('should display settings form', async ({ page }) => {
     await goToSettingsPage(page);
 
-    // Verify settings form fields are present
+    // Verify settings form fields are present (account section)
     await expect(page.locator('select[name="locale"]')).toBeAttached();
     await expect(page.locator('input[type="checkbox"][name="show_empty_line"]')).toBeAttached();
     await expect(page.locator('input[type="checkbox"][name="suggest_time"]')).toBeAttached();
     await expect(page.locator('input[type="checkbox"][name="show_future"]')).toBeAttached();
   });
 
-  // Persistence is verified through the /settings/save response the form
-  // submission triggers (its echoed `settings` object), NOT by re-reading the
-  // checkbox after reload: Settings.tsx renders all checkboxes unchecked on
-  // every load (it does not hydrate saved state into the inputs), so a checkbox
-  // read-back would not reflect persisted state. Driving the form proves the UI
-  // save path works; the echoed settings prove the new value persisted.
+  // Persistence is verified through the PATCH /api/v2/settings response the
+  // form submission triggers (its echoed settings object). Driving the form
+  // proves the UI save path works; the echoed settings prove the new value
+  // persisted.
   test('should save show_empty_line setting', async ({ page }) => {
     // Establish a known baseline (everything off) so the toggle is deterministic.
-    await applySettingsApi(page, { show_empty_line: 0, suggest_time: 0, show_future: 0 });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
 
     await goToSettingsPage(page);
 
@@ -136,15 +129,15 @@ test.describe('Settings Tab', () => {
     const persisted = await saveSettingsViaForm(page);
 
     console.log(`Saved show_empty_line value: ${persisted.show_empty_line}`);
-    expect(Boolean(persisted.show_empty_line)).toBe(true);
+    expect(persisted.show_empty_line).toBe(true);
 
     // Restore baseline (off).
-    await applySettingsApi(page, { show_empty_line: 0, suggest_time: 0, show_future: 0 });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
   });
 
   test('should save suggest_time setting', async ({ page }) => {
     // Establish a known baseline (everything off) so the toggle is deterministic.
-    await applySettingsApi(page, { show_empty_line: 0, suggest_time: 0, show_future: 0 });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
 
     await goToSettingsPage(page);
 
@@ -154,10 +147,84 @@ test.describe('Settings Tab', () => {
     const persisted = await saveSettingsViaForm(page);
 
     console.log(`Saved suggest_time value: ${persisted.suggest_time}`);
-    expect(Boolean(persisted.suggest_time)).toBe(true);
+    expect(persisted.suggest_time).toBe(true);
 
     // Restore baseline (off).
-    await applySettingsApi(page, { show_empty_line: 0, suggest_time: 0, show_future: 0 });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
+  });
+});
+
+test.describe('Settings page conversion', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
+  });
+
+  test('settings is a full page with a working section nav', async ({ page }) => {
+    await goToSettingsPage(page);
+
+    // No dialog anymore — the page itself hosts the content.
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    // Nav switches section and URL (German UI, English fallback).
+    await page.locator('.settings-nav-link', { hasText: /Sicherheit|Security/ }).click();
+    await expect(page).toHaveURL(/\/ui\/settings\/security/);
+
+    // The document title names the active section (a11y: a distinct page title
+    // per section plus a section-specific route-change announcement). German UI
+    // → "Einstellungen – Sicherheit – …".
+    await expect(page).toHaveTitle(/Sicherheit|Security/);
+  });
+
+  test('deep link opens the security section directly', async ({ page }) => {
+    await goToSettingsPage(page, 'security');
+    // Structure assertion (German UI): the 2FA/password card is on screen.
+    await expect(page.locator('.security-block').first()).toBeVisible();
+  });
+
+  test('unknown section falls back to account', async ({ page }) => {
+    await goToSettingsPage(page, 'does-not-exist');
+    await expect(page.locator('form.stack-form')).toBeVisible();
+  });
+});
+
+test.describe('Settings locale reload', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
+  });
+
+  // Saving a changed locale reloads the SPA (UI strings are locale-bound at load,
+  // so AccountSection calls window.location.reload()). The reload must land back
+  // on the same settings section, not /ui or the default section (spec §9.1/§12).
+  // The e2e UI is German by default; switch to English and back to German so the
+  // serially-run file is left as it found it.
+  test('changing the locale reloads onto the same settings section', async ({ page }) => {
+    await goToSettingsPage(page, 'account');
+
+    // The section hydrates its locale <select> from GET /api/v2/settings on
+    // mount; wait for that to settle (German default) before changing it, so the
+    // resolving GET can't reset the new selection.
+    const locale = page.locator('select[name="locale"]');
+    await expect(locale).toHaveValue('de');
+
+    await locale.selectOption('en');
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/api/v2/settings') && r.request().method() === 'PATCH'),
+      page.waitForEvent('load'),
+      page.locator('form.stack-form button.primary-button').click(),
+    ]);
+    // The reload preserved the section URL.
+    await expect(page).toHaveURL(/\/ui\/settings\/account/);
+
+    // Restore German (en → de reloads too), leaving the shared user on de.
+    const localeAfterReload = page.locator('select[name="locale"]');
+    await expect(localeAfterReload).toHaveValue('en');
+    await localeAfterReload.selectOption('de');
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/api/v2/settings') && r.request().method() === 'PATCH'),
+      page.waitForEvent('load'),
+      page.locator('form.stack-form button.primary-button').click(),
+    ]);
+    await expect(page).toHaveURL(/\/ui\/settings\/account/);
   });
 });
 
@@ -169,7 +236,7 @@ test.describe('Settings Effectiveness', () => {
 
   test('suggest_time should pre-fill start time when enabled', async ({ page }) => {
     // Enable suggest_time via the API, then exercise the worklog grid
-    await applySettingsApi(page, { show_empty_line: 0, suggest_time: 1, show_future: 0 });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: true, show_future: false });
 
     await page.goto('/ui/tracking');
     await waitForTrackingGridReady(page);
@@ -184,7 +251,7 @@ test.describe('Settings Effectiveness', () => {
 
   test('suggest_time disabled should not pre-fill times', async ({ page }) => {
     // Disable suggest_time via the API
-    await applySettingsApi(page, { show_empty_line: 0, suggest_time: 0, show_future: 0 });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
 
     await page.goto('/ui/tracking');
     await waitForTrackingGridReady(page);
@@ -205,27 +272,18 @@ test.describe('Settings API', () => {
     // Use 'i.myself' who has a stable database record
     await loginWithFrozenClock(page, 'i.myself', 'myself123');
 
-    // Use API endpoint to get settings
-    const response = await page.request.get('/settings/get');
+    // GET /api/v2/settings returns the full settings object (booleans).
+    const response = await page.request.get('/api/v2/settings');
+    expect(response.ok()).toBeTruthy();
 
-    if (response.ok()) {
-      const settingsData = await response.json();
-      console.log('Settings data from API:', settingsData);
+    const settingsData = await response.json();
+    console.log('Settings data from API:', settingsData);
 
-      expect(settingsData).toBeDefined();
-      expect(settingsData).toHaveProperty('show_empty_line');
-      expect(settingsData).toHaveProperty('suggest_time');
-      expect(settingsData).toHaveProperty('show_future');
-      expect(settingsData).toHaveProperty('locale');
-    } else {
-      // If the GET endpoint doesn't exist, verify form fields on the settings page
-      await goToSettingsPage(page);
-
-      // Verify form fields exist
-      await expect(page.locator('input[type="checkbox"][name="show_empty_line"]')).toBeAttached();
-      await expect(page.locator('input[type="checkbox"][name="suggest_time"]')).toBeAttached();
-      await expect(page.locator('input[type="checkbox"][name="show_future"]')).toBeAttached();
-    }
+    expect(settingsData).toBeDefined();
+    expect(settingsData).toHaveProperty('show_empty_line');
+    expect(settingsData).toHaveProperty('suggest_time');
+    expect(settingsData).toHaveProperty('show_future');
+    expect(settingsData).toHaveProperty('locale');
   });
 
   test('save settings API should update settings', async ({ page }) => {
@@ -233,26 +291,25 @@ test.describe('Settings API', () => {
     await loginWithFrozenClock(page, 'i.myself', 'myself123');
 
     // Establish a known baseline (everything off) and capture the echo as the
-    // authoritative source of truth — there is no /settings/get endpoint, and
-    // Settings.tsx does not hydrate saved state back into the form inputs.
+    // authoritative source of truth.
     const baseline = await applySettingsApi(page, {
-      show_empty_line: 0,
-      suggest_time: 0,
-      show_future: 0,
+      show_empty_line: false,
+      suggest_time: false,
+      show_future: false,
     });
-    expect(Boolean(baseline.show_empty_line)).toBe(false);
+    expect(baseline.show_empty_line).toBe(false);
 
-    // Toggle show_empty_line on via the API (send all four fields — controller
-    // treats unset as false) and assert the echoed settings reflect the change.
+    // Toggle show_empty_line on via the API (PATCH partial update — the other
+    // fields stay unchanged) and assert the echoed settings reflect the change.
     const updated = await applySettingsApi(page, {
-      show_empty_line: 1,
-      suggest_time: 0,
-      show_future: 0,
+      show_empty_line: true,
+      suggest_time: false,
+      show_future: false,
     });
     console.log('Save result settings:', updated);
-    expect(Boolean(updated.show_empty_line)).toBe(true);
+    expect(updated.show_empty_line).toBe(true);
 
     // Restore baseline (off).
-    await applySettingsApi(page, { show_empty_line: 0, suggest_time: 0, show_future: 0 });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
   });
 });

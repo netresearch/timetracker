@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth';
 import {
+  clickHeaderNav,
   goToAuswertungPage,
   goToSettingsPage,
   goToAdminPage,
@@ -41,27 +42,29 @@ test.describe('Header Navigation', () => {
     await expect(page.locator('input[type="checkbox"][name="show_empty_line"]')).toBeAttached();
   });
 
-  test('Settings opens as a modal dialog over the page and closes on Escape', async ({ page }) => {
+  test('Settings renders as a full page with a section nav, not a modal', async ({ page }) => {
     await goToSettingsPage(page);
     await expect(page).toHaveURL(/\/ui\/settings/);
 
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-    await expect(dialog.locator('form.stack-form')).toBeVisible();
-
-    await page.keyboard.press('Escape');
-    // Settings was opened over the worklog (the beforeEach landing), so Escape
-    // returns there.
-    await expect(page).toHaveURL(/\/ui\/tracking/, { timeout: 10000 });
+    // Settings is a full page since the redesign — no dialog wrapper.
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('.settings-nav')).toBeVisible();
+    await expect(page.locator('form.stack-form')).toBeVisible();
   });
 
   test('closing a modal returns to the page it was opened from, not Overview', async ({ page }) => {
+    // Billing is a modal page (Settings is a full page since the redesign) and
+    // its nav link is PL-only — re-auth as i.myself. The header Help icon is no
+    // alternative: it opens the shortcuts overlay instead of navigating.
+    await page.context().clearCookies();
+    await login(page, 'i.myself', 'myself123');
+    await waitForGrid(page);
+
     await goToAuswertungPage(page);
     await expect(page).toHaveURL(/\/ui\/auswertung/);
 
-    await goToSettingsPage(page); // opens the Settings modal over Evaluation
-    await expect(page).toHaveURL(/\/ui\/settings/);
+    await clickHeaderNav(page, NAV_LINKS.billing); // opens the Billing modal over Evaluation
+    await expect(page).toHaveURL(/\/ui\/billing/);
     await expect(page.getByRole('dialog')).toBeVisible();
 
     await page.keyboard.press('Escape');

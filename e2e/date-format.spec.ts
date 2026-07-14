@@ -4,9 +4,10 @@ import { goToWorklogPage } from './helpers/navigation';
 import { cleanupWorklogEntries, createWorklogEntry, rowByStamp } from './helpers/worklog';
 
 /**
- * The client-side date-format preference (Settings → ISO / Automatic / Custom).
- * It applies to the read-only display leaves only — the wire format, the sort key
- * and the inline date EDITOR all stay ISO yyyy-mm-dd.
+ * The client-side date-format preference (Settings → Appearance →
+ * ISO / Automatic / Custom). It applies to the read-only display leaves only —
+ * the wire format, the sort key and the inline date EDITOR all stay ISO
+ * yyyy-mm-dd.
  */
 test.describe('Date-format preference', () => {
   test.beforeEach(async ({ page }) => {
@@ -25,13 +26,13 @@ test.describe('Date-format preference', () => {
     await expect(rowByStamp(page, stamp).locator('td[data-col-key="date"] .dt-full'))
       .toHaveText(/^\d{4}-\d{2}-\d{2}$/); // ISO by default
 
-    // Switch to a custom DD.MM.YYYY pattern.
-    await page.goto('/ui/settings');
+    // Switch to a custom DD.MM.YYYY pattern (Appearance section).
+    await page.goto('/ui/settings/appearance');
     await page.getByLabel(/Date format|Datumsformat/i).selectOption('custom');
     await page.getByLabel(/Custom date pattern|Eigenes Datumsmuster/i).fill('DD.MM.YYYY');
 
-    // Back on the worklog (direct nav — the Settings modal covers the header
-    // link; this also exercises the localStorage-persistence path) the same cell
+    // Back on the worklog (direct nav — this also exercises the
+    // localStorage-persistence path) the same cell
     // now renders dd.mm.yyyy ...
     await page.goto('/ui/tracking');
     await page.waitForSelector('table.tracking-table');
@@ -45,7 +46,7 @@ test.describe('Date-format preference', () => {
   });
 
   test('the Settings preview rejects an invalid pattern and keeps the last valid one', async ({ page }) => {
-    await page.goto('/ui/settings');
+    await page.goto('/ui/settings/appearance');
     await page.getByLabel(/Date format|Datumsformat/i).selectOption('custom');
     const pattern = page.getByLabel(/Custom date pattern|Eigenes Datumsmuster/i);
 

@@ -20,7 +20,7 @@ const PROJECT_IMPORT_KEY = 'project-import'
 const PERSONIO_MATCH_KEY = 'personio-employee-match'
 
 // Remembers the entity the Admin URL last selected. When a page-level modal
-// (e.g. /ui/settings) opens over Admin, App.tsx re-renders Admin as the modal's
+// (e.g. /ui/help) opens over Admin, App.tsx re-renders Admin as the modal's
 // background — but the live route is the modal's, so useParams() no longer
 // carries the :entity segment. The background falls back to this so the (dimmed)
 // backdrop keeps its tab instead of flashing to the first entity.

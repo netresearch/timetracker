@@ -62,7 +62,8 @@ The navigation (top bar by default, switchable to a sidebar in
 | **Evaluation** | everyone | Filterable effort charts and entry lists |
 | **Billing** | PL, ADMIN | Monthly-statement XLSX export |
 | **Administration** | PL, ADMIN | Customers, projects, users, teams, … |
-| ⚙ Settings / ? Help | everyone | Open as dialogs over the current page |
+| ⚙ Settings | everyone | Your personal settings — a full page with five sections |
+| ? Help | everyone | Opens as a dialog over the current page |
 
 The header also shows three **working-time badges** — *Today*, *Week*,
 *Month* — comparing your booked time against your contract target. They update
@@ -278,12 +279,16 @@ In the sidebar layout each panel also gets a quick-add "+" button.
 
 ## Settings
 
-![Settings dialog: an Account card (language, behavior toggles, minimum duration, Save) above a This device card (display preferences)](images/settings.png)
+![Settings page: a section list (Account & tracking, Appearance, Security, API tokens, Synchronization) next to the Account form with language, behavior toggles, minimum entry duration and Save](images/settings.png)
 
-The ⚙ icon opens your personal settings, grouped into two labeled sections
-with different save semantics:
+The ⚙ icon opens your personal settings as a full page with five sections.
+Each section has its own address (`/ui/settings/account` …
+`/ui/settings/sync`), so a section can be bookmarked or linked to directly,
+and small **?** buttons next to individual settings open a short explanation
+in place.
 
-**Account** — saved to your account and applied on every device; press *Save*:
+**Account & tracking** — saved to your account and applied on every device;
+press *Save*:
 
 - **Language** — English, German, Spanish, French or Russian (reloads the page).
 - **Always show an empty line** — keep a blank entry row ready in the Worklog.
@@ -292,7 +297,7 @@ with different save semantics:
 - **Minimum entry duration (minutes)** — a new entry's end pre-fills to start
   + this many minutes (0 disables it).
 
-**This device** — stored only in this browser; changes apply instantly, no
+**Appearance** — stored only in this browser; changes apply instantly, no
 *Save* needed:
 
 - **When editing a table cell, Enter…** stays / moves down / moves right.
@@ -302,6 +307,22 @@ with different save semantics:
 - **Font** — Hyperlegible (default), system font, or OpenDyslexic; plus
   **text size** (normal / large / larger).
 - **Navigation layout** — top bar, left sidebar, or right sidebar.
+
+The remaining sections save per action (no shared *Save* button):
+
+- **Security** — change your password (local accounts only), enable
+  two-factor authentication with an authenticator app, and register passkeys
+  for password-less sign-in.
+- **API tokens** — create scoped tokens (per resource, read/write, or full
+  access, with an optional expiry) so scripts, CI or agents can use the API
+  on your behalf. The secret is shown once at creation; existing tokens list
+  their last use and can be revoked.
+- **Synchronization** — import your Jira worklogs (with a preview before
+  anything is written), choose per connected ticket system whether the
+  nightly sync mirrors your Jira worklogs (project leads and administrators
+  additionally see a *sync all* toggle that pushes every worklog their Jira
+  account can access), and opt in to sending your working hours to Personio
+  (available once an administrator has configured the connection).
 
 ## Theme, density and layout
 

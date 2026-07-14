@@ -11,6 +11,8 @@ import Settings from './Settings'
 
 const getJson = vi.fn()
 const postForm = vi.fn()
+const patchSettings = vi.hoisted(() => vi.fn())
+const fetchSettings = vi.hoisted(() => vi.fn())
 
 vi.mock('../api/client', () => ({
   SessionExpiredError: class extends Error {},
@@ -19,9 +21,12 @@ vi.mock('../api/client', () => ({
       super(message)
     }
   },
+  apiErrorMessage: (_error: unknown, fallback: string) => fallback,
   getJson: (...args: unknown[]) => getJson(...args),
   postForm: (...args: unknown[]) => postForm(...args),
 }))
+
+vi.mock('../api/settings', () => ({ fetchSettings, patchSettings }))
 
 function renderPage(path: string, component: () => unknown) {
   return renderWithProviders(undefined, {
@@ -32,6 +37,8 @@ function renderPage(path: string, component: () => unknown) {
 afterEach(() => {
   getJson.mockReset()
   postForm.mockReset()
+  patchSettings.mockReset()
+  fetchSettings.mockReset()
 })
 
 describe('Billing', () => {
@@ -62,18 +69,28 @@ describe('Billing', () => {
 })
 
 describe('Settings', () => {
-  it('posts the form-urlencoded settings and reports success', async () => {
-    postForm.mockResolvedValue(JSON.stringify({ success: true, locale: 'en', message: 'ok' }))
+  it('saves the account settings through the shell and reports success', async () => {
+    // The Account section hydrates from GET on mount; echo the APP_CONFIG
+    // snapshot so the submitted values are the unchanged defaults.
+    fetchSettings.mockResolvedValue({
+      locale: 'en',
+      show_empty_line: false,
+      suggest_time: false,
+      show_future: false,
+      min_entry_duration: 5,
+      personio_sync_enabled: false,
+    })
+    patchSettings.mockResolvedValue({ locale: 'en' })
 
     const { getByText, getByRole, unmount } = renderPage('/settings', Settings)
     fireEvent.submit(getByRole('button', { name: /Save/i }).closest('form') as HTMLFormElement)
 
     await waitFor(() => expect(getByText('Settings saved.')).toBeInTheDocument())
-    expect(postForm).toHaveBeenCalledWith('/settings/save', expect.objectContaining({
+    expect(patchSettings).toHaveBeenCalledWith(expect.objectContaining({
       locale: 'en',
-      show_empty_line: 0,
-      suggest_time: 0,
-      show_future: 0,
+      show_empty_line: false,
+      suggest_time: false,
+      show_future: false,
     }))
 
     unmount()

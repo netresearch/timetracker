@@ -321,8 +321,9 @@ test.describe('Admin URL-addressable sub-nav', () => {
     await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
 
     // Client-side nav to a modal route (preserves the page underneath).
-    await page.locator('a.header-icon-link[data-nav="settings"]').click();
-    await expect(page).toHaveURL(/\/ui\/settings/);
+    // Billing is a modal page; Settings is a full page since the redesign.
+    await page.locator('a.main-nav-link[data-nav="billing"]').click();
+    await expect(page).toHaveURL(/\/ui\/billing/);
     await expect(page.locator('.modal-page')).toBeVisible();
 
     // The dimmed background Admin stays on Projects, not reset to the first tab.

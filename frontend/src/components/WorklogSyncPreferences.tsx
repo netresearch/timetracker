@@ -9,6 +9,7 @@ import {
   type PutPreferencePayload,
   type WorklogSyncPreference,
 } from '../api/worklogSync'
+import { HelpPopover } from './HelpPopover'
 import { m } from '../paraglide/messages.js'
 
 /**
@@ -80,17 +81,22 @@ export function WorklogSyncPreferences(): JSX.Element {
               <div class="security-block">
                 <h3 class="security-heading">{preference.ticket_system_name}</h3>
 
-                <label class="field-check">
-                  <input
-                    type="checkbox"
-                    checked={preference.sync_enabled}
-                    disabled={busyId() === preference.ticket_system_id}
-                    onChange={(event) =>
-                      void toggle(preference, { sync_enabled: event.currentTarget.checked })
-                    }
-                  />
-                  <span>{m.worklogsync_prefs_enable()}</span>
-                </label>
+                {/* The help trigger stays OUTSIDE the <label> so clicking it
+                    doesn't toggle the checkbox (the .field-check-row pattern). */}
+                <div class="field-check-row">
+                  <label class="field-check">
+                    <input
+                      type="checkbox"
+                      checked={preference.sync_enabled}
+                      disabled={busyId() === preference.ticket_system_id}
+                      onChange={(event) =>
+                        void toggle(preference, { sync_enabled: event.currentTarget.checked })
+                      }
+                    />
+                    <span>{m.worklogsync_prefs_enable()}</span>
+                  </label>
+                  <HelpPopover topic={m.worklogsync_prefs_enable()}>{m.settings_help_sync_optin()}</HelpPopover>
+                </div>
                 <p class="field-hint">{m.worklogsync_prefs_enable_hint()}</p>
 
                 <Show when={canSyncAll()}>

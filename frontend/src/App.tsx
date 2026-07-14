@@ -47,14 +47,32 @@ const PAGE_TITLES: Record<string, () => string> = {
   help: m.help_title,
 }
 
+// The five settings sections share one route (/settings/:section?), so they'd
+// otherwise share the single "Settings" title/announcement. Map each section to
+// its nav label so the route title becomes "Settings – <section>" — giving each
+// section a distinct document.title (WCAG 2.4.2) and a section-specific
+// route-change announcement (WCAG 4.1.3). Keys match the shell's section keys.
+const SETTINGS_SECTION_TITLES: Record<string, () => string> = {
+  account: m.settings_nav_account,
+  appearance: m.settings_nav_appearance,
+  security: m.settings_nav_security,
+  tokens: m.settings_nav_tokens,
+  sync: m.settings_nav_sync,
+}
+
+// The :section segment of a settings path, defaulting to the shell's own
+// fallback ('account') for a bare /settings or an unknown section.
+const settingsSectionOf = (pathname: string): string =>
+  pathname.replace(/^\/ui\/?/, '').split('/')[1] || 'account'
+
 // Shown once ever: the keyboard model is otherwise invisible, so on the first
 // load we surface a dismissible hint pointing at the "?" shortcut overview.
 const HINT_SEEN_KEY = 'tt-kbd-hint-seen'
 
 // Secondary pages that present as a modal dialog over the page you were on.
-// Deep-linkable: /ui/settings opens the dialog over the last full page (or Month
+// Deep-linkable: /ui/help opens the dialog over the last full page (or Month
 // for a direct visit); closing returns to that page.
-const MODAL_SEGMENTS = new Set(['settings', 'help', 'billing'])
+const MODAL_SEGMENTS = new Set(['help', 'billing'])
 
 const segmentOf = (pathname: string): string =>
   pathname.replace(/^\/ui\/?/, '').split('/')[0] || 'month'
@@ -99,7 +117,17 @@ function Layout(props: ParentProps) {
   const [lastFullPath, setLastFullPath] = createSignal('/month')
 
   const isModal = createMemo(() => MODAL_SEGMENTS.has(segmentOf(location.pathname)))
-  const routeTitle = createMemo(() => (PAGE_TITLES[segmentOf(location.pathname)] ?? m.month_title)())
+  const routeTitle = createMemo(() => {
+    const segment = segmentOf(location.pathname)
+    const base = (PAGE_TITLES[segment] ?? m.month_title)()
+    // Settings sections share one route: append the active section's label so the
+    // document title and the route-change announcement name the section (a11y).
+    if (segment === 'settings') {
+      return `${base} – ${(SETTINGS_SECTION_TITLES[settingsSectionOf(location.pathname)] ?? m.settings_nav_account)()}`
+    }
+
+    return base
+  })
   // #main-content names the BACKGROUND page when a modal is open (that's what
   // the region shows); the modal dialog carries its own title separately.
   const mainHeading = createMemo(() =>
@@ -220,6 +248,7 @@ const BG_PAGES: Record<string, Component> = {
   month: Month,
   tracking: Tracking,
   auswertung: Auswertung,
+  settings: Settings,
   admin: guarded(Admin, () => hasRole('ROLE_ADMIN')),
 }
 
@@ -230,7 +259,7 @@ export default function App() {
       <Route path="/month" component={Month} />
       <Route path="/tracking" component={Tracking} />
       <Route path="/auswertung" component={Auswertung} />
-      <Route path="/settings" component={Settings} />
+      <Route path="/settings/:section?" component={Settings} />
       <Route path="/help" component={Help} />
       <Route path="/billing" component={guarded(Billing, canBill)} />
       <Route path="/admin/:entity?" component={guarded(Admin, () => hasRole('ROLE_ADMIN'))} />

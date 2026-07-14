@@ -30,6 +30,25 @@ use const JSON_THROW_ON_ERROR;
  */
 trait MintsApiTokens
 {
+    private const string BEARER_PREFIX = 'Bearer ';
+
+    private const string JSON_MIME = 'application/json';
+
+    /**
+     * Server vars for a Bearer-authenticated request; JSON body vars on demand.
+     *
+     * @return array<string, string>
+     */
+    private function bearerServerVars(string $bearer, bool $jsonBody = false): array
+    {
+        $vars = ['HTTP_AUTHORIZATION' => self::BEARER_PREFIX . $bearer, 'HTTP_ACCEPT' => self::JSON_MIME];
+        if ($jsonBody) {
+            $vars['CONTENT_TYPE'] = self::JSON_MIME;
+        }
+
+        return $vars;
+    }
+
     /**
      * @param list<string> $scopes
      */
@@ -52,7 +71,7 @@ trait MintsApiTokens
 
     protected function requestWithToken(string $path, string $bearer): int
     {
-        $this->client->request(Request::METHOD_GET, $path, [], [], ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json']);
+        $this->client->request(Request::METHOD_GET, $path, [], [], $this->bearerServerVars($bearer));
 
         return $this->client->getResponse()->getStatusCode();
     }
@@ -67,7 +86,24 @@ trait MintsApiTokens
             $path,
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
+            $this->bearerServerVars($bearer, jsonBody: true),
+            json_encode($json, JSON_THROW_ON_ERROR),
+        );
+
+        return $this->client->getResponse()->getStatusCode();
+    }
+
+    /**
+     * @param array<string, mixed> $json
+     */
+    protected function patchJsonWithToken(string $path, string $bearer, array $json): int
+    {
+        $this->client->request(
+            Request::METHOD_PATCH,
+            $path,
+            [],
+            [],
+            $this->bearerServerVars($bearer, jsonBody: true),
             json_encode($json, JSON_THROW_ON_ERROR),
         );
 

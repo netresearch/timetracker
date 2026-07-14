@@ -1,192 +1,112 @@
-import { fireEvent, waitFor } from '@solidjs/testing-library'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, within } from '@solidjs/testing-library'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../test/renderWithProviders'
 import Settings from './Settings'
 
-// Only the write path is mocked: onSubmit posts through postForm, so a spy lets
-// us assert the payload without a network round-trip. apiErrorMessage keeps its
-// real behaviour for the error branch.
-const { postFormMock } = vi.hoisted(() => ({ postFormMock: vi.fn() }))
-vi.mock('../api/client', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api/client')>()
+// The Account section hydrates from GET /api/v2/settings on mount; stub the
+// settings API so the shell tests never touch the network (the echo matches the
+// APP_CONFIG snapshot, so hydration is a no-op here).
+vi.mock('../api/settings', () => ({
+  fetchSettings: vi.fn().mockResolvedValue({
+    locale: 'en',
+    show_empty_line: false,
+    suggest_time: false,
+    show_future: false,
+    min_entry_duration: 5,
+    personio_sync_enabled: false,
+  }),
+  patchSettings: vi.fn(),
+}))
 
-  return {
-    ...actual,
-    postForm: (...args: unknown[]) => postFormMock(...args) as unknown,
-  }
-})
-
-beforeEach(() => {
-  postFormMock.mockReset()
-})
-
-afterEach(() => {
-  localStorage.clear()
-  document.documentElement.removeAttribute('data-font')
-  document.documentElement.style.removeProperty('--font-scale')
-})
-
-describe('Settings', () => {
-  it('offers exactly the locales the UI ships translations for', () => {
-    const { container, unmount } = renderWithProviders(() => <Settings />)
-
-    // Target the locale select specifically (the page also has a client-side
-    // grid-editing preference select).
-    const select = container.querySelector('select[name="locale"]') as HTMLSelectElement
-    const values = Array.from(select.options).map((option) => option.value)
-
-    // Must mirror project.inlang/settings.json (paraglide-compiled catalogs).
-    expect(values).toEqual(['de', 'en', 'es', 'fr', 'ru'])
-
-    unmount()
+// The shell resolves the section from the route, so it mounts under a router
+// with the optional :section param (the Admin.test.tsx pattern). Per-section
+// behaviour is tested next to each section component (components/settings/*,
+// components/SecuritySection.test.tsx) — here only the shell is under test.
+function renderSettings(path = '/settings') {
+  return renderWithProviders(undefined, {
+    route: { initialPath: path, path: '/settings/:section?', component: Settings },
   })
+}
 
-  it('applies the body-font preference to <html> on change', () => {
-    const { container, unmount } = renderWithProviders(() => <Settings />)
+afterEach(cleanup)
 
-    const fontSelect = Array.from(container.querySelectorAll('select')).find((select) =>
-      Array.from(select.options).some((option) => option.value === 'dyslexic'),
-    ) as HTMLSelectElement
-    fireEvent.change(fontSelect, { target: { value: 'dyslexic' } })
-
-    expect(document.documentElement.getAttribute('data-font')).toBe('dyslexic')
-    expect(localStorage.getItem('timetracker-font')).toBe('dyslexic')
-
-    unmount()
-  })
-})
-
-describe('Settings grouping', () => {
-  // The page splits into two labeled sections (fieldset + legend) with
-  // opposite save semantics: account-saved (needs Save) vs device-local
-  // (applies instantly). Tests run under the base locale (en).
-  it('renders the account and device sections as labeled groups', () => {
-    const { getByRole, getByText, unmount } = renderWithProviders(() => <Settings />)
+describe('Settings shell', () => {
+  it('renders the account section by default', () => {
+    const { getByRole, unmount } = renderSettings()
 
     expect(getByRole('group', { name: 'Account' })).toBeInTheDocument()
-    expect(getByRole('group', { name: 'This device' })).toBeInTheDocument()
-
-    // Each section states its save semantics right under the title.
-    expect(getByText(/press Save to apply/)).toBeInTheDocument()
-    expect(getByText(/apply immediately — no Save needed/)).toBeInTheDocument()
 
     unmount()
   })
 
-  it('scopes the Save button and the account-saved fields to the save form', () => {
-    const { getByRole, unmount } = renderWithProviders(() => <Settings />)
+  it('renders the requested section', () => {
+    const { getByRole, queryByRole, unmount } = renderSettings('/settings/security')
 
-    const account = getByRole('group', { name: 'Account' })
-    const form = account.closest('form') as HTMLFormElement
-    expect(form).not.toBeNull()
-
-    // Every account-saved setting is submitted by this form …
-    for (const name of ['show_empty_line', 'suggest_time', 'show_future', 'personio_sync_enabled']) {
-      expect(form.querySelector(`input[type="checkbox"][name="${name}"]`)).not.toBeNull()
-    }
-    expect(form.querySelector('select[name="locale"]')).not.toBeNull()
-    expect(form.querySelector('input[name="min_entry_duration"]')).not.toBeNull()
-    // … and the (only) Save button lives in the same card.
-    expect(form.querySelector('button[type="submit"]')).not.toBeNull()
+    expect(getByRole('group', { name: 'Security' })).toBeInTheDocument()
+    // Prefix match: the heading's accessible name also carries its help trigger.
+    expect(getByRole('heading', { name: /^Two-factor authentication/ })).toBeInTheDocument()
+    // Only the active section mounts — account is gone.
+    expect(queryByRole('group', { name: 'Account' })).not.toBeInTheDocument()
 
     unmount()
   })
 
-  it('includes the Personio attendance opt-in in the save payload', async () => {
-    postFormMock.mockResolvedValue(JSON.stringify({ success: true, locale: 'en', message: 'ok' }))
-    const { container, unmount } = renderWithProviders(() => <Settings />)
+  it('falls back to account for an unknown section', () => {
+    const { getByRole, unmount } = renderSettings('/settings/nope')
 
-    const checkbox = container.querySelector('input[name="personio_sync_enabled"]') as HTMLInputElement
-    expect(checkbox).not.toBeNull()
-    fireEvent.click(checkbox)
-
-    const form = container.querySelector('form') as HTMLFormElement
-    fireEvent.submit(form)
-
-    await waitFor(() => expect(postFormMock).toHaveBeenCalled())
-    const [url, body] = postFormMock.mock.calls[0] as [string, Record<string, unknown>]
-    expect(url).toBe('/settings/save')
-    expect(body).toMatchObject({ personio_sync_enabled: 1 })
+    expect(getByRole('group', { name: 'Account' })).toBeInTheDocument()
 
     unmount()
   })
 
-  it('preserves a persisted Personio opt-in on save when the control is disabled', async () => {
-    // Personio was configured when the user opted in, then an admin removed the
-    // config: the checkbox renders disabled (so the browser omits it from
-    // FormData), but the persisted opt-in must survive an unrelated save rather
-    // than being silently coerced off.
-    const previousConfigured = window.APP_CONFIG!.personioConfigured
-    const previousEnabled = window.APP_CONFIG!.personioSyncEnabled
-    window.APP_CONFIG!.personioConfigured = false
-    window.APP_CONFIG!.personioSyncEnabled = true
-    postFormMock.mockResolvedValue(JSON.stringify({ success: true, locale: 'en', message: 'ok' }))
-    try {
-      const { container, unmount } = renderWithProviders(() => <Settings />)
+  it('lists all five sections in the nav', () => {
+    const { getByRole, unmount } = renderSettings()
 
-      const checkbox = container.querySelector('input[type="checkbox"][name="personio_sync_enabled"]') as HTMLInputElement
-      expect(checkbox.disabled).toBe(true)
-
-      const form = container.querySelector('form') as HTMLFormElement
-      fireEvent.submit(form)
-
-      await waitFor(() => expect(postFormMock).toHaveBeenCalled())
-      const [, body] = postFormMock.mock.calls[0] as [string, Record<string, unknown>]
-      expect(body).toMatchObject({ personio_sync_enabled: 1 })
-
-      unmount()
-    } finally {
-      window.APP_CONFIG!.personioConfigured = previousConfigured
-      window.APP_CONFIG!.personioSyncEnabled = previousEnabled
-    }
-  })
-
-  it('disables the Personio opt-in and shows the unavailable hint when Personio is not configured', () => {
-    const previous = window.APP_CONFIG!.personioConfigured
-    window.APP_CONFIG!.personioConfigured = false
-    try {
-      const { container, getByText, unmount } = renderWithProviders(() => <Settings />)
-
-      const checkbox = container.querySelector('input[name="personio_sync_enabled"]') as HTMLInputElement
-      expect(checkbox).not.toBeNull()
-      expect(checkbox.disabled).toBe(true)
-      expect(getByText(/Available once an administrator/)).toBeInTheDocument()
-
-      unmount()
-    } finally {
-      window.APP_CONFIG!.personioConfigured = previous
-    }
-  })
-
-  it('enables the Personio opt-in when Personio is configured', () => {
-    const previous = window.APP_CONFIG!.personioConfigured
-    window.APP_CONFIG!.personioConfigured = true
-    try {
-      const { container, unmount } = renderWithProviders(() => <Settings />)
-
-      const checkbox = container.querySelector('input[name="personio_sync_enabled"]') as HTMLInputElement
-      expect(checkbox).not.toBeNull()
-      expect(checkbox.disabled).toBe(false)
-
-      unmount()
-    } finally {
-      window.APP_CONFIG!.personioConfigured = previous
-    }
-  })
-
-  it('keeps the instantly-applied device preferences outside the save form', () => {
-    const { getByRole, unmount } = renderWithProviders(() => <Settings />)
-
-    const device = getByRole('group', { name: 'This device' })
-
-    // Device-local preferences are deliberately not part of any form — they
-    // persist to localStorage on change, nothing here is submitted.
-    expect(device.closest('form')).toBeNull()
-    expect(device.querySelector('button[type="submit"]')).toBeNull()
-    // All five live here: Enter behavior, date format, font, text size, layout.
-    expect(device.querySelectorAll('select').length).toBe(5)
+    const nav = getByRole('navigation', { name: 'Settings' })
+    const labels = within(nav)
+      .getAllByRole('link')
+      .map((link) => link.textContent)
+    expect(labels).toEqual(['Account & tracking', 'Appearance', 'Security', 'API tokens', 'Synchronization'])
 
     unmount()
+  })
+
+  it('marks the active section with aria-current', () => {
+    const { getByRole, unmount } = renderSettings('/settings/appearance')
+
+    const nav = getByRole('navigation', { name: 'Settings' })
+    expect(within(nav).getByRole('link', { name: 'Appearance' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'Account & tracking' })).not.toHaveAttribute('aria-current')
+
+    unmount()
+  })
+
+  it('marks the fallback section with aria-current when the URL has no section', () => {
+    const { getByRole, unmount } = renderSettings()
+
+    const nav = getByRole('navigation', { name: 'Settings' })
+    expect(within(nav).getByRole('link', { name: 'Account & tracking' })).toHaveAttribute('aria-current', 'page')
+
+    unmount()
+  })
+
+  it('keeps the last active section as the modal-background fallback', () => {
+    // Live route records the section the user is on…
+    const live = renderSettings('/settings/security')
+    expect(live.getByRole('group', { name: 'Security' })).toBeInTheDocument()
+    live.unmount()
+
+    // …then, rendered as a modal background (the live route is /help, so there is
+    // no :section param), it falls back to that section instead of flipping to
+    // Account. A '*' route matches /help while still mounting the Settings shell,
+    // exactly as App.tsx's BG_PAGES does.
+    const background = renderWithProviders(undefined, {
+      route: { initialPath: '/help', path: '*', component: Settings },
+    })
+    expect(background.getByRole('group', { name: 'Security' })).toBeInTheDocument()
+    expect(background.queryByRole('group', { name: 'Account' })).not.toBeInTheDocument()
+
+    background.unmount()
   })
 })

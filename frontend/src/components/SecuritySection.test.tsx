@@ -30,14 +30,6 @@ vi.mock('../lib/passkeys', () => ({
   listPasskeys: (...a: unknown[]) => listPasskeys(...a),
 }))
 
-// API tokens have their own component test; here the section only needs the
-// list resource to settle so the surrounding Security controls render.
-vi.mock('../lib/apiTokens', () => ({
-  listApiTokens: () => Promise.resolve({ tokens: [], resources: [], actions: [], wildcard: '*' }),
-  createApiToken: vi.fn(),
-  revokeApiToken: vi.fn(),
-}))
-
 // Imported after the mock so the component picks up the stubbed client.
 const { SecuritySection } = await import('./SecuritySection')
 

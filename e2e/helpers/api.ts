@@ -190,19 +190,20 @@ export async function getSettingsData(page: Page): Promise<Record<string, unknow
 }
 
 /**
- * Save user settings via API
+ * Save user settings via PATCH /api/v2/settings (partial update — absent
+ * fields stay unchanged). Returns the persisted settings the API echoes.
  */
 export async function saveSettings(
   page: Page,
   settings: {
-    show_empty_line?: number;
-    suggest_time?: number;
-    show_future?: number;
+    show_empty_line?: boolean;
+    suggest_time?: boolean;
+    show_future?: boolean;
     locale?: string;
   }
-): Promise<{ success: boolean; settings: Record<string, unknown> }> {
-  const response = await page.request.post('/settings/save', {
-    form: settings,
+): Promise<Record<string, unknown>> {
+  const response = await page.request.patch('/api/v2/settings', {
+    data: settings,
   });
 
   if (!response.ok()) {

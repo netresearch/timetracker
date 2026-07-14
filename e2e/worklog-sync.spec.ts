@@ -17,8 +17,8 @@ import { goToAdminPage, goToSettingsPage } from './helpers/navigation';
  *
  * The admin sync area is a non-CRUD Administration sub-page served at
  * `/ui/admin/worklog-sync` (frontend/src/pages/WorklogSync.tsx, registered in
- * Admin.tsx); self-service import lives in Settings
- * (frontend/src/components/WorklogImportSection.tsx). The e2e env renders
+ * Admin.tsx); self-service import lives in the Sync section of the Settings
+ * page (frontend/src/components/WorklogImportSection.tsx). The e2e env renders
  * GERMAN by default, so assertions match a German-or-English regex.
  */
 
@@ -83,6 +83,10 @@ test.describe('Worklog sync — self-service import', () => {
     await login(page);
     await waitForGrid(page);
     await goToSettingsPage(page);
+
+    // The import section lives in the Sync section of the settings page.
+    await page.locator('.settings-nav-link', { hasText: /Synchronisation|Synchronization/i }).click();
+    await page.waitForURL(/\/ui\/settings\/sync/, { timeout: 10000 });
 
     // The import section is self-service (no ROLE_ADMIN gate): its fieldset
     // legend, the ticket-system select and the Preview (dry-run) button render.
