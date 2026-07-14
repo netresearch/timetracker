@@ -460,6 +460,35 @@ final class McpToolsTest extends AbstractWebTestCase
     }
 
     /**
+     * The list tools declare an explicit outputSchema so strict clients can
+     * validate the object-shaped results (#585). MCP (and the SDK's Tool
+     * schema) require a declared outputSchema to be of type "object" — a
+     * violation would only surface client-side, so guard it here.
+     */
+    public function testListToolsDeclareAnObjectOutputSchema(): void
+    {
+        $schemas = [];
+        foreach ($this->declaredToolAttributes() as $mcpTool) {
+            if (is_string($mcpTool->name)) {
+                $schemas[$mcpTool->name] = $mcpTool->outputSchema;
+            }
+        }
+
+        foreach (['list_activities', 'list_projects', 'list_recent_entries'] as $tool) {
+            self::assertArrayHasKey($tool, $schemas);
+            self::assertNotNull($schemas[$tool], sprintf('%s must declare an outputSchema (#585)', $tool));
+        }
+
+        foreach ($schemas as $tool => $outputSchema) {
+            if (null === $outputSchema) {
+                continue;
+            }
+
+            self::assertSame('object', $outputSchema['type'] ?? null, sprintf('%s: a declared outputSchema must be of type "object"', $tool));
+        }
+    }
+
+    /**
      * A persisted run + parked conflict state for the sync tools, with the
      * Jira- and Personio-touching services mocked in the container (ADR-023 §6).
      *
@@ -544,6 +573,25 @@ final class McpToolsTest extends AbstractWebTestCase
     private function declaredToolNames(): array
     {
         $names = [];
+        foreach ($this->declaredToolAttributes() as $mcpTool) {
+            if (is_string($mcpTool->name)) {
+                $names[] = $mcpTool->name;
+            }
+        }
+
+        sort($names);
+
+        return $names;
+    }
+
+    /**
+     * All #[McpTool] attribute instances declared under src/Mcp/Tool.
+     *
+     * @return list<McpTool>
+     */
+    private function declaredToolAttributes(): array
+    {
+        $attributes = [];
         $files = glob(dirname(__DIR__, 2) . '/src/Mcp/Tool/*.php');
         self::assertNotFalse($files);
         foreach ($files as $file) {
@@ -551,16 +599,11 @@ final class McpToolsTest extends AbstractWebTestCase
             $class = 'App\\Mcp\\Tool\\' . basename($file, '.php');
             foreach (new ReflectionClass($class)->getMethods() as $method) {
                 foreach ($method->getAttributes(McpTool::class) as $attribute) {
-                    $name = $attribute->newInstance()->name;
-                    if (is_string($name)) {
-                        $names[] = $name;
-                    }
+                    $attributes[] = $attribute->newInstance();
                 }
             }
         }
 
-        sort($names);
-
-        return $names;
+        return $attributes;
     }
 }
