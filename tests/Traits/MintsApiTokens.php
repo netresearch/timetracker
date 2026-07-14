@@ -30,6 +30,8 @@ use const JSON_THROW_ON_ERROR;
  */
 trait MintsApiTokens
 {
+    private const string BEARER_PREFIX = 'Bearer ';
+
     /**
      * @param list<string> $scopes
      */
@@ -52,7 +54,7 @@ trait MintsApiTokens
 
     protected function requestWithToken(string $path, string $bearer): int
     {
-        $this->client->request(Request::METHOD_GET, $path, [], [], ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json']);
+        $this->client->request(Request::METHOD_GET, $path, [], [], ['HTTP_AUTHORIZATION' => self::BEARER_PREFIX . $bearer, 'HTTP_ACCEPT' => 'application/json']);
 
         return $this->client->getResponse()->getStatusCode();
     }
@@ -67,7 +69,7 @@ trait MintsApiTokens
             $path,
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
+            ['HTTP_AUTHORIZATION' => self::BEARER_PREFIX . $bearer, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
             json_encode($json, JSON_THROW_ON_ERROR),
         );
 
@@ -84,7 +86,7 @@ trait MintsApiTokens
             $path,
             [],
             [],
-            ['HTTP_AUTHORIZATION' => 'Bearer ' . $bearer, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
+            ['HTTP_AUTHORIZATION' => self::BEARER_PREFIX . $bearer, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'],
             json_encode($json, JSON_THROW_ON_ERROR),
         );
 

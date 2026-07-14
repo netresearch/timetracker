@@ -35,6 +35,6 @@ describe('AppearanceSection', () => {
     expect(device.closest('form')).toBeNull()
     expect(device.querySelector('button[type="submit"]')).toBeNull()
     // All five live here: Enter behavior, date format, font, text size, layout.
-    expect(device.querySelectorAll('select').length).toBe(5)
+    expect(device.querySelectorAll('select')).toHaveLength(5)
   })
 })

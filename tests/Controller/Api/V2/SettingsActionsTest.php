@@ -26,6 +26,8 @@ final class SettingsActionsTest extends AbstractWebTestCase
 {
     use MintsApiTokens;
 
+    private const string ENDPOINT = '/api/v2/settings';
+
     private const array KEYS = [
         'locale', 'show_empty_line', 'suggest_time', 'show_future',
         'min_entry_duration', 'personio_sync_enabled',
@@ -33,7 +35,7 @@ final class SettingsActionsTest extends AbstractWebTestCase
 
     public function testSessionGetReturnsSettingsShape(): void
     {
-        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $this->client->request(Request::METHOD_GET, self::ENDPOINT);
         $this->assertStatusCode(200);
 
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
@@ -47,26 +49,26 @@ final class SettingsActionsTest extends AbstractWebTestCase
 
     public function testTokenWithSettingsReadIsAuthorized(): void
     {
-        $status = $this->requestWithToken('/api/v2/settings', $this->mintToken(['settings:read']));
+        $status = $this->requestWithToken(self::ENDPOINT, $this->mintToken(['settings:read']));
 
         self::assertSame(200, $status);
     }
 
     public function testTokenWithoutSettingsReadIsForbidden(): void
     {
-        $status = $this->requestWithToken('/api/v2/settings', $this->mintToken(['entries:read']));
+        $status = $this->requestWithToken(self::ENDPOINT, $this->mintToken(['entries:read']));
 
         self::assertSame(403, $status);
     }
 
     public function testPatchSingleFieldLeavesOthersUntouched(): void
     {
-        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $this->client->request(Request::METHOD_GET, self::ENDPOINT);
         $before = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($before);
         self::assertIsBool($before['suggest_time']);
 
-        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', [
+        $this->client->jsonRequest(Request::METHOD_PATCH, self::ENDPOINT, [
             'suggest_time' => !$before['suggest_time'],
         ]);
         $this->assertStatusCode(200);
@@ -82,7 +84,7 @@ final class SettingsActionsTest extends AbstractWebTestCase
         // Re-read from the database (identity map dropped): the response above
         // was serialized from the in-memory entity, so only this proves flush().
         $this->clearEntityManager();
-        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $this->client->request(Request::METHOD_GET, self::ENDPOINT);
         $persisted = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($persisted);
         self::assertSame(!$before['suggest_time'], $persisted['suggest_time']);
@@ -90,7 +92,7 @@ final class SettingsActionsTest extends AbstractWebTestCase
 
     public function testPatchFullPayloadPersistsAllFields(): void
     {
-        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $this->client->request(Request::METHOD_GET, self::ENDPOINT);
         $before = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($before);
 
@@ -102,7 +104,7 @@ final class SettingsActionsTest extends AbstractWebTestCase
             'min_entry_duration' => 15,
             'personio_sync_enabled' => false,
         ];
-        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', $payload);
+        $this->client->jsonRequest(Request::METHOD_PATCH, self::ENDPOINT, $payload);
         $this->assertStatusCode(200);
 
         $after = json_decode((string) $this->client->getResponse()->getContent(), true);
@@ -111,14 +113,14 @@ final class SettingsActionsTest extends AbstractWebTestCase
 
         // Re-read from the database (identity map dropped) — proves flush().
         $this->clearEntityManager();
-        $this->client->request(Request::METHOD_GET, '/api/v2/settings');
+        $this->client->request(Request::METHOD_GET, self::ENDPOINT);
         $persisted = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertSame($payload, $persisted);
     }
 
     public function testPatchNormalizesLocale(): void
     {
-        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', ['locale' => 'xx']);
+        $this->client->jsonRequest(Request::METHOD_PATCH, self::ENDPOINT, ['locale' => 'xx']);
         $this->assertStatusCode(200);
         $after = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($after);
@@ -128,14 +130,14 @@ final class SettingsActionsTest extends AbstractWebTestCase
 
     public function testPatchMinDurationOutOfRangeIsRejected(): void
     {
-        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/v2/settings', ['min_entry_duration' => 100000]);
+        $this->client->jsonRequest(Request::METHOD_PATCH, self::ENDPOINT, ['min_entry_duration' => 100000]);
         $this->assertStatusCode(422);
     }
 
     public function testTokenWithSettingsWriteMayPatch(): void
     {
         $status = $this->patchJsonWithToken(
-            '/api/v2/settings',
+            self::ENDPOINT,
             $this->mintToken(['settings:read', 'settings:write']),
             [],
         );
@@ -146,7 +148,7 @@ final class SettingsActionsTest extends AbstractWebTestCase
     public function testTokenWithoutSettingsWriteMayNotPatch(): void
     {
         $status = $this->patchJsonWithToken(
-            '/api/v2/settings',
+            self::ENDPOINT,
             $this->mintToken(['settings:read']),
             [],
         );

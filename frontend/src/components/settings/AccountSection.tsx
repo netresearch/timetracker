@@ -78,7 +78,8 @@ export function AccountSection() {
     event.preventDefault()
     const form = event.currentTarget as HTMLFormElement
     const data = new FormData(form)
-    const locale = String(data.get('locale') ?? config.locale)
+    const rawLocale = data.get('locale')
+    const locale = typeof rawLocale === 'string' ? rawLocale : config.locale
 
     setStatus({ kind: 'saving' })
     try {
@@ -149,7 +150,7 @@ export function AccountSection() {
           {status().kind === 'saving' ? m.app_saving() : m.app_save()}
         </button>
         <Show when={status().kind === 'ok'}>
-          <span role="status" class="form-status is-ok">{m.settings_saved()}</span>
+          <output class="form-status is-ok">{m.settings_saved()}</output>
         </Show>
         <Show when={status().kind === 'error'}>
           <span role="alert" class="form-status is-error">{statusMessage()}</span>

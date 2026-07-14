@@ -76,7 +76,7 @@ export function PersonioOptIn() {
         </Show>
       </label>
       <Show when={status().kind === 'ok'}>
-        <span role="status" class="form-status is-ok">{m.settings_saved()}</span>
+        <output class="form-status is-ok">{m.settings_saved()}</output>
       </Show>
       <Show when={status().kind === 'error'}>
         <span role="alert" class="form-status is-error">{statusMessage()}</span>
