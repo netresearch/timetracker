@@ -37,12 +37,14 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 use Throwable;
 
 use function array_map;
 use function assert;
+use function count;
 use function in_array;
 use function sprintf;
 
@@ -54,10 +56,18 @@ final class SaveEntryAction extends BaseTrackingController
 
     private TokenStorageInterface $tokenStorage;
 
+    private ValidatorInterface $validator;
+
     #[Required]
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
     {
         $this->eventDispatcher = $eventDispatcher;
+    }
+
+    #[Required]
+    public function setValidator(ValidatorInterface $validator): void
+    {
+        $this->validator = $validator;
     }
 
     #[Required]
@@ -86,6 +96,16 @@ final class SaveEntryAction extends BaseTrackingController
         #[CurrentUser]
         User $user,
     ): Response|JsonResponse|Error {
+        // #[MapRequestPayload] validates only during HTTP argument resolution;
+        // direct invocations (MCP LogTimeTool, EntryUpdateService) bypass it, so
+        // the constraints must be enforced here too — otherwise an invalid value
+        // (e.g. an over-long description, #586) only explodes at flush and gets
+        // flattened into the generic "Could not save the entry" 500.
+        $violations = $this->validator->validate($entrySaveDto);
+        if (count($violations) > 0) {
+            return new Error((string) $violations->get(0)->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $customer = $this->resolveCustomer($entrySaveDto->getCustomerId());
         if (!$customer instanceof Customer) {
             return $customer;

@@ -33,6 +33,11 @@ class Entry extends Base
     public const int DESCRIPTION_MAX_LENGTH = 255;
 
     /**
+     * Maximum length of the `ticket` column (varchar(32)).
+     */
+    public const int TICKET_MAX_LENGTH = 32;
+
+    /**
      * Non-persisted runtime flag indicating if the entry is billable based on external labels.
      */
     protected ?bool $billable = null;
@@ -57,7 +62,7 @@ class Entry extends Base
     #[ORM\GeneratedValue(strategy: 'AUTO')]
     protected $id;
 
-    #[ORM\Column(type: 'string', length: 32)]
+    #[ORM\Column(type: 'string', length: self::TICKET_MAX_LENGTH)]
     protected string $ticket = '';
 
     #[ORM\Column(name: 'worklog_id', type: 'integer', nullable: true)]
