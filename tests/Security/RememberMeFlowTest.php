@@ -115,6 +115,39 @@ final class RememberMeFlowTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
     }
 
+    public function testStepUpRedirectLandsOnTheLoginForm(): void
+    {
+        $rememberMe = $this->loginWithRememberMe();
+
+        $this->simulateBrowserRestart($rememberMe);
+
+        // A remembered session's request to a keep-FULLY endpoint 302s to
+        // /login. FOLLOWING that redirect must render the login form — the
+        // step-up the SPA's overlay and a manual navigation both depend on.
+        // (/login used to bounce any authenticated user, remembered included,
+        // to the start page, making every FULLY endpoint a dead end, #587.)
+        $this->client->request(Request::METHOD_GET, '/settings/api-tokens');
+        self::assertResponseRedirects();
+
+        $this->client->followRedirect();
+
+        $this->assertStatusCode(200);
+        $html = $this->client->getResponse()->getContent();
+        self::assertIsString($html);
+        self::assertStringContainsString('id="login"', $html, 'the remembered user must reach the login form to step up');
+    }
+
+    public function testLoginPageBouncesFullyAuthenticatedUsersToStart(): void
+    {
+        $this->loginWithRememberMe();
+
+        // A full-fledged login has nothing to do on /login — the pre-#587
+        // redirect to the start page must survive the step-up fix.
+        $this->client->request(Request::METHOD_GET, '/login');
+
+        self::assertResponseRedirects('/');
+    }
+
     public function testRememberedAdminCannotImpersonateWithoutFullLogin(): void
     {
         $rememberMe = $this->loginWithRememberMe();

@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Contracts\Service\Attribute\Required;
 use Twig\Error\LoaderError;
@@ -54,8 +53,12 @@ class SecurityController extends AbstractController
      */
     public function login(): Response
     {
-        // If user is already authenticated, redirect to start page
-        if ($this->getUser() instanceof UserInterface) {
+        // Only a full-fledged login has nothing to do here — send it to the
+        // start page. A session resumed from the REMEMBERME cookie must fall
+        // through to the form: the security entry point sends it here to step
+        // up when an IS_AUTHENTICATED_FULLY endpoint denies it (#587), and
+        // bouncing it away would make every such endpoint a dead end.
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
             return $this->redirectToRoute('_start');
         }
 
