@@ -1,7 +1,7 @@
-import { createSignal, Show } from 'solid-js'
+import { createEffect, createResource, createSignal, Show } from 'solid-js'
 
 import { apiErrorMessage } from '../../api/client'
-import { patchSettings } from '../../api/settings'
+import { fetchSettings, patchSettings } from '../../api/settings'
 import { appConfig } from '../../config'
 import { m } from '../../paraglide/messages.js'
 
@@ -19,6 +19,17 @@ export function PersonioOptIn() {
 
     return current.kind === 'error' ? current.message : ''
   }
+
+  // Hydrate from the server on mount: the APP_CONFIG snapshot can be stale after
+  // a save (the Sync section remounts lazily). Only apply the fetched value
+  // while idle, so it never clobbers an in-flight or just-completed local toggle.
+  const [remote] = createResource(fetchSettings)
+  createEffect(() => {
+    const data = remote.latest
+    if (data !== undefined && status().kind === 'idle') {
+      setEnabled(data.personio_sync_enabled)
+    }
+  })
 
   async function toggle(next: boolean) {
     const previous = enabled()

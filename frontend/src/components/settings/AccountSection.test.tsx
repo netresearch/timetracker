@@ -3,13 +3,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AccountSection } from './AccountSection'
 
-// Only the write path is mocked: the payload shape is the contract with
-// PATCH /api/v2/settings. window.APP_CONFIG comes from src/test/setup.ts.
+// The settings API is mocked: patchSettings' payload shape is the write
+// contract, fetchSettings is the on-mount hydration read. window.APP_CONFIG
+// comes from src/test/setup.ts.
 const patchSettings = vi.hoisted(() => vi.fn())
-vi.mock('../../api/settings', () => ({ patchSettings }))
+const fetchSettings = vi.hoisted(() => vi.fn())
+vi.mock('../../api/settings', () => ({ fetchSettings, patchSettings }))
 
 beforeEach(() => {
   patchSettings.mockReset()
+  fetchSettings.mockReset()
+  // Default: GET echoes the APP_CONFIG snapshot, so hydration is a no-op unless
+  // a test overrides it.
+  fetchSettings.mockResolvedValue({
+    locale: window.APP_CONFIG!.locale,
+    show_empty_line: window.APP_CONFIG!.showEmptyLine,
+    suggest_time: window.APP_CONFIG!.suggestTime,
+    show_future: window.APP_CONFIG!.showFuture,
+    min_entry_duration: window.APP_CONFIG!.minEntryDuration,
+    personio_sync_enabled: window.APP_CONFIG!.personioSyncEnabled,
+  })
 })
 
 afterEach(() => {
@@ -43,6 +56,28 @@ describe('AccountSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /save|speichern/i }))
 
     await waitFor(() => expect(reload).toHaveBeenCalled())
+  })
+
+  it('hydrates the form from GET /api/v2/settings after mount', async () => {
+    // The server holds values that differ from the APP_CONFIG snapshot (which is
+    // all-false / 5): after the GET resolves the inputs reflect the persisted
+    // state, not the stale pre-fetch defaults.
+    fetchSettings.mockResolvedValue({
+      locale: 'en',
+      show_empty_line: true,
+      suggest_time: true,
+      show_future: true,
+      min_entry_duration: 30,
+      personio_sync_enabled: false,
+    })
+    const { container } = render(() => <AccountSection />)
+
+    const showFuture = container.querySelector('input[name="show_future"]') as HTMLInputElement
+    // Pre-fetch it is unchecked (APP_CONFIG default); the GET flips it on.
+    expect(showFuture.checked).toBe(false)
+    await waitFor(() => expect(showFuture.checked).toBe(true))
+    expect((container.querySelector('input[name="suggest_time"]') as HTMLInputElement).checked).toBe(true)
+    expect(container.querySelector('input[name="min_entry_duration"]')).toHaveValue(30)
   })
 
   it('offers exactly the locales the UI ships translations for', () => {

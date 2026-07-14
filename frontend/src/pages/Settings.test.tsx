@@ -1,8 +1,23 @@
 import { cleanup, within } from '@solidjs/testing-library'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { renderWithProviders } from '../test/renderWithProviders'
 import Settings from './Settings'
+
+// The Account section hydrates from GET /api/v2/settings on mount; stub the
+// settings API so the shell tests never touch the network (the echo matches the
+// APP_CONFIG snapshot, so hydration is a no-op here).
+vi.mock('../api/settings', () => ({
+  fetchSettings: vi.fn().mockResolvedValue({
+    locale: 'en',
+    show_empty_line: false,
+    suggest_time: false,
+    show_future: false,
+    min_entry_duration: 5,
+    personio_sync_enabled: false,
+  }),
+  patchSettings: vi.fn(),
+}))
 
 // The shell resolves the section from the route, so it mounts under a router
 // with the optional :section param (the Admin.test.tsx pattern). Per-section

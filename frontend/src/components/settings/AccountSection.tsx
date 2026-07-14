@@ -1,8 +1,8 @@
-import { createSignal, For, Show } from 'solid-js'
+import { createMemo, createResource, createSignal, For, Show } from 'solid-js'
 
 import { apiErrorMessage } from '../../api/client'
-import { patchSettings } from '../../api/settings'
-import { appConfig, type AppConfig } from '../../config'
+import { fetchSettings, patchSettings } from '../../api/settings'
+import { appConfig } from '../../config'
 import { HelpPopover } from '../HelpPopover'
 import { m } from '../../paraglide/messages.js'
 
@@ -21,13 +21,12 @@ const LANGUAGES = [
 interface BoolSetting {
   name: 'show_empty_line' | 'suggest_time' | 'show_future'
   label: () => string
-  initial: (c: AppConfig) => boolean
 }
 
 const BOOL_SETTINGS: BoolSetting[] = [
-  { name: 'show_empty_line', label: () => m.settings_show_empty_line(), initial: (c) => c.showEmptyLine },
-  { name: 'suggest_time', label: () => m.settings_suggest_time(), initial: (c) => c.suggestTime },
-  { name: 'show_future', label: () => m.settings_show_future(), initial: (c) => c.showFuture },
+  { name: 'show_empty_line', label: () => m.settings_show_empty_line() },
+  { name: 'suggest_time', label: () => m.settings_suggest_time() },
+  { name: 'show_future', label: () => m.settings_show_future() },
 ]
 
 type Status = { kind: 'idle' | 'saving' } | { kind: 'ok' } | { kind: 'error'; message: string }
@@ -36,6 +35,23 @@ type Status = { kind: 'idle' | 'saving' } | { kind: 'ok' } | { kind: 'error'; me
  *  applied on every device. The only settings section with a Save button. */
 export function AccountSection() {
   const config = appConfig()
+  // Hydrate from the server on mount: the page-load APP_CONFIG snapshot can be
+  // stale after a save (sections remount lazily, so switching away and back
+  // would otherwise show pre-save values). APP_CONFIG is the pre-fetch (and
+  // on-error) default; `.latest` stays undefined until GET /api/v2/settings
+  // resolves, so a failed fetch degrades to the snapshot instead of throwing.
+  const [remote] = createResource(fetchSettings)
+  const values = createMemo(() => {
+    const s = remote.latest
+
+    return {
+      locale: s?.locale ?? config.locale,
+      show_empty_line: s?.show_empty_line ?? config.showEmptyLine,
+      suggest_time: s?.suggest_time ?? config.suggestTime,
+      show_future: s?.show_future ?? config.showFuture,
+      min_entry_duration: s?.min_entry_duration ?? config.minEntryDuration,
+    }
+  })
   const [status, setStatus] = createSignal<Status>({ kind: 'idle' })
   const statusMessage = () => {
     const current = status()
@@ -81,7 +97,7 @@ export function AccountSection() {
 
         <label class="field">
           <span>{m.settings_language()}</span>
-          <select name="locale" value={config.locale}>
+          <select name="locale" value={values().locale}>
             <For each={LANGUAGES}>
               {(lang) => <option value={lang.value}>{lang.label}</option>}
             </For>
@@ -91,7 +107,7 @@ export function AccountSection() {
         <For each={BOOL_SETTINGS}>
           {(setting) => (
             <label class="field-check">
-              <input type="checkbox" name={setting.name} checked={setting.initial(config)} />
+              <input type="checkbox" name={setting.name} checked={values()[setting.name]} />
               <span>{setting.label()}</span>
             </label>
           )}
@@ -105,7 +121,7 @@ export function AccountSection() {
             <label for="settings-min-entry-duration">{m.settings_min_entry_duration()}</label>
             <HelpPopover topic={m.settings_min_entry_duration()}>{m.settings_help_min_duration()}</HelpPopover>
           </span>
-          <input id="settings-min-entry-duration" type="number" name="min_entry_duration" min="0" max="1440" step="5" value={config.minEntryDuration} />
+          <input id="settings-min-entry-duration" type="number" name="min_entry_duration" min="0" max="1440" step="5" value={values().min_entry_duration} />
           <small class="field-hint">{m.settings_min_entry_duration_hint()}</small>
         </div>
       </fieldset>
