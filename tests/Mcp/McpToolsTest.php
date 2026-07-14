@@ -40,6 +40,7 @@ use App\Mcp\Tool\OnboardCustomerTool;
 use App\Mcp\Tool\OnboardProjectTool;
 use App\Mcp\Tool\OnboardUserTool;
 use App\Mcp\Tool\ResolveSyncConflictTool;
+use App\Mcp\Tool\RunPersonioSyncTool;
 use App\Mcp\Tool\SaveContractTool;
 use App\Mcp\Tool\SaveTeamTool;
 use App\Mcp\Tool\SaveTicketSystemTool;
@@ -52,6 +53,7 @@ use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
 use App\Security\ApiToken\ApiAccessToken;
+use App\Service\Personio\AttendanceExportService;
 use App\Service\Sync\ConflictResolutionService;
 use App\Service\Sync\VerifyWorklogsService;
 use App\ValueObject\Sync\ResolutionResult;
@@ -434,6 +436,7 @@ final class McpToolsTest extends AbstractWebTestCase
             'onboard_project' => $container->get(OnboardProjectTool::class)->onboardProject(name: 'Guard Project', customer: '1'),
             'onboard_user' => $container->get(OnboardUserTool::class)->onboardUser(username: 'guard.user', abbr: 'GRD', teamIds: [1]),
             'resolve_sync_conflict' => $container->get(ResolveSyncConflictTool::class)->resolveSyncConflict((int) $syncState->getId(), 'local'),
+            'run_personio_sync' => $container->get(RunPersonioSyncTool::class)->runPersonioSync('export'),
             'save_contract' => $container->get(SaveContractTool::class)->saveContract(user: 'noContract', start: '2020-01-01', end: '2020-12-31'),
             'save_team' => $container->get(SaveTeamTool::class)->saveTeam(name: 'Guard-Team', leadUser: 'unittest'),
             'save_ticketsystem' => $container->get(SaveTicketSystemTool::class)->saveTicketSystem(name: 'Guard-TS', type: 'JIRA'),
@@ -458,7 +461,7 @@ final class McpToolsTest extends AbstractWebTestCase
 
     /**
      * A persisted run + parked conflict state for the sync tools, with the
-     * Jira-touching services mocked in the container (ADR-023 §6).
+     * Jira- and Personio-touching services mocked in the container (ADR-023 §6).
      *
      * @return array{SyncRun, WorklogSyncState}
      */
@@ -518,6 +521,17 @@ final class McpToolsTest extends AbstractWebTestCase
         $resolutionStub = self::createStub(ConflictResolutionService::class);
         $resolutionStub->method('resolve')->willReturn(new ResolutionResult(true, 'pushed_local'));
         $container->set(ConflictResolutionService::class, $resolutionStub);
+
+        $exportStub = self::createStub(AttendanceExportService::class);
+        $exportStub->method('exportUser')->willReturn(
+            new SyncRun()
+                ->setType(SyncRunType::PERSONIO_EXPORT)
+                ->setStatus(SyncRunStatus::COMPLETED)
+                ->setTriggeredBy($unittest)
+                ->setCounters([])
+                ->setStartedAt(new DateTimeImmutable('2026-07-09 11:00:00')),
+        );
+        $container->set(AttendanceExportService::class, $exportStub);
 
         return [$syncRun, $syncState];
     }
