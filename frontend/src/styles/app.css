@@ -847,18 +847,18 @@ main:has(.tracking) {
     gap: 0.3rem 1.2rem;
   }
 
-  /* Every control and hint stacks in the control column; only the label <span>
+  /* Every control stacks in the control column; only the label <span>
      stays in column 1. Without pinning, a field's SECOND control — e.g. the
      custom date-format <input> that appears after the <select> — would be
      auto-placed into the narrow label column and break the row alignment. */
   .stack-form .field > input:not([type='checkbox']):not([type='radio']),
   .stack-form .field > select,
-  .stack-form .field > textarea,
-  .stack-form .field > .field-hint {
+  .stack-form .field > textarea {
     grid-column: 2;
   }
 
   .stack-form .field > .field-hint {
+    grid-column: 1 / -1;
     margin: 0.15em 0 0;
   }
 
@@ -937,6 +937,7 @@ main:has(.tracking) {
   display: flex;
   flex-direction: row;
   gap: 2rem;
+  max-width: 60rem;
 }
 
 .settings-nav {
@@ -3598,17 +3599,23 @@ th[aria-sort='descending'] .th-sort-glyph {
   padding: 0 10px;
 }
 
-/* Strip ambient helper UI: context help, field hints, the ⓘ help buttons and the
+/* Strip ambient helper UI: worklog context help, the admin intro and the
    worklog colour + icon legends (the icon legend also carries .tracking-legend).
    The on-demand Help page and the keyboard-shortcuts dialog are unaffected. */
 :root[data-density='ultra-compact'] .tracking-hint,
-:root[data-density='ultra-compact'] .field-hint,
-:root[data-density='ultra-compact'] .settings-section-hint,
-:root[data-density='ultra-compact'] .field-help,
 :root[data-density='ultra-compact'] .admin-intro,
 :root[data-density='ultra-compact'] .tracking-legend {
   display: none;
 }
+
+/* Density is a table/nav affordance — settings + dialogs keep comfortable
+   controls and their help text at every density. */
+:root[data-density] :is(.settings-page,.modal) .field input:not([type='checkbox']):not([type='radio']),
+:root[data-density] :is(.settings-page,.modal) .field select,
+:root[data-density] :is(.settings-page,.modal) :is(.link-button,.action-button,.primary-button,.days-combo-toggle){ min-height:44px; }
+:root[data-density] :is(.settings-page,.modal) .primary-button{ padding:0 1.2rem; }
+:root[data-density] :is(.settings-page,.modal) .days-combo-toggle{ width:auto; }
+:root[data-density='ultra-compact'] :is(.settings-page,.modal) :is(.field-hint,.settings-section-hint,.field-help){ display:revert; }
 
 /* Sidebar chrome (collapse / resize / reopen) is hidden by default — it only
    applies in the left-sidebar layout (shown in the media query below). */
