@@ -6,11 +6,12 @@ import { ApiTokenControls } from '../ApiTokenControls'
 export function TokensSection() {
   return (
     <div class="stack-form">
-      {/* One h2 per settings section so the page outline is h1 → h2;
-          visually-hidden because the fieldset legend already shows the title. */}
-      <h2 class="visually-hidden">{m.settings_apitoken_heading()}</h2>
+      {/* One h2 per settings section so the page outline is h1 → h2.
+          The h2 lives INSIDE the legend: a single text node serves both the
+          outline and the group name, so screen readers don't announce the
+          title twice (hidden heading + identically-named legend). */}
       <fieldset class="settings-group">
-        <legend>{m.settings_apitoken_heading()}</legend>
+        <legend><h2>{m.settings_apitoken_heading()}</h2></legend>
         <ApiTokenControls />
       </fieldset>
     </div>

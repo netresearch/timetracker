@@ -912,6 +912,15 @@ main:has(.tracking) {
   padding: 0;
 }
 
+/* The section heading sits INSIDE the legend (one text node names the group
+   AND enters the h1 → h2 outline), so it adopts the legend's styling rather
+   than the .form-page h2 page-title look. */
+.settings-group > legend > h2 {
+  font: inherit;
+  letter-spacing: inherit;
+  margin: 0;
+}
+
 /* One-line answer to "when do these settings apply?", under the title. */
 .settings-section-hint {
   color: var(--color-text-muted);

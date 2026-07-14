@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe } from 'vitest-axe'
 
 import { AccountSection } from './AccountSection'
 
@@ -116,10 +117,13 @@ describe('AccountSection', () => {
     expect(values).toEqual(['de', 'en', 'es', 'fr', 'ru'])
   })
 
-  it('renders as a labeled group whose fields the save form submits', () => {
-    const { getByRole, getByText } = render(() => <AccountSection />)
+  it('renders as a labeled group whose fields the save form submits', async () => {
+    const { container, getByRole, getByText } = render(() => <AccountSection />)
 
     const account = getByRole('group', { name: 'Account' })
+    // The h2 lives inside the legend: the same node names the group and enters
+    // the page outline, so the title is announced once, not twice.
+    expect(getByRole('heading', { level: 2, name: 'Account' })).toBeInTheDocument()
     // The section states its save semantics right under the title.
     expect(getByText(/press Save to apply/)).toBeInTheDocument()
 
@@ -135,5 +139,7 @@ describe('AccountSection', () => {
     expect(form.querySelector('button[type="submit"]')).not.toBeNull()
     // The Personio opt-in moved to the Sync section — not part of this form.
     expect(form.querySelector('input[name="personio_sync_enabled"]')).toBeNull()
+
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

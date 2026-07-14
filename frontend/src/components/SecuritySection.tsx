@@ -35,11 +35,12 @@ export function SecuritySection(): JSX.Element {
   return (
     <div class="stack-form">
       {/* One h2 per settings section so the sub-headings (Passkeys, 2FA, …) nest
-          under an h2 rather than skipping h1 → h3; visually-hidden because the
-          fieldset legend already shows the title. */}
-      <h2 class="visually-hidden">{m.settings_section_security()}</h2>
+          under an h2 rather than skipping h1 → h3. The h2 lives INSIDE the
+          legend: a single text node serves both the outline and the group name,
+          so screen readers don't announce the title twice (hidden heading +
+          identically-named legend). */}
       <fieldset class="settings-group">
-        <legend>{m.settings_section_security()}</legend>
+        <legend><h2>{m.settings_section_security()}</h2></legend>
         <p class="settings-section-hint">{m.settings_section_security_hint()}</p>
 
         <TwoFactorControls initiallyEnabled={config.totpEnabled} />
