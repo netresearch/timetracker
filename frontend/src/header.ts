@@ -229,10 +229,13 @@ export function wireWorktimeDetail(): void {
   })
 }
 
-// Monotonic ticket for updateWorktime: with several triggers (init, mutations,
+// Monotonic tickets for updateWorktime: with several triggers (init, mutations,
 // refocus, the status poll) two fetches can be in flight at once, and responses
-// may return out of order — only the latest-started fetch may paint.
+// may return out of order — a response paints only if it is newer than the one
+// on screen. Comparing against the last PAINTED (not last started) fetch keeps
+// an older successful response usable when a newer fetch failed.
 let worktimeFetchSeq = 0
+let worktimePaintedSeq = 0
 
 // Exported so the SolidJS worklog can refresh the header's today/week/month
 // totals right after it saves, edits or deletes an entry — otherwise the header
@@ -241,9 +244,10 @@ export async function updateWorktime(): Promise<void> {
   const seq = ++worktimeFetchSeq
   try {
     const summary = await getJson<TimeBalance>('/api/v2/time-balance')
-    if (seq !== worktimeFetchSeq) {
-      return // a newer refresh started meanwhile; its response paints
+    if (seq <= worktimePaintedSeq) {
+      return // a newer response already painted; don't overwrite it
     }
+    worktimePaintedSeq = seq
     setText('worktime-day', formatDuration(summary.today.ist))
     setText('worktime-week', formatDuration(summary.week.ist))
     // Month shows person-days only; the hours stay in the title for reference.

@@ -139,6 +139,33 @@ describe('updateWorktime', () => {
     expect(document.getElementById('worktime-day')?.textContent).toBe('7:45')
   })
 
+  it('paints an older successful response when the newer fetch failed', async () => {
+    renderWorktime()
+    const period = { soll_total: 480, soll_so_far: 480, diff: 0, status: 'ok' as const }
+    const balance = (ist: number) => ({
+      today: { ...period, ist },
+      week: { ...period, ist },
+      month: { ...period, ist },
+      warnings: [],
+    })
+    // First call resolves LATE but successfully; the second (newer) call fails.
+    // The older data is still fresher than what's on screen, so it paints.
+    let releaseOlder: (() => void) | undefined
+    vi.mocked(getJson)
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        releaseOlder = () => resolve(balance(465))
+      }))
+      .mockRejectedValueOnce(new Error('boom'))
+
+    const older = updateWorktime()
+    const newer = updateWorktime()
+    await newer
+
+    releaseOlder?.()
+    await older
+    expect(document.getElementById('worktime-day')?.textContent).toBe('7:45')
+  })
+
   it('leaves a period neutral when its SOLL so far is zero (weekend/holiday)', async () => {
     renderWorktime()
     vi.mocked(getJson).mockResolvedValue({
