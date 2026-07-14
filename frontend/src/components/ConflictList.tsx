@@ -2,9 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
-import { ENTRIES_KEY } from '../api/queries'
+import { refreshEntriesAndWorktime } from '../api/queries'
 import { resolveConflict, syncConflictsQuery, worklogSyncKeys, type SyncConflict } from '../api/worklogSync'
-import { updateWorktime } from '../header'
 import { m } from '../paraglide/messages.js'
 
 // Jira reports remote effort in seconds; the local entry stores minutes, so the
@@ -44,8 +43,7 @@ export function ConflictList(props: { user?: string } = {}): JSX.Element {
       // Either resolution can change local entries (keeping the remote side
       // rewrites or deletes one) — refresh the worklog grid and the header
       // day/week/month totals, which don't observe the entries cache (#620).
-      void queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] })
-      void updateWorktime()
+      void refreshEntriesAndWorktime(queryClient)
     } catch (caught) {
       setError(apiErrorMessage(caught, m.worklogsync_resolve_error()))
     } finally {
