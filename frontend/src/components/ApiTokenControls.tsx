@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { createResource, createSignal, For, Show, type JSX } from 'solid-js'
+import { createMemo, createResource, createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
 import { formatUserDate } from '../lib/dateFormat'
@@ -183,8 +183,9 @@ export function ApiTokenControls(): JSX.Element {
     setWildcard(false)
   }
 
-  /** The preset whose exact scope set the current selection matches, if any. */
-  const activePreset = (): string | null => {
+  /** The preset whose exact scope set the current selection matches, if any.
+   *  Memoised so the per-button aria-pressed reads don't recompute it 4×. */
+  const activePreset = createMemo((): string | null => {
     if (wildcard()) {
       return null
     }
@@ -199,7 +200,7 @@ export function ApiTokenControls(): JSX.Element {
       }
     }
     return null
-  }
+  })
 
   function resetForm(): void {
     setName('')
@@ -353,21 +354,22 @@ export function ApiTokenControls(): JSX.Element {
           {/* Convenience presets: each click sets an exact scope set (narrowed to
               what the server advertises) and turns wildcard off; the user can then
               tweak individual checkboxes. aria-pressed marks the matching preset. */}
-          <div class="apitoken-presets" role="group" aria-label={m.settings_apitoken_presets_label()}>
-            <span class="field-hint apitoken-presets-label">{m.settings_apitoken_presets_label()}</span>
+          <fieldset class="apitoken-presets">
+            <legend class="field-hint apitoken-presets-label">{m.settings_apitoken_presets_label()}</legend>
             <For each={SCOPE_PRESETS}>
               {(preset) => (
                 <button
                   type="button"
                   class="ghost-button apitoken-preset"
                   aria-pressed={activePreset() === preset.id}
+                  disabled={data() === undefined}
                   onClick={() => applyPreset(preset)}
                 >
                   {preset.label()}
                 </button>
               )}
             </For>
-          </div>
+          </fieldset>
 
           <label class="apitoken-wildcard">
             <input

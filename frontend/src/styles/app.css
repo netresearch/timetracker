@@ -1259,6 +1259,21 @@ main:has(.tracking) {
   padding: 0;
   font-weight: 600;
 }
+/* A fieldset (native group) reset to a plain wrap row: the legend labels the
+   preset buttons for assistive tech without the default border/box. */
+.apitoken-presets {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.apitoken-presets > .apitoken-presets-label {
+  margin: 0;
+}
 .apitoken-wildcard {
   display: flex;
   align-items: start;
