@@ -78,6 +78,14 @@ function renderTracking() {
   return renderWithProviders(() => <Tracking />)
 }
 
+// d/m/Y for a Date — the grid's row date format (the clock is frozen in
+// beforeEach, so "today"/"tomorrow" are deterministic).
+function dmy(date: Date): string {
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
+}
+const todayDmy = (): string => dmy(new Date())
+const tomorrowDmy = (): string => dmy(new Date(Date.now() + 24 * 60 * 60 * 1000))
+
 beforeEach(() => {
   setDateFormat({ mode: 'iso', pattern: 'DD.MM.YYYY' })
   // Freeze the clock (Date only — leave setTimeout/Interval real so waitFor still
@@ -1010,9 +1018,7 @@ describe('Tracking (Worklog grid)', () => {
   it('Add inherits the latest end only when the latest entry is from today (suggest-time on)', async () => {
     window.APP_CONFIG!.suggestTime = true
     try {
-      const now = new Date()
-      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
-      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }])
       const { getByRole, container, unmount } = renderTracking()
       await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
@@ -1164,20 +1170,20 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('Add pre-fills the end time to start + the configured minimum (suggest-time on)', async () => {
+  it('Add pre-fills the end to now when the suggested span lies in the past (suggest-time on, #588)', async () => {
     window.APP_CONFIG!.suggestTime = true
     window.APP_CONFIG!.minEntryDuration = 15
     try {
-      const now = new Date()
-      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
-      // Latest entry from today ends 10:30 → start inherits 10:30 → end = 10:30 + 15 = 10:45.
-      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      // Latest entry from today ends 10:30 → start inherits 10:30. The frozen clock
+      // reads 12:00 (past the start), so end = max(now, start + 15) = 12:00 — the
+      // v4-parity "previous end → now" span (#588).
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }])
       const { getByRole, container, unmount } = renderTracking()
       await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
       fireEvent.click(getByRole('button', { name: 'Add entry' }))
       await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
-      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('10:45')
+      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('12:00')
 
       unmount()
     } finally {
@@ -1186,39 +1192,102 @@ describe('Tracking (Worklog grid)', () => {
     }
   })
 
+  it('Add keeps end = start + minimum when the suggested start is not in the past (suggest-time on)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      // Today's last entry ends 13:30 — after the frozen 12:00 clock — so the
+      // "extend to now" rule must not fire: end stays start + minimum.
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), start: '13:00', end: '13:30', class: 0 } }])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('13:30'))
+      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('13:45')
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
+  it('Add with a zero minimum still pre-fills the end to now (suggest-time on, #588)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 0
+    try {
+      // minEntryDuration=0 degrades to end = max(now, start): the frozen 12:00 is
+      // past the inherited 10:30 start, so the end still pre-fills to now.
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
+      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('12:00')
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
+  it('Add continues from today\'s last end even when a future-dated entry sorts above it (suggest-time on)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    try {
+      // With show-future, a future-dated entry is the newest in the list — but the
+      // start must continue from the TARGET day's (today's) last end, not from a
+      // day the entry isn't added to.
+      mockApiWith([
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: tomorrowDmy(), start: '09:00', end: '09:30', class: 0 } },
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: todayDmy(), end: '10:30', class: 0 } },
+      ])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: '10:30' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+    }
+  })
+
   it('Continue saves the pre-filled entry on commit even though nothing was edited (#495)', async () => {
     window.APP_CONFIG!.suggestTime = true
     window.APP_CONFIG!.minEntryDuration = 15
     try {
-      const now = new Date()
-      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
-      // A saved entry from today ending 10:30 → Continue seeds start 10:30, end 10:45.
-      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      // A saved entry from today ending 10:30 → Continue seeds start 10:30 and
+      // end max(now, 10:45) = 12:00 (frozen clock).
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }])
       postJson.mockResolvedValue({})
       const { getByRole, container, unmount } = renderTracking()
       await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
       // Continue → a new row pre-filled with the source's customer/project/activity/
-      // ticket, start inherited (10:30) and end = start + 15 (10:45). Its draft equals
-      // its seed (nothing edited) — the case that used to be dropped as a no-op.
+      // ticket/description and suggested times. Editing starts in the DESCRIPTION
+      // column (#588) — the one field a continued entry usually changes; everything
+      // else is inherited. The draft equals its seed (nothing edited) — the case
+      // that used to be dropped as a no-op.
       fireEvent.click(getByRole('button', { name: 'Continue' }))
-      const startInput = await waitFor(() => {
-        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="start"] input')
-        if (el === null) throw new Error('start editor not open on the Continue row')
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
 
         return el
       })
-      expect(startInput.value).toBe('10:30')
+      expect(descInput.value).toBe('Work')
 
-      // Commit the start cell with its seeded value unchanged — the draft still
-      // equals its seed (the #495 case), and the complete new row must SAVE.
-      fireEvent.input(startInput, { target: { value: '10:30' } })
-      fireEvent.keyDown(startInput, { key: 'Enter' })
-
+      // Commit the description cell with its seeded value unchanged — the draft
+      // still equals its seed (the #495 case), and the complete new row must SAVE.
+      fireEvent.keyDown(descInput, { key: 'Enter' })
 
       await waitFor(() =>
         expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({
-          customer: 1, project: 4, activity: 5, ticket: 'ABC-1', start: '10:30', end: '10:45',
+          customer: 1, project: 4, activity: 5, ticket: 'ABC-1', start: '10:30', end: '12:00',
         })),
       )
       // A brand-new entry carries no id in the save payload.

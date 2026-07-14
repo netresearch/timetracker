@@ -149,6 +149,26 @@ function nowHi(): string {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
+// End prefill for a fresh row (#588, v4 parity): when the target day is today
+// and the wall clock is already past the start, suggest max(now, start + the
+// minimum) — the "previous end → now" span a user expects when booking right
+// after finishing the work. That span deliberately covers unbooked gaps (e.g.
+// lunch); both times are visibly prefilled and editable. Otherwise (start not
+// in the past) keep the fixed start + minimum, blank when the minimum is 0 —
+// the pre-#588 behaviour. Zero-padded H:i strings compare chronologically.
+function suggestedEnd(start: string, isToday: boolean, minMinutes: number): string {
+  const minEnd = minMinutes > 0 ? addMinutes(start, minMinutes) : ''
+  if (!isToday) {
+    return minEnd
+  }
+  const now = nowHi()
+  if (now <= start) {
+    return minEnd
+  }
+
+  return minEnd > now ? minEnd : now
+}
+
 // Add minutes to an H:i time, capped at 23:59 (a single entry can't cross midnight).
 function addMinutes(hi: string, mins: number): string {
   const [hh, mm] = hi.split(':')
@@ -620,16 +640,18 @@ export default function Tracking() {
     }
   }
 
-  // Suggested start for a fresh row / empty start cell: continue from the latest
-  // entry's end ONLY if that entry is from TODAY; otherwise a fresh day starts at
-  // the current wall-clock time, not yesterday's (or older) last end.
+  // Suggested start for a fresh row / empty start cell: continue from the end of
+  // the chronologically last entry OF THE TARGET DAY — the day the row is added
+  // to, which is always today for Add/Continue (#588). Entries are sorted
+  // newest-first by date+start, so the first entry dated today is that day's
+  // last one; a future-dated entry (show-future) sorting above it must not
+  // shadow it. The FIRST entry of a day keeps the previous behaviour and starts
+  // at the current wall-clock time, not an older day's last end.
   const suggestedStart = (): string => {
-    const latest = (entries.data ?? [])[0]
-    if (latest !== undefined && dmyToIso(str(latest.date)) === dmyToIso(todayDmy())) {
-      return str(latest.end) || nowHi()
-    }
+    const todayIso = dmyToIso(todayDmy())
+    const lastOfDay = (entries.data ?? []).find((entry) => dmyToIso(str(entry.date)) === todayIso)
 
-    return nowHi()
+    return lastOfDay !== undefined ? (str(lastOfDay.end) || nowHi()) : nowHi()
   }
 
   // On commit: ticket → derive project/customer; customer change → clear a now-
@@ -693,18 +715,18 @@ export default function Tracking() {
       return field !== undefined && INLINE_TYPES.has(field.type)
     },
     seedDraft: (entry) => {
-      // A fresh row prefills start with the suggested start, then end with start +
-      // the per-user minimum (minEntryDuration minutes) — so a new entry opens with a
-      // sensible default span. Both respect the suggest-time opt-out; a 0 minimum (or
-      // an already-set value) leaves end blank.
+      // A fresh row prefills start with the suggested start (see suggestedStart),
+      // then end via suggestedEnd (max(now, start + minimum) for a today row whose
+      // start lies in the past; start + minimum otherwise — #588). Both respect
+      // the suggest-time opt-out; an already-set value always wins.
       const start = str(entry.start) || (appConfig().suggestTime ? suggestedStart() : '')
-      const minMinutes = appConfig().minEntryDuration
+      const isToday = toIsoDate(str(entry.date)) === dmyToIso(todayDmy())
 
       return {
         id: num(entry.id),
         date: toIsoDate(str(entry.date)),
         start,
-        end: str(entry.end) || (start !== '' && appConfig().suggestTime && minMinutes > 0 ? addMinutes(start, minMinutes) : ''),
+        end: str(entry.end) || (start !== '' && appConfig().suggestTime ? suggestedEnd(start, isToday, appConfig().minEntryDuration) : ''),
         ticket: str(entry.ticket),
         customer: num(entry.customer),
         project: num(entry.project),
@@ -1002,9 +1024,8 @@ export default function Tracking() {
     editor.beginEdit(num(row.id), firstCol)
   }
 
-  // Add (Alt+A): a blank entry. suggestedStart inherits the latest entry's end
-  // ONLY when that entry is from today; on a fresh day it starts at the current
-  // time, not yesterday's (or older) last end.
+  // Add (Alt+A): a blank entry. suggestedStart continues from the end of today's
+  // last entry; the first entry of a day starts at the current time.
   // Editing starts in the ticket column (#588): a ticket number is what most
   // users enter first, and it auto-derives customer/project via the prefix map.
   function addEntry(): void {
@@ -1012,7 +1033,10 @@ export default function Tracking() {
   }
 
   // Continue: clone the cursor row's (or, with no cursor, the latest entry's)
-  // customer/project/activity/ticket/description into a fresh blank-time row.
+  // customer/project/activity/ticket/description into a fresh row; the times are
+  // prefilled by seedDraft (suggest-time). Editing starts in the description
+  // column (#588): everything else is inherited from the continued entry, so the
+  // description is the one field a continued entry usually changes.
   function continueEntry(entry?: TrackingEntry): void {
     const source = entry ?? activeOrLatestEntry()
     if (source === undefined) {
@@ -1028,7 +1052,7 @@ export default function Tracking() {
         description: str(source.description),
         ticket: str(source.ticket),
       },
-      'start',
+      'description',
     )
   }
 
