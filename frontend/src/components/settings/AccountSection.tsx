@@ -133,7 +133,9 @@ export function AccountSection() {
           )}
         </For>
 
-        {/* Server setting: a new entry's end pre-fills to start + this many minutes.
+        {/* Server setting: the minimum span of a suggested entry — for today's
+            entries the end pre-fills to max(now, start + this many minutes),
+            for other days to start + N (#588).
             A <div class="field"> (not a wrapping <label>) so the help trigger sits
             beside — not inside — the label and can't focus the input on click. */}
         <div class="field">

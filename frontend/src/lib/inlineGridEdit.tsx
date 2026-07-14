@@ -740,6 +740,14 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       // fires only once a row is complete (no invalid fields), so a rejection
       // here is a genuine server error (overlap, inactive project) with no field
       // hint to explain it — staying silent would hide a real failure.
+      // Cancel an intent THIS call carried: its Enter-save failed, so a later
+      // unrelated flush that succeeds must not fire it and pull focus into this
+      // row's description editor. An intent parked by a SWALLOWED Enter-flush
+      // (savingRows guard) survives an unrelated save's failure on purpose —
+      // the immediate follow-up flush consumes it (in-flight resume test).
+      if (resumeEdit) {
+        resumePending.delete(id)
+      }
       setRowErrors(id, config.saveErrorMessage?.(caught) ?? m.app_load_error())
     } finally {
       setSavingRows(id, false)

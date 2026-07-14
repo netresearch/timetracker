@@ -1483,6 +1483,66 @@ describe('Tracking (Worklog grid)', () => {
     }
   })
 
+  it('a failed Enter-save leaves no stale resume intent for a later row-leave flush (#588)', async () => {
+    // The Enter-save itself fails; the user gives up and clicks a cell in a
+    // DIFFERENT row. The row-leave flush retries and persists the row — the
+    // success must not reopen an editor or yank focus (unlike the in-flight
+    // case above, where the intent came from a swallowed flush and the retry
+    // legitimately resumes). Pins the end-to-end invariant: in jsdom the rekey
+    // remount disposes the roving handle before the resume could fire, so this
+    // cannot discriminate the intent-cleanup in flushRow's catch specifically —
+    // that cleanup is belt-and-braces for timings where the handle survives.
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      const entriesList: unknown[] = [{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }]
+      mockTracking({
+        entries: entriesList,
+        customers: [{ customer: { id: 1, name: 'ACME' } }],
+        projects: [{ project: { id: 4, name: 'Site' } }],
+        activities: [{ activity: { id: 5, name: 'Dev' } }],
+      })
+      mockRekeyedSave(entriesList, {
+        id: 79, date: todayDmy(), start: '10:30', end: '12:00', user: 3, customer: 1, project: 4,
+        activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'ABC-1', description: 'Work',
+      })
+      // The once-implementation is consumed before mockRekeyedSave's default:
+      // the Enter-save POST rejects, every later POST persists + rekeys.
+      postJson.mockImplementationOnce(() => Promise.reject(new Error('overlap')))
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
+
+        return el
+      })
+      fireEvent.input(descInput, { target: { value: 'Work' } })
+      fireEvent.keyDown(descInput, { key: 'Enter' })
+      // The rejection settles within the microtasks before waitFor's next poll
+      // tick, so observing the call implies the catch (intent cleanup) ran.
+      await waitFor(() => expect(postJson).toHaveBeenCalledTimes(1))
+      await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).not.toBeNull())
+
+      // Give up: focus a cell in another row → row-leave flush retries, succeeds.
+      const otherCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')!
+      otherCell.focus()
+      await waitFor(() => expect(postJson).toHaveBeenCalledTimes(2))
+      await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).toBeNull())
+
+      // The stale intent must NOT fire: no editor reopens, focus stays put.
+      expect(document.querySelector('input.inline-editor')).toBeNull()
+      expect(document.activeElement).toBe(otherCell)
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
   it('gates the ticket link behind Ctrl/Cmd — a plain click is prevented (starts editing)', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],

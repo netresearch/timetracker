@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { loginIsolated } from './helpers/auth';
+import { installFrozenClock } from './helpers/clock';
 import { goToWorklogPage } from './helpers/navigation';
 import { cleanupWorklogEntries, createWorklogEntry, isSaveResponse, rowByStamp } from './helpers/worklog';
 
@@ -159,6 +160,11 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
   // the editor unmounted and focus was lost. The session must survive the save,
   // continuing in the description column of the persisted row.
   test('Enter-saving a new row via the activity select continues editing in description (#588)', async ({ page }) => {
+    // Freeze the BROWSER clock too (the server is already frozen): the suggest-
+    // time prefill runs on browser Date, and at a real 23:59 start==end would
+    // fail client-side validation before any POST — the awaited save response
+    // would then never arrive and the test would hang to timeout.
+    await installFrozenClock(page);
     const stamp = `e2e-${Date.now()}`;
     await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
 
@@ -185,20 +191,30 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     // The final Enter completes the row, so it saves (intended, unchanged) …
     const saved = page.waitForResponse(isSaveResponse);
     await arrowEnter(); // activity — the row is complete, Enter saves
-    await saved;
+    const savedResponse = await saved;
+    // The first save persists the row STILL UNSTAMPED (description is typed only
+    // after the resume). If anything below fails, afterEach's stamp-based cleanup
+    // would never match it — delete by the id from the save response instead.
+    const savedId = ((await savedResponse.json().catch(() => null)) as { result?: { id?: number } } | null)?.result?.id;
+    try {
+      // … and the edit session survives the save: the description editor is open on
+      // the persisted row (no unsaved rows remain), focused, immediately typeable.
+      const descEditor = page.locator('td[data-col-key="description"][data-inline-editing] input.inline-editor');
+      await expect(descEditor).toBeVisible();
+      await expect(descEditor).toBeFocused();
+      await expect(page.locator('tr.tracking-row.is-new')).toHaveCount(0);
 
-    // … and the edit session survives the save: the description editor is open on
-    // the persisted row (no unsaved rows remain), focused, immediately typeable.
-    const descEditor = page.locator('td[data-col-key="description"][data-inline-editing] input.inline-editor');
-    await expect(descEditor).toBeVisible();
-    await expect(descEditor).toBeFocused();
-    await expect(page.locator('tr.tracking-row.is-new')).toHaveCount(0);
-
-    const savedAgain = page.waitForResponse(isSaveResponse);
-    await page.keyboard.type(stamp);
-    await page.keyboard.press('Enter');
-    await savedAgain;
-    await expect(rowByStamp(page, stamp)).toBeVisible();
+      const savedAgain = page.waitForResponse(isSaveResponse);
+      await page.keyboard.type(stamp);
+      await page.keyboard.press('Enter');
+      await savedAgain;
+      await expect(rowByStamp(page, stamp)).toBeVisible();
+    } catch (caught) {
+      if (savedId !== undefined) {
+        await page.request.post('/tracking/delete', { form: { id: savedId } }).catch(() => undefined);
+      }
+      throw caught;
+    }
   });
 
   test('Enter committing a select editor keeps focus on a grid cell (no focus loss)', async ({ page }) => {
