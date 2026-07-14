@@ -720,26 +720,20 @@ describe('Tracking (Worklog grid)', () => {
 
     fireEvent.click(getByRole('button', { name: 'Add entry' }))
 
-    // Add opens the customer select; its search input is body-portalled, so the
-    // grid's focusin can't move the roving cell there — pushNewRow must reset it
-    // to the new row explicitly, else Shift+Tab walks from the header's first
-    // cell and lands on the "Datum" column heading (#588).
-    const input = await waitFor(() => {
-      const el = document.querySelector<HTMLInputElement>('.combobox-input')
-      expect(el).not.toBeNull()
+    // Add starts editing in the new row's TICKET cell (#588 suggestion 1: the
+    // ticket is what most users enter first, and it auto-derives customer and
+    // project) — and pushNewRow hands the row the keyboard cursor.
+    const ticketCell = container.querySelector<HTMLElement>('td[data-row-id="-1"][data-col-key="ticket"]')
+    const input = ticketCell?.querySelector<HTMLInputElement>('input')
+    expect(input).not.toBeNull()
+    expect(document.activeElement).toBe(input)
 
-      return el!
-    })
-    fireEvent.keyDown(input, { key: 'Tab', shiftKey: true })
-
-    // Shift+Tab commits and opens the previous editable cell's editor on the
-    // SAME row (ticket; extTicket is hidden) — never a column heading. The
-    // advance is rAF-deferred for select editors, so poll via waitFor.
-    await waitFor(() => {
-      const ticketCell = container.querySelector<HTMLElement>('td[data-row-id="-1"][data-col-key="ticket"]')
-      expect(ticketCell?.querySelector('input')).not.toBeNull()
-      expect(ticketCell?.contains(document.activeElement)).toBe(true)
-    })
+    // Shift+Tab opens the previous editable cell's editor on the SAME row
+    // (end) — never the "Datum" column heading the stale header cursor gave.
+    fireEvent.keyDown(input!, { key: 'Tab', shiftKey: true })
+    const endCell = container.querySelector<HTMLElement>('td[data-row-id="-1"][data-col-key="end"]')
+    expect(endCell?.querySelector('input')).not.toBeNull()
+    expect(endCell?.contains(document.activeElement)).toBe(true)
     expect(document.activeElement?.closest('th')).toBeNull()
 
     unmount()
@@ -1101,11 +1095,12 @@ describe('Tracking (Worklog grid)', () => {
       projects: [{ project: { id: 4, name: 'Site', customer: 1, active: true } }],
       activities: [{ activity: { id: 5, name: 'Dev' } }],
     })
-    const { getByRole, unmount } = renderTracking()
+    const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
-    // Add opens the customer picker on the new row.
+    // Add a row (editing starts in its ticket cell), then open its customer picker.
     fireEvent.click(getByRole('button', { name: 'Add entry' }))
+    editCell(container, 'customer')
     await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
     const labels = [...document.querySelectorAll('.combobox-content .combobox-item')].map((el) => el.textContent ?? '')
     expect(labels.some((label) => label.includes('ACME'))).toBe(true)

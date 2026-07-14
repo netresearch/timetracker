@@ -1005,8 +1005,10 @@ export default function Tracking() {
   // Add (Alt+A): a blank entry. suggestedStart inherits the latest entry's end
   // ONLY when that entry is from today; on a fresh day it starts at the current
   // time, not yesterday's (or older) last end.
+  // Editing starts in the ticket column (#588): a ticket number is what most
+  // users enter first, and it auto-derives customer/project via the prefix map.
   function addEntry(): void {
-    pushNewRow({ start: appConfig().suggestTime ? suggestedStart() : '' }, 'customer')
+    pushNewRow({ start: appConfig().suggestTime ? suggestedStart() : '' }, 'ticket')
   }
 
   // Continue: clone the cursor row's (or, with no cursor, the latest entry's)
