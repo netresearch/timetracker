@@ -318,9 +318,11 @@ The remaining sections save per action (no shared *Save* button):
   on your behalf. The secret is shown once at creation; existing tokens list
   their last use and can be revoked.
 - **Synchronization** — import your Jira worklogs (with a preview before
-  anything is written), choose whether the nightly sync mirrors your Jira
-  worklogs, and opt in to sending your working hours to Personio (available
-  once an administrator has configured the connection).
+  anything is written), choose per connected ticket system whether the
+  nightly sync mirrors your Jira worklogs (project leads and administrators
+  additionally see a *sync all* toggle that pushes every worklog their Jira
+  account can access), and opt in to sending your working hours to Personio
+  (available once an administrator has configured the connection).
 
 ## Theme, density and layout
 
