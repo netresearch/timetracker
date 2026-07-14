@@ -55,6 +55,9 @@ export function ChipSelect(props: {
 
   const [selected, setSelected] = createSignal<string[]>(initialValues())
   const [inputValue, setInputValue] = createSignal('')
+  // The listbox item the user arrowed/filtered to — mirrored from zag so Tab can
+  // accept it (zag only applies a highlight to the selection on Enter/click).
+  const [highlighted, setHighlighted] = createSignal<string | null>(null)
   // Seed to match `defaultOpen`: Ark enters the open state as the machine's initial
   // state without firing onOpenChange, so a signal seeded false would mis-read the
   // open list as closed and route the first Enter to commit-the-cell.
@@ -128,6 +131,22 @@ export function ChipSelect(props: {
     if (event.key === 'Tab') {
       event.preventDefault()
       event.stopPropagation()
+      // Tab accepts the highlighted option like Enter does (#588), then moves on
+      // as a left/right commit — which stays in the row's edit mode and defers
+      // the save to row-leave (see commitCell), so arrow+Tab in the last required
+      // column flows straight into the next cell instead of stranding the user.
+      // A freshly opened list has no highlight (autohighlight only fires on
+      // typing), so a plain Tab-walk across a filled cell commits it unchanged.
+      const pick = open() ? highlighted() : null
+      if (pick !== null) {
+        if (props.multiple) {
+          if (!selected().includes(pick)) {
+            setSelected([...selected(), pick])
+          }
+        } else {
+          setSelected(pick === CLEAR_VALUE ? [] : [pick])
+        }
+      }
       finish(event.shiftKey ? 'left' : 'right')
     } else if (event.key === 'Escape') {
       event.preventDefault()
@@ -243,6 +262,7 @@ export function ChipSelect(props: {
         }}
         inputValue={inputValue()}
         onInputValueChange={(details) => setInputValue(details.inputValue)}
+        onHighlightChange={(details) => setHighlighted(details.highlightedValue)}
         defaultOpen
         onOpenChange={(details) => {
           setOpen(details.open)
