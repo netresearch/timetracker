@@ -1,7 +1,7 @@
-import { createMemo, createResource, createSignal, For, Show } from 'solid-js'
+import { createEffect, createResource, createSignal, For, Show } from 'solid-js'
 
 import { apiErrorMessage } from '../../api/client'
-import { fetchSettings, patchSettings } from '../../api/settings'
+import { fetchSettings, patchSettings, type UserSettings } from '../../api/settings'
 import { appConfig } from '../../config'
 import { HelpPopover } from '../HelpPopover'
 import { m } from '../../paraglide/messages.js'
@@ -41,15 +41,30 @@ export function AccountSection() {
   // on-error) default; `.latest` stays undefined until GET /api/v2/settings
   // resolves, so a failed fetch degrades to the snapshot instead of throwing.
   const [remote] = createResource(fetchSettings)
-  const values = createMemo(() => {
+  // The form is uncontrolled (submit reads FormData); `values` only seeds each
+  // input's initial DOM value. Apply the fetched settings ONLY until the user
+  // touches a field, so a GET that resolves mid-edit can't overwrite an
+  // in-progress selection (mirrors PersonioOptIn's idle guard — here the analog
+  // of "not idle" is "the user has interacted", since editing this form doesn't
+  // change status until Save).
+  const [values, setValues] = createSignal<Omit<UserSettings, 'personio_sync_enabled'>>({
+    locale: config.locale,
+    show_empty_line: config.showEmptyLine,
+    suggest_time: config.suggestTime,
+    show_future: config.showFuture,
+    min_entry_duration: config.minEntryDuration,
+  })
+  const [touched, setTouched] = createSignal(false)
+  createEffect(() => {
     const s = remote.latest
-
-    return {
-      locale: s?.locale ?? config.locale,
-      show_empty_line: s?.show_empty_line ?? config.showEmptyLine,
-      suggest_time: s?.suggest_time ?? config.suggestTime,
-      show_future: s?.show_future ?? config.showFuture,
-      min_entry_duration: s?.min_entry_duration ?? config.minEntryDuration,
+    if (s !== undefined && !touched()) {
+      setValues({
+        locale: s.locale,
+        show_empty_line: s.show_empty_line,
+        suggest_time: s.suggest_time,
+        show_future: s.show_future,
+        min_entry_duration: s.min_entry_duration,
+      })
     }
   })
   const [status, setStatus] = createSignal<Status>({ kind: 'idle' })
@@ -90,7 +105,7 @@ export function AccountSection() {
   }
 
   return (
-    <form class="stack-form" onSubmit={(event) => void onSubmit(event)}>
+    <form class="stack-form" onInput={() => setTouched(true)} onSubmit={(event) => void onSubmit(event)}>
       {/* One h2 per settings section so the page outline is h1 → h2 (→ h3);
           visually-hidden because the fieldset legend already shows the title. */}
       <h2 class="visually-hidden">{m.settings_section_account()}</h2>

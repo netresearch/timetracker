@@ -80,6 +80,32 @@ describe('AccountSection', () => {
     expect(container.querySelector('input[name="min_entry_duration"]')).toHaveValue(30)
   })
 
+  it('keeps an edit made while the on-mount GET is still resolving', async () => {
+    // Server holds a locale ('fr') that differs from both the APP_CONFIG snapshot
+    // ('en') and the value the user is about to pick ('de').
+    fetchSettings.mockResolvedValue({
+      locale: 'fr',
+      show_empty_line: false,
+      suggest_time: false,
+      show_future: false,
+      min_entry_duration: 5,
+      personio_sync_enabled: false,
+    })
+    const { container } = render(() => <AccountSection />)
+
+    const select = container.querySelector('select[name="locale"]') as HTMLSelectElement
+    expect(select.value).toBe('en')
+
+    // The user changes the locale synchronously — i.e. before the resolved GET's
+    // microtask runs — during the hydration fetch window.
+    fireEvent.input(select, { target: { value: 'de' } })
+    expect(select.value).toBe('de')
+
+    // Once the GET resolves ('fr'), hydration must not clobber the user's choice.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(select.value).toBe('de')
+  })
+
   it('offers exactly the locales the UI ships translations for', () => {
     const { container } = render(() => <AccountSection />)
 
