@@ -106,6 +106,65 @@ describe('ApiTokenControls', () => {
     )
   })
 
+  it('applies a preset as exactly its scope set and marks it active', async () => {
+    listApiTokens.mockResolvedValue({ tokens: [], resources: ['entries', 'sync'], actions: ['read', 'write'], wildcard: '*' })
+    render(() => <ApiTokenControls />)
+    await waitFor(() => screen.getByLabelText('entries:read'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Jira sync' }))
+
+    // Jira-Sync = sync:read, sync:write, entries:read — exactly those, nothing else.
+    expect(screen.getByLabelText('sync:read')).toBeChecked()
+    expect(screen.getByLabelText('sync:write')).toBeChecked()
+    expect(screen.getByLabelText('entries:read')).toBeChecked()
+    expect(screen.getByLabelText('entries:write')).not.toBeChecked()
+
+    // The matching preset is flagged active; a non-matching one is not.
+    expect(screen.getByRole('button', { name: 'Jira sync' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Time tracking' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('derives the read-only preset from the server resource list', async () => {
+    listApiTokens.mockResolvedValue({
+      tokens: [],
+      resources: ['entries', 'projects', 'reporting'],
+      actions: ['read', 'write'],
+      wildcard: '*',
+    })
+    render(() => <ApiTokenControls />)
+    await waitFor(() => screen.getByLabelText('entries:read'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Read-only' }))
+
+    // Every resource's :read, no :write — derived, not hard-coded.
+    expect(screen.getByLabelText('entries:read')).toBeChecked()
+    expect(screen.getByLabelText('projects:read')).toBeChecked()
+    expect(screen.getByLabelText('reporting:read')).toBeChecked()
+    expect(screen.getByLabelText('entries:write')).not.toBeChecked()
+    expect(screen.getByLabelText('projects:write')).not.toBeChecked()
+    expect(screen.getByLabelText('reporting:write')).not.toBeChecked()
+  })
+
+  it('drops preset scopes the server does not advertise', async () => {
+    // Taxonomy has only entries: the time-tracking preset also names projects,
+    // activities and customers, which must be silently dropped.
+    listApiTokens.mockResolvedValue({ tokens: [], resources: ['entries'], actions: ['read', 'write'], wildcard: '*' })
+    render(() => <ApiTokenControls />)
+    await waitFor(() => screen.getByLabelText('entries:read'))
+
+    fireEvent.input(screen.getByPlaceholderText('e.g. CI pipeline'), { target: { value: 'tt' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Time tracking' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create token' }))
+
+    await waitFor(() =>
+      expect(createApiToken).toHaveBeenCalledWith({
+        name: 'tt',
+        scopes: ['entries:read', 'entries:write'],
+        expiresAt: undefined,
+      }),
+    )
+  })
+
   it('revokes an active token', async () => {
     const token: ApiToken = {
       id: 42,
