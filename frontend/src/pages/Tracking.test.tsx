@@ -1365,6 +1365,78 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('the resume survives when the Enter-save finds an earlier flush still in flight (#588)', async () => {
+    // The CI-observed ordering: an earlier flush of the new row (here: a blur
+    // commit; on CI a row-leave flush the server rejected) is STILL IN FLIGHT
+    // when Enter commits the row — the Enter-flush bails on the savingRows
+    // guard, and the save that finally persists the row runs from the follow-up
+    // refreshHints. The resume intent must stick to the ROW, not to the
+    // swallowed call.
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      const entriesList: unknown[] = [{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }]
+      mockTracking({
+        entries: entriesList,
+        customers: [{ customer: { id: 1, name: 'ACME' } }],
+        projects: [{ project: { id: 4, name: 'Site' } }],
+        activities: [{ activity: { id: 5, name: 'Dev' } }],
+      })
+      const saved = {
+        id: 77, date: todayDmy(), start: '10:30', end: '12:00', user: 3, customer: 1, project: 4,
+        activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'ABC-1', description: 'Work more x',
+      }
+      // First POST: the in-flight flush — rejected only AFTER the Enter commit
+      // below. Later POSTs: persist the row and land it in the refetch.
+      let rejectFirst: ((reason: Error) => void) | undefined
+      postJson.mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectFirst = reject }))
+      postJson.mockImplementation(() => {
+        entriesList.push({ entry: { ...saved, worklog: null, extTicket: null } })
+
+        return Promise.resolve({ result: saved })
+      })
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      // Continue → a complete pre-filled row; edit the description, then leave
+      // the row: the blur commit auto-saves (POST #1, held pending).
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
+
+        return el
+      })
+      fireEvent.input(descInput, { target: { value: 'Work more' } })
+      container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')!.focus()
+      await waitFor(() => expect(postJson).toHaveBeenCalledTimes(1))
+
+      // Back on the new row: commit another edit with Enter while POST #1 is
+      // still in flight — this flush is swallowed by the savingRows guard.
+      const descAgain = editCell(container, 'description')
+      fireEvent.input(descAgain, { target: { value: 'Work more x' } })
+      fireEvent.keyDown(descAgain, { key: 'Enter' })
+
+      // Now the in-flight flush fails — the follow-up flush must persist the
+      // row AND still resume the edit session in description.
+      rejectFirst!(new Error('Unprocessable entity'))
+
+      const resumed = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('td[data-row-id="77"][data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not resumed on the persisted row')
+
+        return el
+      })
+      expect(resumed.value).toBe('Work more x')
+      expect(document.activeElement).toBe(resumed)
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
   it('a row-leave save of a new row does not steal focus back into an editor (#588)', async () => {
     window.APP_CONFIG!.suggestTime = true
     window.APP_CONFIG!.minEntryDuration = 15

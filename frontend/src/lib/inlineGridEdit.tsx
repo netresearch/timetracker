@@ -335,6 +335,13 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   // can still save on unmount even if the parent already cleared the rows list
   // (e.g. route/tab change) — rowById() would then return undefined.
   const originalRows = new Map<number, R>()
+  // Rows whose next successful save should resume the edit session (#588). The
+  // intent must stick to the ROW, not to one flushRow call: the Enter commit's
+  // flush can find an earlier flush still in flight (e.g. a row-leave flush the
+  // server rejects as incomplete) and bail on the savingRows guard — the save
+  // that finally persists the row then runs from the follow-up refreshHints,
+  // which doesn't carry the flag.
+  const resumePending = new Set<number>()
 
   const rowById = (id: number): R | undefined => originalRows.get(id) ?? config.rows().find((row) => idOf(row) === id)
 
@@ -387,10 +394,13 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   // Drop a row's draft + field-hints + original-row snapshot — the teardown
   // shared by save-success, modal take-over, reset, and the clean-up of an
   // unchanged draft. (rowErrors is cleared separately, only where it applies.)
+  // A dropped draft has nothing left to save, so a pending resume intent (#588)
+  // dies with it — flushRow's success path consumes its own intent BEFORE this.
   function clearDraftState(id: number): void {
     setDrafts(produce((store) => { delete store[id] }))
     setFieldHints(produce((store) => { delete store[id] }))
     originalRows.delete(id)
+    resumePending.delete(id)
   }
 
   // Drop a draft that ended up identical to its original row (opened a cell and
@@ -688,6 +698,9 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   async function flushRow(id: number, resumeEdit = false): Promise<void> {
     const draft = drafts[id]
     const row = rowById(id)
+    if (resumeEdit && draft !== undefined) {
+      resumePending.add(id)
+    }
     if (draft === undefined || row === undefined || savingRows[id]) {
       return
     }
@@ -696,6 +709,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     // exception: its seed is its content, so it still needs persisting (#495).
     if (!rowDirty(id) && !isNewAndComplete(id, row)) {
       discardIfClean(id)
+      resumePending.delete(id)
 
       return
     }
@@ -708,13 +722,17 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     const sentJson = JSON.stringify(snapshot)
     try {
       const persistedId = await config.saveRow(snapshot, row)
+      // Consume the resume intent before clearDraftState drops it with the
+      // draft; it may come from THIS call or from an earlier flush this save
+      // superseded (see resumePending) — a successful save always consumes it.
+      const resume = resumePending.delete(id)
       // Refetch has the saved values now, so dropping the draft shows no flash —
       // but only when nothing changed since (else the newer edits would be lost).
       if (drafts[id] !== undefined && JSON.stringify({ ...drafts[id] }) === sentJson) {
         clearDraftState(id)
       }
       config.onSaved?.()
-      if (resumeEdit && typeof persistedId === 'number' && persistedId !== id) {
+      if (resume && typeof persistedId === 'number' && persistedId !== id) {
         resumeEditAfterRekey(id, persistedId)
       }
     } catch (caught) {
