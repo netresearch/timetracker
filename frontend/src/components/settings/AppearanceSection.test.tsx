@@ -26,7 +26,7 @@ describe('AppearanceSection', () => {
   it('keeps the instantly-applied device preferences outside any form', () => {
     const { getByRole, getByText } = render(() => <AppearanceSection />)
 
-    const device = getByRole('group', { name: 'This device' })
+    const device = getByRole('group', { name: 'Appearance' })
     // The section states its save semantics right under the title.
     expect(getByText(/apply immediately — no Save needed/)).toBeInTheDocument()
 

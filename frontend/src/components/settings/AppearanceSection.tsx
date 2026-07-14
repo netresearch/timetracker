@@ -70,9 +70,9 @@ export function AppearanceSection() {
     <div class="stack-form">
       {/* One h2 per settings section so the page outline is h1 → h2;
           visually-hidden because the fieldset legend already shows the title. */}
-      <h2 class="visually-hidden">{m.settings_section_device()}</h2>
+      <h2 class="visually-hidden">{m.settings_nav_appearance()}</h2>
       <fieldset class="settings-group">
-        <legend>{m.settings_section_device()}</legend>
+        <legend>{m.settings_nav_appearance()}</legend>
         <p class="settings-section-hint settings-instant-badge">{m.settings_section_device_hint()}</p>
 
         <label class="field">

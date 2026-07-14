@@ -65,7 +65,6 @@
   "settings_nav_sync": "Synchronisation",
   "settings_section_account": "Konto",
   "settings_section_account_hint": "Wird in deinem Konto gespeichert und gilt auf allen Geräten — erst Speichern übernimmt die Änderungen.",
-  "settings_section_device": "Dieses Gerät",
   "settings_section_device_hint": "Wird nur in diesem Browser gespeichert. Änderungen wirken sofort — kein Speichern nötig.",
   "settings_language": "Sprache",
   "settings_show_empty_line": "Immer leere Zeile anzeigen",
