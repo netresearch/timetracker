@@ -14,7 +14,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * method alone would resolve on the first 422 and let the helper return while the
  * real save (and its reconciling refetch) is still in flight.
  */
-const isSaveResponse = (r: { url(): string; status(): number; request(): { method(): string } }): boolean =>
+export const isSaveResponse = (r: { url(): string; status(): number; request(): { method(): string } }): boolean =>
   /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST' && r.status() === 200;
 
 /** The reconciling GET the grid issues after a save lands (invalidate → refetch). */

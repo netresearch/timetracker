@@ -283,8 +283,10 @@ export interface InlineGridEditConfig<R extends object> {
   isInlineEditable: (colKey: string) => boolean
   /** Seed a fresh draft from a row (the editable form values). */
   seedDraft: (row: R) => FormValues
-  /** Persist one row's draft (POST + refetch); rejects to surface a row error. */
-  saveRow: (draft: FormValues, row: R) => Promise<void>
+  /** Persist one row's draft (POST + refetch); rejects to surface a row error.
+   *  May resolve with the row's PERSISTED id when the save re-keys it (a new
+   *  row's temp id → its server id) so the controller can follow the row. */
+  saveRow: (draft: FormValues, row: R) => Promise<number | void>
   /** Fallback for activating a non-inline column (e.g. open a modal); return
    *  true if it handled the activation. */
   onModalActivate?: (row: R) => boolean
@@ -304,6 +306,11 @@ export interface InlineGridEditConfig<R extends object> {
    *  a no-op — it must still save once complete (see #495). Omit for grids that
    *  never create in-place new rows (the default: no row is treated as new). */
   isNewRow?: (row: R) => boolean
+  /** The column to continue editing in after an Enter-triggered save persists a
+   *  NEW row under a fresh id (saveRow resolved with a different id): the re-key
+   *  unmounts the temp row, which would otherwise end the edit session and strand
+   *  focus on <body> (#588). Omit to keep the edit session ending on save. */
+  resumeColAfterCreate?: string
 }
 
 /**
@@ -527,8 +534,10 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     // A Tab move (left/right) stays in the same row and opens the next cell's
     // editor; auto-saving now would refetch and remount that editor away (#481),
     // so defer the save to row-leave. Every other commit auto-saves as before.
+    // An Enter commit ('next') keeps the user in the row, so a save it triggers
+    // may resume the edit session after a new row is re-keyed (#588).
     const staysInRowViaTab = direction === 'left' || direction === 'right'
-    refreshHints(cell.rowId, !staysInRowViaTab)
+    refreshHints(cell.rowId, !staysInRowViaTab, direction === 'next')
 
     // The post-commit move (all through the grid's setActive — the single
     // roving-tabindex writer). Enter (stay/down) on an incomplete row is guided to
@@ -580,7 +589,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   // refetches, which remounts the rows and would unmount the editor Tab just opened
   // on the next cell (#481 — "lose inline-edit mode on Tab"). The row still saves
   // when focus leaves it (onTableFocusOut / row-leave) or on any non-Tab commit.
-  function refreshHints(id: number, autoSave = true): void {
+  function refreshHints(id: number, autoSave = true, resumeEdit = false): void {
     if (config.invalidFields === undefined) {
       return
     }
@@ -592,7 +601,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     const invalid = config.invalidFields(draft, row)
     setFieldHints(id, invalid)
     if (autoSave && invalid.length === 0) {
-      void flushRow(id)
+      void flushRow(id, resumeEdit)
     }
   }
 
@@ -645,7 +654,38 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     seedChar = undefined
   }
 
-  async function flushRow(id: number): Promise<void> {
+  // A NEW row that persists mid-session is re-keyed: the temp-id row unmounts and
+  // the saved entry renders as a fresh row, which ends the edit session and drops
+  // keyboard focus to <body> (#588 — "leaves inline edit mode after save"). When
+  // the save came from an in-row Enter commit and the user hasn't moved elsewhere
+  // while it was in flight, continue the session on the persisted row: focus it
+  // and open the resume column's (description) editor.
+  function resumeEditAfterRekey(oldId: number, newId: number): void {
+    const col = config.resumeColAfterCreate
+    if (col === undefined || moveHandle === null) {
+      return
+    }
+    // The resume INTENT was established when the save was triggered (an Enter
+    // commit inside the row). Re-checking the focused row here would misfire:
+    // unmounting the temp row makes the grid re-anchor its cursor to a neighbour
+    // row, which is indistinguishable from a user move. So only a user who
+    // meanwhile started EDITING another row, or took focus OUT of the grid to
+    // another control (click-away mid-save), blocks the resume — focus on
+    // <body> (or still inside the table / an editor popup) is reclaimed.
+    const openCell = editCell()
+    if (openCell !== null && openCell.rowId !== oldId) {
+      return
+    }
+    const active = document.activeElement
+    if (active !== null && active !== document.body && tableEl?.contains(active) !== true && !inEditorPopup(active)) {
+      return
+    }
+    lastFocusedRowId = newId
+    moveHandle.focusCell(newId, col)
+    beginEdit(newId, col)
+  }
+
+  async function flushRow(id: number, resumeEdit = false): Promise<void> {
     const draft = drafts[id]
     const row = rowById(id)
     if (draft === undefined || row === undefined || savingRows[id]) {
@@ -667,13 +707,16 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     const snapshot = { ...draft }
     const sentJson = JSON.stringify(snapshot)
     try {
-      await config.saveRow(snapshot, row)
+      const persistedId = await config.saveRow(snapshot, row)
       // Refetch has the saved values now, so dropping the draft shows no flash —
       // but only when nothing changed since (else the newer edits would be lost).
       if (drafts[id] !== undefined && JSON.stringify({ ...drafts[id] }) === sentJson) {
         clearDraftState(id)
       }
       config.onSaved?.()
+      if (resumeEdit && typeof persistedId === 'number' && persistedId !== id) {
+        resumeEditAfterRekey(id, persistedId)
+      }
     } catch (caught) {
       // Keep the draft so edits aren't lost, and surface the failure. Auto-save
       // fires only once a row is complete (no invalid fields), so a rejection

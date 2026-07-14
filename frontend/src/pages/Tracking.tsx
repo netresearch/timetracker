@@ -770,7 +770,14 @@ export default function Tracking() {
         setNewRows((list) => list.filter((row) => num(row.id) !== num(entry.id)))
       }
       await refreshWorklog()
+
+      // Hand the controller the persisted id: a created row is re-keyed from its
+      // temp id, and an Enter-triggered save then resumes editing on the new row.
+      return saved.result.id
     },
+    // An Enter-save that persists (re-keys) a new row continues the edit session
+    // in the description column of the persisted row (#588).
+    resumeColAfterCreate: 'description',
     onCommit: handleCommit,
     // Confirm every successful save (auto, force, or row-leave): announce to AT
     // users via the live region AND flash a brief visible toast for sighted users.

@@ -1300,6 +1300,117 @@ describe('Tracking (Worklog grid)', () => {
     }
   })
 
+  // A save re-keys a new row (temp id → server id): the temp row unmounts and the
+  // persisted entry renders as a fresh row. Without the resume, that ended the edit
+  // session and stranded focus on <body> (#588 — "leaves inline edit mode after
+  // save"). The mock save must land the persisted entry in the refetch too, or the
+  // reconciling refetch would drop it again and there'd be no row to resume on.
+  function mockRekeyedSave(entriesList: unknown[], saved: Record<string, unknown>): void {
+    postJson.mockImplementation(() => {
+      entriesList.push({ entry: { ...saved, worklog: null, extTicket: null } })
+
+      return Promise.resolve({ result: saved })
+    })
+  }
+
+  it('an Enter-save that persists a new row keeps the edit session in the description column (#588)', async () => {
+    const entriesList: unknown[] = [{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }]
+    mockTracking({
+      entries: entriesList,
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    mockRekeyedSave(entriesList, {
+      id: 77, date: todayDmy(), start: '09:00', end: '09:30', user: 3, customer: 1, project: 4,
+      activity: 5, duration: '0:30', durationMinutes: 30, class: 0, ticket: 'ABC-1', description: 'Work',
+    })
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    // Continue (suggest-time off) → a new row inheriting the relations but with
+    // blank times; the description editor auto-opens. Close it and fill the times:
+    // Enter on start guides to the still-missing end; Enter on end completes the
+    // row and auto-saves it.
+    fireEvent.click(getByRole('button', { name: 'Continue' }))
+    await waitFor(() => expect(container.querySelector('tbody td[data-col-key="description"] input')).toBeInTheDocument())
+    fireEvent.keyDown(container.querySelector('tbody td[data-col-key="description"] input')!, { key: 'Escape' })
+
+    const startInput = editCell(container, 'start')
+    fireEvent.input(startInput, { target: { value: '09:00' } })
+    fireEvent.keyDown(startInput, { key: 'Enter' })
+    const endInput = await waitFor(() => {
+      const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="end"] input')
+      if (el === null) throw new Error('end editor not open (guided flow)')
+
+      return el
+    })
+    fireEvent.input(endInput, { target: { value: '09:30' } })
+    fireEvent.keyDown(endInput, { key: 'Enter' })
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ start: '09:00', end: '09:30' })))
+    // The edit session survives the re-key: the description editor is open on the
+    // PERSISTED row (id 77), focused, seeded with the saved description — the user
+    // can type on immediately. The temp new-row is gone.
+    const resumed = await waitFor(() => {
+      const el = container.querySelector<HTMLInputElement>('td[data-row-id="77"][data-col-key="description"] input')
+      if (el === null) throw new Error('description editor not resumed on the persisted row')
+
+      return el
+    })
+    expect(resumed.value).toBe('Work')
+    expect(document.activeElement).toBe(resumed)
+    expect(container.querySelector('tr.tracking-row.is-new')).toBeNull()
+
+    unmount()
+  })
+
+  it('a row-leave save of a new row does not steal focus back into an editor (#588)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      const entriesList: unknown[] = [{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }]
+      mockTracking({
+        entries: entriesList,
+        customers: [{ customer: { id: 1, name: 'ACME' } }],
+        projects: [{ project: { id: 4, name: 'Site' } }],
+        activities: [{ activity: { id: 5, name: 'Dev' } }],
+      })
+      mockRekeyedSave(entriesList, {
+        id: 78, date: todayDmy(), start: '10:30', end: '12:00', user: 3, customer: 1, project: 4,
+        activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'ABC-1', description: 'Work',
+      })
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      // Continue → a complete pre-filled row (suggest-time). Tab out of the auto-
+      // opened description editor commits in-row (deferred save), then moving to
+      // ANOTHER row saves the new row on row-leave.
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
+
+        return el
+      })
+      fireEvent.keyDown(descInput, { key: 'Tab' })
+
+      const otherCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')!
+      otherCell.focus()
+
+      await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ start: '10:30', end: '12:00' })))
+      // The user had left the row — the save must NOT reopen an editor or move focus.
+      await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).toBeNull())
+      expect(document.querySelector('input.inline-editor')).toBeNull()
+      expect(document.activeElement).toBe(otherCell)
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
   it('gates the ticket link behind Ctrl/Cmd — a plain click is prevented (starts editing)', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],

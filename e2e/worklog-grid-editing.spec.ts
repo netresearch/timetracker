@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 import { loginIsolated } from './helpers/auth';
 import { goToWorklogPage } from './helpers/navigation';
-import { cleanupWorklogEntries, createWorklogEntry, rowByStamp } from './helpers/worklog';
+import { cleanupWorklogEntries, createWorklogEntry, isSaveResponse, rowByStamp } from './helpers/worklog';
 
 /**
  * Spreadsheet-style keyboard + clipboard editing on the SolidJS worklog grid:
@@ -151,6 +151,54 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await expect(row.locator('td[data-col-key="project"][data-inline-editing]')).toBeVisible();
     await arrowEnter();
     await expect(row.locator('td[data-col-key="activity"][data-inline-editing]')).toBeVisible();
+  });
+
+  // #588 (save must not end inline editing): Enter in the activity select of a
+  // COMPLETE new row saves it — intended — but used to end the edit session: the
+  // persisted row re-keyed (temp id → server id) and replaced the temp row, so
+  // the editor unmounted and focus was lost. The session must survive the save,
+  // continuing in the description column of the persisted row.
+  test('Enter-saving a new row via the activity select continues editing in description (#588)', async ({ page }) => {
+    const stamp = `e2e-${Date.now()}`;
+    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+
+    // Add opens the ticket editor; suggest-time has prefilled date/start/end, so
+    // the three relation selects are all that's missing. Tab walks into customer.
+    const ticketEditor = page.locator('td[data-col-key="ticket"][data-inline-editing] input.inline-editor');
+    await expect(ticketEditor).toBeVisible();
+    await expect(ticketEditor).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('td[data-col-key="customer"][data-inline-editing]')).toBeVisible();
+
+    const arrowEnter = async (): Promise<void> => {
+      await expect(page.locator('.combobox-input').first()).toBeVisible();
+      // Wait for the options before arrowing (see the guided-flow test above).
+      await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
+      await page.keyboard.press('ArrowDown');
+      await page.keyboard.press('Enter');
+    };
+    await arrowEnter(); // customer — guided on to project
+    await expect(page.locator('td[data-col-key="project"][data-inline-editing]')).toBeVisible();
+    await arrowEnter(); // project — guided on to activity
+    await expect(page.locator('td[data-col-key="activity"][data-inline-editing]')).toBeVisible();
+
+    // The final Enter completes the row, so it saves (intended, unchanged) …
+    const saved = page.waitForResponse(isSaveResponse);
+    await arrowEnter(); // activity — the row is complete, Enter saves
+    await saved;
+
+    // … and the edit session survives the save: the description editor is open on
+    // the persisted row (no unsaved rows remain), focused, immediately typeable.
+    const descEditor = page.locator('td[data-col-key="description"][data-inline-editing] input.inline-editor');
+    await expect(descEditor).toBeVisible();
+    await expect(descEditor).toBeFocused();
+    await expect(page.locator('tr.tracking-row.is-new')).toHaveCount(0);
+
+    const savedAgain = page.waitForResponse(isSaveResponse);
+    await page.keyboard.type(stamp);
+    await page.keyboard.press('Enter');
+    await savedAgain;
+    await expect(rowByStamp(page, stamp)).toBeVisible();
   });
 
   test('Enter committing a select editor keeps focus on a grid cell (no focus loss)', async ({ page }) => {
