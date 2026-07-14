@@ -90,4 +90,23 @@ describe('Settings shell', () => {
 
     unmount()
   })
+
+  it('keeps the last active section as the modal-background fallback', () => {
+    // Live route records the section the user is on…
+    const live = renderSettings('/settings/security')
+    expect(live.getByRole('group', { name: 'Security' })).toBeInTheDocument()
+    live.unmount()
+
+    // …then, rendered as a modal background (the live route is /help, so there is
+    // no :section param), it falls back to that section instead of flipping to
+    // Account. A '*' route matches /help while still mounting the Settings shell,
+    // exactly as App.tsx's BG_PAGES does.
+    const background = renderWithProviders(undefined, {
+      route: { initialPath: '/help', path: '*', component: Settings },
+    })
+    expect(background.getByRole('group', { name: 'Security' })).toBeInTheDocument()
+    expect(background.queryByRole('group', { name: 'Account' })).not.toBeInTheDocument()
+
+    background.unmount()
+  })
 })
