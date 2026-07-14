@@ -78,6 +78,14 @@ function renderTracking() {
   return renderWithProviders(() => <Tracking />)
 }
 
+// d/m/Y for a Date — the grid's row date format (the clock is frozen in
+// beforeEach, so "today"/"tomorrow" are deterministic).
+function dmy(date: Date): string {
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
+}
+const todayDmy = (): string => dmy(new Date())
+const tomorrowDmy = (): string => dmy(new Date(Date.now() + 24 * 60 * 60 * 1000))
+
 beforeEach(() => {
   setDateFormat({ mode: 'iso', pattern: 'DD.MM.YYYY' })
   // Freeze the clock (Date only — leave setTimeout/Interval real so waitFor still
@@ -1010,9 +1018,7 @@ describe('Tracking (Worklog grid)', () => {
   it('Add inherits the latest end only when the latest entry is from today (suggest-time on)', async () => {
     window.APP_CONFIG!.suggestTime = true
     try {
-      const now = new Date()
-      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
-      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }])
       const { getByRole, container, unmount } = renderTracking()
       await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
@@ -1164,20 +1170,20 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('Add pre-fills the end time to start + the configured minimum (suggest-time on)', async () => {
+  it('Add pre-fills the end to now when the suggested span lies in the past (suggest-time on, #588)', async () => {
     window.APP_CONFIG!.suggestTime = true
     window.APP_CONFIG!.minEntryDuration = 15
     try {
-      const now = new Date()
-      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
-      // Latest entry from today ends 10:30 → start inherits 10:30 → end = 10:30 + 15 = 10:45.
-      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      // Latest entry from today ends 10:30 → start inherits 10:30. The frozen clock
+      // reads 12:00 (past the start), so end = max(now, start + 15) = 12:00 — the
+      // v4-parity "previous end → now" span (#588).
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }])
       const { getByRole, container, unmount } = renderTracking()
       await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
       fireEvent.click(getByRole('button', { name: 'Add entry' }))
       await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
-      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('10:45')
+      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('12:00')
 
       unmount()
     } finally {
@@ -1186,43 +1192,349 @@ describe('Tracking (Worklog grid)', () => {
     }
   })
 
+  it('Add keeps end = start + minimum when the suggested start is not in the past (suggest-time on)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      // Today's last entry ends 13:30 — after the frozen 12:00 clock — so the
+      // "extend to now" rule must not fire: end stays start + minimum.
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), start: '13:00', end: '13:30', class: 0 } }])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('13:30'))
+      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('13:45')
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
+  it('Add with a zero minimum still pre-fills the end to now (suggest-time on, #588)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 0
+    try {
+      // minEntryDuration=0 degrades to end = max(now, start): the frozen 12:00 is
+      // past the inherited 10:30 start, so the end still pre-fills to now.
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
+      expect(container.querySelector('tbody td[data-col-key="end"]')?.textContent).toBe('12:00')
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
+  it('Add continues from today\'s last end even when a future-dated entry sorts above it (suggest-time on)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    try {
+      // With show-future, a future-dated entry is the newest in the list — but the
+      // start must continue from the TARGET day's (today's) last end, not from a
+      // day the entry isn't added to.
+      mockApiWith([
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: tomorrowDmy(), start: '09:00', end: '09:30', class: 0 } },
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: todayDmy(), end: '10:30', class: 0 } },
+      ])
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: '10:30' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+    }
+  })
+
   it('Continue saves the pre-filled entry on commit even though nothing was edited (#495)', async () => {
     window.APP_CONFIG!.suggestTime = true
     window.APP_CONFIG!.minEntryDuration = 15
     try {
-      const now = new Date()
-      const today = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
-      // A saved entry from today ending 10:30 → Continue seeds start 10:30, end 10:45.
-      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: today, end: '10:30', class: 0 } }])
+      // A saved entry from today ending 10:30 → Continue seeds start 10:30 and
+      // end max(now, 10:45) = 12:00 (frozen clock).
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }])
       postJson.mockResolvedValue({})
       const { getByRole, container, unmount } = renderTracking()
       await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
       // Continue → a new row pre-filled with the source's customer/project/activity/
-      // ticket, start inherited (10:30) and end = start + 15 (10:45). Its draft equals
-      // its seed (nothing edited) — the case that used to be dropped as a no-op.
+      // ticket/description and suggested times. Editing starts in the DESCRIPTION
+      // column (#588) — the one field a continued entry usually changes; everything
+      // else is inherited. The draft equals its seed (nothing edited) — the case
+      // that used to be dropped as a no-op.
       fireEvent.click(getByRole('button', { name: 'Continue' }))
-      const startInput = await waitFor(() => {
-        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="start"] input')
-        if (el === null) throw new Error('start editor not open on the Continue row')
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
 
         return el
       })
-      expect(startInput.value).toBe('10:30')
+      expect(descInput.value).toBe('Work')
 
-      // Commit the start cell with its seeded value unchanged — the draft still
-      // equals its seed (the #495 case), and the complete new row must SAVE.
-      fireEvent.input(startInput, { target: { value: '10:30' } })
-      fireEvent.keyDown(startInput, { key: 'Enter' })
-
+      // Commit the description cell with its seeded value unchanged — the draft
+      // still equals its seed (the #495 case), and the complete new row must SAVE.
+      fireEvent.keyDown(descInput, { key: 'Enter' })
 
       await waitFor(() =>
         expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({
-          customer: 1, project: 4, activity: 5, ticket: 'ABC-1', start: '10:30', end: '10:45',
+          customer: 1, project: 4, activity: 5, ticket: 'ABC-1', start: '10:30', end: '12:00',
         })),
       )
       // A brand-new entry carries no id in the save payload.
       expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.not.objectContaining({ id: expect.anything() }))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
+  // A save re-keys a new row (temp id → server id): the temp row unmounts and the
+  // persisted entry renders as a fresh row. Without the resume, that ended the edit
+  // session and stranded focus on <body> (#588 — "leaves inline edit mode after
+  // save"). The mock save must land the persisted entry in the refetch too, or the
+  // reconciling refetch would drop it again and there'd be no row to resume on.
+  function mockRekeyedSave(entriesList: unknown[], saved: Record<string, unknown>): void {
+    postJson.mockImplementation(() => {
+      entriesList.push({ entry: { ...saved, worklog: null, extTicket: null } })
+
+      return Promise.resolve({ result: saved })
+    })
+  }
+
+  it('an Enter-save that persists a new row keeps the edit session in the description column (#588)', async () => {
+    const entriesList: unknown[] = [{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }]
+    mockTracking({
+      entries: entriesList,
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    mockRekeyedSave(entriesList, {
+      id: 77, date: todayDmy(), start: '09:00', end: '09:30', user: 3, customer: 1, project: 4,
+      activity: 5, duration: '0:30', durationMinutes: 30, class: 0, ticket: 'ABC-1', description: 'Work',
+    })
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    // Continue (suggest-time off) → a new row inheriting the relations but with
+    // blank times; the description editor auto-opens. Close it and fill the times:
+    // Enter on start guides to the still-missing end; Enter on end completes the
+    // row and auto-saves it.
+    fireEvent.click(getByRole('button', { name: 'Continue' }))
+    await waitFor(() => expect(container.querySelector('tbody td[data-col-key="description"] input')).toBeInTheDocument())
+    fireEvent.keyDown(container.querySelector('tbody td[data-col-key="description"] input')!, { key: 'Escape' })
+
+    const startInput = editCell(container, 'start')
+    fireEvent.input(startInput, { target: { value: '09:00' } })
+    fireEvent.keyDown(startInput, { key: 'Enter' })
+    const endInput = await waitFor(() => {
+      const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="end"] input')
+      if (el === null) throw new Error('end editor not open (guided flow)')
+
+      return el
+    })
+    fireEvent.input(endInput, { target: { value: '09:30' } })
+    fireEvent.keyDown(endInput, { key: 'Enter' })
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ start: '09:00', end: '09:30' })))
+    // The edit session survives the re-key: the description editor is open on the
+    // PERSISTED row (id 77), focused, seeded with the saved description — the user
+    // can type on immediately. The temp new-row is gone.
+    const resumed = await waitFor(() => {
+      const el = container.querySelector<HTMLInputElement>('td[data-row-id="77"][data-col-key="description"] input')
+      if (el === null) throw new Error('description editor not resumed on the persisted row')
+
+      return el
+    })
+    expect(resumed.value).toBe('Work')
+    expect(document.activeElement).toBe(resumed)
+    expect(container.querySelector('tr.tracking-row.is-new')).toBeNull()
+
+    unmount()
+  })
+
+  it('the resume survives when the Enter-save finds an earlier flush still in flight (#588)', async () => {
+    // The CI-observed ordering: an earlier flush of the new row (here: a blur
+    // commit; on CI a row-leave flush the server rejected) is STILL IN FLIGHT
+    // when Enter commits the row — the Enter-flush bails on the savingRows
+    // guard, and the save that finally persists the row runs from the follow-up
+    // refreshHints. The resume intent must stick to the ROW, not to the
+    // swallowed call.
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      const entriesList: unknown[] = [{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }]
+      mockTracking({
+        entries: entriesList,
+        customers: [{ customer: { id: 1, name: 'ACME' } }],
+        projects: [{ project: { id: 4, name: 'Site' } }],
+        activities: [{ activity: { id: 5, name: 'Dev' } }],
+      })
+      const saved = {
+        id: 77, date: todayDmy(), start: '10:30', end: '12:00', user: 3, customer: 1, project: 4,
+        activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'ABC-1', description: 'Work more x',
+      }
+      // First POST: the in-flight flush — rejected only AFTER the Enter commit
+      // below. Later POSTs: persist the row and land it in the refetch.
+      let rejectFirst: ((reason: Error) => void) | undefined
+      postJson.mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectFirst = reject }))
+      postJson.mockImplementation(() => {
+        entriesList.push({ entry: { ...saved, worklog: null, extTicket: null } })
+
+        return Promise.resolve({ result: saved })
+      })
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      // Continue → a complete pre-filled row; edit the description, then leave
+      // the row: the blur commit auto-saves (POST #1, held pending).
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
+
+        return el
+      })
+      fireEvent.input(descInput, { target: { value: 'Work more' } })
+      container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')!.focus()
+      await waitFor(() => expect(postJson).toHaveBeenCalledTimes(1))
+
+      // Back on the new row: commit another edit with Enter while POST #1 is
+      // still in flight — this flush is swallowed by the savingRows guard.
+      const descAgain = editCell(container, 'description')
+      fireEvent.input(descAgain, { target: { value: 'Work more x' } })
+      fireEvent.keyDown(descAgain, { key: 'Enter' })
+
+      // Now the in-flight flush fails — the follow-up flush must persist the
+      // row AND still resume the edit session in description.
+      rejectFirst!(new Error('Unprocessable entity'))
+
+      const resumed = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('td[data-row-id="77"][data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not resumed on the persisted row')
+
+        return el
+      })
+      expect(resumed.value).toBe('Work more x')
+      expect(document.activeElement).toBe(resumed)
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
+  it('a row-leave save of a new row does not steal focus back into an editor (#588)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      const entriesList: unknown[] = [{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }]
+      mockTracking({
+        entries: entriesList,
+        customers: [{ customer: { id: 1, name: 'ACME' } }],
+        projects: [{ project: { id: 4, name: 'Site' } }],
+        activities: [{ activity: { id: 5, name: 'Dev' } }],
+      })
+      mockRekeyedSave(entriesList, {
+        id: 78, date: todayDmy(), start: '10:30', end: '12:00', user: 3, customer: 1, project: 4,
+        activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'ABC-1', description: 'Work',
+      })
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      // Continue → a complete pre-filled row (suggest-time). Tab out of the auto-
+      // opened description editor commits in-row (deferred save), then moving to
+      // ANOTHER row saves the new row on row-leave.
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
+
+        return el
+      })
+      fireEvent.keyDown(descInput, { key: 'Tab' })
+
+      const otherCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')!
+      otherCell.focus()
+
+      await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ start: '10:30', end: '12:00' })))
+      // The user had left the row — the save must NOT reopen an editor or move focus.
+      await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).toBeNull())
+      expect(document.querySelector('input.inline-editor')).toBeNull()
+      expect(document.activeElement).toBe(otherCell)
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
+  it('a failed Enter-save leaves no stale resume intent for a later row-leave flush (#588)', async () => {
+    // The Enter-save itself fails; the user gives up and clicks a cell in a
+    // DIFFERENT row. The row-leave flush retries and persists the row — the
+    // success must not reopen an editor or yank focus (unlike the in-flight
+    // case above, where the intent came from a swallowed flush and the retry
+    // legitimately resumes). Pins the end-to-end invariant: in jsdom the rekey
+    // remount disposes the roving handle before the resume could fire, so this
+    // cannot discriminate the intent-cleanup in flushRow's catch specifically —
+    // that cleanup is belt-and-braces for timings where the handle survives.
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      const entriesList: unknown[] = [{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0 } }]
+      mockTracking({
+        entries: entriesList,
+        customers: [{ customer: { id: 1, name: 'ACME' } }],
+        projects: [{ project: { id: 4, name: 'Site' } }],
+        activities: [{ activity: { id: 5, name: 'Dev' } }],
+      })
+      mockRekeyedSave(entriesList, {
+        id: 79, date: todayDmy(), start: '10:30', end: '12:00', user: 3, customer: 1, project: 4,
+        activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'ABC-1', description: 'Work',
+      })
+      // The once-implementation is consumed before mockRekeyedSave's default:
+      // the Enter-save POST rejects, every later POST persists + rekeys.
+      postJson.mockImplementationOnce(() => Promise.reject(new Error('overlap')))
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
+
+        return el
+      })
+      fireEvent.input(descInput, { target: { value: 'Work' } })
+      fireEvent.keyDown(descInput, { key: 'Enter' })
+      // The rejection settles within the microtasks before waitFor's next poll
+      // tick, so observing the call implies the catch (intent cleanup) ran.
+      await waitFor(() => expect(postJson).toHaveBeenCalledTimes(1))
+      await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).not.toBeNull())
+
+      // Give up: focus a cell in another row → row-leave flush retries, succeeds.
+      const otherCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')!
+      otherCell.focus()
+      await waitFor(() => expect(postJson).toHaveBeenCalledTimes(2))
+      await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).toBeNull())
+
+      // The stale intent must NOT fire: no editor reopens, focus stays put.
+      expect(document.querySelector('input.inline-editor')).toBeNull()
+      expect(document.activeElement).toBe(otherCell)
 
       unmount()
     } finally {
