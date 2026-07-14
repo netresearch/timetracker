@@ -41,7 +41,23 @@ final readonly class ListRecentEntriesTool
      *
      * @return array{entries: list<array<string, mixed>>}
      */
-    #[McpTool(name: 'list_recent_entries', description: "List the authenticated user's own recent time entries.")]
+    #[McpTool(
+        name: 'list_recent_entries',
+        description: "List the authenticated user's own recent time entries.",
+        // The entry item shape (Entry::toArray()) is wide and evolves — keep the
+        // item schema permissive so shape drift never becomes a client-side
+        // validation failure.
+        outputSchema: [
+            'type' => 'object',
+            'required' => ['entries'],
+            'properties' => [
+                'entries' => [
+                    'type' => 'array',
+                    'items' => ['type' => 'object'],
+                ],
+            ],
+        ],
+    )]
     public function listRecentEntries(
         #[Schema(description: 'How many days back to include (1–90).', minimum: 1, maximum: 90)]
         int $days = 7,
