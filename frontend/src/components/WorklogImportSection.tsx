@@ -110,12 +110,12 @@ export function WorklogImportSection(): JSX.Element {
 
           <label class="field">
             <span>{m.worklogsync_from()}</span>
-            <DateField value={from()} onChange={setFrom} disabled={busy()} />
+            <DateField value={from()} onChange={setFrom} disabled={busy()} calendar />
           </label>
 
           <label class="field">
             <span>{m.worklogsync_to()}</span>
-            <DateField value={to()} onChange={setTo} disabled={busy()} />
+            <DateField value={to()} onChange={setTo} disabled={busy()} calendar />
           </label>
 
           <label class="field">

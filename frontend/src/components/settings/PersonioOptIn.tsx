@@ -46,41 +46,43 @@ export function PersonioOptIn() {
   }
 
   return (
-    <fieldset class="settings-group">
-      <legend>{m.settings_personio_sync()}</legend>
-      <label class="field-check">
-        <input
-          type="checkbox"
-          name="personio_sync_enabled"
-          checked={enabled()}
-          disabled={!config.personioConfigured}
-          onChange={(event) => {
-            // Not disabled while saving: disabling the focused control would
-            // drop keyboard focus to <body> (WCAG 2.4.3). Re-entrancy is
-            // guarded here instead — toggles during an in-flight save are
-            // ignored and the box snaps back to the pending value.
-            if (status().kind === 'saving') {
-              event.currentTarget.checked = enabled()
+    <div class="stack-form">
+      <fieldset class="settings-group">
+        <legend>{m.settings_personio_sync()}</legend>
+        <label class="field-check">
+          <input
+            type="checkbox"
+            name="personio_sync_enabled"
+            checked={enabled()}
+            disabled={!config.personioConfigured}
+            onChange={(event) => {
+              // Not disabled while saving: disabling the focused control would
+              // drop keyboard focus to <body> (WCAG 2.4.3). Re-entrancy is
+              // guarded here instead — toggles during an in-flight save are
+              // ignored and the box snaps back to the pending value.
+              if (status().kind === 'saving') {
+                event.currentTarget.checked = enabled()
 
-              return
-            }
-            void toggle(event.currentTarget.checked)
-          }}
-        />
-        <span>{m.settings_personio_sync()}</span>
-        <Show
-          when={config.personioConfigured}
-          fallback={<small class="field-hint">{m.settings_personio_sync_unavailable()}</small>}
-        >
-          <small class="field-hint">{m.settings_personio_sync_help()}</small>
+                return
+              }
+              void toggle(event.currentTarget.checked)
+            }}
+          />
+          <span>{m.settings_personio_sync()}</span>
+          <Show
+            when={config.personioConfigured}
+            fallback={<small class="field-hint">{m.settings_personio_sync_unavailable()}</small>}
+          >
+            <small class="field-hint">{m.settings_personio_sync_help()}</small>
+          </Show>
+        </label>
+        <Show when={status().kind === 'ok'}>
+          <output class="form-status is-ok">{m.settings_saved()}</output>
         </Show>
-      </label>
-      <Show when={status().kind === 'ok'}>
-        <output class="form-status is-ok">{m.settings_saved()}</output>
-      </Show>
-      <Show when={status().kind === 'error'}>
-        <span role="alert" class="form-status is-error">{statusMessage()}</span>
-      </Show>
-    </fieldset>
+        <Show when={status().kind === 'error'}>
+          <span role="alert" class="form-status is-error">{statusMessage()}</span>
+        </Show>
+      </fieldset>
+    </div>
   )
 }

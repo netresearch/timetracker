@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { createResource, createSignal, For, Show, type JSX } from 'solid-js'
+import { createMemo, createResource, createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
+import { DateField } from './DateField'
 import { formatUserDate } from '../lib/dateFormat'
 import {
   type ApiToken,
+  type ApiTokenList,
   createApiToken,
   type CreatedApiToken,
   listApiTokens,
@@ -35,9 +37,107 @@ function formatDate(iso: string | null): string {
   return iso === null ? '' : formatUserDate(iso.slice(0, 10))
 }
 
-/** Today as yyyy-mm-dd, for the expiry input's `min` (no past dates). */
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
+
+/** A scope preset: a fixed convenience selection a click drops into the picker,
+ *  which the user can then still tweak checkbox by checkbox. Each `resolve`s
+ *  against the server taxonomy so an unknown scope is silently dropped. */
+interface ScopePreset {
+  id: string
+  label: () => string
+  /** The preset's scope strings; `resources` feeds the derived read-only set. */
+  resolve: (resources: readonly string[]) => string[]
+}
+
+/** Time-tracking core, reused as the base of the MCP-agent preset. */
+const TIMETRACKING_SCOPES = ['entries:read', 'entries:write', 'projects:read', 'activities:read', 'customers:read']
+
+const SCOPE_PRESETS: readonly ScopePreset[] = [
+  {
+    id: 'timetracking',
+    label: () => m.settings_apitoken_preset_timetracking(),
+    resolve: () => TIMETRACKING_SCOPES,
+  },
+  {
+    id: 'mcp',
+    label: () => m.settings_apitoken_preset_mcp(),
+    resolve: () => [...TIMETRACKING_SCOPES, 'reporting:read', 'sync:read', 'sync:write'],
+  },
+  {
+    id: 'jirasync',
+    label: () => m.settings_apitoken_preset_jirasync(),
+    resolve: () => ['sync:read', 'sync:write', 'entries:read'],
+  },
+  {
+    id: 'readonly',
+    label: () => m.settings_apitoken_preset_readonly(),
+    resolve: (resources) => resources.map((resource) => `${resource}:read`),
+  },
+]
+
+/** Every valid `resource:action` scope the server currently advertises. */
+function validScopeSet(list: ApiTokenList | undefined): ReadonlySet<string> {
+  const scopes = new Set<string>()
+  for (const resource of list?.resources ?? []) {
+    for (const action of list?.actions ?? []) {
+      scopes.add(`${resource}:${action}`)
+    }
+  }
+  return scopes
+}
+
+/** The preset's scopes narrowed to the ones the server actually accepts. */
+function presetScopeSet(preset: ScopePreset, list: ApiTokenList | undefined): ReadonlySet<string> {
+  const valid = validScopeSet(list)
+  return new Set(preset.resolve(list?.resources ?? []).filter((scope) => valid.has(scope)))
+}
+
+function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+  if (a.size !== b.size) {
+    return false
+  }
+  for (const value of a) {
+    if (!b.has(value)) {
+      return false
+    }
+  }
+  return true
+}
+
+/** Plain-language name for a scope resource. Falls back to the raw token so a
+ *  server-added resource without a gloss still renders sensibly. */
+const RESOURCE_GLOSS: Record<string, () => string> = {
+  entries: () => m.settings_apitoken_scope_entries(),
+  projects: () => m.settings_apitoken_scope_projects(),
+  customers: () => m.settings_apitoken_scope_customers(),
+  activities: () => m.settings_apitoken_scope_activities(),
+  presets: () => m.settings_apitoken_scope_presets(),
+  teams: () => m.settings_apitoken_scope_teams(),
+  users: () => m.settings_apitoken_scope_users(),
+  contracts: () => m.settings_apitoken_scope_contracts(),
+  ticketsystems: () => m.settings_apitoken_scope_ticketsystems(),
+  reporting: () => m.settings_apitoken_scope_reporting(),
+  settings: () => m.settings_apitoken_scope_settings(),
+  sync: () => m.settings_apitoken_scope_sync(),
+}
+
+function resourceGloss(resource: string): string {
+  return RESOURCE_GLOSS[resource]?.() ?? resource
+}
+
+function actionGloss(action: string): string {
+  if (action === 'write') {
+    return m.settings_apitoken_scope_action_write()
+  }
+  if (action === 'read') {
+    return m.settings_apitoken_scope_action_read()
+  }
+  return action
+}
+
+/** A hover title reading a `resource:action` scope in plain language,
+ *  e.g. "Time entries — Create & edit". */
+function scopeTitle(resource: string, action: string): string {
+  return `${resourceGloss(resource)} — ${actionGloss(action)}`
 }
 
 /**
@@ -74,6 +174,31 @@ export function ApiTokenControls(): JSX.Element {
     setScopes(next)
   }
 
+  /** Drop a preset's (server-valid) scopes into the picker and leave wildcard off. */
+  function applyPreset(preset: ScopePreset): void {
+    setScopes(presetScopeSet(preset, data()))
+    setWildcard(false)
+  }
+
+  /** The preset whose exact scope set the current selection matches, if any.
+   *  Memoised so the per-button aria-pressed reads don't recompute it 4×. */
+  const activePreset = createMemo((): string | null => {
+    if (wildcard()) {
+      return null
+    }
+    const current = scopes()
+    if (current.size === 0) {
+      return null
+    }
+    const list = data()
+    for (const preset of SCOPE_PRESETS) {
+      if (setsEqual(current, presetScopeSet(preset, list))) {
+        return preset.id
+      }
+    }
+    return null
+  })
+
   function resetForm(): void {
     setName('')
     setWildcard(false)
@@ -88,6 +213,15 @@ export function ApiTokenControls(): JSX.Element {
     const chosen = effectiveScopes()
     if (name().trim() === '' || chosen.length === 0) {
       setError(m.settings_apitoken_incomplete())
+      return
+    }
+
+    // A past expiry would create a token that is already spent; the enhanced
+    // date field (unlike the old native <input min>) doesn't block it, so guard
+    // here (ISO strings compare lexicographically).
+    const expiry = expiresAt()
+    if (expiry !== '' && expiry < new Date().toISOString().slice(0, 10)) {
+      setError(m.settings_apitoken_expiry_past())
       return
     }
 
@@ -223,6 +357,26 @@ export function ApiTokenControls(): JSX.Element {
             <HelpPopover topic={m.settings_apitoken_scopes_label()}>{m.settings_help_token_scopes()}</HelpPopover>
           </legend>
 
+          {/* Convenience presets: each click sets an exact scope set (narrowed to
+              what the server advertises) and turns wildcard off; the user can then
+              tweak individual checkboxes. aria-pressed marks the matching preset. */}
+          <fieldset class="apitoken-presets">
+            <legend class="field-hint apitoken-presets-label">{m.settings_apitoken_presets_label()}</legend>
+            <For each={SCOPE_PRESETS}>
+              {(preset) => (
+                <button
+                  type="button"
+                  class="ghost-button apitoken-preset"
+                  aria-pressed={activePreset() === preset.id}
+                  disabled={data() === undefined}
+                  onClick={() => applyPreset(preset)}
+                >
+                  {preset.label()}
+                </button>
+              )}
+            </For>
+          </fieldset>
+
           <label class="apitoken-wildcard">
             <input
               type="checkbox"
@@ -247,7 +401,10 @@ export function ApiTokenControls(): JSX.Element {
                 <For each={data()?.resources}>
                   {(resource) => (
                     <tr>
-                      <th scope="row">{resource}</th>
+                      <th scope="row">
+                        {resource}
+                        <span class="field-hint apitoken-scope-gloss"> — {resourceGloss(resource)}</span>
+                      </th>
                       <For each={data()?.actions}>
                         {(action) => {
                           const scope = `${resource}:${action}`
@@ -256,6 +413,7 @@ export function ApiTokenControls(): JSX.Element {
                               <input
                                 type="checkbox"
                                 aria-label={scope}
+                                title={scopeTitle(resource, action)}
                                 checked={scopes().has(scope)}
                                 onChange={(event) => toggleScope(scope, event.currentTarget.checked)}
                               />
@@ -273,12 +431,7 @@ export function ApiTokenControls(): JSX.Element {
 
         <label class="field">
           <span>{m.settings_apitoken_expiry_label()}</span>
-          <input
-            type="date"
-            min={todayIso()}
-            value={expiresAt()}
-            onInput={(event) => setExpiresAt(event.currentTarget.value)}
-          />
+          <DateField value={expiresAt()} onChange={setExpiresAt} calendar />
         </label>
 
         <div class="security-row">
