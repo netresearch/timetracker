@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: ["**"]
 
+# Supersede an in-flight run when new commits land on the same ref. Scoped to
+# non-default refs so every main commit still gets a complete run (bisect
+# granularity); PR force-push/rapid-push bursts stop competing for the runner
+# pool, which is what inflates wall-clock under contention.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   setup:
     name: Setup Dependencies
@@ -297,7 +305,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        shard: [1, 2, 3, 4]
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -365,7 +373,7 @@ jobs:
           # Verify coverage is enabled
           curl -s http://localhost:8766/coverage.php?action=status || echo "Coverage endpoint not responding"
 
-      - name: Run E2E tests (shard ${{ matrix.shard }}/10)
+      - name: Run E2E tests (shard ${{ matrix.shard }}/${{ strategy.job-total }})
         env:
           COMPOSE_PROFILES: e2e
         run: |
@@ -375,7 +383,7 @@ jobs:
           docker compose run --rm \
             -e E2E_BASE_URL=http://httpd-e2e:80 \
             -e CI=true \
-            app-e2e bash -c "npx playwright install chromium && npx playwright test --shard=${{ matrix.shard }}/10 -x"
+            app-e2e bash -c "npx playwright install chromium && npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }} -x"
 
       - name: Collect E2E coverage
         if: always()
@@ -416,7 +424,7 @@ jobs:
 
   # Single aggregate gate: green only when every job above succeeded. Lets branch
   # protection require one check ("CI Success") instead of enumerating all jobs +
-  # the 10 e2e shard names.
+  # the e2e shard names (whose count is the strategy matrix size).
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
