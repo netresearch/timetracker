@@ -72,6 +72,21 @@ describe('SecuritySection', () => {
     expect(await axe(container)).toHaveNoViolations()
   })
 
+  it('keeps the help triggers out of the sub-block heading names', async () => {
+    passkeysAvailable = true
+    render(() => <SecuritySection />)
+
+    // Exact names: each "Help: …" trigger is a sibling of its h3, not a child.
+    expect(screen.getByRole('heading', { level: 3, name: 'Two-factor authentication' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: 'Passkeys' })).toBeInTheDocument()
+    // The triggers themselves are still reachable under their own names.
+    expect(screen.getByRole('button', { name: 'Help: Two-factor authentication' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Help: Passkeys' })).toBeInTheDocument()
+
+    // The resource behind the passkey list settles before teardown.
+    await waitFor(() => expect(listPasskeys).toHaveBeenCalled())
+  })
+
   it('rejects mismatched new passwords without calling the API', async () => {
     render(() => <SecuritySection />)
     fireEvent.input(screen.getByLabelText('Current password'), { target: { value: 'oldpass12' } })

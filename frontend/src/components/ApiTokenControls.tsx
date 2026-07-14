@@ -214,9 +214,12 @@ export function ApiTokenControls(): JSX.Element {
           />
         </label>
 
-        <fieldset class="apitoken-scopes-picker">
+        {/* aria-labelledby names the group from the label span alone: the help
+            trigger keeps its visual spot in the legend, but its "Help: …"
+            aria-label stays out of the group's accessible name. */}
+        <fieldset class="apitoken-scopes-picker" aria-labelledby="apitoken-scopes-label">
           <legend>
-            {m.settings_apitoken_scopes_label()}
+            <span id="apitoken-scopes-label">{m.settings_apitoken_scopes_label()}</span>
             <HelpPopover topic={m.settings_apitoken_scopes_label()}>{m.settings_help_token_scopes()}</HelpPopover>
           </legend>
 

@@ -51,6 +51,9 @@ describe('ApiTokenControls', () => {
 
     await waitFor(() => expect(screen.getByLabelText('entries:read')).toBeInTheDocument())
     expect(screen.getByLabelText('projects:write')).toBeInTheDocument()
+    // Exact group name: the "Help: …" trigger inside the legend is kept out of
+    // the accessible name by the fieldset's aria-labelledby.
+    expect(screen.getByRole('group', { name: 'Scopes' })).toBeInTheDocument()
   })
 
   it('prevents selecting a past expiry date', async () => {

@@ -44,8 +44,9 @@ describe('Settings shell', () => {
     const { getByRole, queryByRole, unmount } = renderSettings('/settings/security')
 
     expect(getByRole('group', { name: 'Security' })).toBeInTheDocument()
-    // Prefix match: the heading's accessible name also carries its help trigger.
-    expect(getByRole('heading', { name: /^Two-factor authentication/ })).toBeInTheDocument()
+    // Exact match: the help trigger sits beside the h3, so its "Help: …"
+    // aria-label is not part of the heading's accessible name.
+    expect(getByRole('heading', { name: 'Two-factor authentication' })).toBeInTheDocument()
     // Only the active section mounts — account is gone.
     expect(queryByRole('group', { name: 'Account' })).not.toBeInTheDocument()
 

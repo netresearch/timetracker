@@ -80,9 +80,12 @@ export function WorklogImportSection(): JSX.Element {
 
   return (
     <div class="stack-form">
-      <fieldset class="settings-group">
+      {/* aria-labelledby names the group from the title span alone: the help
+          trigger keeps its visual spot in the legend, but its "Help: …"
+          aria-label stays out of the group's accessible name. */}
+      <fieldset class="settings-group" aria-labelledby="worklog-import-title">
         <legend>
-          {m.worklogsync_import_title()}
+          <span id="worklog-import-title">{m.worklogsync_import_title()}</span>
           <HelpPopover topic={m.worklogsync_import_title()}>{m.settings_help_import_dryrun()}</HelpPopover>
         </legend>
         <p class="settings-section-hint">{m.worklogsync_import_intro()}</p>

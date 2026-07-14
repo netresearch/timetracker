@@ -1127,6 +1127,14 @@ main:has(.tracking) {
   margin: 0;
 }
 
+/* Sub-block heading + its help trigger on one line. The trigger sits BESIDE
+   the h3 (not inside it) so its "Help: …" aria-label stays out of the
+   heading's accessible name; the trigger's own margin provides the gap. */
+.security-heading-row {
+  align-items: center;
+  display: flex;
+}
+
 /* A one-line state (hint or "2FA is on") next to its action button. Wraps on a
    narrow container so the button never overflows. */
 .security-row {

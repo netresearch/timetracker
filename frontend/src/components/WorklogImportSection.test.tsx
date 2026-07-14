@@ -73,6 +73,10 @@ describe('WorklogImportSection', () => {
     // Reference selects populate from the mocked endpoints.
     await waitFor(() => expect(screen.getByRole('option', { name: 'Jira Cloud' })).toBeInTheDocument())
 
+    // Exact group name: the "Help: …" trigger inside the legend is kept out of
+    // the accessible name by the fieldset's aria-labelledby.
+    expect(screen.getByRole('group', { name: 'Import Jira worklogs' })).toBeInTheDocument()
+
     fireEvent.change(screen.getByLabelText('Ticket system'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Default activity'), { target: { value: '2' } })
 
