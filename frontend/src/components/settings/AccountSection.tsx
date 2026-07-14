@@ -107,11 +107,12 @@ export function AccountSection() {
 
   return (
     <form class="stack-form" onInput={() => setTouched(true)} onSubmit={(event) => void onSubmit(event)}>
-      {/* One h2 per settings section so the page outline is h1 → h2 (→ h3);
-          visually-hidden because the fieldset legend already shows the title. */}
-      <h2 class="visually-hidden">{m.settings_section_account()}</h2>
+      {/* One h2 per settings section so the page outline is h1 → h2 (→ h3).
+          The h2 lives INSIDE the legend: a single text node serves both the
+          outline and the group name, so screen readers don't announce the
+          title twice (hidden heading + identically-named legend). */}
       <fieldset class="settings-group">
-        <legend>{m.settings_section_account()}</legend>
+        <legend><h2>{m.settings_section_account()}</h2></legend>
         <p class="settings-section-hint">{m.settings_section_account_hint()}</p>
 
         <label class="field">

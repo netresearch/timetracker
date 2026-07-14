@@ -179,37 +179,3 @@ export async function getTimeSummary(page: Page): Promise<{
   }
   return await response.json();
 }
-
-/**
- * Get settings data from page context
- */
-export async function getSettingsData(page: Page): Promise<Record<string, unknown>> {
-  return await page.evaluate(() => {
-    return (globalThis as unknown as { settingsData: Record<string, unknown> }).settingsData;
-  });
-}
-
-/**
- * Save user settings via PATCH /api/v2/settings (partial update — absent
- * fields stay unchanged). Returns the persisted settings the API echoes.
- */
-export async function saveSettings(
-  page: Page,
-  settings: {
-    show_empty_line?: boolean;
-    suggest_time?: boolean;
-    show_future?: boolean;
-    locale?: string;
-  }
-): Promise<Record<string, unknown>> {
-  const response = await page.request.patch('/api/v2/settings', {
-    data: settings,
-  });
-
-  if (!response.ok()) {
-    const error = await response.text();
-    throw new Error(`Failed to save settings: ${error}`);
-  }
-
-  return await response.json();
-}

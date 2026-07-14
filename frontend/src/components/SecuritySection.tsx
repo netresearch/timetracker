@@ -35,11 +35,12 @@ export function SecuritySection(): JSX.Element {
   return (
     <div class="stack-form">
       {/* One h2 per settings section so the sub-headings (Passkeys, 2FA, …) nest
-          under an h2 rather than skipping h1 → h3; visually-hidden because the
-          fieldset legend already shows the title. */}
-      <h2 class="visually-hidden">{m.settings_section_security()}</h2>
+          under an h2 rather than skipping h1 → h3. The h2 lives INSIDE the
+          legend: a single text node serves both the outline and the group name,
+          so screen readers don't announce the title twice (hidden heading +
+          identically-named legend). */}
       <fieldset class="settings-group">
-        <legend>{m.settings_section_security()}</legend>
+        <legend><h2>{m.settings_section_security()}</h2></legend>
         <p class="settings-section-hint">{m.settings_section_security_hint()}</p>
 
         <TwoFactorControls initiallyEnabled={config.totpEnabled} />
@@ -95,10 +96,12 @@ export function PasskeyControls(props: Readonly<{ onRegistered?: () => void }> =
 
   return (
     <div class="security-block">
-      <h3 class="security-heading">
-        {m.settings_passkey_heading()}
+      {/* The help trigger is a SIBLING of the h3, not a child, so its
+          "Help: …" aria-label stays out of the heading's accessible name. */}
+      <div class="security-heading-row">
+        <h3 class="security-heading">{m.settings_passkey_heading()}</h3>
         <HelpPopover topic={m.settings_passkey_heading()}>{m.settings_help_passkeys()}</HelpPopover>
-      </h3>
+      </div>
       <p class="field-hint">{m.settings_passkey_hint()}</p>
 
       <Show when={(passkeys()?.length ?? 0) > 0}>
@@ -275,10 +278,12 @@ export function TwoFactorControls(props: Readonly<{ initiallyEnabled: boolean; o
 
   return (
     <div class="security-block">
-      <h3 class="security-heading">
-        {m.settings_2fa_heading()}
+      {/* The help trigger is a SIBLING of the h3, not a child, so its
+          "Help: …" aria-label stays out of the heading's accessible name. */}
+      <div class="security-heading-row">
+        <h3 class="security-heading">{m.settings_2fa_heading()}</h3>
         <HelpPopover topic={m.settings_2fa_heading()}>{m.settings_help_totp()}</HelpPopover>
-      </h3>
+      </div>
 
       {/* Backup codes are shown exactly once, right after a successful enrolment. */}
       <Show when={backupCodes()}>

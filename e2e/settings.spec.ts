@@ -200,9 +200,10 @@ test.describe('Settings locale reload', () => {
   test('changing the locale reloads onto the same settings section', async ({ page }) => {
     await goToSettingsPage(page, 'account');
 
-    // The section hydrates its locale <select> from GET /api/v2/settings on
-    // mount; wait for that to settle (German default) before changing it, so the
-    // resolving GET can't reset the new selection.
+    // Readiness gate only: the select is seeded from APP_CONFIG before the
+    // mount-time GET resolves, and both carry the same DB value ('de'), so
+    // this cannot distinguish pre- from post-hydration. A user edit racing
+    // the GET is protected by AccountSection's touched guard, not this wait.
     const locale = page.locator('select[name="locale"]');
     await expect(locale).toHaveValue('de');
 

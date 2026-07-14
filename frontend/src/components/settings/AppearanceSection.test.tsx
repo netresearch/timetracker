@@ -27,6 +27,9 @@ describe('AppearanceSection', () => {
     const { getByRole, getByText } = render(() => <AppearanceSection />)
 
     const device = getByRole('group', { name: 'Appearance' })
+    // The h2 lives inside the legend: the same node names the group and enters
+    // the page outline, so the title is announced once, not twice.
+    expect(getByRole('heading', { level: 2, name: 'Appearance' })).toBeInTheDocument()
     // The section states its save semantics right under the title.
     expect(getByText(/apply immediately — no Save needed/)).toBeInTheDocument()
 

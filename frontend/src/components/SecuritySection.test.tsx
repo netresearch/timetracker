@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe } from 'vitest-axe'
 
 const postJson = vi.fn()
 
@@ -58,6 +59,32 @@ describe('SecuritySection', () => {
     configure({ localAccount: false })
     render(() => <SecuritySection />)
     expect(screen.queryByLabelText('Current password')).toBeNull()
+  })
+
+  it('exposes the section title once — as both the group name and the h2 outline entry', async () => {
+    const { container } = render(() => <SecuritySection />)
+
+    // The h2 lives inside the legend: one text node serves the outline AND the
+    // group name, so the title is announced once, not twice.
+    expect(screen.getByRole('group', { name: 'Security' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Security' })).toBeInTheDocument()
+
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('keeps the help triggers out of the sub-block heading names', async () => {
+    passkeysAvailable = true
+    render(() => <SecuritySection />)
+
+    // Exact names: each "Help: …" trigger is a sibling of its h3, not a child.
+    expect(screen.getByRole('heading', { level: 3, name: 'Two-factor authentication' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: 'Passkeys' })).toBeInTheDocument()
+    // The triggers themselves are still reachable under their own names.
+    expect(screen.getByRole('button', { name: 'Help: Two-factor authentication' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Help: Passkeys' })).toBeInTheDocument()
+
+    // The resource behind the passkey list settles before teardown.
+    await waitFor(() => expect(listPasskeys).toHaveBeenCalled())
   })
 
   it('rejects mismatched new passwords without calling the API', async () => {

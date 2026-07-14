@@ -912,6 +912,15 @@ main:has(.tracking) {
   padding: 0;
 }
 
+/* The section heading sits INSIDE the legend (one text node names the group
+   AND enters the h1 → h2 outline), so it adopts the legend's styling rather
+   than the .form-page h2 page-title look. */
+.settings-group > legend > h2 {
+  font: inherit;
+  letter-spacing: inherit;
+  margin: 0;
+}
+
 /* One-line answer to "when do these settings apply?", under the title. */
 .settings-section-hint {
   color: var(--color-text-muted);
@@ -1116,6 +1125,14 @@ main:has(.tracking) {
   font-size: 1em;
   font-weight: 600;
   margin: 0;
+}
+
+/* Sub-block heading + its help trigger on one line. The trigger sits BESIDE
+   the h3 (not inside it) so its "Help: …" aria-label stays out of the
+   heading's accessible name; the trigger's own margin provides the gap. */
+.security-heading-row {
+  align-items: center;
+  display: flex;
 }
 
 /* A one-line state (hint or "2FA is on") next to its action button. Wraps on a
