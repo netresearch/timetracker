@@ -39,6 +39,8 @@ final class RememberMeFlowTest extends AbstractWebTestCase
 
     private const string PROBE_PATH = '/getUsers';
 
+    private const string PATH_LOGIN = '/login';
+
     /** Throwaway fixture value for the seeded test user's local login. */
     private const string VALID_LOGIN = 'Str0ng-Horse-Battery-42';
 
@@ -78,10 +80,7 @@ final class RememberMeFlowTest extends AbstractWebTestCase
 
         // The very first request after the "restart" must be served, not bounced
         // to /login (the pre-#587 behavior force-logged the user out here).
-        $this->client->request(Request::METHOD_GET, self::PROBE_PATH, [], [], [
-            'HTTP_ACCEPT' => 'application/json',
-            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-        ]);
+        $this->client->request(Request::METHOD_GET, self::PROBE_PATH, [], [], self::jsonHeaders(xhr: true));
         $this->assertStatusCode(200);
 
         self::assertRememberMeCookieNotCleared($this->client->getResponse()->headers->getCookies());
@@ -97,21 +96,17 @@ final class RememberMeFlowTest extends AbstractWebTestCase
         // must re-enter credentials. The response is the form_login entry
         // point's redirect — NOT a logout, so the REMEMBERME cookie survives
         // and day-to-day routes keep working afterwards.
-        $this->client->request(Request::METHOD_GET, '/settings/api-tokens', [], [], [
-            'HTTP_ACCEPT' => 'application/json',
-        ]);
+        $this->client->request(Request::METHOD_GET, '/settings/api-tokens', [], [], self::jsonHeaders());
 
         self::assertResponseRedirects();
         $location = $this->client->getResponse()->headers->get('Location');
         self::assertNotNull($location);
-        self::assertStringContainsString('/login', $location);
+        self::assertStringContainsString(self::PATH_LOGIN, $location);
 
         self::assertRememberMeCookieNotCleared($this->client->getResponse()->headers->getCookies());
 
         // The remembered session is still intact: a normal route stays reachable.
-        $this->client->request(Request::METHOD_GET, self::PROBE_PATH, [], [], [
-            'HTTP_ACCEPT' => 'application/json',
-        ]);
+        $this->client->request(Request::METHOD_GET, self::PROBE_PATH, [], [], self::jsonHeaders());
         $this->assertStatusCode(200);
     }
 
@@ -143,7 +138,7 @@ final class RememberMeFlowTest extends AbstractWebTestCase
 
         // A full-fledged login has nothing to do on /login — the pre-#587
         // redirect to the start page must survive the step-up fix.
-        $this->client->request(Request::METHOD_GET, '/login');
+        $this->client->request(Request::METHOD_GET, self::PATH_LOGIN);
 
         self::assertResponseRedirects('/');
     }
@@ -161,14 +156,12 @@ final class RememberMeFlowTest extends AbstractWebTestCase
         // RequireFullAuthForImpersonationSubscriber does (unit-tested).
         // Either way the remembered user must land on the step-up redirect
         // below — never a completed switch, never a logout.
-        $this->client->request(Request::METHOD_GET, self::PROBE_PATH . '?simulateUserId=2', [], [], [
-            'HTTP_ACCEPT' => 'application/json',
-        ]);
+        $this->client->request(Request::METHOD_GET, self::PROBE_PATH . '?simulateUserId=2', [], [], self::jsonHeaders());
 
         self::assertResponseRedirects();
         $location = $this->client->getResponse()->headers->get('Location');
         self::assertNotNull($location);
-        self::assertStringContainsString('/login', $location);
+        self::assertStringContainsString(self::PATH_LOGIN, $location);
 
         self::assertRememberMeCookieNotCleared($this->client->getResponse()->headers->getCookies());
     }
@@ -203,7 +196,7 @@ final class RememberMeFlowTest extends AbstractWebTestCase
      */
     private function postLogin(bool $withRememberMe): void
     {
-        $this->client->request(Request::METHOD_GET, '/login');
+        $this->client->request(Request::METHOD_GET, self::PATH_LOGIN);
         $html = $this->client->getResponse()->getContent();
         self::assertIsString($html);
         self::assertSame(1, preg_match('/name="_csrf_token" value="([^"]+)"/', $html, $matches), 'login page must render the CSRF token');
@@ -217,10 +210,23 @@ final class RememberMeFlowTest extends AbstractWebTestCase
             $parameters['_remember_me'] = 'on';
         }
 
-        $this->client->request(Request::METHOD_POST, '/login', $parameters, [], [
-            'HTTP_ACCEPT' => 'application/json',
-            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-        ]);
+        $this->client->request(Request::METHOD_POST, self::PATH_LOGIN, $parameters, [], self::jsonHeaders(xhr: true));
+    }
+
+    /**
+     * Server array for a request the way the SPA issues it: JSON Accept
+     * header, optionally marked as an XHR.
+     *
+     * @return array<string, string>
+     */
+    private static function jsonHeaders(bool $xhr = false): array
+    {
+        $server = ['HTTP_ACCEPT' => 'application/json'];
+        if ($xhr) {
+            $server['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest';
+        }
+
+        return $server;
     }
 
     /**
