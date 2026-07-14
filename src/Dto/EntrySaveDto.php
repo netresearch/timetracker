@@ -37,10 +37,13 @@ final readonly class EntrySaveDto
         public string $start = '00:00:00',
         #[Assert\NotBlank(message: 'End time is required')]
         public string $end = '00:00:00',
-        #[Assert\Length(max: 50, maxMessage: 'Ticket cannot be longer than 50 characters')]
+        // Max lengths mirror the DB columns (entries.ticket varchar(32),
+        // entries.description varchar(255)): under strict SQL mode a longer
+        // value would otherwise explode at flush with a 1406 error (#586).
+        #[Assert\Length(max: Entry::TICKET_MAX_LENGTH, maxMessage: 'Ticket cannot be longer than 32 characters')]
         #[Assert\Regex(pattern: '/^[A-Z0-9\-_]*$/i', message: 'Invalid ticket format')]
         public string $ticket = '',
-        #[Assert\Length(max: 1000, maxMessage: 'Description cannot be longer than 1000 characters')]
+        #[Assert\Length(max: Entry::DESCRIPTION_MAX_LENGTH, maxMessage: 'Description cannot be longer than 255 characters')]
         public string $description = '',
 
         // Support both naming conventions: project_id and project

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Tests\Dto;
 
 use App\Dto\EntrySaveDto;
+use App\Entity\Entry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -344,13 +345,13 @@ final class EntrySaveDtoTest extends KernelTestCase
             date: '2024-01-15',
             start: '09:00:00',
             end: '17:00:00',
-            ticket: str_repeat('A', 51),
+            ticket: str_repeat('A', Entry::TICKET_MAX_LENGTH + 1),
         );
 
         $violations = $this->validator->validate($dto);
 
         self::assertGreaterThan(0, $violations->count());
-        self::assertStringContainsString($this->validationMessage('Ticket cannot be longer than 50 characters'), (string) $violations);
+        self::assertStringContainsString($this->validationMessage('Ticket cannot be longer than 32 characters'), (string) $violations);
     }
 
     public function testDescriptionTooLong(): void
@@ -359,13 +360,13 @@ final class EntrySaveDtoTest extends KernelTestCase
             date: '2024-01-15',
             start: '09:00:00',
             end: '17:00:00',
-            description: str_repeat('a', 1001),
+            description: str_repeat('a', Entry::DESCRIPTION_MAX_LENGTH + 1),
         );
 
         $violations = $this->validator->validate($dto);
 
         self::assertGreaterThan(0, $violations->count());
-        self::assertStringContainsString($this->validationMessage('Description cannot be longer than 1000 characters'), (string) $violations);
+        self::assertStringContainsString($this->validationMessage('Description cannot be longer than 255 characters'), (string) $violations);
     }
 
     public function testInvalidTimeRange(): void

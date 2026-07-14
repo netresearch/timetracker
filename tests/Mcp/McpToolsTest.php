@@ -72,6 +72,7 @@ use function glob;
 use function is_string;
 use function sort;
 use function sprintf;
+use function str_repeat;
 
 /**
  * Integration tests for the MCP tools (ADR-021 Phase 5), exercised through the
@@ -222,6 +223,101 @@ final class McpToolsTest extends AbstractWebTestCase
             durationMinutes: 60,
             start: 'not-a-time',
         );
+    }
+
+    /**
+     * #586: `!`, `#`, `/` in the description were blamed for save failures.
+     * The reporter's exact minimal repro string must save and round-trip
+     * unchanged — the real cause was a length overflow, not the characters.
+     */
+    public function testLogTimeAcceptsDescriptionWithSpecialCharacters(): void
+    {
+        $this->useToken(['entries:write']);
+        $description = 'ref #439 / MR !1';
+
+        $result = self::getContainer()->get(LogTimeTool::class)->logTime(
+            project: '1',
+            activity: '1',
+            durationMinutes: 60,
+            description: $description,
+        );
+
+        self::assertIsArray($result['result'] ?? null);
+        $id = $result['result']['id'];
+        self::assertIsInt($id);
+        self::assertSame($description, $result['result']['description'] ?? null);
+
+        // Byte-identical round-trip from the database.
+        $em = self::getContainer()->get('doctrine')->getManager();
+        $em->clear();
+        $entry = $em->getRepository(Entry::class)->find($id);
+        self::assertInstanceOf(Entry::class, $entry);
+        self::assertSame($description, $entry->getDescription());
+    }
+
+    /**
+     * #586: a description longer than the varchar(255) column must be rejected
+     * by validation with a message naming the limit — previously it passed the
+     * DTO (max 1000), exploded at flush under strict SQL mode (1406), and was
+     * flattened into the generic "Could not save the entry. Please try again.".
+     */
+    public function testLogTimeRejectsOverlongDescriptionWithLengthMessage(): void
+    {
+        $this->useToken(['entries:write']);
+        $expected = self::getContainer()->get('translator')
+            ->trans('Description cannot be longer than 255 characters', [], 'validators');
+
+        try {
+            self::getContainer()->get(LogTimeTool::class)->logTime(
+                project: '1',
+                activity: '1',
+                durationMinutes: 60,
+                description: str_repeat('x', Entry::DESCRIPTION_MAX_LENGTH + 1),
+            );
+            self::fail('expected the over-long description to be rejected');
+        } catch (ToolCallException $toolCallException) {
+            self::assertSame($expected, $toolCallException->getMessage());
+        }
+    }
+
+    public function testLogTimeAcceptsDescriptionAtMaxLength(): void
+    {
+        $this->useToken(['entries:write']);
+
+        $result = self::getContainer()->get(LogTimeTool::class)->logTime(
+            project: '1',
+            activity: '1',
+            durationMinutes: 60,
+            description: str_repeat('y', Entry::DESCRIPTION_MAX_LENGTH),
+        );
+
+        self::assertIsArray($result['result'] ?? null);
+        self::assertIsInt($result['result']['id']);
+    }
+
+    /**
+     * #586: update_entry delegates to SaveEntryAction via a merged DTO — the
+     * direct-invoke validation must cover that path too.
+     */
+    public function testUpdateEntryRejectsOverlongDescriptionWithLengthMessage(): void
+    {
+        $this->useToken(['entries:write']);
+        $created = self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', durationMinutes: 30);
+        self::assertIsArray($created['result'] ?? null);
+        $id = $created['result']['id'];
+        self::assertIsInt($id);
+        $expected = self::getContainer()->get('translator')
+            ->trans('Description cannot be longer than 255 characters', [], 'validators');
+
+        try {
+            self::getContainer()->get(UpdateEntryTool::class)->updateEntry(
+                entryId: $id,
+                description: str_repeat('z', Entry::DESCRIPTION_MAX_LENGTH + 1),
+            );
+            self::fail('expected the over-long description to be rejected');
+        } catch (ToolCallException $toolCallException) {
+            self::assertSame($expected, $toolCallException->getMessage());
+        }
     }
 
     public function testDeleteEntryRemovesOwnEntry(): void
