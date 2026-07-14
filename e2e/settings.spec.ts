@@ -187,6 +187,47 @@ test.describe('Settings page conversion', () => {
   });
 });
 
+test.describe('Settings locale reload', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginWithFrozenClock(page, 'i.myself', 'myself123');
+  });
+
+  // Saving a changed locale reloads the SPA (UI strings are locale-bound at load,
+  // so AccountSection calls window.location.reload()). The reload must land back
+  // on the same settings section, not /ui or the default section (spec §9.1/§12).
+  // The e2e UI is German by default; switch to English and back to German so the
+  // serially-run file is left as it found it.
+  test('changing the locale reloads onto the same settings section', async ({ page }) => {
+    await goToSettingsPage(page, 'account');
+
+    // The section hydrates its locale <select> from GET /api/v2/settings on
+    // mount; wait for that to settle (German default) before changing it, so the
+    // resolving GET can't reset the new selection.
+    const locale = page.locator('select[name="locale"]');
+    await expect(locale).toHaveValue('de');
+
+    await locale.selectOption('en');
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/api/v2/settings') && r.request().method() === 'PATCH'),
+      page.waitForEvent('load'),
+      page.locator('form.stack-form button.primary-button').click(),
+    ]);
+    // The reload preserved the section URL.
+    await expect(page).toHaveURL(/\/ui\/settings\/account/);
+
+    // Restore German (en → de reloads too), leaving the shared user on de.
+    const localeAfterReload = page.locator('select[name="locale"]');
+    await expect(localeAfterReload).toHaveValue('en');
+    await localeAfterReload.selectOption('de');
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/api/v2/settings') && r.request().method() === 'PATCH'),
+      page.waitForEvent('load'),
+      page.locator('form.stack-form button.primary-button').click(),
+    ]);
+    await expect(page).toHaveURL(/\/ui\/settings\/account/);
+  });
+});
+
 test.describe('Settings Effectiveness', () => {
   test.beforeEach(async ({ page }) => {
     // Use 'i.myself' who has a stable database record
