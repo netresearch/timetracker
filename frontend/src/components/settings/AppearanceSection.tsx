@@ -68,6 +68,9 @@ export function AppearanceSection() {
        wrapper is a div (not a sectioning element): the accessible group
        name comes from the fieldset's legend. */
     <div class="stack-form">
+      {/* One h2 per settings section so the page outline is h1 → h2;
+          visually-hidden because the fieldset legend already shows the title. */}
+      <h2 class="visually-hidden">{m.settings_section_device()}</h2>
       <fieldset class="settings-group">
         <legend>{m.settings_section_device()}</legend>
         <p class="settings-section-hint settings-instant-badge">{m.settings_section_device_hint()}</p>

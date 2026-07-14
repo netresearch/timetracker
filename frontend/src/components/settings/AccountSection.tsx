@@ -91,6 +91,9 @@ export function AccountSection() {
 
   return (
     <form class="stack-form" onSubmit={(event) => void onSubmit(event)}>
+      {/* One h2 per settings section so the page outline is h1 → h2 (→ h3);
+          visually-hidden because the fieldset legend already shows the title. */}
+      <h2 class="visually-hidden">{m.settings_section_account()}</h2>
       <fieldset class="settings-group">
         <legend>{m.settings_section_account()}</legend>
         <p class="settings-section-hint">{m.settings_section_account_hint()}</p>
