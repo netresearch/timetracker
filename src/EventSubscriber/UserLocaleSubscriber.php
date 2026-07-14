@@ -32,7 +32,12 @@ use Symfony\Component\Translation\LocaleSwitcher;
  * listener; the LocaleSwitcher call propagates it to all locale-aware
  * services directly. The request locale is still set for consumers that read
  * it (e.g. app.request.locale in error templates). Runs on sub-requests too,
- * so error pages rendered as sub-requests get the user's locale as well.
+ * so error pages rendered as sub-requests get the user's locale even when
+ * the exception fired before this listener ran on the main request (e.g. a
+ * 403 from the firewall at priority 8). A request dispatched with an
+ * explicit `_locale` attribute is left untouched — error sub-requests carry
+ * none (ErrorListener::duplicateRequest() replaces the attributes), so the
+ * guard only skips requests that were given a fixed locale on purpose.
  */
 final readonly class UserLocaleSubscriber implements EventSubscriberInterface
 {
@@ -52,6 +57,14 @@ final readonly class UserLocaleSubscriber implements EventSubscriberInterface
 
     public function onKernelRequest(RequestEvent $requestEvent): void
     {
+        $request = $requestEvent->getRequest();
+
+        // An explicit `_locale` (route parameter or a sub-request dispatched
+        // in a fixed locale) wins over the user's saved locale.
+        if ($request->attributes->has('_locale')) {
+            return;
+        }
+
         $user = $this->security->getUser();
         if (!$user instanceof User) {
             return;
@@ -60,7 +73,7 @@ final readonly class UserLocaleSubscriber implements EventSubscriberInterface
         // Normalize on read like User::getSettings() does — legacy rows may
         // hold values outside the supported de/en/es/fr/ru set.
         $locale = $this->localizationService->normalizeLocale($user->getLocale());
-        $requestEvent->getRequest()->setLocale($locale);
+        $request->setLocale($locale);
         $this->localeSwitcher->setLocale($locale);
     }
 }
