@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use App\Entity\User;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
 
@@ -49,6 +51,47 @@ final class UiSpaActionTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $content = (string) $this->client->getResponse()->getContent();
         self::assertStringContainsString('window.APP_CONFIG', $content);
+    }
+
+    public function testHeaderIsGermanForGermanLocaleUser(): void
+    {
+        // Seeded user 1 'unittest' has locale 'de' (sql/unittest/002_testdata.sql).
+        $this->client->request(Request::METHOD_GET, '/ui');
+
+        $this->assertStatusCode(200);
+        $content = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('<html lang="de">', $content);
+        self::assertStringContainsString('>Übersicht<', $content);
+        self::assertStringContainsString('title="Abmelden"', $content);
+    }
+
+    public function testHeaderFollowsUserLocaleOverDefaultLocale(): void
+    {
+        // The test env default_locale is 'de' (config/packages/test/translation.yaml),
+        // so only a user whose saved locale DIFFERS from the default can tell
+        // "header follows the user" apart from "header follows the default".
+        $this->setUserLocale(1, 'en');
+
+        $this->client->request(Request::METHOD_GET, '/ui');
+
+        $this->assertStatusCode(200);
+        $content = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('<html lang="en">', $content);
+        self::assertStringContainsString('>Overview<', $content);
+        self::assertStringContainsString('title="Logout"', $content);
+        self::assertStringNotContainsString('Übersicht', $content);
+        self::assertStringNotContainsString('Abmelden', $content);
+    }
+
+    private function setUserLocale(int $userId, string $locale): void
+    {
+        self::assertNotNull($this->serviceContainer);
+        $doctrine = $this->serviceContainer->get('doctrine');
+        self::assertInstanceOf(ManagerRegistry::class, $doctrine);
+        $user = $doctrine->getRepository(User::class)->find($userId);
+        self::assertInstanceOf(User::class, $user);
+        $user->setLocale($locale);
+        $doctrine->getManager()->flush();
     }
 
     public function testAnonymousUserIsRedirectedToLogin(): void
