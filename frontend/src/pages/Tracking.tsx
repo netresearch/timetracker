@@ -992,6 +992,13 @@ export default function Tracking() {
     }
     tempId -= 1
     setNewRows((list) => [row, ...list])
+    // Reset the grid's roving cursor to the new row BEFORE opening the editor:
+    // the editor's Tab/Shift+Tab move walks from the roving td[tabindex="0"], so
+    // leaving it wherever it was (initially the header) made Shift+Tab land on
+    // the "Datum" column heading instead of the previous cell (#588). Order
+    // matters — beginEdit's editor grabs focus on mount, and a later td.focus()
+    // would steal it back out of the input.
+    gridHandle?.focusCell(num(row.id), firstCol)
     editor.beginEdit(num(row.id), firstCol)
   }
 
