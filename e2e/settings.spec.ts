@@ -168,6 +168,11 @@ test.describe('Settings page conversion', () => {
     // Nav switches section and URL (German UI, English fallback).
     await page.locator('.settings-nav-link', { hasText: /Sicherheit|Security/ }).click();
     await expect(page).toHaveURL(/\/ui\/settings\/security/);
+
+    // The document title names the active section (a11y: a distinct page title
+    // per section plus a section-specific route-change announcement). German UI
+    // → "Einstellungen – Sicherheit – …".
+    await expect(page).toHaveTitle(/Sicherheit|Security/);
   });
 
   test('deep link opens the security section directly', async ({ page }) => {
