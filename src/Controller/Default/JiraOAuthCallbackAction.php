@@ -59,7 +59,7 @@ final class JiraOAuthCallbackAction extends BaseController
      * @throws JiraApiException    When Jira API operations fail
      */
     #[Route(path: '/jiraoauthcallback', name: 'jiraOAuthCallback', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): RedirectResponse|Response
     {
         if (!$user instanceof User) {

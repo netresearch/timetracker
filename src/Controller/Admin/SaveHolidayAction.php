@@ -24,6 +24,7 @@ final class SaveHolidayAction extends BaseController
 {
     #[Route(path: '/holiday/save', name: 'saveHoliday_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] HolidaySaveDto $holidaySaveDto): Response|JsonResponse|Error
     {
         // The day is a validated Y-m-d string (Assert\Date on the DTO).

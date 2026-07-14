@@ -25,6 +25,7 @@ final class DeleteUserAction extends BaseController
 {
     #[Route(path: '/user/delete', name: 'deleteUser_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] IdDto $idDto): JsonResponse|Error|Response
     {
         try {

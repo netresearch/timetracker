@@ -38,6 +38,7 @@ final class SaveContractAction extends BaseController
      */
     #[Route(path: '/contract/save', name: 'saveContract_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] ContractSaveDto $contractSaveDto): Response|JsonResponse|Error
     {
         $contractId = $contractSaveDto->id;

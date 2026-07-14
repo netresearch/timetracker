@@ -34,7 +34,7 @@ final class GetHolidaysAction extends BaseController
      * @throws BadRequestException      When query parameters are malformed
      */
     #[Route(path: '/getHolidays', name: '_getHolidays_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): JsonResponse|RedirectResponse
     {
         if (!$user instanceof User) {

@@ -130,10 +130,21 @@ security:
         # lock them to admins. Inert in dev/test/prod (no such routes/firewall match).
         - { path: ^/_(profiler|wdt), roles: ROLE_ADMIN }
         # The 2FA form (/2fa) and code check (/2fa_check) are reached while the
-        # login is half-done — the catch-all's IS_AUTHENTICATED_FULLY would block
-        # them, so allow the in-progress state explicitly (must precede ^/).
+        # login is half-done — the catch-all would block them (a TwoFactorToken
+        # is neither remembered nor full), so allow the in-progress state
+        # explicitly (must precede ^/).
         - { path: ^/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS }
-        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+        # Passkey registration (the webauthn-bundle ceremony endpoints, which
+        # carry no controller attribute) demands a full login: a passkey added
+        # from a session resumed via the REMEMBERME cookie would escalate a
+        # stolen cookie into a permanent full-fledged login. Same ADR-018
+        # re-auth posture as the Settings security controllers (must precede ^/).
+        - { path: ^/settings/security/passkeys, roles: IS_AUTHENTICATED_FULLY }
+        # Day-to-day routes accept a session resumed from the 30-day REMEMBERME
+        # cookie ("Stay logged in", #587); FULLY would reject every remembered
+        # session and make the cookie useless. Sensitive endpoints step up to
+        # IS_AUTHENTICATED_FULLY via controller attributes / the rules above.
+        - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
 
         # Uncomment to restrict access to paths starting with /_internal to only localhost
         # - { path: ^/_internal/secure, roles: IS_AUTHENTICATED_ANONYMOUSLY, ip: 127.0.0.1 }

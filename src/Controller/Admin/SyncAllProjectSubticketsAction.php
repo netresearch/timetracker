@@ -22,6 +22,7 @@ final class SyncAllProjectSubticketsAction extends BaseController
 {
     #[Route(path: '/projects/syncsubtickets', name: 'syncAllSubtickets_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(): JsonResponse
     {
         // Legacy route syncs all projects; mirror behavior by iterating all

@@ -39,7 +39,7 @@ final class GetLastEntriesAction extends BaseInterpretationController
      */
     #[RequireScope('reporting:read')]
     #[Route(path: '/interpretation/entries', name: 'interpretation_entries_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(
         Request $request,
         #[CurrentUser]

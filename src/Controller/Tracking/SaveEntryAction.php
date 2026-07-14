@@ -79,7 +79,7 @@ final class SaveEntryAction extends BaseTrackingController
      */
     #[RequireScope('entries:write')]
     #[Route(path: '/tracking/save', name: 'timetracking_save_attr', methods: ['POST'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(
         #[MapRequestPayload]
         EntrySaveDto $entrySaveDto,

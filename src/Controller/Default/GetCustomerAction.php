@@ -30,7 +30,7 @@ final class GetCustomerAction extends BaseController
      * @throws InvalidArgumentException When project parameter is invalid
      */
     #[Route(path: '/getCustomer', name: '_getCustomer_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(Request $request): JsonResponse
     {
         $projectParam = $request->query->get('project');

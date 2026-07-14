@@ -42,6 +42,7 @@ final class SavePresetAction extends BaseController
      */
     #[Route(path: '/preset/save', name: 'savePreset_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] PresetSaveDto $presetSaveDto): Response|JsonResponse|Error
     {
         $id = $presetSaveDto->id;

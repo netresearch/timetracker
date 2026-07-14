@@ -27,7 +27,7 @@ final class GetActivitiesAction extends BaseController
 {
     #[RequireScope('activities:read')]
     #[Route(path: '/getActivities', name: '_getActivities_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(#[CurrentUser] ?User $user = null): RedirectResponse|Response|JsonResponse
     {
         if (!$user instanceof User) {

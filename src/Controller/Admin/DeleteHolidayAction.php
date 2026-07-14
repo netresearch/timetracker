@@ -27,6 +27,7 @@ final class DeleteHolidayAction extends BaseController
 {
     #[Route(path: '/holiday/delete', name: 'deleteHoliday_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] HolidayDeleteDto $holidayDeleteDto): JsonResponse|Error|Response
     {
         try {

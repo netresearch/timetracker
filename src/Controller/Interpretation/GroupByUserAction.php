@@ -34,7 +34,7 @@ final class GroupByUserAction extends BaseInterpretationController
 
     #[RequireScope('reporting:read')]
     #[Route(path: '/interpretation/user', name: 'interpretation_user_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(
         Request $request,
         #[CurrentUser]

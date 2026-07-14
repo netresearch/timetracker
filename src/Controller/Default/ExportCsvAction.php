@@ -31,7 +31,7 @@ final class ExportCsvAction extends BaseController
      */
     #[RequireScope('reporting:read')]
     #[Route(path: '/export/{days}', name: '_export_attr', defaults: ['days' => 10000], methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): Response
     {
         if (!$user instanceof User) {

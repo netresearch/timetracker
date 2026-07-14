@@ -24,7 +24,7 @@ final class GetEntryAction extends BaseTrackingController
 {
     #[RequireScope('entries:read')]
     #[Route(path: '/tracking/entry/{id}', name: 'timetracking_get_attr', requirements: ['id' => '\d+'], methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(
         int $id,
         #[CurrentUser]

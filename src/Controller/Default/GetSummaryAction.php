@@ -49,7 +49,7 @@ final class GetSummaryAction extends BaseController
      * @throws Exception                When time calculation operations fail
      */
     #[Route(path: '/getSummary', name: '_getSummary_attr', methods: ['POST'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     #[Deprecated(message: 'superseded by GET /api/v2/entries/{id}/summary (ADR-022); removal in v7')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): RedirectResponse|Response|JsonResponse|Error
     {

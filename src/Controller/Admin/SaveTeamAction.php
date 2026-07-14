@@ -33,6 +33,7 @@ final class SaveTeamAction extends BaseController
      */
     #[Route(path: '/team/save', name: 'saveTeam_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] TeamSaveDto $teamSaveDto): Response|JsonResponse|Error
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Team::class);

@@ -43,6 +43,7 @@ final class SavePersonioConfigAction extends BaseController
      */
     #[Route(path: '/personio-config/save', name: 'savePersonioConfig_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] PersonioConfigSaveDto $personioConfigSaveDto): Response|Error|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(PersonioConfig::class);

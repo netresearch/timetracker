@@ -27,7 +27,7 @@ final class GetUsersAction extends BaseController
 {
     #[RequireScope('users:read')]
     #[Route(path: '/getUsers', name: '_getUsers_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(#[CurrentUser] ?User $user = null): RedirectResponse|Response|JsonResponse
     {
         if (!$user instanceof User) {

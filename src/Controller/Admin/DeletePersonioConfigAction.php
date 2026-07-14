@@ -27,6 +27,7 @@ final class DeletePersonioConfigAction extends BaseController
 {
     #[Route(path: '/personio-config/delete', name: 'deletePersonioConfig_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] IdDto $idDto): JsonResponse|Error|Response
     {
         try {

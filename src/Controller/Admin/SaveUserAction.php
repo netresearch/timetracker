@@ -49,6 +49,7 @@ final class SaveUserAction extends BaseController
      */
     #[Route(path: '/user/save', name: 'saveUser_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] UserSaveDto $userSaveDto): Response|Error|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(User::class);

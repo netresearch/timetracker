@@ -48,7 +48,7 @@ final class GetTicketTimeSummaryAction extends BaseController
      */
     #[RequireScope('reporting:read')]
     #[Route(path: '/getTicketTimeSummary/{ticket}', name: '_getTicketTimeSummary_attr', defaults: ['ticket' => null], methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): Response|RedirectResponse
     {
         if (!$user instanceof User) {

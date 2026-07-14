@@ -36,7 +36,7 @@ final class GetAllProjectsAction extends BaseController
      */
     #[RequireScope('projects:read')]
     #[Route(path: '/getAllProjects', name: '_getAllProjects_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): RedirectResponse|Response|JsonResponse
     {
         if (!$user instanceof User) {
