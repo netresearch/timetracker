@@ -7,6 +7,13 @@ import type { SyncConflict } from '../api/worklogSync'
 
 const resolveConflict = vi.fn()
 const conflictsQueryFn = vi.fn()
+const updateWorktime = vi.fn()
+
+// A resolve can change local entries, so the component refreshes the header
+// worktime totals (#620) — spy on that imperative bridge.
+vi.mock('../header', () => ({
+  updateWorktime: (...args: unknown[]) => updateWorktime(...args),
+}))
 
 // Mock the API module: the query factory returns a stable key plus a queryFn the
 // test controls, and the write helper is a spy. worklogSyncKeys is echoed so the
@@ -56,6 +63,7 @@ afterEach(() => {
   cleanup()
   resolveConflict.mockReset()
   conflictsQueryFn.mockReset()
+  updateWorktime.mockReset()
 })
 
 describe('ConflictList', () => {
@@ -81,6 +89,10 @@ describe('ConflictList', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Keep remote: ABC-1' }))
     await waitFor(() => expect(resolveConflict).toHaveBeenCalledWith(5, 'remote'))
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['worklog-sync', 'conflicts'] })
+    // The resolution changed a local entry: the worklog grid and the header
+    // day/week/month totals refresh too (#620).
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['tracking-entries'] })
+    expect(updateWorktime).toHaveBeenCalled()
 
     // Success is announced and the resolved row disappears on the refetch.
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Conflict resolved.'))
@@ -133,6 +145,8 @@ describe('ConflictList', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Keep local: ABC-1' }))
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Could not resolve the conflict.'))
+    // Nothing changed server-side — no header-totals refresh.
+    expect(updateWorktime).not.toHaveBeenCalled()
     expect(await axe(container)).toHaveNoViolations()
   })
 

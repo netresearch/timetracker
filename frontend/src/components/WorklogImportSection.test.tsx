@@ -7,6 +7,13 @@ import type { SyncRun } from '../api/worklogSync'
 
 const createSyncRun = vi.fn()
 const getJson = vi.fn()
+const updateWorktime = vi.fn()
+
+// A real import creates entries, so the component refreshes the header
+// worktime totals (#620) — spy on that imperative bridge.
+vi.mock('../header', () => ({
+  updateWorktime: (...args: unknown[]) => updateWorktime(...args),
+}))
 
 vi.mock('../api/worklogSync', () => ({
   createSyncRun: (...args: unknown[]) => createSyncRun(...args),
@@ -56,6 +63,7 @@ afterEach(() => {
   cleanup()
   createSyncRun.mockReset()
   getJson.mockReset()
+  updateWorktime.mockReset()
 })
 
 describe('WorklogImportSection', () => {
@@ -95,6 +103,8 @@ describe('WorklogImportSection', () => {
     // The dry-run summary + "nothing imported yet" note appear.
     await waitFor(() => expect(screen.getByText('Would create')).toBeInTheDocument())
     expect(screen.getByText('Preview only — nothing has been imported yet.')).toBeInTheDocument()
+    // A dry run writes nothing — the worklog/header must not refresh yet (#620).
+    expect(updateWorktime).not.toHaveBeenCalled()
 
     // Step 2: execute → dry_run:false, success status, conflicts invalidated.
     fireEvent.click(screen.getByRole('button', { name: 'Execute import' }))
@@ -105,6 +115,10 @@ describe('WorklogImportSection', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Import complete.'))
     expect(screen.getByText('Created')).toBeInTheDocument()
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['worklog-sync', 'conflicts'] })
+    // The real import created entries: the worklog grid and the header
+    // day/week/month totals refresh too (#620).
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['tracking-entries'] })
+    expect(updateWorktime).toHaveBeenCalledTimes(1)
 
     expect(await axe(container)).toHaveNoViolations()
   })
