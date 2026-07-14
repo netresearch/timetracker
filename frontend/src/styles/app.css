@@ -978,6 +978,11 @@ main:has(.tracking) {
 
 @media (max-width: 767px) {
   .settings-layout {
+    /* Desktop's flex-start would shrink-to-fit the column children here;
+       the percentage-wide form fields inside then resolve against a 0-wide
+       parent and the whole content column collapses. Stretch restores the
+       full-width column. */
+    align-items: stretch;
     flex-direction: column;
     gap: 1rem;
   }
