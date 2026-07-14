@@ -132,7 +132,33 @@ describe('LoginForm', () => {
     const { unmount } = render(() => <LoginForm config={config} />)
 
     await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
-    expect(loginWithPasskeyAutofill).toHaveBeenCalledWith(expect.any(AbortSignal))
+    expect(loginWithPasskeyAutofill).toHaveBeenCalledWith(expect.any(Function), expect.any(AbortSignal))
+
+    unmount()
+  })
+
+  it('threads the "Stay logged in" checkbox into the passkey logins (#587)', async () => {
+    vi.stubGlobal('location', { ...window.location, assign: vi.fn() })
+    passkeysSupported.mockReturnValue(true)
+    passkeyAutofillSupported.mockResolvedValue(true)
+    // Keep the background ceremony pending — only its remember accessor matters.
+    loginWithPasskeyAutofill.mockReturnValue(new Promise<string>(() => {}))
+
+    const { container, getByRole, unmount } = render(() => <LoginForm config={config} />)
+    await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
+
+    // The remember accessor is evaluated at submit time — flipping the
+    // checkbox changes what an in-flight ceremony will send.
+    const autofillRemember = loginWithPasskeyAutofill.mock.calls[0]![0] as () => boolean
+    expect(autofillRemember()).toBe(true) // default-checked
+
+    fireEvent.click(container.querySelector('input[name="_remember_me"]')!) // uncheck
+    expect(autofillRemember()).toBe(false)
+
+    fireEvent.click(getByRole('button', { name: 'Sign in with a passkey' }))
+    await waitFor(() => expect(loginWithPasskey).toHaveBeenCalled())
+    const buttonRemember = loginWithPasskey.mock.calls[0]![0] as () => boolean
+    expect(buttonRemember()).toBe(false)
 
     unmount()
   })
@@ -142,7 +168,7 @@ describe('LoginForm', () => {
     // Capture the signal handed to the autofill request so we can assert it aborts.
     let signal: AbortSignal | undefined
     loginWithPasskeyAutofill.mockImplementation((...args: unknown[]) => {
-      signal = args[0] as AbortSignal | undefined
+      signal = args[1] as AbortSignal | undefined
 
       return new Promise<string>(() => {}) // never resolves — a live conditional ceremony
     })

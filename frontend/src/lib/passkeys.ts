@@ -47,7 +47,7 @@ function abortedError(): DOMException {
  * around that await stops startAuthentication from firing a stray prompt after
  * the caller has moved on.
  */
-async function requestPasskeyLogin(useBrowserAutofill: boolean, signal?: AbortSignal): Promise<string> {
+async function requestPasskeyLogin(useBrowserAutofill: boolean, remember: () => boolean, signal?: AbortSignal): Promise<string> {
   if (signal?.aborted) {
     throw abortedError()
   }
@@ -56,14 +56,20 @@ async function requestPasskeyLogin(useBrowserAutofill: boolean, signal?: AbortSi
     throw abortedError()
   }
   const assertion = await startAuthentication({ optionsJSON, useBrowserAutofill })
-  const result = await postJson<{ ok?: boolean; redirect?: string }>('/login/passkey', assertion as unknown as Record<string, unknown>)
+  // "Stay logged in": the assertion travels as a raw JSON body, which Symfony's
+  // remember-me listener never inspects — it reads the standard `_remember_me`
+  // parameter from attributes/query/form fields only. Carry the choice in the
+  // query string instead, and read it at submit time (not ceremony start) so
+  // the checkbox state at the moment the user picks a passkey counts.
+  const resultPath = remember() ? '/login/passkey?_remember_me=1' : '/login/passkey'
+  const result = await postJson<{ ok?: boolean; redirect?: string }>(resultPath, assertion as unknown as Record<string, unknown>)
 
   return result.redirect ?? '/'
 }
 
 /** Explicit ("Sign in with a passkey" button) modal login. */
-export function loginWithPasskey(): Promise<string> {
-  return requestPasskeyLogin(false)
+export function loginWithPasskey(remember: () => boolean): Promise<string> {
+  return requestPasskeyLogin(false, remember)
 }
 
 /**
@@ -73,8 +79,8 @@ export function loginWithPasskey(): Promise<string> {
  * ceremony, or {@see cancelPasskeyCeremony} during it) or on error — callers
  * stay quiet on the ceremony rejections and surface only a server rejection.
  */
-export function loginWithPasskeyAutofill(signal?: AbortSignal): Promise<string> {
-  return requestPasskeyLogin(true, signal)
+export function loginWithPasskeyAutofill(remember: () => boolean, signal?: AbortSignal): Promise<string> {
+  return requestPasskeyLogin(true, remember, signal)
 }
 
 /**

@@ -27,6 +27,7 @@ final class DeleteProjectAction extends BaseController
 {
     #[Route(path: '/project/delete', name: 'deleteProject_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] IdDto $idDto): JsonResponse|Error|Response
     {
         try {

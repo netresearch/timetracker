@@ -18,7 +18,7 @@ final class CheckStatusAction extends BaseController
     #[Route(path: '/status/check', name: 'check_status', methods: ['GET'])]
     public function __invoke(): JsonResponse
     {
-        $login = $this->isGranted('IS_AUTHENTICATED_FULLY');
+        $login = $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
 
         return new JsonResponse(['loginStatus' => $login]);
     }

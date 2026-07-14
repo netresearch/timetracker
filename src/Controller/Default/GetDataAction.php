@@ -34,7 +34,7 @@ final class GetDataAction extends BaseController
     #[RequireScope('entries:read')]
     #[Route(path: '/getData', name: '_getData_attr', methods: ['GET', 'POST'])]
     #[Route(path: '/getData/days/{days}', name: '_getDataDays_attr', defaults: ['days' => 3], methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(Request $request, #[CurrentUser] ?User $user = null): JsonResponse
     {
         if (!$user instanceof User) {

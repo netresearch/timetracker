@@ -43,6 +43,7 @@ final class SaveCustomerAction extends BaseController
      */
     #[Route(path: '/customer/save', name: 'saveCustomer_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] CustomerSaveDto $customerSaveDto): Response|Error|JsonResponse
     {
         $customerId = $customerSaveDto->id;

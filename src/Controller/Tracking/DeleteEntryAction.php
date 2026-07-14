@@ -40,7 +40,7 @@ final class DeleteEntryAction extends BaseTrackingController
      */
     #[RequireScope('entries:write')]
     #[Route(path: '/tracking/delete', name: 'timetracking_delete_attr', methods: ['POST'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(
         Request $request,
         #[CurrentUser]

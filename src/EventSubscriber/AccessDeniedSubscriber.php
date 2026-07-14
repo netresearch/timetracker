@@ -67,25 +67,16 @@ final readonly class AccessDeniedSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // A login that is half-done (password ok, 2FA code outstanding) also fails
-        // IS_AUTHENTICATED_FULLY — but it is NOT a stale remember-me session and
-        // must not be logged out. Defer to scheb's ExceptionListener (priority 2),
-        // which answers with the JSON challenge signal or the /2fa redirect.
-        if ($this->security->isGranted('IS_AUTHENTICATED_2FA_IN_PROGRESS')) {
-            return;
-        }
-
-        // Case 2: User is authenticated via remember_me but not fully authenticated
-        // This happens when IS_AUTHENTICATED_FULLY is required but user only has remember_me.
-        // Log out programmatically (session + cookies cleared, redirect to login)
-        // instead of redirecting through /logout: a browser following that
-        // redirect from an address-bar navigation sends no same-origin fetch
-        // metadata and would fail the logout CSRF check.
+        // Case 2: authenticated, but not full-fledged — a session resumed from
+        // the REMEMBERME cookie hitting an IS_AUTHENTICATED_FULLY-guarded
+        // endpoint, or a half-done 2FA login (password ok, code outstanding).
+        // Set no response and defer: Symfony's security ExceptionListener
+        // (priority 1) restarts authentication at the form_login entry point —
+        // saving the target path and redirecting to /login WITHOUT touching the
+        // session or the REMEMBERME cookie (a remembered user must be stepped
+        // up, never logged out, #587) — and scheb's listener (priority 2)
+        // answers the 2FA case with the challenge signal instead.
         if (!$this->security->isGranted('IS_AUTHENTICATED_FULLY')) {
-            $response = $this->security->logout(false)
-                ?? new RedirectResponse($this->router->generate('_login'));
-            $exceptionEvent->setResponse($response);
-
             return;
         }
 

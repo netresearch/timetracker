@@ -43,6 +43,7 @@ final class ResetUserTwoFactorAction extends BaseController
 
     #[Route(path: '/user/reset-2fa', name: 'resetUserTwoFactor_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(
         #[MapRequestPayload]
         IdDto $idDto,

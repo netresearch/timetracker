@@ -34,7 +34,7 @@ final class GroupByProjectAction extends BaseInterpretationController
 
     #[RequireScope('reporting:read')]
     #[Route(path: '/interpretation/project', name: 'interpretation_project_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(
         Request $request,
         #[CurrentUser]

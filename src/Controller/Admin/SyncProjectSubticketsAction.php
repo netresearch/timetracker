@@ -35,6 +35,7 @@ final class SyncProjectSubticketsAction extends BaseController
 
     #[Route(path: '/projects/{project}/syncsubtickets', name: 'syncProjectSubtickets_attr_invokable', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request): JsonResponse|Error|ModelResponse
     {
         // Map path parameter to query for DTO compatibility

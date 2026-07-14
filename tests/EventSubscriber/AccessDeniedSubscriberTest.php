@@ -131,8 +131,13 @@ final class AccessDeniedSubscriberTest extends TestCase
         self::assertTrue($rememberMeCookie->isCleared(), 'REMEMBERME cookie should be marked as cleared');
     }
 
-    public function testRememberedUserNeedingFullAuthIsLoggedOutProgrammatically(): void
+    public function testRememberedUserNeedingFullAuthIsDeferredToSymfonyEntryPoint(): void
     {
+        // A session resumed from the REMEMBERME cookie hitting a route that
+        // demands IS_AUTHENTICATED_FULLY must NOT be logged out (#587): the
+        // subscriber sets no response, so Symfony's security ExceptionListener
+        // redirects to the login entry point for a step-up — preserving the
+        // session and the REMEMBERME cookie.
         $user = new User();
         $user->setUsername('testuser');
 
@@ -143,44 +148,15 @@ final class AccessDeniedSubscriberTest extends TestCase
         // User is authenticated via remember_me but NOT fully authenticated
         $this->stubIsGranted(fully: false, twoFactorInProgress: false);
 
-        // The subscriber logs out programmatically (no CSRF-guarded round
-        // trip through /logout) and uses the logout response as-is.
-        $logoutResponse = new RedirectResponse('/login');
         $this->security
-            ->expects(self::once())->method('logout')
-            ->with(false)
-            ->willReturn($logoutResponse);
+            ->expects(self::never())->method('logout');
 
         $request = $this->createRequest(true);
         $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
 
         $this->subscriber->onKernelException($event);
 
-        self::assertSame($logoutResponse, $event->getResponse());
-    }
-
-    public function testRememberedUserFallsBackToLoginRedirectWhenLogoutReturnsNoResponse(): void
-    {
-        $user = new User();
-        $user->setUsername('testuser');
-
-        $this->security
-            ->method('getUser')
-            ->willReturn($user);
-        $this->stubIsGranted(fully: false, twoFactorInProgress: false);
-        $this->security
-            ->expects(self::once())->method('logout')
-            ->with(false)
-            ->willReturn(null);
-
-        $request = $this->createRequest(true);
-        $event = $this->createExceptionEvent($request, new AccessDeniedException('Access Denied'));
-
-        $this->subscriber->onKernelException($event);
-
-        $response = $event->getResponse();
-        self::assertInstanceOf(RedirectResponse::class, $response);
-        self::assertSame('/login', $response->getTargetUrl());
+        self::assertNull($event->getResponse());
     }
 
     public function testTwoFactorInProgressIsDeferredToSchebListener(): void

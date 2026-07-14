@@ -32,6 +32,7 @@ final class SyncJiraEntriesAction extends BaseController
      */
     #[Route(path: '/syncentries/jira', name: 'syncJiraEntries_attr', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request): JsonResponse
     {
         $from = $request->query->get('from');

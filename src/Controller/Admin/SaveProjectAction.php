@@ -42,6 +42,7 @@ final class SaveProjectAction extends BaseController
      */
     #[Route(path: '/project/save', name: 'saveProject_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] ProjectSaveDto $projectSaveDto): Response|Error|JsonResponse
     {
         $ticketSystem = null !== $projectSaveDto->ticket_system ? $this->doctrineRegistry->getRepository(TicketSystem::class)->find($projectSaveDto->ticket_system) : null;

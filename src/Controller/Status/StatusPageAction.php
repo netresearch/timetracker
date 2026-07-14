@@ -13,7 +13,7 @@ final class StatusPageAction extends BaseController
     #[Route(path: '/status/page', name: 'status_page', methods: ['GET'])]
     public function __invoke(): Response
     {
-        $isLoggedIn = $this->isGranted('IS_AUTHENTICATED_FULLY');
+        $isLoggedIn = $this->isGranted('IS_AUTHENTICATED_REMEMBERED');
         $statusClass = $isLoggedIn ? 'status_active' : 'status_inactive';
 
         $html = <<<HTML

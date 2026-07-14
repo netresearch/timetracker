@@ -133,6 +133,15 @@ describe('api/client', () => {
       await expect(postJson('/s', {})).rejects.toBeInstanceOf(SessionExpiredError)
       expect(sessionExpired()).toBe(true)
     })
+
+    it('raises session-expired (no navigation) when an ok response is not JSON', async () => {
+      // A remembered session's mutation on a step-up endpoint can be bounced
+      // through /login onto an HTML page other than /login — landing there
+      // must raise the overlay, not feed HTML into JSON.parse (issue #587).
+      mockFetch({ status: 200, redirected: true, url: 'http://localhost/ui/tracking', contentType: 'text/html', body: '<!doctype html>' })
+      await expect(postJson('/s', {})).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(sessionExpired()).toBe(true)
+    })
   })
 
   describe('apiErrorMessage', () => {

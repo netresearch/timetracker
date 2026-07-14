@@ -37,6 +37,7 @@ final class SaveActivityAction extends BaseController
      */
     #[Route(path: '/activity/save', name: 'saveActivity_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] ActivitySaveDto $activitySaveDto): Response|Error|JsonResponse
     {
         $objectRepository = $this->doctrineRegistry->getRepository(Activity::class);

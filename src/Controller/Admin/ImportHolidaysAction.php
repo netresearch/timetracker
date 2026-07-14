@@ -66,6 +66,7 @@ final class ImportHolidaysAction extends BaseController
 
     #[Route(path: '/holiday/import-ical', name: 'importHolidaysIcal_attr', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request): Response|JsonResponse|Error
     {
         $icalContent = $this->readIcalContent($request);

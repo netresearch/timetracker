@@ -30,7 +30,7 @@ final class GetPresetsAction extends BaseController
     // Save/Delete actions.
     #[RequireScope('presets:read')]
     #[Route(path: '/getAllPresets', name: '_getAllPresets_attr', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
     public function __invoke(#[CurrentUser] ?User $user = null): JsonResponse|RedirectResponse
     {
         if (!$user instanceof User) {

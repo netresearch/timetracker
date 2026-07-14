@@ -37,6 +37,7 @@ final readonly class ConfirmProjectImportAction
 
     #[Route(path: '/project-import/confirm', name: 'project_import_confirm', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(#[MapRequestPayload] ProjectImportConfirmDto $projectImportConfirmDto): JsonResponse
     {
         try {

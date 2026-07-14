@@ -166,7 +166,12 @@ async function sendJson<T>(
     body: JSON.stringify(payload),
   })
 
-  if (sessionLost(response)) {
+  // Same content-type fallback as getJson: an auth bounce can land on an ok
+  // HTML page other than /login (every JSON endpoint answers JSON), and
+  // feeding that into JSON.parse below would bury the step-up behind a
+  // SyntaxError instead of raising the re-login overlay (#587).
+  const contentType = response.headers.get('content-type') ?? ''
+  if (sessionLost(response) || (response.ok && !contentType.includes('json'))) {
     raiseSessionExpired()
   }
 

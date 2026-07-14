@@ -16,9 +16,10 @@ use function assert;
 /**
  * Regression tests for remember_me authentication edge cases.
  *
- * These tests verify that users authenticated via remember_me (but not fully
- * authenticated) are properly logged out instead of seeing a 403 error or
- * getting stuck in a redirect loop, and that logout CSRF is enforced.
+ * These tests verify that users authenticated via remember_me are served on
+ * day-to-day routes (#587 — the previous force-logout made "Stay logged in"
+ * useless), that a stale REMEMBERME cookie is cleaned up with a redirect to
+ * /login instead of a 403 or a redirect loop, and that logout CSRF is enforced.
  *
  * @internal
  *
@@ -60,33 +61,78 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
     }
 
     /**
-     * Test that a remember_me authenticated user accessing a route requiring
-     * IS_AUTHENTICATED_FULLY is logged out and lands on /login (not 403).
-     *
-     * This is a regression test for the bug where remember_me users would see
-     * "You are not allowed to perform this action" instead of being redirected
-     * to re-authenticate.
+     * A remember_me-authenticated session must be SERVED on day-to-day routes
+     * (#587). The catch-all access rule accepts IS_AUTHENTICATED_REMEMBERED —
+     * the pre-#587 behavior (force-logout to /login on the first request after
+     * a browser restart, which also caused the historic 403/redirect loop)
+     * must not return.
      */
-    public function testRememberMeUserIsLoggedOutNotForbidden(): void
+    public function testRememberMeUserIsServedNotLoggedOut(): void
     {
-        // Get a real user from the database
-        $user = $this->entityManager->getRepository(User::class)->findOneBy([]);
-        if (!$user instanceof User) {
-            self::markTestSkipped('No users in database to test with');
+        $this->authenticateViaRememberMeToken();
+
+        // A day-to-day data route (requires IS_AUTHENTICATED_REMEMBERED)
+        $this->client->request('GET', '/getUsers');
+
+        self::assertResponseIsSuccessful('Remembered user must be served, not logged out');
+
+        // The remembered session must survive: no REMEMBERME cookie deletion.
+        foreach ($this->client->getResponse()->headers->getCookies() as $cookie) {
+            if ('REMEMBERME' === $cookie->getName()) {
+                self::assertFalse($cookie->isCleared(), 'REMEMBERME cookie must not be deleted');
+            }
+        }
+    }
+
+    /**
+     * A remembered session reaching an IS_AUTHENTICATED_FULLY endpoint (ADR-018
+     * re-auth posture) is redirected to /login by the form_login entry point —
+     * a step-up prompt, NOT a logout: the session cookie and REMEMBERME cookie
+     * stay untouched, so day-to-day routes keep working afterwards.
+     */
+    public function testRememberMeUserIsRedirectedToStepUpOnSensitiveRoute(): void
+    {
+        $this->authenticateViaRememberMeToken();
+
+        $this->client->request('GET', '/settings/api-tokens');
+
+        self::assertResponseRedirects();
+        $location = $this->client->getResponse()->headers->get('Location');
+        self::assertNotNull($location);
+        self::assertStringContainsString(self::PATH_LOGIN, $location,
+            'Remembered user must be sent to /login to step up, not shown 403');
+
+        foreach ($this->client->getResponse()->headers->getCookies() as $cookie) {
+            if ('REMEMBERME' === $cookie->getName()) {
+                self::assertFalse($cookie->isCleared(), 'step-up redirect must not delete the REMEMBERME cookie');
+            }
         }
 
-        // Create a RememberMeToken (not fully authenticated)
+        // The remembered session is still alive after the denied request.
+        $this->client->request('GET', '/getUsers');
+        self::assertResponseIsSuccessful('the remembered session must survive a step-up redirect');
+    }
+
+    /**
+     * Store a RememberMeToken (authenticated, but not full-fledged) in a real
+     * session and attach its cookie to the client — the state Symfony's
+     * remember-me authenticator leaves behind after resurrecting a session
+     * from the REMEMBERME cookie.
+     */
+    private function authenticateViaRememberMeToken(): void
+    {
+        $user = $this->entityManager->getRepository(User::class)->find(1);
+        self::assertInstanceOf(User::class, $user);
+
         // Symfony 8: RememberMeToken only takes 2 parameters - $user and $firewallName
         $token = new RememberMeToken($user, 'main');
 
-        // Set the token in the security context via session
         assert(null !== $this->serviceContainer, self::MSG_NO_CONTAINER);
         /** @var \Symfony\Component\HttpFoundation\Session\SessionInterface $session */
         $session = $this->serviceContainer->get('session.factory')->createSession();
         $session->set('_security_main', serialize($token));
         $session->save();
 
-        // Set the session cookie on the client
         $this->client->getCookieJar()->set(new Cookie(
             $session->getName(),
             $session->getId(),
@@ -96,19 +142,6 @@ final class RememberMeRedirectTest extends AbstractWebTestCase
             false,
             true,
         ));
-
-        // Access a route that requires IS_AUTHENTICATED_FULLY
-        $this->client->request('GET', '/');
-
-        // Should be logged out programmatically and redirected, NOT shown 403
-        self::assertResponseRedirects();
-        $location = $this->client->getResponse()->headers->get('Location');
-        self::assertNotNull($location);
-
-        // Case 2 in AccessDeniedSubscriber performs a programmatic logout,
-        // whose response redirects straight to the login page.
-        self::assertStringContainsString(self::PATH_LOGIN, $location,
-            'Remember_me user should be logged out and land on /login, not shown 403');
     }
 
     /**

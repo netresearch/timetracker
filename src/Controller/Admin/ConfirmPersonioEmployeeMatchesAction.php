@@ -40,6 +40,7 @@ final readonly class ConfirmPersonioEmployeeMatchesAction
 
     #[Route(path: '/personio/employee-matches/confirm', name: 'personio_employee_matches_confirm', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function __invoke(Request $request): JsonResponse
     {
         $content = $request->getContent();

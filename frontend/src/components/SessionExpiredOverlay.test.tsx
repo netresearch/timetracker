@@ -162,6 +162,11 @@ describe('SessionExpiredOverlay', () => {
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
     expect(loginWithPasskey).toHaveBeenCalledTimes(1)
+    // Mirrors the overlay's password path (which sends no _remember_me): the
+    // overlay only shows when no valid REMEMBERME cookie exists, so a re-login
+    // must not silently grant a 30-day cookie the user never opted into (#587).
+    const remember = loginWithPasskey.mock.calls[0]![0] as () => boolean
+    expect(remember()).toBe(false)
   })
 
   it('surfaces an inline error when the passkey ceremony fails, without resuming', async () => {
@@ -203,7 +208,10 @@ describe('SessionExpiredOverlay', () => {
     render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)
 
     await waitFor(() => expect(loginWithPasskeyAutofill).toHaveBeenCalled())
-    expect(loginWithPasskeyAutofill.mock.calls[0]![0]).toBeInstanceOf(AbortSignal)
+    const [remember, signal] = loginWithPasskeyAutofill.mock.calls[0]!
+    expect(signal).toBeInstanceOf(AbortSignal)
+    // Same remember-me parity as the explicit passkey button (#587).
+    expect((remember as () => boolean)()).toBe(false)
   })
 
   it('tears down the autofill when switching to the 2FA code step', async () => {

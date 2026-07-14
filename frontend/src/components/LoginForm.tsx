@@ -118,7 +118,7 @@ export function LoginForm(props: { config: LoginConfig }) {
     setSubmitting(true)
     setError(null)
     try {
-      globalThis.location.assign(await loginWithPasskey())
+      globalThis.location.assign(await loginWithPasskey(remember))
     } catch {
       // Includes the user dismissing the native prompt — a quiet inline message.
       setError(m.login_passkey_error())
@@ -149,7 +149,7 @@ export function LoginForm(props: { config: LoginConfig }) {
         if (!(await passkeyAutofillSupported())) {
           return
         }
-        globalThis.location.assign(await loginWithPasskeyAutofill(passkeyAutofill.signal))
+        globalThis.location.assign(await loginWithPasskeyAutofill(remember, passkeyAutofill.signal))
       } catch (caught) {
         // An ApiError means the ceremony produced an assertion but the server
         // rejected it — worth telling the user. Everything else (abort, dismiss,
