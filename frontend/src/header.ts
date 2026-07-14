@@ -30,6 +30,10 @@ type WorktimeStatus = 'ok' | 'under' | 'neutral'
 
 const STATUS_POLL_INTERVAL_MS = 90_000
 
+// Refocus catch-up (#620): 'focus' and 'visibilitychange' fire together when a
+// tab is refocused, so refreshes within this window collapse into one fetch.
+const WORKTIME_REFOCUS_THROTTLE_MS = 15_000
+
 /** 'H:MM', optionally suffixed with person-days (PT). */
 export function formatDuration(minutes: number, inDays = false): string {
   const days = Math.floor((minutes / (60 * 8)) * 100) / 100
@@ -225,12 +229,25 @@ export function wireWorktimeDetail(): void {
   })
 }
 
+// Monotonic tickets for updateWorktime: with several triggers (init, mutations,
+// refocus, the status poll) two fetches can be in flight at once, and responses
+// may return out of order — a response paints only if it is newer than the one
+// on screen. Comparing against the last PAINTED (not last started) fetch keeps
+// an older successful response usable when a newer fetch failed.
+let worktimeFetchSeq = 0
+let worktimePaintedSeq = 0
+
 // Exported so the SolidJS worklog can refresh the header's today/week/month
 // totals right after it saves, edits or deletes an entry — otherwise the header
 // sums (loaded once on init) go stale until a full page reload (#446).
 export async function updateWorktime(): Promise<void> {
+  const seq = ++worktimeFetchSeq
   try {
     const summary = await getJson<TimeBalance>('/api/v2/time-balance')
+    if (seq <= worktimePaintedSeq) {
+      return // a newer response already painted; don't overwrite it
+    }
+    worktimePaintedSeq = seq
     setText('worktime-day', formatDuration(summary.today.ist))
     setText('worktime-week', formatDuration(summary.week.ist))
     // Month shows person-days only; the hours stay in the title for reference.
@@ -247,6 +264,41 @@ export async function updateWorktime(): Promise<void> {
   } catch {
     // Header sums are non-critical; leave the rendered defaults.
   }
+}
+
+let lastRefocusRefreshAt = 0
+
+/**
+ * Refetch the totals when the tab becomes visible/focused again, at most once
+ * per throttle window. This is the catch-up for out-of-band writes (another
+ * tab, the REST/MCP API): the entries grid is a TanStack query and refetches
+ * on window focus by default, but the header totals are painted imperatively
+ * and would otherwise keep their stale figures until a full reload (#620).
+ * The timestamp is set synchronously, so the focus + visibilitychange pair a
+ * refocus fires (and any double-wired listener) collapses into one fetch.
+ */
+function refreshWorktimeOnRefocus(): void {
+  const now = Date.now()
+  if (now - lastRefocusRefreshAt < WORKTIME_REFOCUS_THROTTLE_MS) {
+    return
+  }
+  lastRefocusRefreshAt = now
+  void updateWorktime()
+}
+
+let worktimeRefocusWired = false
+
+function wireWorktimeRefocus(): void {
+  if (worktimeRefocusWired) {
+    return
+  }
+  worktimeRefocusWired = true
+  window.addEventListener('focus', refreshWorktimeOnRefocus)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      refreshWorktimeOnRefocus()
+    }
+  })
 }
 
 // The nav links are rendered in document order (and the overflow script keeps
@@ -624,7 +676,11 @@ export function refreshLoginStatus(config: AppConfig): Promise<void> {
 }
 
 function pollLoginStatus(config: AppConfig): void {
-  void fetchLoginStatus(config).finally(() => {
+  // The worktime totals piggyback on the status poll: an idle-open tab picks up
+  // out-of-band writes (#620) on the same cadence, with no extra timer. Both
+  // fetches swallow their own errors; allSettled makes it explicit that neither
+  // a failing fetch nor the other one can stop the rescheduling.
+  void Promise.allSettled([fetchLoginStatus(config), updateWorktime()]).then(() => {
     setTimeout(() => {
       pollLoginStatus(config)
     }, STATUS_POLL_INTERVAL_MS)
@@ -643,6 +699,7 @@ export function initHeaderDynamics(config: AppConfig): void {
   })
   void updateWorktime()
   wireWorktimeDetail()
+  wireWorktimeRefocus()
   setTimeout(() => {
     pollLoginStatus(config)
   }, STATUS_POLL_INTERVAL_MS)

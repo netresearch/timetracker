@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
-import { ticketSystemsQuery, usersQuery } from '../api/queries'
+import { refreshEntriesAndWorktime, ticketSystemsQuery, usersQuery } from '../api/queries'
 import {
   createSyncRun,
   syncRunQuery,
@@ -131,6 +131,12 @@ function WorklogSyncArea(): JSX.Element {
       setResult(run)
       // A new run belongs at the top of the history — refresh it.
       void queryClient.invalidateQueries({ queryKey: worklogSyncKeys.runs })
+      if (!dryRun()) {
+        // A real run can create or change entries — refresh the worklog grid and
+        // the header day/week/month totals, which don't observe the entries
+        // cache (#620). A dry run writes nothing, so it skips the refresh.
+        void refreshEntriesAndWorktime(queryClient)
+      }
     } catch (caught) {
       setError(apiErrorMessage(caught, m.worklogsync_run_error()))
     } finally {

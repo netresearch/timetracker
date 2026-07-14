@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getJson } from './api/client'
 import type { AppConfig } from './config'
-import { formatDays, formatDuration, formatSignedDuration, handleHelpClick, handleShortcut, hideAccessHints, initialsFrom, refreshLoginStatus, showAccessHints, updateWorktime, wireWorktimeDetail, worktimeStatus } from './header'
+import { formatDays, formatDuration, formatSignedDuration, handleHelpClick, handleShortcut, hideAccessHints, initHeaderDynamics, initialsFrom, refreshLoginStatus, showAccessHints, updateWorktime, wireWorktimeDetail, worktimeStatus } from './header'
 import { setShortcutsHelpOpen, shortcutsHelpOpen } from './lib/shortcutsHelp'
 
 // Preserve the module's other exports (SessionExpiredError, postJson, …) and stub
@@ -111,6 +111,61 @@ describe('updateWorktime', () => {
     expect(row.querySelector('[data-wd="delta"]')?.textContent).toBe('+0:30')
   })
 
+  it('never paints a stale response over a newer one (out-of-order fetches)', async () => {
+    renderWorktime()
+    const period = { soll_total: 480, soll_so_far: 480, diff: 0, status: 'ok' as const }
+    const balance = (ist: number) => ({
+      today: { ...period, ist },
+      week: { ...period, ist },
+      month: { ...period, ist },
+      warnings: [],
+    })
+    // First call resolves LATE with the old total; second resolves first with
+    // the new one — the late stale response must not win the paint.
+    let releaseStale: (() => void) | undefined
+    vi.mocked(getJson)
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        releaseStale = () => resolve(balance(0))
+      }))
+      .mockResolvedValueOnce(balance(465))
+
+    const stale = updateWorktime()
+    const fresh = updateWorktime()
+    await fresh
+    expect(document.getElementById('worktime-day')?.textContent).toBe('7:45')
+
+    releaseStale?.()
+    await stale
+    expect(document.getElementById('worktime-day')?.textContent).toBe('7:45')
+  })
+
+  it('paints an older successful response when the newer fetch failed', async () => {
+    renderWorktime()
+    const period = { soll_total: 480, soll_so_far: 480, diff: 0, status: 'ok' as const }
+    const balance = (ist: number) => ({
+      today: { ...period, ist },
+      week: { ...period, ist },
+      month: { ...period, ist },
+      warnings: [],
+    })
+    // First call resolves LATE but successfully; the second (newer) call fails.
+    // The older data is still fresher than what's on screen, so it paints.
+    let releaseOlder: (() => void) | undefined
+    vi.mocked(getJson)
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        releaseOlder = () => resolve(balance(465))
+      }))
+      .mockRejectedValueOnce(new Error('boom'))
+
+    const older = updateWorktime()
+    const newer = updateWorktime()
+    await newer
+
+    releaseOlder?.()
+    await older
+    expect(document.getElementById('worktime-day')?.textContent).toBe('7:45')
+  })
+
   it('leaves a period neutral when its SOLL so far is zero (weekend/holiday)', async () => {
     renderWorktime()
     vi.mocked(getJson).mockResolvedValue({
@@ -126,6 +181,112 @@ describe('updateWorktime', () => {
     expect(today.classList.contains('is-ok')).toBe(false)
     expect(today.classList.contains('is-under')).toBe(false)
     expect(document.getElementById('worktime-day')?.textContent).toBe('7:30')
+  })
+})
+
+describe('worktime auto-refresh (#620)', () => {
+  const config = { userName: 'dev' } as AppConfig
+  const BALANCE_PATH = '/api/v2/time-balance'
+  const STATUS_PATH = '/status/check'
+
+  // One response object satisfying BOTH header fetches: fetchLoginStatus reads
+  // loginStatus, updateWorktime reads the periods. Calls are counted per path.
+  const response = {
+    loginStatus: true,
+    today: { ist: 465, soll_total: 480, soll_so_far: 480, diff: -15, status: 'behind' },
+    week: { ist: 465, soll_total: 2400, soll_so_far: 480, diff: -15, status: 'behind' },
+    month: { ist: 465, soll_total: 9600, soll_so_far: 480, diff: -15, status: 'behind' },
+    warnings: [],
+  }
+  const calls = (path: string): number =>
+    vi.mocked(getJson).mock.calls.filter(([url]) => url === path).length
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    document.body.innerHTML = '<a id="worktime-day">0:00</a>'
+    vi.mocked(getJson).mockResolvedValue(response)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+  })
+
+  /** Init the header under this test's fake clock and drop the init-time fetch
+   *  from the counters. (The refocus listeners are wired once per module.) */
+  async function initCleanly(): Promise<void> {
+    initHeaderDynamics(config)
+    await vi.advanceTimersByTimeAsync(0)
+    vi.mocked(getJson).mockClear()
+  }
+
+  it('refetches and repaints the totals when the window regains focus, throttled', async () => {
+    // Absolute far-future time: keeps the throttle state independent from the
+    // other tests in this file (the module keeps its last-refresh timestamp).
+    vi.setSystemTime(new Date('2030-01-01T08:00:00Z'))
+    await initCleanly()
+
+    window.dispatchEvent(new Event('focus'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls(BALANCE_PATH)).toBe(1)
+    expect(document.getElementById('worktime-day')?.textContent).toBe('7:45')
+
+    // focus + visibilitychange fire together on a refocus — no double-fetch.
+    window.dispatchEvent(new Event('focus'))
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls(BALANCE_PATH)).toBe(1)
+
+    // Past the throttle window the next refocus fetches again.
+    await vi.advanceTimersByTimeAsync(16_000)
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls(BALANCE_PATH)).toBe(2)
+  })
+
+  it('does not refetch while the tab stays hidden', async () => {
+    vi.setSystemTime(new Date('2030-02-01T08:00:00Z'))
+    await initCleanly()
+
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls(BALANCE_PATH)).toBe(0)
+
+    // Same event with the tab visible does fetch — only the hidden state blocked it.
+    visibility.mockReturnValue('visible')
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(calls(BALANCE_PATH)).toBe(1)
+  })
+
+  it('piggybacks the totals on the 90s status poll', async () => {
+    vi.setSystemTime(new Date('2030-03-01T08:00:00Z'))
+    await initCleanly()
+
+    await vi.advanceTimersByTimeAsync(90_000)
+    expect(calls(STATUS_PATH)).toBe(1)
+    expect(calls(BALANCE_PATH)).toBe(1)
+
+    await vi.advanceTimersByTimeAsync(90_000)
+    expect(calls(STATUS_PATH)).toBe(2)
+    expect(calls(BALANCE_PATH)).toBe(2)
+  })
+
+  it('keeps polling when the fetches reject', async () => {
+    vi.setSystemTime(new Date('2030-04-01T08:00:00Z'))
+    await initCleanly()
+    vi.mocked(getJson).mockRejectedValue(new Error('offline'))
+
+    await vi.advanceTimersByTimeAsync(90_000)
+    expect(calls(STATUS_PATH)).toBe(1)
+    expect(calls(BALANCE_PATH)).toBe(1)
+
+    // The failing tick must still reschedule the next one.
+    await vi.advanceTimersByTimeAsync(90_000)
+    expect(calls(STATUS_PATH)).toBe(2)
+    expect(calls(BALANCE_PATH)).toBe(2)
   })
 })
 

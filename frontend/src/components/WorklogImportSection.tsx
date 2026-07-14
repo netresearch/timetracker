@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
-import { activitiesQuery, ticketSystemsQuery } from '../api/queries'
+import { activitiesQuery, refreshEntriesAndWorktime, ticketSystemsQuery } from '../api/queries'
 import { createSyncRun, worklogSyncKeys, type CreateRunPayload, type SyncRun } from '../api/worklogSync'
 import { appConfig } from '../config'
 import { isoDate } from '../lib/format'
@@ -70,6 +70,9 @@ export function WorklogImportSection(): JSX.Element {
         setPreview(null)
         // A real import can park entries as conflicts — refresh any open list.
         void queryClient.invalidateQueries({ queryKey: worklogSyncKeys.conflicts })
+        // It also created entries — refresh the worklog grid and the header
+        // day/week/month totals, which don't observe the entries cache (#620).
+        void refreshEntriesAndWorktime(queryClient)
       }
     } catch (caught) {
       setError(apiErrorMessage(caught, m.worklogsync_import_error()))

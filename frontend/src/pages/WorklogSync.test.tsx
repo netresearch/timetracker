@@ -7,6 +7,13 @@ import type { SyncRun } from '../api/worklogSync'
 
 const createSyncRun = vi.fn()
 const getJson = vi.fn()
+const updateWorktime = vi.fn()
+
+// A real (non-dry) run can change entries, so the page refreshes the header
+// worktime totals (#620) — spy on that imperative bridge.
+vi.mock('../header', () => ({
+  updateWorktime: (...args: unknown[]) => updateWorktime(...args),
+}))
 
 // syncRunsQuery / syncRunQuery are replaced with factories that resolve seeded
 // data; createSyncRun is a spy the trigger form calls.
@@ -111,6 +118,7 @@ afterEach(() => {
   cleanup()
   createSyncRun.mockReset()
   getJson.mockReset()
+  updateWorktime.mockReset()
   window.APP_CONFIG!.roles = [...FULL_ROLES]
 })
 
@@ -143,8 +151,33 @@ describe('WorklogSync', () => {
     await waitFor(() => expect(screen.getByText('Created')).toBeInTheDocument())
     expect(screen.getByRole('status')).toBeInTheDocument()
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['worklog-sync', 'runs'] })
+    // The default trigger is a dry run — it writes nothing, so the worklog grid
+    // and the header totals must not refresh (#620).
+    expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['tracking-entries'] })
+    expect(updateWorktime).not.toHaveBeenCalled()
 
     expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('refreshes the worklog and header totals after a real (non-dry) run', async () => {
+    mockRefs()
+    createSyncRun.mockResolvedValue(makeRun({ type: 'import', counters: { created: 1 } }))
+    const { queryClient } = renderWithProviders(() => <WorklogSync />)
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
+
+    await waitFor(() => expect(screen.getAllByRole('option', { name: 'Jira Cloud' }).length).toBeGreaterThanOrEqual(2))
+    fireEvent.change(screen.getByLabelText('Ticket system', { selector: '#worklogsync-trigger-ticket' }), {
+      target: { value: '1' },
+    })
+    fireEvent.click(screen.getByLabelText('Dry run')) // uncheck → a real run
+    fireEvent.click(screen.getByRole('button', { name: 'Trigger a run' }))
+
+    await waitFor(() => expect(createSyncRun).toHaveBeenCalledTimes(1))
+    expect(createSyncRun).toHaveBeenLastCalledWith(expect.objectContaining({ dry_run: false }))
+    // A real run can create/change entries: the worklog grid and the header
+    // day/week/month totals refresh (#620).
+    await waitFor(() => expect(updateWorktime).toHaveBeenCalledTimes(1))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['tracking-entries'] })
   })
 
   it('loads a run detail (with items) when a run is opened', async () => {

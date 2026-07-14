@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
+import { refreshEntriesAndWorktime } from '../api/queries'
 import { resolveConflict, syncConflictsQuery, worklogSyncKeys, type SyncConflict } from '../api/worklogSync'
 import { m } from '../paraglide/messages.js'
 
@@ -39,6 +40,10 @@ export function ConflictList(props: { user?: string } = {}): JSX.Element {
       setResolved(true)
       // The resolved conflict is gone server-side; refetch drops it from the list.
       void queryClient.invalidateQueries({ queryKey: worklogSyncKeys.conflicts })
+      // Either resolution can change local entries (keeping the remote side
+      // rewrites or deletes one) — refresh the worklog grid and the header
+      // day/week/month totals, which don't observe the entries cache (#620).
+      void refreshEntriesAndWorktime(queryClient)
     } catch (caught) {
       setError(apiErrorMessage(caught, m.worklogsync_resolve_error()))
     } finally {

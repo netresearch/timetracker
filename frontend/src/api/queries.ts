@@ -1,6 +1,7 @@
 import { keepPreviousData, type QueryClient } from '@tanstack/solid-query'
 
 import { getJson } from './client'
+import { updateWorktime } from '../header'
 import { dmyToIso } from '../lib/timeParse'
 
 // Response shape of GET /interpretation/time (GroupByWorktimeAction):
@@ -170,6 +171,17 @@ interface TrackingEntryRow {
 // the per-range query appends the day count. Exported so the page invalidates and
 // seeds the same key.
 export const ENTRIES_KEY = 'tracking-entries'
+
+// Refresh everything that shows worklog entries but does not observe the
+// mutation: the tracking grid's entries cache and the header's imperatively
+// painted day/week/month totals (#620). Never rejects — both sides handle
+// their own failures — so callers can fire-and-forget it.
+export async function refreshEntriesAndWorktime(queryClient: QueryClient): Promise<void> {
+  await Promise.allSettled([
+    queryClient.invalidateQueries({ queryKey: [ENTRIES_KEY] }),
+    updateWorktime(),
+  ])
+}
 
 // The /tracking/save response envelope: the persisted entry, with date as 'd/m/Y'
 // and start/end as 'H:i' (already the cache row shape), so it can seed the cache
