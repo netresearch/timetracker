@@ -719,5 +719,6 @@
   "personiomatch_source_name": "Nom",
   "personiomatch_confirm_selected": "Confirmer la sélection",
   "personiomatch_confirm_error": "Impossible d'appliquer les associations.",
-  "personiomatch_applied": "{count} association(s) appliquée(s)."
+  "personiomatch_applied": "{count} association(s) appliquée(s).",
+  "settings_apitoken_expiry_past": "La date d'expiration ne peut pas être dans le passé."
 }

@@ -719,5 +719,6 @@
   "personiomatch_source_name": "Name",
   "personiomatch_confirm_selected": "Auswahl bestätigen",
   "personiomatch_confirm_error": "Die Zuordnungen konnten nicht angewendet werden.",
-  "personiomatch_applied": "{count} Zuordnung(en) angewendet."
+  "personiomatch_applied": "{count} Zuordnung(en) angewendet.",
+  "settings_apitoken_expiry_past": "Das Ablaufdatum darf nicht in der Vergangenheit liegen."
 }

@@ -719,5 +719,6 @@
   "personiomatch_source_name": "Name",
   "personiomatch_confirm_selected": "Confirm selected",
   "personiomatch_confirm_error": "Could not apply the matches.",
-  "personiomatch_applied": "Applied {count} mapping(s)."
+  "personiomatch_applied": "Applied {count} mapping(s).",
+  "settings_apitoken_expiry_past": "The expiry date can't be in the past."
 }

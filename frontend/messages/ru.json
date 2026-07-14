@@ -719,5 +719,6 @@
   "personiomatch_source_name": "Имя",
   "personiomatch_confirm_selected": "Подтвердить выбранное",
   "personiomatch_confirm_error": "Не удалось применить сопоставления.",
-  "personiomatch_applied": "Применено сопоставлений: {count}."
+  "personiomatch_applied": "Применено сопоставлений: {count}.",
+  "settings_apitoken_expiry_past": "Дата окончания не может быть в прошлом."
 }

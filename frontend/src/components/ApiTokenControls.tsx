@@ -6,6 +6,7 @@
 import { createMemo, createResource, createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
+import { DateField } from './DateField'
 import { formatUserDate } from '../lib/dateFormat'
 import {
   type ApiToken,
@@ -36,10 +37,6 @@ function formatDate(iso: string | null): string {
   return iso === null ? '' : formatUserDate(iso.slice(0, 10))
 }
 
-/** Today as yyyy-mm-dd, for the expiry input's `min` (no past dates). */
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 /** A scope preset: a fixed convenience selection a click drops into the picker,
  *  which the user can then still tweak checkbox by checkbox. Each `resolve`s
@@ -216,6 +213,15 @@ export function ApiTokenControls(): JSX.Element {
     const chosen = effectiveScopes()
     if (name().trim() === '' || chosen.length === 0) {
       setError(m.settings_apitoken_incomplete())
+      return
+    }
+
+    // A past expiry would create a token that is already spent; the enhanced
+    // date field (unlike the old native <input min>) doesn't block it, so guard
+    // here (ISO strings compare lexicographically).
+    const expiry = expiresAt()
+    if (expiry !== '' && expiry < new Date().toISOString().slice(0, 10)) {
+      setError(m.settings_apitoken_expiry_past())
       return
     }
 
@@ -425,12 +431,7 @@ export function ApiTokenControls(): JSX.Element {
 
         <label class="field">
           <span>{m.settings_apitoken_expiry_label()}</span>
-          <input
-            type="date"
-            min={todayIso()}
-            value={expiresAt()}
-            onInput={(event) => setExpiresAt(event.currentTarget.value)}
-          />
+          <DateField value={expiresAt()} onChange={setExpiresAt} calendar />
         </label>
 
         <div class="security-row">

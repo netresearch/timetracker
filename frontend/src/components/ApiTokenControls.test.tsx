@@ -56,12 +56,20 @@ describe('ApiTokenControls', () => {
     expect(screen.getByRole('group', { name: 'Scopes' })).toBeInTheDocument()
   })
 
-  it('prevents selecting a past expiry date', async () => {
+  it('blocks submit when the expiry date is in the past', async () => {
     render(() => <ApiTokenControls />)
     await waitFor(() => screen.getByLabelText('entries:read'))
 
-    const today = new Date().toISOString().slice(0, 10)
-    expect(screen.getByLabelText('Expires', { exact: false })).toHaveAttribute('min', today)
+    fireEvent.input(screen.getByPlaceholderText('e.g. CI pipeline'), { target: { value: 'CI' } })
+    fireEvent.change(screen.getByLabelText('Full access', { exact: false }), { target: { checked: true } })
+    // The enhanced date field accepts ISO; a past date commits into the signal.
+    const expiry = screen.getByLabelText('Expires', { exact: false })
+    fireEvent.input(expiry, { target: { value: '2020-01-01' } })
+    fireEvent.change(expiry)
+    fireEvent.click(screen.getByRole('button', { name: 'Create token' }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(createApiToken).not.toHaveBeenCalled()
   })
 
   it('blocks submit and does not call the API when name or scopes are missing', async () => {

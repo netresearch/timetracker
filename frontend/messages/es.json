@@ -719,5 +719,6 @@
   "personiomatch_source_name": "Nombre",
   "personiomatch_confirm_selected": "Confirmar selección",
   "personiomatch_confirm_error": "No se pudieron aplicar las asignaciones.",
-  "personiomatch_applied": "{count} asignación(es) aplicada(s)."
+  "personiomatch_applied": "{count} asignación(es) aplicada(s).",
+  "settings_apitoken_expiry_past": "La fecha de caducidad no puede estar en el pasado."
 }
