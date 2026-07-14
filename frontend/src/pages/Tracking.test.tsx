@@ -766,7 +766,7 @@ describe('Tracking (Worklog grid)', () => {
       expect(descCell?.querySelector('input')).not.toBeNull()
     })
     expect(container.querySelector('td[data-col-key="activity"]')?.textContent).toContain('QA')
-    expect(postJson.mock.calls.filter((args) => args[0] === '/tracking/save').length).toBe(0)
+    expect(postJson.mock.calls.filter((args) => args[0] === '/tracking/save')).toHaveLength(0)
 
     unmount()
   })
