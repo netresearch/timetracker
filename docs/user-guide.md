@@ -121,8 +121,9 @@ Rows are grouped per day, newest first.
 - **Customer ↔ project consistency:** changing the customer clears a project
   that doesn't belong to it; picking a project sets its customer.
 - **Suggested times:** with *Suggest time* enabled (Settings), a new entry's
-  start continues from your latest end time of the day, and its end pre-fills
-  start + your *minimum entry duration*.
+  start continues from your last end time of the day (the first entry of a day
+  starts at the current time), and its end pre-fills to the current time — but
+  no earlier than start + your *minimum entry duration*.
 - Inactive customers/projects are hidden from the pickers; existing entries
   keep their values.
 
@@ -294,8 +295,9 @@ press *Save*:
 - **Always show an empty line** — keep a blank entry row ready in the Worklog.
 - **Suggest time** — pre-fill new entries' start/end times.
 - **Show future** — include future-dated entries in the Worklog.
-- **Minimum entry duration (minutes)** — a new entry's end pre-fills to start
-  + this many minutes (0 disables it).
+- **Minimum entry duration (minutes)** — a new entry's end pre-fills to the
+  current time, but no earlier than start + this many minutes (0 disables the
+  minimum).
 
 **Appearance** — stored only in this browser; changes apply instantly, no
 *Save* needed:
