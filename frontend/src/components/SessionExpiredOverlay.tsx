@@ -63,11 +63,15 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
     setSubmitting(true)
     setError(null)
     try {
+      // No _remember_me here: the overlay only appears when no valid REMEMBERME
+      // cookie rescued the session (a remembered session passes the ^/ rule,
+      // #587), so there is no cookie to preserve — and a re-login must not
+      // grant a 30-day cookie the user never opted into. Opting in stays on
+      // the full login form's checkbox.
       const response = await postForm(cfg.loginPath, {
         _username: username(),
         _password: password(),
         _csrf_token: cfg.csrfToken,
-        _remember_me: 'on',
       })
       const data = (await response.json().catch(() => null)) as { ok?: boolean; twoFactorRequired?: boolean } | null
       if (response.ok && data?.ok === true) {
@@ -130,10 +134,10 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
     try {
       // A passkey is inherently MFA, so this re-establishes a fully-authenticated
       // session in one step. Resume in place (ignore the returned redirect).
-      // remember=true mirrors the overlay's password path, which always sends
-      // _remember_me — otherwise this re-login would clear an existing
-      // REMEMBERME cookie (Symfony cancels old cookies on every login).
-      await loginWithPasskey(() => true)
+      // remember=false mirrors the overlay's password path: the overlay only
+      // shows when no valid REMEMBERME cookie exists (#587), so there is
+      // nothing to preserve and nothing to silently grant.
+      await loginWithPasskey(() => false)
       props.onSuccess()
     } catch {
       // Includes the user dismissing the native prompt — a quiet inline message.
@@ -169,7 +173,7 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
         if (!(await passkeyAutofillSupported())) {
           return
         }
-        await loginWithPasskeyAutofill(() => true, passkeyAutofill.signal)
+        await loginWithPasskeyAutofill(() => false, passkeyAutofill.signal)
         props.onSuccess()
       } catch (caught) {
         if (caught instanceof ApiError) {

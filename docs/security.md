@@ -149,14 +149,28 @@ Path-based access control is configured in `security.yaml`:
 access_control:
     - { path: ^/login, roles: PUBLIC_ACCESS }
     - { path: ^/login_check, roles: PUBLIC_ACCESS }
+    - { path: ^/logout, roles: PUBLIC_ACCESS }
     - { path: ^/css, roles: PUBLIC_ACCESS }
     - { path: ^/js, roles: PUBLIC_ACCESS }
     - { path: ^/images, roles: PUBLIC_ACCESS }
     - { path: ^/status/check, roles: PUBLIC_ACCESS }
     - { path: ^/status/page, roles: PUBLIC_ACCESS }
+    - { path: ^/\.well-known/, roles: PUBLIC_ACCESS }
+    - { path: ^/llms\.txt$, roles: PUBLIC_ACCESS }
     - { path: ^/admin, roles: ROLE_ADMIN }
-    - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/_(profiler|wdt), roles: ROLE_ADMIN }
+    - { path: ^/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS }
+    - { path: ^/settings/security/passkeys, roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
 ```
+
+The `^/` catch-all accepts sessions resumed from the 30-day `REMEMBERME`
+cookie ("Stay logged in", issue #587). Sensitive operations — password
+change, passkey add/delete, API-token create/revoke, 2FA enrol/disable,
+admin mutations, impersonation — step up to `IS_AUTHENTICATED_FULLY` via
+controller attributes or the explicit rules above: a session resumed from
+the cookie is redirected to the login form for re-authentication before
+they proceed.
 
 ### User Switching (Impersonation)
 
