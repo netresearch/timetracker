@@ -49,6 +49,31 @@ describe('ChipSelect (jsdom)', () => {
     expect(onCommit).not.toHaveBeenCalledWith(0, expect.anything())
   })
 
+  it('Tab confirms the arrow-highlighted option and commits it as a right-move (#588)', async () => {
+    // The issue-588 flow: arrow to an option, then Tab accepts it AND moves on
+    // (like Enter accepts it) — Tab must not silently drop the highlighted pick.
+    const onCommit = vi.fn()
+    render(() => <ChipSelect field={field} label="Customer" initial={0} options={options} multiple={false} onCommit={onCommit} onCancel={vi.fn()} />)
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
+
+    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'ArrowDown' })
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Apollo' })).toHaveAttribute('data-highlighted'))
+    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Tab' })
+    await waitFor(() => expect(onCommit).toHaveBeenCalledWith(7, 'right'))
+  })
+
+  it('Tab on a freshly-opened list commits the current value unchanged', async () => {
+    // Nothing is highlighted before the user types or arrows (autohighlight only
+    // fires on input), so Tab-walking across a filled cell must not overwrite it.
+    const onCommit = vi.fn()
+    render(() => <ChipSelect field={field} label="Customer" initial={8} options={options} multiple={false} onCommit={onCommit} onCancel={vi.fn()} />)
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
+
+    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Tab' })
+    expect(onCommit).toHaveBeenCalledTimes(1)
+    expect(onCommit).toHaveBeenCalledWith(8, 'right')
+  })
+
   it('Escape cancels the edit without committing', async () => {
     const onCommit = vi.fn()
     const onCancel = vi.fn()
@@ -122,6 +147,18 @@ describe('ChipSelect (jsdom)', () => {
     await waitFor(() => expect(screen.getAllByRole('listitem').length).toBe(2))
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Tab' })
     await waitFor(() => expect(onCommit).toHaveBeenCalledWith([1, 3], expect.anything()))
+  })
+
+  it('multi: Tab confirms the highlighted option into the committed array (#588)', async () => {
+    const onCommit = vi.fn()
+    render(() => <ChipSelect field={teamsField} label="Teams" initial={[1]} options={teamOptions} multiple onCommit={onCommit} onCancel={vi.fn()} />)
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
+
+    // Typing a filter autohighlights the first match (Design, id 3).
+    fireEvent.input(screen.getByRole('combobox'), { target: { value: 'Des' } })
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Design' })).toHaveAttribute('data-highlighted'))
+    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Tab' })
+    await waitFor(() => expect(onCommit).toHaveBeenCalledWith([1, 3], 'right'))
   })
 
   it('multi: removing the last chip commits an empty array on Tab', async () => {

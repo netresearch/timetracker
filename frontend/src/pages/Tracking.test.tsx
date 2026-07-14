@@ -713,6 +713,64 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('a new row owns the keyboard cursor — Shift+Tab walks its cells, not the header (#588)', async () => {
+    mockApi()
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Add entry' }))
+
+    // Add starts editing in the new row's TICKET cell (#588 suggestion 1: the
+    // ticket is what most users enter first, and it auto-derives customer and
+    // project) — and pushNewRow hands the row the keyboard cursor.
+    const ticketCell = container.querySelector<HTMLElement>('td[data-row-id="-1"][data-col-key="ticket"]')
+    const input = ticketCell?.querySelector<HTMLInputElement>('input')
+    expect(input).not.toBeNull()
+    expect(document.activeElement).toBe(input)
+
+    // Shift+Tab opens the previous editable cell's editor on the SAME row
+    // (end) — never the "Datum" column heading the stale header cursor gave.
+    fireEvent.keyDown(input!, { key: 'Tab', shiftKey: true })
+    const endCell = container.querySelector<HTMLElement>('td[data-row-id="-1"][data-col-key="end"]')
+    expect(endCell?.querySelector('input')).not.toBeNull()
+    expect(endCell?.contains(document.activeElement)).toBe(true)
+    expect(document.activeElement?.closest('th')).toBeNull()
+
+    unmount()
+  })
+
+  it('Tab in the activity picker confirms the highlighted pick and moves on to description without saving (#588)', async () => {
+    mockTracking({
+      entries: [{ entry: DEFAULT_ENTRY }],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }, { activity: { id: 6, name: 'QA' } }],
+    })
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    // Open the activity picker and filter-highlight another activity (QA).
+    editCell(container, 'activity')
+    await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
+    const combo = document.querySelector<HTMLInputElement>('.combobox-input')!
+    fireEvent.input(combo, { target: { value: 'QA' } })
+    await waitFor(() => expect(document.querySelector('.combobox-item[data-highlighted]')?.textContent).toContain('QA'))
+
+    // Tab accepts the highlighted pick (like Enter would) AND walks on into the
+    // description editor on the same row — the save is deferred to row-leave, so
+    // the user is not stranded outside edit mode (#588 problem 2).
+    fireEvent.keyDown(combo, { key: 'Tab' })
+    await waitFor(() => {
+      const descCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')
+      expect(descCell?.querySelector('input')).not.toBeNull()
+    })
+    expect(container.querySelector('td[data-col-key="activity"]')?.textContent).toContain('QA')
+    expect(postJson.mock.calls.filter((args) => args[0] === '/tracking/save')).toHaveLength(0)
+
+    unmount()
+  })
+
   it('Prolong sets the latest entry end to now and saves it', async () => {
     mockApi()
     postJson.mockResolvedValue({})
@@ -1069,11 +1127,12 @@ describe('Tracking (Worklog grid)', () => {
       projects: [{ project: { id: 4, name: 'Site', customer: 1, active: true } }],
       activities: [{ activity: { id: 5, name: 'Dev' } }],
     })
-    const { getByRole, unmount } = renderTracking()
+    const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
-    // Add opens the customer picker on the new row.
+    // Add a row (editing starts in its ticket cell), then open its customer picker.
     fireEvent.click(getByRole('button', { name: 'Add entry' }))
+    editCell(container, 'customer')
     await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
     const labels = [...document.querySelectorAll('.combobox-content .combobox-item')].map((el) => el.textContent ?? '')
     expect(labels.some((label) => label.includes('ACME'))).toBe(true)

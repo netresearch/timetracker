@@ -55,6 +55,9 @@ export function ChipSelect(props: {
 
   const [selected, setSelected] = createSignal<string[]>(initialValues())
   const [inputValue, setInputValue] = createSignal('')
+  // The listbox item the user arrowed/filtered to — mirrored from zag so Tab can
+  // accept it (zag only applies a highlight to the selection on Enter/click).
+  const [highlighted, setHighlighted] = createSignal<string | null>(null)
   // Seed to match `defaultOpen`: Ark enters the open state as the machine's initial
   // state without firing onOpenChange, so a signal seeded false would mis-read the
   // open list as closed and route the first Enter to commit-the-cell.
@@ -114,6 +117,54 @@ export function ChipSelect(props: {
     }
   })
 
+  // Fold the currently highlighted listbox option into the selection, if any.
+  // A freshly opened list has no highlight (autohighlight only fires on
+  // typing), so a plain Tab-walk across a filled cell commits it unchanged.
+  const acceptHighlighted = (): void => {
+    const pick = open() ? highlighted() : null
+    if (pick === null) {
+      return
+    }
+    if (!props.multiple) {
+      setSelected(pick === CLEAR_VALUE ? [] : [pick])
+    } else if (!selected().includes(pick)) {
+      setSelected([...selected(), pick])
+    }
+  }
+
+  const onTabKey = (event: KeyboardEvent): void => {
+    event.preventDefault()
+    event.stopPropagation()
+    // Tab accepts the highlighted option like Enter does (#588), then moves on
+    // as a left/right commit — which stays in the row's edit mode and defers
+    // the save to row-leave (see commitCell), so arrow+Tab in the last required
+    // column flows straight into the next cell instead of stranding the user.
+    acceptHighlighted()
+    finish(event.shiftKey ? 'left' : 'right')
+  }
+
+  const onEnterKey = (event: KeyboardEvent): void => {
+    if (open()) {
+      // The list is open: let zag select the highlighted item; mark that an Enter
+      // (not a click) drove the resulting onSelect so it commits as 'next'.
+      committedByEnter = true
+
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    finish('next')
+  }
+
+  const onBackspaceKey = (event: KeyboardEvent): void => {
+    if (!props.multiple || inputValue() !== '' || selected().length === 0) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation() // don't let the grid/global shortcuts also see the Backspace
+    setSelected(selected().slice(0, -1))
+  }
+
   const onInputKeyDown = (event: KeyboardEvent): void => {
     // Any non-Enter key starts a fresh interaction, so a prior open-Enter that didn't
     // select (empty list / no highlight) can't leak its "guide" intent into a later
@@ -126,27 +177,15 @@ export function ChipSelect(props: {
     // Escape with the list open is handled in onOpenChange (zag consumes it first);
     // this branch covers the closed list and environments where zag doesn't.
     if (event.key === 'Tab') {
-      event.preventDefault()
-      event.stopPropagation()
-      finish(event.shiftKey ? 'left' : 'right')
+      onTabKey(event)
     } else if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
       cancel()
     } else if (event.key === 'Enter') {
-      if (open()) {
-        // The list is open: let zag select the highlighted item; mark that an Enter
-        // (not a click) drove the resulting onSelect so it commits as 'next'.
-        committedByEnter = true
-      } else {
-        event.preventDefault()
-        event.stopPropagation()
-        finish('next')
-      }
-    } else if (event.key === 'Backspace' && props.multiple && inputValue() === '' && selected().length > 0) {
-      event.preventDefault()
-      event.stopPropagation() // don't let the grid/global shortcuts also see the Backspace
-      setSelected(selected().slice(0, -1))
+      onEnterKey(event)
+    } else if (event.key === 'Backspace') {
+      onBackspaceKey(event)
     }
   }
 
@@ -243,6 +282,7 @@ export function ChipSelect(props: {
         }}
         inputValue={inputValue()}
         onInputValueChange={(details) => setInputValue(details.inputValue)}
+        onHighlightChange={(details) => setHighlighted(details.highlightedValue)}
         defaultOpen
         onOpenChange={(details) => {
           setOpen(details.open)

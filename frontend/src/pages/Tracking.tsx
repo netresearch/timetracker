@@ -992,14 +992,23 @@ export default function Tracking() {
     }
     tempId -= 1
     setNewRows((list) => [row, ...list])
+    // Reset the grid's roving cursor to the new row BEFORE opening the editor:
+    // the editor's Tab/Shift+Tab move walks from the roving td[tabindex="0"], so
+    // leaving it wherever it was (initially the header) made Shift+Tab land on
+    // the "Datum" column heading instead of the previous cell (#588). Order
+    // matters — beginEdit's editor grabs focus on mount, and a later td.focus()
+    // would steal it back out of the input.
+    gridHandle?.focusCell(num(row.id), firstCol)
     editor.beginEdit(num(row.id), firstCol)
   }
 
   // Add (Alt+A): a blank entry. suggestedStart inherits the latest entry's end
   // ONLY when that entry is from today; on a fresh day it starts at the current
   // time, not yesterday's (or older) last end.
+  // Editing starts in the ticket column (#588): a ticket number is what most
+  // users enter first, and it auto-derives customer/project via the prefix map.
   function addEntry(): void {
-    pushNewRow({ start: appConfig().suggestTime ? suggestedStart() : '' }, 'customer')
+    pushNewRow({ start: appConfig().suggestTime ? suggestedStart() : '' }, 'ticket')
   }
 
   // Continue: clone the cursor row's (or, with no cursor, the latest entry's)

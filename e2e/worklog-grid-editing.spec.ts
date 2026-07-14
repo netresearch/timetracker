@@ -115,7 +115,7 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await expect(row.locator('.is-unsaved')).toBeVisible();
     await expect(row.locator('.is-reset')).toBeVisible();
 
-    // Close the auto-opened customer editor so the reset click isn't racing the combobox.
+    // Close the auto-opened ticket editor so the reset click isn't racing it.
     await page.keyboard.press('Escape');
     // Reset discards the unsaved new row (client-side; no /tracking/delete for a temp id).
     await row.locator('.is-reset').click();
@@ -126,6 +126,14 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
     const row = page.locator('tr.tracking-row.is-new').first();
     await expect(row).toBeVisible();
+
+    // Add starts in the ticket editor (#588); Tab walks on into the first
+    // required relation (customer), staying in edit mode.
+    const ticketEditor = page.locator('td[data-col-key="ticket"][data-inline-editing] input.inline-editor');
+    await expect(ticketEditor).toBeVisible();
+    await expect(ticketEditor).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(row.locator('td[data-col-key="customer"][data-inline-editing]')).toBeVisible();
 
     const arrowEnter = async (): Promise<void> => {
       await expect(page.locator('.combobox-input').first()).toBeVisible();
