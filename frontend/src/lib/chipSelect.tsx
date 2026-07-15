@@ -1,13 +1,12 @@
-import { Combobox, createListCollection } from '@ark-ui/solid/combobox'
+import { Combobox } from '@ark-ui/solid/combobox'
 import { createMemo, createSignal, For, type JSX, onMount, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
 import type { FieldDef, FormValues, OptionLookup } from '../admin/types'
+import { ComboboxContent, ComboSearchIcon, comboCollection, type ComboItem } from './comboboxParts'
 import { getEnterBehavior } from './gridEditPref'
 import { fieldSelectOptions } from './inlineGridEdit'
 import { m } from '../paraglide/messages.js'
-
-type Item = { value: string; label: string }
 
 // The "clear to none" pseudo-option for an optional single relation select. A
 // sentinel (never a real option value — relation values stringify to digits) so
@@ -69,17 +68,17 @@ export function ChipSelect(props: {
   // resulting onSelect commits as 'next' (guides to the next required field).
   let committedByEnter = false
 
-  const allItems = createMemo<Item[]>(() => fieldSelectOptions(props.field, props.options).map((option) => ({ value: String(option.value), label: option.label })))
+  const allItems = createMemo<ComboItem[]>(() => fieldSelectOptions(props.field, props.options).map((option) => ({ value: String(option.value), label: option.label })))
   const labelOf = (value: string): string => allItems().find((item) => item.value === value)?.label ?? value
   // Offer an explicit "none" only for an optional, numeric (relation) single select.
   const showClear = (): boolean => !props.multiple && props.field.required !== true && props.field.stringValue !== true
-  const filteredItems = createMemo<Item[]>(() => {
+  const filteredItems = createMemo<ComboItem[]>(() => {
     const query = inputValue().trim().toLowerCase()
     const base = query === '' ? allItems() : allItems().filter((item) => item.label.toLowerCase().includes(query))
 
     return showClear() && query === '' ? [{ value: CLEAR_VALUE, label: m.app_select_none() }, ...base] : base
   })
-  const collection = createMemo(() => createListCollection<Item>({ items: filteredItems(), itemToValue: (item) => item.value, itemToString: (item) => item.label }))
+  const collection = createMemo(() => comboCollection(filteredItems()))
 
   const coerced = (): FormValues[string] => {
     if (props.multiple) {
@@ -189,13 +188,6 @@ export function ChipSelect(props: {
     }
   }
 
-  const magnifier = (): JSX.Element => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-      <circle cx="10.5" cy="10.5" r="6.5" />
-      <line x1="15.6" y1="15.6" x2="21" y2="21" />
-    </svg>
-  )
-
   const searchInput = (): JSX.Element => (
     <Combobox.Input
       ref={(element) => { inputEl = element }}
@@ -226,7 +218,7 @@ export function ChipSelect(props: {
     >
       {/* Multi: a leading magnifier in the cell. Single's search lives in the popup. */}
       <Show when={props.multiple}>
-        <span class="combobox-search" aria-hidden="true">{magnifier()}</span>
+        <ComboSearchIcon />
       </Show>
 
       {/* Selection chips in the cell: multi = removable; single = the current value
@@ -321,25 +313,7 @@ export function ChipSelect(props: {
             focus-out logic so opening it doesn't save/close the row. */}
         <Portal>
           <Combobox.Positioner class="combobox-positioner" data-chipselect-popup>
-            <Combobox.Content class="combobox-content">
-              {/* Single: a roomy, sticky search field at the TOP of the dropdown —
-                  not constrained by the narrow cell. */}
-              <Show when={!props.multiple}>
-                <div class="combobox-search-row">
-                  <span class="combobox-search" aria-hidden="true">{magnifier()}</span>
-                  {searchInput()}
-                </div>
-              </Show>
-              <For each={filteredItems()}>
-                {(item) => (
-                  <Combobox.Item item={item} class="combobox-item">
-                    <Combobox.ItemText>{item.label}</Combobox.ItemText>
-                    <Combobox.ItemIndicator class="combobox-indicator">✓</Combobox.ItemIndicator>
-                  </Combobox.Item>
-                )}
-              </For>
-              <Combobox.Empty class="combobox-empty">{m.app_no_results()}</Combobox.Empty>
-            </Combobox.Content>
+            <ComboboxContent items={filteredItems()} multiple={props.multiple} searchInput={searchInput} />
           </Combobox.Positioner>
         </Portal>
       </Combobox.Root>

@@ -1,11 +1,10 @@
-import { Combobox, createListCollection } from '@ark-ui/solid/combobox'
+import { Combobox } from '@ark-ui/solid/combobox'
 import { createMemo, createSignal, For, type JSX, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
 
 import type { NamedOption } from '../api/queries'
+import { ComboboxContent, ComboSearchIcon, comboCollection, type ComboItem } from '../lib/comboboxParts'
 import { m } from '../paraglide/messages.js'
-
-type Item = { value: string; label: string }
 
 // The "all / none" pseudo-option (value 0) for an optional single select. A
 // sentinel that can't collide with a real relation id (which stringify to
@@ -58,19 +57,19 @@ export function SearchableSelect(props: {
     return raw > 0 ? [String(raw)] : []
   })
 
-  const allItems = createMemo<Item[]>(() => (props.options ?? []).map((option) => ({ value: String(option.id), label: option.label })))
+  const allItems = createMemo<ComboItem[]>(() => (props.options ?? []).map((option) => ({ value: String(option.id), label: option.label })))
   const labelOf = (value: string): string =>
     value === ALL_VALUE ? (props.allLabel ?? '') : (allItems().find((item) => item.value === value)?.label ?? value)
 
   // Offer an explicit "all / none" entry only for an optional single select.
   const showAll = (): boolean => !isMulti() && props.allLabel !== undefined
-  const filteredItems = createMemo<Item[]>(() => {
+  const filteredItems = createMemo<ComboItem[]>(() => {
     const query = inputValue().trim().toLowerCase()
     const base = query === '' ? allItems() : allItems().filter((item) => item.label.toLowerCase().includes(query))
 
     return showAll() && query === '' ? [{ value: ALL_VALUE, label: props.allLabel ?? '' }, ...base] : base
   })
-  const collection = createMemo(() => createListCollection<Item>({ items: filteredItems(), itemToValue: (item) => item.value, itemToString: (item) => item.label }))
+  const collection = createMemo(() => comboCollection(filteredItems()))
 
   // Single-select control display: the chosen label, or the "all" label when
   // nothing is chosen (value 0), falling back to a generic "none" placeholder.
@@ -87,13 +86,6 @@ export function SearchableSelect(props: {
     props.onChange(selectedValues().filter((current) => current !== value).map(Number))
   }
 
-  const magnifier = (): JSX.Element => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-      <circle cx="10.5" cy="10.5" r="6.5" />
-      <line x1="15.6" y1="15.6" x2="21" y2="21" />
-    </svg>
-  )
-
   const searchInput = (): JSX.Element => (
     <Combobox.Input
       ref={(element) => { inputEl = element }}
@@ -109,7 +101,7 @@ export function SearchableSelect(props: {
       <div class={`searchable-select chip-select${isMulti() ? ' inline-tags' : ''}${props.disabled === true ? ' is-disabled' : ''}`}>
         {/* Multi: a leading magnifier in the control. Single's search is in the popup. */}
         <Show when={isMulti()}>
-          <span class="combobox-search" aria-hidden="true">{magnifier()}</span>
+          <ComboSearchIcon />
           <ul class="tag-list">
             <For each={selectedValues()}>
               {(value) => (
@@ -191,24 +183,7 @@ export function SearchableSelect(props: {
           {/* Body-portal so the popup floats above cards/dialogs and is never clipped. */}
           <Portal>
             <Combobox.Positioner class="combobox-positioner">
-              <Combobox.Content class="combobox-content">
-                {/* Single: a roomy, sticky search field at the TOP of the dropdown. */}
-                <Show when={!isMulti()}>
-                  <div class="combobox-search-row">
-                    <span class="combobox-search" aria-hidden="true">{magnifier()}</span>
-                    {searchInput()}
-                  </div>
-                </Show>
-                <For each={filteredItems()}>
-                  {(item) => (
-                    <Combobox.Item item={item} class="combobox-item">
-                      <Combobox.ItemText>{item.label}</Combobox.ItemText>
-                      <Combobox.ItemIndicator class="combobox-indicator">✓</Combobox.ItemIndicator>
-                    </Combobox.Item>
-                  )}
-                </For>
-                <Combobox.Empty class="combobox-empty">{m.app_no_results()}</Combobox.Empty>
-              </Combobox.Content>
+              <ComboboxContent items={filteredItems()} multiple={isMulti()} searchInput={searchInput} />
             </Combobox.Positioner>
           </Portal>
         </Combobox.Root>
