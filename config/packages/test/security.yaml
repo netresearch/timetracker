@@ -1,4 +1,12 @@
 security:
+    # Cheap password hashing in tests (#624 QW4): bcrypt cost 4 keeps the $2y$
+    # format the fixtures rely on (password_hash(..., PASSWORD_DEFAULT)) while
+    # cutting per-hash cost — the default 'auto' (Argon2id) dominated the run.
+    password_hashers:
+        App\Entity\User:
+            algorithm: bcrypt
+            cost: 4
+
     firewalls:
         main:
             # Complete override for test environment
