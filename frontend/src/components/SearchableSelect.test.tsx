@@ -24,13 +24,13 @@ describe('SearchableSelect (jsdom)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
     // 3 real options + the prepended "all" entry.
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(4))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4))
   })
 
   it('single: typing filters the options', async () => {
     render(() => <SearchableSelect label="Customer" value={0} onChange={vi.fn()} options={customers} allLabel="All" />)
     fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(4))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4))
 
     fireEvent.input(screen.getByRole('combobox'), { target: { value: 'Ap' } })
     await waitFor(() => {
@@ -44,7 +44,7 @@ describe('SearchableSelect (jsdom)', () => {
     const onChange = vi.fn()
     render(() => <SearchableSelect label="Customer" value={0} onChange={onChange} options={customers} allLabel="All" />)
     fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(4))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4))
 
     fireEvent.click(screen.getByRole('option', { name: 'Zeus' }))
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(8))
@@ -57,7 +57,7 @@ describe('SearchableSelect (jsdom)', () => {
     // The chosen value is shown in the (compact) control.
     expect(screen.getByRole('button', { name: 'Customer' })).toHaveTextContent('Apollo')
     fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(4))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4))
 
     fireEvent.click(screen.getByRole('option', { name: 'All' }))
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(0))
@@ -76,7 +76,7 @@ describe('SearchableSelect (jsdom)', () => {
     const onChange = vi.fn()
     render(() => <SearchableSelect label="Teams" value={[1]} onChange={onChange} options={teams} multiple />)
 
-    expect(screen.getAllByRole('listitem').length).toBe(1) // initial chip (id 1 = Backend)
+    expect(screen.getAllByRole('listitem')).toHaveLength(1) // initial chip (id 1 = Backend)
     fireEvent.click(screen.getByRole('button', { name: 'Teams' })) // ▾ opens the list
     fireEvent.input(screen.getByRole('combobox'), { target: { value: 'Des' } })
     await waitFor(() => expect(screen.getByRole('option', { name: 'Design' })).toBeInTheDocument())
@@ -89,7 +89,7 @@ describe('SearchableSelect (jsdom)', () => {
     const onChange = vi.fn()
     render(() => <SearchableSelect label="Teams" value={[1, 2]} onChange={onChange} options={teams} multiple />)
 
-    expect(screen.getAllByRole('listitem').length).toBe(2)
+    expect(screen.getAllByRole('listitem')).toHaveLength(2)
     fireEvent.click(screen.getByRole('button', { name: /Backend/ })) // the × on the Backend chip
     await waitFor(() => expect(onChange).toHaveBeenCalledWith([2]))
   })
@@ -99,7 +99,7 @@ describe('SearchableSelect (jsdom)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Teams' })) // ▾ opens the list
     fireEvent.input(screen.getByRole('combobox'), { target: { value: 'e' } }) // matches Backend/Frontend/Design
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
     expect(screen.queryByRole('option', { name: 'All' })).not.toBeInTheDocument()
   })
 })

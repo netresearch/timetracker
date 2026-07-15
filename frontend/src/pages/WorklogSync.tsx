@@ -22,6 +22,16 @@ import { m } from '../paraglide/messages.js'
 const RUN_TYPES = ['verify', 'import', 'sync'] as const
 type RunType = (typeof RUN_TYPES)[number]
 
+/** Normalize a SearchableSelect value (single id or id array) to an id list,
+ *  dropping the 0 = "none" sentinel. */
+function toIdArray(value: number | number[]): number[] {
+  if (Array.isArray(value)) {
+    return value
+  }
+
+  return value > 0 ? [value] : []
+}
+
 const typeLabels: Record<RunType, () => string> = {
   verify: m.worklogsync_type_verify,
   import: m.worklogsync_type_import,
@@ -202,7 +212,7 @@ function WorklogSyncArea(): JSX.Element {
                   label={m.worklogsync_users()}
                   multiple
                   value={selectedUserIds()}
-                  onChange={(value) => setSelectedUserIds(Array.isArray(value) ? value : value > 0 ? [value] : [])}
+                  onChange={(value) => setSelectedUserIds(toIdArray(value))}
                   options={userOptions.data}
                   disabled={busy()}
                 />
@@ -211,7 +221,7 @@ function WorklogSyncArea(): JSX.Element {
               <SearchableSelect
                 label={m.worklogsync_users()}
                 value={selectedUserIds()[0] ?? 0}
-                onChange={(value) => setSelectedUserIds(Array.isArray(value) ? value : value > 0 ? [value] : [])}
+                onChange={(value) => setSelectedUserIds(toIdArray(value))}
                 options={userOptions.data}
                 allLabel="—"
                 disabled={busy()}

@@ -110,10 +110,10 @@ export function SearchableSelect(props: {
         {/* Multi: a leading magnifier in the control. Single's search is in the popup. */}
         <Show when={isMulti()}>
           <span class="combobox-search" aria-hidden="true">{magnifier()}</span>
-          <span class="tag-list" role="list">
+          <ul class="tag-list">
             <For each={selectedValues()}>
               {(value) => (
-                <span class="tag" role="listitem">
+                <li class="tag">
                   <span class="tag-label">{labelOf(value)}</span>
                   <button
                     type="button"
@@ -124,10 +124,10 @@ export function SearchableSelect(props: {
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => { removeValue(value); inputEl?.focus() }}
                   >×</button>
-                </span>
+                </li>
               )}
             </For>
-          </span>
+          </ul>
         </Show>
 
         {/* Announce selection changes — Ark's own live region only narrates the
