@@ -292,6 +292,9 @@ class ModernLdapService
             'port' => $this->config['port'],
             'baseDn' => $this->config['baseDn'],
             'useSsl' => $this->config['useSsl'],
+            // Bound the connect attempt (#624 QW3): an unreachable directory fails
+            // fast (5s) instead of hanging on the default LDAP network timeout.
+            'networkTimeout' => 5,
         ];
 
         if (true === $this->config['useSsl']) {
