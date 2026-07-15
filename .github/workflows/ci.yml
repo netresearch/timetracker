@@ -5,6 +5,13 @@ on:
     branches: ["main", "v4"]
   pull_request:
     branches: ["**"]
+  # Nightly full run WITH code coverage (#624 S9). PR/push runs skip xdebug
+  # coverage instrumentation so they don't pay its overhead on the critical path;
+  # the schedule (and on-demand workflow_dispatch) re-collect it — with branch
+  # coverage (phpunit.xml.dist branchCoverage=true → Cobertura) — off that path.
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
 
 # Supersede an in-flight run when new commits land on the same ref. Scoped to
 # non-default refs so every main commit still gets a complete run (bisect
@@ -184,14 +191,24 @@ jobs:
         run: |
           docker compose run --rm -e APP_ENV=test app-e2e php bin/console cache:warmup --env=test
 
-      - name: Run unit tests with coverage
+      - name: Run unit tests
         env:
           COMPOSE_PROFILES: e2e
+          # Coverage only on the nightly schedule / manual dispatch (#624 S9);
+          # PR & push run without xdebug instrumentation. Cobertura carries the
+          # branch coverage (phpunit.xml.dist branchCoverage=true) for Codecov.
+          COVERAGE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
         run: |
-          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e \
-            php -d memory_limit=1G bin/phpunit --testsuite unit --coverage-clover var/coverage/unit.xml
+          if [ "$COVERAGE" = "1" ]; then
+            docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e \
+              php -d memory_limit=1G bin/phpunit --testsuite unit --coverage-cobertura var/coverage/unit.xml
+          else
+            docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-e2e \
+              php -d memory_limit=1G bin/phpunit --testsuite unit
+          fi
 
       - name: Upload unit coverage to Codecov
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -243,14 +260,22 @@ jobs:
           docker compose up -d db_unittest
           docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
 
-      - name: Run integration tests with coverage
+      - name: Run integration tests
         env:
           COMPOSE_PROFILES: e2e
+          # Coverage only on the nightly schedule / manual dispatch (#624 S9).
+          COVERAGE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
         run: |
-          docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e \
-            php -d memory_limit=2G bin/phpunit --testsuite integration,controller,api-functional,mcp --coverage-clover var/coverage/integration.xml
+          if [ "$COVERAGE" = "1" ]; then
+            docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage app-e2e \
+              php -d memory_limit=2G bin/phpunit --testsuite integration,controller,api-functional,mcp --coverage-cobertura var/coverage/integration.xml
+          else
+            docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off app-e2e \
+              php -d memory_limit=2G bin/phpunit --testsuite integration,controller,api-functional,mcp
+          fi
 
       - name: Upload integration coverage to Codecov
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -310,11 +335,13 @@ jobs:
           # Artifact download doesn't preserve npm binary symlinks, reinstall to fix
           docker compose run --rm app-e2e npm install --legacy-peer-deps
 
-      - name: Start E2E stack with coverage
+      - name: Start E2E stack
         env:
           COMPOSE_PROFILES: e2e
-          COVERAGE_ENABLED: '1'
-          XDEBUG_MODE: coverage
+          # Coverage only on the nightly schedule / manual dispatch (#624 S9);
+          # PR & push start the stack without xdebug coverage instrumentation.
+          COVERAGE_ENABLED: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
+          XDEBUG_MODE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'coverage' || 'off' }}
         run: |
           docker compose up -d
 
@@ -363,7 +390,7 @@ jobs:
             app-e2e bash -c "npx playwright install chromium && npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }} -x"
 
       - name: Collect E2E coverage
-        if: always()
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
         run: |
           curl -s "http://localhost:8766/coverage.php?action=report&format=clover" > var/coverage/e2e-clover-${{ matrix.shard }}.xml || true
           if [ -s var/coverage/e2e-clover-${{ matrix.shard }}.xml ]; then
@@ -373,7 +400,7 @@ jobs:
           fi
 
       - name: Upload E2E coverage to Codecov
-        if: always()
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

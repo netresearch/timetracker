@@ -13,7 +13,7 @@
     displayDetailsOnTestsThatTriggerWarnings="false"
     displayDetailsOnTestsThatTriggerDeprecations="false"
 >
-    <coverage/>
+    <coverage branchCoverage="true"/>
     <source>
         <include>
             <directory suffix=".php">src</directory>
