@@ -3592,6 +3592,7 @@ th[aria-sort='descending'] .th-sort-glyph {
    nav. Textarea keeps its multi-line height. */
 :root[data-density='compact'] .field input:not([type='checkbox']):not([type='radio']),
 :root[data-density='compact'] .field select,
+:root[data-density='compact'] .searchable-select-trigger,
 :root[data-density='compact'] .range-preset,
 :root[data-density='compact'] .admin-filter,
 :root[data-density='compact'] .today-button,
@@ -3659,6 +3660,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='ultra-compact'] .tracking-days-input,
 :root[data-density='ultra-compact'] .field input:not([type='checkbox']):not([type='radio']),
 :root[data-density='ultra-compact'] .field select,
+:root[data-density='ultra-compact'] .searchable-select-trigger,
 :root[data-density='ultra-compact'] .range-preset,
 :root[data-density='ultra-compact'] .admin-filter,
 :root[data-density='ultra-compact'] .today-button,
@@ -3708,6 +3710,7 @@ th[aria-sort='descending'] .th-sort-glyph {
    controls and their help text at every density. */
 :root[data-density] :is(.settings-page,.modal) .field input:not([type='checkbox']):not([type='radio']),
 :root[data-density] :is(.settings-page,.modal) .field select,
+:root[data-density] :is(.settings-page,.modal) .searchable-select-trigger,
 :root[data-density] :is(.settings-page,.modal) :is(.link-button,.action-button,.primary-button,.days-combo-toggle){ min-height:44px; }
 :root[data-density] :is(.settings-page,.modal) .primary-button{ padding:0 1.2rem; }
 :root[data-density] :is(.settings-page,.modal) .days-combo-toggle{ width:auto; }
