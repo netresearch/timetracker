@@ -869,8 +869,10 @@ main:has(.tracking) {
     grid-column: 2;
   }
 
+  /* A field's hint sits under its control (column 2), not full-width under the
+     label — so a date field's "YYYY-MM-DD" hint lines up beneath the input. */
   .stack-form .field > .field-hint {
-    grid-column: 1 / -1;
+    grid-column: 2;
     margin: 0.15em 0 0;
   }
 
@@ -889,16 +891,18 @@ main:has(.tracking) {
     grid-column: auto;
   }
 
-  /* Right-align labels in the beside layout so the label's edge sits at the
-     control's left edge (tight label↔field coupling) — except the full-width
-     exceptions above, whose label sits on top and stays left-aligned. */
-  .stack-form .field > span {
+  /* Right-align only the LABEL (the first span) in the beside layout, so its edge
+     sits at the control's left edge (tight label↔field coupling). Scoped to
+     :first-child so it never catches a field's other spans — e.g. the DateField's
+     .date-field-wrap or its .field-hint, which must not be pushed to the right. */
+  .stack-form .field > span:first-child {
     text-align: right;
   }
 
-  .stack-form .field.multiselect > span,
-  .stack-form .field:has(textarea) > span,
-  .stack-form .field-row .field > span {
+  /* The full-width exceptions keep their label on top, left-aligned. */
+  .stack-form .field.multiselect > span:first-child,
+  .stack-form .field:has(textarea) > span:first-child,
+  .stack-form .field-row .field > span:first-child {
     text-align: left;
   }
 
@@ -913,14 +917,28 @@ main:has(.tracking) {
     grid-template-columns: 18em minmax(0, 22em);
   }
 
-  .stack-form .field-check > span {
+  /* Pin the rows explicitly: label + box share row 1, an optional hint sits under
+     the box on row 2. Without pinned rows, sparse auto-placement (the box has an
+     explicit col 2 and comes first in the DOM) pushes the label onto row 2, leaving
+     the box stranded above it — visible only once a label wraps or a hint is present. */
+  .stack-form .field-check > span:not(.field-hint) {
     grid-column: 1;
+    grid-row: 1;
     text-align: right;
   }
 
   .stack-form .field-check > input {
     grid-column: 2;
+    grid-row: 1;
     justify-self: start;
+  }
+
+  /* A checkbox's own hint (e.g. Personio's "available once configured" note) sits
+     under the box in column 2. */
+  .stack-form .field-check > .field-hint {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0.15em 0 0;
   }
 
   /* Help-icon rows keep the compact inline pattern (checkbox + its ⓘ side by side),
