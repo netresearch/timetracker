@@ -26,4 +26,9 @@ return RectorConfig::configure()
     ])
     ->withComposerBased(symfony: true)
     ->withAttributesSets(symfony: true)
+    // Host-mounted cache (resolves to repo-root var/cache/rector) so the
+    // ChangedFilesDetector cache persists across CI runs via actions/cache.
+    // Rector salts this cache with the config-file hash, so a rule-set change
+    // invalidates it — a stale restore only recomputes changed files.
+    ->withCache(__DIR__ . '/../../var/cache/rector')
     ->withImportNames(importShortClasses: false);

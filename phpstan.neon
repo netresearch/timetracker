@@ -30,7 +30,10 @@ parameters:
 
     # PHPUnit specific configuration handled by extension
 
-    tmpDir: /tmp/phpstan-timetracker
+    # Host-mounted path (compose bind-mounts ./var/cache) so the result cache
+    # survives the ephemeral `docker compose run --rm` container and persists
+    # across CI runs via actions/cache. /tmp/... lived only inside the container.
+    tmpDir: var/cache/phpstan
 
     # These might need to be addressed gradually
     ignoreErrors:
