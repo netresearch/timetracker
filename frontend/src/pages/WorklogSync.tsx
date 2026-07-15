@@ -191,32 +191,33 @@ function WorklogSyncArea(): JSX.Element {
 
             {/* A sync run targets a single user (the backend rejects >1 with 422);
                 verify/import accept several. Remount across the mode switch so
-                Ark's combobox re-inits single vs multiple cleanly. */}
-            <div class="field">
-              <Show
-                when={type() === 'sync'}
-                fallback={
-                  <SearchableSelect
-                    label={m.worklogsync_users()}
-                    multiple
-                    value={selectedUserIds()}
-                    onChange={(value) => setSelectedUserIds(Array.isArray(value) ? value : value > 0 ? [value] : [])}
-                    options={userOptions.data}
-                    disabled={busy()}
-                  />
-                }
-              >
+                Ark's combobox re-inits single vs multiple cleanly. Each
+                SearchableSelect is its own .field (label + control); the hint is a
+                sibling — a wrapping .field would nest a grid inside the
+                .stack-form label/control grid and squeeze the control. */}
+            <Show
+              when={type() === 'sync'}
+              fallback={
                 <SearchableSelect
                   label={m.worklogsync_users()}
-                  value={selectedUserIds()[0] ?? 0}
+                  multiple
+                  value={selectedUserIds()}
                   onChange={(value) => setSelectedUserIds(Array.isArray(value) ? value : value > 0 ? [value] : [])}
                   options={userOptions.data}
-                  allLabel="—"
                   disabled={busy()}
                 />
-              </Show>
-              <small class="field-hint">{m.worklogsync_users_hint()}</small>
-            </div>
+              }
+            >
+              <SearchableSelect
+                label={m.worklogsync_users()}
+                value={selectedUserIds()[0] ?? 0}
+                onChange={(value) => setSelectedUserIds(Array.isArray(value) ? value : value > 0 ? [value] : [])}
+                options={userOptions.data}
+                allLabel="—"
+                disabled={busy()}
+              />
+            </Show>
+            <small class="field-hint">{m.worklogsync_users_hint()}</small>
 
             <label class="field-check">
               <input
