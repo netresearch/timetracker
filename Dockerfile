@@ -199,15 +199,16 @@ RUN curl -sS https://get.symfony.com/cli/installer | bash \
     && symfony completion bash > /etc/bash_completion.d/symfony \
     && echo 'source /etc/bash_completion.d/symfony' >> /etc/bash.bashrc
 
-# Root npm deps (Playwright + axe) — needed so `npx playwright install` below can
-# resolve the browser version. Kept LAST of the manifest-independent installs so
-# a package.json bump doesn't invalidate the apt/pecl layers above.
+# Root npm deps (Playwright + axe), the chromium install, and cleanup in ONE
+# layer: dev/e2e receive node_modules + manifests from deps' `COPY --from=deps`,
+# so devtools' copy is transient and must not be committed (image bloat). The
+# chromium browser installs to ~/.cache/ms-playwright (outside node_modules), so
+# it survives the cleanup. Kept LAST of the manifest-independent installs so a
+# package.json bump doesn't invalidate the apt/pecl layers above.
 COPY --chown=app:app package.json package-lock.json ./
-RUN npm ci
-
-# Install Playwright + chromium including its canonical system dependencies.
-# Cached here (below the app code), so a src change never re-downloads chromium.
-RUN npx playwright install chromium --with-deps
+RUN npm ci \
+    && npx playwright install chromium --with-deps \
+    && rm -rf node_modules package.json package-lock.json
 
 # =============================================================================
 # DEV - Development image with debugging tools
