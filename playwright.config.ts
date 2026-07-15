@@ -31,7 +31,9 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:8766',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // Record only during a retry (#624 QW9): the happy path captures no video,
+    // while a flaky test still yields one from its first retry.
+    video: 'on-first-retry',
   },
   projects: [
     {

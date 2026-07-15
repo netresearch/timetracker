@@ -72,7 +72,7 @@ class LdapClientService
     /**
      * @return (bool|int|string)[] LDAP options
      *
-     * @psalm-return array{useSsl: bool, host: string, username: string, password: string, baseDn: string, port: int}
+     * @psalm-return array{useSsl: bool, host: string, username: string, password: string, baseDn: string, port: int, networkTimeout: int}
      */
     protected function getLdapOptions(): array
     {
@@ -83,6 +83,9 @@ class LdapClientService
             'password' => $this->readPass,
             'baseDn' => $this->baseDn,
             'port' => $this->port,
+            // Bound the connect attempt (#624 QW3): an unreachable directory fails
+            // fast (5s) instead of hanging on the default LDAP network timeout.
+            'networkTimeout' => 5,
         ];
     }
 
