@@ -50,12 +50,13 @@ describe('SearchableSelect (jsdom)', () => {
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(8))
   })
 
-  it('single: shows the current value and the "all" entry clears it to 0', async () => {
+  it('single: shows the current value as a chip and the "all" entry clears it to 0', async () => {
     const onChange = vi.fn()
     render(() => <SearchableSelect label="Customer" value={7} onChange={onChange} options={customers} allLabel="All" />)
 
-    // The chosen value is shown in the (compact) control.
-    expect(screen.getByRole('button', { name: 'Customer' })).toHaveTextContent('Apollo')
+    // Single and multi share the chip layout, so the chosen value shows as its chip
+    // (the input beside it stays a bare search box).
+    expect(screen.getByRole('listitem')).toHaveTextContent('Apollo')
     fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
     await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4))
 
@@ -63,12 +64,13 @@ describe('SearchableSelect (jsdom)', () => {
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(0))
   })
 
-  it('single: with no selection and no allLabel, shows the "none" placeholder', () => {
+  it('single: with no selection, shows an empty search control and no "all" entry', () => {
     render(() => <SearchableSelect label="Customer" value={0} onChange={vi.fn()} options={customers} />)
 
-    // No "all" option requested → the compact control falls back to the generic
-    // "none" placeholder rather than a blank control.
+    // Nothing chosen → no value chip, just the search input + ▾ trigger; and with no
+    // allLabel requested, the "all" entry is not offered.
     expect(screen.getByRole('button', { name: 'Customer' })).toBeInTheDocument()
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
     expect(screen.queryByText('All')).not.toBeInTheDocument()
   })
 

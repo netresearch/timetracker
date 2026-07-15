@@ -313,7 +313,7 @@ export function ChipSelect(props: {
             focus-out logic so opening it doesn't save/close the row. */}
         <Portal>
           <Combobox.Positioner class="combobox-positioner" data-chipselect-popup>
-            <ComboboxContent items={filteredItems()} multiple={props.multiple} searchInput={searchInput} />
+            <ComboboxContent items={filteredItems()} popupSearch={!props.multiple} searchInput={searchInput} />
           </Combobox.Positioner>
         </Portal>
       </Combobox.Root>

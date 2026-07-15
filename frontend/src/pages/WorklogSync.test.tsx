@@ -204,7 +204,9 @@ describe('WorklogSync', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Users' }))
     fireEvent.input(screen.getByRole('combobox', { name: 'Users' }), { target: { value: 'ali' } })
     fireEvent.click(await screen.findByRole('option', { name: 'alice' }))
-    await waitFor(() => expect(screen.getByRole('listitem')).toHaveTextContent('alice'))
+    // Single-select fields (the trigger ticket system) now also show their value as a
+    // chip, so several listitems can be present — assert the alice chip is among them.
+    await waitFor(() => expect(screen.getAllByRole('listitem').some((li) => li.textContent?.includes('alice'))).toBe(true))
     fireEvent.click(screen.getByRole('button', { name: 'Trigger a run' }))
 
     await waitFor(() => expect(createSyncRun).toHaveBeenCalledTimes(1))

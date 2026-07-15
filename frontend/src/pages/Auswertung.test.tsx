@@ -63,8 +63,9 @@ describe('Auswertung', () => {
     await waitFor(() => expect(getByRole('rowheader', { name: 'ACME' })).toBeInTheDocument())
 
     getJson.mockClear()
-    // Change a filter so the query key actually changes, then submit.
-    const ticket = container.querySelector('.filter-grid input[type=text]') as HTMLInputElement
+    // Change a filter so the query key actually changes, then submit. Exclude the
+    // OptionSelect search inputs (.combobox-input), which now precede the ticket field.
+    const ticket = container.querySelector('.filter-grid input[type=text]:not(.combobox-input)') as HTMLInputElement
     fireEvent.input(ticket, { target: { value: 'ABC-1' } })
     fireEvent.click(getByRole('button', { name: 'Refresh' }))
 
