@@ -22,12 +22,15 @@ test.describe('Evaluation (Auswertung) page', () => {
 
   test('should display the evaluation page with a filter bar', async ({ page }) => {
     await expect(page.locator('form.filter-bar')).toBeVisible();
-    // Selects for customer/project/team/user/activity plus the ticket/description text inputs.
-    expect(await page.locator('form.filter-bar select').count()).toBeGreaterThan(0);
+    // customer/project/team/user/activity are searchable comboboxes now
+    // (SearchableSelect), plus the ticket/description text inputs.
+    expect(await page.locator('form.filter-bar .searchable-select').count()).toBeGreaterThan(0);
   });
 
   test('should have a start and end date filter', async ({ page }) => {
-    await expect(page.locator('form.filter-bar input[type="date"]')).toHaveCount(2);
+    // Start/end are DateField controls now — text inputs that honour the user's
+    // date format with a calendar popover, not native date inputs.
+    await expect(page.locator('form.filter-bar .date-field')).toHaveCount(2);
   });
 
   test('should render effort results when filters are applied', async ({ page }) => {
@@ -40,7 +43,9 @@ test.describe('Evaluation (Auswertung) page', () => {
   });
 
   test('should reset filters back to defaults', async ({ page }) => {
-    const ticket = page.locator('form.filter-bar input[type="text"]').first();
+    // The ticket field is the first free-text input in the filter grid; the
+    // date-range inputs are DateField controls in a separate row above.
+    const ticket = page.locator('form.filter-bar .filter-grid input[type="text"]').first();
     await ticket.fill('ABC-123');
     await expect(ticket).toHaveValue('ABC-123');
 
@@ -142,19 +147,23 @@ test.describe('Entry Filtering', () => {
   });
 
   test('should expose customer/project/user filters defaulting to "all"', async ({ page }) => {
-    // The five relation filters (customer, project, team, user, activity) each
-    // carry a "0" = all option as their first entry.
-    const selects = page.locator('form.filter-bar select');
-    expect(await selects.count()).toBeGreaterThanOrEqual(5);
-    await expect(selects.first().locator('option[value="0"]')).toHaveCount(1);
+    // The five relation filters (customer, project, team, user, activity) are
+    // searchable comboboxes that each default to their "Alle" (value 0) entry.
+    const filters = page.locator('form.filter-bar .searchable-select');
+    expect(await filters.count()).toBeGreaterThanOrEqual(5);
+    await expect(filters.first().locator('.searchable-select-value')).toHaveText('Alle');
   });
 
   test('should keep the page functional after changing a filter', async ({ page }) => {
-    const customer = page.locator('form.filter-bar select').first();
-    const options = customer.locator('option');
-    // Only exercise selection when seed data provides at least one real option.
-    if ((await options.count()) > 1) {
-      await customer.selectOption({ index: 1 });
+    // Open the first relation combobox (customer) and pick a real option past the
+    // leading "Alle" entry — only when the seed data provides one.
+    await page.locator('form.filter-bar .searchable-select-trigger').first().click();
+    await expect(page.locator('.combobox-input').first()).toBeVisible();
+    const realOption = page.locator('.combobox-content .combobox-item').nth(1);
+    if (await realOption.isVisible()) {
+      await realOption.click();
+    } else {
+      await page.keyboard.press('Escape');
     }
     await page.locator('form.filter-bar button[type="submit"]').click();
     await expect(page.locator('section.auswertung')).toBeVisible();
