@@ -137,11 +137,44 @@ RUN composer install --ignore-platform-req=php
 USER app
 
 # =============================================================================
-# DEV - Development image with debugging tools
+# DEVTOOLS - Code-INDEPENDENT dev/e2e tooling, cached across code-only commits.
+#
+# Built FROM base (NOT deps), so none of these installs — git/curl, Xdebug,
+# Symfony CLI, Node, Bun, composer, the root Playwright npm deps, and the
+# Chromium browser — sit above the application code copy. A src-only change
+# invalidates `deps` (its trailing `COPY . .`) but leaves this whole stage
+# cached, so the ~68s of apt/pecl/chromium/composer no longer re-runs per commit.
+#
+# Xdebug and Chromium live ONLY here (→ dev → e2e); production (FROM base),
+# profiling and tools (FROM deps) never inherit from this stage, so they stay
+# free of Xdebug (would skew profiling timings) and Chromium (bloat).
 # =============================================================================
-FROM deps AS dev
+FROM base AS devtools
 
+ARG NODE_VERSION
 ARG XDEBUG_VERSION
+
+# Reproduce the env `dev`'s composer install ran under when it was FROM deps:
+# CAPTAINHOOK_DISABLE skips the captainhook git-hook install (no .git in image),
+# APP_ENV=prod keeps the post-install cache:clear identical to before. `dev`
+# overrides APP_ENV back to `dev` at the end of its stage (as it always did).
+ENV CAPTAINHOOK_DISABLE=true
+ENV APP_ENV=prod
+
+# Get composer from official image
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+
+# Install Node.js (Playwright/chromium need it; also handy in the dev shell)
+RUN set -ex \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Bun is the package manager of the new SolidJS frontend (frontend/)
+COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
 
 # Install dev tools
 RUN set -ex \
@@ -166,6 +199,27 @@ RUN curl -sS https://get.symfony.com/cli/installer | bash \
     && symfony completion bash > /etc/bash_completion.d/symfony \
     && echo 'source /etc/bash_completion.d/symfony' >> /etc/bash.bashrc
 
+# Root npm deps (Playwright + axe), the chromium install, and cleanup in ONE
+# layer: dev/e2e receive node_modules + manifests from deps' `COPY --from=deps`,
+# so devtools' copy is transient and must not be committed (image bloat). The
+# chromium browser installs to ~/.cache/ms-playwright (outside node_modules), so
+# it survives the cleanup. Kept LAST of the manifest-independent installs so a
+# package.json bump doesn't invalidate the apt/pecl layers above.
+COPY --chown=app:app package.json package-lock.json ./
+RUN npm ci \
+    && npx playwright install chromium --with-deps \
+    && rm -rf node_modules package.json package-lock.json
+
+# =============================================================================
+# DEV - Development image with debugging tools
+# =============================================================================
+FROM devtools AS dev
+
+# Bring in the built application tree (vendor, built SolidJS UI, app code) from
+# deps. This is the ONLY code-dependent layer of the dev image — it invalidates
+# on any src change, but that is unavoidable and cheap (a plain copy).
+COPY --from=deps --chown=app:app /var/www/html /var/www/html
+
 # Install dev dependencies
 RUN composer install --ignore-platform-req=php
 
@@ -180,9 +234,7 @@ ENV APP_DEBUG=1
 # =============================================================================
 FROM dev AS e2e
 
-# Install Playwright + chromium including its canonical system dependencies
-RUN npx playwright install chromium --with-deps
-
+# Chromium + Playwright are already installed in the cached `devtools` stage.
 ENV APP_ENV=test
 
 # =============================================================================
