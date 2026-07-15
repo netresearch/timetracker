@@ -64,7 +64,7 @@ describe('Auswertung', () => {
 
     getJson.mockClear()
     // Change a filter so the query key actually changes, then submit.
-    const ticket = container.querySelector('input[type=text]') as HTMLInputElement
+    const ticket = container.querySelector('.filter-grid input[type=text]') as HTMLInputElement
     fireEvent.input(ticket, { target: { value: 'ABC-1' } })
     fireEvent.click(getByRole('button', { name: 'Refresh' }))
 

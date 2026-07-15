@@ -16,6 +16,7 @@ import {
   timeSeriesQuery,
   usersQuery,
 } from '../api/queries'
+import { DateField } from '../components/DateField'
 import { EffortChart, type EffortRow } from '../components/EffortChart'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
 import { OptionSelect } from '../components/OptionSelect'
@@ -234,11 +235,11 @@ export default function Auswertung() {
         <div class="field-row">
           <label class="field">
             <span>{m.auswertung_date_start()}</span>
-            <input type="date" value={filters().datestart} onInput={(e) => set('datestart', e.currentTarget.value)} />
+            <DateField value={filters().datestart} onChange={(iso) => set('datestart', iso)} calendar />
           </label>
           <label class="field">
             <span>{m.auswertung_date_end()}</span>
-            <input type="date" value={filters().dateend} onInput={(e) => set('dateend', e.currentTarget.value)} />
+            <DateField value={filters().dateend} onChange={(iso) => set('dateend', iso)} calendar />
           </label>
         </div>
 
