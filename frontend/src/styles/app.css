@@ -2792,6 +2792,14 @@ th[aria-sort='descending'] .th-sort-glyph {
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
 }
 
+/* Stack the sync sections with the same card rhythm the settings page uses
+   (.settings-page gap) so their borders don't touch. */
+.worklog-sync {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
 .status-group {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -3456,6 +3464,16 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='ultra-compact'] main {
   max-width: none;
   padding: 0.5rem 1rem;
+}
+
+/* Keep a side gap on the reading-width pages (Month, admin, …) at every
+   density — only the full-bleed worklog grid (main:has(.tracking)) rides the
+   viewport edge. Density still tightens the vertical padding. */
+:root[data-density='compact'] main:not(:has(.tracking)) {
+  padding: 0.5rem 2rem;
+}
+:root[data-density='ultra-compact'] main:not(:has(.tracking)) {
+  padding: 0.25rem 2rem;
 }
 
 :root[data-density='compact'] .admin-page,
@@ -4528,8 +4546,10 @@ th[aria-sort='descending'] .th-sort-glyph {
    Self-contained month grid used by the date fields. Monday-first, 44px touch
    targets, design tokens only. Text stays >= 7:1 in both schemes (AAA); the
    selected day uses the darker --color-accent-text so white/near-black day text
-   clears 7:1, and future days reuse the shared --color-future-tint. */
-.calendar {
+   clears 7:1, and future days reuse the shared --color-future-tint.
+   Scoped to div.calendar so these flex rules don't hit the month view's
+   <table class="calendar"> (which shares the base class). */
+div.calendar {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
