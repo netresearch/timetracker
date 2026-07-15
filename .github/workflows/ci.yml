@@ -70,6 +70,30 @@ jobs:
           chmod -R 777 var bin vendor
           if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
 
+      # Persist the PHP static-analysis tool caches across runs so PHPStan runs
+      # incrementally (cold ~148s -> warm ~87s). The app-e2e container runs as
+      # root with umask 022, so the cache files it writes are 0644/0755
+      # (world-readable) and the post-job save (running as the runner user) can
+      # read them without a chmod. Restore before the tool steps; the dirs are
+      # created on demand by each tool on a cold run.
+      - name: Cache PHP static-analysis caches
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            var/cache/phpstan
+            var/cache/rector
+            var/phpstan-phpat
+            var/.php-cs-fixer.cache
+          # github.run_id is unique per run, so the primary key never hits and the
+          # job always SAVES a fresh cache at the end (newest incremental state).
+          # restore-keys prefix-matches and restores the most recent prior cache.
+          # PHPStan (config+composer-salted result cache), Rector (config-salted
+          # ChangedFilesDetector) and PHP-CS-Fixer all re-validate internally, so a
+          # stale restore is safe — worst case they recompute the changed files.
+          key: php-static-analysis-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            php-static-analysis-${{ runner.os }}-
+
       - name: Install PHP dependencies
         env:
           COMPOSE_PROFILES: e2e
