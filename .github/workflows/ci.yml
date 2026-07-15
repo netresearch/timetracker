@@ -161,7 +161,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    timeout-minutes: 10
+    # 30 min headroom for the nightly/dispatch coverage run: xdebug branch
+    # coverage over the full unit suite is ~6x slower than a plain run (the PR
+    # path, which skips coverage, finishes in ~90s well under this). See #624 S9.
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -222,7 +225,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    timeout-minutes: 15
+    # 25 min headroom for the nightly/dispatch coverage run (xdebug branch
+    # coverage ~6x slower; measured ~700s). PR path skips coverage. See #624 S9.
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
