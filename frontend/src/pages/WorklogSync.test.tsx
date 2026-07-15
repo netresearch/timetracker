@@ -112,6 +112,14 @@ function mockRefs(): void {
   })
 }
 
+// Pick a ticket system in the trigger form's searchable combobox: the two
+// 'Ticket system' comboboxes (trigger + history filter) share a label, so the
+// first (region 1 — trigger) is opened, then the seeded option is chosen.
+async function pickTriggerTicketSystem(): Promise<void> {
+  fireEvent.click(screen.getAllByRole('button', { name: 'Ticket system' })[0]!)
+  fireEvent.click(await screen.findByRole('option', { name: 'Jira Cloud' }))
+}
+
 const FULL_ROLES = ['ROLE_USER', 'ROLE_PL', 'ROLE_ADMIN']
 
 afterEach(() => {
@@ -134,13 +142,8 @@ describe('WorklogSync', () => {
     expect(screen.getByText('Completed')).toBeInTheDocument()
     expect(screen.getByText('Failed')).toBeInTheDocument()
 
-    // Pick a ticket system, then trigger a run.
-    // Both selects (trigger + history filter) carry the ticket system, so the
-    // option appears twice — wait for the trigger select to be populated.
-    await waitFor(() => expect(screen.getAllByRole('option', { name: 'Jira Cloud' }).length).toBeGreaterThanOrEqual(2))
-    fireEvent.change(screen.getByLabelText('Ticket system', { selector: '#worklogsync-trigger-ticket' }), {
-      target: { value: '1' },
-    })
+    // Pick a ticket system in the trigger combobox, then trigger a run.
+    await pickTriggerTicketSystem()
     fireEvent.click(screen.getByRole('button', { name: 'Trigger a run' }))
 
     await waitFor(() => expect(createSyncRun).toHaveBeenCalledTimes(1))
@@ -148,8 +151,10 @@ describe('WorklogSync', () => {
       expect.objectContaining({ type: 'verify', ticket_system_id: 1, dry_run: true }),
     )
     // The returned run's summary + a success status appear; runs are invalidated.
+    // (Each SearchableSelect carries its own aria-live status region, so scope to
+    // the trigger form's success status paragraph rather than role='status'.)
     await waitFor(() => expect(screen.getByText('Created')).toBeInTheDocument())
-    expect(screen.getByRole('status')).toBeInTheDocument()
+    expect(container.querySelector('.form-status.is-ok')).toBeInTheDocument()
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['worklog-sync', 'runs'] })
     // The default trigger is a dry run — it writes nothing, so the worklog grid
     // and the header totals must not refresh (#620).
@@ -165,10 +170,7 @@ describe('WorklogSync', () => {
     const { queryClient } = renderWithProviders(() => <WorklogSync />)
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
 
-    await waitFor(() => expect(screen.getAllByRole('option', { name: 'Jira Cloud' }).length).toBeGreaterThanOrEqual(2))
-    fireEvent.change(screen.getByLabelText('Ticket system', { selector: '#worklogsync-trigger-ticket' }), {
-      target: { value: '1' },
-    })
+    await pickTriggerTicketSystem()
     fireEvent.click(screen.getByLabelText('Dry run')) // uncheck → a real run
     fireEvent.click(screen.getByRole('button', { name: 'Trigger a run' }))
 
@@ -178,6 +180,35 @@ describe('WorklogSync', () => {
     // day/week/month totals refresh (#620).
     await waitFor(() => expect(updateWorktime).toHaveBeenCalledTimes(1))
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['tracking-entries'] })
+  })
+
+  it('maps a picked user id back to its username in the trigger payload', async () => {
+    // The users picker is a relation combobox over ids, but the API targets users
+    // by username — the payload must still carry the name the old <select> sent.
+    getJson.mockImplementation((path: string) => {
+      if (path === '/getTicketSystems') {
+        return Promise.resolve([{ ticketSystem: { id: 1, name: 'Jira Cloud', active: true } }])
+      }
+      if (path === '/getAllUsers') {
+        return Promise.resolve([{ user: { id: 7, username: 'alice' } }])
+      }
+
+      return Promise.resolve([])
+    })
+    createSyncRun.mockResolvedValue(makeRun())
+    renderWithProviders(() => <WorklogSync />)
+
+    await pickTriggerTicketSystem()
+    // Open the users multi-combobox (▾), filter, pick alice. Ark applies the
+    // selection asynchronously, so wait for its chip before triggering.
+    fireEvent.click(screen.getByRole('button', { name: 'Users' }))
+    fireEvent.input(screen.getByRole('combobox', { name: 'Users' }), { target: { value: 'ali' } })
+    fireEvent.click(await screen.findByRole('option', { name: 'alice' }))
+    await waitFor(() => expect(screen.getByRole('listitem')).toHaveTextContent('alice'))
+    fireEvent.click(screen.getByRole('button', { name: 'Trigger a run' }))
+
+    await waitFor(() => expect(createSyncRun).toHaveBeenCalledTimes(1))
+    expect(createSyncRun).toHaveBeenLastCalledWith(expect.objectContaining({ users: ['alice'] }))
   })
 
   it('loads a run detail (with items) when a run is opened', async () => {
@@ -194,16 +225,15 @@ describe('WorklogSync', () => {
   it('surfaces a trigger failure as an alert', async () => {
     mockRefs()
     createSyncRun.mockRejectedValue(new Error('Jira unreachable'))
-    renderWithProviders(() => <WorklogSync />)
+    const { container } = renderWithProviders(() => <WorklogSync />)
 
-    await waitFor(() => expect(screen.getAllByRole('option', { name: 'Jira Cloud' }).length).toBeGreaterThanOrEqual(2))
-    fireEvent.change(screen.getByLabelText('Ticket system', { selector: '#worklogsync-trigger-ticket' }), {
-      target: { value: '1' },
-    })
+    await pickTriggerTicketSystem()
     fireEvent.click(screen.getByRole('button', { name: 'Trigger a run' }))
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Jira unreachable'))
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    // No success status paragraph on failure (SearchableSelects keep their own
+    // aria-live status regions, so target the trigger form's success class).
+    expect(container.querySelector('.form-status.is-ok')).not.toBeInTheDocument()
   })
 
   it('does not expose the sync area to a non-admin', () => {

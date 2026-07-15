@@ -12,6 +12,7 @@ import {
   proposalsQuery,
 } from '../api/projectImport'
 import { customersQuery, ticketSystemsQuery, type NamedOption } from '../api/queries'
+import { SearchableSelect } from '../components/SearchableSelect'
 import { hasRole } from '../config'
 import { m } from '../paraglide/messages.js'
 
@@ -220,24 +221,18 @@ function ProjectImportArea(): JSX.Element {
         <p class="field-hint">{m.projectimport_intro()}</p>
 
         <div class="stack-form">
-          <label class="field">
-            <span>{m.worklogsync_ticket_system()}</span>
-            <select
-              id="projectimport-ticket"
-              value={ticketSystemId()}
-              disabled={busy()}
-              onChange={(event) => {
-                setResults([])
-                setError('')
-                setTicketSystemId(Number(event.currentTarget.value))
-              }}
-            >
-              <option value={0}>—</option>
-              <For each={ticketSystems.data ?? []}>
-                {(option) => <option value={option.id}>{option.label}</option>}
-              </For>
-            </select>
-          </label>
+          <SearchableSelect
+            label={m.worklogsync_ticket_system()}
+            value={ticketSystemId()}
+            onChange={(value) => {
+              setResults([])
+              setError('')
+              setTicketSystemId(typeof value === 'number' ? value : (value[0] ?? 0))
+            }}
+            options={ticketSystems.data}
+            allLabel="—"
+            disabled={busy()}
+          />
         </div>
 
         <Show when={ticketSystemId() > 0}>

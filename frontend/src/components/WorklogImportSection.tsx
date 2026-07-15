@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
-import { createSignal, For, Show, type JSX } from 'solid-js'
+import { createSignal, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
 import { activitiesQuery, refreshEntriesAndWorktime, ticketSystemsQuery } from '../api/queries'
@@ -8,6 +8,7 @@ import { appConfig } from '../config'
 import { isoDate } from '../lib/format'
 import { DateField } from './DateField'
 import { HelpPopover } from './HelpPopover'
+import { SearchableSelect } from './SearchableSelect'
 import { SyncRunSummary } from './SyncRunSummary'
 import { m } from '../paraglide/messages.js'
 
@@ -94,19 +95,14 @@ export function WorklogImportSection(): JSX.Element {
         <p class="settings-section-hint">{m.worklogsync_import_intro()}</p>
 
         <div class="security-block">
-          <label class="field">
-            <span>{m.worklogsync_ticket_system()}</span>
-            <select
-              value={ticketSystemId()}
-              disabled={busy()}
-              onChange={(event) => setTicketSystemId(Number(event.currentTarget.value))}
-            >
-              <option value={0}>—</option>
-              <For each={ticketSystems.data ?? []}>
-                {(option) => <option value={option.id}>{option.label}</option>}
-              </For>
-            </select>
-          </label>
+          <SearchableSelect
+            label={m.worklogsync_ticket_system()}
+            value={ticketSystemId()}
+            onChange={(value) => setTicketSystemId(typeof value === 'number' ? value : (value[0] ?? 0))}
+            options={ticketSystems.data}
+            allLabel="—"
+            disabled={busy()}
+          />
 
           <label class="field">
             <span>{m.worklogsync_from()}</span>
@@ -118,19 +114,14 @@ export function WorklogImportSection(): JSX.Element {
             <DateField value={to()} onChange={setTo} disabled={busy()} calendar />
           </label>
 
-          <label class="field">
-            <span>{m.worklogsync_default_activity()}</span>
-            <select
-              value={activityId()}
-              disabled={busy()}
-              onChange={(event) => setActivityId(Number(event.currentTarget.value))}
-            >
-              <option value={0}>—</option>
-              <For each={activities.data ?? []}>
-                {(option) => <option value={option.id}>{option.label}</option>}
-              </For>
-            </select>
-          </label>
+          <SearchableSelect
+            label={m.worklogsync_default_activity()}
+            value={activityId()}
+            onChange={(value) => setActivityId(typeof value === 'number' ? value : (value[0] ?? 0))}
+            options={activities.data}
+            allLabel="—"
+            disabled={busy()}
+          />
 
           <div class="form-actions">
             <button type="button" class="primary-button" disabled={!canRun()} onClick={() => void runImport(true)}>

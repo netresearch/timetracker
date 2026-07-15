@@ -47,14 +47,16 @@ test.describe('Controlling Export', () => {
     await page.goto('/ui/billing');
     await page.waitForSelector('form.stack-form', { timeout: 15000 });
 
-    // User/Project/Customer default to "all" (0). The export test data lives in
-    // January 2026, so pin year/month explicitly rather than relying on the
-    // page's "current period" defaults (which, under the frozen 2024 clock,
-    // would otherwise query an empty period). The form has five selects in DOM
-    // order: user, project, customer, year, month.
+    // User/Project/Customer default to "all" (0) — they are searchable
+    // comboboxes now, left untouched so no filtering is applied. The export test
+    // data lives in January 2026, so pin year/month explicitly rather than
+    // relying on the page's "current period" defaults (which, under the frozen
+    // 2024 clock, would otherwise query an empty period). Year and month remain
+    // native <select>s and are the only two left in the form, in DOM order:
+    // year, month.
     const selects = page.locator('form.stack-form select');
-    await selects.nth(3).selectOption('2026'); // year
-    await selects.nth(4).selectOption('1'); // month (1 = January)
+    await selects.nth(0).selectOption('2026'); // year
+    await selects.nth(1).selectOption('1'); // month (1 = January)
 
     // The export anchor carries the same-origin /controlling/export href,
     // recomputed reactively from the selected filters.

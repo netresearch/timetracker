@@ -13,6 +13,7 @@ import {
 } from '../api/worklogSync'
 import { ConflictList } from '../components/ConflictList'
 import { DateField } from '../components/DateField'
+import { SearchableSelect } from '../components/SearchableSelect'
 import { SyncRunSummary } from '../components/SyncRunSummary'
 import { hasRole } from '../config'
 import { isoDate } from '../lib/format'
@@ -20,6 +21,16 @@ import { m } from '../paraglide/messages.js'
 
 const RUN_TYPES = ['verify', 'import', 'sync'] as const
 type RunType = (typeof RUN_TYPES)[number]
+
+/** Normalize a SearchableSelect value (single id or id array) to an id list,
+ *  dropping the 0 = "none" sentinel. */
+function toIdArray(value: number | number[]): number[] {
+  if (Array.isArray(value)) {
+    return value
+  }
+
+  return value > 0 ? [value] : []
+}
 
 const typeLabels: Record<RunType, () => string> = {
   verify: m.worklogsync_type_verify,
@@ -88,7 +99,9 @@ function WorklogSyncArea(): JSX.Element {
   const [ticketSystemId, setTicketSystemId] = createSignal(0)
   const [from, setFrom] = createSignal(firstOfMonth())
   const [to, setTo] = createSignal(isoDate(new Date()))
-  const [selectedUsers, setSelectedUsers] = createSignal<string[]>([])
+  // Selected TT users, held as ids; mapped back to usernames for the payload
+  // (the API targets users by name — see buildPayload).
+  const [selectedUserIds, setSelectedUserIds] = createSignal<number[]>([])
   const [dryRun, setDryRun] = createSignal(true)
   const [busy, setBusy] = createSignal(false)
   const [error, setError] = createSignal('')
@@ -111,7 +124,12 @@ function WorklogSyncArea(): JSX.Element {
 
   function buildPayload(): CreateRunPayload {
     // A sync run targets at most one user; verify/import accept several.
-    const users = type() === 'sync' ? selectedUsers().slice(0, 1) : selectedUsers()
+    const ids = type() === 'sync' ? selectedUserIds().slice(0, 1) : selectedUserIds()
+    // The API identifies target users by username, so map the picked ids back to
+    // their names (the same payload the native <select> of usernames produced).
+    const users = ids
+      .map((id) => userOptions.data?.find((option) => option.id === id)?.label)
+      .filter((name): name is string => name !== undefined)
 
     return {
       type: type(),
@@ -162,18 +180,14 @@ function WorklogSyncArea(): JSX.Element {
               </select>
             </label>
 
-            <label class="field">
-              <span>{m.worklogsync_ticket_system()}</span>
-              <select
-                id="worklogsync-trigger-ticket"
-                value={ticketSystemId()}
-                disabled={busy()}
-                onChange={(event) => setTicketSystemId(Number(event.currentTarget.value))}
-              >
-                <option value={0}>—</option>
-                <For each={ticketSystems.data ?? []}>{(option) => <option value={option.id}>{option.label}</option>}</For>
-              </select>
-            </label>
+            <SearchableSelect
+              label={m.worklogsync_ticket_system()}
+              value={ticketSystemId()}
+              onChange={(value) => setTicketSystemId(typeof value === 'number' ? value : (value[0] ?? 0))}
+              options={ticketSystems.data}
+              allLabel="—"
+              disabled={busy()}
+            />
 
             <label class="field">
               <span>{m.worklogsync_from()}</span>
@@ -185,34 +199,35 @@ function WorklogSyncArea(): JSX.Element {
               <DateField value={to()} onChange={setTo} disabled={busy()} calendar />
             </label>
 
-            <label class="field">
-              <span>{m.worklogsync_users()}</span>
-              <select
-                multiple={type() !== 'sync'}
+            {/* A sync run targets a single user (the backend rejects >1 with 422);
+                verify/import accept several. Remount across the mode switch so
+                Ark's combobox re-inits single vs multiple cleanly. Each
+                SearchableSelect is its own .field (label + control); the hint is a
+                sibling — a wrapping .field would nest a grid inside the
+                .stack-form label/control grid and squeeze the control. */}
+            <Show
+              when={type() === 'sync'}
+              fallback={
+                <SearchableSelect
+                  label={m.worklogsync_users()}
+                  multiple
+                  value={selectedUserIds()}
+                  onChange={(value) => setSelectedUserIds(toIdArray(value))}
+                  options={userOptions.data}
+                  disabled={busy()}
+                />
+              }
+            >
+              <SearchableSelect
+                label={m.worklogsync_users()}
+                value={selectedUserIds()[0] ?? 0}
+                onChange={(value) => setSelectedUserIds(toIdArray(value))}
+                options={userOptions.data}
+                allLabel="—"
                 disabled={busy()}
-                onChange={(event) => {
-                  // A sync run targets a single user (the backend rejects >1 with 422);
-                  // verify/import accept a multi-selection.
-                  if (type() === 'sync') {
-                    setSelectedUsers(event.currentTarget.value ? [event.currentTarget.value] : [])
-                  } else {
-                    setSelectedUsers(Array.from(event.currentTarget.selectedOptions, (option) => option.value))
-                  }
-                }}
-              >
-                <Show when={type() === 'sync'}>
-                  <option value="" selected={selectedUsers().length === 0}>—</option>
-                </Show>
-                <For each={userOptions.data ?? []}>
-                  {(option) => (
-                    <option value={String(option.label)} selected={selectedUsers().includes(String(option.label))}>
-                      {option.label}
-                    </option>
-                  )}
-                </For>
-              </select>
-              <small class="field-hint">{m.worklogsync_users_hint()}</small>
-            </label>
+              />
+            </Show>
+            <small class="field-hint">{m.worklogsync_users_hint()}</small>
 
             <label class="field-check">
               <input
@@ -250,17 +265,13 @@ function WorklogSyncArea(): JSX.Element {
       <section class="status-group">
         <h2 class="status-group-title">{m.worklogsync_run_history()}</h2>
         <div class="stack-form">
-          <label class="field">
-            <span>{m.worklogsync_ticket_system()}</span>
-            <select
-              id="worklogsync-history-ticket"
-              value={historyFilter()}
-              onChange={(event) => setHistoryFilter(Number(event.currentTarget.value))}
-            >
-              <option value={0}>—</option>
-              <For each={ticketSystems.data ?? []}>{(option) => <option value={option.id}>{option.label}</option>}</For>
-            </select>
-          </label>
+          <SearchableSelect
+            label={m.worklogsync_ticket_system()}
+            value={historyFilter()}
+            onChange={(value) => setHistoryFilter(typeof value === 'number' ? value : (value[0] ?? 0))}
+            options={ticketSystems.data}
+            allLabel="—"
+          />
         </div>
 
         <Show

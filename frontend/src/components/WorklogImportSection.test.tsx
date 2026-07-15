@@ -31,6 +31,13 @@ vi.mock('../api/client', () => ({
 
 const { WorklogImportSection } = await import('./WorklogImportSection')
 
+// Pick an option in a SearchableSelect (single) combobox: open its trigger by the
+// field label, then choose the seeded option once the popup mounts it.
+async function pickOption(comboboxLabel: string, optionName: string): Promise<void> {
+  fireEvent.click(screen.getByRole('button', { name: comboboxLabel }))
+  fireEvent.click(await screen.findByRole('option', { name: optionName }))
+}
+
 function makeRun(overrides: Partial<SyncRun> = {}): SyncRun {
   return {
     id: 1,
@@ -78,15 +85,13 @@ describe('WorklogImportSection', () => {
     const { container, queryClient } = renderWithProviders(() => <WorklogImportSection />)
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
 
-    // Reference selects populate from the mocked endpoints.
-    await waitFor(() => expect(screen.getByRole('option', { name: 'Jira Cloud' })).toBeInTheDocument())
-
     // Exact group name: the "Help: …" trigger inside the legend is kept out of
     // the accessible name by the fieldset's aria-labelledby.
     expect(screen.getByRole('group', { name: 'Import Jira worklogs' })).toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('Ticket system'), { target: { value: '1' } })
-    fireEvent.change(screen.getByLabelText('Default activity'), { target: { value: '2' } })
+    // Pick the ticket system and default activity in their searchable comboboxes.
+    await pickOption('Ticket system', 'Jira Cloud')
+    await pickOption('Default activity', 'Development')
 
     // Step 1: preview → dry_run:true, scoped to the current user (unittest).
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
@@ -112,7 +117,9 @@ describe('WorklogImportSection', () => {
     expect(createSyncRun).toHaveBeenLastCalledWith(
       expect.objectContaining({ type: 'import', ticket_system_id: 1, dry_run: false }),
     )
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Import complete.'))
+    // Each SearchableSelect carries its own aria-live status region, so scope the
+    // success assertion to the import form's success status paragraph.
+    await waitFor(() => expect(container.querySelector('.form-status.is-ok')).toHaveTextContent('Import complete.'))
     expect(screen.getByText('Created')).toBeInTheDocument()
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['worklog-sync', 'conflicts'] })
     // The real import created entries: the worklog grid and the header
@@ -128,12 +135,13 @@ describe('WorklogImportSection', () => {
     createSyncRun.mockRejectedValue(new Error('Jira unreachable'))
     const { container } = renderWithProviders(() => <WorklogImportSection />)
 
-    await waitFor(() => expect(screen.getByRole('option', { name: 'Jira Cloud' })).toBeInTheDocument())
-    fireEvent.change(screen.getByLabelText('Ticket system'), { target: { value: '1' } })
+    await pickOption('Ticket system', 'Jira Cloud')
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Jira unreachable'))
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    // No success status paragraph on failure (SearchableSelects keep their own
+    // aria-live status regions, so target the success class rather than role).
+    expect(container.querySelector('.form-status.is-ok')).not.toBeInTheDocument()
 
     expect(await axe(container)).toHaveNoViolations()
   })
@@ -142,10 +150,10 @@ describe('WorklogImportSection', () => {
     mockRefs()
     renderWithProviders(() => <WorklogImportSection />)
 
-    await waitFor(() => expect(screen.getByRole('option', { name: 'Jira Cloud' })).toBeInTheDocument())
+    // Preview stays disabled until a ticket system is chosen.
     expect(screen.getByRole('button', { name: 'Preview' })).toBeDisabled()
 
-    fireEvent.change(screen.getByLabelText('Ticket system'), { target: { value: '1' } })
-    expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled()
+    await pickOption('Ticket system', 'Jira Cloud')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled())
   })
 })

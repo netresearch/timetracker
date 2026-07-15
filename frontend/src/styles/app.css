@@ -2546,6 +2546,69 @@ kbd {
   display: contents;
 }
 
+/* ---- SearchableSelect: the same Ark Combobox + chip styling as a standalone
+   FORM control (not a grid cell). The inline editor borrows the cell's box; a
+   form field needs its own, so .searchable-select carries the border, the 44px
+   height and the focus ring, while the popup and chips reuse the combobox/tag
+   classes above. */
+.searchable-select {
+  align-items: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  column-gap: 0.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 44px;
+  padding: 0.15rem 0.5rem;
+  row-gap: 0.2rem;
+}
+
+.searchable-select:focus-within {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.searchable-select.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* SINGLE: the current value fills the row, a trailing ▾ opens the popup; the
+   whole control is the click target. */
+.searchable-select-trigger {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  font: inherit;
+  gap: 0.3rem;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 0;
+  text-align: start;
+}
+
+.searchable-select.is-disabled .searchable-select-trigger {
+  cursor: not-allowed;
+}
+
+.searchable-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combobox-trigger-glyph {
+  color: var(--color-accent);
+  flex: none;
+  font-size: 0.8rem;
+}
+
 /* MULTI: the cell IS the search field — surface fill + accent border + focus ring,
    with the magnifier, chips and input on one (wrapping) row. */
 .data-table td[data-inline-editing] .chip-select.inline-tags {
@@ -3529,6 +3592,7 @@ th[aria-sort='descending'] .th-sort-glyph {
    nav. Textarea keeps its multi-line height. */
 :root[data-density='compact'] .field input:not([type='checkbox']):not([type='radio']),
 :root[data-density='compact'] .field select,
+:root[data-density='compact'] .searchable-select-trigger,
 :root[data-density='compact'] .range-preset,
 :root[data-density='compact'] .admin-filter,
 :root[data-density='compact'] .today-button,
@@ -3596,6 +3660,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='ultra-compact'] .tracking-days-input,
 :root[data-density='ultra-compact'] .field input:not([type='checkbox']):not([type='radio']),
 :root[data-density='ultra-compact'] .field select,
+:root[data-density='ultra-compact'] .searchable-select-trigger,
 :root[data-density='ultra-compact'] .range-preset,
 :root[data-density='ultra-compact'] .admin-filter,
 :root[data-density='ultra-compact'] .today-button,
@@ -3645,6 +3710,7 @@ th[aria-sort='descending'] .th-sort-glyph {
    controls and their help text at every density. */
 :root[data-density] :is(.settings-page,.modal) .field input:not([type='checkbox']):not([type='radio']),
 :root[data-density] :is(.settings-page,.modal) .field select,
+:root[data-density] :is(.settings-page,.modal) .searchable-select-trigger,
 :root[data-density] :is(.settings-page,.modal) :is(.link-button,.action-button,.primary-button,.days-combo-toggle){ min-height:44px; }
 :root[data-density] :is(.settings-page,.modal) .primary-button{ padding:0 1.2rem; }
 :root[data-density] :is(.settings-page,.modal) .days-combo-toggle{ width:auto; }

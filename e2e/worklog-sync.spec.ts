@@ -92,7 +92,8 @@ test.describe('Worklog sync — self-service import', () => {
     // legend, the ticket-system select and the Preview (dry-run) button render.
     const section = page.locator('fieldset.settings-group').filter({ hasText: IMPORT_TITLE });
     await expect(section).toBeVisible();
-    await expect(section.locator('select').first()).toBeVisible();
+    // The ticket-system picker is a searchable combobox now (SearchableSelect).
+    await expect(section.locator('.searchable-select').first()).toBeVisible();
     await expect(section.getByRole('button', { name: PREVIEW })).toBeVisible();
   });
 });

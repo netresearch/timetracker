@@ -80,14 +80,11 @@ afterEach(() => {
   window.APP_CONFIG!.roles = [...FULL_ROLES]
 })
 
-// Select the ticket system so the proposals table loads.
+// Select the ticket system (now a searchable combobox) so the proposals table
+// loads: open its trigger and pick the seeded option.
 async function selectTicketSystem(): Promise<void> {
-  await waitFor(() =>
-    expect(screen.getByRole('option', { name: 'Jira Cloud' })).toBeInTheDocument(),
-  )
-  fireEvent.change(screen.getByLabelText('Ticket system', { selector: '#projectimport-ticket' }), {
-    target: { value: '1' },
-  })
+  fireEvent.click(screen.getByRole('button', { name: 'Ticket system' }))
+  fireEvent.click(await screen.findByRole('option', { name: 'Jira Cloud' }))
   await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument())
 }
 

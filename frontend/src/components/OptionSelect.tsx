@@ -1,10 +1,13 @@
-import { For } from 'solid-js'
+import type { JSX } from 'solid-js'
 
 import type { NamedOption } from '../api/queries'
+import { SearchableSelect } from './SearchableSelect'
 
 /**
- * A labelled relation `<select>` with a leading "all" (value 0) option, shared
- * by the Auswertung filter bar and the Billing form.
+ * A labelled relation picker with a leading "all" (value 0) option, shared by the
+ * Auswertung filter bar and the Billing form. Built on {@link SearchableSelect}
+ * so the (often long) option list is type-to-search; the props stay a plain
+ * single-select contract (value / onInput) for its callers.
  */
 export function OptionSelect(props: {
   label: string
@@ -13,20 +16,16 @@ export function OptionSelect(props: {
   options: NamedOption[] | undefined
   allLabel: string
   disabled?: boolean
-}) {
+}): JSX.Element {
   return (
-    <label class="field">
-      <span>{props.label}</span>
-      <select
-        value={props.value}
-        disabled={props.disabled}
-        onInput={(event) => props.onInput(Number(event.currentTarget.value))}
-      >
-        <option value="0">{props.allLabel}</option>
-        <For each={props.options ?? []}>
-          {(option) => <option value={option.id}>{option.label}</option>}
-        </For>
-      </select>
-    </label>
+    <SearchableSelect
+      label={props.label}
+      value={props.value}
+      // Single-select only ever emits a scalar; guard keeps the numeric contract.
+      onChange={(value) => props.onInput(typeof value === 'number' ? value : (value[0] ?? 0))}
+      options={props.options}
+      allLabel={props.allLabel}
+      disabled={props.disabled}
+    />
   )
 }
