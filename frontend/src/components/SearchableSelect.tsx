@@ -1,9 +1,8 @@
 import { Combobox } from '@ark-ui/solid/combobox'
 import { createMemo, createSignal, For, type JSX, Show } from 'solid-js'
-import { Portal } from 'solid-js/web'
 
 import type { NamedOption } from '../api/queries'
-import { ComboboxContent, ComboSearchIcon, comboCollection, type ComboItem } from '../lib/comboboxParts'
+import { ComboboxContent, comboCollection, type ComboItem } from '../lib/comboboxParts'
 import { m } from '../paraglide/messages.js'
 
 // The "all / none" pseudo-option (value 0) for an optional single select. A
@@ -12,18 +11,14 @@ import { m } from '../paraglide/messages.js'
 const ALL_VALUE = '__all__'
 
 /**
- * A searchable relation combobox for ordinary FORMS (not the admin grid),
- * built on the same Ark UI Combobox primitive + combobox CSS as the inline-grid
- * editor ({@link ChipSelect}), so it looks identical to the worklog table's cell
- * editor — but with a plain controlled form API (value / onChange) instead of
- * the grid's field/commit/cancel contract.
+ * A searchable relation combobox for ordinary FORMS (not the admin grid).
  *
- * Two layouts share all the logic:
- * - SINGLE: a compact control showing the chosen label + a ▾; the search field
- *   lives at the top of the (body-portalled) popup. An optional "all" (value 0)
- *   entry clears the selection.
- * - MULTI: removable chips + a leading magnifier + the search input, all in the
- *   control; the popup lists the options.
+ * Single and multi share ONE layout so they read the same (a maintainer request):
+ * the editable input IS the search field (WAI-ARIA 1.2 combobox), the chosen
+ * value(s) sit as chips beside it, and a trailing ▾ opens the list. Single differs
+ * only in that its chip is not removable (pick another option, or the "all" entry,
+ * to change it) and selecting closes the popup. Opening always shows ALL options —
+ * the current selection highlights, it never pre-filters the list.
  *
  * Boundary: Ark deals in string[]; relation ids are carried verbatim as the
  * option's string value and converted back to numbers only in onChange.
@@ -71,42 +66,40 @@ export function SearchableSelect(props: {
   })
   const collection = createMemo(() => comboCollection(filteredItems()))
 
-  // Single-select control display: the chosen label, or the "all" label when
-  // nothing is chosen (value 0), falling back to a generic "none" placeholder.
-  const singleDisplay = (): string => {
-    const first = selectedValues()[0]
-    if (first !== undefined) {
-      return labelOf(first)
-    }
-
-    return props.allLabel ?? m.app_select_none()
-  }
-
   const removeValue = (value: string): void => {
     props.onChange(selectedValues().filter((current) => current !== value).map(Number))
   }
 
-  const searchInput = (): JSX.Element => (
-    <Combobox.Input
-      ref={(element) => { inputEl = element }}
-      class="combobox-input"
-      aria-label={props.label}
-      placeholder={isMulti() && selectedValues().length === 0 ? m.app_type_to_add() : m.app_type_to_search()}
-    />
-  )
+  // The placeholder is only an invitation to search — shown while nothing is chosen.
+  // Once a value is picked its chip carries the display, so the input reads as a
+  // bare search box.
+  const placeholder = (): string => {
+    if (selectedValues().length > 0) {
+      return ''
+    }
+
+    return isMulti() ? m.app_type_to_add() : m.app_type_to_search()
+  }
 
   return (
     <div class="field">
       <span>{props.label}</span>
       <div class={`searchable-select chip-select${isMulti() ? ' inline-tags' : ''}${props.disabled === true ? ' is-disabled' : ''}`}>
-        {/* Multi: a leading magnifier in the control. Single's search is in the popup. */}
-        <Show when={isMulti()}>
-          <ComboSearchIcon />
-          <ul class="tag-list">
-            <For each={selectedValues()}>
-              {(value) => (
-                <li class="tag">
-                  <span class="tag-label">{labelOf(value)}</span>
+        {/* Announce selection changes — Ark's own live region only narrates the
+            highlighted option during navigation. */}
+        <span class="visually-hidden" role="status" aria-live="polite">
+          {selectedValues().map(labelOf).join(', ')}
+        </span>
+
+        {/* The chosen value(s) as chips — multi: removable; single: one, non-removable.
+            Outside Root so they share the field's wrapping flex row with the
+            (display:contents) input + ▾. */}
+        <ul class="tag-list">
+          <For each={selectedValues()}>
+            {(value) => (
+              <li class="tag">
+                <span class="tag-label">{labelOf(value)}</span>
+                <Show when={isMulti()}>
                   <button
                     type="button"
                     class="tag-remove"
@@ -116,17 +109,11 @@ export function SearchableSelect(props: {
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => { removeValue(value); inputEl?.focus() }}
                   >×</button>
-                </li>
-              )}
-            </For>
-          </ul>
-        </Show>
-
-        {/* Announce selection changes — Ark's own live region only narrates the
-            highlighted option during navigation. */}
-        <span class="visually-hidden" role="status" aria-live="polite">
-          {selectedValues().map(labelOf).join(', ')}
-        </span>
+                </Show>
+              </li>
+            )}
+          </For>
+        </ul>
 
         <Combobox.Root
           class="chip-select-root"
@@ -144,13 +131,21 @@ export function SearchableSelect(props: {
             props.onChange(first === undefined || first === ALL_VALUE ? 0 : Number(first))
           }}
           inputValue={inputValue()}
-          onInputValueChange={(details) => setInputValue(details.inputValue)}
+          onInputValueChange={(details) => {
+            // Ark echoes a single-select's chosen label back into the input; suppress that
+            // so the input stays a bare (empty) search box and the value shows only as its
+            // chip. That also means reopening never pre-filters by the current selection
+            // (WAI-ARIA APG: the selection highlights, it does not filter). A real query —
+            // which differs from the chosen label — passes through untouched, so typing
+            // (even the keystroke that opens the list) filters normally.
+            const isSelectionEcho = !isMulti() && selectedValues().some((value) => labelOf(value) === details.inputValue)
+            setInputValue(isSelectionEcho ? '' : details.inputValue)
+          }}
           onOpenChange={(details) => {
-            // Single's search input lives in the popup — focus it once the popup
-            // mounts so typing starts immediately. Clear a stale filter on close.
             if (details.open) {
               requestAnimationFrame(() => { if (inputEl?.isConnected) inputEl.focus() })
             } else {
+              // Drop a typed query on close so the next open starts fresh with all options.
               setInputValue('')
             }
           }}
@@ -158,34 +153,27 @@ export function SearchableSelect(props: {
           closeOnSelect={!isMulti()}
           allowCustomValue={false}
           inputBehavior="autohighlight"
-          positioning={{ sameWidth: true, gutter: 2, flip: true, fitViewport: true }}
+          positioning={{ strategy: 'fixed', sameWidth: true, gutter: 2, flip: true, fitViewport: true }}
         >
           <Combobox.Label class="visually-hidden">{props.label}</Combobox.Label>
           <Combobox.Control class="combobox-control">
-            {/* Multi: search input next to the chips. Single: a value + ▾ trigger. */}
-            <Show
-              when={isMulti()}
-              fallback={
-                <Combobox.Trigger
-                  class="searchable-select-trigger"
-                  aria-label={props.label}
-                  aria-required={props.required === true ? 'true' : undefined}
-                >
-                  <span class="searchable-select-value">{singleDisplay()}</span>
-                  <span class="combobox-trigger-glyph" aria-hidden="true">▾</span>
-                </Combobox.Trigger>
-              }
-            >
-              {searchInput()}
-              <Combobox.Trigger class="combobox-trigger" tabindex="-1" aria-label={props.label}>▾</Combobox.Trigger>
-            </Show>
+            <Combobox.Input
+              ref={(element) => { inputEl = element }}
+              class="combobox-input"
+              aria-label={props.label}
+              aria-required={props.required === true ? 'true' : undefined}
+              placeholder={placeholder()}
+            />
+            <Combobox.Trigger class="combobox-trigger" tabindex="-1" aria-label={props.label}>▾</Combobox.Trigger>
           </Combobox.Control>
-          {/* Body-portal so the popup floats above cards/dialogs and is never clipped. */}
-          <Portal>
-            <Combobox.Positioner class="combobox-positioner">
-              <ComboboxContent items={filteredItems()} multiple={isMulti()} searchInput={searchInput} />
-            </Combobox.Positioner>
-          </Portal>
+          {/* Rendered inline (NOT body-portalled) with a fixed positioning strategy. The
+              popup stays in this field's DOM subtree, so when the field sits in a modal
+              dialog its focus trap can't inert the popup (a body-portalled popup is a
+              sibling of the dialog → inert → dead, the Billing-modal bug); `fixed` still
+              lets it break out of any card/table `overflow` and clamp to the viewport. */}
+          <Combobox.Positioner class="combobox-positioner">
+            <ComboboxContent items={filteredItems()} />
+          </Combobox.Positioner>
         </Combobox.Root>
       </div>
     </div>

@@ -148,20 +148,22 @@ test.describe('Entry Filtering', () => {
 
   test('should expose customer/project/user filters defaulting to "all"', async ({ page }) => {
     // The five relation filters (customer, project, team, user, activity) are
-    // searchable comboboxes that each default to their "Alle" (value 0) entry.
+    // searchable comboboxes. Each defaults to its "Alle" (value 0) entry, which in
+    // the unified control shows as no value chip — an empty search field.
     const filters = page.locator('form.filter-bar .searchable-select');
     expect(await filters.count()).toBeGreaterThanOrEqual(5);
-    await expect(filters.first().locator('.searchable-select-value')).toHaveText('Alle');
+    await expect(filters.first().locator('.tag-list .tag')).toHaveCount(0);
   });
 
   test('should keep the page functional after changing a filter', async ({ page }) => {
-    // Open the first relation combobox (customer) and pick a real option past the
-    // leading "Alle" entry — only when the seed data provides one.
-    await page.locator('form.filter-bar .searchable-select-trigger').first().click();
-    await expect(page.locator('.combobox-input').first()).toBeVisible();
-    const realOption = page.locator('.combobox-content .combobox-item').nth(1);
-    if (await realOption.isVisible()) {
-      await realOption.click();
+    // Type into the first relation combobox (customer) to open + filter the list,
+    // then pick a real option — only when the seed data provides a match. Typing
+    // filters out the leading "Alle" entry, so the first result is a real option.
+    const firstCombo = page.locator('form.filter-bar .searchable-select').first();
+    await firstCombo.locator('.combobox-input').pressSequentially('e', { delay: 30 });
+    const option = firstCombo.locator('.combobox-item').first();
+    if (await option.isVisible().catch(() => false)) {
+      await option.click();
     } else {
       await page.keyboard.press('Escape');
     }

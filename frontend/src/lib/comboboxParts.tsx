@@ -26,21 +26,26 @@ export const ComboSearchIcon = (): JSX.Element => (
 
 /**
  * The dropdown body shared by both comboboxes: an optional sticky search row at the
- * top (single-select only — multi keeps its search inline in the control), the
- * option list, and the empty state. Rendered inside the caller's `Combobox.Root` →
- * `Portal` → `Combobox.Positioner`, so Ark's context resolves normally.
+ * top, the option list, and the empty state. Rendered inside the caller's
+ * `Combobox.Root` → `Portal` → `Combobox.Positioner`, so Ark's context resolves
+ * normally.
+ *
+ * `popupSearch` decides where the search lives, decoupled from `multiple`: the grid
+ * cell editor ({@link ChipSelect}) puts a single-select's search HERE (a narrow
+ * column can't host an inline field), while the form control ({@link SearchableSelect})
+ * always searches inline and leaves this off.
  */
 export function ComboboxContent(props: {
   items: ComboItem[]
-  multiple: boolean
-  searchInput: () => JSX.Element
+  popupSearch?: boolean
+  searchInput?: () => JSX.Element
 }): JSX.Element {
   return (
     <Combobox.Content class="combobox-content">
-      <Show when={!props.multiple}>
+      <Show when={props.popupSearch === true && props.searchInput !== undefined}>
         <div class="combobox-search-row">
           <ComboSearchIcon />
-          {props.searchInput()}
+          {props.searchInput?.()}
         </div>
       </Show>
       <For each={props.items}>
