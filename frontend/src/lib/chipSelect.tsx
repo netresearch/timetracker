@@ -294,7 +294,14 @@ export function ChipSelect(props: {
         // its own content so the search field is never bound to a narrow column.
         positioning={{ sameWidth: props.multiple, gutter: 2, flip: true, fitViewport: true }}
         onInteractOutside={(event) => {
-          const target = event.target as Node | null
+          // Ark's InteractOutsideEvent is a CustomEvent: the actually-clicked element
+          // is in event.detail.target, NOT event.target (which is the dispatch node,
+          // e.g. the document). Reading event.target made a chip's × read as "outside"
+          // the cell in a real browser, so clicking it committed the cell (leaving edit
+          // mode) instead of removing the chip. Multi chips (× buttons) live in rootEl
+          // but outside the combobox control, so they are the only in-cell clicks that
+          // reach here. Fall back to event.target where detail is absent.
+          const target = (event.detail?.target ?? event.target) as Node | null
           if (target !== null && rootEl?.contains(target)) {
             event.preventDefault() // a click within the cell keeps editing
           } else {
