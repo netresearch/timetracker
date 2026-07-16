@@ -1,5 +1,5 @@
 import { Combobox } from '@ark-ui/solid/combobox'
-import { createMemo, createSignal, For, type JSX, Show } from 'solid-js'
+import { createEffect, createMemo, createSignal, For, type JSX } from 'solid-js'
 
 import type { NamedOption } from '../api/queries'
 import { ComboboxContent, comboCollection, type ComboItem } from '../lib/comboboxParts'
@@ -13,12 +13,14 @@ const ALL_VALUE = '__all__'
 /**
  * A searchable relation combobox for ordinary FORMS (not the admin grid).
  *
- * Single and multi share ONE layout so they read the same (a maintainer request):
- * the editable input IS the search field (WAI-ARIA 1.2 combobox), the chosen
- * value(s) sit as chips beside it, and a trailing ▾ opens the list. Single differs
- * only in that its chip is not removable (pick another option, or the "all" entry,
- * to change it) and selecting closes the popup. Opening always shows ALL options —
- * the current selection highlights, it never pre-filters the list.
+ * Single and multi read differently on purpose:
+ *   - SINGLE displays the chosen option's label IN the editable input (a
+ *     React-Select single control): the input IS both the value display and the
+ *     search field. Opening lists ALL options (the selection highlights, it does
+ *     NOT pre-filter); typing filters; picking commits and closes; closing without
+ *     a pick reverts the input to the selected label.
+ *   - MULTI keeps the chosen values as removable chips beside a bare inline search
+ *     input, with a trailing ▾ that opens the (always complete) list.
  *
  * Boundary: Ark deals in string[]; relation ids are carried verbatim as the
  * option's string value and converted back to numbers only in onChange.
@@ -37,7 +39,15 @@ export function SearchableSelect(props: {
   required?: boolean
 }): JSX.Element {
   let inputEl: HTMLInputElement | undefined
-  const [inputValue, setInputValue] = createSignal('')
+  // The input's text, controlled but driven BY Ark: on selection Ark echoes the
+  // chosen label into it (so a single select shows its value IN the input), while
+  // typing writes the query. A single select also seeds/reverts it to the selected
+  // label via the effect below (Ark echoes only on a selection event, not at mount).
+  const [inputText, setInputText] = createSignal('')
+  // Single-only filter gate: true while the user is actively typing a query. Set on
+  // real input (native onInput), reset on close — so opening lists ALL options (the
+  // resting label never pre-filters) and a typed-but-not-committed query never persists.
+  const [searching, setSearching] = createSignal(false)
 
   const isMulti = (): boolean => props.multiple === true
 
@@ -58,11 +68,38 @@ export function SearchableSelect(props: {
 
   // Offer an explicit "all / none" entry only for an optional single select.
   const showAll = (): boolean => !isMulti() && props.allLabel !== undefined
-  const filteredItems = createMemo<ComboItem[]>(() => {
-    const query = inputValue().trim().toLowerCase()
-    const base = query === '' ? allItems() : allItems().filter((item) => item.label.toLowerCase().includes(query))
 
-    return showAll() && query === '' ? [{ value: ALL_VALUE, label: props.allLabel ?? '' }, ...base] : base
+  // Single: the label the input DISPLAYS when not searching — the chosen option's
+  // label, or EMPTY when nothing is chosen (value 0). The empty resting state (the
+  // search placeholder shows through) matches the existing callers' "all = blank
+  // field"; the "all / none" entry still lives in the dropdown to clear a selection.
+  const selectedLabel = createMemo<string>(() => {
+    if (isMulti()) {
+      return ''
+    }
+    const values = selectedValues()
+
+    return values.length > 0 ? labelOf(values[0]!) : ''
+  })
+
+  // Single: keep the input showing the selected label whenever the user is NOT typing
+  // — at mount, on external value changes, and (searching flips false) on close, which
+  // reverts a typed-but-not-committed query. Skipped while searching so typing shows.
+  createEffect(() => {
+    if (!isMulti() && !searching()) {
+      setInputText(selectedLabel())
+    }
+  })
+
+  // What the list filters by. A single select only filters once the user is really
+  // typing, so opening shows ALL options (the selection highlights, never pre-filters).
+  const activeQuery = createMemo<string>(() => (isMulti() || searching() ? inputText() : ''))
+
+  const filteredItems = createMemo<ComboItem[]>(() => {
+    const q = activeQuery().trim().toLowerCase()
+    const base = q === '' ? allItems() : allItems().filter((item) => item.label.toLowerCase().includes(q))
+
+    return showAll() && q === '' ? [{ value: ALL_VALUE, label: props.allLabel ?? '' }, ...base] : base
   })
   const collection = createMemo(() => comboCollection(filteredItems()))
 
@@ -70,15 +107,14 @@ export function SearchableSelect(props: {
     props.onChange(selectedValues().filter((current) => current !== value).map(Number))
   }
 
-  // The placeholder is only an invitation to search — shown while nothing is chosen.
-  // Once a value is picked its chip carries the display, so the input reads as a
-  // bare search box.
   const placeholder = (): string => {
-    if (selectedValues().length > 0) {
-      return ''
+    if (isMulti()) {
+      return selectedValues().length > 0 ? '' : m.app_type_to_add()
     }
 
-    return isMulti() ? m.app_type_to_add() : m.app_type_to_search()
+    // Single: the input carries its value, so this hint only shows through when that
+    // value is empty (nothing chosen and no "all" label, or the query is cleared).
+    return m.app_type_to_search()
   }
 
   return (
@@ -91,25 +127,23 @@ export function SearchableSelect(props: {
           {selectedValues().map(labelOf).join(', ')}
         </span>
 
-        {/* The chosen value(s) as chips — multi: removable; single: one, non-removable.
-            Outside Root so they share the field's wrapping flex row with the
-            (display:contents) input + ▾. */}
+        {/* MULTI only: the chosen values as removable chips. A single select shows its
+            value IN the input (below), so it renders no chip. Outside Root so the chips
+            share the field's wrapping flex row with the (display:contents) input + ▾. */}
         <ul class="tag-list">
-          <For each={selectedValues()}>
+          <For each={isMulti() ? selectedValues() : []}>
             {(value) => (
               <li class="tag">
                 <span class="tag-label">{labelOf(value)}</span>
-                <Show when={isMulti()}>
-                  <button
-                    type="button"
-                    class="tag-remove"
-                    tabindex="-1"
-                    disabled={props.disabled}
-                    aria-label={`${m.admin_delete()}: ${labelOf(value)}`}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => { removeValue(value); inputEl?.focus() }}
-                  >×</button>
-                </Show>
+                <button
+                  type="button"
+                  class="tag-remove"
+                  tabindex="-1"
+                  disabled={props.disabled}
+                  aria-label={`${m.admin_delete()}: ${labelOf(value)}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => { removeValue(value); inputEl?.focus() }}
+                >×</button>
               </li>
             )}
           </For>
@@ -130,23 +164,35 @@ export function SearchableSelect(props: {
             const first = details.value[0]
             props.onChange(first === undefined || first === ALL_VALUE ? 0 : Number(first))
           }}
-          inputValue={inputValue()}
+          inputValue={inputText()}
           onInputValueChange={(details) => {
-            // Ark echoes a single-select's chosen label back into the input; suppress that
-            // so the input stays a bare (empty) search box and the value shows only as its
-            // chip. That also means reopening never pre-filters by the current selection
-            // (WAI-ARIA APG: the selection highlights, it does not filter). A real query —
-            // which differs from the chosen label — passes through untouched, so typing
-            // (even the keystroke that opens the list) filters normally.
-            const isSelectionEcho = !isMulti() && selectedValues().some((value) => labelOf(value) === details.inputValue)
-            setInputValue(isSelectionEcho ? '' : details.inputValue)
+            // Ark owns the input text: typing writes the query, and on selection it
+            // echoes the chosen label back in (which is what a single select displays).
+            // The `searching` flag (set on real typing) decides whether that text
+            // filters — so a resting single label never pre-filters the list.
+            setInputText(details.inputValue)
           }}
           onOpenChange={(details) => {
             if (details.open) {
-              requestAnimationFrame(() => { if (inputEl?.isConnected) inputEl.focus() })
+              requestAnimationFrame(() => {
+                if (!inputEl?.isConnected) {
+                  return
+                }
+                inputEl.focus()
+                // Opened by click (not by typing): select the shown label so the first
+                // keystroke replaces it.
+                if (!isMulti() && !searching()) {
+                  inputEl.select()
+                }
+              })
             } else {
-              // Drop a typed query on close so the next open starts fresh with all options.
-              setInputValue('')
+              // Closing without committing: end search mode. For a single select the
+              // effect then reverts the input to the selected label; multi's search box
+              // clears.
+              setSearching(false)
+              if (isMulti()) {
+                setInputText('')
+              }
             }
           }}
           openOnClick
@@ -163,6 +209,14 @@ export function SearchableSelect(props: {
               aria-label={props.label}
               aria-required={props.required === true ? 'true' : undefined}
               placeholder={placeholder()}
+              onInput={() => {
+                // Fires only on REAL user typing (not Ark's programmatic writes). Single:
+                // enter search mode so the typed text (captured by onInputValueChange)
+                // starts filtering the list. Multi always filters, so it is a no-op there.
+                if (!isMulti()) {
+                  setSearching(true)
+                }
+              }}
             />
             <Combobox.Trigger class="combobox-trigger" tabindex="-1" aria-label={props.label}>▾</Combobox.Trigger>
           </Combobox.Control>

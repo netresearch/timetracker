@@ -72,7 +72,7 @@ test.describe('Administration UI', () => {
     const form = page.locator('.modal form.stack-form');
     await expect(form).toBeVisible();
     await form.locator('.field input[type="text"]').first().fill(name);
-    await form.locator('.field-check').filter({ hasText: /^Global$/ }).locator('input[type="checkbox"]').check();
+    await form.getByRole('checkbox', { name: 'Global', exact: true }).check();
     await form.locator('button[type="submit"]').filter({ hasText: SAVE }).click();
     await expect(page.locator('.modal')).toHaveCount(0);
     await expect(row(page, name)).toHaveCount(1);

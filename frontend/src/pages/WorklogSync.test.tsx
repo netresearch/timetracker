@@ -204,8 +204,9 @@ describe('WorklogSync', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Users' }))
     fireEvent.input(screen.getByRole('combobox', { name: 'Users' }), { target: { value: 'ali' } })
     fireEvent.click(await screen.findByRole('option', { name: 'alice' }))
-    // Single-select fields (the trigger ticket system) now also show their value as a
-    // chip, so several listitems can be present — assert the alice chip is among them.
+    // Users is multi-select, so alice shows as a removable chip (listitem). The
+    // single-select trigger ticket system shows its value IN the input, not as a chip,
+    // so the alice chip is the listitem to assert on.
     await waitFor(() => expect(screen.getAllByRole('listitem').some((li) => li.textContent?.includes('alice'))).toBe(true))
     fireEvent.click(screen.getByRole('button', { name: 'Trigger a run' }))
 

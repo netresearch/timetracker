@@ -50,18 +50,38 @@ describe('SearchableSelect (jsdom)', () => {
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(8))
   })
 
-  it('single: shows the current value as a chip and the "all" entry clears it to 0', async () => {
+  it('single: shows the current value in the input and the "all" entry clears it to 0', async () => {
     const onChange = vi.fn()
     render(() => <SearchableSelect label="Customer" value={7} onChange={onChange} options={customers} allLabel="All" />)
 
-    // Single and multi share the chip layout, so the chosen value shows as its chip
-    // (the input beside it stays a bare search box).
-    expect(screen.getByRole('listitem')).toHaveTextContent('Apollo')
+    // Single shows the chosen value IN the input (React-Select single), not as a chip.
+    expect(screen.getByRole('combobox', { name: 'Customer' })).toHaveValue('Apollo')
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+
+    // Opening lists every option (the selection highlights, it does not pre-filter):
+    // 3 real options + the prepended "all" entry.
     fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
     await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4))
 
     fireEvent.click(screen.getByRole('option', { name: 'All' }))
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(0))
+  })
+
+  it('single: reverts the input to the selected label when closed without a pick', async () => {
+    render(() => <SearchableSelect label="Customer" value={7} onChange={vi.fn()} options={customers} allLabel="All" />)
+
+    const input = screen.getByRole('combobox', { name: 'Customer' })
+    expect(input).toHaveValue('Apollo')
+
+    // Open, type a non-committed query (filters the list) …
+    fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
+    fireEvent.input(input, { target: { value: 'Ze' } })
+    await waitFor(() => expect(input).toHaveValue('Ze'))
+
+    // … then close without picking (toggle the ▾): the input reverts to the chosen
+    // label, the typed query does not persist.
+    fireEvent.click(screen.getByRole('button', { name: 'Customer' }))
+    await waitFor(() => expect(input).toHaveValue('Apollo'))
   })
 
   it('single: with no selection, shows an empty search control and no "all" entry', () => {

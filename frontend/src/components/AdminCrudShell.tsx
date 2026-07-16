@@ -940,11 +940,13 @@ function FieldControl(props: {
     <Switch>
       <Match when={props.field.type === 'checkbox'}>
         <div class="field-check-row">
-          <label class="field-check">
-            <input type="checkbox" checked={Boolean(value())} onInput={(e) => props.setField(props.field.name, e.currentTarget.checked)} />
-            <span>{props.field.label()}</span>
+          <label class="field-check-label" for={`field-check-${props.field.name}`}>
+            {props.field.label()}
           </label>
-          <FieldHelp field={props.field} />
+          <div class="field-check">
+            <input id={`field-check-${props.field.name}`} type="checkbox" checked={Boolean(value())} onInput={(e) => props.setField(props.field.name, e.currentTarget.checked)} />
+            <FieldHelp field={props.field} />
+          </div>
         </div>
       </Match>
       <Match when={props.field.type === 'multiselect'}>
