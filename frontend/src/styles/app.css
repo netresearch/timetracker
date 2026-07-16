@@ -751,8 +751,10 @@ main:has(.tracking) {
 }
 
 /* All text-like inputs, selects and textareas in a field share the same
-   recognisable box (checkboxes/radios keep their native look in .field-check). */
-.field input:not([type='checkbox']):not([type='radio']):not(.date-field),
+   recognisable box (checkboxes/radios keep their native look in .field-check).
+   .combobox-input is excluded: its wrapper .searchable-select carries the box,
+   so bordering the inner input too would draw a double frame. */
+.field input:not([type='checkbox']):not([type='radio']):not(.date-field):not(.combobox-input),
 .field select,
 .field textarea {
   background: var(--color-bg);
@@ -770,7 +772,7 @@ main:has(.tracking) {
   resize: vertical;
 }
 
-.field input:not([type='checkbox']):not([type='radio']):not(.date-field):focus-visible,
+.field input:not([type='checkbox']):not([type='radio']):not(.date-field):not(.combobox-input):focus-visible,
 .field select:focus-visible,
 .field textarea:focus-visible {
   border-color: var(--color-accent);
