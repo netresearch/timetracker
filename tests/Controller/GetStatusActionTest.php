@@ -95,6 +95,30 @@ final class GetStatusActionTest extends AbstractWebTestCase
         self::assertStringNotContainsStringIgnoringCase('password', json_encode($json, JSON_THROW_ON_ERROR));
     }
 
+    public function testVersionPrefersTheBuildRefTag(): void
+    {
+        // The profiling image is built only on tag pushes, so a deployed release
+        // carries its tag in APP_BUILD_REF. The "Application → Version" field
+        // surfaces it (stripped of the leading "v") rather than Composer's
+        // unversioned root default ("1.0.0+no-version-set").
+        putenv('APP_BUILD_REF=v9.9.9');
+        $_SERVER['APP_BUILD_REF'] = 'v9.9.9';
+
+        try {
+            $this->getJson('/admin/status');
+            $this->assertStatusCode(200);
+
+            $json = $this->getJsonResponse($this->client->getResponse());
+            self::assertIsArray($json['app']);
+            self::assertSame('9.9.9', $json['app']['version']);
+            self::assertIsArray($json['build']);
+            self::assertSame('v9.9.9', $json['build']['ref']);
+        } finally {
+            putenv('APP_BUILD_REF');
+            unset($_SERVER['APP_BUILD_REF']);
+        }
+    }
+
     public function testForbiddenForNonAdmin(): void
     {
         $this->logInSession('developer'); // type DEV — not an admin
