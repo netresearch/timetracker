@@ -76,9 +76,7 @@ final class GetStatusAction extends BaseController
                 'env' => $this->kernel->getEnvironment(),
                 'debug' => $this->kernel->isDebug(),
                 'locale' => $this->param('app_locale'),
-                'version' => InstalledVersions::isInstalled('netresearch/timetracker')
-                    ? InstalledVersions::getPrettyVersion('netresearch/timetracker')
-                    : null,
+                'version' => $this->appVersion(),
             ],
             'build' => $this->buildInfo(),
             'php' => [
@@ -120,30 +118,54 @@ final class GetStatusAction extends BaseController
      */
     private function buildInfo(): array
     {
-        $env = static function (string $key): ?string {
-            // getenv() reads the real process environment regardless of PHP's
-            // variables_order (where the APP_BUILD_* Docker env land); fall back
-            // to the superglobals for SAPIs/setups that only populate those.
-            $value = getenv($key);
-            if (false === $value || '' === $value) {
-                $value = $_SERVER[$key] ?? $_ENV[$key] ?? null;
-            }
-
-            return is_string($value) && '' !== $value ? $value : null;
-        };
-
-        $revision = $env('APP_BUILD_REVISION');
-        $ref = $env('APP_BUILD_REF');
+        $revision = $this->buildEnv('APP_BUILD_REVISION');
+        $ref = $this->buildEnv('APP_BUILD_REF');
 
         return [
             'revision' => $revision,
             'ref' => $ref,
-            'date' => $env('APP_BUILD_DATE'),
+            'date' => $this->buildEnv('APP_BUILD_DATE'),
             'repositoryUrl' => self::REPOSITORY_URL,
             'commitUrl' => null !== $revision ? self::REPOSITORY_URL . '/commit/' . $revision : null,
             'refUrl' => null !== $ref ? self::REPOSITORY_URL . '/tree/' . rawurlencode($ref) : null,
             'releasesUrl' => self::REPOSITORY_URL . '/releases',
         ];
+    }
+
+    /**
+     * Read a build-provenance env var (APP_BUILD_*), null when unset.
+     *
+     * getenv() reads the real process environment regardless of PHP's
+     * variables_order (where the APP_BUILD_* Docker env land); fall back to the
+     * superglobals for SAPIs/setups that only populate those.
+     */
+    private function buildEnv(string $key): ?string
+    {
+        $value = getenv($key);
+        if (false === $value || '' === $value) {
+            $value = $_SERVER[$key] ?? $_ENV[$key] ?? null;
+        }
+
+        return is_string($value) && '' !== $value ? $value : null;
+    }
+
+    /**
+     * The release version for the "Application" section. The profiling image is
+     * built only on tag pushes, so a deployed release carries its tag (e.g.
+     * "v6.3.4") in APP_BUILD_REF — prefer that, stripped of the leading "v".
+     * Falls back to Composer's root version, which reads "1.0.0+no-version-set"
+     * in a CI build that has no tag/VCS context.
+     */
+    private function appVersion(): ?string
+    {
+        $ref = $this->buildEnv('APP_BUILD_REF');
+        if (null !== $ref && 1 === preg_match('/^v?\d+\.\d+\.\d+/', $ref)) {
+            return ltrim($ref, 'v');
+        }
+
+        return InstalledVersions::isInstalled('netresearch/timetracker')
+            ? InstalledVersions::getPrettyVersion('netresearch/timetracker')
+            : null;
     }
 
     /** @return array<string, string|null> */
