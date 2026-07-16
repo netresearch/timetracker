@@ -157,6 +157,32 @@ test.describe('Admin inline cell editing', () => {
       .locator('td[data-col-key="teams"] .tag')).toHaveCount(expected);
   });
 
+  test('removing a chip with its × stays in edit mode and drops the chip', async ({ page }) => {
+    // Regression: a chip's × read as an "interact outside" the cell because the handler
+    // read event.target (the dispatch node) instead of event.detail.target (the actual
+    // click). So clicking × committed and LEFT edit mode instead of removing the chip.
+    await page.goto('/ui/admin/users');
+    await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
+    await page.locator('input.admin-filter').fill('sandy');
+    const row = page.locator('table.admin-table tbody tr').filter({ hasText: /sandy/i }).first();
+    await expect(row).toBeVisible();
+    const before = await row.locator('td[data-col-key="teams"] .tag').count();
+    expect(before).toBeGreaterThanOrEqual(1);
+
+    await row.locator('td[data-col-key="teams"]').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.combobox-input')).toBeVisible();
+
+    await page.locator('td[data-inline-editing] .tag .tag-remove').first().click();
+
+    // The chip is gone AND the cell is still being edited (the × must not commit/close it).
+    await expect(page.locator('td[data-inline-editing] .tag')).toHaveCount(before - 1);
+    await expect(page.locator('td[data-inline-editing]')).toHaveCount(1);
+    await expect(page.locator('.combobox-input')).toBeVisible();
+
+    await page.keyboard.press('Escape'); // discard — leave the fixture unchanged
+  });
+
   test('the Status sub-page shows read-only diagnostics', async ({ page }) => {
     await page.goto('/ui/admin/status');
     // Seven groups (app/build/php/symfony/db/packages/config). Assert on locale-
