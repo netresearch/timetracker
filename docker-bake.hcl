@@ -155,6 +155,14 @@ target "app-e2e" {
 target "app-profiling" {
   inherits = ["_common"]
   target   = "profiling"
+  # Bake the build provenance into the profiling image too (like the `app` target),
+  # so /ui/admin/status shows the deployed commit/ref/date — the prod hot-deploy runs
+  # :profiling-<sha>, not the release image, so without this the page reads "unknown".
+  args = {
+    APP_BUILD_REVISION = GIT_SHA
+    APP_BUILD_REF      = GIT_REF
+    APP_BUILD_DATE     = BUILD_DATE
+  }
   tags = compact([
     "${REGISTRY}/${IMAGE_NAME}:profiling",
     GIT_SHA != "" ? "${REGISTRY}/${IMAGE_NAME}:profiling-${GIT_SHA}" : "",

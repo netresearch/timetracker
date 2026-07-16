@@ -99,6 +99,8 @@ jobs:
         uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b # v7.3.0
         env:
           GIT_SHA: ${{ github.sha }}
+          GIT_REF: ${{ github.ref_name }}
+          BUILD_DATE: ${{ env.BUILD_DATE }}
         with:
           source: .
           targets: app-profiling
