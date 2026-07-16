@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { createMemo, createResource, createSignal, For, Show, type JSX } from 'solid-js'
+import { createEffect, createMemo, createResource, createSignal, For, Show, type JSX } from 'solid-js'
 
 import { apiErrorMessage } from '../api/client'
 import { DateField } from './DateField'
@@ -174,6 +174,36 @@ export function ApiTokenControls(): JSX.Element {
     setScopes(next)
   }
 
+  /** How many of an action column's checkboxes are ticked — drives the header
+   *  select-all's checked / indeterminate (three) state. */
+  function columnState(action: string): { checked: boolean; indeterminate: boolean } {
+    const resources = data()?.resources ?? []
+    if (resources.length === 0) {
+      return { checked: false, indeterminate: false }
+    }
+    let checked = 0
+    for (const resource of resources) {
+      if (scopes().has(`${resource}:${action}`)) {
+        checked += 1
+      }
+    }
+    return { checked: checked === resources.length, indeterminate: checked > 0 && checked < resources.length }
+  }
+
+  /** Header select-all: tick or clear every resource's scope for one action column. */
+  function toggleColumn(action: string, on: boolean): void {
+    const next = new Set<string>(scopes())
+    for (const resource of data()?.resources ?? []) {
+      const scope = `${resource}:${action}`
+      if (on) {
+        next.add(scope)
+      } else {
+        next.delete(scope)
+      }
+    }
+    setScopes(next)
+  }
+
   /** Drop a preset's (server-valid) scopes into the picker and leave wildcard off. */
   function applyPreset(preset: ScopePreset): void {
     setScopes(presetScopeSet(preset, data()))
@@ -276,6 +306,155 @@ export function ApiTokenControls(): JSX.Element {
     <div class="security-block">
       <p class="field-hint">{m.settings_apitoken_hint()}</p>
 
+      <h3 class="apitoken-subheading">{m.settings_apitoken_create_heading()}</h3>
+
+      <form class="apitoken-form" onSubmit={(event) => void submit(event)}>
+        <label class="field">
+          <span>{m.settings_apitoken_name_label()}</span>
+          <input
+            type="text"
+            maxLength={100}
+            placeholder={m.settings_apitoken_name_placeholder()}
+            value={name()}
+            onInput={(event) => setName(event.currentTarget.value)}
+          />
+        </label>
+
+        {/* aria-labelledby names the group from the label span alone: the help
+            trigger keeps its visual spot in the legend, but its "Help: …"
+            aria-label stays out of the group's accessible name. */}
+        <fieldset class="apitoken-scopes-picker" aria-labelledby="apitoken-scopes-label">
+          <legend>
+            <span id="apitoken-scopes-label">{m.settings_apitoken_scopes_label()}</span>
+            <HelpPopover topic={m.settings_apitoken_scopes_label()}>{m.settings_help_token_scopes()}</HelpPopover>
+          </legend>
+
+          {/* Convenience presets: each click sets an exact scope set (narrowed to
+              what the server advertises) and turns wildcard off; the user can then
+              tweak individual checkboxes. aria-pressed marks the matching preset. */}
+          <fieldset class="apitoken-presets">
+            <legend class="field-hint apitoken-presets-label">{m.settings_apitoken_presets_label()}</legend>
+            <For each={SCOPE_PRESETS}>
+              {(preset) => (
+                <button
+                  type="button"
+                  class="ghost-button apitoken-preset"
+                  aria-pressed={activePreset() === preset.id}
+                  disabled={data() === undefined}
+                  onClick={() => applyPreset(preset)}
+                >
+                  {preset.label()}
+                </button>
+              )}
+            </For>
+          </fieldset>
+
+          {/* Access mode: "By resource" reveals the scope grid; "Full access"
+              swaps to the wildcard ('*') and a caution box. The underlying state
+              stays the same wildcard boolean the rest of the form reads. */}
+          <fieldset class="apitoken-mode" aria-labelledby="apitoken-mode-label">
+            <legend id="apitoken-mode-label" class="apitoken-mode-legend">{m.settings_apitoken_mode_label()}</legend>
+            <div class="apitoken-mode-options">
+              <label class="apitoken-mode-option">
+                <input type="radio" name="apitoken-mode" checked={!wildcard()} onChange={() => setWildcard(false)} />
+                <span>{m.settings_apitoken_mode_scoped()}</span>
+              </label>
+              <label class="apitoken-mode-option">
+                <input type="radio" name="apitoken-mode" checked={wildcard()} onChange={() => setWildcard(true)} />
+                <span>{m.settings_apitoken_scope_all()}</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <Show when={wildcard()}>
+            <p class="apitoken-scope-warning" role="note">
+              <strong>{m.settings_apitoken_scope_all()}</strong> — {m.settings_apitoken_scope_all_warning()}
+            </p>
+          </Show>
+
+          <Show when={!wildcard()}>
+            {/* --apitoken-actions drives the grid's column count so the header
+                select-all boxes stay aligned above their column of checkboxes. */}
+            <div
+              class="apitoken-scope-grid"
+              style={{ '--apitoken-actions': String(data()?.actions?.length ?? 2) }}
+            >
+              <div class="apitoken-scope-head">
+                <span class="apitoken-scope-head-resource">{m.settings_apitoken_scope_resource()}</span>
+                <For each={data()?.actions}>
+                  {(action) => {
+                    let ref: HTMLInputElement | undefined
+                    // indeterminate is a DOM property, not an attribute — set it
+                    // from the per-column count whenever the selection changes.
+                    createEffect(() => {
+                      if (ref !== undefined) {
+                        ref.indeterminate = columnState(action).indeterminate
+                      }
+                    })
+                    return (
+                      <label class="apitoken-scope-col-head">
+                        <input
+                          ref={(el) => {
+                            ref = el
+                          }}
+                          type="checkbox"
+                          aria-label={m.settings_apitoken_select_all({ action })}
+                          checked={columnState(action).checked}
+                          onChange={(event) => toggleColumn(action, event.currentTarget.checked)}
+                        />
+                        <span aria-hidden="true">{action}</span>
+                      </label>
+                    )
+                  }}
+                </For>
+              </div>
+              <For each={data()?.resources}>
+                {(resource) => (
+                  <div class="apitoken-scope-row">
+                    <span class="apitoken-scope-resource">
+                      <span class="apitoken-scope-resource-name">{resource}</span>
+                      <span class="field-hint apitoken-scope-gloss">{resourceGloss(resource)}</span>
+                    </span>
+                    <For each={data()?.actions}>
+                      {(action) => {
+                        const scope = `${resource}:${action}`
+                        return (
+                          <input
+                            type="checkbox"
+                            class="apitoken-scope-check"
+                            aria-label={scope}
+                            title={scopeTitle(resource, action)}
+                            checked={scopes().has(scope)}
+                            onChange={(event) => toggleScope(scope, event.currentTarget.checked)}
+                          />
+                        )
+                      }}
+                    </For>
+                  </div>
+                )}
+              </For>
+            </div>
+          </Show>
+        </fieldset>
+
+        <label class="field">
+          <span>{m.settings_apitoken_expiry_label()}</span>
+          <DateField value={expiresAt()} onChange={setExpiresAt} calendar />
+        </label>
+
+        <div class="security-row">
+          <button type="submit" class="primary-button" disabled={busy()}>
+            {busy() ? m.app_saving() : m.settings_apitoken_create()}
+          </button>
+        </div>
+      </form>
+
+      <Show when={error()}>
+        <span role="alert" class="form-status is-error">
+          {error()}
+        </span>
+      </Show>
+
       {/* The one-time plaintext of the token just created. */}
       <Show when={created()}>
         {(token) => (
@@ -291,6 +470,8 @@ export function ApiTokenControls(): JSX.Element {
           </div>
         )}
       </Show>
+
+      <h3 class="apitoken-subheading">{m.settings_apitoken_existing_heading()}</h3>
 
       <Show
         when={(data()?.tokens.length ?? 0) > 0}
@@ -334,117 +515,6 @@ export function ApiTokenControls(): JSX.Element {
             }}
           </For>
         </ul>
-      </Show>
-
-      <form class="apitoken-form" onSubmit={(event) => void submit(event)}>
-        <label class="field">
-          <span>{m.settings_apitoken_name_label()}</span>
-          <input
-            type="text"
-            maxLength={100}
-            placeholder={m.settings_apitoken_name_placeholder()}
-            value={name()}
-            onInput={(event) => setName(event.currentTarget.value)}
-          />
-        </label>
-
-        {/* aria-labelledby names the group from the label span alone: the help
-            trigger keeps its visual spot in the legend, but its "Help: …"
-            aria-label stays out of the group's accessible name. */}
-        <fieldset class="apitoken-scopes-picker" aria-labelledby="apitoken-scopes-label">
-          <legend>
-            <span id="apitoken-scopes-label">{m.settings_apitoken_scopes_label()}</span>
-            <HelpPopover topic={m.settings_apitoken_scopes_label()}>{m.settings_help_token_scopes()}</HelpPopover>
-          </legend>
-
-          {/* Convenience presets: each click sets an exact scope set (narrowed to
-              what the server advertises) and turns wildcard off; the user can then
-              tweak individual checkboxes. aria-pressed marks the matching preset. */}
-          <fieldset class="apitoken-presets">
-            <legend class="field-hint apitoken-presets-label">{m.settings_apitoken_presets_label()}</legend>
-            <For each={SCOPE_PRESETS}>
-              {(preset) => (
-                <button
-                  type="button"
-                  class="ghost-button apitoken-preset"
-                  aria-pressed={activePreset() === preset.id}
-                  disabled={data() === undefined}
-                  onClick={() => applyPreset(preset)}
-                >
-                  {preset.label()}
-                </button>
-              )}
-            </For>
-          </fieldset>
-
-          <label class="apitoken-wildcard">
-            <input
-              type="checkbox"
-              checked={wildcard()}
-              onChange={(event) => setWildcard(event.currentTarget.checked)}
-            />
-            <span>
-              {m.settings_apitoken_scope_all()}
-              <span class="field-hint"> — {m.settings_apitoken_scope_all_hint()}</span>
-            </span>
-          </label>
-
-          <Show when={!wildcard()}>
-            <table class="apitoken-scope-grid">
-              <thead>
-                <tr>
-                  <th scope="col">{m.settings_apitoken_scope_resource()}</th>
-                  <For each={data()?.actions}>{(action) => <th scope="col">{action}</th>}</For>
-                </tr>
-              </thead>
-              <tbody>
-                <For each={data()?.resources}>
-                  {(resource) => (
-                    <tr>
-                      <th scope="row">
-                        {resource}
-                        <span class="field-hint apitoken-scope-gloss"> — {resourceGloss(resource)}</span>
-                      </th>
-                      <For each={data()?.actions}>
-                        {(action) => {
-                          const scope = `${resource}:${action}`
-                          return (
-                            <td>
-                              <input
-                                type="checkbox"
-                                aria-label={scope}
-                                title={scopeTitle(resource, action)}
-                                checked={scopes().has(scope)}
-                                onChange={(event) => toggleScope(scope, event.currentTarget.checked)}
-                              />
-                            </td>
-                          )
-                        }}
-                      </For>
-                    </tr>
-                  )}
-                </For>
-              </tbody>
-            </table>
-          </Show>
-        </fieldset>
-
-        <label class="field">
-          <span>{m.settings_apitoken_expiry_label()}</span>
-          <DateField value={expiresAt()} onChange={setExpiresAt} calendar />
-        </label>
-
-        <div class="security-row">
-          <button type="submit" class="primary-button" disabled={busy()}>
-            {busy() ? m.app_saving() : m.settings_apitoken_create()}
-          </button>
-        </div>
-      </form>
-
-      <Show when={error()}>
-        <span role="alert" class="form-status is-error">
-          {error()}
-        </span>
       </Show>
     </div>
   )

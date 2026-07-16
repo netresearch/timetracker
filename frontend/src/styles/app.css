@@ -942,10 +942,28 @@ main:has(.tracking) {
     margin: 0.15em 0 0;
   }
 
-  /* Help-icon rows keep the compact inline pattern (checkbox + its ⓘ side by side),
-     so they opt out of the two-column grid. */
-  .stack-form .field-check-row .field-check {
+  /* Help-icon checkbox rows join the same two-column rhythm as the plain
+     checkboxes above: the label text sits right-aligned in column 1 and the
+     [checkbox + ⓘ] control group starts column 2 — one shared left edge for
+     every control type. The label text is a col1 <label for>; the help trigger
+     stays a sibling OUTSIDE that label so clicking it never toggles the box. */
+  .stack-form .field-check-row {
+    align-items: center;
+    display: grid;
+    gap: 0.3rem 1.2rem;
+    grid-template-columns: 18em minmax(0, 22em);
+  }
+
+  .stack-form .field-check-row > .field-check-label {
+    grid-column: 1;
+    text-align: right;
+  }
+
+  /* The control group (checkbox + help) fills column 2 as a compact inline
+     flex, not the plain-checkbox grid. */
+  .stack-form .field-check-row > .field-check {
     display: flex;
+    grid-column: 2;
     grid-template-columns: none;
   }
 }
@@ -1346,32 +1364,126 @@ main:has(.tracking) {
 .apitoken-presets > .apitoken-presets-label {
   margin: 0;
 }
-.apitoken-wildcard {
-  display: flex;
-  align-items: start;
-  gap: 0.5rem;
-}
-.apitoken-wildcard .field-hint {
-  margin: 0;
+/* Sub-heading inside the tokens block ("Create a new token" / "Your tokens").
+   h3 under the section's h2, so the page outline stays h1 → h2 → h3. */
+.apitoken-subheading {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin: 0.4rem 0 0;
 }
 
+/* Access mode: a compact segmented radio pair — "By resource" vs "Full access". */
+.apitoken-mode {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.apitoken-mode-legend {
+  padding: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.apitoken-mode-options {
+  display: inline-flex;
+  inline-size: fit-content;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.apitoken-mode-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.apitoken-mode-option:has(input:checked) {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  font-weight: 600;
+}
+.apitoken-mode-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 1px;
+}
+
+/* Full-access caution: the wildcard grants every present AND future permission,
+   so it warrants the same warning styling as the one-time secret box. */
+.apitoken-scope-warning {
+  margin: 0;
+  max-inline-size: 380px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-warning-text);
+  border-radius: 8px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Scope grid: a narrow, grouped layout — resource on the left, the read/write
+   checkboxes right after it, one select-all per column in the header. The head
+   and rows are display:contents so their cells share the one column track and
+   stay aligned. --apitoken-actions (set inline) is the action-column count. */
 .apitoken-scope-grid {
-  border-collapse: collapse;
+  display: grid;
+  /* Resource column sized to its content (not 1fr — that stretched it wide and left
+     a big gap before the far-right checkboxes); the grid shrinks to content so the
+     read/write checkboxes sit directly after the resource, and never overflows. */
+  grid-template-columns: auto repeat(var(--apitoken-actions, 2), 3rem);
+  align-items: center;
+  gap: 0.2rem 0.9rem;
+  inline-size: max-content;
+  max-inline-size: 100%;
   font-size: 0.85rem;
 }
-.apitoken-scope-grid th,
-.apitoken-scope-grid td {
-  padding: 0.25rem 0.6rem;
-  text-align: center;
+.apitoken-scope-head,
+.apitoken-scope-row {
+  display: contents;
 }
-.apitoken-scope-grid th[scope='row'] {
-  text-align: start;
-  font-weight: 400;
+.apitoken-scope-head-resource {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+.apitoken-scope-head-resource,
+.apitoken-scope-col-head {
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.apitoken-scope-col-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  justify-self: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.apitoken-scope-resource {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+.apitoken-scope-resource-name {
   font-family: var(--font-mono, monospace);
 }
-.apitoken-scope-grid thead th {
-  border-bottom: 1px solid var(--color-border);
-  font-weight: 600;
+.apitoken-scope-gloss {
+  margin: 0;
+  font-size: 0.75rem;
+}
+.apitoken-scope-check {
+  justify-self: center;
 }
 
 .security-enroll {

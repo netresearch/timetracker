@@ -114,6 +114,42 @@ describe('ApiTokenControls', () => {
     )
   })
 
+  it('column select-all fills its action column and shows a three-state header', async () => {
+    render(() => <ApiTokenControls />)
+    await waitFor(() => screen.getByLabelText('entries:read'))
+
+    const selectAllRead = screen.getByLabelText('Select all read') as HTMLInputElement
+
+    // One of two read cells ticked → the header is partial (indeterminate).
+    fireEvent.change(screen.getByLabelText('entries:read'), { target: { checked: true } })
+    await waitFor(() => expect(selectAllRead.indeterminate).toBe(true))
+    expect(selectAllRead.checked).toBe(false)
+
+    // The header select-all fills the whole read column, no longer partial.
+    fireEvent.change(selectAllRead, { target: { checked: true } })
+    expect(screen.getByLabelText('entries:read')).toBeChecked()
+    expect(screen.getByLabelText('projects:read')).toBeChecked()
+    expect(screen.getByLabelText('entries:write')).not.toBeChecked()
+    await waitFor(() => expect(selectAllRead.indeterminate).toBe(false))
+    expect(selectAllRead.checked).toBe(true)
+
+    // Clearing the header empties the column again.
+    fireEvent.change(selectAllRead, { target: { checked: false } })
+    expect(screen.getByLabelText('entries:read')).not.toBeChecked()
+    expect(screen.getByLabelText('projects:read')).not.toBeChecked()
+  })
+
+  it('full-access mode hides the scope grid and shows the wildcard warning', async () => {
+    render(() => <ApiTokenControls />)
+    await waitFor(() => screen.getByLabelText('entries:read'))
+
+    fireEvent.change(screen.getByLabelText('Full access', { exact: false }), { target: { checked: true } })
+
+    // The grid is gone and the caution note takes its place.
+    expect(screen.queryByLabelText('entries:read')).not.toBeInTheDocument()
+    expect(screen.getByRole('note')).toBeInTheDocument()
+  })
+
   it('applies a preset as exactly its scope set and marks it active', async () => {
     listApiTokens.mockResolvedValue({ tokens: [], resources: ['entries', 'sync'], actions: ['read', 'write'], wildcard: '*' })
     render(() => <ApiTokenControls />)

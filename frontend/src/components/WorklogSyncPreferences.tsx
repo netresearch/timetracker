@@ -81,11 +81,20 @@ export function WorklogSyncPreferences(): JSX.Element {
               <div class="security-block">
                 <h3 class="security-heading">{preference.ticket_system_name}</h3>
 
-                {/* The help trigger stays OUTSIDE the <label> so clicking it
-                    doesn't toggle the checkbox (the .field-check-row pattern). */}
+                {/* The label text is a col1 <label for>; the checkbox and its
+                    help share the col2 control group. The help trigger stays
+                    OUTSIDE the label so clicking it doesn't toggle the checkbox
+                    (the .field-check-row pattern). */}
                 <div class="field-check-row">
-                  <label class="field-check">
+                  <label
+                    class="field-check-label"
+                    for={`worklog-sync-enabled-${preference.ticket_system_id}`}
+                  >
+                    {m.worklogsync_prefs_enable()}
+                  </label>
+                  <div class="field-check">
                     <input
+                      id={`worklog-sync-enabled-${preference.ticket_system_id}`}
                       type="checkbox"
                       checked={preference.sync_enabled}
                       disabled={busyId() === preference.ticket_system_id}
@@ -93,9 +102,8 @@ export function WorklogSyncPreferences(): JSX.Element {
                         void toggle(preference, { sync_enabled: event.currentTarget.checked })
                       }
                     />
-                    <span>{m.worklogsync_prefs_enable()}</span>
-                  </label>
-                  <HelpPopover topic={m.worklogsync_prefs_enable()}>{m.settings_help_sync_optin()}</HelpPopover>
+                    <HelpPopover topic={m.worklogsync_prefs_enable()}>{m.settings_help_sync_optin()}</HelpPopover>
+                  </div>
                 </div>
                 <p class="field-hint">{m.worklogsync_prefs_enable_hint()}</p>
 
