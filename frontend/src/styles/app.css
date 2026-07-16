@@ -752,7 +752,7 @@ main:has(.tracking) {
 
 /* All text-like inputs, selects and textareas in a field share the same
    recognisable box (checkboxes/radios keep their native look in .field-check). */
-.field input:not([type='checkbox']):not([type='radio']),
+.field input:not([type='checkbox']):not([type='radio']):not(.date-field),
 .field select,
 .field textarea {
   background: var(--color-bg);
@@ -770,7 +770,7 @@ main:has(.tracking) {
   resize: vertical;
 }
 
-.field input:not([type='checkbox']):not([type='radio']):focus-visible,
+.field input:not([type='checkbox']):not([type='radio']):not(.date-field):focus-visible,
 .field select:focus-visible,
 .field textarea:focus-visible {
   border-color: var(--color-accent);
@@ -823,8 +823,9 @@ main:has(.tracking) {
 }
 
 .field-check input {
-  height: 20px;
-  width: 20px;
+  height: 24px;
+  width: 24px;
+  accent-color: var(--color-accent);
 }
 
 .field-hint {
