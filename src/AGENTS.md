@@ -122,3 +122,59 @@ public function list(EntityManagerInterface $em): JsonResponse
 - Services go in `Service/` with clear single responsibilities
 - Entities are read-only where possible; mutations via services
 - Use `final` classes unless inheritance is explicitly needed
+- On any "validation blocks deactivate/re-save" report, grandfather the ENTIRE
+  `*SaveDto` constraint family in one pass (uniqueness + length + format), not
+  just the constraint that was hit: when editing an existing entity (`id > 0`)
+  whose persisted value is unchanged, skip the check (fetch current by id,
+  compare `(string) $current->getX() === $value` so a NULL persisted value
+  equals `''`). Declarative `#[Assert\NotBlank/Length]` can't see the DB —
+  convert to a custom validator (e.g. `ValidUserAbbr`) to grandfather. Narrow
+  nullable DTO ids before `> 0`
+- `App\Entity\Holiday` has a `DateTime` primary key the ORM can't manage
+  (persist/hydrate blow up stringifying the identifier) — do ALL holiday read
+  AND write via DBAL (`$connection->fetchAllAssociative`/`insert`/`delete`),
+  never the ORM; reference `GetHolidaysAction`. Holidays are create+delete only
+  (immutable). Validate dates with `#[Assert\Date]`, never `new DateTime()`
+  (it rolls impossible dates over instead of throwing). The list exposes a
+  synthetic `Ymd` int `id` for the grid; delete keys on `{ day }`
+- The production image self-migrates on container start
+  (`docker/php/docker-entrypoint.sh`, opt out `AUTO_MIGRATE=0`): waits for the
+  DB, runs pending Doctrine migrations, then execs php-fpm. `sql/full.sql`
+  seeds `doctrine_migration_versions` so a fresh install reads as
+  up-to-date; an un-versioned legacy DB (schema present, 0 version rows) is
+  baselined from live schema — but a PARTIALLY-versioned DB is NOT
+  auto-baselined, so pre-flight `doctrine:migrations:version '<FQCN>' --add`
+  any present-but-unrecorded migration before deploying. Use `dbal:run-sql`
+  (DoctrineBundle 3.2.4 dropped `doctrine:query:sql`)
+
+## Deployment, CI & merge (operational)
+
+- Merge gate for `netresearch/timetracker` (PRs to `main`) has two required
+  parts: the `Copilot review for default branch` ruleset (a Copilot review on
+  the HEAD commit — feature PRs open as DRAFTS, `gh pr ready` un-drafts and
+  triggers Copilot) AND the required status check `CI Success`
+  (`.github/workflows/ci.yml` `ci-success` job — a single aggregate over
+  `[setup, frontend, lint, test-unit, test-integration, e2e]`, added so branch
+  protection needs one check instead of enumerating all jobs + the e2e
+  shards). Codecov/SonarCloud are NOT part of that aggregate — they stay
+  reporting-only and a red result there does not block merge. Rector is a
+  CI-only lint gate, NOT in CaptainHook — run `composer rector`/`--dry-run` on
+  changed PHP before pushing. Local PHPStan gives false negatives from a stale
+  shared `var/cache` container XML — warm the cache before trusting it (never
+  `cache:clear --no-warmup`). codecov's e2e coverage upload is flaky —
+  `gh run rerun` heals it, keeping the head SHA
+- Prod = `tt.netresearch.de`, container `timetracker` (php-fpm) fronted by
+  `timetracker_httpd` (nginx) on `utility3.nr` (SSH `root@utility3.nr`, default
+  ssh-agent) — `tt.netresearch.de` IS PRODUCTION, there is NO separate "review
+  environment" despite the domain name; never offer a "review deploy" there.
+  "Hot-deploy the last main merge" = pull the floating
+  `ghcr.io/netresearch/timetracker:production` tag (verify
+  `org.opencontainers.image.revision` == the merge commit and its
+  `docker-publish.yml` run is success). Frontend assets live in the persisted
+  volume `timetracker_pub_v5`, so `docker cp build-ui` out of the new image
+  into the volume AFTER the container is healthy (rollback-safe). Attach BOTH
+  `timetracker` + `mariadb` nets before start (`docker create → network
+  connect → start`). Park the old container as `timetracker_prod_rollback`.
+  Migrating deploys: back up first (`mariadb-dump` via the URL user — root has
+  no pw) and pre-flight each pending migration's columns. For local testing use
+  the dev compose stack (`COMPOSE_PROFILES=dev`, port 8765, `APP_ENV=dev`)
