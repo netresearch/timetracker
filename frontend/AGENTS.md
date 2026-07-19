@@ -21,6 +21,7 @@ See [`README.md`](README.md) for the full stack description.
 - Typecheck: `bun run typecheck` (paraglide compile + `tsc --noEmit`)
 - Tests: `bun run test` (Vitest, jsdom) / `bun run test:watch`
 - Single test file: `bun run test src/components/LoginForm.test.tsx`
+- a11y assertions use `vitest-axe` — it requires jsdom (incompatible with happy-dom)
 
 ## Code style & conventions
 
@@ -37,6 +38,13 @@ See [`README.md`](README.md) for the full stack description.
 - Compiled to `src/paraglide/` (via `bun run typecheck` or `i18n:compile`);
   never edit `src/paraglide/` by hand
 - Use `import { m } from '../paraglide/messages.js'` and `m.key()` in components
+
+### Stack decisions
+
+- Ark UI (`@ark-ui/solid`), not Kobalte, for headless components; Tailwind 4
+  (`tailwindcss` + `@tailwindcss/vite`) plus the app's own semantic design tokens
+- Don't re-propose Vue or Svelte — an earlier Vue-3 `timetracker-ui` plan is
+  superseded by the SolidJS decision
 
 ## Security & safety
 
@@ -65,3 +73,26 @@ See [`README.md`](README.md) for the full stack description.
   the SPA only syncs its active state (`src/nav.ts`) — don't duplicate the nav
 - Keyboard shortcuts are defined centrally in `src/lib/shortcuts.ts` and shown
   in the Help page and ShortcutsDialog — register new ones there
+- `@ark-ui/solid` ships no Calendar/DatePicker (only Dialog/Combobox/Popover
+  shells) — hand-roll date UI with `<For>` (role=grid, roving tabindex) and
+  reuse `parseUserDate`/`formatWith` (`src/lib/dateFormat.ts`) so the app stays
+  authoritative over the user's date-format setting. Wiring an Ark Popover into
+  an on-blur-commit inline editor needs cooperating focus guards:
+  `autoFocus={false}`, mousedown-preventDefault on trigger+content,
+  `closeOnEscape={false}` + `restoreFocus={false}` (let the input own Escape,
+  not zag), an `onBlur` guard that ignores focus into `[data-date-popup]`, and
+  extending the row-leave save-whitelist. Portal to `<body>` to escape the
+  table's overflow scroll container — verify in a real browser (invisible to
+  jsdom)
+- Admin + Worklog inline grid editing follows "Philosophy A": `gridNavigation.ts`
+  (gridNav) stays a pure navigation/ARIA controller and the SINGLE owner of the
+  roving-tabindex invariant; edit state lives in the consumer (AdminCrudShell /
+  Tracking) via the shared `createInlineGridEdit` controller
+  (`src/lib/inlineGridEdit.tsx`), cooperating through thin gridNav hooks
+  (`onActivate`, `moveRef`, `data-inline-editing`, `onRowSelectToggle`,
+  `onPageEdge`) — never make the consumer a second writer of the roving
+  invariant. Save is auto-save-on-completeness (`config.invalidFields`
+  auto-flushes a valid draft; a quiet auto-fail sets hints not a rowError; the
+  disk icon forces a save and row-leave shows the full error). Relation cells
+  use `ChipSelect` (`src/lib/chipSelect.tsx`, an Ark Combobox) body-portalled
+  (whitelist `data-chipselect-popup`) to escape the table scroll container

@@ -132,3 +132,12 @@ public function testSyncWithJiraHandlesApiError(): void
 - Use `#[Group('...')]` for test categorization
 - Performance tests go in `Performance/` with `#[Group('performance')]`
 - Prefer `assertSame()` over `assertEquals()` for strict comparison
+- Write portable `LIKE` queries: escape `%`/`_` and spell out `ESCAPE`
+  explicitly (`LIKE :p ESCAPE '|'`, not a default backslash) — SQLite (used by
+  some query-builder tests) has no default LIKE escape char, unlike
+  MySQL/MariaDB (see `EntryRepository::applyInterpretationExtraFilters`)
+- A functional test can't change the logged-in user via raw SQL and have a
+  validator see it: `logInSession()` loads the user into the EM identity map,
+  so a validator's `find($loggedInUserId)` returns the CACHED entity — a raw
+  `UPDATE users …` is invisible to it. Unit-test such validators (mock `find`)
+  or operate on a non-logged-in entity
