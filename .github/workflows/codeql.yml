@@ -12,37 +12,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-permissions:
-  contents: read
+# Least privilege by default; the reusable's jobs request their own subset.
+permissions: {}
 
 jobs:
-  analyze:
-    name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
+  codeql:
+    uses: netresearch/.github/.github/workflows/codeql.yml@main
     permissions:
-      security-events: write
-      contents: read
       actions: read
-    strategy:
-      fail-fast: false
-      matrix:
-        # CodeQL supported languages: javascript-typescript, python, ruby, go, java, c-cpp, csharp, swift
-        # PHP is NOT supported by CodeQL
-        language: [javascript-typescript]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
-        with:
-          languages: ${{ matrix.language }}
-          config-file: .github/codeql/codeql-config.yml
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
-        with:
-          category: "/language:${{ matrix.language }}"
+      contents: read
+      security-events: write
+    with:
+      languages: javascript-typescript
