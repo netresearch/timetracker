@@ -1,8 +1,0 @@
-name: "CodeQL config"
-
-# Only analyze our code, not external libraries
-paths-ignore:
-  # Node modules
-  - node_modules
-  # Vendor dependencies
-  - vendor
