@@ -37,6 +37,9 @@ jobs:
     with:
       targets: app,app-e2e
       push: ${{ github.event_name != 'pull_request' }}
+      # Build from the local checkout: the metadata-action tag/label files are
+      # local $RUNNER_TEMP paths the default git-remote context cannot see.
+      bake-source: .
       metadata-images: ghcr.io/${{ github.repository }}
       metadata-tags: |
         type=schedule
@@ -72,6 +75,7 @@ jobs:
     with:
       targets: app-profiling
       push: true
+      bake-source: .
       pre-build-command: |
         {
           echo "GIT_SHA=$GITHUB_SHA"
