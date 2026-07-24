@@ -26,3 +26,14 @@ updates:
       npm:
         patterns:
           - "*"
+  # Composer (PHP backend). Was unmonitored — this is why the phpoffice/
+  # phpspreadsheet CVE-2026-59931/2/3 advisory produced no bump PR and only
+  # surfaced as a red composer-audit gate. Now covered.
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      composer:
+        patterns:
+          - "*"
