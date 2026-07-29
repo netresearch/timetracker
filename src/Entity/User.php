@@ -691,9 +691,4 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
             $this->{$property} = $value;
         }
     }
-
-    public function serialize(): void
-    {
-        // If you store any temporary, sensitive data on the user, clear it here
-    }
 }
