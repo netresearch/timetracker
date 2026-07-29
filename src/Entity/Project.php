@@ -174,8 +174,6 @@ class Project extends Base
 
     /**
      * Sets the additional Information.
-     *
-     * @return $this
      */
     public function setAdditionalInformationFromExternal(bool $additionalInformationFromExternal): static
     {
@@ -188,8 +186,6 @@ class Project extends Base
      * Sets the internal Jira project key.
      *
      * @param string $strInternalJiraProjectKey the internal jira project key
-     *
-     * @return $this
      */
     public function setInternalJiraProjectKey(?string $strInternalJiraProjectKey): static
     {
@@ -206,8 +202,6 @@ class Project extends Base
      * Sets the id internal Jira ticket system.
      *
      * @param string|null $nInternalJiraTicketSystem the id of internal jira ticketsystem
-     *
-     * @return $this
      */
     public function setInternalJiraTicketSystem(?string $nInternalJiraTicketSystem): static
     {
@@ -281,8 +275,6 @@ class Project extends Base
      * Sets the project's name.
      *
      * @param string $name the name to be set
-     *
-     * @return $this
      */
     public function setName(string $name): static
     {
@@ -305,8 +297,6 @@ class Project extends Base
      * Sets the project's active status.
      *
      * @param bool $active the status to be set
-     *
-     * @return $this
      */
     public function setActive(bool $active): static
     {
@@ -329,8 +319,6 @@ class Project extends Base
      * Sets the project's customer.
      *
      * @param Customer|null $customer the customer to be set
-     *
-     * @return $this
      */
     public function setCustomer(?Customer $customer): static
     {
@@ -353,8 +341,6 @@ class Project extends Base
      * Sets the project's global status.
      *
      * @param bool $global the status to be set
-     *
-     * @return $this
      */
     public function setGlobal(bool $global): static
     {
@@ -377,8 +363,6 @@ class Project extends Base
      * Sets the project's Jira ID.
      *
      * @param string|null $jiraId the Jira ID to be set
-     *
-     * @return $this
      */
     public function setJiraId(?string $jiraId): static
     {
@@ -401,8 +385,6 @@ class Project extends Base
      * Sets the project's jira ticket.
      *
      * @param string|null $jiraTicket the jira ticket to be set
-     *
-     * @return $this
      */
     public function setJiraTicket(?string $jiraTicket): static
     {
@@ -425,8 +407,6 @@ class Project extends Base
      * Sets the project's subtickets.
      *
      * @param string|null $subtickets the subtickets to be set
-     *
-     * @return $this
      */
     public function setSubtickets(?string $subtickets): static
     {
@@ -464,8 +444,6 @@ class Project extends Base
      * Sets the project's ticketSystem.
      *
      * @param TicketSystem|null $ticketSystem the ticketSystem to be set
-     *
-     * @return $this
      */
     public function setTicketSystem(?TicketSystem $ticketSystem): static
     {
@@ -496,8 +474,6 @@ class Project extends Base
      * Sets the project's estimated duration.
      *
      * @param int $estimation the estimation in minutes
-     *
-     * @return $this
      */
     public function setEstimation(int $estimation): static
     {
@@ -520,8 +496,6 @@ class Project extends Base
      * Sets the project's offer number.
      *
      * @param string|null $offer the offer number
-     *
-     * @return $this
      */
     public function setOffer(?string $offer): static
     {
@@ -544,8 +518,6 @@ class Project extends Base
      * Sets the project's billing method.
      *
      * @param BillingType $billingType the billing method
-     *
-     * @return $this
      */
     public function setBilling(BillingType $billingType): static
     {
@@ -568,8 +540,6 @@ class Project extends Base
      * Sets the project's cost center.
      *
      * @param string|null $costCenter the cost center
-     *
-     * @return $this
      */
     public function setCostCenter(?string $costCenter): static
     {
@@ -592,8 +562,6 @@ class Project extends Base
      * Sets the project's internal reference number.
      *
      * @param string|null $internalReference the internal reference number
-     *
-     * @return $this
      */
     public function setInternalReference(?string $internalReference): static
     {
@@ -616,8 +584,6 @@ class Project extends Base
      * Sets the project's external reference number.
      *
      * @param string|null $externalReference the external reference number
-     *
-     * @return $this
      */
     public function setExternalReference(?string $externalReference): static
     {
@@ -640,8 +606,6 @@ class Project extends Base
      * Sets the project lead user.
      *
      * @param User|null $user the project lead
-     *
-     * @return $this
      */
     public function setProjectLead(?User $user): static
     {
@@ -664,8 +628,6 @@ class Project extends Base
      * Sets the technical lead user.
      *
      * @param User|null $user the technical lead
-     *
-     * @return $this
      */
     public function setTechnicalLead(?User $user): static
     {
@@ -688,8 +650,6 @@ class Project extends Base
      * Sets the project's invoice number.
      *
      * @param string|null $invoice the invoice number
-     *
-     * @return $this
      */
     public function setInvoice(?string $invoice): static
     {

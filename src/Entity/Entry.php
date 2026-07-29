@@ -199,8 +199,6 @@ class Entry extends Base
 
     /**
      * @throws InvalidEntryTimeException
-     *
-     * @return $this
      */
     public function validateDuration(): static
     {

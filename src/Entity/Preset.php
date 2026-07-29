@@ -71,8 +71,6 @@ class Preset extends Base
      * Set name.
      * *
      * @param string $name
-     *
-     * @return $this
      */
     public function setName($name): static
     {
@@ -121,8 +119,6 @@ class Preset extends Base
      * Set description.
      *
      * @param string $description
-     *
-     * @return $this
      */
     public function setDescription($description): static
     {
@@ -143,8 +139,6 @@ class Preset extends Base
 
     /**
      * Set customer.
-     *
-     * @return $this
      */
     public function setCustomer(Customer $customer): static
     {
@@ -165,8 +159,6 @@ class Preset extends Base
 
     /**
      * Set project.
-     *
-     * @return $this
      */
     public function setProject(Project $project): static
     {
@@ -187,8 +179,6 @@ class Preset extends Base
 
     /**
      * Set activity.
-     *
-     * @return $this
      */
     public function setActivity(Activity $activity): static
     {
