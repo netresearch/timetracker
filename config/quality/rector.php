@@ -8,6 +8,7 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\DeadCode\Rector\Property\RemoveDefaultValueFromAssignedPropertyRector;
 use Rector\Renaming\Rector\Name\RenameClassRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
@@ -36,6 +37,17 @@ return RectorConfig::configure()
         RenameClassRector::class => [
             __DIR__ . '/../../src/Kernel.php',
         ],
+        // Strips `= null` from properties it believes are always assigned, but
+        // it does not see Symfony's #[Required] setter injection: those
+        // properties are assigned by the container AFTER construction, so
+        // without the default they stay uninitialized. The `instanceof` guards
+        // that read them (BulkEntryAction, DeleteEntryAction) then raise
+        // "Typed property must not be accessed before initialization" instead
+        // of taking the null branch. Skipped repo-wide rather than per file:
+        // the rule only fires on classes that have a constructor, so a class
+        // with the same setter-injected property is silently exempt until
+        // someone adds one.
+        RemoveDefaultValueFromAssignedPropertyRector::class,
     ])
     // Host-mounted cache (resolves to repo-root var/cache/rector) so the
     // ChangedFilesDetector cache persists across CI runs via actions/cache.
