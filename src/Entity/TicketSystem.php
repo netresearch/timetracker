@@ -151,8 +151,6 @@ class TicketSystem extends Base
 
     /**
      * Set name.
-     *
-     * @return $this
      */
     public function setName(string $name): static
     {
@@ -171,8 +169,6 @@ class TicketSystem extends Base
 
     /**
      * Set bookTime.
-     *
-     * @return $this
      */
     public function setBookTime(bool $bookTime): static
     {
@@ -191,8 +187,6 @@ class TicketSystem extends Base
 
     /**
      * Set type.
-     *
-     * @return $this
      */
     public function setType(TicketSystemType|string $type): static
     {
@@ -219,8 +213,6 @@ class TicketSystem extends Base
 
     /**
      * Set url.
-     *
-     * @return $this
      */
     public function setUrl(string $url): static
     {
@@ -239,8 +231,6 @@ class TicketSystem extends Base
 
     /**
      * Set the ticket url.
-     *
-     * @return $this
      */
     public function setTicketUrl(?string $ticketUrl): static
     {
@@ -262,8 +252,6 @@ class TicketSystem extends Base
 
     /**
      * Set login.
-     *
-     * @return $this
      */
     public function setLogin(string $login): static
     {
@@ -282,8 +270,6 @@ class TicketSystem extends Base
 
     /**
      * Set password.
-     *
-     * @return $this
      */
     public function setPassword(#[SensitiveParameter] string $password): static
     {
@@ -319,8 +305,6 @@ class TicketSystem extends Base
 
     /**
      * Set private key.
-     *
-     * @return $this
      */
     public function setPrivateKey(string $privateKey): static
     {
@@ -344,9 +328,6 @@ class TicketSystem extends Base
         return $this->oauthConsumerKey;
     }
 
-    /**
-     * @return $this
-     */
     public function setOauthConsumerKey(?string $oauthConsumerKey): static
     {
         $this->oauthConsumerKey = $oauthConsumerKey;
@@ -359,9 +340,6 @@ class TicketSystem extends Base
         return $this->oauthConsumerSecret;
     }
 
-    /**
-     * @return $this
-     */
     public function setOauthConsumerSecret(?string $oauthConsumerSecret): static
     {
         $this->oauthConsumerSecret = $oauthConsumerSecret;
@@ -371,8 +349,6 @@ class TicketSystem extends Base
 
     /**
      * Set deployment type.
-     *
-     * @return $this
      */
     public function setDeploymentType(DeploymentType|string $deploymentType): static
     {
@@ -402,9 +378,6 @@ class TicketSystem extends Base
         return $this->oauth2ClientId;
     }
 
-    /**
-     * @return $this
-     */
     public function setOauth2ClientId(?string $oauth2ClientId): static
     {
         $this->oauth2ClientId = $oauth2ClientId;
@@ -417,9 +390,6 @@ class TicketSystem extends Base
         return $this->oauth2ClientSecret;
     }
 
-    /**
-     * @return $this
-     */
     public function setOauth2ClientSecret(?string $oauth2ClientSecret): static
     {
         $this->oauth2ClientSecret = $oauth2ClientSecret;
@@ -432,9 +402,6 @@ class TicketSystem extends Base
         return $this->cloudId;
     }
 
-    /**
-     * @return $this
-     */
     public function setCloudId(?string $cloudId): static
     {
         $this->cloudId = $cloudId;
@@ -447,9 +414,6 @@ class TicketSystem extends Base
         return $this->syncDefaultActivity;
     }
 
-    /**
-     * @return $this
-     */
     public function setSyncDefaultActivity(?Activity $syncDefaultActivity): static
     {
         $this->syncDefaultActivity = $syncDefaultActivity;
@@ -462,9 +426,6 @@ class TicketSystem extends Base
         return $this->autoImportUnresolvedProjects;
     }
 
-    /**
-     * @return $this
-     */
     public function setAutoImportUnresolvedProjects(bool $autoImportUnresolvedProjects): static
     {
         $this->autoImportUnresolvedProjects = $autoImportUnresolvedProjects;

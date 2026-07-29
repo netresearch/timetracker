@@ -21,7 +21,6 @@ use App\Model\Response;
 use App\Response\Error;
 use Exception;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\ObjectMapper\ObjectMapperInterface;

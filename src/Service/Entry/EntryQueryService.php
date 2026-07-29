@@ -14,7 +14,6 @@ use App\Entity\Entry;
 use App\Exception\InvalidPaginationException;
 use App\Repository\EntryRepository;
 use App\ValueObject\PaginatedEntryCollection;
-use Doctrine\ORM\Query;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 
 use function is_string;

@@ -61,8 +61,6 @@ class Team
 
     /**
      * Set name.
-     *
-     * @return $this
      */
     public function setName(string $name): static
     {
@@ -83,8 +81,6 @@ class Team
 
     /**
      * Set lead user.
-     *
-     * @return $this
      */
     public function setLeadUser(User $leadUser): static
     {

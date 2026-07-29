@@ -13,7 +13,6 @@ use App\Entity\WebauthnCredential;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Webauthn\Bundle\Repository\CanSaveCredentialRecord;
-use Webauthn\Bundle\Repository\CredentialRecordRepositoryInterface;
 use Webauthn\Bundle\Repository\PublicKeyCredentialSourceRepositoryInterface;
 use Webauthn\CredentialRecord;
 use Webauthn\PublicKeyCredentialUserEntity;

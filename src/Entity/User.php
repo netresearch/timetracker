@@ -183,8 +183,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
 
     /**
      * Set username.
-     *
-     * @return $this
      */
     public function setUsername(string $username): static
     {
@@ -207,8 +205,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
      * Set abbr.
      *
      * @param string $abbr
-     *
-     * @return $this
      */
     public function setAbbr($abbr): static
     {
@@ -229,8 +225,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
 
     /**
      * Set type.
-     *
-     * @return $this
      */
     public function setType(UserType|string $type): static
     {
@@ -348,8 +342,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
 
     /**
      * Reset teams.
-     *
-     * @return $this
      */
     public function resetTeams(): static
     {
@@ -360,8 +352,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
 
     /**
      * Add team.
-     *
-     * @return $this
      */
     public function addTeam(Team $team): static
     {
@@ -502,11 +492,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
     {
         // Guarantee non-empty string as required by Symfony contracts
         return '' !== $this->username ? $this->username : '_';
-    }
-
-    public function eraseCredentials(): void
-    {
-        // If you store any temporary, sensitive data on the user, clear it here
     }
 
     /**
@@ -705,5 +690,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
             /* @phpstan-ignore property.dynamicName */
             $this->{$property} = $value;
         }
+    }
+
+    public function serialize(): void
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
     }
 }

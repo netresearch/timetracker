@@ -89,8 +89,6 @@ class Customer extends Base
      * Set id.
      *
      * @param int $id
-     *
-     * @return $this
      */
     public function setId($id): static
     {
@@ -111,8 +109,6 @@ class Customer extends Base
 
     /**
      * Set name.
-     *
-     * @return $this
      */
     public function setName(string $name): static
     {
@@ -141,8 +137,6 @@ class Customer extends Base
 
     /**
      * Set the stable Tempo customer key (ADR-026 P2).
-     *
-     * @return $this
      */
     public function setTempoCustomerKey(?string $tempoCustomerKey): static
     {
@@ -155,8 +149,6 @@ class Customer extends Base
      * Set active.
      *
      * @param bool $active
-     *
-     * @return $this
      */
     public function setActive($active): static
     {
@@ -179,8 +171,6 @@ class Customer extends Base
      * Set global.
      *
      * @param bool $global
-     *
-     * @return $this
      */
     public function setGlobal($global): static
     {
@@ -203,8 +193,6 @@ class Customer extends Base
      * Add projects.
      *
      * Legacy alias kept for backward compatibility; delegates to addProject().
-     *
-     * @return $this
      */
     public function addProjects(Project $project): static
     {
@@ -233,8 +221,6 @@ class Customer extends Base
 
     /**
      * Reset teams.
-     *
-     * @return $this
      */
     public function resetTeams(): static
     {
@@ -245,8 +231,6 @@ class Customer extends Base
 
     /**
      * Add team.
-     *
-     * @return $this
      */
     public function addTeam(Team $team): static
     {
@@ -267,8 +251,6 @@ class Customer extends Base
 
     /**
      * Add a project.
-     *
-     * @return $this
      */
     public function addProject(Project $project): static
     {

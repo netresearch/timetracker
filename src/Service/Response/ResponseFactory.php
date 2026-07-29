@@ -12,7 +12,6 @@ namespace App\Service\Response;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Model\JsonResponse;
-use App\Model\Response;
 use App\Response\Error;
 use Exception;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;

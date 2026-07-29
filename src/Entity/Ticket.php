@@ -80,8 +80,6 @@ class Ticket extends Base
      * Sets the estimated duration.
      *
      * @param int $estimatedDuration estimated duration
-     *
-     * @return $this
      */
     public function setEstimatedDuration(int $estimatedDuration): static
     {
@@ -98,9 +96,6 @@ class Ticket extends Base
         return $this->estimatedDuration;
     }
 
-    /**
-     * @return $this
-     */
     public function setName(string $name): static
     {
         $this->name = $name;
@@ -113,9 +108,6 @@ class Ticket extends Base
         return $this->name;
     }
 
-    /**
-     * @return $this
-     */
     public function setParentTicketNumber(string $parentTicketNumber): static
     {
         $this->parentTicketNumber = $parentTicketNumber;
@@ -130,8 +122,6 @@ class Ticket extends Base
 
     /**
      * @param int $ticketId
-     *
-     * @return $this
      */
     public function setTicketId($ticketId): static
     {
@@ -148,9 +138,6 @@ class Ticket extends Base
         return $this->ticketId;
     }
 
-    /**
-     * @return $this
-     */
     public function setTicketNumber(string $ticketNumber): static
     {
         $this->ticketNumber = $ticketNumber;
@@ -163,9 +150,6 @@ class Ticket extends Base
         return $this->ticketNumber;
     }
 
-    /**
-     * @return $this
-     */
     public function setTicketSystemId(int $ticketSystemId): static
     {
         $this->ticketSystemId = $ticketSystemId;

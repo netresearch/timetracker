@@ -88,9 +88,6 @@ class UserTicketsystem extends Base
         return $this->id;
     }
 
-    /**
-     * @return $this
-     */
     public function setId(int $id): static
     {
         $this->id = $id;
@@ -103,9 +100,6 @@ class UserTicketsystem extends Base
         return $this->ticketSystem;
     }
 
-    /**
-     * @return $this
-     */
     public function setTicketSystem(TicketSystem $ticketSystem): static
     {
         $this->ticketSystem = $ticketSystem;
@@ -118,9 +112,6 @@ class UserTicketsystem extends Base
         return $this->user;
     }
 
-    /**
-     * @return $this
-     */
     public function setUser(User $user): static
     {
         $this->user = $user;
@@ -133,9 +124,6 @@ class UserTicketsystem extends Base
         return $this->accessToken;
     }
 
-    /**
-     * @return $this
-     */
     public function setAccessToken(#[SensitiveParameter] string $accessToken): static
     {
         $this->accessToken = $accessToken;
@@ -148,9 +136,6 @@ class UserTicketsystem extends Base
         return $this->tokenSecret;
     }
 
-    /**
-     * @return $this
-     */
     public function setTokenSecret(#[SensitiveParameter] string $tokenSecret): static
     {
         $this->tokenSecret = $tokenSecret;
@@ -163,9 +148,6 @@ class UserTicketsystem extends Base
         return $this->refreshToken;
     }
 
-    /**
-     * @return $this
-     */
     public function setRefreshToken(#[SensitiveParameter] ?string $refreshToken): static
     {
         $this->refreshToken = $refreshToken;
@@ -178,9 +160,6 @@ class UserTicketsystem extends Base
         return $this->tokenExpiresAt;
     }
 
-    /**
-     * @return $this
-     */
     public function setTokenExpiresAt(?DateTimeImmutable $tokenExpiresAt): static
     {
         $this->tokenExpiresAt = $tokenExpiresAt;
@@ -193,9 +172,6 @@ class UserTicketsystem extends Base
         return $this->avoidConnection;
     }
 
-    /**
-     * @return $this
-     */
     public function setAvoidConnection(bool $avoidConnection): static
     {
         $this->avoidConnection = $avoidConnection;
@@ -208,9 +184,6 @@ class UserTicketsystem extends Base
         return $this->remoteAccountId;
     }
 
-    /**
-     * @return $this
-     */
     public function setRemoteAccountId(?string $remoteAccountId): static
     {
         $this->remoteAccountId = $remoteAccountId;
@@ -223,9 +196,6 @@ class UserTicketsystem extends Base
         return $this->syncEnabled;
     }
 
-    /**
-     * @return $this
-     */
     public function setSyncEnabled(bool $syncEnabled): static
     {
         $this->syncEnabled = $syncEnabled;
@@ -238,9 +208,6 @@ class UserTicketsystem extends Base
         return $this->syncAll;
     }
 
-    /**
-     * @return $this
-     */
     public function setSyncAll(bool $syncAll): static
     {
         $this->syncAll = $syncAll;

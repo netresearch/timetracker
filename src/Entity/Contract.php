@@ -92,8 +92,6 @@ class Contract
 
     /**
      * Set user.
-     *
-     * @return $this
      */
     public function setUser(User $user): static
     {
@@ -112,9 +110,6 @@ class Contract
         return $this->start;
     }
 
-    /**
-     * @return $this
-     */
     public function setStart(DateTime $start): static
     {
         $this->start = $start;
@@ -127,9 +122,6 @@ class Contract
         return $this->end;
     }
 
-    /**
-     * @return $this
-     */
     public function setEnd(?DateTime $dateTimed): static
     {
         $this->end = $dateTimed;
@@ -147,8 +139,6 @@ class Contract
 
     /**
      * @param float $hours_0
-     *
-     * @return $this
      */
     public function setHours0($hours_0): static
     {
@@ -167,8 +157,6 @@ class Contract
 
     /**
      * @param float $hours_1
-     *
-     * @return $this
      */
     public function setHours1($hours_1): static
     {
@@ -187,8 +175,6 @@ class Contract
 
     /**
      * @param float $hours_2
-     *
-     * @return $this
      */
     public function setHours2($hours_2): static
     {
@@ -207,8 +193,6 @@ class Contract
 
     /**
      * @param float $hours_3
-     *
-     * @return $this
      */
     public function setHours3($hours_3): static
     {
@@ -227,8 +211,6 @@ class Contract
 
     /**
      * @param float $hours_4
-     *
-     * @return $this
      */
     public function setHours4($hours_4): static
     {
@@ -247,8 +229,6 @@ class Contract
 
     /**
      * @param float $hours_5
-     *
-     * @return $this
      */
     public function setHours5($hours_5): static
     {
@@ -267,8 +247,6 @@ class Contract
 
     /**
      * @param float $hours_6
-     *
-     * @return $this
      */
     public function setHours6($hours_6): static
     {

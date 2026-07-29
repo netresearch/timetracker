@@ -389,16 +389,6 @@ final class UserTest extends TestCase
         self::assertSame('_', $user->getUserIdentifier());
     }
 
-    // ==================== eraseCredentials tests ====================
-
-    public function testEraseCredentialsDoesNotThrow(): void
-    {
-        $this->expectNotToPerformAssertions();
-
-        $user = new User();
-        $user->eraseCredentials();
-    }
-
     // ==================== getPassword tests ====================
 
     public function testGetPasswordReturnsHash(): void
