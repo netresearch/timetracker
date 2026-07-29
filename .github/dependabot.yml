@@ -16,6 +16,15 @@ updates:
       frontend:
         patterns:
           - "*"
+    ignore:
+      # typescript-eslint declares `typescript: ">=4.8.4 <6.1.0"` and hard-fails
+      # at load ("typescript-eslint does not support TS 7.0"), so anything from
+      # 6.1 up breaks `eslint .`. 8.65.0 is latest and no release supports it.
+      # Drop this entry once typescript-eslint widens the peer range; the pin in
+      # frontend/package.json goes with it.
+      - dependency-name: typescript
+        versions:
+          - ">= 6.1"
   # Root npm lockfile (Playwright e2e tooling). Was unmonitored, so dev-tooling
   # advisories (http-proxy-middleware, uuid) never produced a bump PR.
   - package-ecosystem: npm
