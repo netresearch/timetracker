@@ -16,7 +16,7 @@ jobs:
   node-audit:
     permissions:
       contents: read
-    uses: netresearch/.github/.github/workflows/node-audit.yml@53469ad0d1024265804184e214318b9895559cc9 # main
+    uses: netresearch/.github/.github/workflows/node-audit.yml@main
     with:
       package-manager: npm
       audit-level: high
