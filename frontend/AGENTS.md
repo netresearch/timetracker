@@ -96,3 +96,11 @@ See [`README.md`](README.md) for the full stack description.
   disk icon forces a save and row-leave shows the full error). Relation cells
   use `ChipSelect` (`src/lib/chipSelect.tsx`, an Ark Combobox) body-portalled
   (whitelist `data-chipselect-popup`) to escape the table scroll container
+
+## Popups inside a modal dialog
+
+A body-portalled combobox/popover popup is a SIBLING of an Ark Dialog's portal, so the dialog's modal focus trap makes it `inert` — it looks dead. Render the Positioner INLINE (no `<Portal>`) with `positioning: {strategy: 'fixed'}`: it stays inside the dialog's DOM subtree (the trap only inerts siblings), and `fixed` still escapes `overflow` clipping. Portalling *into* the dialog breaks `openOnClick` (the combobox machine initialises without a present Positioner). The body-portal guidance elsewhere in this file applies OUTSIDE modals.
+
+## MCP-playwright clicks do not focus inputs here
+
+In an `mcp__playwright__*` session, clicking any input leaves `document.activeElement` on `#main-content` (the SPA autofocus wins the race), so `openOnClick` and option-click commits silently fail. This is a session artifact, not a component bug — the real e2e runner clicks fine. Verify comboboxes in MCP by TYPING (`fill`/`pressSequentially`), and trust the e2e suite for click flows; never "fix" the component off a failing MCP click without checking a known-green reference.

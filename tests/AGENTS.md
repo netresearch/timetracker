@@ -141,3 +141,15 @@ public function testSyncWithJiraHandlesApiError(): void
   so a validator's `find($loggedInUserId)` returns the CACHED entity — a raw
   `UPDATE users …` is invisible to it. Unit-test such validators (mock `find`)
   or operate on a non-logged-in entity
+
+## `.env.test.local` hijacks PHPUnit's database
+
+`make e2e-up` writes `.env.test.local` whose `DATABASE_URL` points at the dev `db` — Symfony dotenv loads it LAST for any `APP_ENV=test` process, so `bin/phpunit` silently runs against the (often migration-behind) dev DB and fails with `SQLSTATE 1054 Unknown column` on recently added columns. Do NOT delete the file (the e2e stack needs it); override with a REAL env var instead, which dotenv never overrides:
+
+```bash
+docker compose --profile dev exec -T -e APP_ENV=test \
+  -e 'DATABASE_URL=mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4' \
+  app-dev bin/phpunit tests/...
+```
+
+`db_unittest` seeds `sql/unittest/00{1,2}_*.sql` only on FIRST volume init; `001_testtables.sql` is a gitignored artifact regenerated from `sql/full.sql`. A stale schema means: recreate the volume.
