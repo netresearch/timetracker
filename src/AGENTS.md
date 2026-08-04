@@ -178,3 +178,14 @@ public function list(EntityManagerInterface $em): JsonResponse
   Migrating deploys: back up first (`mariadb-dump` via the URL user — root has
   no pw) and pre-flight each pending migration's columns. For local testing use
   the dev compose stack (`COMPOSE_PROFILES=dev`, port 8765, `APP_ENV=dev`)
+
+## Index direction vs. MIN/MAX loose scan
+
+MariaDB 10.11 cannot use a loose scan (`Using index for group-by`) for `MIN()`/`MAX()` over a `DESC` key part — a `(col, day DESC)` index turns `SELECT col, MAX(day) … GROUP BY col` into a full index scan (~240k rows, ~150 ms), while plain ASC `(col, day)` loose-scans in ~1 ms AND still serves `WHERE col=X ORDER BY day DESC` without filesort (backward scan). That is why `Version20260704_LastActivityIndexesAscLooseScan` recreated the three `idx_entries_*_day` indexes ASC. Before adding a `DESC` key part, check whether an aggregate reads the index; verify with a real `EXPLAIN`, not from docs or tickets.
+
+## Settings/2FA endpoint conventions
+
+- Write actions (SaveSettings, ChangePassword): `{"success": true}` / `{"success": false, "message": <translated>}`; HTTP 422 on validation failure, 403 on auth-source refusal.
+- 2FA toggle actions (Start/ConfirmTotpEnrollment, DisableTwoFactor): `{"enabled": true|false, …}` — the toggle state, not generic success.
+- Errors translate via `$this->translate()` (`messages` domain); DTO violations via the `validators` domain. Both need de/es/fr/ru entries — `debug:translation` does NOT detect `translate()`-wrapped strings.
+- Admin `/user/save` `authSource` is TRI-STATE (`?string`, ADR-018 D1): `null` (legacy client) = no source change and never clears an existing local hash; `'ldap'` clears the hash; `'local'` sets/keeps a password (new local account without password → 422). Probe "has a local password" with `User::isLocalAccount()`, never `getPassword() === null` — `getPassword()` synthesises an LDAP signature and never returns null.
