@@ -186,6 +186,6 @@ MariaDB 10.11 cannot use a loose scan (`Using index for group-by`) for `MIN()`/`
 ## Settings/2FA endpoint conventions
 
 - Write actions (SaveSettings, ChangePassword): `{"success": true}` / `{"success": false, "message": <translated>}`; HTTP 422 on validation failure, 403 on auth-source refusal.
-- 2FA toggle actions (Start/ConfirmTotpEnrollment, DisableTwoFactor): `{"enabled": true|false, …}` — the toggle state, not generic success.
+- 2FA state-changing actions (ConfirmTotpEnrollment, DisableTwoFactor): `{"enabled": true|false, …}` — the toggle state, not generic success. StartTotpEnrollment is the exception: it returns the enrollment material (`provisioningUri`, `secret`), no `enabled` field.
 - Errors translate via `$this->translate()` (`messages` domain); DTO violations via the `validators` domain. Both need de/es/fr/ru entries — `debug:translation` does NOT detect `translate()`-wrapped strings.
 - Admin `/user/save` `authSource` is TRI-STATE (`?string`, ADR-018 D1): `null` (legacy client) = no source change and never clears an existing local hash; `'ldap'` clears the hash; `'local'` sets/keeps a password (new local account without password → 422). Probe "has a local password" with `User::isLocalAccount()`, never `getPassword() === null` — `getPassword()` synthesises an LDAP signature and never returns null.
