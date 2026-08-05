@@ -44,7 +44,7 @@ final readonly class TwoFactorEnrollmentService
     public function __construct(
         private TokenEncryptionService $tokenEncryptionService,
         private ClockInterface $clock,
-        #[Autowire('%app_title%')]
+        #[Autowire(param: 'app_title')]
         private string $issuer,
     ) {
     }
