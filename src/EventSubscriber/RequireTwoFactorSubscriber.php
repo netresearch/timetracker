@@ -72,7 +72,7 @@ final readonly class RequireTwoFactorSubscriber implements EventSubscriberInterf
         private Security $security,
         private TwoFactorStatusService $status,
         private RouterInterface $router,
-        #[Autowire('%app_require_two_factor%')]
+        #[Autowire(param: 'app_require_two_factor')]
         private bool $required,
     ) {
     }
