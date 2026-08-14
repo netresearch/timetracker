@@ -42,6 +42,31 @@ export async function pickFirstOption(page: Page, row: Locator, colKey: string, 
   await expect(page.locator('.combobox-content')).toBeHidden({ timeout: 4000 });
 }
 
+/**
+ * The one seeded customer both e2e users can book (`Freizeit`, id 2 — global,
+ * with projects; see e2e/AGENTS.md and sql/testdata.sql). The worklog CUSTOMER
+ * pick must target it BY NAME, never "first option": the option list is
+ * name-sorted and shared run-wide, so a throwaway admin-spec customer
+ * (`E2E*`, global, without projects) that leaks past its best-effort delete
+ * sorts first — a blind first-option pick then selects it and the dependent
+ * project combobox renders empty ("Keine Treffer"), deterministically failing
+ * every retry (scheduled runs 29629898230 and 31767912809, shard 1).
+ */
+export const SEEDED_BOOKABLE_CUSTOMER = 'Freizeit';
+
+/** Open a relation cell's combobox, filter it by `text`, and pick the first match. */
+export async function pickOptionByText(page: Page, row: Locator, colKey: string, text: string): Promise<void> {
+  await row.locator(`td[data-col-key="${colKey}"]`).focus();
+  await page.keyboard.press('Enter');
+  const input = page.locator('.combobox-input').first();
+  await expect(input).toBeVisible();
+  await input.fill(text);
+  const option = page.locator('.combobox-content .combobox-item').filter({ hasText: text }).first();
+  await expect(option).toBeVisible({ timeout: 8000 });
+  await option.click();
+  await expect(page.locator('.combobox-content')).toBeHidden({ timeout: 4000 });
+}
+
 export function rowByStamp(page: Page, stamp: string): Locator {
   return page.locator('tr.tracking-row').filter({ hasText: stamp }).first();
 }
@@ -123,7 +148,9 @@ export async function createWorklogEntry(page: Page): Promise<string> {
   // late-landing refetch (the historic boundingBox-null flake).
   const saved = page.waitForResponse(isSaveResponse);
   const refetched = page.waitForResponse(isEntriesRefetch);
-  await pickFirstOption(page, row, 'customer');
+  // Customer by NAME (leaked E2E* customers sort first — see SEEDED_BOOKABLE_CUSTOMER);
+  // project/activity are scoped to that customer, so first-option is deterministic.
+  await pickOptionByText(page, row, 'customer', SEEDED_BOOKABLE_CUSTOMER);
   await pickFirstOption(page, row, 'project');
   await pickFirstOption(page, row, 'activity');
   await saved;
