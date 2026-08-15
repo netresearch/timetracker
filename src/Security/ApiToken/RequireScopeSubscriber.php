@@ -11,6 +11,7 @@ namespace App\Security\ApiToken;
 
 use App\ValueObject\ApiScope;
 use ReflectionMethod;
+use Symfony\AI\McpBundle\Controller\McpController;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -55,8 +56,13 @@ final readonly class RequireScopeSubscriber implements EventSubscriberInterface
 
         $controller = $event->getController();
         $controllerObject = is_array($controller) ? $controller[0] : (is_object($controller) ? $controller : null);
-        if ($controllerObject instanceof SelfEnforcesScope) {
-            return; // controller enforces scopes per call (e.g. the MCP endpoint)
+        // The MCP endpoint multiplexes many tools, each requiring a different scope
+        // checked in its handler (App\Mcp\ScopeGuard), so a single controller-level
+        // #[RequireScope] cannot express its requirement. It is the one controller
+        // that takes responsibility for enforcing scopes on every path, so the
+        // fail-closed default below is bypassed for it — and only for it.
+        if ($controllerObject instanceof McpController) {
+            return;
         }
 
         $required = $this->requiredScope($controller);
