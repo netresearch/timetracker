@@ -1,3 +1,5 @@
+import { randomInt } from 'node:crypto';
+
 import { test, type Page } from '@playwright/test';
 
 /**
@@ -104,9 +106,11 @@ async function deleteRows(page: Page, rows: CustomerRow['customer'][]): Promise<
 
 /** A throwaway name for `prefix`, collision-safe across parallel workers.
  *  Date.now() alone can collide when two workers create a row in the same
- *  millisecond (a unique-name DB violation); the random suffix rules that out. */
+ *  millisecond (a unique-name DB violation); the random suffix rules that out.
+ *  crypto.randomInt only because Sonar flags Math.random as a hotspot —
+ *  nothing here is security-relevant, the suffix just de-duplicates names. */
 export function throwawayCustomerName(prefix: string): string {
-  return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
+  return `${prefix}_${Date.now()}_${randomInt(1_000_000)}`;
 }
 
 /**
