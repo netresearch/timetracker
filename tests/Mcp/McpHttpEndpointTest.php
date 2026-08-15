@@ -18,10 +18,10 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Functional tests for the /mcp HTTP endpoint (ADR-021 Phase 5), driving the full
- * stack — the Bearer-PAT firewall, our McpEndpointController, and the SDK's
+ * stack — the Bearer-PAT firewall, the bundle's McpController, and the SDK's
  * Streamable-HTTP transport middleware (incl. the DNS-rebinding Host guard the
  * direct tool tests bypass). Regression cover for the localhost-only default that
- * 403'd a real domain until McpEndpointController allowlisted the host.
+ * 403'd a real domain until mcp.http.allowed_hosts allowlisted the host.
  */
 final class McpHttpEndpointTest extends AbstractWebTestCase
 {
