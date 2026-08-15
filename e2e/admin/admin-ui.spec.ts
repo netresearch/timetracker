@@ -1,4 +1,10 @@
 import { test, expect, Page } from '@playwright/test';
+import {
+  ADMIN_UI_PREFIX,
+  deleteThrowawayCustomers,
+  sweepStaleThrowawayCustomers,
+  throwawayCustomerName,
+} from '../helpers/admin-fixtures';
 import { login } from '../helpers/auth';
 import { waitForGrid } from '../helpers/grid';
 import { goToAdminPage } from '../helpers/navigation';
@@ -45,6 +51,9 @@ test.describe('Administration UI', () => {
   test.beforeEach(async ({ page }) => {
     // i.myself is type PL → ROLE_ADMIN.
     await login(page, 'i.myself', 'myself123');
+    // Heal the shared db-e2e before touching the list — see the same call in
+    // admin-inline-edit.spec.ts and helpers/admin-fixtures.ts.
+    await sweepStaleThrowawayCustomers(page);
     await waitForGrid(page);
     await goToAdminPage(page);
   });
@@ -64,34 +73,44 @@ test.describe('Administration UI', () => {
   });
 
   test('creates, edits and deletes a customer', async ({ page }) => {
-    const name = `E2ECustomer_${Date.now()}`;
+    const name = throwawayCustomerName(ADMIN_UI_PREFIX);
 
-    // Create. A customer must be global or have teams (server-enforced), so
-    // mark it global to keep the fixture self-contained.
-    await page.locator('.admin-crud-toolbar button.primary-button').filter({ hasText: ADD }).click();
-    const form = page.locator('.modal form.stack-form');
-    await expect(form).toBeVisible();
-    await form.locator('.field input[type="text"]').first().fill(name);
-    await form.getByRole('checkbox', { name: 'Global', exact: true }).check();
-    await form.locator('button[type="submit"]').filter({ hasText: SAVE }).click();
-    await expect(page.locator('.modal')).toHaveCount(0);
-    await expect(row(page, name)).toHaveCount(1);
+    // Deleting through the UI is this test's SUBJECT, so it stays a UI click. The
+    // finally is the safety net: fail anywhere before that click — or on it — and
+    // the row would otherwise outlive the test and poison the name-sorted customer
+    // list for every later spec in the shard (#675).
+    try {
+      // Create. A customer must be global or have teams (server-enforced), so
+      // mark it global to keep the fixture self-contained.
+      await page.locator('.admin-crud-toolbar button.primary-button').filter({ hasText: ADD }).click();
+      const form = page.locator('.modal form.stack-form');
+      await expect(form).toBeVisible();
+      await form.locator('.field input[type="text"]').first().fill(name);
+      await form.getByRole('checkbox', { name: 'Global', exact: true }).check();
+      await form.locator('button[type="submit"]').filter({ hasText: SAVE }).click();
+      await expect(page.locator('.modal')).toHaveCount(0);
+      await expect(row(page, name)).toHaveCount(1);
 
-    // Edit (rename). The action buttons are icon-only, so match the accessible
-    // name (aria-label), not visible text.
-    const renamed = `${name}_Renamed`;
-    await row(page, name).getByRole('button', { name: EDIT }).click();
-    const editForm = page.locator('.modal form.stack-form');
-    await expect(editForm).toBeVisible();
-    const nameInput = editForm.locator('.field input[type="text"]').first();
-    await nameInput.fill(renamed);
-    await editForm.locator('button[type="submit"]').filter({ hasText: SAVE }).click();
-    await expect(page.locator('.modal')).toHaveCount(0);
-    await expect(row(page, renamed)).toHaveCount(1);
+      // Edit (rename). The action buttons are icon-only, so match the accessible
+      // name (aria-label), not visible text.
+      const renamed = `${name}_Renamed`;
+      await row(page, name).getByRole('button', { name: EDIT }).click();
+      const editForm = page.locator('.modal form.stack-form');
+      await expect(editForm).toBeVisible();
+      const nameInput = editForm.locator('.field input[type="text"]').first();
+      await nameInput.fill(renamed);
+      await editForm.locator('button[type="submit"]').filter({ hasText: SAVE }).click();
+      await expect(page.locator('.modal')).toHaveCount(0);
+      await expect(row(page, renamed)).toHaveCount(1);
 
-    // Delete (native confirm)
-    page.once('dialog', (dialog) => dialog.accept());
-    await row(page, renamed).getByRole('button', { name: DELETE }).click();
-    await expect(row(page, renamed)).toHaveCount(0);
+      // Delete (native confirm)
+      page.once('dialog', (dialog) => dialog.accept());
+      await row(page, renamed).getByRole('button', { name: DELETE }).click();
+      await expect(row(page, renamed)).toHaveCount(0);
+    } finally {
+      // A no-op on the happy path (the UI delete already removed the row); the
+      // prefix match covers `name` and `name_Renamed` alike.
+      await deleteThrowawayCustomers(page, name);
+    }
   });
 });

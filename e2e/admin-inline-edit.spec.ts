@@ -1,10 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
 import { login } from './helpers/auth';
+import {
+  INLINE_EDIT_PREFIX,
+  deleteThrowawayCustomers,
+  sweepStaleThrowawayCustomers,
+  throwawayCustomerName,
+} from './helpers/admin-fixtures';
 
 const ADD = /^(Hinzufügen|Add)$/i;
 const SAVE = /^(Speichern|Save)$/i;
 const EDIT = /^(Bearbeiten|Edit)$/i;
-const DELETE = /^(Löschen|Delete)$/i;
 
 /** A throwaway Customers row to mutate, by name. */
 function adminRow(page: Page, name: string) {
@@ -18,9 +23,7 @@ function adminRow(page: Page, name: string) {
  * shared seed rows, so re-runs stay idempotent and leave no residue.
  */
 async function createThrowawayCustomer(page: Page): Promise<string> {
-  // Date.now() alone can collide when parallel workers create a row in the same
-  // millisecond (a unique-name DB violation); a random suffix makes it collision-safe.
-  const name = `E2EInline_${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
+  const name = throwawayCustomerName(INLINE_EDIT_PREFIX);
   await page.locator('.admin-crud-toolbar button.primary-button').filter({ hasText: ADD }).click();
   const form = page.locator('.modal form.stack-form');
   await expect(form).toBeVisible();
@@ -32,24 +35,6 @@ async function createThrowawayCustomer(page: Page): Promise<string> {
   return name;
 }
 
-/** Best-effort delete of the throwaway customer (native confirm), for finally blocks. */
-async function deleteThrowawayCustomer(page: Page, name: string): Promise<void> {
-  try {
-    const row = adminRow(page, name);
-    // Of the two names passed across a finally block (pre/post rename), only one
-    // row actually exists — skip the missing one instead of letting its delete
-    // button locator wait out the full timeout (a ~30s stall on every run). Bound
-    // the click for the same reason; the row is present, so it resolves at once.
-    if ((await row.count()) === 0) return;
-    page.once('dialog', (dialog) => dialog.accept());
-    await row.getByRole('button', { name: DELETE }).click({ timeout: 2000 });
-    await expect(row).toHaveCount(0);
-  } catch {
-    // Swallow — a mid-test failure may leave the page in a state where delete
-    // can't complete; never mask the original failure with a cleanup error.
-  }
-}
-
 /**
  * Inline (spreadsheet-style) cell editing on the SolidJS Administration tables,
  * built on the use:gridNav directive.
@@ -58,6 +43,11 @@ test.describe('Admin inline cell editing', () => {
   test.beforeEach(async ({ page }) => {
     // i.myself is a PL (ROLE_ADMIN), so the Administration page is reachable.
     await login(page, 'i.myself', 'myself123');
+    // Heal the shared db-e2e before touching the list: a previous run killed
+    // mid-test leaves an E2EInline row that sorts ahead of the seed rows and
+    // derails later specs (#675). Age-bounded, so a sibling worker's live row
+    // is never touched.
+    await sweepStaleThrowawayCustomers(page);
     await page.goto('/ui/admin');
     await page.waitForSelector('table.admin-table [role="gridcell"]', { timeout: 15000 });
   });
@@ -90,9 +80,8 @@ test.describe('Admin inline cell editing', () => {
       await expect(page.getByRole('gridcell', { name: updated, exact: true })).toBeVisible();
     } finally {
       // The row carries `updated` on success, or `name` if the rename never landed
-      // (mid-test failure); whichever is present, delete it best-effort.
-      await deleteThrowawayCustomer(page, updated);
-      await deleteThrowawayCustomer(page, name);
+      // (mid-test failure) — deleting by name prefix covers both without guessing.
+      await deleteThrowawayCustomers(page, name);
     }
   });
 
@@ -214,13 +203,10 @@ test.describe('Admin inline cell editing', () => {
       await row.getByRole('button', { name: EDIT }).click();
       await expect(page.locator('.modal input[type="text"]').first()).toHaveValue(draft);
     } finally {
-      // Close the modal (Escape-dismissible) so the row's Delete icon is clickable,
-      // then delete: the background auto-save may have renamed the row to `draft`,
-      // so cover both names best-effort.
-      await page.keyboard.press('Escape').catch(() => undefined);
-      await expect(page.locator('.modal')).toHaveCount(0).catch(() => undefined);
-      await deleteThrowawayCustomer(page, draft);
-      await deleteThrowawayCustomer(page, name);
+      // The background auto-save may have renamed the row to `draft`; the prefix
+      // delete covers both. No need to dismiss the modal first — the API delete
+      // does not go through the row's Delete icon, so an open modal cannot block it.
+      await deleteThrowawayCustomers(page, name);
     }
   });
 
