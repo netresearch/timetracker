@@ -14,12 +14,14 @@ use App\Repository\UserRepository;
 use App\Service\ApiToken\ApiTokenService;
 use Tests\AbstractWebTestCase;
 
+use const JSON_THROW_ON_ERROR;
+
 /**
  * Functional tests for the /mcp HTTP endpoint (ADR-021 Phase 5), driving the full
- * stack — the Bearer-PAT firewall, our McpEndpointController, and the SDK's
+ * stack — the Bearer-PAT firewall, the bundle's McpController, and the SDK's
  * Streamable-HTTP transport middleware (incl. the DNS-rebinding Host guard the
  * direct tool tests bypass). Regression cover for the localhost-only default that
- * 403'd a real domain until McpEndpointController allowlisted the host.
+ * 403'd a real domain until mcp.http.allowed_hosts allowlisted the host.
  */
 final class McpHttpEndpointTest extends AbstractWebTestCase
 {
@@ -42,6 +44,30 @@ final class McpHttpEndpointTest extends AbstractWebTestCase
         $this->client->request('POST', '/mcp', server: $this->mcpServer('evil.example.com'), content: self::INITIALIZE);
 
         self::assertSame(403, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testToolsListExposesTheRegisteredTools(): void
+    {
+        // The SDK loads its element registry lazily since v0.7.0, so the tools only
+        // materialise on the first registry read — tools/list, not the handshake.
+        // The direct tool tests fetch the services from the container and would not
+        // notice an empty registry here.
+        $server = $this->mcpServer('localhost');
+        $this->client->request('POST', '/mcp', server: $server, content: self::INITIALIZE);
+        $sessionId = $this->client->getResponse()->headers->get('Mcp-Session-Id');
+        self::assertNotNull($sessionId, 'the handshake did not open a session');
+
+        $server['HTTP_MCP_SESSION_ID'] = $sessionId;
+        $this->client->request('POST', '/mcp', server: $server, content: '{"jsonrpc":"2.0","id":2,"method":"tools/list"}');
+
+        $response = $this->client->getResponse();
+        self::assertSame(200, $response->getStatusCode());
+
+        /** @var array{result: array{tools: list<array{name: string}>}} $payload */
+        $payload = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $names = array_column($payload['result']['tools'], 'name');
+        self::assertContains('get_day', $names);
+        self::assertContains('log_time', $names);
     }
 
     public function testBogusTokenIsUnauthorized(): void

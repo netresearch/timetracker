@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { loginIsolated } from './helpers/auth';
 import { installFrozenClock } from './helpers/clock';
 import { goToWorklogPage } from './helpers/navigation';
-import { cleanupWorklogEntries, createWorklogEntry, isSaveResponse, rowByStamp } from './helpers/worklog';
+import { SEEDED_BOOKABLE_CUSTOMER, cleanupWorklogEntries, createWorklogEntry, isSaveResponse, rowByStamp } from './helpers/worklog';
 
 /**
  * Spreadsheet-style keyboard + clipboard editing on the SolidJS worklog grid:
@@ -136,8 +136,17 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await page.keyboard.press('Tab');
     await expect(row.locator('td[data-col-key="customer"][data-inline-editing]')).toBeVisible();
 
-    const arrowEnter = async (): Promise<void> => {
-      await expect(page.locator('.combobox-input').first()).toBeVisible();
+    const arrowEnter = async (filter?: string): Promise<void> => {
+      const input = page.locator('.combobox-input').first();
+      await expect(input).toBeVisible();
+      // The customer step filters to the seeded bookable customer first — the raw
+      // list is name-sorted and a leaked E2E* throwaway customer (no projects)
+      // would sort first, so a blind ArrowDown would pick it and leave the
+      // subsequent project list empty (see SEEDED_BOOKABLE_CUSTOMER).
+      if (filter !== undefined) {
+        await input.fill(filter);
+        await expect(page.locator('.combobox-content .combobox-item').first()).toContainText(filter, { timeout: 8000 });
+      }
       // Wait for the option list to populate before navigating it — under shard load
       // ArrowDown can fire before the (async) options arrive, highlighting nothing, so
       // Enter then picks nothing and the guide never advances to the next field.
@@ -148,7 +157,7 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     // customer/project/activity are always required-and-empty for a new row, so the
     // guide jumps through them. (date/start/end are pre-filled by suggest-time +
     // the end-prefill minimum, so they're skipped — the guide only targets empties.)
-    await arrowEnter();
+    await arrowEnter(SEEDED_BOOKABLE_CUSTOMER);
     await expect(row.locator('td[data-col-key="project"][data-inline-editing]')).toBeVisible();
     await arrowEnter();
     await expect(row.locator('td[data-col-key="activity"][data-inline-editing]')).toBeVisible();
@@ -176,14 +185,21 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await page.keyboard.press('Tab');
     await expect(page.locator('td[data-col-key="customer"][data-inline-editing]')).toBeVisible();
 
-    const arrowEnter = async (): Promise<void> => {
-      await expect(page.locator('.combobox-input').first()).toBeVisible();
+    const arrowEnter = async (filter?: string): Promise<void> => {
+      const input = page.locator('.combobox-input').first();
+      await expect(input).toBeVisible();
+      // Filter the customer step to the seeded bookable customer (see the
+      // guided-flow test above and SEEDED_BOOKABLE_CUSTOMER).
+      if (filter !== undefined) {
+        await input.fill(filter);
+        await expect(page.locator('.combobox-content .combobox-item').first()).toContainText(filter, { timeout: 8000 });
+      }
       // Wait for the options before arrowing (see the guided-flow test above).
       await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
       await page.keyboard.press('ArrowDown');
       await page.keyboard.press('Enter');
     };
-    await arrowEnter(); // customer — guided on to project
+    await arrowEnter(SEEDED_BOOKABLE_CUSTOMER); // customer — guided on to project
     await expect(page.locator('td[data-col-key="project"][data-inline-editing]')).toBeVisible();
     await arrowEnter(); // project — guided on to activity
     await expect(page.locator('td[data-col-key="activity"][data-inline-editing]')).toBeVisible();
@@ -223,6 +239,14 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
 
     await row.locator('td[data-col-key="customer"]').focus();
     await page.keyboard.press('Enter'); // open the (portalled) select editor
+    // Filter to the seeded bookable customer before arrowing — a blind ArrowDown
+    // would pick whatever sorts first, and a leaked E2E* throwaway customer (no
+    // projects) would invalidate the row and re-render it, losing the very focus
+    // this test asserts on (see SEEDED_BOOKABLE_CUSTOMER).
+    const input = page.locator('.combobox-input').first();
+    await expect(input).toBeVisible();
+    await input.fill(SEEDED_BOOKABLE_CUSTOMER);
+    await expect(page.locator('.combobox-content .combobox-item').first()).toContainText(SEEDED_BOOKABLE_CUSTOMER, { timeout: 8000 });
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter'); // commit — focus must return to a grid cell, not <body>
     await expect(page.locator('.tracking-table td:focus')).toHaveCount(1);
