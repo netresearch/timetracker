@@ -60,7 +60,7 @@
         "symfony/dotenv": "^8.1",
         "symfony/flex": "^2.8",
         "symfony/framework-bundle": "^8.1",
-        "symfony/mcp-bundle": "^0.11",
+        "symfony/mcp-bundle": "^0.12",
         "symfony/monolog-bundle": "^3.10|^4.0",
         "symfony/object-mapper": "^8.1",
         "symfony/polyfill-mbstring": "^1.33",
