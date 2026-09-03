@@ -12,28 +12,28 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ark-ui/solid": "^5.37.1",
+    "@ark-ui/solid": "^5.39.1",
     "@simplewebauthn/browser": "^13.3.0",
     "@solidjs/router": "~1.0.0",
-    "@tanstack/solid-query": "^5.101.4",
-    "solid-js": "~1.9.14"
+    "@tanstack/solid-query": "^5.102.8",
+    "solid-js": "~1.9.15"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@inlang/paraglide-js": "^2.23.0",
+    "@inlang/paraglide-js": "^2.25.0",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.3.3",
-    "@testing-library/jest-dom": "^7.0.0",
-    "eslint": "^10.8.0",
-    "eslint-plugin-solid": "^0.14.5",
+    "@testing-library/jest-dom": "^7.0.1",
+    "eslint": "^10.9.1",
+    "eslint-plugin-solid": "^0.17.0",
     "jsdom": "^30.0.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.65.0",
-    "vite": "^8.2.0",
+    "typescript-eslint": "^8.68.0",
+    "vite": "^8.2.2",
     "vite-plugin-solid": "^2.11.14",
     "vite-plugin-symfony": "^8.2.4",
-    "vitest": "^4.1.10",
+    "vitest": "^4.1.11",
     "vitest-axe": "^0.1.0"
   }
 }
