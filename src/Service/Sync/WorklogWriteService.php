@@ -129,6 +129,10 @@ class WorklogWriteService
         return $api->deleteEntryJiraWorkLog($entry);
     }
 
+    /**
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
+     */
     private function refreshBase(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): void
     {
         $worklogId = $entry->getWorklogId();

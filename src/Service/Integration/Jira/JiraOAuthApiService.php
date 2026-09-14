@@ -376,7 +376,8 @@ class JiraOAuthApiService
      * This is an alias for updateEntryJiraWorkLog to maintain backward compatibility.
      *
      * @throws JiraApiException
-     * @throws JsonException    when a response body is not JSON
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function createEntryJiraWorkLog(Entry $entry): void
     {
@@ -491,7 +492,8 @@ class JiraOAuthApiService
      * Get an array of ticket numbers that are subtickets of the given issue.
      *
      * @throws JiraApiException
-     * @throws JsonException    when a response body is not JSON
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      *
      * @return list<string>
      */
