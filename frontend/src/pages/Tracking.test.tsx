@@ -573,6 +573,25 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('warns that deleting one half of a human/agent pair deletes both (ADR-025)', async () => {
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, class: 0, pairedEntry: 2 } }],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('button', { name: 'Delete' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Delete' }))
+    const dialog = await screen.findByRole('dialog')
+
+    expect(dialog.textContent).toContain('This permanently deletes both entries.')
+    expect(dialog.textContent).not.toContain('This permanently deletes the selected worklog entry.')
+
+    unmount()
+  })
+
   it('maps a ticket prefix to its project and customer on commit', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, customer: 0, project: 0, ticket: '', class: 0 } }],

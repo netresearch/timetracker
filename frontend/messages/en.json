@@ -268,6 +268,7 @@
   "tracking_prolonged": "End time set to now",
   "tracking_delete_title": "Delete entry?",
   "tracking_delete_body": "This permanently deletes the selected worklog entry.",
+  "tracking_delete_body_paired": "The selected entry belongs to a human/agent pair. This permanently deletes both entries.",
   "tracking_delete_confirm": "Delete",
   "tracking_date_format_hint": "Date format: YYYY-MM-DD",
   "tracking_edit_hint": "Double-click a cell — or focus it and press Enter — to edit. Tab within a row reaches its actions; Alt+C / Alt+P / Alt+I act on the current row. A completed row saves automatically; the disk icon force-saves an unsaved row and the reset icon discards it.",

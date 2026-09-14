@@ -161,6 +161,9 @@ export interface TrackingEntry {
   /** ADR-025: true when a human-source figure is an agent-derived estimate a
    *  person should still review before it counts as attendance. */
   estimated: boolean
+  /** ADR-025: id of the other half of an agent/human pair, or null. Deleting
+   *  one half deletes both. Optional: rows from older payloads lack it. */
+  pairedEntry?: number | null
 }
 
 interface TrackingEntryRow {

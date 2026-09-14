@@ -88,6 +88,11 @@ final class LogTimeToolSourceTest extends AbstractWebTestCase
         self::assertSame(['prompts' => 7, 'reviews' => 2], $human->getTouchpoints());
         self::assertInstanceOf(User::class, $human->getResponsibleUser());
         self::assertSame(1, $human->getResponsibleUser()->getId());
+
+        // The two halves are linked symmetrically, so either side finds its partner.
+        self::assertSame($human->getId(), $agent->getPairedEntryId());
+        self::assertSame($agent->getId(), $human->getPairedEntryId());
+        self::assertSame($human->getId(), $agent->toArray()['pairedEntry']);
     }
 
     public function testDualWriteRollsBackAgentEntryWhenHumanWriteFails(): void

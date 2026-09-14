@@ -13,6 +13,7 @@ use App\Controller\Tracking\SaveEntryAction;
 use App\Dto\EntrySaveDto;
 use App\Entity\Activity;
 use App\Entity\Customer;
+use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\User;
 use App\Mcp\DecodesActionResponse;
@@ -247,6 +248,13 @@ final readonly class LogTimeTool
                 touchpoints: $touchpoints,
             ), $user);
 
+            // ADR-025 pair link, inside the same transaction: without both ids the
+            // pair cannot be linked, so fail and roll both writes back.
+            $agentEntry = $this->loadCreatedEntry($agentBody);
+            $humanEntry = $this->loadCreatedEntry($humanBody);
+            $agentEntry->pairWith($humanEntry);
+            $this->entityManager->flush();
+
             return ['agent' => $agentBody, 'human' => $humanBody];
         });
 
@@ -289,6 +297,22 @@ final readonly class LogTimeTool
         }
 
         return $body;
+    }
+
+    /**
+     * @param array<array-key, mixed> $body the decoded SaveEntryAction response
+     *
+     * @throws ToolCallException when the response carries no id of a stored entry
+     */
+    private function loadCreatedEntry(array $body): Entry
+    {
+        $entryId = $this->createdEntryId($body);
+        $entry = null !== $entryId ? $this->entityManager->find(Entry::class, $entryId) : null;
+        if (!$entry instanceof Entry) {
+            throw new ToolCallException('Failed to link the agent and human entries.');
+        }
+
+        return $entry;
     }
 
     /**

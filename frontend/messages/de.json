@@ -268,6 +268,7 @@
   "tracking_prolonged": "Endzeit auf jetzt gesetzt",
   "tracking_delete_title": "Eintrag löschen?",
   "tracking_delete_body": "Der ausgewählte Worklog-Eintrag wird endgültig gelöscht.",
+  "tracking_delete_body_paired": "Der ausgewählte Eintrag gehört zu einem Mensch/Agent-Paar. Beide Einträge werden endgültig gelöscht.",
   "tracking_delete_confirm": "Löschen",
   "tracking_date_format_hint": "Datumsformat: JJJJ-MM-TT",
   "tracking_edit_hint": "Zum Bearbeiten eine Zelle doppelklicken — oder fokussieren und Enter drücken. Tab innerhalb einer Zeile erreicht deren Aktionen; Alt+C / Alt+P / Alt+I wirken auf die aktuelle Zeile. Eine vollständige Zeile wird automatisch gespeichert; das Disketten-Symbol erzwingt das Speichern, das Zurücksetzen-Symbol verwirft die Änderungen.",

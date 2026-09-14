@@ -27,4 +27,48 @@ final class EntrySourceFieldsTest extends TestCase
         self::assertTrue($entry->toArray()['estimated']);
         self::assertSame(['prompts' => 7, 'reviews' => 2], $entry->getTouchpoints());
     }
+
+    public function testUnpairedEntryHasNoPartner(): void
+    {
+        $entry = new Entry();
+        self::assertNull($entry->getPairedEntry());
+        self::assertNull($entry->toArray()['pairedEntry']);
+    }
+
+    public function testPairWithLinksBothSides(): void
+    {
+        $agent = new Entry()->setSource(EntrySource::AGENT);
+        $human = new Entry()->setEstimated(true);
+
+        $agent->pairWith($human);
+
+        self::assertSame($human, $agent->getPairedEntry());
+        self::assertSame($agent, $human->getPairedEntry());
+    }
+
+    public function testRemovingOneHalfClearsThePartnersBackReference(): void
+    {
+        $agent = new Entry()->setSource(EntrySource::AGENT);
+        $human = new Entry()->setEstimated(true);
+        $agent->pairWith($human);
+
+        // Doctrine calls this on EntityManager::remove() — the survivor must not keep
+        // pointing at the removed half, or its next flush fails.
+        $human->unlinkPartnerOnRemove();
+
+        self::assertNull($agent->getPairedEntry());
+    }
+
+    public function testRemovalLeavesAPartnerLinkedElsewhereAlone(): void
+    {
+        $first = new Entry();
+        $second = new Entry();
+        $third = new Entry();
+        $first->pairWith($second);
+        $third->pairWith($second); // $second now points at $third, $first is stale
+
+        $first->unlinkPartnerOnRemove();
+
+        self::assertSame($third, $second->getPairedEntry());
+    }
 }
