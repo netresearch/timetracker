@@ -88,12 +88,6 @@ final readonly class EntryUpdateService
             project_id: $projectId ?? $entry->getProjectId(),
             customer_id: $customerId,
             activity_id: $activityId ?? $entry->getActivityId(),
-            // A partial update keeps the ADR-025 attribution too: in the token
-            // channel SaveEntryAction defaults a missing source to human, which
-            // would silently turn an agent entry into human labour.
-            source: $entry->getSource()->value,
-            estimated: $entry->isEstimated(),
-            touchpoints: $entry->getTouchpoints(),
         );
     }
 

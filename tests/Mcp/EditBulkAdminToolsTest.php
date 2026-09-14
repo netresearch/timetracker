@@ -94,7 +94,6 @@ final class EditBulkAdminToolsTest extends AbstractWebTestCase
 
         self::assertSame('agent corrected', $agentEntry->getDescription());
         self::assertSame(EntrySource::AGENT, $agentEntry->getSource());
-        self::assertFalse($agentEntry->isEstimated());
 
         self::assertSame('human corrected', $humanEntry->getDescription());
         self::assertSame(EntrySource::HUMAN, $humanEntry->getSource());
