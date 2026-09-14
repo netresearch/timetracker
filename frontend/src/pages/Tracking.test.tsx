@@ -206,6 +206,42 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('derives row cues from human entries only, so an agent twin never marks a pause or overlap (ADR-025 §6)', async () => {
+    // Mirrors DayClassService::recalculate, which reads the human day shape only:
+    // an agent entry running in parallel is expected overlap, not a clash, and
+    // must neither take the day break nor shift the previous-end baseline.
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: '15/01/2024', start: '07:30', end: '09:30', description: 'EarlyAgent', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: '15/01/2024', start: '08:00', end: '08:30', description: 'HumanFirst', class: 0, source: 'human', estimated: true } },
+        { entry: { ...DEFAULT_ENTRY, id: 3, date: '15/01/2024', start: '08:00', end: '10:00', description: 'AgentTwin', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 4, date: '15/01/2024', start: '08:30', end: '09:00', description: 'HumanNext', class: 0, source: 'human', estimated: true } },
+        { entry: { ...DEFAULT_ENTRY, id: 5, date: '15/01/2024', start: '08:45', end: '09:15', description: 'HumanClash', class: 0, source: 'human', estimated: false } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'HumanClash' })).toBeInTheDocument())
+
+    const rowOf = (id: number): Element | null => container.querySelector(`td[data-row-id="${id}"]`)?.closest('tr') ?? null
+    const cues = ['is-daybreak', 'is-pause', 'is-overlap']
+    const hasAnyCue = (id: number): boolean => cues.some((cue) => rowOf(id)?.classList.contains(cue) === true)
+    // Agent rows carry no cue at all.
+    expect(hasAnyCue(1)).toBe(false)
+    expect(hasAnyCue(3)).toBe(false)
+    // The earliest HUMAN entry is the day break, even though an agent started earlier.
+    expect(rowOf(2)?.classList.contains('is-daybreak')).toBe(true)
+    // 08:30 starts exactly at the previous human end (08:30) — plain, although the
+    // agent twin in between ran until 10:00.
+    expect(hasAnyCue(4)).toBe(false)
+    // A real human/human clash still reads as an overlap.
+    expect(rowOf(5)?.classList.contains('is-overlap')).toBe(true)
+
+    unmount()
+  })
+
   it('marks future entries and inserts a labeled divider above the today/past block', async () => {
     // Frozen clock is 2024-01-15 (test setup); with show_future the list mixes a
     // 2026 (future) day above the 2024 (today) day.
@@ -820,6 +856,31 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('Alt+P prolongs the latest HUMAN entry, never an agent twin sorting first (ADR-025)', async () => {
+    // Newest-first: the agent twin (same start, later end) comes back first. Prolong
+    // must still target the person's own entry, not rewrite the machine's walltime.
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 2, start: '09:00', end: '11:00', description: 'AgentTwin', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '10:00', description: 'HumanWork', class: 0, source: 'human', estimated: true } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    postJson.mockResolvedValue({})
+    const { getByRole, unmount } = renderTracking()
+    // The estimated badge joins the description cell's accessible name, so match on the text.
+    await waitFor(() => expect(getByRole('gridcell', { name: /HumanWork/ })).toBeInTheDocument())
+
+    fireEvent.keyDown(document, { key: 'p', altKey: true })
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 1 })))
+    expect(postJson).not.toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 2 }))
+
+    unmount()
+  })
+
   it('renders the ticket as a link to its ticket system', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, customer: 7, project: 9, ticket: 'APO-42', class: 0 } }],
@@ -832,6 +893,36 @@ describe('Tracking (Worklog grid)', () => {
     await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
 
     expect(getByRole('link', { name: 'APO-42' })).toHaveAttribute('href', 'https://jira/browse/APO-42')
+
+    unmount()
+  })
+
+  it('Alt+I without a cursor row summarizes the latest HUMAN entry, not an agent twin sorting first (ADR-025)', async () => {
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 2, start: '09:00', end: '11:00', description: 'AgentTwin', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '10:00', description: 'HumanWork', class: 0, source: 'human', estimated: false } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+      summary: {
+        customer: { scope: 'customer', name: 'ACME', entries: 1, total: 60, own: 60, estimation: 0 },
+        project: { scope: 'project', name: 'Site', entries: 1, total: 60, own: 60, estimation: 0 },
+        activity: { scope: 'activity', name: 'Dev', entries: 1, total: 60, own: 60, estimation: 0 },
+        ticket: { scope: 'ticket', name: 'ABC-1', entries: 1, total: 60, own: 60, estimation: 0 },
+        estimate: { estimation: 0, booked_total: 60, percent: 0, status: 'ok' },
+        warnings: [],
+      },
+    })
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'HumanWork' })).toBeInTheDocument())
+
+    // No cell is focused, so Alt+I falls back to the latest entry.
+    fireEvent.keyDown(document, { key: 'i', altKey: true })
+
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/api/v2/entries/1/summary'))
+    expect(getJson).not.toHaveBeenCalledWith('/api/v2/entries/2/summary')
 
     unmount()
   })
@@ -1024,6 +1115,26 @@ describe('Tracking (Worklog grid)', () => {
 
       fireEvent.click(getByRole('button', { name: 'Add entry' }))
       // The latest entry is from today → the new row's start inherits its end.
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+    }
+  })
+
+  it('Add inherits the end of the latest HUMAN entry, not an agent twin sorting first (ADR-025)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    try {
+      // Newest-first: the agent twin (same start, later end) is entries[0].
+      mockApiWith([
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: todayDmy(), start: '09:00', end: '11:00', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: todayDmy(), start: '09:00', end: '10:30', class: 0, source: 'human', estimated: false } },
+      ])
+      const { getAllByRole, getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getAllByRole('gridcell', { name: 'ABC-1' })).toHaveLength(2))
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
       await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
 
       unmount()

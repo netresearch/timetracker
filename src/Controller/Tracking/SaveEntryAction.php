@@ -285,15 +285,28 @@ final class SaveEntryAction extends BaseTrackingController
         // A session request is ALWAYS a plain human self-log — body source/estimated
         // ignored, so a person cannot mark work agent and drop it from attendance/ArbZG.
         // The responsible user is the token owner, never a client-supplied id (IDOR).
+        // Editing an EXISTING agent entry in a session keeps its attribution: the
+        // person may correct times or text, but the save must not silently turn
+        // machine time into human labour that counts towards attendance (ADR-025
+        // §4 exception, §3; attendance reads human time only, §5).
         $isAgentChannel = $this->tokenStorage->getToken() instanceof ApiAccessToken;
+        $isExistingEntry = null !== $entry->getId();
+        $isSessionEditOfAgentEntry = !$isAgentChannel
+            && $isExistingEntry
+            && EntrySource::AGENT === $entry->getSource();
         if ($isAgentChannel) {
-            $source = EntrySource::tryFrom((string) $entrySaveDto->source) ?? EntrySource::HUMAN;
+            // An update that omits the attribution (a partial or older token client)
+            // keeps the stored values instead of defaulting to a plain human entry.
+            $source = EntrySource::tryFrom((string) $entrySaveDto->source)
+                ?? ($isExistingEntry ? $entry->getSource() : EntrySource::HUMAN);
+            $estimated = $entrySaveDto->estimated ?? ($isExistingEntry && $entry->isEstimated());
+            $touchpoints = $entrySaveDto->touchpoints ?? ($isExistingEntry ? $entry->getTouchpoints() : null);
             $entry->setSource($source)
                 ->setLoggedBy($user)
                 ->setResponsibleUser($user)
-                ->setEstimated($entrySaveDto->estimated ?? false)
-                ->setTouchpoints($entrySaveDto->touchpoints);
-        } else {
+                ->setEstimated($estimated)
+                ->setTouchpoints($touchpoints);
+        } elseif (!$isSessionEditOfAgentEntry) {
             $entry->setSource(EntrySource::HUMAN)
                 ->setLoggedBy($user)
                 ->setEstimated(false)

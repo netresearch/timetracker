@@ -208,9 +208,14 @@ export interface SavedEntryResult {
 // Build a cache row from a save response. A created entry must land in entries.data
 // the instant its save returns 200 — not on a follow-up refetch — so it survives a
 // session-expiry (issue #408) or any other error on that refetch.
-function savedEntryToRow(saved: SavedEntryResult['result']): TrackingEntryRow {
+function savedEntryToRow(saved: SavedEntryResult['result'], previous?: TrackingEntry): TrackingEntryRow {
   return {
     entry: {
+      // Row fields the save response does not return stay as cached; everything set
+      // below overrides them. Today every TrackingEntry field is set below, so this
+      // only matters for fields added to the list payload later (e.g. a pair link):
+      // they keep their cached value until the reconciling refetch.
+      ...previous,
       id: saved.id,
       date: saved.date,
       start: saved.start,
@@ -226,10 +231,11 @@ function savedEntryToRow(saved: SavedEntryResult['result']): TrackingEntryRow {
       class: saved.class,
       worklog: null,
       extTicket: saved.extTicket ?? null,
-      // A web-UI (session) save is always a human self-log — ADR-025 §4 forces
-      // source=human and never marks it estimated, regardless of the body.
-      source: 'human',
-      estimated: false,
+      // ADR-025 §4: a web-UI (session) save is a human self-log and never marks
+      // an entry estimated — except that editing an existing agent entry leaves its
+      // attribution untouched on the server, so the cached row keeps it too.
+      source: previous?.source === 'agent' ? 'agent' : 'human',
+      estimated: previous?.source === 'agent' ? previous.estimated : false,
     },
   }
 }
@@ -240,7 +246,13 @@ function savedEntryToRow(saved: SavedEntryResult['result']): TrackingEntryRow {
 // (re-classed server-side) are reconciled by the follow-up invalidate, but losing
 // that refetch must never drop the user's just-saved work.
 export function upsertSavedEntry(queryClient: QueryClient, saved: SavedEntryResult['result']): void {
-  const row = savedEntryToRow(saved)
+  // Look the previous row up across every cached range first: an edit can move an
+  // entry into a range that has not cached it yet.
+  const previous = queryClient
+    .getQueriesData<TrackingEntryRow[]>({ queryKey: [ENTRIES_KEY] })
+    .flatMap(([, rows]) => rows ?? [])
+    .find((candidate) => candidate?.entry?.id === saved.id)?.entry
+  const row = savedEntryToRow(saved, previous)
   queryClient.setQueriesData<TrackingEntryRow[]>({ queryKey: [ENTRIES_KEY] }, (existing) => {
     if (existing === undefined) {
       return existing
