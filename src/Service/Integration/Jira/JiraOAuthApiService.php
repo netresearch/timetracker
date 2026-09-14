@@ -525,7 +525,8 @@ class JiraOAuthApiService
      * Reads all worklogs of one issue (ADR-023 read path 3).
      *
      * @throws JiraApiException
-     * @throws JsonException    when a response body is not JSON
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      *
      * @return list<JiraWorkLog>
      */
@@ -562,7 +563,8 @@ class JiraOAuthApiService
      * with results still pending — the normal path fetches every page.
      *
      * @throws JiraApiException
-     * @throws JsonException    when a response body is not JSON
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function searchIssueKeysWithWorklogs(string $jql, int $limit = 500): JiraIssueKeySearchResult
     {
@@ -643,7 +645,8 @@ class JiraOAuthApiService
      * The Jira account behind the current token (GET myself) — for author filtering.
      *
      * @throws JiraApiException
-     * @throws JsonException    when a response body is not JSON
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function getMyself(): JiraUserIdentity
     {

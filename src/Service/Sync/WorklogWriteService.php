@@ -17,6 +17,7 @@ use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use App\Repository\WorklogSyncStateRepository;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use DateTimeImmutable;
@@ -41,7 +42,8 @@ class WorklogWriteService
 
     /**
      * @throws JiraApiException
-     * @throws JsonException    when a response body is not JSON
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function push(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
     {
@@ -94,7 +96,8 @@ class WorklogWriteService
      * so this also covers orphaned recreation.
      *
      * @throws JiraApiException
-     * @throws JsonException    when a response body is not JSON
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function forcePush(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
     {
