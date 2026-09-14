@@ -285,7 +285,13 @@ final class SaveEntryAction extends BaseTrackingController
         // A session request is ALWAYS a plain human self-log — body source/estimated
         // ignored, so a person cannot mark work agent and drop it from attendance/ArbZG.
         // The responsible user is the token owner, never a client-supplied id (IDOR).
+        // Editing an EXISTING agent entry in a session keeps its attribution: the
+        // person may correct times or text, but the save must not silently turn
+        // machine time into human labour (ADR-025 §5).
         $isAgentChannel = $this->tokenStorage->getToken() instanceof ApiAccessToken;
+        $isSessionEditOfAgentEntry = !$isAgentChannel
+            && null !== $entry->getId()
+            && EntrySource::AGENT === $entry->getSource();
         if ($isAgentChannel) {
             $source = EntrySource::tryFrom((string) $entrySaveDto->source) ?? EntrySource::HUMAN;
             $entry->setSource($source)
@@ -293,7 +299,7 @@ final class SaveEntryAction extends BaseTrackingController
                 ->setResponsibleUser($user)
                 ->setEstimated($entrySaveDto->estimated ?? false)
                 ->setTouchpoints($entrySaveDto->touchpoints);
-        } else {
+        } elseif (!$isSessionEditOfAgentEntry) {
             $entry->setSource(EntrySource::HUMAN)
                 ->setLoggedBy($user)
                 ->setEstimated(false)

@@ -642,6 +642,11 @@ export default function Tracking() {
     }
   }
 
+  // The person's own timeline (ADR-025): agent entries run in parallel by design,
+  // so "the last entry" for Add/Continue/Prolong is always the last HUMAN one —
+  // an agent twin sorting first must neither seed the next start nor be prolonged.
+  const humanEntries = (): TrackingEntry[] => (entries.data ?? []).filter((entry) => entry.source !== 'agent')
+
   // Suggested start for a fresh row / empty start cell: continue from the end of
   // the chronologically last entry OF THE TARGET DAY — the day the row is added
   // to, which is always today for Add/Continue (#588). Entries are sorted
@@ -651,7 +656,7 @@ export default function Tracking() {
   // at the current wall-clock time, not an older day's last end.
   const suggestedStart = (): string => {
     const todayIso = dmyToIso(todayDmy())
-    const lastOfDay = (entries.data ?? []).find((entry) => dmyToIso(str(entry.date)) === todayIso)
+    const lastOfDay = humanEntries().find((entry) => dmyToIso(str(entry.date)) === todayIso)
 
     return lastOfDay !== undefined ? (str(lastOfDay.end) || nowHi()) : nowHi()
   }
@@ -932,13 +937,13 @@ export default function Tracking() {
   function activeOrLatestEntry(): TrackingEntry | undefined {
     const active = activeEntry()
 
-    return active !== undefined && num(active.id) > 0 ? active : (entries.data ?? [])[0]
+    return active !== undefined && num(active.id) > 0 ? active : humanEntries()[0]
   }
 
-  // The most recent saved entry (entries are returned newest-first) — the only
-  // row whose end Prolong may rewrite to now without corrupting an older span.
+  // The most recent saved human entry (entries are returned newest-first) — the
+  // only row whose end Prolong may rewrite to now without corrupting an older span.
   const isLatestEntry = (entry: TrackingEntry): boolean => {
-    const latest = (entries.data ?? [])[0]
+    const latest = humanEntries()[0]
 
     return latest !== undefined && num(latest.id) === num(entry.id)
   }
@@ -1067,7 +1072,7 @@ export default function Tracking() {
 
   // Prolong-last (Alt+P): set the latest entry's end to now and save it.
   async function prolongLast(entry?: TrackingEntry): Promise<void> {
-    const base = entry ?? (entries.data ?? [])[0]
+    const base = entry ?? humanEntries()[0]
     if (base === undefined) {
       return
     }

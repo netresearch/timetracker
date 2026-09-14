@@ -180,6 +180,71 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
         self::assertSame(1, $entry->getResponsibleUser()->getId());
     }
 
+    public function testSessionEditKeepsAgentAttributionOfExistingAgentEntry(): void
+    {
+        // The agent logs its walltime through the token channel ...
+        $this->useToken(['entries:write']);
+        $user = $this->tokenUser();
+        $entryId = $this->invokeAction(new EntrySaveDto(
+            date: self::DATE,
+            start: self::START,
+            end: self::END,
+            description: 'agent walltime',
+            project_id: 1,
+            customer_id: 1,
+            activity_id: 1,
+            source: 'agent',
+            estimated: false,
+            touchpoints: ['prompts' => 3],
+        ), $user);
+
+        // ... then the person corrects it in the web grid. The edit must not
+        // silently turn machine time into human labour (ADR-025 §5): the source
+        // and the agent attribution survive, only the edited fields change.
+        $this->logInSession('unittest');
+        $this->sessionSave($this->saveParameters([
+            'id' => $entryId,
+            'end' => '10:30:00',
+            'description' => 'agent walltime (corrected)',
+        ]));
+        $entry = $this->reloadEntry($entryId);
+
+        self::assertSame(EntrySource::AGENT, $entry->getSource());
+        self::assertFalse($entry->isEstimated());
+        self::assertSame(['prompts' => 3], $entry->getTouchpoints());
+        self::assertInstanceOf(User::class, $entry->getResponsibleUser());
+        self::assertSame(1, $entry->getResponsibleUser()->getId());
+        self::assertSame('agent walltime (corrected)', $entry->getDescription());
+        self::assertSame('10:30', $entry->getEnd()->format('H:i'));
+    }
+
+    public function testSessionEditOfEstimatedHumanEntryConfirmsIt(): void
+    {
+        // The delegated human estimate stays human; a person editing it in the
+        // web grid takes ownership of the figure, so it is no longer an estimate.
+        $this->useToken(['entries:write']);
+        $user = $this->tokenUser();
+        $entryId = $this->invokeAction(new EntrySaveDto(
+            date: self::DATE,
+            start: self::START,
+            end: self::END,
+            description: 'delegated human estimate',
+            project_id: 1,
+            customer_id: 1,
+            activity_id: 1,
+            source: 'human',
+            estimated: true,
+            touchpoints: ['prompts' => 7],
+        ), $user);
+
+        $this->logInSession('unittest');
+        $this->sessionSave($this->saveParameters(['id' => $entryId, 'end' => '09:45:00']));
+        $entry = $this->reloadEntry($entryId);
+
+        self::assertSame(EntrySource::HUMAN, $entry->getSource());
+        self::assertFalse($entry->isEstimated());
+    }
+
     private function tokenUser(): User
     {
         $user = self::getContainer()->get(UserRepository::class)->find(1);

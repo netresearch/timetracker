@@ -856,6 +856,31 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('Alt+P prolongs the latest HUMAN entry, never an agent twin sorting first (ADR-025)', async () => {
+    // Newest-first: the agent twin (same start, later end) comes back first. Prolong
+    // must still target the person's own entry, not rewrite the machine's walltime.
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 2, start: '09:00', end: '11:00', description: 'AgentTwin', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '10:00', description: 'HumanWork', class: 0, source: 'human', estimated: true } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    postJson.mockResolvedValue({})
+    const { getByRole, unmount } = renderTracking()
+    // The estimated badge joins the description cell's accessible name, so match on the text.
+    await waitFor(() => expect(getByRole('gridcell', { name: /HumanWork/ })).toBeInTheDocument())
+
+    fireEvent.keyDown(document, { key: 'p', altKey: true })
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 1 })))
+    expect(postJson).not.toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ id: 2 }))
+
+    unmount()
+  })
+
   it('renders the ticket as a link to its ticket system', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, customer: 7, project: 9, ticket: 'APO-42', class: 0 } }],
