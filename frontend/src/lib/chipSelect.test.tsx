@@ -81,7 +81,7 @@ describe('ChipSelect (jsdom)', () => {
     await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
 
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Escape' })
-    expect(onCancel).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(onCancel).toHaveBeenCalledTimes(1))
     expect(onCommit).not.toHaveBeenCalled()
   })
 
