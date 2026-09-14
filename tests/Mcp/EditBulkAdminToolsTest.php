@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Tests\Mcp;
 
+use App\Entity\Entry;
+use App\Enum\EntrySource;
 use App\Mcp\Tool\BulkLogTimeTool;
 use App\Mcp\Tool\ListCustomersTool;
 use App\Mcp\Tool\ListUsersTool;
@@ -46,6 +48,58 @@ final class EditBulkAdminToolsTest extends AbstractWebTestCase
         // Ticket and duration were not passed → kept.
         self::assertSame('SA-1', $result['result']['ticket']);
         self::assertSame('01:00', $result['result']['duration']);
+    }
+
+    public function testUpdateEntryKeepsAgentAttributionOfADualWrittenPair(): void
+    {
+        // ADR-025: a partial update must not reset the attribution. Before the fix the
+        // merged DTO carried no source, so the token channel defaulted it to human and
+        // an agent entry silently became human labour (and lost estimated/touchpoints).
+        $this->useToken(['entries:write', 'reporting:read']);
+        $container = self::getContainer();
+        $written = $container->get(LogTimeTool::class)->logTime(
+            project: '1',
+            activity: '1',
+            ticket: 'SA-7',
+            date: '2024-06-03',
+            description: 'pair',
+            agentWalltimeMinutes: 90,
+            humanMinutes: 30,
+            touchpoints: ['prompts' => 4],
+        );
+        $agentBody = $written['agent'] ?? null;
+        $humanBody = $written['human'] ?? null;
+        self::assertIsArray($agentBody);
+        self::assertIsArray($humanBody);
+        $agentResult = $agentBody['result'] ?? null;
+        $humanResult = $humanBody['result'] ?? null;
+        self::assertIsArray($agentResult);
+        self::assertIsArray($humanResult);
+        $agentId = $agentResult['id'] ?? null;
+        $humanId = $humanResult['id'] ?? null;
+        self::assertIsInt($agentId);
+        self::assertIsInt($humanId);
+
+        $updateEntryTool = $container->get(UpdateEntryTool::class);
+        $updateEntryTool->updateEntry(entryId: $agentId, description: 'agent corrected');
+        $updateEntryTool->updateEntry(entryId: $humanId, description: 'human corrected');
+
+        // The save response carries no attribution fields, so read the stored rows.
+        $manager = $container->get('doctrine')->getManager();
+        $manager->clear();
+        $agentEntry = $manager->getRepository(Entry::class)->find($agentId);
+        $humanEntry = $manager->getRepository(Entry::class)->find($humanId);
+        self::assertInstanceOf(Entry::class, $agentEntry);
+        self::assertInstanceOf(Entry::class, $humanEntry);
+
+        self::assertSame('agent corrected', $agentEntry->getDescription());
+        self::assertSame(EntrySource::AGENT, $agentEntry->getSource());
+        self::assertFalse($agentEntry->isEstimated());
+
+        self::assertSame('human corrected', $humanEntry->getDescription());
+        self::assertSame(EntrySource::HUMAN, $humanEntry->getSource());
+        self::assertTrue($humanEntry->isEstimated());
+        self::assertSame(['prompts' => 4], $humanEntry->getTouchpoints());
     }
 
     public function testUpdateEntryRejectsAnotherUsersEntry(): void
