@@ -206,6 +206,77 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryUpdated(new EntryEvent($entry));
     }
 
+    public function testOnEntryUpdatedWithdrawsTheWorklogWhenAnEntryBecomesAgentWalltime(): void
+    {
+        // Re-attributing a synced human entry to the agent must take its worklog off the
+        // human labour line: the sync ignores agent entries from then on, so no later run
+        // would remove it.
+        [$entry, $previousEntry] = $this->syncedEntryReattributedToAgent();
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, $previousEntry)
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): void {
+                $deleted->setWorklogId(null); // what the Jira client does on success
+            });
+        $this->worklogWriteService->expects(self::never())
+            ->method('push');
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertNull($entry->getWorklogId());
+        self::assertFalse($entry->getSyncedToTicketsystem());
+    }
+
+    public function testOnEntryUpdatedKeepsTheWorklogLinkWhenTheWithdrawalFails(): void
+    {
+        [$entry, $previousEntry] = $this->syncedEntryReattributedToAgent();
+
+        $this->worklogWriteService->method('delete')
+            ->willThrowException(new JiraApiException('Jira unavailable', 503));
+        $this->logger->expects(self::once())
+            ->method('error')
+            ->with('JIRA worklog withdrawal failed', self::anything());
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame(555, $entry->getWorklogId());
+        self::assertTrue($entry->getSyncedToTicketsystem());
+    }
+
+    /**
+     * A synced entry (worklog 555) whose save changed its source from human to agent.
+     *
+     * @return array{Entry, Entry} the saved entry and its pre-save snapshot
+     */
+    private function syncedEntryReattributedToAgent(): array
+    {
+        $ticketSystem = self::createStub(TicketSystem::class);
+        $ticketSystem->method('getBookTime')->willReturn(true);
+        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('getTicketSystem')->willReturn($ticketSystem);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $previousEntry = new Entry();
+        $previousEntry->setUser($user);
+        $previousEntry->setProject($project);
+        $previousEntry->setTicket('ABC-1');
+        $previousEntry->setWorklogId(555);
+        $previousEntry->setSyncedToTicketsystem(true);
+
+        $entry = clone $previousEntry;
+        $entry->setSource(EntrySource::AGENT);
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        return [$entry, $previousEntry];
+    }
+
     public function testOnEntryCreatedDoesNotSyncWhenNoProject(): void
     {
         $user = self::createStub(User::class);

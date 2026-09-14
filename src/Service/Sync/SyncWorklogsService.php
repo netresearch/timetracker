@@ -337,12 +337,14 @@ class SyncWorklogsService extends AbstractSyncRunService
 
         // Whatever remains on the remote side has no matching entry — pool it for move-detection
         // (delete-by-absence relink) and unattended import.
+        $linkedEntries = $this->entryRepository->findByWorklogIdsAndTicketSystem(array_keys($remoteByWorklogId), $context->ticketSystem);
         foreach ($remoteByWorklogId as $worklogId => $record) {
             // A worklog that already belongs to a local entry outside the candidates (e.g.
             // agent walltime synced before ADR-025 §7 was enforced) is neither a move
             // target nor an import candidate.
-            if ($this->entryRepository->findOneByWorklogIdAndTicketSystem($worklogId, $context->ticketSystem) instanceof Entry) {
-                $context->syncRun->incrementCounter('already_linked');
+            $linkedEntry = $linkedEntries[$worklogId] ?? null;
+            if ($linkedEntry instanceof Entry) {
+                $this->reportLinkedRemoteWorklog($context->syncRun, $linkedEntry, $worklogId, $record['issueKey']);
 
                 continue;
             }
@@ -536,7 +538,7 @@ class SyncWorklogsService extends AbstractSyncRunService
                 break;
             case WriteOutcome::SKIPPED:
                 $syncRun->incrementCounter('errors');
-                $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, entry: $entry, reason: 'push skipped: entry has no pushable ticket');
+                $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, entry: $entry, reason: 'push skipped: entry has no pushable ticket or is agent walltime');
                 break;
         }
     }

@@ -12,6 +12,7 @@ namespace App\Service\Sync;
 use App\Entity\Entry;
 use App\Entity\SyncRun;
 use App\Entity\SyncRunItem;
+use App\Enum\EntrySource;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use DateTimeImmutable;
@@ -99,6 +100,30 @@ abstract class AbstractSyncRunService
                 ->setReason($reason)
                 ->setPayload($payload)
                 ->setCreatedAt($this->now()),
+        );
+    }
+
+    /**
+     * A remote worklog already linked to a local entry that is not part of this run: it is
+     * neither an import nor a move candidate. Agent walltime booked before ADR-025 §7 was
+     * enforced is reported as an item, so the worklog can be removed in Jira.
+     */
+    protected function reportLinkedRemoteWorklog(SyncRun $syncRun, Entry $entry, int $worklogId, string $issueKey): void
+    {
+        if (EntrySource::AGENT !== $entry->getSource()) {
+            $syncRun->incrementCounter('already_linked');
+
+            return;
+        }
+
+        $syncRun->incrementCounter('agent_worklogs');
+        $this->addItem(
+            $syncRun,
+            SyncItemKind::ERROR,
+            issueKey: $issueKey,
+            remoteWorklogId: $worklogId,
+            entry: $entry,
+            reason: 'agent walltime is booked as a Jira worklog (ADR-025 §7); remove the worklog in Jira',
         );
     }
 }

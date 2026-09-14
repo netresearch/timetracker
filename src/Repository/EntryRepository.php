@@ -1326,6 +1326,40 @@ class EntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Entries already linked to any of the given Jira worklogs on this ticket system, keyed
+     * by worklog id — the batched form of {@see self::findOneByWorklogIdAndTicketSystem()}.
+     *
+     * @param list<int> $worklogIds
+     *
+     * @return array<int, Entry>
+     */
+    public function findByWorklogIdsAndTicketSystem(array $worklogIds, TicketSystem $ticketSystem): array
+    {
+        if ([] === $worklogIds) {
+            return [];
+        }
+
+        $result = $this->createQueryBuilder('e')
+            ->join('e.project', 'p')
+            ->where('e.worklogId IN (:worklogIds)')
+            ->andWhere('p.ticketSystem = :ticketSystem')
+            ->setParameter('worklogIds', $worklogIds)
+            ->setParameter('ticketSystem', $ticketSystem)
+            ->getQuery()
+            ->getResult();
+
+        assert(is_array($result));
+
+        $byWorklogId = [];
+        foreach ($result as $entry) {
+            assert($entry instanceof Entry);
+            $byWorklogId[(int) $entry->getWorklogId()] = $entry;
+        }
+
+        return $byWorklogId;
+    }
+
+    /**
      * Unlinked entry matching user+ticket+day+duration — the ADR-023 probable-duplicate heuristic.
      */
     public function findUnlinkedDuplicate(User $user, string $ticket, DateTimeInterface $day, int $durationMinutes): ?Entry

@@ -93,17 +93,30 @@ class EntryEventSubscriber implements EventSubscriberInterface
     public function onEntryUpdated(EntryEvent $entryEvent): void
     {
         $entry = $entryEvent->getEntry();
+        $previousEntry = $this->getPreviousEntry($entryEvent);
 
         $this->logger?->info('Entry updated');
 
         $this->invalidateUserEntryCache($entry);
+
+        // ADR-025 §7: an entry re-attributed to the agent leaves the human labour line.
+        // Its worklog would otherwise stay booked in Jira, and since the sync ignores
+        // agent entries, nothing else would ever take it down.
+        if ($previousEntry instanceof Entry && $this->becameAgentWalltime($entry, $previousEntry)) {
+            try {
+                $this->withdrawWorklog($entry, $previousEntry);
+                $this->logger?->info('JIRA worklog withdrawn from agent walltime entry');
+            } catch (Exception $e) {
+                $this->logger?->error('JIRA worklog withdrawal failed', ['exception' => $e]);
+            }
+        }
 
         // Sync on every update (v4 parity): the lease-checked push creates a
         // new worklog or updates the existing one based on the worklog id,
         // so entries that were never synced are caught up on their next save.
         if ($this->shouldAutoSync($entry)) {
             try {
-                $this->syncWorklog($entry, $this->getPreviousEntry($entryEvent));
+                $this->syncWorklog($entry, $previousEntry);
                 $this->logger?->info('JIRA worklog updated');
             } catch (Exception $e) {
                 // Error, not warning: see onEntryDeleted — a warning is swallowed by
@@ -288,6 +301,29 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         return array_values($unique);
+    }
+
+    private function becameAgentWalltime(Entry $entry, Entry $previousEntry): bool
+    {
+        return EntrySource::AGENT === $entry->getSource()
+            && EntrySource::AGENT !== $previousEntry->getSource()
+            && null !== $previousEntry->getWorklogId();
+    }
+
+    /**
+     * Deletes the worklog through the pre-save snapshot, whose ticket is the one the
+     * worklog lives on, and unlinks the entry once it is gone. A failed delete leaves
+     * the link in place so the worklog is not lost track of.
+     */
+    private function withdrawWorklog(Entry $entry, Entry $previousEntry): void
+    {
+        $this->deleteWorklog($previousEntry);
+
+        if (null === $previousEntry->getWorklogId()) {
+            $entry->setWorklogId(null);
+            $entry->setSyncedToTicketsystem(false);
+            $this->managerRegistry->getManager()->flush();
+        }
     }
 
     private function shouldAutoSync(Entry $entry): bool

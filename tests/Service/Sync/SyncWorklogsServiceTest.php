@@ -54,6 +54,9 @@ use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 
 use function array_map;
 use function array_values;
+use function in_array;
+
+use const ARRAY_FILTER_USE_KEY;
 
 #[CoversClass(SyncWorklogsService::class)]
 #[AllowMockObjectsWithoutExpectations]
@@ -110,6 +113,13 @@ final class SyncWorklogsServiceTest extends TestCase
         );
         $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturnCallback(
             fn (int $worklogId): ?Entry => $this->entriesByWorklogId[$worklogId] ?? null,
+        );
+        $this->entryRepository->method('findByWorklogIdsAndTicketSystem')->willReturnCallback(
+            fn (array $worklogIds): array => array_filter(
+                $this->entriesByWorklogId,
+                static fn (int $worklogId): bool => in_array($worklogId, $worklogIds, true),
+                ARRAY_FILTER_USE_KEY,
+            ),
         );
         $this->entryRepository->method('findJiraSyncCandidates')->willReturnCallback(
             fn (): array => $this->candidates,
@@ -467,6 +477,11 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame(11, $human->getWorklogId());
         self::assertSame(0, $syncRun->getCounters()['relinked'] ?? 0);
         self::assertSame(0, $syncRun->getCounters()['remote_only'] ?? 0);
+        // What does happen: the clean human entry follows its vanished worklog, and the
+        // agent's worklog is reported for removal in Jira.
+        self::assertSame(1, $syncRun->getCounters()['deleted_local'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['agent_worklogs'] ?? 0);
+        self::assertContains(SyncItemKind::ERROR, $this->itemKinds($syncRun));
     }
 
     public function testUnmatchedRemoteImportedWhenActivityConfigured(): void

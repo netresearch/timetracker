@@ -121,4 +121,19 @@ final class EntryRepositorySyncCandidatesTest extends AbstractWebTestCase
         self::assertContains($human->getId(), $ids);
         self::assertNotContains($agentWalltime->getId(), $ids);
     }
+
+    public function testFindByWorklogIdsAndTicketSystemKeysLinkedEntriesByWorklogId(): void
+    {
+        $human = $this->persistEntry('ABC-20', self::IN_RANGE_DAY, self::NINE, self::TEN)->setWorklogId(900001);
+        $agentWalltime = $this->persistEntry('ABC-21', self::IN_RANGE_DAY, self::TEN, '11:00', EntrySource::AGENT)->setWorklogId(900002);
+        $this->persistEntry('ABC-22', self::IN_RANGE_DAY, '11:00', '12:00')->setWorklogId(900003);
+        $this->entityManager->flush();
+
+        $found = $this->entryRepository->findByWorklogIdsAndTicketSystem([900001, 900002, 900099], $this->ticketSystem);
+
+        self::assertEqualsCanonicalizing([900001, 900002], array_keys($found));
+        self::assertSame($human, $found[900001]);
+        self::assertSame($agentWalltime, $found[900002]);
+        self::assertSame([], $this->entryRepository->findByWorklogIdsAndTicketSystem([], $this->ticketSystem));
+    }
 }

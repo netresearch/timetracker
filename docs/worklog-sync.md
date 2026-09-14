@@ -26,7 +26,9 @@ Each synced target user becomes one `sync_run` (type `sync`, triggered by the to
 - both changed, different fields → merge (pull remote fields, push the result),
 - both changed, same field → parked as **conflict**, no writes,
 - deleted in Jira → move detection first (a matching new worklog re-links the entry); otherwise a clean entry is deleted, a locally modified entry is parked as **orphaned**,
-- worklog with no matching entry → auto-imported when the ticket system has a default import activity, otherwise reported as `remote_only`.
+- worklog with no matching entry → auto-imported when the ticket system has a default import activity, otherwise reported as `remote_only`; a worklog that already belongs to an entry outside this run counts as `already_linked` and is left alone.
+
+Agent walltime entries (ADR-025 §7) are never pushed or reconciled — a Jira worklog is the human labour line. A worklog still linked to an agent entry (booked before that rule) counts as `agent_worklogs` and is reported as an `error` item naming the entry, so it can be removed in Jira. Re-attributing a synced entry to the agent removes its worklog on save.
 
 There is **no cursor**. Each run rescans a bounded date window; identity matching by worklog id makes re-runs idempotent, so overlapping windows are free and a failed run simply re-reads the same window.
 
@@ -95,7 +97,7 @@ True conflicts are never auto-resolved — they are parked for a human. Every ru
 | `diverged` | Linked pair differs but has no sync base to diff against; resolve it via the UI or the conflicts API. |
 | `unresolved_project` / `probable_duplicate` | Import parked the worklog for a human (see ADR-023 §2). |
 | `shadow_user_created` | A PO sync-all run created a placeholder user for a Jira author with no TimeTracker account. |
-| `error` | Item-level failure (e.g. unresolvable issue id, or a Jira-permission denial on a write); the run continues. |
+| `error` | Item-level failure (e.g. unresolvable issue id, or a Jira-permission denial on a write), or a Jira worklog still booked for an agent walltime entry; the run continues. |
 | `truncated` | Issue-search cap hit; remaining changes come with the next run. |
 
 Inspect parked items via the command output, the [UI](#ui), the [API & MCP surfaces](#api--mcp) below, or the `sync_run` / `sync_run_item` and `worklog_sync_state` tables.
