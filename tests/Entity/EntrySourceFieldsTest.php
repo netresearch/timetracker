@@ -6,6 +6,7 @@ namespace Tests\Entity;
 
 use App\Entity\Entry;
 use App\Enum\EntrySource;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 
 final class EntrySourceFieldsTest extends TestCase
@@ -59,23 +60,46 @@ final class EntrySourceFieldsTest extends TestCase
         self::assertNull($agent->getPairedEntry());
     }
 
-    public function testRePairingReleasesThePreviousPartner(): void
+    public function testPairingTheSamePairAgainChangesNothing(): void
     {
-        $first = new Entry();
-        $second = new Entry();
-        $third = new Entry();
-        $first->pairWith($second);
+        $agent = new Entry();
+        $human = new Entry();
+        $agent->pairWith($human);
 
-        // The unique index allows one link per entry: $first must not keep pointing at
-        // $second once $second is paired with $third.
-        $third->pairWith($second);
+        $human->pairWith($agent);
 
-        self::assertNull($first->getPairedEntry());
-        self::assertSame($third, $second->getPairedEntry());
-        self::assertSame($second, $third->getPairedEntry());
+        self::assertSame($human, $agent->getPairedEntry());
+        self::assertSame($agent, $human->getPairedEntry());
+    }
 
-        $first->unlinkPartnerOnRemove();
+    public function testRefusesToPairAnEntryThatIsPairedElsewhere(): void
+    {
+        // Moving a link cannot be written in one flush without risking the unique index,
+        // so an existing pair is never silently rewired — from either side.
+        $paired = new Entry();
+        $paired->pairWith(new Entry());
 
-        self::assertSame($third, $second->getPairedEntry());
+        $this->expectException(LogicException::class);
+
+        $paired->pairWith(new Entry());
+    }
+
+    public function testRefusesToPairWithAnEntryThatIsPairedElsewhere(): void
+    {
+        $paired = new Entry();
+        $paired->pairWith(new Entry());
+
+        $this->expectException(LogicException::class);
+
+        new Entry()->pairWith($paired);
+    }
+
+    public function testRefusesToPairAnEntryWithItself(): void
+    {
+        $entry = new Entry();
+
+        $this->expectException(LogicException::class);
+
+        $entry->pairWith($entry);
     }
 }

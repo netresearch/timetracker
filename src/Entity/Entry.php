@@ -18,6 +18,7 @@ use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
+use LogicException;
 use Override;
 
 use function sprintf;
@@ -629,17 +630,27 @@ class Entry extends Base
 
     /**
      * Link this entry and $other symmetrically, so either side knows its partner
-     * without an extra query. A previous partner of either side is released first;
-     * left pointing at its old partner, it would collide with the unique index on
-     * the next flush.
+     * without an extra query.
+     *
+     * A pair is formed once, between two unpaired entries. Moving a link would need the
+     * old partner released in an earlier flush than the new link is written — Doctrine
+     * does not order the UPDATEs, so a single flush can hit the unique index — hence
+     * re-pairing is refused instead of half-supported.
+     *
+     * @throws LogicException when pairing with itself or with an entry already paired elsewhere
      */
     public function pairWith(self $other): static
     {
-        foreach ([$this, $other] as $side) {
-            $previous = $side->pairedEntry;
-            if ($previous instanceof self && $previous !== $this && $previous !== $other && $previous->pairedEntry === $side) {
-                $previous->pairedEntry = null;
-            }
+        if ($other === $this) {
+            throw new LogicException('An entry cannot be paired with itself.');
+        }
+
+        if ($this->pairedEntry === $other && $other->pairedEntry === $this) {
+            return $this;
+        }
+
+        if ($this->pairedEntry instanceof self || $other->pairedEntry instanceof self) {
+            throw new LogicException('Both entries must be unpaired before they can be paired.');
         }
 
         $this->pairedEntry = $other;
@@ -658,7 +669,7 @@ class Entry extends Base
     #[ORM\PreRemove]
     public function unlinkPartnerOnRemove(): void
     {
-        if ($this->pairedEntry instanceof self && $this->pairedEntry->pairedEntry === $this) {
+        if ($this->pairedEntry instanceof self) {
             $this->pairedEntry->pairedEntry = null;
         }
     }
