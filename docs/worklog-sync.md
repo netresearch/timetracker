@@ -83,7 +83,7 @@ There is **no in-app polling** — schedule the CLI command per ticket system.
 
 **systemd timer** (alternative): a `tt-worklog-sync.service` running the same `docker compose exec -T app php bin/console tt:sync-worklogs 1`, plus a `tt-worklog-sync.timer` with `OnCalendar=*:0/15`.
 
-Each target's issue-key search is capped at 500 issues; when more match, a `truncated` item is reported and the next run's rescanned window picks up the remainder (idempotency makes that free), so short cadences are safe.
+Each target's issue-key search reads pages of up to 500 issues and stops after 100 pages (at most 50,000 issues, `JiraOAuthApiService::MAX_SEARCH_PAGES`); when more match, a `truncated` item is reported and the next run's rescanned window picks up the remainder (idempotency makes that free), so short cadences are safe.
 
 ## What gets parked, and where to see it
 
@@ -186,5 +186,5 @@ This only affects the cron pull/reconcile; lease-checked pushes on the normal en
 | A user's worklogs are not synced | They haven't opted in, and no sync-all PO can see them; or their Jira connection has no token / is disconnected. |
 | Worklogs added in Jira show up as `remote_only` instead of entries | No `sync_default_activity_id` configured on the ticket system. |
 | A PO's *Sync all* toggle is missing | The account lacks ROLE_PL / ROLE_ADMIN (`can_sync_all` is false). |
-| `truncated` items keep appearing | More than 500 matching issues in the window — the next run picks up the remainder; shorten the window or the cadence. |
+| `truncated` items keep appearing | More than 100 search pages (up to 50,000 matching issues) in the window — the next run picks up the remainder; shorten the window or the cadence. |
 | A run fails with a token error | The responsible user's OAuth token expired — they re-authorize via the OAuth flow. |
