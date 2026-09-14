@@ -64,9 +64,15 @@ class ConflictResolutionService
         }
 
         // ADR-025 §7: agent walltime is not synced. "Local wins" could never push it, and
-        // "remote wins" on a missing worklog would delete the agent entry.
+        // "remote wins" on a missing worklog would delete the agent entry. Nothing else
+        // would ever clear such a state (parked before agent time stopped syncing), so
+        // resolving it drops the state for either winner without touching Jira or the
+        // entry; a worklog still in Jira is reported by the next sync run.
         if (EntrySource::AGENT === $entry->getSource()) {
-            return new ResolutionResult(false, '', 'entry is agent walltime, which is never synced (ADR-025 §7); remove its worklog in Jira instead');
+            $this->entityManager->remove($state);
+            $this->entityManager->flush();
+
+            return new ResolutionResult(true, 'dropped_agent_state');
         }
 
         $api = $this->jiraOAuthApiFactory->create($this->tokenUser($entry, $ticketSystem, $actor), $ticketSystem);

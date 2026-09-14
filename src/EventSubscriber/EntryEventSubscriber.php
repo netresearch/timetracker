@@ -227,12 +227,16 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
     }
 
-    private function deleteWorklog(Entry $entry): void
+    /**
+     * @return bool whether the worklog is gone: deleted on one system, or reported
+     *              missing by every system tried
+     */
+    private function deleteWorklog(Entry $entry): bool
     {
         $user = $entry->getUser();
         $project = $entry->getProject();
         if (!$user instanceof User || !$project instanceof Project) {
-            return;
+            return false;
         }
 
         // Delete on the systems the worklog could have been booked on, mirroring
@@ -241,24 +245,27 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // own system but would delete only on the (missing) internal one.
         $ticketSystems = $this->bookableTicketSystems($project);
         if ([] === $ticketSystems) {
-            return;
+            return false;
         }
 
         $lastError = null;
+        $goneEverywhereTried = true;
         foreach ($ticketSystems as $ticketSystem) {
             // deleteEntryJiraWorkLog nulls the worklog id once it removes the entry
-            // (and no-ops on a not-found), so stop as soon as it is gone.
+            // (and keeps it on a not-found, since another system may hold the
+            // worklog), so stop as soon as it is gone.
             if (null === $entry->getWorklogId()) {
                 break;
             }
 
             try {
                 $api = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
-                $this->worklogWriteService->delete($api, $entry);
+                $goneEverywhereTried = $this->worklogWriteService->delete($api, $entry) && $goneEverywhereTried;
             } catch (JiraApiException $jiraApiException) {
                 // Keep trying the remaining systems — a failure on one (auth,
                 // network, wrong instance) must not prevent cleanup on another.
                 $lastError = $jiraApiException;
+                $goneEverywhereTried = false;
             }
         }
 
@@ -271,6 +278,8 @@ class EntryEventSubscriber implements EventSubscriberInterface
         if (null !== $entry->getWorklogId() && $lastError instanceof JiraApiException) {
             throw $lastError;
         }
+
+        return null === $entry->getWorklogId() || $goneEverywhereTried;
     }
 
     /**
@@ -336,8 +345,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
             $objectManager->flush();
         }
 
-        $this->deleteWorklog($previousEntry);
-        if (null !== $previousEntry->getWorklogId()) {
+        if (!$this->deleteWorklog($previousEntry)) {
             return false;
         }
 

@@ -28,7 +28,7 @@ Each synced target user becomes one `sync_run` (type `sync`, triggered by the to
 - deleted in Jira → move detection first (a matching new worklog re-links the entry); otherwise a clean entry is deleted, a locally modified entry is parked as **orphaned**,
 - worklog with no matching entry → auto-imported when the ticket system has a default import activity, otherwise reported as `remote_only`; a worklog that already belongs to an entry outside this run counts as `already_linked` and is left alone.
 
-Agent walltime entries (ADR-025 §7) are never pushed or reconciled — a Jira worklog is the human labour line. A worklog still linked to an agent entry (booked before that rule) counts as `agent_worklogs` (and in `errors`) and is reported as an `error` item naming the entry, so it can be removed in Jira. Re-attributing a synced entry to the agent removes its worklog on save and drops the entry's sync state; a parked state of an agent entry cannot be resolved.
+Agent walltime entries (ADR-025 §7) are never pushed or reconciled — a Jira worklog is the human labour line. A worklog still linked to an agent entry (booked before that rule) counts as `agent_worklogs` (and in `errors`) and is reported as an `error` item naming the entry, so it can be removed in Jira. Re-attributing a synced entry to the agent removes its worklog on save and drops the entry's sync state. Resolving a parked state of an agent entry, with either winner, only drops the state (action `dropped_agent_state`): nothing is pushed and the entry is not deleted.
 
 There is **no cursor**. Each run rescans a bounded date window; identity matching by worklog id makes re-runs idempotent, so overlapping windows are free and a failed run simply re-reads the same window.
 

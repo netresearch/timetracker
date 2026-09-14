@@ -274,25 +274,34 @@ final class ConflictResolutionServiceTest extends TestCase
         self::assertSame('deleted_local', $result->action);
     }
 
-    public function testAgentWalltimeStateIsNeverResolved(): void
+    public function testResolvingAnAgentWalltimeStateOnlyDropsIt(): void
     {
-        // ADR-025 §7: a state parked before agent time stopped syncing must neither push
-        // the entry ("local") nor delete it because its worklog is gone ("remote").
+        // ADR-025 §7: a state parked before agent time stopped syncing would otherwise stay
+        // listed for good. Either winner drops it, without pushing the entry ("local") or
+        // deleting it because its worklog is gone ("remote").
         $this->worklogWriteService->expects(self::never())->method('forcePush');
-        $this->entityManager->expects(self::never())->method('remove');
+        $this->api->expects(self::never())->method('getIssueWorklog');
+        $removed = [];
+        $this->entityManager->method('remove')->willReturnCallback(
+            static function (object $object) use (&$removed): void { $removed[] = $object; },
+        );
 
+        $states = [];
         foreach (['local', 'remote'] as $winner) {
             $state = $this->parkedState(WorklogSyncStatus::ORPHANED);
             $entry = $state->getEntry();
             self::assertInstanceOf(Entry::class, $entry);
             $entry->setSource(EntrySource::AGENT);
+            $states[] = $state;
 
             $result = $this->service->resolve($state, $winner, $this->actor);
 
-            self::assertFalse($result->resolved, $winner);
-            self::assertStringContainsString('agent walltime', $result->reason);
-            self::assertSame(WorklogSyncStatus::ORPHANED, $state->getStatus());
+            self::assertTrue($result->resolved, $winner);
+            self::assertSame('dropped_agent_state', $result->action);
         }
+
+        // Only the two states were removed; no entry went with them.
+        self::assertSame($states, $removed);
     }
 
     public function testPullFailureSurfacesReason(): void

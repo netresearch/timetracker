@@ -382,21 +382,24 @@ class JiraOAuthApiService
      * Removes Jira workLog entry.
      *
      * @throws JiraApiException
+     *
+     * @return bool whether this Jira confirmed the worklog is gone (deleted, or not found);
+     *              false when no delete was attempted
      */
-    public function deleteEntryJiraWorkLog(Entry $entry): void
+    public function deleteEntryJiraWorkLog(Entry $entry): bool
     {
         $sTicket = $entry->getTicket();
         if ('' === $sTicket || '0' === $sTicket) {
-            return;
+            return false;
         }
 
         $worklogId = $entry->getWorklogId();
         if (null === $worklogId || $worklogId <= 0) {
-            return;
+            return false;
         }
 
         if (!$this->checkUserTicketSystem()) {
-            return;
+            return false;
         }
 
         try {
@@ -409,8 +412,11 @@ class JiraOAuthApiService
 
             $entry->setWorklogId(null);
         } catch (JiraApiInvalidResourceException) {
-            // The worklog is already gone on the Jira side — nothing to delete.
+            // The worklog is already gone on this Jira. The id stays set: the worklog may
+            // live on another ticket system the caller still tries.
         }
+
+        return true;
     }
 
     /**

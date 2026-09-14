@@ -218,8 +218,10 @@ final class EntryEventSubscriberTest extends TestCase
         $this->worklogWriteService->expects(self::once())
             ->method('delete')
             ->with($this->jiraOAuthApiService, $previousEntry)
-            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): void {
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): bool {
                 $deleted->setWorklogId(null); // what the Jira client does on success
+
+                return true;
             });
         $this->worklogWriteService->expects(self::never())
             ->method('push');
@@ -291,6 +293,25 @@ final class EntryEventSubscriberTest extends TestCase
 
         self::assertNotContains('JIRA worklog withdrawn from agent walltime entry', $messages);
         self::assertSame(555, $entry->getWorklogId());
+    }
+
+    public function testWithdrawalUnlinksAWorklogJiraNoLongerHas(): void
+    {
+        // Jira answers 404: the worklog is already gone, so the entry must not keep a
+        // dangling link, and nothing is reported as left behind.
+        [$entry, $previousEntry] = $this->syncedEntryReattributedToAgent();
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->willReturn(true); // not found: confirmed gone, worklog id left as it was
+        $this->logger->expects(self::never())
+            ->method('error');
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame(555, $previousEntry->getWorklogId());
+        self::assertNull($entry->getWorklogId());
+        self::assertFalse($entry->getSyncedToTicketsystem());
     }
 
     /**

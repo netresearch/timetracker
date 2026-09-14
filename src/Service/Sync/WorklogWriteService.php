@@ -109,9 +109,12 @@ class WorklogWriteService
         return EntrySource::AGENT === $entry->getSource();
     }
 
-    public function delete(JiraOAuthApiService $api, Entry $entry): void
+    /**
+     * @return bool whether Jira confirmed the worklog is gone (deleted, or not found)
+     */
+    public function delete(JiraOAuthApiService $api, Entry $entry): bool
     {
-        $api->deleteEntryJiraWorkLog($entry);
+        return $api->deleteEntryJiraWorkLog($entry);
     }
 
     private function refreshBase(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): void

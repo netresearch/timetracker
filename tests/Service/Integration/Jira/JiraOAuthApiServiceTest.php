@@ -495,39 +495,35 @@ final class JiraOAuthApiServiceTest extends TestCase
         $service->updateEntryJiraWorkLog($entry);
     }
 
+    // An early return attempted no delete, so it must not claim the worklog is gone.
+
     public function testDeleteEntryJiraWorkLogReturnsEarlyForEmptyTicket(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('');
 
         $service = $this->createServiceWithMockedClient();
-        $service->deleteEntryJiraWorkLog($entry);
+        self::assertFalse($service->deleteEntryJiraWorkLog($entry));
     }
 
     public function testDeleteEntryJiraWorkLogReturnsEarlyForNullWorklogId(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('TEST-123');
         $entry->method('getWorklogId')->willReturn(null);
 
         $service = $this->createServiceWithMockedClient();
-        $service->deleteEntryJiraWorkLog($entry);
+        self::assertFalse($service->deleteEntryJiraWorkLog($entry));
     }
 
     public function testDeleteEntryJiraWorkLogReturnsEarlyForZeroWorklogId(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('TEST-123');
         $entry->method('getWorklogId')->willReturn(0);
 
         $service = $this->createServiceWithMockedClient();
-        $service->deleteEntryJiraWorkLog($entry);
+        self::assertFalse($service->deleteEntryJiraWorkLog($entry));
     }
 
     // ==================== Create ticket tests ====================
