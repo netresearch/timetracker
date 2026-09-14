@@ -13,8 +13,10 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
+use App\Service\Tracking\DayClassService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\EntityManagerTestTrait;
 
@@ -133,6 +135,111 @@ final class DeleteEntryActionTest extends AbstractWebTestCase
 
         self::assertSame(Response::HTTP_FORBIDDEN, $status);
         self::assertTrue($this->entryExists($id));
+    }
+
+    public function testDeletingOneHalfOfAPairDeletesBoth(): void
+    {
+        // ADR-025: the agent walltime entry and its delegated human estimate are one
+        // logged session; deleting either half must not leave the other orphaned.
+        $this->logInSession('unittest');
+        $agent = $this->makeEntry('unittest');
+        $human = $this->makeEntry('unittest');
+        $agent->pairWith($human);
+        $this->entityManager()->flush();
+        $agentId = $agent->getId();
+        $humanId = $human->getId();
+        self::assertIsInt($agentId);
+        self::assertIsInt($humanId);
+
+        $response = $this->deleteJson($humanId);
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        $body = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($body);
+        self::assertEqualsCanonicalizing([$humanId, $agentId], $body['deleted'] ?? null);
+        $this->entityManager()->clear();
+        self::assertFalse($this->entryExists($humanId));
+        self::assertFalse($this->entryExists($agentId));
+    }
+
+    public function testRefusesAPairDeleteWhenThePartnerIsNotDeletable(): void
+    {
+        // The UI and the ADR promise that deleting one half deletes both. If the caller
+        // may delete the requested half but not its partner (different owners), the
+        // request must fail as a whole rather than silently delete a single half.
+        $own = $this->makeEntry('developer');
+        $foreign = $this->makeEntry('i.myself');
+        $own->pairWith($foreign);
+        $this->entityManager()->flush();
+        $ownId = $own->getId();
+        $foreignId = $foreign->getId();
+        self::assertIsInt($ownId);
+        self::assertIsInt($foreignId);
+
+        $this->logInSession('developer');
+        $response = $this->deleteJson($ownId);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+        // The refusal names the pair, not the entry the caller does own. Compare with the
+        // translator's output, since the test environment renders a non-English locale.
+        $body = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($body);
+        $translator = self::getContainer()->get('translator');
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
+        self::assertSame($translator->trans('This entry is paired with an entry you are not allowed to delete.'), $body['message'] ?? null);
+        $this->entityManager()->clear();
+        self::assertTrue($this->entryExists($ownId));
+        self::assertTrue($this->entryExists($foreignId));
+    }
+
+    public function testRemovingOneHalfOutsideTheActionUnlinksThePartner(): void
+    {
+        // Other delete paths (worklog sync, conflict resolution) remove a single entry
+        // through the EntityManager while its partner may still be managed. That must
+        // not fail on the stale back-reference; the survivor simply loses its link.
+        $agent = $this->makeEntry('unittest');
+        $human = $this->makeEntry('unittest');
+        $agent->pairWith($human);
+        $entityManager = $this->entityManager();
+        $entityManager->flush();
+        $agentId = $agent->getId();
+        $humanId = $human->getId();
+        self::assertIsInt($agentId);
+        self::assertIsInt($humanId);
+
+        $entityManager->remove($human);
+        $entityManager->flush();
+        // Like the sync services: recalculate the day in the SAME unit of work, which
+        // reloads the surviving partner and flushes again while it still holds the
+        // in-memory reference to the removed half.
+        self::getContainer()->get(DayClassService::class)->recalculate(1, '2024-01-15');
+        $entityManager->flush();
+        $entityManager->clear();
+
+        self::assertFalse($this->entryExists($humanId));
+        $survivor = $entityManager->getRepository(Entry::class)->find($agentId);
+        self::assertInstanceOf(Entry::class, $survivor);
+        self::assertNull($survivor->getPairedEntry());
+    }
+
+    public function testDeletingAnUnpairedEntryLeavesOthersAlone(): void
+    {
+        $this->logInSession('unittest');
+        $target = $this->makeEntry('unittest');
+        $bystander = $this->makeEntry('unittest');
+        $targetId = $target->getId();
+        $bystanderId = $bystander->getId();
+        self::assertIsInt($targetId);
+        self::assertIsInt($bystanderId);
+
+        $response = $this->deleteJson($targetId);
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        $body = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($body);
+        self::assertSame([$targetId], $body['deleted'] ?? null);
+        $this->entityManager()->clear();
+        self::assertTrue($this->entryExists($bystanderId));
     }
 
     public function testAdminCanDeleteAnotherUsersEntry(): void

@@ -268,6 +268,7 @@
   "tracking_prolonged": "Heure de fin fixée à maintenant",
   "tracking_delete_title": "Supprimer la saisie ?",
   "tracking_delete_body": "Cette action supprime définitivement la saisie sélectionnée du journal.",
+  "tracking_delete_body_paired": "La saisie sélectionnée fait partie d’une paire humain/agent. Cette action supprime définitivement les deux saisies.",
   "tracking_delete_confirm": "Supprimer",
   "tracking_date_format_hint": "Format de date : AAAA-MM-JJ",
   "tracking_edit_hint": "Double-cliquez sur une cellule — ou placez le focus dessus et appuyez sur Entrée — pour la modifier. Tab dans une ligne atteint ses actions ; Alt+C / Alt+P / Alt+I agissent sur la ligne courante. Une ligne complète s'enregistre automatiquement ; l'icône disquette force l'enregistrement d'une ligne non enregistrée et l'icône de réinitialisation annule ses modifications.",

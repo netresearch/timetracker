@@ -18,12 +18,14 @@ use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
+use LogicException;
 use Override;
 
 use function sprintf;
 
 #[ORM\Entity(repositoryClass: EntryRepository::class)]
 #[ORM\Table(name: 'entries')]
+#[ORM\HasLifecycleCallbacks]
 class Entry extends Base
 {
     /**
@@ -122,6 +124,11 @@ class Entry extends Base
     /** @var array{prompts?: int, reviews?: int, interventions?: int}|null */
     #[ORM\Column(name: 'touchpoints', type: 'json', nullable: true)]
     protected ?array $touchpoints = null;
+
+    /** ADR-025: the other half of an agent/human pair written by one dual-write. */
+    #[ORM\OneToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(name: 'paired_entry_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    protected ?self $pairedEntry = null;
 
     /**
      * holds summary from external ticket system; no mapping for ORM required (yet).
@@ -452,7 +459,7 @@ class Entry extends Base
      *
      * @return (bool|int|string|null)[]
      *
-     * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: string, durationMinutes: int, class: int, worklog: int|null, extTicket: string|null, source: string, estimated: bool}
+     * @psalm-return array{id: int|null, date: null|string, start: null|string, end: null|string, user: int|null, customer: int|null, project: int|null, activity: int|null, description: string, ticket: string, duration: string, durationMinutes: int, class: int, worklog: int|null, extTicket: string|null, source: string, estimated: bool, pairedEntry: int|null}
      */
     #[Override]
     public function toArray(): array
@@ -489,6 +496,7 @@ class Entry extends Base
             'extTicket' => $this->getInternalJiraTicketOriginalKey(),
             'source' => $this->source->value,
             'estimated' => $this->estimated,
+            'pairedEntry' => $this->getPairedEntryId(),
         ];
     }
 
@@ -604,6 +612,67 @@ class Entry extends Base
     public function getTouchpoints(): ?array
     {
         return $this->touchpoints;
+    }
+
+    /**
+     * ADR-025 pair link: the agent walltime entry and its delegated human estimate
+     * point at each other. Set both sides via {@see self::pairWith()}.
+     */
+    public function getPairedEntry(): ?self
+    {
+        return $this->pairedEntry;
+    }
+
+    public function getPairedEntryId(): ?int
+    {
+        return $this->pairedEntry?->getId();
+    }
+
+    /**
+     * Link this entry and $other symmetrically, so either side knows its partner
+     * without an extra query.
+     *
+     * A pair is formed once, between two unpaired entries. Moving a link would need the
+     * old partner released in an earlier flush than the new link is written — Doctrine
+     * does not order the UPDATEs, so a single flush can hit the unique index — hence
+     * re-pairing is refused instead of half-supported.
+     *
+     * @throws LogicException when pairing with itself or with an entry already paired elsewhere
+     */
+    public function pairWith(self $other): static
+    {
+        if ($other === $this) {
+            throw new LogicException('An entry cannot be paired with itself.');
+        }
+
+        if ($this->pairedEntry === $other && $other->pairedEntry === $this) {
+            return $this;
+        }
+
+        if ($this->pairedEntry instanceof self || $other->pairedEntry instanceof self) {
+            throw new LogicException('Both entries must be unpaired before they can be paired.');
+        }
+
+        $this->pairedEntry = $other;
+        $other->pairedEntry = $this;
+
+        return $this;
+    }
+
+    /**
+     * Removing one half must dissolve the partner's in-memory back-reference too.
+     * The database already sets it NULL (ON DELETE SET NULL), but a partner still
+     * managed in the same unit of work would otherwise point at the removed entity,
+     * and the next flush (e.g. a day-class recalculation after a sync delete) fails
+     * with "a new entity was found through the relationship". A partner that points
+     * at a different entry (only a hand-edited row can do that) keeps its own link.
+     */
+    #[ORM\PreRemove]
+    public function unlinkPartnerOnRemove(): void
+    {
+        if ($this->pairedEntry instanceof self && $this->pairedEntry->pairedEntry === $this) {
+            $this->pairedEntry->pairedEntry = null;
+        }
     }
 
     /**

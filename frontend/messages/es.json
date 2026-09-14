@@ -268,6 +268,7 @@
   "tracking_prolonged": "Hora de fin puesta en ahora",
   "tracking_delete_title": "¿Eliminar la entrada?",
   "tracking_delete_body": "Esto elimina definitivamente la entrada de registro seleccionada.",
+  "tracking_delete_body_paired": "La entrada seleccionada forma parte de un par persona/agente. Esto elimina definitivamente ambas entradas.",
   "tracking_delete_confirm": "Eliminar",
   "tracking_date_format_hint": "Formato de fecha: AAAA-MM-DD",
   "tracking_edit_hint": "Haga doble clic en una celda — o enfóquela y pulse Enter — para editar. Tab dentro de una fila llega a sus acciones; Alt+C / Alt+P / Alt+I actúan sobre la fila actual. Una fila completa se guarda automáticamente; el icono del disquete fuerza el guardado de una fila sin guardar y el icono de restablecer la descarta.",

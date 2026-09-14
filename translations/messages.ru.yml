@@ -35,6 +35,7 @@
 "There is more than one open-ended contract for the user.": "У пользователя более одного бессрочного договора."
 "No entry for id.": "Нет записи с таким идентификатором."
 "You are not allowed to view this entry.": "У вас нет прав на просмотр этой записи."
+"This entry is paired with an entry you are not allowed to delete.": "Эта запись связана с записью, которую вам нельзя удалять."
 "Skip to main content": "Перейти к основному содержимому"
 "User status": "Статус пользователя"
 "Logout": "Выйти"

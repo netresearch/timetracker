@@ -261,6 +261,7 @@ CREATE TABLE `entries` (
   `estimated` tinyint(1) NOT NULL DEFAULT 0,
   `responsible_user_id` int(11) DEFAULT NULL,
   `touchpoints` JSON DEFAULT NULL,
+  `paired_entry_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY (`project_id`),
   KEY (`user_id`),
@@ -277,7 +278,8 @@ CREATE TABLE `entries` (
   KEY `idx_entries_day_start` (`day` DESC, `start` DESC),
   KEY `IDX_entries_source` (`source`),
   KEY (`logged_by_id`),
-  KEY (`responsible_user_id`)
+  KEY (`responsible_user_id`),
+  UNIQUE KEY `UNIQ_entries_paired_entry` (`paired_entry_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 --
@@ -289,7 +291,8 @@ ALTER TABLE `entries`
   ADD CONSTRAINT `entries_ibfk_4` FOREIGN KEY (`activity_id`) REFERENCES `activities` (`id`),
   ADD CONSTRAINT `entries_ibfk_5` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`),
   ADD CONSTRAINT `FK_entries_logged_by` FOREIGN KEY (`logged_by_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `FK_entries_responsible` FOREIGN KEY (`responsible_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `FK_entries_responsible` FOREIGN KEY (`responsible_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `FK_entries_paired_entry` FOREIGN KEY (`paired_entry_id`) REFERENCES `entries` (`id`) ON DELETE SET NULL;
 
 
 --
@@ -519,7 +522,8 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20260711_PersonioAttendanceExport', '2026-07-11 00:00:01', 0),
 ('DoctrineMigrations\\Version20260712_AutoImportProjectsFlag',  '2026-07-12 00:00:00', 0),
 ('DoctrineMigrations\\Version20260712_CustomerTempoKey',        '2026-07-12 00:00:01', 0),
-('DoctrineMigrations\\Version20260712_PersonioAbsenceImport',   '2026-07-12 00:00:02', 0);
+('DoctrineMigrations\\Version20260712_PersonioAbsenceImport',   '2026-07-12 00:00:02', 0),
+('DoctrineMigrations\\Version20260914_EntryPairLink',           '2026-09-14 00:00:00', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------

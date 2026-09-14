@@ -58,23 +58,52 @@ final class DeleteEntryAction extends BaseTrackingController
             );
         }
 
-        // The owner's day is what changed — recalculate their classes, not the
-        // deleter's (an admin/PL may be removing someone else's entry).
-        $ownerId = $entry->getUserId() ?? 0;
-        $day = $entry->getDay()->format('Y-m-d');
-
-        // Dispatch event before removal (subscriber handles Jira worklog deletion)
-        if ($this->eventDispatcher instanceof EventDispatcherInterface) {
-            $this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::DELETED);
+        // ADR-025: an agent entry and its delegated human estimate are one logged
+        // session — deleting one half deletes both, so no orphan half survives. The
+        // partner goes through the same ownership check as the requested entry.
+        // If the caller may not delete the partner, refuse the whole request rather
+        // than silently delete a single half.
+        $toDelete = [$entry];
+        $partner = $entry->getPairedEntry();
+        if ($partner instanceof Entry) {
+            if (!$this->mayDelete($partner, $currentUser)) {
+                return new Error(
+                    $this->translator->trans('This entry is paired with an entry you are not allowed to delete.'),
+                    \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN,
+                );
+            }
+            $toDelete[] = $partner;
         }
 
+        // The owners' days are what changed — recalculate their classes, not the
+        // deleter's (an admin/PL may be removing someone else's entry).
+        $affectedDays = [];
+        foreach ($toDelete as $doomed) {
+            $ownerId = $doomed->getUserId() ?? 0;
+            $day = $doomed->getDay()->format('Y-m-d');
+            $affectedDays[$ownerId . '|' . $day] = [$ownerId, $day];
+        }
+
+        // Dispatch events before removal (subscriber handles Jira worklog deletion)
+        if ($this->eventDispatcher instanceof EventDispatcherInterface) {
+            foreach ($toDelete as $doomed) {
+                $this->eventDispatcher->dispatch(new EntryEvent($doomed), EntryEvent::DELETED);
+            }
+        }
+
+        $deletedIds = array_map(static fn (Entry $doomed): ?int => $doomed->getId(), $toDelete);
+
         $manager = $this->managerRegistry->getManager();
-        $manager->remove($entry);
+        foreach ($toDelete as $doomed) {
+            $manager->remove($doomed);
+        }
         $manager->flush();
 
-        $this->calculateClasses($ownerId, $day);
+        foreach ($affectedDays as [$ownerId, $day]) {
+            $this->calculateClasses($ownerId, $day);
+        }
 
-        return new JsonResponse(['success' => true]);
+        return new JsonResponse(['success' => true, 'deleted' => $deletedIds]);
     }
 
     /**

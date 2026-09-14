@@ -35,6 +35,7 @@
 "There is more than one open-ended contract for the user.": "Existe más de un contrato indefinido para el usuario."
 "No entry for id.": "No hay ninguna entrada para el ID."
 "You are not allowed to view this entry.": "No tiene permiso para ver esta entrada."
+"This entry is paired with an entry you are not allowed to delete.": "Esta entrada está vinculada a una entrada que no tiene permiso para eliminar."
 "Skip to main content": "Saltar al contenido principal"
 "User status": "Estado del usuario"
 "Logout": "Cerrar sesión"

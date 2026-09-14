@@ -333,7 +333,41 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $result = self::getContainer()->get(DeleteEntryTool::class)->deleteEntry($id);
 
-        self::assertSame(['success' => true], $result);
+        self::assertSame(['success' => true, 'deleted' => [$id]], $result);
+    }
+
+    public function testDeleteEntryRemovesBothHalvesOfAPairAndReportsBothIds(): void
+    {
+        // ADR-025: log_time writes an agent and a human entry as a pair. Deleting one
+        // half through the tool deletes both, and the result says so — an agent that
+        // then tries to delete the other half by id would otherwise hit "not found".
+        $this->useToken(['entries:write', 'reporting:read']);
+        $written = self::getContainer()->get(LogTimeTool::class)->logTime(
+            project: '1',
+            activity: '1',
+            ticket: 'SA-9',
+            date: '2024-06-10',
+            description: 'pair to delete',
+            agentWalltimeMinutes: 60,
+            humanMinutes: 20,
+        );
+        $agentBody = $written['agent'] ?? null;
+        $humanBody = $written['human'] ?? null;
+        self::assertIsArray($agentBody);
+        self::assertIsArray($humanBody);
+        $agentResult = $agentBody['result'] ?? null;
+        $humanResult = $humanBody['result'] ?? null;
+        self::assertIsArray($agentResult);
+        self::assertIsArray($humanResult);
+        $agentId = $agentResult['id'] ?? null;
+        $humanId = $humanResult['id'] ?? null;
+        self::assertIsInt($agentId);
+        self::assertIsInt($humanId);
+
+        $result = self::getContainer()->get(DeleteEntryTool::class)->deleteEntry($agentId);
+
+        self::assertTrue($result['success']);
+        self::assertEqualsCanonicalizing([$agentId, $humanId], $result['deleted']);
     }
 
     public function testDeleteEntryIsDeniedWithoutScope(): void

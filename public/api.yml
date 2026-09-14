@@ -1942,6 +1942,11 @@ paths:
   /tracking/delete:
     post:
       summary: Delete an entry
+      description: >-
+        Deletes the entry. If it is one half of an agent/human pair written by
+        log_time (ADR-025), its partner is deleted too; `deleted` lists every
+        removed id. If the caller may delete the requested entry but not its
+        partner, the whole request fails with 403 and nothing is deleted.
       tags:
         - Entries
       requestBody:
@@ -1950,15 +1955,22 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/DeleteParameter'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteParameter'
       responses:
         '500':
           description: Internal Server Error
+        '400':
+          description: No entry id provided
         '401':
           description: Error Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UnauthorizedResponse'
+        '403':
+          description: Not allowed to delete this entry or its pair partner
         '404':
           description: No entry for id
           content:
@@ -1970,7 +1982,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  deleted:
+                    type: array
+                    description: Ids of all removed entries (two for a pair)
+                    items:
+                      type: integer
+                    example: [123, 124]
+                required:
+                  - success
+                  - deleted
 
   /tracking/entry/{id}:
     get:

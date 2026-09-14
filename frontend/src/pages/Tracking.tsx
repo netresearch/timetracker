@@ -977,8 +977,12 @@ export default function Tracking() {
       // /tracking/delete reads form params ($request->request), so it must be
       // posted as a form — not a JSON body.
       await postForm('/tracking/delete', { id: num(entry.id) })
-      // Drop any pending inline draft for the now-deleted entry.
+      // Drop any pending inline draft for the now-deleted entry — and for its
+      // ADR-025 pair partner, which the server deletes together with it.
       editor.takeDraft(num(entry.id))
+      if ((entry.pairedEntry ?? null) !== null) {
+        editor.takeDraft(num(entry.pairedEntry))
+      }
       await refreshWorklog()
       announce(m.tracking_deleted())
       // The deleted row (and its trash button) left the DOM — restore cell focus
@@ -1594,7 +1598,7 @@ export default function Tracking() {
 
       {/* Accessible delete confirmation (replaces native window.confirm). */}
       <PageDialog open={pendingDelete() !== null} onClose={() => setPendingDelete(null)} title={m.tracking_delete_title()}>
-        <p class="dialog-body">{m.tracking_delete_body()}</p>
+        <p class="dialog-body">{(pendingDelete()?.pairedEntry ?? null) !== null ? m.tracking_delete_body_paired() : m.tracking_delete_body()}</p>
         <div class="form-actions">
           <button type="button" class="primary-button is-danger" onClick={() => void confirmDelete()}>{m.tracking_delete_confirm()}</button>
           <button type="button" class="action-button" onClick={() => setPendingDelete(null)}>{m.admin_cancel()}</button>
