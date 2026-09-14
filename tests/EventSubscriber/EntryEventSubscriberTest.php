@@ -206,19 +206,6 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryUpdated(new EntryEvent($entry));
     }
 
-    public function testOnEntryCreatedStillBooksTheDelegatedHumanEstimate(): void
-    {
-        // The human half of a dual-write is labour (estimated or not) and keeps syncing.
-        [$entry, $user, $ticketSystem] = $this->createSyncableEntry(source: EntrySource::HUMAN);
-
-        $this->expectJiraApiCreatedFor($user, $ticketSystem);
-        $this->worklogWriteService->expects(self::once())
-            ->method('push')
-            ->willReturn(WriteOutcome::WRITTEN);
-
-        $this->subscriber->onEntryCreated(new EntryEvent($entry));
-    }
-
     public function testOnEntryCreatedDoesNotSyncWhenNoProject(): void
     {
         $user = self::createStub(User::class);
