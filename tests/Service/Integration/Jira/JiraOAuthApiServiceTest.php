@@ -20,6 +20,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use JsonException;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\Stub;
@@ -534,6 +535,18 @@ final class JiraOAuthApiServiceTest extends TestCase
 
         self::assertTrue($service->deleteEntryJiraWorkLog($entry));
         self::assertNull($entry->getWorklogId());
+    }
+
+    public function testAnEmptyBodyOnAReadStillFails(): void
+    {
+        // Only a 204 may be empty. An empty 200 (a proxy or gateway page) read as "no data"
+        // would let the worklog sync see no remote worklogs and delete local entries.
+        $service = $this->createServiceWithMockedClientReturning(new Response(200, [], ''));
+        $getResponse = new ReflectionClass($service)->getMethod('getResponse');
+
+        $this->expectException(JsonException::class);
+
+        $getResponse->invoke($service, 'GET', 'myself');
     }
 
     public function testDeleteEntryJiraWorkLogConfirmsAWorklogJiraNoLongerHasButKeepsTheId(): void

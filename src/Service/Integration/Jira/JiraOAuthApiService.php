@@ -857,10 +857,12 @@ class JiraOAuthApiService
             }
         }
 
-        // A DELETE answers 204 No Content. Decoding that empty body would throw after the
-        // request already succeeded (JiraHttpClientService::delete handles it the same way).
+        // A worklog DELETE answers 204 No Content; decoding that empty body would throw after
+        // the request already succeeded. Only a 204 may be empty: an empty 200 on a read (a
+        // proxy or gateway page) must still fail, or callers would take it as "no data" —
+        // the worklog sync would then see no remote worklogs and delete local entries.
         $body = (string) $response->getBody();
-        if ('' === $body) {
+        if ('' === $body && 204 === $response->getStatusCode()) {
             return new stdClass();
         }
 
