@@ -39,6 +39,7 @@ describe('upsertSavedEntry (ADR-025 attribution in the cached row)', () => {
   it('keeps an edited agent entry as agent time — the server does not relabel it', () => {
     const entry = upsertInto([cachedRow({ source: 'agent' })])
     expect(entry?.source).toBe('agent')
+    expect(entry?.estimated).toBe(false)
     expect(entry?.description).toBe('corrected')
     expect(entry?.end).toBe('10:30')
   })

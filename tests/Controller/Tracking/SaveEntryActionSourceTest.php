@@ -194,7 +194,7 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
             customer_id: 1,
             activity_id: 1,
             source: 'agent',
-            estimated: false,
+            estimated: true,
             touchpoints: ['prompts' => 3],
         ), $user);
 
@@ -210,6 +210,7 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
         $entry = $this->reloadEntry($entryId);
 
         self::assertSame(EntrySource::AGENT, $entry->getSource());
+        self::assertTrue($entry->isEstimated());
         self::assertSame(['prompts' => 3], $entry->getTouchpoints());
         self::assertSame('agent walltime (corrected)', $entry->getDescription());
         self::assertSame('10:30', $entry->getEnd()->format('H:i'));
