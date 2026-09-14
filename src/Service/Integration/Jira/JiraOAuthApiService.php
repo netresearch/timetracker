@@ -374,6 +374,9 @@ class JiraOAuthApiService
     /**
      * Creates a work log entry for the given entry in JIRA.
      * This is an alias for updateEntryJiraWorkLog to maintain backward compatibility.
+     *
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      */
     public function createEntryJiraWorkLog(Entry $entry): void
     {
@@ -425,6 +428,7 @@ class JiraOAuthApiService
     /**
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function createTicket(Entry $entry): mixed
     {
@@ -457,6 +461,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function searchTicket(string $jql, array $fields, int $limit = 1, int $startAt = 0): mixed
     {
@@ -475,6 +480,7 @@ class JiraOAuthApiService
      * Checks existence of a ticket in Jira.
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      */
     public function doesTicketExist(string $sTicket): bool
     {
@@ -483,6 +489,9 @@ class JiraOAuthApiService
 
     /**
      * Get an array of ticket numbers that are subtickets of the given issue.
+     *
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      *
      * @return list<string>
      */
@@ -514,6 +523,7 @@ class JiraOAuthApiService
      * Reads all worklogs of one issue (ADR-023 read path 3).
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      *
      * @return list<JiraWorkLog>
      */
@@ -550,6 +560,7 @@ class JiraOAuthApiService
      * with results still pending — the normal path fetches every page.
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      */
     public function searchIssueKeysWithWorklogs(string $jql, int $limit = 500): JiraIssueKeySearchResult
     {
@@ -630,6 +641,7 @@ class JiraOAuthApiService
      * The Jira account behind the current token (GET myself) — for author filtering.
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      */
     public function getMyself(): JiraUserIdentity
     {
@@ -642,6 +654,7 @@ class JiraOAuthApiService
      * Single worklog read — the lease comparand (ADR-023 §1). Null when the worklog is gone.
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      */
     public function getIssueWorklog(string $issueKey, int $worklogId): ?JiraWorkLog
     {
@@ -692,6 +705,7 @@ class JiraOAuthApiService
      * is not a project (404) or the response lacks a usable id/name.
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      *
      * @return array{id: int, name: string, categoryName: string|null}|null
      */
@@ -728,6 +742,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      *
      * @return list<string>
      */
@@ -760,6 +775,7 @@ class JiraOAuthApiService
      * Checks existence of a work log entry in Jira.
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      */
     protected function doesWorkLogExist(string $sTicket, int $workLogId): bool
     {
@@ -770,6 +786,7 @@ class JiraOAuthApiService
      * Checks existence of a Jira resource.
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      */
     protected function doesResourceExist(string $url): bool
     {

@@ -39,6 +39,10 @@ class WorklogWriteService
     ) {
     }
 
+    /**
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
+     */
     public function push(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
     {
         $ticket = $entry->getTicket();
@@ -88,6 +92,9 @@ class WorklogWriteService
      * Forced lease-era write (ADR-023 §2 conflict resolution): identical to push() but
      * skips the lease comparison. The legacy write nulls a stale worklogId and re-creates,
      * so this also covers orphaned recreation.
+     *
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      */
     public function forcePush(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
     {
