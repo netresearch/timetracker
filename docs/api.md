@@ -154,7 +154,7 @@ A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracke
 **Errors**:
 - `400 Bad Request`: No entry id provided
 - `401 Unauthorized`: Not authenticated
-- `403 Forbidden`: Not allowed to delete this entry
+- `403 Forbidden`: Not allowed to delete this entry, or it is paired with an entry the caller may not delete (nothing is deleted then)
 - `404 Not Found`: No entry for that id
 
 ---

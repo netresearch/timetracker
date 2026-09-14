@@ -1945,8 +1945,8 @@ paths:
       description: >-
         Deletes the entry. If it is one half of an agent/human pair written by
         log_time (ADR-025), its partner is deleted too; `deleted` lists every
-        removed id. The request fails with 403 as a whole when the caller may
-        not delete either half.
+        removed id. If the caller may delete the requested entry but not its
+        partner, the whole request fails with 403 and nothing is deleted.
       tags:
         - Entries
       requestBody:

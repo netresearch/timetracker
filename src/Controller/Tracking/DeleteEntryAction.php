@@ -68,7 +68,7 @@ final class DeleteEntryAction extends BaseTrackingController
         if ($partner instanceof Entry) {
             if (!$this->mayDelete($partner, $currentUser)) {
                 return new Error(
-                    $this->translator->trans('You are not allowed to delete this entry.'),
+                    $this->translator->trans('This entry is paired with an entry you are not allowed to delete.'),
                     \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN,
                 );
             }
