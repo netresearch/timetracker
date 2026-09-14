@@ -24,6 +24,7 @@ use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Sync\WorklogWriteService;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
+use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Throwable;
@@ -261,10 +262,11 @@ class EntryEventSubscriber implements EventSubscriberInterface
             try {
                 $api = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
                 $goneEverywhereTried = $this->worklogWriteService->delete($api, $entry) && $goneEverywhereTried;
-            } catch (JiraApiException $jiraApiException) {
+            } catch (JiraApiException|JsonException $exception) {
                 // Keep trying the remaining systems — a failure on one (auth,
-                // network, wrong instance) must not prevent cleanup on another.
-                $lastError = $jiraApiException;
+                // network, wrong instance, a response body that is not JSON) must
+                // not prevent cleanup on another.
+                $lastError = $exception;
                 $goneEverywhereTried = false;
             }
         }
@@ -275,7 +277,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // it up, so surface the error (onEntryDeleted logs it) instead of reporting
         // success. A still-set id with no error means the worklog was simply not
         // found anywhere — nothing to delete.
-        if (null !== $entry->getWorklogId() && $lastError instanceof JiraApiException) {
+        if (null !== $entry->getWorklogId() && null !== $lastError) {
             throw $lastError;
         }
 

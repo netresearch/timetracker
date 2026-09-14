@@ -24,6 +24,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
 use Exception;
+use JsonException;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -702,6 +703,61 @@ final class EntryEventSubscriberTest extends TestCase
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryDeleted($event);
+    }
+
+    public function testOnEntryDeletedStillTriesTheOtherSystemAfterAnUnreadableResponse(): void
+    {
+        // The first system answers with a body that is not JSON. That is a failure on this
+        // system like any Jira error: the worklog may live on the second one, which must
+        // still be tried — and once it deletes the worklog, nothing is left to report.
+        $internalSystem = self::createStub(TicketSystem::class);
+        $internalSystem->method('getBookTime')->willReturn(true);
+        $internalSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $ownSystem = self::createStub(TicketSystem::class);
+        $ownSystem->method('getBookTime')->willReturn(true);
+        $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('hasInternalJiraProjectKey')->willReturn(true);
+        $project->method('getInternalJiraTicketSystem')->willReturn('99');
+        $project->method('getTicketSystem')->willReturn($ownSystem);
+
+        $repository = $this->createMock(TicketSystemRepository::class);
+        $repository->method('find')->willReturn($internalSystem);
+        $this->managerRegistry->method('getRepository')->willReturn($repository);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket('ABC-123');
+        $entry->setWorklogId(12345);
+        $entry->setSyncedToTicketsystem(true);
+
+        $this->jiraOAuthApiFactory->expects(self::exactly(2))
+            ->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+        $calls = 0;
+        $this->worklogWriteService->expects(self::exactly(2))
+            ->method('delete')
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted) use (&$calls): bool {
+                if (1 === ++$calls) {
+                    throw new JsonException('Syntax error');
+                }
+
+                $deleted->setWorklogId(null);
+
+                return true;
+            });
+        $this->logger->expects(self::never())
+            ->method('error');
+
+        $this->subscriber->onEntryDeleted(new EntryEvent($entry));
+
+        self::assertNull($entry->getWorklogId());
     }
 
     public function testWithdrawalKeepsTheLinkWhenOnlyOneOfTwoSystemsConfirmedTheWorklogGone(): void
