@@ -38,7 +38,9 @@ final readonly class ResolveSyncConflictTool
      * Pick a winner for a parked conflict from list_sync_conflicts:
      * winner=local force-pushes the timetracker entry to Jira (recreating the
      * worklog if it vanished), winner=remote pulls the live Jira worklog into
-     * the entry — or accepts the remote deletion by removing the entry.
+     * the entry — or accepts the remote deletion by removing the entry. For an
+     * agent walltime entry (never synced, ADR-025 §7) either winner only drops
+     * the parked state (action dropped_agent_state).
      *
      * @throws ToolCallException on missing scope, unknown conflict, a foreign
      *                           conflict without an administrator account, or

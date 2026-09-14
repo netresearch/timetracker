@@ -526,6 +526,38 @@ final class JiraOAuthApiServiceTest extends TestCase
         self::assertFalse($service->deleteEntryJiraWorkLog($entry));
     }
 
+    public function testDeleteEntryJiraWorkLogUnlinksAndConfirmsADeletedWorklog(): void
+    {
+        // Jira answers a worklog DELETE with 204 and an empty body.
+        $entry = $this->bookedEntryOnABookableSystem();
+        $service = $this->createServiceWithMockedClientReturning(new Response(204, [], ''));
+
+        self::assertTrue($service->deleteEntryJiraWorkLog($entry));
+        self::assertNull($entry->getWorklogId());
+    }
+
+    public function testDeleteEntryJiraWorkLogConfirmsAWorklogJiraNoLongerHasButKeepsTheId(): void
+    {
+        // A 404 means the worklog is gone on this Jira. The id stays set: another ticket
+        // system the caller tries next may still hold the worklog.
+        $entry = $this->bookedEntryOnABookableSystem();
+        $request = new Request('DELETE', 'https://jira.example.com');
+        $service = $this->createServiceWithMockedClientThrowing(new RequestException('Not found', $request, new Response(404)));
+
+        self::assertTrue($service->deleteEntryJiraWorkLog($entry));
+        self::assertSame(77, $entry->getWorklogId());
+    }
+
+    private function bookedEntryOnABookableSystem(): Entry
+    {
+        $this->ticketSystem->method('getBookTime')->willReturn(true);
+        $repository = self::createStub(EntityRepository::class);
+        $repository->method('findOneBy')->willReturn(null);
+        $this->managerRegistry->method('getRepository')->willReturn($repository);
+
+        return new Entry()->setTicket('TEST-1')->setWorklogId(77);
+    }
+
     // ==================== Create ticket tests ====================
 
     public function testCreateTicketThrowsExceptionForEntryWithoutProject(): void

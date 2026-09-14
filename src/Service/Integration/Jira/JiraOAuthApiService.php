@@ -857,7 +857,14 @@ class JiraOAuthApiService
             }
         }
 
-        $decoded = json_decode((string) $response->getBody(), false, 512, JSON_THROW_ON_ERROR);
+        // A DELETE answers 204 No Content. Decoding that empty body would throw after the
+        // request already succeeded (JiraHttpClientService::delete handles it the same way).
+        $body = (string) $response->getBody();
+        if ('' === $body) {
+            return new stdClass();
+        }
+
+        $decoded = json_decode($body, false, 512, JSON_THROW_ON_ERROR);
         if (!is_object($decoded)) {
             throw new JiraApiException('Unexpected non-object response from Jira API', 500);
         }

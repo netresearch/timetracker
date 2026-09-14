@@ -704,6 +704,59 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryDeleted($event);
     }
 
+    public function testWithdrawalKeepsTheLinkWhenOnlyOneOfTwoSystemsConfirmedTheWorklogGone(): void
+    {
+        // Internal system: no delete attempted. Own system: 404 — gone there, id kept. The
+        // worklog may still live on the internal system, so the entry must stay linked
+        // and the leftover must be reported. (The last answer alone would say "gone".)
+        $internalSystem = self::createStub(TicketSystem::class);
+        $internalSystem->method('getBookTime')->willReturn(true);
+        $internalSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $ownSystem = self::createStub(TicketSystem::class);
+        $ownSystem->method('getBookTime')->willReturn(true);
+        $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('hasInternalJiraProjectKey')->willReturn(true);
+        $project->method('getInternalJiraTicketSystem')->willReturn('99');
+        $project->method('getTicketSystem')->willReturn($ownSystem);
+
+        $ticketSystemRepository = $this->createMock(TicketSystemRepository::class);
+        $ticketSystemRepository->method('find')->willReturn($internalSystem);
+        $syncStateRepository = $this->createMock(ObjectRepository::class);
+        $this->managerRegistry->method('getRepository')->willReturnCallback(
+            static fn (string $className): ObjectRepository => WorklogSyncState::class === $className ? $syncStateRepository : $ticketSystemRepository,
+        );
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $previousEntry = new Entry();
+        $previousEntry->setUser($user);
+        $previousEntry->setProject($project);
+        $previousEntry->setTicket('ABC-1');
+        $previousEntry->setWorklogId(555);
+        $previousEntry->setSyncedToTicketsystem(true);
+        $entry = clone $previousEntry;
+        $entry->setSource(EntrySource::AGENT);
+
+        $this->jiraOAuthApiFactory->expects(self::exactly(2))
+            ->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+        $this->worklogWriteService->expects(self::exactly(2))
+            ->method('delete')
+            ->willReturnOnConsecutiveCalls(false, true);
+        $this->logger->expects(self::once())
+            ->method('error')
+            ->with('JIRA worklog of agent walltime entry was not withdrawn', self::anything());
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame(555, $entry->getWorklogId());
+        self::assertTrue($entry->getSyncedToTicketsystem());
+    }
+
     public function testOnEntrySyncedInvalidatesJiraSyncCacheTag(): void
     {
         $entry = self::createStub(Entry::class);
