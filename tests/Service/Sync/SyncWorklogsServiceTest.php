@@ -511,6 +511,50 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame(0, $syncRun->getCounters()['absence_unverified'] ?? 0);
     }
 
+    public function testLookalikeIsNeitherRelinkedNorImportedWhenTheEntrysOwnIssueIsUnreadable(): void
+    {
+        // TIM-1, where worklog 11 lives, could not be read, so 11 may still exist. Worklog 22 on
+        // TIM-2 has the same start and duration but may be a second booking, not the move: the
+        // entry stays on 11, and 22 is not imported either (it would duplicate the entry if it
+        // is the move after all).
+        $entry = $this->linkedEntry(11);
+        $local = $this->projector->project($entry);
+        $this->stateFor($entry, $local);
+        $this->issueKeys[] = 'TIM-1';
+        $this->unreadableIssueKeys = ['TIM-1'];
+        $this->ticketSystem = $this->makeTicketSystem(self::createStub(Activity::class));
+        $this->remoteWorklog($local, 22, 'U5', 'TIM-2');
+
+        $this->entityManager->expects(self::never())->method('remove');
+        $this->importWorklogsService->expects(self::never())->method('processWorklog');
+
+        $syncRun = $this->service->syncUser($this->targetUser, $this->targetUser, $this->ticketSystem, new DateTimeImmutable('2026-06-01'), new DateTimeImmutable('2026-06-30'));
+
+        self::assertSame(11, $entry->getWorklogId());
+        self::assertSame(0, $syncRun->getCounters()['relinked'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+    }
+
+    public function testAnUnreadableWorklogBlocksOnlyItsOwnEntry(): void
+    {
+        // Worklog 11 comes back without a start, so it cannot be normalized: its entry stays
+        // unverified. Worklog 12 was simply not returned from a fully read issue — that entry is
+        // still recognised as deleted in Jira.
+        $blocked = $this->linkedEntry(11);
+        $this->stateFor($blocked, $this->projector->project($blocked));
+        $deleted = $this->linkedEntry(12);
+        $this->stateFor($deleted, $this->projector->project($deleted));
+        $this->publish('TIM-1', new JiraWorkLog(id: 11, started: null, timeSpentSeconds: 3600, authorAccountId: 'acc-x'));
+
+        $this->entityManager->expects(self::once())->method('remove')->with(self::identicalTo($deleted));
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['deleted_local'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
+    }
+
     public function testWorklogOwnedByAnExcludedEntryIsNeitherMoveTargetNorImportCandidate(): void
     {
         // An agent entry synced before ADR-025 §7 was enforced is no longer a sync

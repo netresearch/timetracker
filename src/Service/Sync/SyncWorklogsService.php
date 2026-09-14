@@ -300,18 +300,18 @@ class SyncWorklogsService extends AbstractSyncRunService
      */
     private function runUserSync(SyncRunContext $context, User $targetUser, callable $matchesAuthor, string $jql, DateTimeImmutable $from, DateTimeImmutable $to): void
     {
-        // Every reader notice (a failed issue fetch, a worklog that could not be normalized, a
-        // capped issue search) means worklogs that still exist in Jira may be missing from the
-        // remote set. Their entries must then not be concluded deleted in Jira.
-        $remoteReadComplete = true;
+        // A failed issue fetch, a worklog that could not be normalized or a capped issue search
+        // can hide worklogs that still exist in Jira; their entries must then not be concluded
+        // deleted (or moved) in Jira.
+        $gaps = new RemoteReadGaps();
         $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
             $context->api,
             $matchesAuthor,
             $jql,
             $from,
             $to,
-            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($context, &$remoteReadComplete): void {
-                $remoteReadComplete = false;
+            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($context, $gaps): void {
+                $gaps->record($type, $issueKey, $worklogId);
                 $this->onRemoteNotice($context->syncRun, $type, $issueKey, $throwable, $worklogId);
             },
         );
@@ -362,7 +362,7 @@ class SyncWorklogsService extends AbstractSyncRunService
         }
 
         foreach ($absentWorklogIds as $worklogId) {
-            $this->processDeletedWorklog($context, $worklogId, $remoteReadComplete);
+            $this->processDeletedWorklog($context, $worklogId, $gaps);
         }
 
         $this->handleUnmatched($context, $targetUser);
@@ -579,10 +579,10 @@ class SyncWorklogsService extends AbstractSyncRunService
      * A linked entry whose remote worklog is absent from the rescanned window — a remote delete
      * (or a move: a delete+create pair with identical start and duration is a relink).
      *
-     * @param bool $remoteReadComplete false when the remote read reported a failure or a capped
-     *                                 search: the worklog may still exist, so nothing is deleted or parked
+     * @param RemoteReadGaps $gaps what the remote read could not see: where a gap may hide the
+     *                             worklog, nothing is deleted, parked or relinked
      */
-    private function processDeletedWorklog(SyncRunContext $context, int $deletedWorklogId, bool $remoteReadComplete): void
+    private function processDeletedWorklog(SyncRunContext $context, int $deletedWorklogId, RemoteReadGaps $gaps): void
     {
         $entry = $this->entryRepository->findOneByWorklogIdAndTicketSystem($deletedWorklogId, $context->ticketSystem);
         if (!$entry instanceof Entry) {
@@ -590,21 +590,30 @@ class SyncWorklogsService extends AbstractSyncRunService
         }
 
         $projection = $this->entryWorklogProjector->project($entry);
+        $mayRelink = $gaps->allowsRelinkOf($deletedWorklogId, $entry->getTicket());
 
         // Move detection first: a delete+create pair with identical start and duration is a relink.
-        // A relink rests on a worklog that was read, so it stays valid on an incomplete read — and
-        // skipping it would import the moved worklog as a duplicate.
         foreach ($context->unmatchedRemote as $candidateWorklogId => $candidate) {
-            if ($candidate['snapshot']->startedTimestamp === $projection->startedTimestamp
-                && $candidate['snapshot']->durationMinutes === $projection->durationMinutes
+            if ($candidate['snapshot']->startedTimestamp !== $projection->startedTimestamp
+                || $candidate['snapshot']->durationMinutes !== $projection->durationMinutes
             ) {
+                continue;
+            }
+
+            if ($mayRelink) {
                 $this->relink($context, $entry, $candidateWorklogId, $candidate);
 
                 return;
             }
+
+            // The entry's own worklog may still exist where the read could not see: the
+            // lookalike is not known to be its move. Leave the entry linked and keep the
+            // lookalike out of the import too — importing it would duplicate the entry if it
+            // is the move after all. The next complete run decides.
+            unset($context->unmatchedRemote[$candidateWorklogId]);
         }
 
-        if (!$remoteReadComplete) {
+        if (!$gaps->allowsDeletionOf($deletedWorklogId)) {
             $context->syncRun->incrementCounter('absence_unverified');
 
             return;

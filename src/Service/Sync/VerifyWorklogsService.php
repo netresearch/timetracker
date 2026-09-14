@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\SyncAction;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
@@ -98,17 +99,17 @@ class VerifyWorklogsService extends AbstractSyncRunService
             $from->format('Y-m-d'),
             $to->format('Y-m-d'),
         );
-        // Any reader notice means the remote set may be missing worklogs that still exist, so a
-        // missing remote can then not be reported as a deletion (see SyncWorklogsService).
-        $remoteReadComplete = true;
+        // A failed issue fetch, an unreadable worklog or a capped search can hide worklogs that
+        // still exist; a missing remote is then not reported as a deletion (see RemoteReadGaps).
+        $gaps = new RemoteReadGaps();
         $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
             $api,
             static fn (JiraWorkLog $jiraWorkLog): bool => $myself->matchesWorklogAuthor($jiraWorkLog),
             $jql,
             $from,
             $to,
-            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun, &$remoteReadComplete): void {
-                $remoteReadComplete = false;
+            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun, $gaps): void {
+                $gaps->record($type, $issueKey, $worklogId);
                 $this->onRemoteNotice($syncRun, $type, $issueKey, $throwable, $worklogId);
             },
         );
@@ -142,7 +143,7 @@ class VerifyWorklogsService extends AbstractSyncRunService
             $decision = $this->reconciliationService->reconcile($base, $local, $remote);
 
             // A missing remote is evidence of a deletion only when the remote read was complete.
-            if (!$remoteReadComplete && 'remote_missing' === $decision->action->value) {
+            if (SyncAction::REMOTE_MISSING === $decision->action && !$gaps->allowsDeletionOf($worklogId)) {
                 $syncRun->incrementCounter('absence_unverified');
 
                 continue;
