@@ -18,6 +18,9 @@ use Mcp\Exception\ToolCallException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+use function is_array;
+use function is_int;
+
 /**
  * MCP tool: delete one of the caller's own time entries (ADR-021 Phase 5).
  *
@@ -38,14 +41,16 @@ final readonly class DeleteEntryTool
 
     /**
      * Delete a time entry by id. Only the entry's owner (or an admin / project
-     * lead) may delete it.
+     * lead) may delete it. An entry that is one half of an agent/human pair
+     * (ADR-025, written together by log_time) is deleted together with its
+     * partner; `deleted` lists every id that was removed.
      *
      * @throws ToolCallException when the id is missing, unknown, or not deletable
      *                           by the caller
      *
-     * @return array{success: bool}
+     * @return array{success: bool, deleted: list<int>}
      */
-    #[McpTool(name: 'delete_entry', description: 'Delete one of your own time entries by id.')]
+    #[McpTool(name: 'delete_entry', description: 'Delete one of your own time entries by id. If it is half of an agent/human pair written by log_time, its partner is deleted too; the result lists all deleted ids.')]
     public function deleteEntry(
         #[Schema(description: 'The id of the entry to delete.', minimum: 1)]
         int $id,
@@ -57,11 +62,19 @@ final readonly class DeleteEntryTool
         $request = new Request(request: ['id' => (string) $id]);
 
         $response = ($this->deleteEntryAction)($request, $user);
+        $body = $this->decodeBody($response);
 
         if ($response->getStatusCode() >= Response::HTTP_BAD_REQUEST) {
-            throw new ToolCallException($this->errorMessage($this->decodeBody($response), 'Failed to delete the entry.'));
+            throw new ToolCallException($this->errorMessage($body, 'Failed to delete the entry.'));
         }
 
-        return ['success' => true];
+        $deleted = [];
+        foreach (is_array($body['deleted'] ?? null) ? $body['deleted'] : [$id] as $deletedId) {
+            if (is_int($deletedId)) {
+                $deleted[] = $deletedId;
+            }
+        }
+
+        return ['success' => true, 'deleted' => $deleted];
     }
 }

@@ -72,7 +72,7 @@ Reports expose the axes independently: **wall-clock (agent)**, **human portion**
 - New `entries` fields: `source` (human|agent), `logged_by` (actual author), `estimated` (bool), a responsible-user FK, and touchpoint/interaction-signal counts. All additive; existing worklogs default to `source=human, logged_by=owner, estimated=false`.
 - Every aggregation (attendance, day classes, exports, controlling) must be audited to filter/branch on `source` — the main implementation cost; a missed spot is how agent time would leak into human totals.
 - Overlap validation becomes source-aware.
-- The two entries of one dual-write are linked symmetrically (`entries.paired_entry_id`, unique, `ON DELETE SET NULL`). Deleting either half deletes both, so no half of a logged session survives alone; editing either half keeps its source.
+- The two entries of one dual-write are linked symmetrically (`entries.paired_entry_id`, unique, `ON DELETE SET NULL`). Deleting either half through the worklog UI or the `delete_entry` tool deletes both. A delete driven by the ticket-system sync (the remote worklog of one half is gone) removes only that half and the survivor loses its link, because the remote change is a fact about that half alone. Editing either half keeps its source.
 - The Jira/Personio sync paths (ADR-023/024) must tag imported/exported time with the correct source and never export `source=agent` time as attendance.
 - A clean basis for AI-ROI reporting (agent hours vs. delivered work) falls out for free, without polluting labour metrics.
 
