@@ -206,6 +206,42 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('derives row cues from human entries only, so an agent twin never marks a pause or overlap (ADR-025 §6)', async () => {
+    // Mirrors DayClassService::recalculate, which reads the human day shape only:
+    // an agent entry running in parallel is expected overlap, not a clash, and
+    // must neither take the day break nor shift the previous-end baseline.
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: '15/01/2024', start: '07:30', end: '09:30', description: 'EarlyAgent', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: '15/01/2024', start: '08:00', end: '08:30', description: 'HumanFirst', class: 0, source: 'human', estimated: true } },
+        { entry: { ...DEFAULT_ENTRY, id: 3, date: '15/01/2024', start: '08:00', end: '10:00', description: 'AgentTwin', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 4, date: '15/01/2024', start: '08:30', end: '09:00', description: 'HumanNext', class: 0, source: 'human', estimated: true } },
+        { entry: { ...DEFAULT_ENTRY, id: 5, date: '15/01/2024', start: '08:45', end: '09:15', description: 'HumanClash', class: 0, source: 'human', estimated: false } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+    })
+    const { container, getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'HumanClash' })).toBeInTheDocument())
+
+    const rowOf = (id: number): Element | null => container.querySelector(`td[data-row-id="${id}"]`)?.closest('tr') ?? null
+    const cues = ['is-daybreak', 'is-pause', 'is-overlap']
+    const hasAnyCue = (id: number): boolean => cues.some((cue) => rowOf(id)?.classList.contains(cue) === true)
+    // Agent rows carry no cue at all.
+    expect(hasAnyCue(1)).toBe(false)
+    expect(hasAnyCue(3)).toBe(false)
+    // The earliest HUMAN entry is the day break, even though an agent started earlier.
+    expect(rowOf(2)?.classList.contains('is-daybreak')).toBe(true)
+    // 08:30 starts exactly at the previous human end (08:30) — plain, although the
+    // agent twin in between ran until 10:00.
+    expect(hasAnyCue(4)).toBe(false)
+    // A real human/human clash still reads as an overlap.
+    expect(rowOf(5)?.classList.contains('is-overlap')).toBe(true)
+
+    unmount()
+  })
+
   it('marks future entries and inserts a labeled divider above the today/past block', async () => {
     // Frozen clock is 2024-01-15 (test setup); with show_future the list mixes a
     // 2026 (future) day above the 2024 (today) day.

@@ -40,9 +40,11 @@ type RowCue = '' | 'is-daybreak' | 'is-pause' | 'is-overlap'
 // actually render. This is correct for ANY data — seed, import, future-dated —
 // unlike the persisted `class` column, which is only (re)computed server-side
 // when an entry is saved and is therefore stale/absent otherwise.
-// Mirrors BaseTrackingController::calculateClasses: a day's earliest entry is
-// the day break; a later one is a pause (gap after the previous) or an overlap
-// (starts before the previous ended), else plain.
+// Mirrors DayClassService::recalculate: a day's earliest entry is the day
+// break; a later one is a pause (gap after the previous) or an overlap (starts
+// before the previous ended), else plain. Like the backend it reads the HUMAN
+// day shape only (ADR-025 §6): agent entries overlap by design, so they get no
+// cue and never shift the day break or the previous-end baseline.
 // Normalise a worklog date to an ISO day (YYYY-MM-DD), accepting both the
 // grid's dd/mm/YYYY format and an already-ISO value (imported/seed rows).
 function toIsoDay(dateValue: string | null): string | null {
@@ -59,7 +61,7 @@ function deriveRowCues(entries: TrackingEntry[]): Map<number, RowCue> {
   // Parse each row's id/day/start/end ONCE, then sort by the precomputed key —
   // so parsing doesn't re-run inside the O(n log n) comparator.
   const rows = entries
-    .filter((entry) => num(entry.id) > 0 && str(entry.date) !== '')
+    .filter((entry) => num(entry.id) > 0 && str(entry.date) !== '' && entry.source !== 'agent')
     .map((entry) => {
       const day = toIsoDay(entry.date) ?? str(entry.date)
       const start = str(entry.start)
