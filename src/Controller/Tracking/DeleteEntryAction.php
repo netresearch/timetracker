@@ -61,9 +61,17 @@ final class DeleteEntryAction extends BaseTrackingController
         // ADR-025: an agent entry and its delegated human estimate are one logged
         // session — deleting one half deletes both, so no orphan half survives. The
         // partner goes through the same ownership check as the requested entry.
+        // If the caller may not delete the partner, refuse the whole request rather
+        // than silently delete a single half.
         $toDelete = [$entry];
         $partner = $entry->getPairedEntry();
-        if ($partner instanceof Entry && $this->mayDelete($partner, $currentUser)) {
+        if ($partner instanceof Entry) {
+            if (!$this->mayDelete($partner, $currentUser)) {
+                return new Error(
+                    $this->translator->trans('You are not allowed to delete this entry.'),
+                    \Symfony\Component\HttpFoundation\Response::HTTP_FORBIDDEN,
+                );
+            }
             $toDelete[] = $partner;
         }
 

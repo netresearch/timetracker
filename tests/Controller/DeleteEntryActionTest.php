@@ -161,6 +161,29 @@ final class DeleteEntryActionTest extends AbstractWebTestCase
         self::assertFalse($this->entryExists($agentId));
     }
 
+    public function testRefusesAPairDeleteWhenThePartnerIsNotDeletable(): void
+    {
+        // The UI and the ADR promise that deleting one half deletes both. If the caller
+        // may delete the requested half but not its partner (different owners), the
+        // request must fail as a whole rather than silently delete a single half.
+        $own = $this->makeEntry('developer');
+        $foreign = $this->makeEntry('i.myself');
+        $own->pairWith($foreign);
+        $this->entityManager()->flush();
+        $ownId = $own->getId();
+        $foreignId = $foreign->getId();
+        self::assertIsInt($ownId);
+        self::assertIsInt($foreignId);
+
+        $this->logInSession('developer');
+        $status = $this->deleteJson($ownId)->getStatusCode();
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $status);
+        $this->entityManager()->clear();
+        self::assertTrue($this->entryExists($ownId));
+        self::assertTrue($this->entryExists($foreignId));
+    }
+
     public function testRemovingOneHalfOutsideTheActionUnlinksThePartner(): void
     {
         // Other delete paths (worklog sync, conflict resolution) remove a single entry
