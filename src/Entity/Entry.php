@@ -664,12 +664,13 @@ class Entry extends Base
      * The database already sets it NULL (ON DELETE SET NULL), but a partner still
      * managed in the same unit of work would otherwise point at the removed entity,
      * and the next flush (e.g. a day-class recalculation after a sync delete) fails
-     * with "a new entity was found through the relationship".
+     * with "a new entity was found through the relationship". A partner that points
+     * at a different entry (only a hand-edited row can do that) keeps its own link.
      */
     #[ORM\PreRemove]
     public function unlinkPartnerOnRemove(): void
     {
-        if ($this->pairedEntry instanceof self) {
+        if ($this->pairedEntry instanceof self && $this->pairedEntry->pairedEntry === $this) {
             $this->pairedEntry->pairedEntry = null;
         }
     }

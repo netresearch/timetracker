@@ -8,6 +8,7 @@ use App\Entity\Entry;
 use App\Enum\EntrySource;
 use LogicException;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 final class EntrySourceFieldsTest extends TestCase
 {
@@ -58,6 +59,21 @@ final class EntrySourceFieldsTest extends TestCase
         $human->unlinkPartnerOnRemove();
 
         self::assertNull($agent->getPairedEntry());
+    }
+
+    public function testRemovalLeavesAPartnerThatPointsElsewhereAlone(): void
+    {
+        // No application path writes a one-sided link, but a hand-edited row can: removing
+        // $stale must not break the $partner <-> $other pair it still points into.
+        $partner = new Entry();
+        $other = new Entry();
+        $partner->pairWith($other);
+        $stale = new Entry();
+        new ReflectionProperty(Entry::class, 'pairedEntry')->setValue($stale, $partner);
+
+        $stale->unlinkPartnerOnRemove();
+
+        self::assertSame($other, $partner->getPairedEntry());
     }
 
     public function testPairingTheSamePairAgainChangesNothing(): void
