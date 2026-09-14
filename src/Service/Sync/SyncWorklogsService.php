@@ -300,13 +300,18 @@ class SyncWorklogsService extends AbstractSyncRunService
      */
     private function runUserSync(SyncRunContext $context, User $targetUser, callable $matchesAuthor, string $jql, DateTimeImmutable $from, DateTimeImmutable $to): void
     {
+        // Every reader notice (a failed issue fetch, a worklog that could not be normalized, a
+        // capped issue search) means worklogs that still exist in Jira may be missing from the
+        // remote set. Their entries must then not be concluded deleted in Jira.
+        $remoteReadComplete = true;
         $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
             $context->api,
             $matchesAuthor,
             $jql,
             $from,
             $to,
-            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($context): void {
+            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($context, &$remoteReadComplete): void {
+                $remoteReadComplete = false;
                 $this->onRemoteNotice($context->syncRun, $type, $issueKey, $throwable, $worklogId);
             },
         );
@@ -357,7 +362,7 @@ class SyncWorklogsService extends AbstractSyncRunService
         }
 
         foreach ($absentWorklogIds as $worklogId) {
-            $this->processDeletedWorklog($context, $worklogId);
+            $this->processDeletedWorklog($context, $worklogId, $remoteReadComplete);
         }
 
         $this->handleUnmatched($context, $targetUser);
@@ -573,8 +578,11 @@ class SyncWorklogsService extends AbstractSyncRunService
     /**
      * A linked entry whose remote worklog is absent from the rescanned window — a remote delete
      * (or a move: a delete+create pair with identical start and duration is a relink).
+     *
+     * @param bool $remoteReadComplete false when the remote read reported a failure or a capped
+     *                                 search: the worklog may still exist, so nothing is deleted or parked
      */
-    private function processDeletedWorklog(SyncRunContext $context, int $deletedWorklogId): void
+    private function processDeletedWorklog(SyncRunContext $context, int $deletedWorklogId, bool $remoteReadComplete): void
     {
         $entry = $this->entryRepository->findOneByWorklogIdAndTicketSystem($deletedWorklogId, $context->ticketSystem);
         if (!$entry instanceof Entry) {
@@ -584,6 +592,8 @@ class SyncWorklogsService extends AbstractSyncRunService
         $projection = $this->entryWorklogProjector->project($entry);
 
         // Move detection first: a delete+create pair with identical start and duration is a relink.
+        // A relink rests on a worklog that was read, so it stays valid on an incomplete read — and
+        // skipping it would import the moved worklog as a duplicate.
         foreach ($context->unmatchedRemote as $candidateWorklogId => $candidate) {
             if ($candidate['snapshot']->startedTimestamp === $projection->startedTimestamp
                 && $candidate['snapshot']->durationMinutes === $projection->durationMinutes
@@ -592,6 +602,12 @@ class SyncWorklogsService extends AbstractSyncRunService
 
                 return;
             }
+        }
+
+        if (!$remoteReadComplete) {
+            $context->syncRun->incrementCounter('absence_unverified');
+
+            return;
         }
 
         $state = $this->worklogSyncStateRepository->findOneBy(['entry' => $entry]);

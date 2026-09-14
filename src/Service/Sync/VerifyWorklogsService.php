@@ -98,13 +98,17 @@ class VerifyWorklogsService extends AbstractSyncRunService
             $from->format('Y-m-d'),
             $to->format('Y-m-d'),
         );
+        // Any reader notice means the remote set may be missing worklogs that still exist, so a
+        // missing remote can then not be reported as a deletion (see SyncWorklogsService).
+        $remoteReadComplete = true;
         $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
             $api,
             static fn (JiraWorkLog $jiraWorkLog): bool => $myself->matchesWorklogAuthor($jiraWorkLog),
             $jql,
             $from,
             $to,
-            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun): void {
+            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun, &$remoteReadComplete): void {
+                $remoteReadComplete = false;
                 $this->onRemoteNotice($syncRun, $type, $issueKey, $throwable, $worklogId);
             },
         );
@@ -136,6 +140,14 @@ class VerifyWorklogsService extends AbstractSyncRunService
             }
 
             $decision = $this->reconciliationService->reconcile($base, $local, $remote);
+
+            // A missing remote is evidence of a deletion only when the remote read was complete.
+            if (!$remoteReadComplete && 'remote_missing' === $decision->action->value) {
+                $syncRun->incrementCounter('absence_unverified');
+
+                continue;
+            }
+
             $syncRun->incrementCounter(self::ACTION_COUNTERS[$decision->action->value] ?? 'errors');
 
             $itemKind = self::ACTION_ITEM_KINDS[$decision->action->value] ?? null;

@@ -248,6 +248,25 @@ final class VerifyWorklogsServiceTest extends TestCase
         self::assertSame(SyncItemKind::LOCAL_ONLY, $syncRun->getItems()->toArray()[0]->getKind());
     }
 
+    public function testMissingRemoteOnAnIncompleteReadIsNotReportedAsDeleted(): void
+    {
+        // ABC-1's worklogs could not be fetched, so worklog 1001 may still exist. Reporting it
+        // as local_only would present a read failure as a deletion in Jira.
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$this->linkedEntry()]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->api->method('getMyself')->willReturn(new JiraUserIdentity(accountId: 'me'));
+        $this->api->method('searchIssueKeysWithWorklogs')->willReturn(new JiraIssueKeySearchResult(['ABC-1'], false));
+        $this->api->method('getIssueWorklogs')->willThrowException(new RuntimeException('Jira unavailable'));
+
+        $syncRun = $this->verify();
+
+        self::assertSame(0, $syncRun->getCounters()['local_only'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        $kinds = array_map(static fn ($item) => $item->getKind(), $syncRun->getItems()->toArray());
+        self::assertNotContains(SyncItemKind::LOCAL_ONLY, $kinds);
+        self::assertContains(SyncItemKind::ERROR, $kinds);
+    }
+
     public function testUnlinkedEntryCountsNeverSynced(): void
     {
         $entry = self::createStub(Entry::class);

@@ -25,6 +25,7 @@ use App\Enum\SyncRunStatus;
 use App\Enum\WorklogField;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
+use App\Exception\Integration\Jira\JiraApiException;
 use App\Repository\EntryRepository;
 use App\Repository\UserTicketsystemRepository;
 use App\Repository\WorklogSyncStateRepository;
@@ -89,6 +90,9 @@ final class SyncWorklogsServiceTest extends TestCase
     private array $worklogsByIssue = [];
     /** @var list<string> */
     private array $issueKeys = [];
+    /** @var list<string> issues whose worklog fetch fails */
+    private array $unreadableIssueKeys = [];
+    private bool $searchTruncated = false;
 
     protected function setUp(): void
     {
@@ -135,10 +139,11 @@ final class SyncWorklogsServiceTest extends TestCase
         // The token owner behind the mocked api. Its worklogs are attributed to 'acc-x'.
         $this->api->method('getMyself')->willReturn(new JiraUserIdentity(accountId: 'acc-x'));
         $this->api->method('searchIssueKeysWithWorklogs')->willReturnCallback(
-            fn (): JiraIssueKeySearchResult => new JiraIssueKeySearchResult($this->issueKeys, false),
+            fn (): JiraIssueKeySearchResult => new JiraIssueKeySearchResult($this->issueKeys, $this->searchTruncated),
         );
         $this->api->method('getIssueWorklogs')->willReturnCallback(
-            fn (string $issueKey): array => $this->worklogsByIssue[$issueKey] ?? [],
+            fn (string $issueKey): array => in_array($issueKey, $this->unreadableIssueKeys, true)
+                ? throw new JiraApiException('Jira unavailable', 503) : $this->worklogsByIssue[$issueKey] ?? [],
         );
 
         $this->targetUser = new User()->setUsername('target');
@@ -444,6 +449,66 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame('U5', $state->getBaseUpdatedAt());
         self::assertSame($local->toArray(), $state->getBasePayload());
         self::assertSame(0, $syncRun->getCounters()['remote_only'] ?? 0);
+    }
+
+    public function testUnreadableIssueNeverDeletesItsLinkedEntries(): void
+    {
+        // A transient Jira failure reading TIM-1's worklogs hides worklog 11, which still exists.
+        // The clean entry must not be deleted as if the worklog had been deleted in Jira.
+        $entry = $this->linkedEntry(11);
+        $state = $this->stateFor($entry, $this->projector->project($entry));
+        $this->issueKeys = ['TIM-1'];
+        $this->unreadableIssueKeys = ['TIM-1'];
+
+        $this->entityManager->expects(self::never())->method('remove');
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
+        self::assertSame(0, $syncRun->getCounters()['deleted_local'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['orphaned'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
+        self::assertSame(WorklogSyncStatus::IN_SYNC, $state->getStatus());
+    }
+
+    public function testCappedIssueSearchNeverParksAnEntryAsOrphaned(): void
+    {
+        // Issues beyond the search cap were not read, so a locally modified entry whose worklog
+        // is missing must not be parked as orphaned either.
+        $entry = $this->linkedEntry(11);
+        $base = $this->projector->project($entry);
+        $entry->setDescription('local change');
+        $state = $this->stateFor($entry, $base);
+        $this->searchTruncated = true;
+
+        $this->entityManager->expects(self::never())->method('remove');
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(0, $syncRun->getCounters()['orphaned'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(WorklogSyncStatus::IN_SYNC, $state->getStatus());
+    }
+
+    public function testMoveIsStillRelinkedWhenAnotherIssueIsUnreadable(): void
+    {
+        // The moved worklog (22) was read, so the relink is sound even though TIM-9 failed.
+        // Skipping it would import worklog 22 as a duplicate of the entry.
+        $entry = $this->linkedEntry(11);
+        $local = $this->projector->project($entry);
+        $this->stateFor($entry, $local);
+        $this->remoteWorklog($local, 22, 'U5');
+        $this->issueKeys[] = 'TIM-9';
+        $this->unreadableIssueKeys = ['TIM-9'];
+
+        $this->importWorklogsService->expects(self::never())->method('processWorklog');
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(22, $entry->getWorklogId());
+        self::assertSame(1, $syncRun->getCounters()['relinked'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['absence_unverified'] ?? 0);
     }
 
     public function testWorklogOwnedByAnExcludedEntryIsNeitherMoveTargetNorImportCandidate(): void
