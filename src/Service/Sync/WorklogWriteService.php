@@ -16,10 +16,12 @@ use App\Entity\WorklogSyncState;
 use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
+use App\Exception\Integration\Jira\JiraApiException;
 use App\Repository\WorklogSyncStateRepository;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use JsonException;
 use Psr\Clock\ClockInterface;
 
 /**
@@ -110,6 +112,9 @@ class WorklogWriteService
     }
 
     /**
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
+     *
      * @return bool whether Jira confirmed the worklog is gone (deleted, or not found)
      */
     public function delete(JiraOAuthApiService $api, Entry $entry): bool

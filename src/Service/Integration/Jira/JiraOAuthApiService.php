@@ -383,6 +383,7 @@ class JiraOAuthApiService
      * Removes Jira workLog entry.
      *
      * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
      *
      * @return bool whether this Jira confirmed the worklog is gone (deleted, or not found);
      *              false when no delete was attempted
