@@ -97,7 +97,7 @@ class ConflictResolutionService
 
         $outcome = $this->worklogWriteService->forcePush($api, $entry, $ticketSystem);
         if (WriteOutcome::WRITTEN !== $outcome) {
-            return new ResolutionResult(false, '', 'push skipped: entry has no pushable ticket');
+            return new ResolutionResult(false, '', 'push skipped: entry has no pushable ticket or is agent walltime (never booked as a worklog)');
         }
 
         // forcePush's base refresh sets IN_SYNC and clears the conflict payload —

@@ -165,6 +165,23 @@ final class VerifyWorklogsServiceTest extends TestCase
         self::assertSame(2002, $items[0]->getRemoteWorklogId());
     }
 
+    public function testRemoteWorklogOfAnEntryOutsideTheCandidatesIsNotAnImportCandidate(): void
+    {
+        // An agent entry synced before ADR-025 §7 was enforced is no longer a sync
+        // candidate, but its Jira worklog still exists and still belongs to it. Reporting
+        // it as "no matching entry (import candidate)" would invite a duplicate import.
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturn($this->linkedEntry());
+        $this->stubJira(['ABC-1'], ['ABC-1' => [$this->matchingRemote()]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(0, $syncRun->getCounters()['remote_only'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['already_linked'] ?? 0);
+        self::assertCount(0, $syncRun->getItems());
+    }
+
     public function testForeignAuthorWorklogsAreIgnored(): void
     {
         $this->entryRepository->method('findJiraSyncCandidates')->willReturn([]);

@@ -13,6 +13,7 @@ use App\DTO\Jira\JiraWorkLog;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\WorklogSyncState;
+use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Repository\WorklogSyncStateRepository;
@@ -39,7 +40,7 @@ class WorklogWriteService
     public function push(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
     {
         $ticket = $entry->getTicket();
-        if ('' === $ticket || '0' === $ticket) {
+        if ('' === $ticket || '0' === $ticket || $this->isAgentWalltime($entry)) {
             return WriteOutcome::SKIPPED;
         }
 
@@ -89,7 +90,7 @@ class WorklogWriteService
     public function forcePush(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
     {
         $ticket = $entry->getTicket();
-        if ('' === $ticket || '0' === $ticket) {
+        if ('' === $ticket || '0' === $ticket || $this->isAgentWalltime($entry)) {
             return WriteOutcome::SKIPPED;
         }
 
@@ -97,6 +98,15 @@ class WorklogWriteService
         $this->refreshBase($api, $entry, $ticketSystem);
 
         return WriteOutcome::WRITTEN;
+    }
+
+    /**
+     * ADR-025 §7: a ticket-system worklog is the human labour line; agent walltime is
+     * never written there, whichever caller asks.
+     */
+    private function isAgentWalltime(Entry $entry): bool
+    {
+        return EntrySource::AGENT === $entry->getSource();
     }
 
     public function delete(JiraOAuthApiService $api, Entry $entry): void

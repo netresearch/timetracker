@@ -338,6 +338,15 @@ class SyncWorklogsService extends AbstractSyncRunService
         // Whatever remains on the remote side has no matching entry — pool it for move-detection
         // (delete-by-absence relink) and unattended import.
         foreach ($remoteByWorklogId as $worklogId => $record) {
+            // A worklog that already belongs to a local entry outside the candidates (e.g.
+            // agent walltime synced before ADR-025 §7 was enforced) is neither a move
+            // target nor an import candidate.
+            if ($this->entryRepository->findOneByWorklogIdAndTicketSystem($worklogId, $context->ticketSystem) instanceof Entry) {
+                $context->syncRun->incrementCounter('already_linked');
+
+                continue;
+            }
+
             $context->unmatchedRemote[$worklogId] = [
                 'worklog' => $this->synthesizeWorklog($worklogId, $record),
                 'snapshot' => $record['snapshot'],
