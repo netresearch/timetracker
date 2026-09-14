@@ -16,6 +16,7 @@ use App\Entity\Project;
 use App\Service\Tracking\DayClassService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\EntityManagerTestTrait;
 
@@ -176,9 +177,16 @@ final class DeleteEntryActionTest extends AbstractWebTestCase
         self::assertIsInt($foreignId);
 
         $this->logInSession('developer');
-        $status = $this->deleteJson($ownId)->getStatusCode();
+        $response = $this->deleteJson($ownId);
 
-        self::assertSame(Response::HTTP_FORBIDDEN, $status);
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+        // The refusal names the pair, not the entry the caller does own. Compare with the
+        // translator's output, since the test environment renders a non-English locale.
+        $body = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($body);
+        $translator = self::getContainer()->get('translator');
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
+        self::assertSame($translator->trans('This entry is paired with an entry you are not allowed to delete.'), $body['message'] ?? null);
         $this->entityManager()->clear();
         self::assertTrue($this->entryExists($ownId));
         self::assertTrue($this->entryExists($foreignId));
