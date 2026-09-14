@@ -132,27 +132,30 @@ A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracke
 ---
 
 ### POST /tracking/delete
-**Purpose**: Delete a time entry
+**Purpose**: Delete a time entry. If the entry is one half of an agent/human pair written by `log_time` (ADR-025), its partner is deleted too.
 
-**Authentication**: Required (own entries only)
+**Authentication**: Required (own entries; admins and project leads may delete any)
 
-**Request Body** (IdDto):
+**Request Body** (form or JSON):
 ```json
 {
   "id": 123
 }
 ```
 
-**Response (200 OK)**:
+**Response (200 OK)** — `deleted` lists every removed id (two for a pair):
 ```json
 {
-  "message": "Entry deleted successfully"
+  "success": true,
+  "deleted": [123, 124]
 }
 ```
 
 **Errors**:
-- `400 Bad Request`: Entry not found or not owned by user
+- `400 Bad Request`: No entry id provided
 - `401 Unauthorized`: Not authenticated
+- `403 Forbidden`: Not allowed to delete this entry
+- `404 Not Found`: No entry for that id
 
 ---
 
