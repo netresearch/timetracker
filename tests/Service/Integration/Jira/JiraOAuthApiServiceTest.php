@@ -20,6 +20,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use JsonException;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\Stub;
@@ -495,39 +496,79 @@ final class JiraOAuthApiServiceTest extends TestCase
         $service->updateEntryJiraWorkLog($entry);
     }
 
+    // An early return attempted no delete, so it must not claim the worklog is gone.
+
     public function testDeleteEntryJiraWorkLogReturnsEarlyForEmptyTicket(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('');
 
         $service = $this->createServiceWithMockedClient();
-        $service->deleteEntryJiraWorkLog($entry);
+        self::assertFalse($service->deleteEntryJiraWorkLog($entry));
     }
 
     public function testDeleteEntryJiraWorkLogReturnsEarlyForNullWorklogId(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('TEST-123');
         $entry->method('getWorklogId')->willReturn(null);
 
         $service = $this->createServiceWithMockedClient();
-        $service->deleteEntryJiraWorkLog($entry);
+        self::assertFalse($service->deleteEntryJiraWorkLog($entry));
     }
 
     public function testDeleteEntryJiraWorkLogReturnsEarlyForZeroWorklogId(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $entry = self::createStub(Entry::class);
         $entry->method('getTicket')->willReturn('TEST-123');
         $entry->method('getWorklogId')->willReturn(0);
 
         $service = $this->createServiceWithMockedClient();
-        $service->deleteEntryJiraWorkLog($entry);
+        self::assertFalse($service->deleteEntryJiraWorkLog($entry));
+    }
+
+    public function testDeleteEntryJiraWorkLogUnlinksAndConfirmsADeletedWorklog(): void
+    {
+        // Jira answers a worklog DELETE with 204 and an empty body.
+        $entry = $this->bookedEntryOnABookableSystem();
+        $service = $this->createServiceWithMockedClientReturning(new Response(204, [], ''));
+
+        self::assertTrue($service->deleteEntryJiraWorkLog($entry));
+        self::assertNull($entry->getWorklogId());
+    }
+
+    public function testAnEmptyBodyOnAReadStillFails(): void
+    {
+        // Only a 204 may be empty. An empty 200 (a proxy or gateway page) read as "no data"
+        // would let the worklog sync see no remote worklogs and delete local entries.
+        $service = $this->createServiceWithMockedClientReturning(new Response(200, [], ''));
+        $getResponse = new ReflectionClass($service)->getMethod('getResponse');
+
+        $this->expectException(JsonException::class);
+
+        $getResponse->invoke($service, 'GET', 'myself');
+    }
+
+    public function testDeleteEntryJiraWorkLogConfirmsAWorklogJiraNoLongerHasButKeepsTheId(): void
+    {
+        // A 404 means the worklog is gone on this Jira. The id stays set: another ticket
+        // system the caller tries next may still hold the worklog.
+        $entry = $this->bookedEntryOnABookableSystem();
+        $request = new Request('DELETE', 'https://jira.example.com');
+        $service = $this->createServiceWithMockedClientThrowing(new RequestException('Not found', $request, new Response(404)));
+
+        self::assertTrue($service->deleteEntryJiraWorkLog($entry));
+        self::assertSame(77, $entry->getWorklogId());
+    }
+
+    private function bookedEntryOnABookableSystem(): Entry
+    {
+        $this->ticketSystem->method('getBookTime')->willReturn(true);
+        $repository = self::createStub(EntityRepository::class);
+        $repository->method('findOneBy')->willReturn(null);
+        $this->managerRegistry->method('getRepository')->willReturn($repository);
+
+        return new Entry()->setTicket('TEST-1')->setWorklogId(77);
     }
 
     // ==================== Create ticket tests ====================

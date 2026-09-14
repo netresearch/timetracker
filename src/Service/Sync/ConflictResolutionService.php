@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\WorklogSyncState;
+use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
@@ -62,6 +63,18 @@ class ConflictResolutionService
             return new ResolutionResult(false, '', 'state is incomplete');
         }
 
+        // ADR-025 §7: agent walltime is not synced. "Local wins" could never push it, and
+        // "remote wins" on a missing worklog would delete the agent entry. Nothing else
+        // would ever clear such a state (parked before agent time stopped syncing), so
+        // resolving it drops the state for either winner without touching Jira or the
+        // entry; a worklog still in Jira is reported by the next sync run.
+        if (EntrySource::AGENT === $entry->getSource()) {
+            $this->entityManager->remove($state);
+            $this->entityManager->flush();
+
+            return new ResolutionResult(true, 'dropped_agent_state');
+        }
+
         $api = $this->jiraOAuthApiFactory->create($this->tokenUser($entry, $ticketSystem, $actor), $ticketSystem);
 
         if ('local' === $winner) {
@@ -97,7 +110,7 @@ class ConflictResolutionService
 
         $outcome = $this->worklogWriteService->forcePush($api, $entry, $ticketSystem);
         if (WriteOutcome::WRITTEN !== $outcome) {
-            return new ResolutionResult(false, '', 'push skipped: entry has no pushable ticket');
+            return new ResolutionResult(false, '', 'push skipped: entry has no pushable ticket or is agent walltime (never booked as a worklog)');
         }
 
         // forcePush's base refresh sets IN_SYNC and clears the conflict payload —

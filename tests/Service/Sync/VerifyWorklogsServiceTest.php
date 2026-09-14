@@ -16,6 +16,7 @@ use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Repository\EntryRepository;
@@ -84,12 +85,14 @@ final class VerifyWorklogsServiceTest extends TestCase
     /**
      * Entry #42, Development, "fixed it", 2026-06-15 09:00, 60 min, linked worklog 1001.
      */
-    private function linkedEntry(): Entry
+    private function linkedEntry(EntrySource $source = EntrySource::HUMAN): Entry
     {
         $activity = self::createStub(Activity::class);
         $activity->method('getName')->willReturn('Development');
 
         $entry = self::createStub(Entry::class);
+        // Stubs cannot generate an enum return value, so the source is always explicit.
+        $entry->method('getSource')->willReturn($source);
         $entry->method('getId')->willReturn(42);
         $entry->method('getTicket')->willReturn('ABC-1');
         $entry->method('getWorklogId')->willReturn(1001);
@@ -163,6 +166,49 @@ final class VerifyWorklogsServiceTest extends TestCase
         self::assertSame(SyncItemKind::REMOTE_ONLY, $items[0]->getKind());
         self::assertSame('ABC-9', $items[0]->getIssueKey());
         self::assertSame(2002, $items[0]->getRemoteWorklogId());
+    }
+
+    public function testRemoteWorklogOfAnEntryOutsideTheCandidatesIsNotAnImportCandidate(): void
+    {
+        // A worklog whose entry is not among this run's candidates still belongs to that
+        // entry. Reporting it as "no matching entry (import candidate)" would invite a
+        // duplicate import.
+        $this->stubLinkedOutsideCandidates($this->linkedEntry());
+
+        $syncRun = $this->verify();
+
+        self::assertSame(0, $syncRun->getCounters()['remote_only'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['already_linked'] ?? 0);
+        self::assertCount(0, $syncRun->getItems());
+    }
+
+    public function testRemoteWorklogOfAgentWalltimeIsReportedForRemoval(): void
+    {
+        // An agent entry synced before ADR-025 §7 was enforced is no longer a candidate, but
+        // its worklog is still booked on the human labour line. Verify is the report that
+        // lists what needs removing in Jira, so the worklog must surface as an item.
+        $agentWalltime = $this->linkedEntry(EntrySource::AGENT);
+        $this->stubLinkedOutsideCandidates($agentWalltime);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(0, $syncRun->getCounters()['remote_only'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['already_linked'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['agent_worklogs'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
+        $items = $syncRun->getItems()->toArray();
+        self::assertCount(1, $items);
+        self::assertSame(SyncItemKind::ERROR, $items[0]->getKind());
+        self::assertSame(1001, $items[0]->getRemoteWorklogId());
+        self::assertSame($agentWalltime, $items[0]->getEntry());
+    }
+
+    private function stubLinkedOutsideCandidates(Entry $linked): void
+    {
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->entryRepository->method('findByWorklogIdsAndTicketSystem')->willReturn([1001 => $linked]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => [$this->matchingRemote()]]);
     }
 
     public function testForeignAuthorWorklogsAreIgnored(): void

@@ -13,6 +13,7 @@ use App\DTO\Jira\JiraWorkLog;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\WorklogSyncState;
+use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Repository\WorklogSyncStateRepository;
@@ -89,6 +90,30 @@ final class WorklogWriteServiceTest extends TestCase
         $this->api->expects(self::never())->method('updateEntryJiraWorkLog');
 
         $outcome = $this->service->push($this->api, $this->entry('', null), $this->ticketSystem);
+
+        self::assertSame(WriteOutcome::SKIPPED, $outcome);
+    }
+
+    public function testAgentEntryIsNeverPushed(): void
+    {
+        // ADR-025 §7: every modern push path funnels through here, so agent walltime
+        // is refused at the source rather than at each caller.
+        $this->api->expects(self::never())->method('getIssueWorklog');
+        $this->api->expects(self::never())->method('updateEntryJiraWorkLog');
+
+        $outcome = $this->service->push($this->api, $this->entry('ABC-1', 77)->setSource(EntrySource::AGENT), $this->ticketSystem);
+
+        self::assertSame(WriteOutcome::SKIPPED, $outcome);
+    }
+
+    public function testAgentEntryIsNeverForcePushed(): void
+    {
+        // Conflict resolution with winner=local forces a write; it must not recreate
+        // or overwrite a worklog from agent walltime either.
+        $this->api->expects(self::never())->method('getIssueWorklog');
+        $this->api->expects(self::never())->method('updateEntryJiraWorkLog');
+
+        $outcome = $this->service->forcePush($this->api, $this->entry('ABC-1', 77)->setSource(EntrySource::AGENT), $this->ticketSystem);
 
         self::assertSame(WriteOutcome::SKIPPED, $outcome);
     }

@@ -156,8 +156,18 @@ class VerifyWorklogsService extends AbstractSyncRunService
             }
         }
 
-        // --- Whatever remains on the remote side has no matching entry.
+        // --- Whatever remains on the remote side has no matching entry — unless it belongs
+        // to a local entry outside the candidates (e.g. agent walltime synced before
+        // ADR-025 §7 was enforced), which is linked, not an import candidate.
+        $linkedEntries = $this->entryRepository->findByWorklogIdsAndTicketSystem(array_keys($remoteByWorklogId), $ticketSystem);
         foreach ($remoteByWorklogId as $worklogId => $remoteData) {
+            $linkedEntry = $linkedEntries[$worklogId] ?? null;
+            if ($linkedEntry instanceof Entry) {
+                $this->reportLinkedRemoteWorklog($syncRun, $linkedEntry, $worklogId, $remoteData['snapshot']->issueKey);
+
+                continue;
+            }
+
             $syncRun->incrementCounter('remote_only');
             $this->addItem(
                 $syncRun,

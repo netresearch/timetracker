@@ -13,6 +13,8 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\WorklogSyncState;
+use App\Enum\EntrySource;
 use App\Enum\TicketSystemType;
 use App\Enum\WriteOutcome;
 use App\Event\EntryEvent;
@@ -92,17 +94,35 @@ class EntryEventSubscriber implements EventSubscriberInterface
     public function onEntryUpdated(EntryEvent $entryEvent): void
     {
         $entry = $entryEvent->getEntry();
+        $previousEntry = $this->getPreviousEntry($entryEvent);
 
         $this->logger?->info('Entry updated');
 
         $this->invalidateUserEntryCache($entry);
+
+        // ADR-025 §7: an entry re-attributed to the agent leaves the human labour line.
+        // Its worklog would otherwise stay booked in Jira, and since the sync ignores
+        // agent entries, nothing else would ever take it down.
+        if ($previousEntry instanceof Entry && $this->becameAgentWalltime($entry, $previousEntry)) {
+            try {
+                if ($this->withdrawWorklog($entry, $previousEntry)) {
+                    $this->logger?->info('JIRA worklog withdrawn from agent walltime entry');
+                } else {
+                    // Error, not warning (see onEntryDeleted): the worklog is still booked
+                    // on the human labour line and needs removing in Jira.
+                    $this->logger?->error('JIRA worklog of agent walltime entry was not withdrawn', ['entry' => $entry->getId(), 'worklog' => $previousEntry->getWorklogId()]);
+                }
+            } catch (Exception $e) {
+                $this->logger?->error('JIRA worklog withdrawal failed', ['exception' => $e]);
+            }
+        }
 
         // Sync on every update (v4 parity): the lease-checked push creates a
         // new worklog or updates the existing one based on the worklog id,
         // so entries that were never synced are caught up on their next save.
         if ($this->shouldAutoSync($entry)) {
             try {
-                $this->syncWorklog($entry, $this->getPreviousEntry($entryEvent));
+                $this->syncWorklog($entry, $previousEntry);
                 $this->logger?->info('JIRA worklog updated');
             } catch (Exception $e) {
                 // Error, not warning: see onEntryDeleted — a warning is swallowed by
@@ -207,12 +227,16 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
     }
 
-    private function deleteWorklog(Entry $entry): void
+    /**
+     * @return bool whether the worklog is gone: deleted on one system, or reported
+     *              missing by every system tried
+     */
+    private function deleteWorklog(Entry $entry): bool
     {
         $user = $entry->getUser();
         $project = $entry->getProject();
         if (!$user instanceof User || !$project instanceof Project) {
-            return;
+            return false;
         }
 
         // Delete on the systems the worklog could have been booked on, mirroring
@@ -221,24 +245,27 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // own system but would delete only on the (missing) internal one.
         $ticketSystems = $this->bookableTicketSystems($project);
         if ([] === $ticketSystems) {
-            return;
+            return false;
         }
 
         $lastError = null;
+        $goneEverywhereTried = true;
         foreach ($ticketSystems as $ticketSystem) {
             // deleteEntryJiraWorkLog nulls the worklog id once it removes the entry
-            // (and no-ops on a not-found), so stop as soon as it is gone.
+            // (and keeps it on a not-found, since another system may hold the
+            // worklog), so stop as soon as it is gone.
             if (null === $entry->getWorklogId()) {
                 break;
             }
 
             try {
                 $api = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
-                $this->worklogWriteService->delete($api, $entry);
+                $goneEverywhereTried = $this->worklogWriteService->delete($api, $entry) && $goneEverywhereTried;
             } catch (JiraApiException $jiraApiException) {
                 // Keep trying the remaining systems — a failure on one (auth,
                 // network, wrong instance) must not prevent cleanup on another.
                 $lastError = $jiraApiException;
+                $goneEverywhereTried = false;
             }
         }
 
@@ -251,6 +278,8 @@ class EntryEventSubscriber implements EventSubscriberInterface
         if (null !== $entry->getWorklogId() && $lastError instanceof JiraApiException) {
             throw $lastError;
         }
+
+        return null === $entry->getWorklogId() || $goneEverywhereTried;
     }
 
     /**
@@ -289,6 +318,44 @@ class EntryEventSubscriber implements EventSubscriberInterface
         return array_values($unique);
     }
 
+    private function becameAgentWalltime(Entry $entry, Entry $previousEntry): bool
+    {
+        return EntrySource::AGENT === $entry->getSource()
+            && EntrySource::AGENT !== $previousEntry->getSource()
+            && null !== $previousEntry->getWorklogId();
+    }
+
+    /**
+     * Deletes the worklog through the pre-save snapshot, whose ticket is the one the
+     * worklog lives on, and unlinks the entry once it is gone. A delete that did not
+     * happen leaves the link in place so the worklog is not lost track of.
+     *
+     * The entry's sync state goes first, whatever the delete does: an agent entry is
+     * never pushed, so a parked conflict could not be resolved — and resolving it as
+     * "remote wins" on the unlinked worklog would delete the entry.
+     *
+     * @return bool whether the worklog is gone
+     */
+    private function withdrawWorklog(Entry $entry, Entry $previousEntry): bool
+    {
+        $objectManager = $this->managerRegistry->getManager();
+        $syncState = $this->managerRegistry->getRepository(WorklogSyncState::class)->findOneBy(['entry' => $entry]);
+        if ($syncState instanceof WorklogSyncState) {
+            $objectManager->remove($syncState);
+            $objectManager->flush();
+        }
+
+        if (!$this->deleteWorklog($previousEntry)) {
+            return false;
+        }
+
+        $entry->setWorklogId(null);
+        $entry->setSyncedToTicketsystem(false);
+        $objectManager->flush();
+
+        return true;
+    }
+
     private function shouldAutoSync(Entry $entry): bool
     {
         $project = $entry->getProject();
@@ -298,6 +365,13 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         // The Jira client acts on behalf of the entry's user
         if (!$entry->getUser() instanceof User) {
+            return false;
+        }
+
+        // ADR-025 §7: a Jira worklog is the human labour line. Agent walltime is
+        // machine time and is never booked there; its delegated human estimate
+        // (source=human) is the entry that syncs.
+        if (EntrySource::AGENT === $entry->getSource()) {
             return false;
         }
 

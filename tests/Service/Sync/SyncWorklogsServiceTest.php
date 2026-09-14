@@ -19,6 +19,7 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\UserTicketsystem;
 use App\Entity\WorklogSyncState;
+use App\Enum\EntrySource;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Enum\WorklogField;
@@ -53,6 +54,9 @@ use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 
 use function array_map;
 use function array_values;
+use function in_array;
+
+use const ARRAY_FILTER_USE_KEY;
 
 #[CoversClass(SyncWorklogsService::class)]
 #[AllowMockObjectsWithoutExpectations]
@@ -109,6 +113,13 @@ final class SyncWorklogsServiceTest extends TestCase
         );
         $this->entryRepository->method('findOneByWorklogIdAndTicketSystem')->willReturnCallback(
             fn (int $worklogId): ?Entry => $this->entriesByWorklogId[$worklogId] ?? null,
+        );
+        $this->entryRepository->method('findByWorklogIdsAndTicketSystem')->willReturnCallback(
+            fn (array $worklogIds): array => array_filter(
+                $this->entriesByWorklogId,
+                static fn (int $worklogId): bool => in_array($worklogId, $worklogIds, true),
+                ARRAY_FILTER_USE_KEY,
+            ),
         );
         $this->entryRepository->method('findJiraSyncCandidates')->willReturnCallback(
             fn (): array => $this->candidates,
@@ -433,6 +444,44 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame('U5', $state->getBaseUpdatedAt());
         self::assertSame($local->toArray(), $state->getBasePayload());
         self::assertSame(0, $syncRun->getCounters()['remote_only'] ?? 0);
+    }
+
+    public function testWorklogOwnedByAnExcludedEntryIsNeitherMoveTargetNorImportCandidate(): void
+    {
+        // An agent entry synced before ADR-025 §7 was enforced is no longer a sync
+        // candidate, but its worklog (22) still exists and still belongs to it. A human
+        // entry whose own worklog (11) vanished must not be relinked onto it just because
+        // start and duration match, and worklog 22 is not an import candidate either.
+        $human = $this->linkedEntry(11);
+        $local = $this->projector->project($human);
+        $this->stateFor($human, $local);
+
+        $agent = new Entry()
+            ->setUser($this->targetUser)
+            ->setTicket('TIM-1')
+            ->setDay('2026-06-10')
+            ->setStart('09:00:00')
+            ->setEnd('10:00:00')
+            ->setDescription('did things')
+            ->setWorklogId(22)
+            ->setSource(EntrySource::AGENT);
+        $agent->setDuration(60);
+        $this->entriesByWorklogId[22] = $agent; // owned locally, but not among the candidates
+        $this->remoteWorklog($local, 22, 'U5');
+
+        $this->importWorklogsService->expects(self::never())->method('processWorklog');
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
+        self::assertSame(11, $human->getWorklogId());
+        self::assertSame(0, $syncRun->getCounters()['relinked'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['remote_only'] ?? 0);
+        // What does happen: the clean human entry follows its vanished worklog, and the
+        // agent's worklog is reported for removal in Jira.
+        self::assertSame(1, $syncRun->getCounters()['deleted_local'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['agent_worklogs'] ?? 0);
+        self::assertContains(SyncItemKind::ERROR, $this->itemKinds($syncRun));
     }
 
     public function testUnmatchedRemoteImportedWhenActivityConfigured(): void

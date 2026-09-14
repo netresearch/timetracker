@@ -1253,9 +1253,12 @@ class EntryRepository extends ServiceEntityRepository
             ->andWhere('e.ticket IS NOT NULL')
             ->andWhere('e.ticket != :emptyString')
             ->andWhere('e.internalJiraTicketOriginalKey IS NULL OR e.internalJiraTicketOriginalKey = :emptyString')
+            // ADR-025 §7: agent walltime is never booked as a worklog.
+            ->andWhere('e.source = :humanSource')
             ->setParameter('userId', $userId)
             ->setParameter('ticketSystemId', $ticketSystemId)
             ->setParameter('emptyString', '')
+            ->setParameter('humanSource', EntrySource::HUMAN->value)
             ->orderBy('e.day', 'DESC')
             ->addOrderBy('e.start', 'DESC')
             ->setMaxResults($limit)
@@ -1286,9 +1289,12 @@ class EntryRepository extends ServiceEntityRepository
             ->andWhere('e.ticket IS NOT NULL')
             ->andWhere('e.ticket != :emptyString')
             ->andWhere('e.internalJiraTicketOriginalKey IS NULL OR e.internalJiraTicketOriginalKey = :emptyString')
+            // ADR-025 §7: agent walltime is never pushed or reconciled as a worklog.
+            ->andWhere('e.source = :humanSource')
             ->setParameter('user', $user)
             ->setParameter('ticketSystem', $ticketSystem)
             ->setParameter('emptyString', '')
+            ->setParameter('humanSource', EntrySource::HUMAN->value)
             ->setParameter('fromDay', $from->format('Y-m-d'))
             ->setParameter('toDay', $to->format('Y-m-d'))
             ->orderBy('e.day', 'ASC')
@@ -1317,6 +1323,40 @@ class EntryRepository extends ServiceEntityRepository
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * Entries already linked to any of the given Jira worklogs on this ticket system, keyed
+     * by worklog id — the batched form of {@see self::findOneByWorklogIdAndTicketSystem()}.
+     *
+     * @param list<int> $worklogIds
+     *
+     * @return array<int, Entry>
+     */
+    public function findByWorklogIdsAndTicketSystem(array $worklogIds, TicketSystem $ticketSystem): array
+    {
+        if ([] === $worklogIds) {
+            return [];
+        }
+
+        $result = $this->createQueryBuilder('e')
+            ->join('e.project', 'p')
+            ->where('e.worklogId IN (:worklogIds)')
+            ->andWhere('p.ticketSystem = :ticketSystem')
+            ->setParameter('worklogIds', $worklogIds)
+            ->setParameter('ticketSystem', $ticketSystem)
+            ->getQuery()
+            ->getResult();
+
+        assert(is_array($result));
+
+        $byWorklogId = [];
+        foreach ($result as $entry) {
+            assert($entry instanceof Entry);
+            $byWorklogId[(int) $entry->getWorklogId()] = $entry;
+        }
+
+        return $byWorklogId;
     }
 
     /**

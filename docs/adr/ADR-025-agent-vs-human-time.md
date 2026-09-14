@@ -58,7 +58,7 @@ Attendance and any working-time-law computation (incl. the ADR-024 Personio expo
 
 ### 7. Controlling & billing: slice, never sum across sources
 
-Reports expose the axes independently: **wall-clock (agent)**, **human portion**, **agent portion**, **source**, and **responsible person**. Human hours are billable labour (or per contract); agent hours are a **separate** metric (machine time) with their own rate, billed only where a contract permits — never rolled into the human labour line.
+Reports expose the axes independently: **wall-clock (agent)**, **human portion**, **agent portion**, **source**, and **responsible person**. Human hours are billable labour (or per contract); agent hours are a **separate** metric (machine time) with their own rate, billed only where a contract permits — never rolled into the human labour line. A ticket-system worklog (Jira, and Tempo behind it) is that human labour line: `source=agent` entries are never pushed as worklogs — not on save, not by the worklog sync, not by the bulk push — while the delegated `source=human` estimate is.
 
 ## Alternatives considered
 

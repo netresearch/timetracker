@@ -15,7 +15,7 @@ namespace App\ValueObject\Sync;
 final readonly class ResolutionResult
 {
     /**
-     * @param string $action one of pushed_local|pulled_remote|recreated_local|deleted_local, '' when unresolved
+     * @param string $action one of pushed_local|pulled_remote|recreated_local|deleted_local|dropped_agent_state, '' when unresolved
      */
     public function __construct(
         public bool $resolved,

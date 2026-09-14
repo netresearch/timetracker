@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\WorklogSyncState;
+use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
@@ -271,6 +272,36 @@ final class ConflictResolutionServiceTest extends TestCase
 
         self::assertTrue($result->resolved);
         self::assertSame('deleted_local', $result->action);
+    }
+
+    public function testResolvingAnAgentWalltimeStateOnlyDropsIt(): void
+    {
+        // ADR-025 §7: a state parked before agent time stopped syncing would otherwise stay
+        // listed for good. Either winner drops it, without pushing the entry ("local") or
+        // deleting it because its worklog is gone ("remote").
+        $this->worklogWriteService->expects(self::never())->method('forcePush');
+        $this->api->expects(self::never())->method('getIssueWorklog');
+        $removed = [];
+        $this->entityManager->method('remove')->willReturnCallback(
+            static function (object $object) use (&$removed): void { $removed[] = $object; },
+        );
+
+        $states = [];
+        foreach (['local', 'remote'] as $winner) {
+            $state = $this->parkedState(WorklogSyncStatus::ORPHANED);
+            $entry = $state->getEntry();
+            self::assertInstanceOf(Entry::class, $entry);
+            $entry->setSource(EntrySource::AGENT);
+            $states[] = $state;
+
+            $result = $this->service->resolve($state, $winner, $this->actor);
+
+            self::assertTrue($result->resolved, $winner);
+            self::assertSame('dropped_agent_state', $result->action);
+        }
+
+        // Only the two states were removed; no entry went with them.
+        self::assertSame($states, $removed);
     }
 
     public function testPullFailureSurfacesReason(): void
