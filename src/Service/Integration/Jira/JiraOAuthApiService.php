@@ -33,6 +33,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
+use JsonException;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
 use stdClass;
@@ -818,6 +819,7 @@ class JiraOAuthApiService
     /**
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     protected function delete(string $url): object
     {
@@ -831,6 +833,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     protected function getResponse(string $method, string $url, array $data = []): object
     {

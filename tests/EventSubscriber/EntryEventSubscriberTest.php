@@ -613,6 +613,78 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryDeleted($event);
     }
 
+    /**
+     * A synced entry (worklog 12345) of a project whose worklogs may live on two bookable
+     * Jira systems: the internal mirror (id 99, found through the repository) and the
+     * project's own system.
+     *
+     * @param ObjectRepository<WorklogSyncState>|null $syncStateRepository answers the
+     *                                                                     WorklogSyncState lookup of a withdrawal
+     */
+    private function syncedEntryOnTwoBookableSystems(?ObjectRepository $syncStateRepository = null): Entry
+    {
+        $internalSystem = self::createStub(TicketSystem::class);
+        $internalSystem->method('getBookTime')->willReturn(true);
+        $internalSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $ownSystem = self::createStub(TicketSystem::class);
+        $ownSystem->method('getBookTime')->willReturn(true);
+        $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('hasInternalJiraProjectKey')->willReturn(true);
+        $project->method('getInternalJiraTicketSystem')->willReturn('99');
+        $project->method('getTicketSystem')->willReturn($ownSystem);
+
+        $ticketSystemRepository = $this->createMock(TicketSystemRepository::class);
+        $ticketSystemRepository->method('find')->willReturn($internalSystem);
+        $this->managerRegistry->method('getRepository')->willReturnCallback(
+            static fn (string $className): ObjectRepository => WorklogSyncState::class === $className && $syncStateRepository instanceof ObjectRepository
+                ? $syncStateRepository
+                : $ticketSystemRepository,
+        );
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket('ABC-123');
+        $entry->setWorklogId(12345);
+        $entry->setSyncedToTicketsystem(true);
+
+        return $entry;
+    }
+
+    private function expectBothSystemsTried(): void
+    {
+        $this->jiraOAuthApiFactory->expects(self::exactly(2))
+            ->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+    }
+
+    /**
+     * A WorklogWriteService::delete stand-in: the first system answers with a body that is not
+     * JSON, the second one behaves as $second.
+     *
+     * @param callable(Entry): bool $second
+     *
+     * @return callable(JiraOAuthApiService, Entry): bool
+     */
+    private function unreadableResponseThen(callable $second): callable
+    {
+        $calls = 0;
+
+        return static function (JiraOAuthApiService $api, Entry $entry) use (&$calls, $second): bool {
+            if (1 === ++$calls) {
+                throw new JsonException('Syntax error');
+            }
+
+            return $second($entry);
+        };
+    }
+
     public function testOnEntryDeletedFallsBackToOwnSystemWhenInternalSystemMissing(): void
     {
         // Regression for the orphaned-worklog bug: a project IS configured for an
@@ -661,38 +733,11 @@ final class EntryEventSubscriberTest extends TestCase
         // A failure deleting on the first candidate system must not abort cleanup on
         // the others, and an unresolved deletion must surface as an error (not a
         // silent success). Two bookable systems; the delete throws on each.
-        $internalSystem = self::createStub(TicketSystem::class);
-        $internalSystem->method('getBookTime')->willReturn(true);
-        $internalSystem->method('getType')->willReturn(TicketSystemType::JIRA);
-
-        $ownSystem = self::createStub(TicketSystem::class);
-        $ownSystem->method('getBookTime')->willReturn(true);
-        $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
-
-        $project = self::createStub(Project::class);
-        $project->method('hasInternalJiraProjectKey')->willReturn(true);
-        $project->method('getInternalJiraTicketSystem')->willReturn('99');
-        $project->method('getTicketSystem')->willReturn($ownSystem);
-
-        $repository = $this->createMock(TicketSystemRepository::class);
-        $repository->method('find')->willReturn($internalSystem);
-        $this->managerRegistry->method('getRepository')->willReturn($repository);
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getProject')->willReturn($project);
-        $entry->method('getTicket')->willReturn('ABC-123');
-        $entry->method('getSyncedToTicketsystem')->willReturn(true);
-        $entry->method('getWorklogId')->willReturn(12345);
+        $entry = $this->syncedEntryOnTwoBookableSystems();
 
         // Both candidate systems are attempted (create once per system) even though
         // the first delete throws.
-        $this->jiraOAuthApiFactory->expects(self::exactly(2))
-            ->method('create')
-            ->willReturn($this->jiraOAuthApiService);
+        $this->expectBothSystemsTried();
         $this->worklogWriteService->method('delete')
             ->willThrowException(new JiraApiException('boom', 500));
 
@@ -701,8 +746,7 @@ final class EntryEventSubscriberTest extends TestCase
             ->method('error')
             ->with('JIRA worklog deletion failed', self::anything());
 
-        $event = new EntryEvent($entry);
-        $this->subscriber->onEntryDeleted($event);
+        $this->subscriber->onEntryDeleted(new EntryEvent($entry));
     }
 
     public function testOnEntryDeletedStillTriesTheOtherSystemAfterAnUnreadableResponse(): void
@@ -710,48 +754,16 @@ final class EntryEventSubscriberTest extends TestCase
         // The first system answers with a body that is not JSON. That is a failure on this
         // system like any Jira error: the worklog may live on the second one, which must
         // still be tried — and once it deletes the worklog, nothing is left to report.
-        $internalSystem = self::createStub(TicketSystem::class);
-        $internalSystem->method('getBookTime')->willReturn(true);
-        $internalSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+        $entry = $this->syncedEntryOnTwoBookableSystems();
 
-        $ownSystem = self::createStub(TicketSystem::class);
-        $ownSystem->method('getBookTime')->willReturn(true);
-        $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
-
-        $project = self::createStub(Project::class);
-        $project->method('hasInternalJiraProjectKey')->willReturn(true);
-        $project->method('getInternalJiraTicketSystem')->willReturn('99');
-        $project->method('getTicketSystem')->willReturn($ownSystem);
-
-        $repository = $this->createMock(TicketSystemRepository::class);
-        $repository->method('find')->willReturn($internalSystem);
-        $this->managerRegistry->method('getRepository')->willReturn($repository);
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = new Entry();
-        $entry->setUser($user);
-        $entry->setProject($project);
-        $entry->setTicket('ABC-123');
-        $entry->setWorklogId(12345);
-        $entry->setSyncedToTicketsystem(true);
-
-        $this->jiraOAuthApiFactory->expects(self::exactly(2))
-            ->method('create')
-            ->willReturn($this->jiraOAuthApiService);
-        $calls = 0;
+        $this->expectBothSystemsTried();
         $this->worklogWriteService->expects(self::exactly(2))
             ->method('delete')
-            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted) use (&$calls): bool {
-                if (1 === ++$calls) {
-                    throw new JsonException('Syntax error');
-                }
-
+            ->willReturnCallback($this->unreadableResponseThen(static function (Entry $deleted): bool {
                 $deleted->setWorklogId(null);
 
                 return true;
-            });
+            }));
         $this->logger->expects(self::never())
             ->method('error');
 
@@ -760,46 +772,39 @@ final class EntryEventSubscriberTest extends TestCase
         self::assertNull($entry->getWorklogId());
     }
 
+    public function testOnEntryDeletedReportsAnUnreadableResponseWhenNoSystemRemovedTheWorklog(): void
+    {
+        // First system: body that is not JSON. Second system: 404 — gone there, id kept. The
+        // worklog may still be booked on the first one, so the unreadable response is the
+        // error to surface rather than a silent "deleted".
+        $entry = $this->syncedEntryOnTwoBookableSystems();
+
+        $this->expectBothSystemsTried();
+        $this->worklogWriteService->expects(self::exactly(2))
+            ->method('delete')
+            ->willReturnCallback($this->unreadableResponseThen(static fn (Entry $deleted): bool => true));
+        $this->logger->expects(self::once())
+            ->method('error')
+            ->with('JIRA worklog deletion failed', self::callback(
+                static fn (array $context): bool => ($context['exception'] ?? null) instanceof JsonException,
+            ));
+
+        $this->subscriber->onEntryDeleted(new EntryEvent($entry));
+
+        self::assertSame(12345, $entry->getWorklogId());
+    }
+
     public function testWithdrawalKeepsTheLinkWhenOnlyOneOfTwoSystemsConfirmedTheWorklogGone(): void
     {
         // Internal system: no delete attempted. Own system: 404 — gone there, id kept. The
         // worklog may still live on the internal system, so the entry must stay linked
         // and the leftover must be reported. (The last answer alone would say "gone".)
-        $internalSystem = self::createStub(TicketSystem::class);
-        $internalSystem->method('getBookTime')->willReturn(true);
-        $internalSystem->method('getType')->willReturn(TicketSystemType::JIRA);
-
-        $ownSystem = self::createStub(TicketSystem::class);
-        $ownSystem->method('getBookTime')->willReturn(true);
-        $ownSystem->method('getType')->willReturn(TicketSystemType::JIRA);
-
-        $project = self::createStub(Project::class);
-        $project->method('hasInternalJiraProjectKey')->willReturn(true);
-        $project->method('getInternalJiraTicketSystem')->willReturn('99');
-        $project->method('getTicketSystem')->willReturn($ownSystem);
-
-        $ticketSystemRepository = $this->createMock(TicketSystemRepository::class);
-        $ticketSystemRepository->method('find')->willReturn($internalSystem);
-        $syncStateRepository = $this->createMock(ObjectRepository::class);
-        $this->managerRegistry->method('getRepository')->willReturnCallback(
-            static fn (string $className): ObjectRepository => WorklogSyncState::class === $className ? $syncStateRepository : $ticketSystemRepository,
-        );
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $previousEntry = new Entry();
-        $previousEntry->setUser($user);
-        $previousEntry->setProject($project);
-        $previousEntry->setTicket('ABC-1');
+        $previousEntry = $this->syncedEntryOnTwoBookableSystems($this->createMock(ObjectRepository::class));
         $previousEntry->setWorklogId(555);
-        $previousEntry->setSyncedToTicketsystem(true);
         $entry = clone $previousEntry;
         $entry->setSource(EntrySource::AGENT);
 
-        $this->jiraOAuthApiFactory->expects(self::exactly(2))
-            ->method('create')
-            ->willReturn($this->jiraOAuthApiService);
+        $this->expectBothSystemsTried();
         $this->worklogWriteService->expects(self::exactly(2))
             ->method('delete')
             ->willReturnOnConsecutiveCalls(false, true);
