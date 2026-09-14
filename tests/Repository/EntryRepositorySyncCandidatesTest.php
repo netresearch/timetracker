@@ -26,45 +26,77 @@ use Tests\AbstractWebTestCase;
  */
 final class EntryRepositorySyncCandidatesTest extends AbstractWebTestCase
 {
-    public function testFindJiraSyncCandidatesFiltersByUserSystemRangeAndTicket(): void
+    private const string IN_RANGE_DAY = '2026-06-15';
+
+    private const string NINE = '09:00';
+
+    private const string TEN = '10:00';
+
+    private EntityManagerInterface $entityManager;
+
+    private EntryRepository $entryRepository;
+
+    private User $user;
+
+    private TicketSystem $ticketSystem;
+
+    private Project $project;
+
+    protected function setUp(): void
     {
+        parent::setUp();
+
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
         self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+        $this->entityManager = $entityManager;
 
         $entryRepository = self::getContainer()->get(EntryRepository::class);
         self::assertInstanceOf(EntryRepository::class, $entryRepository);
+        $this->entryRepository = $entryRepository;
 
         $user = $entityManager->getRepository(User::class)->findOneBy([]);
         self::assertInstanceOf(User::class, $user, 'fixture user missing');
+        $this->user = $user;
         $ticketSystem = $entityManager->getRepository(TicketSystem::class)->findOneBy([]);
         self::assertInstanceOf(TicketSystem::class, $ticketSystem, 'fixture ticket system missing');
+        $this->ticketSystem = $ticketSystem;
         $project = $entityManager->getRepository(Project::class)->findOneBy([]);
         self::assertInstanceOf(Project::class, $project, 'fixture project missing');
         $project->setTicketSystem($ticketSystem);
+        $this->project = $project;
+    }
 
-        $inRange = new Entry()
-            ->setUser($user)->setProject($project)->setTicket('ABC-1')
-            ->setDay(new DateTime('2026-06-15'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00'));
-        $noTicket = new Entry()
-            ->setUser($user)->setProject($project)->setTicket('')
-            ->setDay(new DateTime('2026-06-15'))->setStart(new DateTime('10:00'))->setEnd(new DateTime('11:00'));
-        $outOfRange = new Entry()
-            ->setUser($user)->setProject($project)->setTicket('ABC-2')
-            ->setDay(new DateTime('2026-07-15'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00'));
+    private function persistEntry(string $ticket, string $day, string $start, string $end, EntrySource $source = EntrySource::HUMAN): Entry
+    {
+        $entry = new Entry()
+            ->setUser($this->user)->setProject($this->project)->setTicket($ticket)->setSource($source)
+            ->setDay(new DateTime($day))->setStart(new DateTime($start))->setEnd(new DateTime($end));
+        $this->entityManager->persist($entry);
+
+        return $entry;
+    }
+
+    /**
+     * @param list<Entry> $result
+     *
+     * @return list<int|null>
+     */
+    private static function idsOf(array $result): array
+    {
+        return array_map(static fn (Entry $entry): ?int => $entry->getId(), $result);
+    }
+
+    public function testFindJiraSyncCandidatesFiltersByUserSystemRangeAndTicket(): void
+    {
+        $inRange = $this->persistEntry('ABC-1', self::IN_RANGE_DAY, self::NINE, self::TEN);
+        $noTicket = $this->persistEntry('', self::IN_RANGE_DAY, self::TEN, '11:00');
+        $outOfRange = $this->persistEntry('ABC-2', '2026-07-15', self::NINE, self::TEN);
         // ADR-025 §7: agent walltime is never pushed as a worklog, so the sync must not pick it up.
-        $agentWalltime = new Entry()
-            ->setUser($user)->setProject($project)->setTicket('ABC-3')->setSource(EntrySource::AGENT)
-            ->setDay(new DateTime('2026-06-15'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('11:00'));
+        $agentWalltime = $this->persistEntry('ABC-3', self::IN_RANGE_DAY, self::NINE, '11:00', EntrySource::AGENT);
+        $this->entityManager->flush();
 
-        $entityManager->persist($inRange);
-        $entityManager->persist($noTicket);
-        $entityManager->persist($outOfRange);
-        $entityManager->persist($agentWalltime);
-        $entityManager->flush();
+        $ids = self::idsOf($this->entryRepository->findJiraSyncCandidates($this->user, $this->ticketSystem, new DateTime('2026-06-01'), new DateTime('2026-06-30')));
 
-        $result = $entryRepository->findJiraSyncCandidates($user, $ticketSystem, new DateTime('2026-06-01'), new DateTime('2026-06-30'));
-
-        $ids = array_map(static fn (Entry $entry): ?int => $entry->getId(), $result);
         self::assertContains($inRange->getId(), $ids);
         self::assertNotContains($noTicket->getId(), $ids);
         self::assertNotContains($outOfRange->getId(), $ids);
@@ -75,39 +107,17 @@ final class EntryRepositorySyncCandidatesTest extends AbstractWebTestCase
     {
         // The legacy bulk push (JiraOAuthApiService / JiraWorkLogService) books every
         // entry this returns; agent walltime must not be among them (ADR-025 §7).
-        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
-        self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+        // A far-future day puts both entries first in the newest-first result.
+        $human = $this->persistEntry('ABC-10', '2030-01-02', self::NINE, self::TEN);
+        $agentWalltime = $this->persistEntry('ABC-10', '2030-01-02', self::NINE, '12:00', EntrySource::AGENT);
+        $this->entityManager->flush();
 
-        $entryRepository = self::getContainer()->get(EntryRepository::class);
-        self::assertInstanceOf(EntryRepository::class, $entryRepository);
-
-        $user = $entityManager->getRepository(User::class)->findOneBy([]);
-        self::assertInstanceOf(User::class, $user, 'fixture user missing');
-        $ticketSystem = $entityManager->getRepository(TicketSystem::class)->findOneBy([]);
-        self::assertInstanceOf(TicketSystem::class, $ticketSystem, 'fixture ticket system missing');
-        $project = $entityManager->getRepository(Project::class)->findOneBy([]);
-        self::assertInstanceOf(Project::class, $project, 'fixture project missing');
-        $project->setTicketSystem($ticketSystem);
-
-        $human = new Entry()
-            ->setUser($user)->setProject($project)->setTicket('ABC-10')
-            ->setDay(new DateTime('2030-01-02'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('10:00'));
-        $agentWalltime = new Entry()
-            ->setUser($user)->setProject($project)->setTicket('ABC-10')->setSource(EntrySource::AGENT)
-            ->setDay(new DateTime('2030-01-02'))->setStart(new DateTime('09:00'))->setEnd(new DateTime('12:00'));
-
-        $entityManager->persist($human);
-        $entityManager->persist($agentWalltime);
-        $entityManager->flush();
-
-        $userId = $user->getId();
-        $ticketSystemId = $ticketSystem->getId();
+        $userId = $this->user->getId();
+        $ticketSystemId = $this->ticketSystem->getId();
         self::assertIsInt($userId);
         self::assertIsInt($ticketSystemId);
-        // Newest day first, so the two 2030 entries lead the result.
-        $result = $entryRepository->findByUserAndTicketSystemToSync($userId, $ticketSystemId, 50);
+        $ids = self::idsOf($this->entryRepository->findByUserAndTicketSystemToSync($userId, $ticketSystemId, 50));
 
-        $ids = array_map(static fn (Entry $entry): ?int => $entry->getId(), $result);
         self::assertContains($human->getId(), $ids);
         self::assertNotContains($agentWalltime->getId(), $ids);
     }
