@@ -67,8 +67,10 @@ final readonly class EntrySaveDto
 
         // ADR-025 agent-vs-human attribution. These are ADVISORY only: they are
         // honoured solely in the API-token (agent) channel by SaveEntryAction —
-        // a session request forces source=human/estimated=false and ignores them
-        // (a person cannot self-mark work as agent to escape attendance/ArbZG).
+        // a session request ignores them and saves a human self-log (a person
+        // cannot self-mark work as agent to escape attendance/ArbZG), except that
+        // a session edit of an existing agent entry keeps its stored attribution
+        // (ADR-025 §4). A token update that omits them keeps the stored values.
         // There is deliberately NO responsibleUserId/loggedBy field: the
         // responsible user is derived server-side from the token owner (a
         // client-supplied responsible id would be an IDOR).

@@ -208,9 +208,12 @@ export interface SavedEntryResult {
 // Build a cache row from a save response. A created entry must land in entries.data
 // the instant its save returns 200 — not on a follow-up refetch — so it survives a
 // session-expiry (issue #408) or any other error on that refetch.
-function savedEntryToRow(saved: SavedEntryResult['result']): TrackingEntryRow {
+function savedEntryToRow(saved: SavedEntryResult['result'], previous?: TrackingEntry): TrackingEntryRow {
   return {
     entry: {
+      // Fields the save response does not return (e.g. a pair link) stay as cached;
+      // everything the response carries below overrides them.
+      ...previous,
       id: saved.id,
       date: saved.date,
       start: saved.start,
@@ -226,9 +229,10 @@ function savedEntryToRow(saved: SavedEntryResult['result']): TrackingEntryRow {
       class: saved.class,
       worklog: null,
       extTicket: saved.extTicket ?? null,
-      // A web-UI (session) save is always a human self-log — ADR-025 §4 forces
-      // source=human and never marks it estimated, regardless of the body.
-      source: 'human',
+      // ADR-025 §4: a web-UI (session) save is a human self-log and never marks
+      // an entry estimated — except that editing an existing agent entry keeps it
+      // agent time, so the cached row must not relabel it.
+      source: previous?.source === 'agent' ? 'agent' : 'human',
       estimated: false,
     },
   }
@@ -240,14 +244,14 @@ function savedEntryToRow(saved: SavedEntryResult['result']): TrackingEntryRow {
 // (re-classed server-side) are reconciled by the follow-up invalidate, but losing
 // that refetch must never drop the user's just-saved work.
 export function upsertSavedEntry(queryClient: QueryClient, saved: SavedEntryResult['result']): void {
-  const row = savedEntryToRow(saved)
   queryClient.setQueriesData<TrackingEntryRow[]>({ queryKey: [ENTRIES_KEY] }, (existing) => {
     if (existing === undefined) {
       return existing
     }
+    const previous = existing.find((candidate) => candidate?.entry?.id === saved.id)?.entry
     const without = existing.filter((candidate) => candidate?.entry?.id !== saved.id)
 
-    return [...without, row]
+    return [...without, savedEntryToRow(saved, previous)]
   })
 }
 

@@ -1,15 +1,65 @@
+import { QueryClient } from '@tanstack/solid-query'
 import { describe, expect, it } from 'vitest'
 
 import {
   activitiesQuery,
   customersQuery,
+  ENTRIES_KEY,
   groupQuery,
   hasInterpretationCriteria,
   type InterpretationFilters,
   optionSourceKey,
+  type SavedEntryResult,
   ticketSystemsQuery,
+  type TrackingEntry,
+  upsertSavedEntry,
   usersQuery,
 } from './queries'
+
+describe('upsertSavedEntry (ADR-025 attribution in the cached row)', () => {
+  const saved: SavedEntryResult['result'] = {
+    id: 7, date: '15/01/2024', start: '09:00', end: '10:30', user: 1, customer: 1, project: 4, activity: 5,
+    duration: '01:30', durationMinutes: 90, class: 0, ticket: 'ABC-1', description: 'corrected',
+  }
+  const cachedRow = (entry: Partial<TrackingEntry>): { entry: TrackingEntry } => ({
+    entry: {
+      id: 7, date: '15/01/2024', start: '09:00', end: '10:00', user: 1, customer: 1, project: 4, activity: 5,
+      description: 'before', ticket: 'ABC-1', duration: '01:00', durationMinutes: 60, class: 0, worklog: null,
+      extTicket: null, source: 'human', estimated: false, ...entry,
+    },
+  })
+  const upsertInto = (rows: { entry: TrackingEntry }[]): TrackingEntry | undefined => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData([ENTRIES_KEY, 7], rows)
+    upsertSavedEntry(queryClient, saved)
+
+    return queryClient.getQueryData<{ entry: TrackingEntry }[]>([ENTRIES_KEY, 7])?.find((row) => row.entry.id === 7)?.entry
+  }
+
+  it('keeps an edited agent entry as agent time — the server does not relabel it', () => {
+    const entry = upsertInto([cachedRow({ source: 'agent' })])
+    expect(entry?.source).toBe('agent')
+    expect(entry?.description).toBe('corrected')
+    expect(entry?.end).toBe('10:30')
+  })
+
+  it('marks a confirmed delegated estimate as no longer estimated', () => {
+    const entry = upsertInto([cachedRow({ source: 'human', estimated: true })])
+    expect(entry?.source).toBe('human')
+    expect(entry?.estimated).toBe(false)
+  })
+
+  it('carries row fields the save response does not return', () => {
+    const entry = upsertInto([{ entry: { ...cachedRow({}).entry, ...({ pairedEntry: 8 } as Partial<TrackingEntry>) } }])
+    expect((entry as unknown as Record<string, unknown>)?.pairedEntry).toBe(8)
+  })
+
+  it('adds a newly created entry as a plain human self-log', () => {
+    const entry = upsertInto([])
+    expect(entry?.source).toBe('human')
+    expect(entry?.estimated).toBe(false)
+  })
+})
 
 const base: InterpretationFilters = {
   datestart: '',
