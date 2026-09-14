@@ -212,8 +212,6 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
         self::assertSame(EntrySource::AGENT, $entry->getSource());
         self::assertFalse($entry->isEstimated());
         self::assertSame(['prompts' => 3], $entry->getTouchpoints());
-        self::assertInstanceOf(User::class, $entry->getResponsibleUser());
-        self::assertSame(1, $entry->getResponsibleUser()->getId());
         self::assertSame('agent walltime (corrected)', $entry->getDescription());
         self::assertSame('10:30', $entry->getEnd()->format('H:i'));
     }
@@ -243,6 +241,8 @@ final class SaveEntryActionSourceTest extends AbstractWebTestCase
 
         self::assertSame(EntrySource::HUMAN, $entry->getSource());
         self::assertFalse($entry->isEstimated());
+        // The confirmed figure is the person's own now; the agent's signals go with the estimate.
+        self::assertNull($entry->getTouchpoints());
     }
 
     private function tokenUser(): User
