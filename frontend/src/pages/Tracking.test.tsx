@@ -897,6 +897,36 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('Alt+I without a cursor row summarizes the latest HUMAN entry, not an agent twin sorting first (ADR-025)', async () => {
+    mockTracking({
+      entries: [
+        { entry: { ...DEFAULT_ENTRY, id: 2, start: '09:00', end: '11:00', description: 'AgentTwin', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '10:00', description: 'HumanWork', class: 0, source: 'human', estimated: false } },
+      ],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+      summary: {
+        customer: { scope: 'customer', name: 'ACME', entries: 1, total: 60, own: 60, estimation: 0 },
+        project: { scope: 'project', name: 'Site', entries: 1, total: 60, own: 60, estimation: 0 },
+        activity: { scope: 'activity', name: 'Dev', entries: 1, total: 60, own: 60, estimation: 0 },
+        ticket: { scope: 'ticket', name: 'ABC-1', entries: 1, total: 60, own: 60, estimation: 0 },
+        estimate: { estimation: 0, booked_total: 60, percent: 0, status: 'ok' },
+        warnings: [],
+      },
+    })
+    const { getByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'HumanWork' })).toBeInTheDocument())
+
+    // No cell is focused, so Alt+I falls back to the latest entry.
+    fireEvent.keyDown(document, { key: 'i', altKey: true })
+
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/api/v2/entries/1/summary'))
+    expect(getJson).not.toHaveBeenCalledWith('/api/v2/entries/2/summary')
+
+    unmount()
+  })
+
   it('Alt+I fetches the v2 entry summary and shows it', async () => {
     mockTracking({
       entries: [{ entry: DEFAULT_ENTRY }],
@@ -1085,6 +1115,26 @@ describe('Tracking (Worklog grid)', () => {
 
       fireEvent.click(getByRole('button', { name: 'Add entry' }))
       // The latest entry is from today → the new row's start inherits its end.
+      await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+    }
+  })
+
+  it('Add inherits the end of the latest HUMAN entry, not an agent twin sorting first (ADR-025)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    try {
+      // Newest-first: the agent twin (same start, later end) is entries[0].
+      mockApiWith([
+        { entry: { ...DEFAULT_ENTRY, id: 2, date: todayDmy(), start: '09:00', end: '11:00', class: 0, source: 'agent', estimated: false } },
+        { entry: { ...DEFAULT_ENTRY, id: 1, date: todayDmy(), start: '09:00', end: '10:30', class: 0, source: 'human', estimated: false } },
+      ])
+      const { getAllByRole, getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getAllByRole('gridcell', { name: 'ABC-1' })).toHaveLength(2))
+
+      fireEvent.click(getByRole('button', { name: 'Add entry' }))
       await waitFor(() => expect(container.querySelector('tbody td[data-col-key="start"]')?.textContent).toBe('10:30'))
 
       unmount()
