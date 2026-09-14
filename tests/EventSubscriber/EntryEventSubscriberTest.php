@@ -8,6 +8,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\WorklogSyncState;
 use App\Enum\EntrySource;
 use App\Enum\TicketSystemType;
 use App\Enum\WriteOutcome;
@@ -21,6 +22,7 @@ use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Sync\WorklogWriteService;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectRepository;
 use Exception;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -242,6 +244,53 @@ final class EntryEventSubscriberTest extends TestCase
 
         self::assertSame(555, $entry->getWorklogId());
         self::assertTrue($entry->getSyncedToTicketsystem());
+    }
+
+    public function testWithdrawalDropsTheEntrysSyncStateEvenWhenTheDeleteFails(): void
+    {
+        // An agent entry is never pushed, so a parked conflict could not be resolved, and
+        // "remote wins" on the unlinked worklog would delete the entry. The state goes
+        // regardless of whether Jira accepted the delete.
+        [$entry, $previousEntry] = $this->syncedEntryReattributedToAgent();
+        $syncState = new WorklogSyncState();
+        $repository = $this->createMock(ObjectRepository::class);
+        $repository->expects(self::once())
+            ->method('findOneBy')
+            ->with(['entry' => $entry])
+            ->willReturn($syncState);
+        $this->managerRegistry->expects(self::once())
+            ->method('getRepository')
+            ->with(WorklogSyncState::class)
+            ->willReturn($repository);
+
+        $this->objectManager->expects(self::once())
+            ->method('remove')
+            ->with($syncState);
+        $this->worklogWriteService->method('delete')
+            ->willThrowException(new JiraApiException('Jira unavailable', 503));
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+    }
+
+    public function testOnEntryUpdatedReportsAWorklogThatWasNotWithdrawn(): void
+    {
+        // A worklog Jira no longer knows, or a ticket system that stopped accepting
+        // bookings, leaves the worklog id in place without an exception. That must not be
+        // logged as a success.
+        [$entry, $previousEntry] = $this->syncedEntryReattributedToAgent();
+        $messages = [];
+        $this->logger->method('info')->willReturnCallback(
+            static function (string $message) use (&$messages): void { $messages[] = $message; },
+        );
+
+        $this->logger->expects(self::once())
+            ->method('error')
+            ->with('JIRA worklog of agent walltime entry was not withdrawn', self::anything());
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertNotContains('JIRA worklog withdrawn from agent walltime entry', $messages);
+        self::assertSame(555, $entry->getWorklogId());
     }
 
     /**

@@ -116,7 +116,10 @@ abstract class AbstractSyncRunService
             return;
         }
 
+        // Counted in errors too, like every other ERROR item, so counters.errors keeps
+        // matching the error items of the run.
         $syncRun->incrementCounter('agent_worklogs');
+        $syncRun->incrementCounter('errors');
         $this->addItem(
             $syncRun,
             SyncItemKind::ERROR,

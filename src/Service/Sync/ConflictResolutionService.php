@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\WorklogSyncState;
+use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
@@ -60,6 +61,12 @@ class ConflictResolutionService
         $ticketSystem = $state->getTicketSystem();
         if (!$entry instanceof Entry || !$ticketSystem instanceof TicketSystem) {
             return new ResolutionResult(false, '', 'state is incomplete');
+        }
+
+        // ADR-025 §7: agent walltime is not synced. "Local wins" could never push it, and
+        // "remote wins" on a missing worklog would delete the agent entry.
+        if (EntrySource::AGENT === $entry->getSource()) {
+            return new ResolutionResult(false, '', 'entry is agent walltime, which is never synced (ADR-025 §7); remove its worklog in Jira instead');
         }
 
         $api = $this->jiraOAuthApiFactory->create($this->tokenUser($entry, $ticketSystem, $actor), $ticketSystem);

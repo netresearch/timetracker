@@ -13,6 +13,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\WorklogSyncState;
 use App\Enum\EntrySource;
 use App\Enum\TicketSystemType;
 use App\Enum\WriteOutcome;
@@ -104,8 +105,13 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // agent entries, nothing else would ever take it down.
         if ($previousEntry instanceof Entry && $this->becameAgentWalltime($entry, $previousEntry)) {
             try {
-                $this->withdrawWorklog($entry, $previousEntry);
-                $this->logger?->info('JIRA worklog withdrawn from agent walltime entry');
+                if ($this->withdrawWorklog($entry, $previousEntry)) {
+                    $this->logger?->info('JIRA worklog withdrawn from agent walltime entry');
+                } else {
+                    // Error, not warning (see onEntryDeleted): the worklog is still booked
+                    // on the human labour line and needs removing in Jira.
+                    $this->logger?->error('JIRA worklog of agent walltime entry was not withdrawn', ['entry' => $entry->getId(), 'worklog' => $previousEntry->getWorklogId()]);
+                }
             } catch (Exception $e) {
                 $this->logger?->error('JIRA worklog withdrawal failed', ['exception' => $e]);
             }
@@ -312,18 +318,34 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
     /**
      * Deletes the worklog through the pre-save snapshot, whose ticket is the one the
-     * worklog lives on, and unlinks the entry once it is gone. A failed delete leaves
-     * the link in place so the worklog is not lost track of.
+     * worklog lives on, and unlinks the entry once it is gone. A delete that did not
+     * happen leaves the link in place so the worklog is not lost track of.
+     *
+     * The entry's sync state goes first, whatever the delete does: an agent entry is
+     * never pushed, so a parked conflict could not be resolved — and resolving it as
+     * "remote wins" on the unlinked worklog would delete the entry.
+     *
+     * @return bool whether the worklog is gone
      */
-    private function withdrawWorklog(Entry $entry, Entry $previousEntry): void
+    private function withdrawWorklog(Entry $entry, Entry $previousEntry): bool
     {
-        $this->deleteWorklog($previousEntry);
-
-        if (null === $previousEntry->getWorklogId()) {
-            $entry->setWorklogId(null);
-            $entry->setSyncedToTicketsystem(false);
-            $this->managerRegistry->getManager()->flush();
+        $objectManager = $this->managerRegistry->getManager();
+        $syncState = $this->managerRegistry->getRepository(WorklogSyncState::class)->findOneBy(['entry' => $entry]);
+        if ($syncState instanceof WorklogSyncState) {
+            $objectManager->remove($syncState);
+            $objectManager->flush();
         }
+
+        $this->deleteWorklog($previousEntry);
+        if (null !== $previousEntry->getWorklogId()) {
+            return false;
+        }
+
+        $entry->setWorklogId(null);
+        $entry->setSyncedToTicketsystem(false);
+        $objectManager->flush();
+
+        return true;
     }
 
     private function shouldAutoSync(Entry $entry): bool

@@ -195,6 +195,7 @@ final class VerifyWorklogsServiceTest extends TestCase
         self::assertSame(0, $syncRun->getCounters()['remote_only'] ?? 0);
         self::assertSame(0, $syncRun->getCounters()['already_linked'] ?? 0);
         self::assertSame(1, $syncRun->getCounters()['agent_worklogs'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
         $items = $syncRun->getItems()->toArray();
         self::assertCount(1, $items);
         self::assertSame(SyncItemKind::ERROR, $items[0]->getKind());

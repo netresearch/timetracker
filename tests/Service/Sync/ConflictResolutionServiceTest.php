@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Entity\WorklogSyncState;
+use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
@@ -271,6 +272,27 @@ final class ConflictResolutionServiceTest extends TestCase
 
         self::assertTrue($result->resolved);
         self::assertSame('deleted_local', $result->action);
+    }
+
+    public function testAgentWalltimeStateIsNeverResolved(): void
+    {
+        // ADR-025 §7: a state parked before agent time stopped syncing must neither push
+        // the entry ("local") nor delete it because its worklog is gone ("remote").
+        $this->worklogWriteService->expects(self::never())->method('forcePush');
+        $this->entityManager->expects(self::never())->method('remove');
+
+        foreach (['local', 'remote'] as $winner) {
+            $state = $this->parkedState(WorklogSyncStatus::ORPHANED);
+            $entry = $state->getEntry();
+            self::assertInstanceOf(Entry::class, $entry);
+            $entry->setSource(EntrySource::AGENT);
+
+            $result = $this->service->resolve($state, $winner, $this->actor);
+
+            self::assertFalse($result->resolved, $winner);
+            self::assertStringContainsString('agent walltime', $result->reason);
+            self::assertSame(WorklogSyncStatus::ORPHANED, $state->getStatus());
+        }
     }
 
     public function testPullFailureSurfacesReason(): void
