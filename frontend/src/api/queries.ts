@@ -211,8 +211,10 @@ export interface SavedEntryResult {
 function savedEntryToRow(saved: SavedEntryResult['result'], previous?: TrackingEntry): TrackingEntryRow {
   return {
     entry: {
-      // Fields the save response does not return (e.g. a pair link) stay as cached;
-      // everything the response carries below overrides them.
+      // Row fields the save response does not return stay as cached; everything set
+      // below overrides them. Today every TrackingEntry field is set below, so this
+      // only matters for fields added to the list payload later (e.g. a pair link):
+      // they keep their cached value until the reconciling refetch.
       ...previous,
       id: saved.id,
       date: saved.date,
@@ -230,10 +232,10 @@ function savedEntryToRow(saved: SavedEntryResult['result'], previous?: TrackingE
       worklog: null,
       extTicket: saved.extTicket ?? null,
       // ADR-025 §4: a web-UI (session) save is a human self-log and never marks
-      // an entry estimated — except that editing an existing agent entry keeps it
-      // agent time, so the cached row must not relabel it.
+      // an entry estimated — except that editing an existing agent entry leaves its
+      // attribution untouched on the server, so the cached row keeps it too.
       source: previous?.source === 'agent' ? 'agent' : 'human',
-      estimated: false,
+      estimated: previous?.source === 'agent' ? previous.estimated : false,
     },
   }
 }
@@ -244,14 +246,20 @@ function savedEntryToRow(saved: SavedEntryResult['result'], previous?: TrackingE
 // (re-classed server-side) are reconciled by the follow-up invalidate, but losing
 // that refetch must never drop the user's just-saved work.
 export function upsertSavedEntry(queryClient: QueryClient, saved: SavedEntryResult['result']): void {
+  // Look the previous row up across every cached range first: an edit can move an
+  // entry into a range that has not cached it yet.
+  const previous = queryClient
+    .getQueriesData<TrackingEntryRow[]>({ queryKey: [ENTRIES_KEY] })
+    .flatMap(([, rows]) => rows ?? [])
+    .find((candidate) => candidate?.entry?.id === saved.id)?.entry
+  const row = savedEntryToRow(saved, previous)
   queryClient.setQueriesData<TrackingEntryRow[]>({ queryKey: [ENTRIES_KEY] }, (existing) => {
     if (existing === undefined) {
       return existing
     }
-    const previous = existing.find((candidate) => candidate?.entry?.id === saved.id)?.entry
     const without = existing.filter((candidate) => candidate?.entry?.id !== saved.id)
 
-    return [...without, savedEntryToRow(saved, previous)]
+    return [...without, row]
   })
 }
 

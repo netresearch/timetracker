@@ -43,6 +43,22 @@ describe('upsertSavedEntry (ADR-025 attribution in the cached row)', () => {
     expect(entry?.end).toBe('10:30')
   })
 
+  it('keeps the estimated flag of an edited agent entry — the server leaves it untouched', () => {
+    const entry = upsertInto([cachedRow({ source: 'agent', estimated: true })])
+    expect(entry?.source).toBe('agent')
+    expect(entry?.estimated).toBe(true)
+  })
+
+  it('finds the previous row in another cached range when the entry moves into this one', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData([ENTRIES_KEY, 7], [])
+    queryClient.setQueryData([ENTRIES_KEY, 35], [cachedRow({ source: 'agent' })])
+    upsertSavedEntry(queryClient, saved)
+
+    const moved = queryClient.getQueryData<{ entry: TrackingEntry }[]>([ENTRIES_KEY, 7])?.find((row) => row.entry.id === 7)?.entry
+    expect(moved?.source).toBe('agent')
+  })
+
   it('marks a confirmed delegated estimate as no longer estimated', () => {
     const entry = upsertInto([cachedRow({ source: 'human', estimated: true })])
     expect(entry?.source).toBe('human')
