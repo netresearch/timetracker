@@ -366,9 +366,9 @@ class SyncWorklogsService extends AbstractSyncRunService
             $this->processDeletedWorklog($context, $worklogId, $gaps, $heldLookalikes);
         }
 
-        // Held back only after every absent entry was processed, so an entry left unverified
-        // cannot take away a lookalike another entry legitimately relinks to (relink removes it
-        // from the pool). Reported, so a withheld Jira worklog never disappears silently.
+        // Lookalikes are held only under a run-wide gap, where no entry of the run may relink, so
+        // none can have been taken by a relink; applying the hold after the loop keeps that true
+        // even if the rules change. Reported, so a withheld Jira worklog never disappears silently.
         foreach ($heldLookalikes as $worklogId => $unverifiedEntries) {
             $candidate = $context->unmatchedRemote[$worklogId] ?? null;
             if (null === $candidate) {

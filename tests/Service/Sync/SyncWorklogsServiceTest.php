@@ -521,11 +521,11 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame($entry, $held[0]->getEntry());
     }
 
-    public function testABlockedEntryDoesNotTakeTheLookalikeAnotherEntryRelinksTo(): void
+    public function testAPerWorklogGapHoldsNothingSoAnotherEntryStillRelinks(): void
     {
         // Entries A (worklog 11) and B (worklog 12) share start and duration. Worklog 11 comes back
-        // without a start, so A stays unverified; B's worklog was recreated as 22. A is processed
-        // first, but must not withhold 22 from B: B is relinked, and nothing is deleted.
+        // without a start, so only A stays unverified — a per-worklog gap holds no lookalike. B's
+        // worklog was recreated as 22 and B is relinked to it; nothing is deleted.
         $blocked = $this->linkedEntry(11);
         $this->stateFor($blocked, $this->projector->project($blocked));
         $moved = $this->linkedEntry(12);
