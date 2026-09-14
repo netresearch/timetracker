@@ -59,13 +59,20 @@ final class EntrySourceFieldsTest extends TestCase
         self::assertNull($agent->getPairedEntry());
     }
 
-    public function testRemovalLeavesAPartnerLinkedElsewhereAlone(): void
+    public function testRePairingReleasesThePreviousPartner(): void
     {
         $first = new Entry();
         $second = new Entry();
         $third = new Entry();
         $first->pairWith($second);
-        $third->pairWith($second); // $second now points at $third, $first is stale
+
+        // The unique index allows one link per entry: $first must not keep pointing at
+        // $second once $second is paired with $third.
+        $third->pairWith($second);
+
+        self::assertNull($first->getPairedEntry());
+        self::assertSame($third, $second->getPairedEntry());
+        self::assertSame($second, $third->getPairedEntry());
 
         $first->unlinkPartnerOnRemove();
 

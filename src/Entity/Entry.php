@@ -629,10 +629,19 @@ class Entry extends Base
 
     /**
      * Link this entry and $other symmetrically, so either side knows its partner
-     * without an extra query.
+     * without an extra query. A previous partner of either side is released first;
+     * left pointing at its old partner, it would collide with the unique index on
+     * the next flush.
      */
     public function pairWith(self $other): static
     {
+        foreach ([$this, $other] as $side) {
+            $previous = $side->pairedEntry;
+            if ($previous instanceof self && $previous !== $this && $previous !== $other && $previous->pairedEntry === $side) {
+                $previous->pairedEntry = null;
+            }
+        }
+
         $this->pairedEntry = $other;
         $other->pairedEntry = $this;
 

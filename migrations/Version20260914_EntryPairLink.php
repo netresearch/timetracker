@@ -29,8 +29,10 @@ final class Version20260914_EntryPairLink extends AbstractMigration
         // Backfill pairs written by LogTimeTool::dualWrite before the link existed. It
         // writes the agent entry first and the delegated human estimate directly after
         // (adjacent ids), with the same user, day, start, project, activity, ticket and
-        // description. Requiring all of that keeps the match unambiguous; a pair whose
-        // human half was edited since simply stays unlinked.
+        // description. Requiring all of that keeps the match unambiguous. Two cases stay
+        // unlinked: a pair whose human half was edited since, and a pair whose inserts
+        // interleaved with another concurrent log_time call, so its ids are not adjacent.
+        // Deleting one half of such a pair leaves the other in place, as before.
         $this->addSql(<<<'SQL'
             UPDATE entries a
             JOIN entries h
