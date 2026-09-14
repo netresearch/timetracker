@@ -8,6 +8,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\TicketSystemType;
 use App\Enum\WriteOutcome;
 use App\Event\EntryEvent;
@@ -76,6 +77,7 @@ final class EntryEventSubscriberTest extends TestCase
         string $ticket = 'ABC-123',
         bool $synced = false,
         ?int $worklogId = null,
+        EntrySource $source = EntrySource::HUMAN,
     ): array {
         $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn($bookTime);
@@ -93,6 +95,8 @@ final class EntryEventSubscriberTest extends TestCase
         $entry->method('getTicket')->willReturn($ticket);
         $entry->method('getSyncedToTicketsystem')->willReturn($synced);
         $entry->method('getWorklogId')->willReturn($worklogId);
+        // Stubs cannot generate an enum return value, so the source is always explicit.
+        $entry->method('getSource')->willReturn($source);
 
         return [$entry, $user, $ticketSystem];
     }
@@ -181,6 +185,40 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryCreated($event);
     }
 
+    public function testOnEntryCreatedDoesNotBookAgentTimeAsJiraWorklog(): void
+    {
+        // ADR-025 §7: agent walltime is machine time, never the human labour line. A
+        // Jira worklog is that line, so an agent entry must not be pushed even when
+        // every other auto-sync condition holds.
+        [$entry] = $this->createSyncableEntry(source: EntrySource::AGENT);
+
+        $this->expectNoJiraApi();
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+    }
+
+    public function testOnEntryUpdatedDoesNotBookAgentTimeAsJiraWorklog(): void
+    {
+        [$entry] = $this->createSyncableEntry(source: EntrySource::AGENT);
+
+        $this->expectNoJiraApi();
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry));
+    }
+
+    public function testOnEntryCreatedStillBooksTheDelegatedHumanEstimate(): void
+    {
+        // The human half of a dual-write is labour (estimated or not) and keeps syncing.
+        [$entry, $user, $ticketSystem] = $this->createSyncableEntry(source: EntrySource::HUMAN);
+
+        $this->expectJiraApiCreatedFor($user, $ticketSystem);
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+    }
+
     public function testOnEntryCreatedDoesNotSyncWhenNoProject(): void
     {
         $user = self::createStub(User::class);
@@ -207,6 +245,7 @@ final class EntryEventSubscriberTest extends TestCase
         $entry = self::createStub(Entry::class);
         $entry->method('getUser')->willReturn($user);
         $entry->method('getProject')->willReturn($project);
+        $entry->method('getSource')->willReturn(EntrySource::HUMAN);
 
         $this->expectNoJiraApi();
 

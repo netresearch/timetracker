@@ -13,6 +13,7 @@ use App\Entity\Entry;
 use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\EntrySource;
 use App\Enum\TicketSystemType;
 use App\Enum\WriteOutcome;
 use App\Event\EntryEvent;
@@ -298,6 +299,13 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         // The Jira client acts on behalf of the entry's user
         if (!$entry->getUser() instanceof User) {
+            return false;
+        }
+
+        // ADR-025 §7: a Jira worklog is the human labour line. Agent walltime is
+        // machine time and is never booked there; its delegated human estimate
+        // (source=human) is the entry that syncs.
+        if (EntrySource::AGENT === $entry->getSource()) {
             return false;
         }
 
