@@ -47,7 +47,7 @@ final readonly class SyncConflictDto implements JsonSerializable
             status: $state->getStatus()->value,
             entry: [
                 'id' => (int) $entry?->getId(),
-                'user' => (string) $entry?->getUser()?->getUsername(),
+                'user' => (string) $entry?->getUser()?->getUserIdentifier(),
                 'ticket' => (string) $entry?->getTicket(),
                 'day' => (string) $entry?->getDay()->format('Y-m-d'),
                 'start' => (string) $entry?->getStart()->format('H:i:s'),

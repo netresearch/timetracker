@@ -158,9 +158,7 @@ class QueryCacheService
         $cacheKey = $this->getCacheKey($key);
 
         foreach ($tags as $tag) {
-            if (!isset($this->tags[$tag])) {
-                $this->tags[$tag] = [];
-            }
+            $this->tags[$tag] ??= [];
 
             $this->tags[$tag][] = $cacheKey;
         }

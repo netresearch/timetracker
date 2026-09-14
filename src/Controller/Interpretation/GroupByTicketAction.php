@@ -53,9 +53,7 @@ final class GroupByTicketAction extends BaseInterpretationController
         foreach ($entries as $entry) {
             $ticket = $entry->getTicket();
             if ('' !== $ticket && '-' !== $ticket) {
-                if (!isset($tickets[$ticket])) {
-                    $tickets[$ticket] = ['id' => $entry->getId(), 'name' => $ticket, 'hours' => 0, 'agentHours' => 0, 'quota' => 0];
-                }
+                $tickets[$ticket] ??= ['id' => $entry->getId(), 'name' => $ticket, 'hours' => 0, 'agentHours' => 0, 'quota' => 0];
 
                 // ADR-025 §7: human and agent hours are distinct columns, never folded.
                 if (EntrySource::AGENT === $entry->getSource()) {

@@ -64,9 +64,7 @@ final class GroupByUserAction extends BaseInterpretationController
             if (null === $uid) {
                 continue;
             }
-            if (!isset($users[$uid])) {
-                $users[$uid] = ['id' => $uid, 'name' => (string) $u->getUsername(), 'hours' => 0, 'agentHours' => 0, 'quota' => 0];
-            }
+            $users[$uid] ??= ['id' => $uid, 'name' => (string) $u->getUsername(), 'hours' => 0, 'agentHours' => 0, 'quota' => 0];
 
             // ADR-025 §7: human and agent hours are distinct columns, never folded.
             if (EntrySource::AGENT === $entry->getSource()) {

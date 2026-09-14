@@ -144,9 +144,7 @@ class ExportService
             && TicketSystemType::JIRA === $ticketSystem->getType()
         ) {
             $ticketSystemId = $ticketSystem->getId() ?? '';
-            if (!isset($arApi[$ticketSystemId])) {
-                $arApi[$ticketSystemId] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
-            }
+            $arApi[$ticketSystemId] ??= $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
 
             if (isset($arApi[$ticketSystemId])) {
                 // Use the ticket system's URL template directly
@@ -181,9 +179,7 @@ class ExportService
         }
 
         $ticketSystemId = $ticketSystem->getId() ?? '';
-        if (!isset($arApi[$ticketSystemId])) {
-            $arApi[$ticketSystemId] = $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
-        }
+        $arApi[$ticketSystemId] ??= $this->jiraOAuthApiFactory->create($currentUser, $ticketSystem);
 
         $apiService = $arApi[$ticketSystemId] ?? null;
         if (null === $apiService) {
@@ -325,13 +321,11 @@ class ExportService
             $ticketSystemId = $ticketSystem->getId();
             // PHP 8.5 deprecates null as array offset, convert to empty string
             $key = $ticketSystemId ?? '';
-            if (!isset($entriesByTicketSystem[$key])) {
-                $entriesByTicketSystem[$key] = [
-                    'ticketSystem' => $ticketSystem,
-                    'entries' => [],
-                    'tickets' => [],
-                ];
-            }
+            $entriesByTicketSystem[$key] ??= [
+                'ticketSystem' => $ticketSystem,
+                'entries' => [],
+                'tickets' => [],
+            ];
 
             $entriesByTicketSystem[$key]['entries'][] = $entry;
             $entriesByTicketSystem[$key]['tickets'][] = $entry->getTicket();
