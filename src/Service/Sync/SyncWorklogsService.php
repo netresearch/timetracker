@@ -361,8 +361,31 @@ class SyncWorklogsService extends AbstractSyncRunService
             ];
         }
 
+        $heldLookalikes = [];
         foreach ($absentWorklogIds as $worklogId) {
-            $this->processDeletedWorklog($context, $worklogId, $gaps);
+            $this->processDeletedWorklog($context, $worklogId, $gaps, $heldLookalikes);
+        }
+
+        // Held back only after every absent entry was processed, so an entry left unverified
+        // cannot take away a lookalike another entry legitimately relinks to (relink removes it
+        // from the pool). Reported, so a withheld Jira worklog never disappears silently.
+        foreach ($heldLookalikes as $worklogId => $entry) {
+            $candidate = $context->unmatchedRemote[$worklogId] ?? null;
+            if (null === $candidate) {
+                continue;
+            }
+
+            unset($context->unmatchedRemote[$worklogId]);
+            $context->syncRun->incrementCounter('lookalike_held');
+            $this->addItem(
+                $context->syncRun,
+                SyncItemKind::REMOTE_ONLY,
+                issueKey: $candidate['issueKey'],
+                remoteWorklogId: $worklogId,
+                entry: $entry,
+                reason: 'held back from import: may be the move of this entry, whose own worklog could not be verified in this run',
+                payload: ['remote' => $candidate['snapshot']->toArray(), 'updated' => $candidate['worklog']->updated],
+            );
         }
 
         $this->handleUnmatched($context, $targetUser);
@@ -579,10 +602,12 @@ class SyncWorklogsService extends AbstractSyncRunService
      * A linked entry whose remote worklog is absent from the rescanned window — a remote delete
      * (or a move: a delete+create pair with identical start and duration is a relink).
      *
-     * @param RemoteReadGaps $gaps what the remote read could not see: where a gap may hide the
-     *                             worklog, nothing is deleted, parked or relinked
+     * @param RemoteReadGaps    $gaps           what the remote read could not see: where a gap may
+     *                                          hide the worklog, nothing is deleted, parked or relinked
+     * @param array<int, Entry> $heldLookalikes collects, by worklog id, the remote worklogs that would
+     *                                          have been the move of an entry left unverified
      */
-    private function processDeletedWorklog(SyncRunContext $context, int $deletedWorklogId, RemoteReadGaps $gaps): void
+    private function processDeletedWorklog(SyncRunContext $context, int $deletedWorklogId, RemoteReadGaps $gaps, array &$heldLookalikes): void
     {
         $entry = $this->entryRepository->findOneByWorklogIdAndTicketSystem($deletedWorklogId, $context->ticketSystem);
         if (!$entry instanceof Entry) {
@@ -590,7 +615,7 @@ class SyncWorklogsService extends AbstractSyncRunService
         }
 
         $projection = $this->entryWorklogProjector->project($entry);
-        $mayRelink = $gaps->allowsRelinkOf($deletedWorklogId, $entry->getTicket());
+        $mayConclude = $gaps->allowsConclusionAbout($deletedWorklogId);
 
         // Move detection first: a delete+create pair with identical start and duration is a relink.
         foreach ($context->unmatchedRemote as $candidateWorklogId => $candidate) {
@@ -600,20 +625,19 @@ class SyncWorklogsService extends AbstractSyncRunService
                 continue;
             }
 
-            if ($mayRelink) {
+            if ($mayConclude) {
                 $this->relink($context, $entry, $candidateWorklogId, $candidate);
 
                 return;
             }
 
-            // The entry's own worklog may still exist where the read could not see: the
-            // lookalike is not known to be its move. Leave the entry linked and keep the
-            // lookalike out of the import too — importing it would duplicate the entry if it
-            // is the move after all. The next complete run decides.
-            unset($context->unmatchedRemote[$candidateWorklogId]);
+            // The entry's own worklog may still exist where the read could not see, so the
+            // lookalike is not known to be its move. Keep it for the caller to hold back from the
+            // import — importing it would duplicate the entry if it is the move after all.
+            $heldLookalikes[$candidateWorklogId] = $entry;
         }
 
-        if (!$gaps->allowsDeletionOf($deletedWorklogId)) {
+        if (!$mayConclude) {
             $context->syncRun->incrementCounter('absence_unverified');
 
             return;

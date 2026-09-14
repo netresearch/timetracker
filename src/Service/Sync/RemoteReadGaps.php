@@ -20,8 +20,7 @@ final class RemoteReadGaps
 {
     private bool $searchTruncated = false;
 
-    /** @var array<string, true> */
-    private array $unreadableIssueKeys = [];
+    private bool $issueUnreadable = false;
 
     /** @var array<int, true> */
     private array $unreadableWorklogIds = [];
@@ -45,35 +44,22 @@ final class RemoteReadGaps
             return;
         }
 
-        if (null !== $issueKey) {
-            $this->unreadableIssueKeys[$issueKey] = true;
-        }
+        $this->issueUnreadable = true;
     }
 
     /**
-     * Whether a linked worklog missing from the read may be concluded deleted in Jira.
+     * Whether the absence of a linked worklog from the read may be acted on: concluded deleted
+     * in Jira, or concluded moved to a lookalike worklog.
      *
-     * A worklog can move between issues, so an issue that could not be read — or one beyond
-     * the search cap — may hold any missing worklog: those gaps block every conclusion. A
-     * worklog that could not be normalized blocks only itself.
+     * Worklogs move between issues and issues get renamed, so an issue that could not be read —
+     * or one beyond the search cap — may hold any missing worklog, whatever issue key its entry
+     * still stores: those gaps block every conclusion in the run. A worklog Jira returned but
+     * that could not be normalized blocks only itself.
      */
-    public function allowsDeletionOf(int $worklogId): bool
+    public function allowsConclusionAbout(int $worklogId): bool
     {
         return !$this->searchTruncated
-            && [] === $this->unreadableIssueKeys
-            && !isset($this->unreadableWorklogIds[$worklogId]);
-    }
-
-    /**
-     * Whether a linked entry may be relinked to another worklog read with its start and
-     * duration. That needs its own worklog to be known gone from where it was booked: the
-     * entry's issue was read, the search was complete, and the worklog was not dropped as
-     * unreadable. Otherwise the "moved" worklog may just be a second booking.
-     */
-    public function allowsRelinkOf(int $worklogId, string $issueKey): bool
-    {
-        return !$this->searchTruncated
-            && !isset($this->unreadableIssueKeys[$issueKey])
+            && !$this->issueUnreadable
             && !isset($this->unreadableWorklogIds[$worklogId]);
     }
 }

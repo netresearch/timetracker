@@ -143,7 +143,7 @@ class VerifyWorklogsService extends AbstractSyncRunService
             $decision = $this->reconciliationService->reconcile($base, $local, $remote);
 
             // A missing remote is evidence of a deletion only when the remote read was complete.
-            if (SyncAction::REMOTE_MISSING === $decision->action && !$gaps->allowsDeletionOf($worklogId)) {
+            if (SyncAction::REMOTE_MISSING === $decision->action && !$gaps->allowsConclusionAbout($worklogId)) {
                 $syncRun->incrementCounter('absence_unverified');
 
                 continue;

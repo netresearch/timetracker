@@ -491,48 +491,58 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame(WorklogSyncStatus::IN_SYNC, $state->getStatus());
     }
 
-    public function testMoveIsStillRelinkedWhenAnotherIssueIsUnreadable(): void
+    public function testNoRelinkWhileAnyIssueIsUnreadable(): void
     {
-        // The moved worklog (22) was read, so the relink is sound even though TIM-9 failed.
-        // Skipping it would import worklog 22 as a duplicate of the entry.
+        // TIM-9 failed. Worklogs move between issues and issues get renamed, so worklog 11 may sit
+        // on TIM-9 whatever key the entry stores; lookalike 22 may be a second booking. The entry
+        // stays on 11, and 22 is held back and reported instead of imported as a duplicate.
         $entry = $this->linkedEntry(11);
         $local = $this->projector->project($entry);
         $this->stateFor($entry, $local);
-        $this->remoteWorklog($local, 22, 'U5');
         $this->issueKeys[] = 'TIM-9';
         $this->unreadableIssueKeys = ['TIM-9'];
-
-        $this->importWorklogsService->expects(self::never())->method('processWorklog');
-
-        $syncRun = $this->syncSelf();
-
-        self::assertSame(22, $entry->getWorklogId());
-        self::assertSame(1, $syncRun->getCounters()['relinked'] ?? 0);
-        self::assertSame(0, $syncRun->getCounters()['absence_unverified'] ?? 0);
-    }
-
-    public function testLookalikeIsNeitherRelinkedNorImportedWhenTheEntrysOwnIssueIsUnreadable(): void
-    {
-        // TIM-1, where worklog 11 lives, could not be read, so 11 may still exist. Worklog 22 on
-        // TIM-2 has the same start and duration but may be a second booking, not the move: the
-        // entry stays on 11, and 22 is not imported either (it would duplicate the entry if it
-        // is the move after all).
-        $entry = $this->linkedEntry(11);
-        $local = $this->projector->project($entry);
-        $this->stateFor($entry, $local);
-        $this->issueKeys[] = 'TIM-1';
-        $this->unreadableIssueKeys = ['TIM-1'];
         $this->ticketSystem = $this->makeTicketSystem(self::createStub(Activity::class));
-        $this->remoteWorklog($local, 22, 'U5', 'TIM-2');
+        $this->remoteWorklog($local, 22, 'U5');
 
         $this->entityManager->expects(self::never())->method('remove');
         $this->importWorklogsService->expects(self::never())->method('processWorklog');
 
-        $syncRun = $this->service->syncUser($this->targetUser, $this->targetUser, $this->ticketSystem, new DateTimeImmutable('2026-06-01'), new DateTimeImmutable('2026-06-30'));
+        $syncRun = $this->syncSelf();
 
         self::assertSame(11, $entry->getWorklogId());
         self::assertSame(0, $syncRun->getCounters()['relinked'] ?? 0);
         self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['lookalike_held'] ?? 0);
+        $held = array_values(array_filter(
+            $syncRun->getItems()->toArray(),
+            static fn ($item): bool => SyncItemKind::REMOTE_ONLY === $item->getKind() && 22 === $item->getRemoteWorklogId(),
+        ));
+        self::assertCount(1, $held);
+        self::assertSame($entry, $held[0]->getEntry());
+    }
+
+    public function testABlockedEntryDoesNotTakeTheLookalikeAnotherEntryRelinksTo(): void
+    {
+        // Entries A (worklog 11) and B (worklog 12) share start and duration. Worklog 11 comes back
+        // without a start, so A stays unverified; B's worklog was recreated as 22. A is processed
+        // first, but must not withhold 22 from B: B is relinked, and nothing is deleted.
+        $blocked = $this->linkedEntry(11);
+        $this->stateFor($blocked, $this->projector->project($blocked));
+        $moved = $this->linkedEntry(12);
+        $local = $this->projector->project($moved);
+        $this->stateFor($moved, $local);
+        $this->publish('TIM-1', new JiraWorkLog(id: 11, started: null, timeSpentSeconds: 3600, authorAccountId: 'acc-x'));
+        $this->remoteWorklog($local, 22, 'U5');
+
+        $this->entityManager->expects(self::never())->method('remove');
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(11, $blocked->getWorklogId());
+        self::assertSame(22, $moved->getWorklogId());
+        self::assertSame(1, $syncRun->getCounters()['relinked'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['lookalike_held'] ?? 0);
     }
 
     public function testAnUnreadableWorklogBlocksOnlyItsOwnEntry(): void
