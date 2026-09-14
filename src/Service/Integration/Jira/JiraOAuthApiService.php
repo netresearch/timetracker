@@ -316,6 +316,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function updateEntryJiraWorkLog(Entry $entry): void
     {
@@ -664,6 +665,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function getFromTenant(string $absolutePath): mixed
     {
@@ -785,6 +787,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     protected function get(string $url): mixed
     {
@@ -798,6 +801,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     protected function post(string $url, array $data = []): object
     {
@@ -811,6 +815,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     protected function put(string $url, array $data = []): object
     {
@@ -885,6 +890,7 @@ class JiraOAuthApiService
      *
      * @throws JiraApiException
      * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      *
      * @return list<object>
      */
