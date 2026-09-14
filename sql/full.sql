@@ -513,7 +513,13 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20260704_LastActivityIndexesAscLooseScan', '2026-07-04 00:00:02', 0),
 ('DoctrineMigrations\\Version20260709_WorklogSyncFoundation',   '2026-07-09 00:00:00', 0),
 ('DoctrineMigrations\\Version20260709_UserTicketsystemRemoteAccountId', '2026-07-09 00:00:01', 0),
-('DoctrineMigrations\\Version20260709_TicketSystemSyncConfig',  '2026-07-09 00:00:02', 0);
+('DoctrineMigrations\\Version20260709_TicketSystemSyncConfig',  '2026-07-09 00:00:02', 0),
+('DoctrineMigrations\\Version20260710_WorklogSyncOptIn',        '2026-07-10 00:00:00', 0),
+('DoctrineMigrations\\Version20260711_EntrySourceAttribution',  '2026-07-11 00:00:00', 0),
+('DoctrineMigrations\\Version20260711_PersonioAttendanceExport', '2026-07-11 00:00:01', 0),
+('DoctrineMigrations\\Version20260712_AutoImportProjectsFlag',  '2026-07-12 00:00:00', 0),
+('DoctrineMigrations\\Version20260712_CustomerTempoKey',        '2026-07-12 00:00:01', 0),
+('DoctrineMigrations\\Version20260712_PersonioAbsenceImport',   '2026-07-12 00:00:02', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------
