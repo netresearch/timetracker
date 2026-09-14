@@ -287,7 +287,8 @@ final class SaveEntryAction extends BaseTrackingController
         // The responsible user is the token owner, never a client-supplied id (IDOR).
         // Editing an EXISTING agent entry in a session keeps its attribution: the
         // person may correct times or text, but the save must not silently turn
-        // machine time into human labour (ADR-025 §5).
+        // machine time into human labour that counts towards attendance (ADR-025
+        // §4 exception, §3; attendance reads human time only, §5).
         $isAgentChannel = $this->tokenStorage->getToken() instanceof ApiAccessToken;
         $isSessionEditOfAgentEntry = !$isAgentChannel
             && null !== $entry->getId()
