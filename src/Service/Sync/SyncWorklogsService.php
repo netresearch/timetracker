@@ -369,7 +369,7 @@ class SyncWorklogsService extends AbstractSyncRunService
         // Held back only after every absent entry was processed, so an entry left unverified
         // cannot take away a lookalike another entry legitimately relinks to (relink removes it
         // from the pool). Reported, so a withheld Jira worklog never disappears silently.
-        foreach ($heldLookalikes as $worklogId => $entry) {
+        foreach ($heldLookalikes as $worklogId => $unverifiedEntries) {
             $candidate = $context->unmatchedRemote[$worklogId] ?? null;
             if (null === $candidate) {
                 continue;
@@ -382,9 +382,13 @@ class SyncWorklogsService extends AbstractSyncRunService
                 SyncItemKind::REMOTE_ONLY,
                 issueKey: $candidate['issueKey'],
                 remoteWorklogId: $worklogId,
-                entry: $entry,
-                reason: 'held back from import: may be the move of this entry, whose own worklog could not be verified in this run',
-                payload: ['remote' => $candidate['snapshot']->toArray(), 'updated' => $candidate['worklog']->updated],
+                entry: $unverifiedEntries[0],
+                reason: 'held back from import: may be the move of an entry whose own worklog could not be verified in this run',
+                payload: [
+                    'remote' => $candidate['snapshot']->toArray(),
+                    'updated' => $candidate['worklog']->updated,
+                    'entries' => array_map(static fn (Entry $entry): ?int => $entry->getId(), $unverifiedEntries),
+                ],
             );
         }
 
@@ -602,10 +606,10 @@ class SyncWorklogsService extends AbstractSyncRunService
      * A linked entry whose remote worklog is absent from the rescanned window — a remote delete
      * (or a move: a delete+create pair with identical start and duration is a relink).
      *
-     * @param RemoteReadGaps    $gaps           what the remote read could not see: where a gap may
-     *                                          hide the worklog, nothing is deleted, parked or relinked
-     * @param array<int, Entry> $heldLookalikes collects, by worklog id, the remote worklogs that would
-     *                                          have been the move of an entry left unverified
+     * @param RemoteReadGaps          $gaps           what the remote read could not see: where a gap may
+     *                                                hide the worklog, nothing is deleted, parked or relinked
+     * @param array<int, list<Entry>> $heldLookalikes collects, by worklog id, the remote worklogs that
+     *                                                may be the move of entries left unverified
      */
     private function processDeletedWorklog(SyncRunContext $context, int $deletedWorklogId, RemoteReadGaps $gaps, array &$heldLookalikes): void
     {
@@ -631,10 +635,13 @@ class SyncWorklogsService extends AbstractSyncRunService
                 return;
             }
 
-            // The entry's own worklog may still exist where the read could not see, so the
-            // lookalike is not known to be its move. Keep it for the caller to hold back from the
-            // import — importing it would duplicate the entry if it is the move after all.
-            $heldLookalikes[$candidateWorklogId] = $entry;
+            // Only a run-wide gap can hide a real move: then the lookalike may be this entry's
+            // worklog, moved where the read could not see, and importing it would duplicate the
+            // entry. A worklog Jira returned but could not normalize still exists where it was, so
+            // a lookalike of it is a separate booking and stays importable.
+            if ($gaps->hidesMoves()) {
+                $heldLookalikes[$candidateWorklogId][] = $entry;
+            }
         }
 
         if (!$mayConclude) {

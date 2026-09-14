@@ -545,6 +545,53 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame(0, $syncRun->getCounters()['lookalike_held'] ?? 0);
     }
 
+    public function testALookalikeOfAnUnreadableWorklogIsStillImported(): void
+    {
+        // Worklog 11 comes back without a start: Jira still has it where it was, so it cannot have
+        // moved, and lookalike 22 is a separate booking. The entry stays unverified, but 22 is
+        // imported like any unmatched worklog rather than held back for as long as 11 stays broken.
+        $blocked = $this->linkedEntry(11);
+        $local = $this->projector->project($blocked);
+        $this->stateFor($blocked, $local);
+        $this->ticketSystem = $this->makeTicketSystem(self::createStub(Activity::class));
+        $this->publish('TIM-1', new JiraWorkLog(id: 11, started: null, timeSpentSeconds: 3600, authorAccountId: 'acc-x'));
+        $this->remoteWorklog($local, 22, 'U5');
+
+        $this->importWorklogsService->expects(self::once())->method('processWorklog')
+            ->with(self::anything(), 'TIM-1', self::callback(static fn (JiraWorkLog $worklog): bool => 22 === $worklog->id));
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(11, $blocked->getWorklogId());
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['lookalike_held'] ?? 0);
+    }
+
+    public function testAHeldLookalikeNamesEveryEntryItMayBelongTo(): void
+    {
+        // TIM-9 failed, and entries 101 and 102 both share start and duration with worklog 22.
+        // One held item for 22 must name both, not only the entry processed last.
+        $first = $this->linkedEntry(11)->setId(101);
+        $this->stateFor($first, $this->projector->project($first));
+        $second = $this->linkedEntry(12)->setId(102);
+        $local = $this->projector->project($second);
+        $this->stateFor($second, $local);
+        $this->issueKeys[] = 'TIM-9';
+        $this->unreadableIssueKeys = ['TIM-9'];
+        $this->remoteWorklog($local, 22, 'U5');
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(1, $syncRun->getCounters()['lookalike_held'] ?? 0);
+        $held = array_values(array_filter(
+            $syncRun->getItems()->toArray(),
+            static fn ($item): bool => SyncItemKind::REMOTE_ONLY === $item->getKind() && 22 === $item->getRemoteWorklogId(),
+        ));
+        self::assertCount(1, $held);
+        self::assertSame($first, $held[0]->getEntry());
+        self::assertSame([101, 102], $held[0]->getPayload()['entries'] ?? null);
+    }
+
     public function testAnUnreadableWorklogBlocksOnlyItsOwnEntry(): void
     {
         // Worklog 11 comes back without a start, so it cannot be normalized: its entry stays

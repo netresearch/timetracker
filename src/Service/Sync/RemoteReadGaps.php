@@ -58,8 +58,17 @@ final class RemoteReadGaps
      */
     public function allowsConclusionAbout(int $worklogId): bool
     {
-        return !$this->searchTruncated
-            && !$this->issueUnreadable
+        return !$this->hidesMoves()
             && !isset($this->unreadableWorklogIds[$worklogId]);
+    }
+
+    /**
+     * Whether a missing worklog may have moved somewhere the read could not see — an issue that
+     * could not be read or one beyond the search cap. A worklog that could not be normalized was
+     * returned by Jira, so it still exists where it was and cannot be the source of a move.
+     */
+    public function hidesMoves(): bool
+    {
+        return $this->searchTruncated || $this->issueUnreadable;
     }
 }
