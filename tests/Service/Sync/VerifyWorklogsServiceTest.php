@@ -267,6 +267,37 @@ final class VerifyWorklogsServiceTest extends TestCase
         self::assertContains(SyncItemKind::ERROR, $kinds);
     }
 
+    public function testAnUnreadableWorklogLeavesOtherDeletionsReported(): void
+    {
+        // Worklog 1001 comes back without a start, so only its entry is unverified. Worklog 1002
+        // is simply missing from the fully read issue: that is still reported as local_only.
+        $missing = self::createStub(Entry::class);
+        $missing->method('getId')->willReturn(43);
+        $missing->method('getTicket')->willReturn('ABC-1');
+        $missing->method('getWorklogId')->willReturn(1002);
+        $missing->method('getDay')->willReturn(new DateTime('2026-06-16'));
+        $missing->method('getStart')->willReturn(new DateTime('1970-01-01 10:00:00'));
+        $missing->method('getDuration')->willReturn(30);
+        $missing->method('getDescription')->willReturn('x');
+        $missing->method('getActivity')->willReturn(null);
+        $missing->method('getSource')->willReturn(EntrySource::HUMAN);
+
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$this->linkedEntry(), $missing]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => [new JiraWorkLog(id: 1001, started: null, timeSpentSeconds: 3600, authorAccountId: 'me')]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['local_only'] ?? 0);
+        $localOnly = array_values(array_filter(
+            $syncRun->getItems()->toArray(),
+            static fn ($item): bool => SyncItemKind::LOCAL_ONLY === $item->getKind(),
+        ));
+        self::assertCount(1, $localOnly);
+        self::assertSame(1002, $localOnly[0]->getRemoteWorklogId());
+    }
+
     public function testUnlinkedEntryCountsNeverSynced(): void
     {
         $entry = self::createStub(Entry::class);

@@ -184,7 +184,8 @@ This only affects the cron pull/reconcile; lease-checked pushes on the normal en
 |---|---|
 | `Nothing to sync: no user opted in …` | Nobody enabled *Sync my Jira worklogs* and no PO enabled *Sync all worklogs I can access* for this ticket system. |
 | A user's worklogs are not synced | They haven't opted in, and no sync-all PO can see them; or their Jira connection has no token / is disconnected. |
-| Worklogs added in Jira show up as `remote_only` instead of entries | No `sync_default_activity_id` configured on the ticket system. |
+| Worklogs added in Jira show up as `remote_only` instead of entries | No `sync_default_activity_id` configured on the ticket system — or, with counter `lookalike_held`, the worklog was held back because an `error`/`truncated` item in the same run left an entry's own worklog unverified (`payload.entries` names it); it is imported by the first run without that gap. |
+| Entries whose worklog was deleted in Jira are neither removed nor parked (counter `absence_unverified`) | The run has an `error` or `truncated` item, so the deletion could not be verified; it clears on the first run without that gap. A per-worklog `error` (e.g. a worklog stored without a start) keeps that one entry unverified until the worklog is fixed in Jira. |
 | A PO's *Sync all* toggle is missing | The account lacks ROLE_PL / ROLE_ADMIN (`can_sync_all` is false). |
 | `truncated` items keep appearing | More than 100 search pages (up to 50,000 matching issues) in the window — the next run picks up the remainder; shorten the window or the cadence. |
 | A run fails with a token error | The responsible user's OAuth token expired — they re-authorize via the OAuth flow. |

@@ -383,6 +383,7 @@ class SyncWorklogsService extends AbstractSyncRunService
                 issueKey: $candidate['issueKey'],
                 remoteWorklogId: $worklogId,
                 entry: $unverifiedEntries[0],
+                author: $this->jiraAuthorMapper->remoteKey($candidate['worklog']),
                 reason: 'held back from import: may be the move of an entry whose own worklog could not be verified in this run',
                 payload: [
                     'remote' => $candidate['snapshot']->toArray(),
