@@ -16,6 +16,7 @@ use App\Entity\Activity;
 use App\Entity\Entry;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\WorklogSyncState;
 use App\Enum\EntrySource;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
@@ -125,13 +126,18 @@ final class VerifyWorklogsServiceTest extends TestCase
     /**
      * @param list<string>                     $issueKeys
      * @param array<string, list<JiraWorkLog>> $worklogsByIssue
+     * @param array<int, JiraWorkLog>          $worklogsOnTheirIssue worklogs the direct read finds past the date window
      */
-    private function stubJira(array $issueKeys, array $worklogsByIssue): void
+    private function stubJira(array $issueKeys, array $worklogsByIssue, array $worklogsOnTheirIssue = []): void
     {
         $this->api->method('getMyself')->willReturn(new JiraUserIdentity(accountId: 'me'));
         $this->api->method('searchIssueKeysWithWorklogs')->willReturn(new JiraIssueKeySearchResult($issueKeys, false));
         $this->api->method('getIssueWorklogs')->willReturnCallback(
             static fn (string $key): array => $worklogsByIssue[$key] ?? [],
+        );
+        // The direct read of one worklog from its own issue, which bypasses the date window.
+        $this->api->method('getIssueWorklog')->willReturnCallback(
+            static fn (string $key, int $worklogId): ?JiraWorkLog => $worklogsOnTheirIssue[$worklogId] ?? null,
         );
     }
 
@@ -328,6 +334,31 @@ final class VerifyWorklogsServiceTest extends TestCase
 
         self::assertSame(1, $syncRun->getCounters()['local_only'] ?? 0);
         self::assertSame(0, $syncRun->getCounters()['absence_unverified'] ?? 0);
+    }
+
+    public function testAWorklogReDatedOutOfTheWindowIsNotReportedAsDeleted(): void
+    {
+        // The run verifies June; in Jira worklog 1001 was moved to 15 July. It is missing from the
+        // windowed read but still on ABC-1, so the entry is behind its worklog — not deleted.
+        $entry = $this->linkedEntry();
+        $state = self::createStub(WorklogSyncState::class);
+        $state->method('getBasePayload')->willReturn(new EntryWorklogProjector()->project($entry)->toArray());
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$entry]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([42 => $state]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => []], [1001 => new JiraWorkLog(
+            id: 1001,
+            comment: '#42: Development: fixed it',
+            started: '2026-07-15T09:00:00.000+0200',
+            timeSpentSeconds: 3600,
+            updated: '2026-07-15T10:00:00.000+0200',
+            authorAccountId: 'me',
+        )]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(0, $syncRun->getCounters()['local_only'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['remote_dirty'] ?? 0);
     }
 
     public function testUnlinkedEntryCountsNeverSynced(): void

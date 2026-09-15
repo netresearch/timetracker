@@ -103,16 +103,17 @@ class VerifyWorklogsService extends AbstractSyncRunService
         // A failed issue fetch, an unreadable worklog or a capped search can hide worklogs that
         // still exist; a missing remote is then not reported as a deletion (see RemoteReadGaps).
         $gaps = new RemoteReadGaps();
+        $onNotice = function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun, $gaps): void {
+            $gaps->record($type, $worklogId);
+            $this->onRemoteNotice($syncRun, $type, $issueKey, $throwable, $worklogId);
+        };
         $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
             $api,
             static fn (JiraWorkLog $jiraWorkLog): bool => $myself->matchesWorklogAuthor($jiraWorkLog),
             $jql,
             $from,
             $to,
-            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun, $gaps): void {
-                $gaps->record($type, $worklogId);
-                $this->onRemoteNotice($syncRun, $type, $issueKey, $throwable, $worklogId);
-            },
+            $onNotice,
         );
 
         // --- Local side.
@@ -140,6 +141,12 @@ class VerifyWorklogsService extends AbstractSyncRunService
             if (isset($remoteByWorklogId[$worklogId])) {
                 $remote = $remoteByWorklogId[$worklogId]['snapshot'];
                 unset($remoteByWorklogId[$worklogId]);
+            } else {
+                // The window the read covers is TT's, not Jira's: a worklog re-dated outside it
+                // is missing from the read while still sitting on its issue. Read it there once
+                // before reporting the entry as deleted in Jira.
+                $record = $this->remoteWorklogReader->readOne($api, (string) $entry->getTicket(), $worklogId, $onNotice);
+                $remote = $record['snapshot'] ?? null;
             }
 
             $decision = $this->reconciliationService->reconcile($base, $local, $remote);
