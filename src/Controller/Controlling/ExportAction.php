@@ -178,12 +178,10 @@ final class ExportAction extends BaseController
      */
     private function collectEntryStats(array &$stats, string $abbr, ?Activity $activity): string
     {
-        if (!isset($stats[$abbr])) {
-            $stats[$abbr] = [
-                'holidays' => 0,
-                'sickdays' => 0,
-            ];
-        }
+        $stats[$abbr] ??= [
+            'holidays' => 0,
+            'sickdays' => 0,
+        ];
 
         if (!$activity instanceof Activity) {
             return ' ';

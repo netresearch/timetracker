@@ -60,9 +60,7 @@ final class GroupByProjectAction extends BaseInterpretationController
             if (null === $pid) {
                 continue;
             }
-            if (!isset($projects[$pid])) {
-                $projects[$pid] = ['id' => $pid, 'name' => $projectEntity->getName(), 'hours' => 0, 'agentHours' => 0, 'quota' => 0];
-            }
+            $projects[$pid] ??= ['id' => $pid, 'name' => $projectEntity->getName(), 'hours' => 0, 'agentHours' => 0, 'quota' => 0];
 
             // ADR-025 §7: human and agent hours are distinct columns, never folded.
             if (EntrySource::AGENT === $entry->getSource()) {

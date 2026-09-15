@@ -141,9 +141,7 @@ final class GroupByWorktimeAction extends BaseInterpretationController
             }
 
             $key = $day->format('y-m-d');
-            if (!isset($times[$key])) {
-                $times[$key] = ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'date' => $day, 'hours' => 0.0, 'agentHours' => 0.0, 'minutes' => 0.0, 'agentMinutes' => 0.0, 'quota' => 0, 'expected' => 0.0];
-            }
+            $times[$key] ??= ['id' => null, 'name' => $key, 'day' => $day->format('d.m.'), 'date' => $day, 'hours' => 0.0, 'agentHours' => 0.0, 'minutes' => 0.0, 'agentMinutes' => 0.0, 'quota' => 0, 'expected' => 0.0];
 
             if (EntrySource::AGENT === $entry->getSource()) {
                 $times[$key]['agentMinutes'] += $entry->getDuration();

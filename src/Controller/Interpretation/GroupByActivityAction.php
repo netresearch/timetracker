@@ -61,9 +61,7 @@ final class GroupByActivityAction extends BaseInterpretationController
             if (null === $aid) {
                 continue;
             }
-            if (!isset($activities[$aid])) {
-                $activities[$aid] = ['id' => $aid, 'name' => $activityObj->getName(), 'hours' => 0, 'agentHours' => 0];
-            }
+            $activities[$aid] ??= ['id' => $aid, 'name' => $activityObj->getName(), 'hours' => 0, 'agentHours' => 0];
 
             // ADR-025 §7: human and agent hours are distinct columns, never folded.
             if (EntrySource::AGENT === $entry->getSource()) {
