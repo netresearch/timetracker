@@ -55,6 +55,14 @@ UPDATE ticket_systems SET sync_default_activity_id = 7 WHERE id = 1;
 
 The former `sync_user_id` and `worklog_sync_cursor` columns are dropped — the sync-user admin field and the `--since` cursor are gone.
 
+### Internal Jira mirror
+
+A project can mirror its tickets into a second, internal Jira (`internal_jira_project_key` plus `internal_jira_ticket_system` on the project). Saving an entry on such a project rewrites it to the mirror issue, keeps the external key in `internal_jira_ticket_original_key`, and books the worklog in the **internal** Jira — while the project itself still points at the external ticket system.
+
+Sync knows about those entries only in one direction. They are excluded from sync candidates, so nothing is ever pushed or reconciled against the wrong Jira. But the lookup that recognises a remote worklog as already belonging to an entry is scoped by the project's ticket system as well, so a run against the **internal** ticket system does not find their entries: their worklogs are reported as `remote_only` import candidates, and a configured default import activity would import them as new entries — duplicating time that TimeTracker already holds.
+
+Until a worklog records which ticket system it belongs to (a schema change, see [ADR-023 §7](adr/ADR-023-jira-worklog-bidirectional-sync.md)), the rule is: **leave `sync_default_activity_id` unset on a ticket system that serves as an internal mirror**, and treat `remote_only` items from such a run as already-booked time rather than as imports.
+
 ## Running it
 
 Preview a window with `--dry-run` first — counters and parked items are reported, nothing is written:
@@ -186,6 +194,7 @@ This only affects the cron pull/reconcile; lease-checked pushes on the normal en
 | A user's worklogs are not synced | They haven't opted in, and no sync-all PO can see them; or their Jira connection has no token / is disconnected. |
 | Worklogs added in Jira show up as `remote_only` instead of entries | No `sync_default_activity_id` configured on the ticket system — or, with counter `lookalike_held`, the worklog was held back because an `error`/`truncated` item in the same run left an entry's own worklog unverified (`payload.entries` names it); it is imported by the first run without that gap. |
 | Entries whose worklog was deleted in Jira are neither removed nor parked (counter `absence_unverified`) | The run has an `error` or `truncated` item, so the deletion could not be verified; it clears on the first run without that gap. A per-worklog `error` (e.g. a worklog stored without a start) keeps that one entry unverified until the worklog is fixed in Jira — and keeps the whole run unverified while no local entry is linked to that worklog id, because it could then be a moved worklog. |
+| A run against an internal mirror Jira reports known time as `remote_only` (or imports it twice) | The entries behind those worklogs belong to projects pointing at the external ticket system, so the run cannot match them — see [Internal Jira mirror](#internal-jira-mirror). Clear `sync_default_activity_id` on that ticket system and delete the duplicate entries. |
 | A PO's *Sync all* toggle is missing | The account lacks ROLE_PL / ROLE_ADMIN (`can_sync_all` is false). |
 | `truncated` items keep appearing | More than 100 search pages (up to 50,000 matching issues) in the window — the next run picks up the remainder; shorten the window or the cadence. |
 | A run fails with a token error | The responsible user's OAuth token expired — they re-authorize via the OAuth flow. |
