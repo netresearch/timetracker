@@ -58,7 +58,7 @@ final readonly class SyncRunDto implements JsonSerializable
             type: $syncRun->getType()->value,
             status: $syncRun->getStatus()->value,
             ticketSystemId: (int) $syncRun->getTicketSystem()?->getId(),
-            triggeredBy: $syncRun->getTriggeredBy()?->getUserIdentifier(),
+            triggeredBy: $syncRun->getTriggeredBy()?->getUsername(),
             scope: $syncRun->getScope(),
             counters: $syncRun->getCounters(),
             startedAt: $syncRun->getStartedAt()?->format(DATE_ATOM),

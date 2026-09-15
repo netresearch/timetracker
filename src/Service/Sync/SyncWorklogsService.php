@@ -182,7 +182,7 @@ class SyncWorklogsService extends AbstractSyncRunService
                 $keys[$remoteAccountId] = true;
             }
 
-            $username = $userTicketsystem->getUser()?->getUserIdentifier();
+            $username = $userTicketsystem->getUser()?->getUsername();
             if (null !== $username && '' !== $username) {
                 $keys[$username] = true;
             }
