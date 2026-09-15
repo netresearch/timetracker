@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\Property\RemoveDefaultValueFromAssignedPropertyRector;
+use Rector\Renaming\Rector\MethodCall\RenameMethodRector;
 use Rector\Renaming\Rector\Name\RenameClassRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
@@ -36,6 +37,20 @@ return RectorConfig::configure()
         // it. See the docblock on Kernel::registerBundles().
         RenameClassRector::class => [
             __DIR__ . '/../../src/Kernel.php',
+        ],
+        // Renames UserInterface::getUsername() to getUserIdentifier() because
+        // Symfony dropped the former from the interface. The two are not the
+        // same value here: User::getUserIdentifier() substitutes '_' for an
+        // empty username to honour Symfony's non-empty contract, while
+        // getUsername() returns what is stored. These three sites report or key
+        // on the stored name, so the placeholder would leak into API responses
+        // (the two DTOs) and into the remote author keys that decide PO sync
+        // coverage — where it would also make the following '' !== $username
+        // guard unreachable.
+        RenameMethodRector::class => [
+            __DIR__ . '/../../src/Dto/Response/SyncConflictDto.php',
+            __DIR__ . '/../../src/Dto/Response/SyncRunDto.php',
+            __DIR__ . '/../../src/Service/Sync/SyncWorklogsService.php',
         ],
         // Strips `= null` from properties it believes are always assigned, but
         // it does not see Symfony's #[Required] setter injection: those
