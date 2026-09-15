@@ -579,6 +579,7 @@ final class SyncWorklogsServiceTest extends TestCase
         $this->issueKeys[] = 'TIM-9';
         $this->unreadableIssueKeys = ['TIM-9'];
         $this->remoteWorklog($local, 22, 'U5');
+        $this->authorMapper->method('remoteKey')->willReturn('acc-x');
 
         $syncRun = $this->syncSelf();
 
@@ -590,6 +591,8 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertCount(1, $held);
         self::assertSame($first, $held[0]->getEntry());
         self::assertSame([101, 102], $held[0]->getPayload()['entries'] ?? null);
+        // The worklog's own author, so a held item names who booked it in Jira, not who may own it.
+        self::assertSame('acc-x', $held[0]->getAuthor());
     }
 
     public function testAnUnreadableWorklogBlocksOnlyItsOwnEntry(): void
@@ -610,6 +613,50 @@ final class SyncWorklogsServiceTest extends TestCase
         self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
         self::assertSame(1, $syncRun->getCounters()['deleted_local'] ?? 0);
         self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
+    }
+
+    public function testAnUnreadableWorklogNobodyOwnsBlocksEveryConclusion(): void
+    {
+        // Worklog 99 came back unreadable and no local entry holds it, so it may be the worklog
+        // Jira recreated when entry 12's worklog was moved. Deleting that clean entry would then
+        // drop work that still exists in Jira, so the run concludes nothing at all.
+        $deleted = $this->linkedEntry(12);
+        $this->stateFor($deleted, $this->projector->project($deleted));
+        $this->publish('TIM-1', new JiraWorkLog(id: 99, started: null, timeSpentSeconds: 3600, authorAccountId: 'acc-x'));
+
+        $this->entityManager->expects(self::never())->method('remove');
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['deleted_local'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
+    }
+
+    public function testAnUnreadableWorklogOwnedOutsideTheWindowBlocksNothingElse(): void
+    {
+        // Worklog 99 is unreadable but belongs to an entry from another month, so it sits where
+        // that entry says and is no move target. Entry 12's absence is still a deletion.
+        $deleted = $this->linkedEntry(12);
+        $this->stateFor($deleted, $this->projector->project($deleted));
+        $outsideWindow = new Entry()
+            ->setUser($this->targetUser)
+            ->setTicket('TIM-1')
+            ->setDay('2026-05-10')
+            ->setStart('09:00:00')
+            ->setEnd('10:00:00')
+            ->setDescription('older work')
+            ->setWorklogId(99);
+        $outsideWindow->setDuration(60);
+        $this->entriesByWorklogId[99] = $outsideWindow; // owned locally, but not a candidate
+        $this->publish('TIM-1', new JiraWorkLog(id: 99, started: null, timeSpentSeconds: 3600, authorAccountId: 'acc-x'));
+
+        $this->entityManager->expects(self::once())->method('remove')->with(self::identicalTo($deleted));
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(0, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['deleted_local'] ?? 0);
     }
 
     public function testWorklogOwnedByAnExcludedEntryIsNeitherMoveTargetNorImportCandidate(): void

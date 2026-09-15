@@ -298,6 +298,36 @@ final class VerifyWorklogsServiceTest extends TestCase
         self::assertSame(1002, $localOnly[0]->getRemoteWorklogId());
     }
 
+    public function testAnUnreadableWorklogNobodyOwnsLeavesEveryAbsenceUnverified(): void
+    {
+        // Worklog 9999 could not be normalized and no local entry holds it, so it may be the
+        // worklog Jira recreated when 1001 was moved: 1001's absence is not a deletion to report.
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$this->linkedEntry()]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => [new JiraWorkLog(id: 9999, started: null, timeSpentSeconds: 3600, authorAccountId: 'me')]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(0, $syncRun->getCounters()['local_only'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertNotContains(SyncItemKind::LOCAL_ONLY, array_map(static fn ($item) => $item->getKind(), $syncRun->getItems()->toArray()));
+    }
+
+    public function testAnUnreadableWorklogOwnedOutsideTheWindowLeavesOtherAbsencesReported(): void
+    {
+        // Worklog 9999 is unreadable but belongs to an entry from another month, so it sits where
+        // that entry says and is no move target: 1001's absence is still reported as a deletion.
+        $this->entryRepository->method('findByWorklogIdsAndTicketSystem')->willReturn([9999 => self::createStub(Entry::class)]);
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$this->linkedEntry()]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => [new JiraWorkLog(id: 9999, started: null, timeSpentSeconds: 3600, authorAccountId: 'me')]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(1, $syncRun->getCounters()['local_only'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['absence_unverified'] ?? 0);
+    }
+
     public function testUnlinkedEntryCountsNeverSynced(): void
     {
         $entry = self::createStub(Entry::class);

@@ -109,13 +109,14 @@ class VerifyWorklogsService extends AbstractSyncRunService
             $from,
             $to,
             function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun, $gaps): void {
-                $gaps->record($type, $issueKey, $worklogId);
+                $gaps->record($type, $worklogId);
                 $this->onRemoteNotice($syncRun, $type, $issueKey, $throwable, $worklogId);
             },
         );
 
         // --- Local side.
         $entries = $this->entryRepository->findJiraSyncCandidates($user, $ticketSystem, $from, $to);
+        $this->claimOwnedWorklogs($gaps, $entries, $ticketSystem);
         $entryIds = array_map(static fn (Entry $entry): int => (int) $entry->getId(), $entries);
         $syncStates = $this->worklogSyncStateRepository->findByEntryIds($entryIds);
 
@@ -188,9 +189,38 @@ class VerifyWorklogsService extends AbstractSyncRunService
                 issueKey: $remoteData['snapshot']->issueKey,
                 remoteWorklogId: $worklogId,
                 author: $remoteData['author'],
-                reason: 'Jira worklog has no matching entry (import candidate)',
+                reason: $gaps->hidesMoves()
+                    ? 'Jira worklog has no matching entry; this run could not tell an import candidate from the move of an entry it failed to verify'
+                    : 'Jira worklog has no matching entry (import candidate)',
                 payload: ['remote' => $remoteData['snapshot']->toArray(), 'updated' => $remoteData['updated']],
             );
+        }
+    }
+
+    /**
+     * Tells the gaps which worklog ids local entries hold, so an unreadable worklog that sits
+     * where an entry says it does stops blocking the run (RemoteReadGaps::claim()).
+     *
+     * @param list<Entry> $entries the run's candidates
+     */
+    private function claimOwnedWorklogs(RemoteReadGaps $gaps, array $entries, TicketSystem $ticketSystem): void
+    {
+        foreach ($entries as $entry) {
+            $worklogId = $entry->getWorklogId();
+            if (null !== $worklogId && $worklogId > 0) {
+                $gaps->claim($worklogId);
+            }
+        }
+
+        // Entries outside the verified window own worklogs too, and an unreadable one of theirs is
+        // no more a move target than a candidate's: one lookup keeps it from blocking the run.
+        $unclaimed = $gaps->unclaimedUnreadableWorklogIds();
+        if ([] === $unclaimed) {
+            return;
+        }
+
+        foreach (array_keys($this->entryRepository->findByWorklogIdsAndTicketSystem($unclaimed, $ticketSystem)) as $worklogId) {
+            $gaps->claim($worklogId);
         }
     }
 

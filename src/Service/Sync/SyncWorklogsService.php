@@ -311,12 +311,13 @@ class SyncWorklogsService extends AbstractSyncRunService
             $from,
             $to,
             function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($context, $gaps): void {
-                $gaps->record($type, $issueKey, $worklogId);
+                $gaps->record($type, $worklogId);
                 $this->onRemoteNotice($context->syncRun, $type, $issueKey, $throwable, $worklogId);
             },
         );
 
         $entries = $this->entryRepository->findJiraSyncCandidates($targetUser, $context->ticketSystem, $from, $to);
+        $this->claimOwnedWorklogs($gaps, $entries, $context->ticketSystem);
         $absentWorklogIds = [];
 
         foreach ($entries as $entry) {
@@ -400,6 +401,33 @@ class SyncWorklogsService extends AbstractSyncRunService
         // Ids exist only after the flush above (same post-flush id rule as import).
         foreach ($context->affectedDays as $affected) {
             $this->dayClassService->recalculate((int) $affected['user']->getId(), $affected['day']);
+        }
+    }
+
+    /**
+     * Tells the gaps which worklog ids local entries hold, so an unreadable worklog that sits
+     * where an entry says it does stops blocking the run (RemoteReadGaps::claim()).
+     *
+     * @param list<Entry> $entries the run's candidates
+     */
+    private function claimOwnedWorklogs(RemoteReadGaps $gaps, array $entries, TicketSystem $ticketSystem): void
+    {
+        foreach ($entries as $entry) {
+            $worklogId = $entry->getWorklogId();
+            if (null !== $worklogId && $worklogId > 0) {
+                $gaps->claim($worklogId);
+            }
+        }
+
+        // Entries outside the synced window own worklogs too, and an unreadable one of theirs is
+        // no more a move target than a candidate's: one lookup keeps it from blocking the run.
+        $unclaimed = $gaps->unclaimedUnreadableWorklogIds();
+        if ([] === $unclaimed) {
+            return;
+        }
+
+        foreach (array_keys($this->entryRepository->findByWorklogIdsAndTicketSystem($unclaimed, $ticketSystem)) as $worklogId) {
+            $gaps->claim($worklogId);
         }
     }
 
@@ -638,8 +666,9 @@ class SyncWorklogsService extends AbstractSyncRunService
 
             // Only a run-wide gap can hide a real move: then the lookalike may be this entry's
             // worklog, moved where the read could not see, and importing it would duplicate the
-            // entry. A worklog Jira returned but could not normalize still exists where it was, so
-            // a lookalike of it is a separate booking and stays importable.
+            // entry. A worklog Jira returned but could not normalize, and that a local entry
+            // claims, still sits where that entry says, so a lookalike of it is a separate
+            // booking and stays importable.
             if ($gaps->hidesMoves()) {
                 $heldLookalikes[$candidateWorklogId][] = $entry;
             }
