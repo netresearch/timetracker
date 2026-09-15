@@ -75,6 +75,38 @@ class RemoteWorklogReader
     }
 
     /**
+     * Reads one worklog straight from the issue its entry names, bypassing both the issue search
+     * and the date range. The range is what makes this necessary: a worklog re-dated out of the
+     * window is missing from readForAuthor() while still existing in Jira, and an absence there
+     * is otherwise read as a deletion.
+     *
+     * Null means Jira no longer has that worklog on that issue — deleted, or moved to another
+     * issue, which the caller's own move detection handles. A failed read is reported as an
+     * `('error', $issueKey, $throwable, $worklogId)` notice and also yields null, so the caller
+     * treats the worklog as unverified rather than gone.
+     *
+     * @param callable(string, ?string=, ?Throwable=, ?int=): void $onNotice
+     *
+     * @return array{snapshot: WorklogSnapshot, updated: ?string, author: ?string, issueKey: string}|null
+     */
+    public function readOne(JiraOAuthApiService $api, string $issueKey, int $worklogId, callable $onNotice): ?array
+    {
+        try {
+            $jiraWorkLog = $api->getIssueWorklog($issueKey, $worklogId);
+        } catch (Throwable $throwable) {
+            $onNotice('error', $issueKey, $throwable, $worklogId);
+
+            return null;
+        }
+
+        if (!$jiraWorkLog instanceof JiraWorkLog) {
+            return null;
+        }
+
+        return $this->toRecord($jiraWorkLog, $worklogId, $issueKey, $onNotice);
+    }
+
+    /**
      * @param callable(JiraWorkLog): bool                          $matchesAuthor
      * @param callable(string, ?string=, ?Throwable=, ?int=): void $onNotice
      *
@@ -96,15 +128,32 @@ class RemoteWorklogReader
             return null;
         }
 
-        try {
-            $snapshot = $this->remoteWorklogNormalizer->normalize($jiraWorkLog, $issueKey);
-        } catch (InvalidArgumentException $invalidArgumentException) {
-            $onNotice('error', $issueKey, $invalidArgumentException, $jiraWorkLog->id);
-
+        $record = $this->toRecord($jiraWorkLog, $jiraWorkLog->id, $issueKey, $onNotice);
+        if (null === $record) {
             return null;
         }
 
-        if ($snapshot->startedTimestamp < $rangeFrom || $snapshot->startedTimestamp > $rangeTo) {
+        if ($record['snapshot']->startedTimestamp < $rangeFrom || $record['snapshot']->startedTimestamp > $rangeTo) {
+            return null;
+        }
+
+        return $record;
+    }
+
+    /**
+     * Normalizes one worklog into the shared record shape, reporting an unusable one as a notice.
+     *
+     * @param callable(string, ?string=, ?Throwable=, ?int=): void $onNotice
+     *
+     * @return array{snapshot: WorklogSnapshot, updated: ?string, author: ?string, issueKey: string}|null
+     */
+    private function toRecord(JiraWorkLog $jiraWorkLog, int $worklogId, string $issueKey, callable $onNotice): ?array
+    {
+        try {
+            $snapshot = $this->remoteWorklogNormalizer->normalize($jiraWorkLog, $issueKey);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            $onNotice('error', $issueKey, $invalidArgumentException, $worklogId);
+
             return null;
         }
 

@@ -93,6 +93,10 @@ final class SyncWorklogsServiceTest extends TestCase
     private array $issueKeys = [];
     /** @var list<string> issues whose worklog fetch fails */
     private array $unreadableIssueKeys = [];
+    /** @var array<int, JiraWorkLog> worklogs readable straight from their issue, past the date window */
+    private array $worklogsOnTheirIssue = [];
+    /** @var list<int> worklog ids whose direct read fails */
+    private array $unreadableWorklogIds = [];
     private bool $searchTruncated = false;
 
     protected function setUp(): void
@@ -145,6 +149,11 @@ final class SyncWorklogsServiceTest extends TestCase
         $this->api->method('getIssueWorklogs')->willReturnCallback(
             fn (string $issueKey): array => in_array($issueKey, $this->unreadableIssueKeys, true)
                 ? throw new JiraApiException('Jira unavailable', 503) : $this->worklogsByIssue[$issueKey] ?? [],
+        );
+        // The direct read of one worklog from its own issue, which bypasses the date window.
+        $this->api->method('getIssueWorklog')->willReturnCallback(
+            fn (string $issueKey, int $worklogId): ?JiraWorkLog => in_array($worklogId, $this->unreadableWorklogIds, true)
+                ? throw new JiraApiException('Jira unavailable', 503) : $this->worklogsOnTheirIssue[$worklogId] ?? null,
         );
 
         $this->targetUser = new User()->setUsername('target');
@@ -614,6 +623,88 @@ final class SyncWorklogsServiceTest extends TestCase
 
         self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
         self::assertSame(1, $syncRun->getCounters()['deleted_local'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
+    }
+
+    public function testAWorklogReDatedOutOfTheWindowIsPulledInsteadOfDeleted(): void
+    {
+        // The run reads June; in Jira the worklog was moved to 15 July. It is therefore missing
+        // from the windowed read while still sitting on TIM-1 — deleting the entry would drop
+        // work that exists. The entry follows the worklog instead.
+        $entry = $this->linkedEntry(11);
+        $base = $this->projector->project($entry);
+        $state = $this->stateFor($entry, $base);
+        $this->worklogsOnTheirIssue[11] = new JiraWorkLog(
+            id: 11,
+            comment: $base->comment,
+            started: '2026-07-15T09:00:00.000+0200',
+            timeSpentSeconds: $base->durationMinutes * 60,
+            updated: 'U7',
+            authorAccountId: 'acc-x',
+        );
+
+        $this->entityManager->expects(self::never())->method('remove');
+        $this->entryPullApplier->expects(self::once())->method('apply')
+            ->with(
+                self::identicalTo($entry),
+                self::callback(static fn (WorklogSnapshot $snapshot): bool => $snapshot->startedTimestamp === new DateTimeImmutable('2026-07-15 09:00:00+0200')->getTimestamp()),
+                [WorklogField::STARTED],
+                self::identicalTo($this->ticketSystem),
+            )
+            ->willReturn(new PullResult(true, '', ['2026-06-10', '2026-07-15']));
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(0, $syncRun->getCounters()['deleted_local'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['pulled'] ?? 0);
+        self::assertSame('U7', $state->getBaseUpdatedAt());
+    }
+
+    public function testAReDatedWorklogIsReadBeforeALookalikeCanTakeItsEntry(): void
+    {
+        // Worklog 22 shares the entry's ORIGINAL start and duration, so move detection would
+        // relink onto it. Worklog 11 still exists though, only re-dated, so the entry belongs to
+        // it and 22 is somebody else's booking — importable, not a move target.
+        $entry = $this->linkedEntry(11);
+        $base = $this->projector->project($entry);
+        $this->stateFor($entry, $base);
+        $this->ticketSystem = $this->makeTicketSystem(self::createStub(Activity::class));
+        $this->remoteWorklog($base, 22, 'U5');
+        $this->worklogsOnTheirIssue[11] = new JiraWorkLog(
+            id: 11,
+            comment: $base->comment,
+            started: '2026-07-15T09:00:00.000+0200',
+            timeSpentSeconds: $base->durationMinutes * 60,
+            updated: 'U7',
+            authorAccountId: 'acc-x',
+        );
+        $this->entryPullApplier->method('apply')->willReturn(new PullResult(true, '', ['2026-06-10']));
+
+        $this->importWorklogsService->expects(self::once())->method('processWorklog')
+            ->with(self::anything(), 'TIM-1', self::callback(static fn (JiraWorkLog $worklog): bool => 22 === $worklog->id));
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(11, $entry->getWorklogId());
+        self::assertSame(0, $syncRun->getCounters()['relinked'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['deleted_local'] ?? 0);
+    }
+
+    public function testAFailedDirectReadLeavesTheEntryUnverifiedRatherThanDeleted(): void
+    {
+        // The worklog is missing from the windowed read and Jira will not say whether it still
+        // exists. Nothing is concluded about that one entry; the run carries on.
+        $entry = $this->linkedEntry(11);
+        $this->stateFor($entry, $this->projector->project($entry));
+        $this->unreadableWorklogIds = [11];
+
+        $this->entityManager->expects(self::never())->method('remove');
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['deleted_local'] ?? 0);
         self::assertSame(1, $syncRun->getCounters()['errors'] ?? 0);
     }
 

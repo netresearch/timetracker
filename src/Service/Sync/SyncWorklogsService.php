@@ -305,16 +305,17 @@ class SyncWorklogsService extends AbstractSyncRunService
         // can hide worklogs that still exist in Jira; their entries must then not be concluded
         // deleted (or moved) in Jira.
         $gaps = new RemoteReadGaps();
+        $onNotice = function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($context, $gaps): void {
+            $gaps->record($type, $worklogId);
+            $this->onRemoteNotice($context->syncRun, $type, $issueKey, $throwable, $worklogId);
+        };
         $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
             $context->api,
             $matchesAuthor,
             $jql,
             $from,
             $to,
-            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($context, $gaps): void {
-                $gaps->record($type, $worklogId);
-                $this->onRemoteNotice($context->syncRun, $type, $issueKey, $throwable, $worklogId);
-            },
+            $onNotice,
         );
 
         $entries = $this->entryRepository->findJiraSyncCandidates($targetUser, $context->ticketSystem, $from, $to);
@@ -333,6 +334,16 @@ class SyncWorklogsService extends AbstractSyncRunService
             }
 
             if (null !== $worklogId && $worklogId > 0) {
+                // The window the read covers is TT's, not Jira's: a worklog re-dated outside it
+                // is missing from the read while still sitting on its issue. Read it there once
+                // before its absence is allowed to mean anything.
+                $record = $this->remoteWorklogReader->readOne($context->api, (string) $entry->getTicket(), $worklogId, $onNotice);
+                if (null !== $record) {
+                    $this->reconcileAndExecute($context, $entry, $record['snapshot'], $this->synthesizeWorklog($worklogId, $record), $record['issueKey']);
+
+                    continue;
+                }
+
                 $absentWorklogIds[] = $worklogId;
 
                 continue;
