@@ -37,6 +37,7 @@ use App\Service\Sync\ImportRunContext;
 use App\Service\Sync\ImportWorklogsService;
 use App\Service\Sync\JiraAuthorMapper;
 use App\Service\Sync\ReconciliationService;
+use App\Service\Sync\RemoteReadGapClaimer;
 use App\Service\Sync\RemoteWorklogNormalizer;
 use App\Service\Sync\RemoteWorklogReader;
 use App\Service\Sync\SyncWorklogsService;
@@ -157,6 +158,7 @@ final class SyncWorklogsServiceTest extends TestCase
             $apiFactory,
             $this->projector,
             new RemoteWorklogReader(new RemoteWorklogNormalizer()),
+            new RemoteReadGapClaimer($this->entryRepository),
             new ReconciliationService(),
             $this->worklogWriteService,
             $this->entryPullApplier,
