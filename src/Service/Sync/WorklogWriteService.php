@@ -16,10 +16,13 @@ use App\Entity\WorklogSyncState;
 use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
+use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use App\Repository\WorklogSyncStateRepository;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use JsonException;
 use Psr\Clock\ClockInterface;
 
 /**
@@ -37,6 +40,11 @@ class WorklogWriteService
     ) {
     }
 
+    /**
+     * @throws JiraApiException
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
+     */
     public function push(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
     {
         $ticket = $entry->getTicket();
@@ -86,6 +94,10 @@ class WorklogWriteService
      * Forced lease-era write (ADR-023 §2 conflict resolution): identical to push() but
      * skips the lease comparison. The legacy write nulls a stale worklogId and re-creates,
      * so this also covers orphaned recreation.
+     *
+     * @throws JiraApiException
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
      */
     public function forcePush(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): WriteOutcome
     {
@@ -110,6 +122,9 @@ class WorklogWriteService
     }
 
     /**
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
+     *
      * @return bool whether Jira confirmed the worklog is gone (deleted, or not found)
      */
     public function delete(JiraOAuthApiService $api, Entry $entry): bool
@@ -117,6 +132,10 @@ class WorklogWriteService
         return $api->deleteEntryJiraWorkLog($entry);
     }
 
+    /**
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
+     */
     private function refreshBase(JiraOAuthApiService $api, Entry $entry, TicketSystem $ticketSystem): void
     {
         $worklogId = $entry->getWorklogId();
