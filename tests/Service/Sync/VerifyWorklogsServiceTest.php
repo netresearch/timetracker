@@ -25,6 +25,7 @@ use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Sync\EntryWorklogProjector;
 use App\Service\Sync\ReconciliationService;
+use App\Service\Sync\RemoteReadGapClaimer;
 use App\Service\Sync\RemoteWorklogNormalizer;
 use App\Service\Sync\RemoteWorklogReader;
 use App\Service\Sync\VerifyWorklogsService;
@@ -77,6 +78,7 @@ final class VerifyWorklogsServiceTest extends TestCase
             $this->apiFactory,
             new EntryWorklogProjector(),
             new RemoteWorklogReader(new RemoteWorklogNormalizer()),
+            new RemoteReadGapClaimer($this->entryRepository),
             new ReconciliationService(),
             new MockClock('2026-07-09 12:00:00'),
         );
@@ -246,6 +248,86 @@ final class VerifyWorklogsServiceTest extends TestCase
 
         self::assertSame(1, $syncRun->getCounters()['local_only'] ?? 0);
         self::assertSame(SyncItemKind::LOCAL_ONLY, $syncRun->getItems()->toArray()[0]->getKind());
+    }
+
+    public function testMissingRemoteOnAnIncompleteReadIsNotReportedAsDeleted(): void
+    {
+        // ABC-1's worklogs could not be fetched, so worklog 1001 may still exist. Reporting it
+        // as local_only would present a read failure as a deletion in Jira.
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$this->linkedEntry()]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->api->method('getMyself')->willReturn(new JiraUserIdentity(accountId: 'me'));
+        $this->api->method('searchIssueKeysWithWorklogs')->willReturn(new JiraIssueKeySearchResult(['ABC-1'], false));
+        $this->api->method('getIssueWorklogs')->willThrowException(new RuntimeException('Jira unavailable'));
+
+        $syncRun = $this->verify();
+
+        self::assertSame(0, $syncRun->getCounters()['local_only'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        $kinds = array_map(static fn ($item) => $item->getKind(), $syncRun->getItems()->toArray());
+        self::assertNotContains(SyncItemKind::LOCAL_ONLY, $kinds);
+        self::assertContains(SyncItemKind::ERROR, $kinds);
+    }
+
+    public function testAnUnreadableWorklogLeavesOtherDeletionsReported(): void
+    {
+        // Worklog 1001 comes back without a start, so only its entry is unverified. Worklog 1002
+        // is simply missing from the fully read issue: that is still reported as local_only.
+        $missing = self::createStub(Entry::class);
+        $missing->method('getId')->willReturn(43);
+        $missing->method('getTicket')->willReturn('ABC-1');
+        $missing->method('getWorklogId')->willReturn(1002);
+        $missing->method('getDay')->willReturn(new DateTime('2026-06-16'));
+        $missing->method('getStart')->willReturn(new DateTime('1970-01-01 10:00:00'));
+        $missing->method('getDuration')->willReturn(30);
+        $missing->method('getDescription')->willReturn('x');
+        $missing->method('getActivity')->willReturn(null);
+        $missing->method('getSource')->willReturn(EntrySource::HUMAN);
+
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$this->linkedEntry(), $missing]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => [new JiraWorkLog(id: 1001, started: null, timeSpentSeconds: 3600, authorAccountId: 'me')]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['local_only'] ?? 0);
+        $localOnly = array_values(array_filter(
+            $syncRun->getItems()->toArray(),
+            static fn ($item): bool => SyncItemKind::LOCAL_ONLY === $item->getKind(),
+        ));
+        self::assertCount(1, $localOnly);
+        self::assertSame(1002, $localOnly[0]->getRemoteWorklogId());
+    }
+
+    public function testAnUnreadableWorklogNobodyOwnsLeavesEveryAbsenceUnverified(): void
+    {
+        // Worklog 9999 could not be normalized and no local entry holds it, so it may be the
+        // worklog Jira recreated when 1001 was moved: 1001's absence is not a deletion to report.
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$this->linkedEntry()]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => [new JiraWorkLog(id: 9999, started: null, timeSpentSeconds: 3600, authorAccountId: 'me')]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(0, $syncRun->getCounters()['local_only'] ?? 0);
+        self::assertSame(1, $syncRun->getCounters()['absence_unverified'] ?? 0);
+        self::assertNotContains(SyncItemKind::LOCAL_ONLY, array_map(static fn ($item) => $item->getKind(), $syncRun->getItems()->toArray()));
+    }
+
+    public function testAnUnreadableWorklogOwnedOutsideTheWindowLeavesOtherAbsencesReported(): void
+    {
+        // Worklog 9999 is unreadable but belongs to an entry from another month, so it sits where
+        // that entry says and is no move target: 1001's absence is still reported as a deletion.
+        $this->entryRepository->method('findByWorklogIdsAndTicketSystem')->willReturn([9999 => self::createStub(Entry::class)]);
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$this->linkedEntry()]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => [new JiraWorkLog(id: 9999, started: null, timeSpentSeconds: 3600, authorAccountId: 'me')]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(1, $syncRun->getCounters()['local_only'] ?? 0);
+        self::assertSame(0, $syncRun->getCounters()['absence_unverified'] ?? 0);
     }
 
     public function testUnlinkedEntryCountsNeverSynced(): void

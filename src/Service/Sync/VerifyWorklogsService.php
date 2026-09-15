@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Enum\SyncAction;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
@@ -65,6 +66,7 @@ class VerifyWorklogsService extends AbstractSyncRunService
         private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
         private readonly EntryWorklogProjector $entryWorklogProjector,
         private readonly RemoteWorklogReader $remoteWorklogReader,
+        private readonly RemoteReadGapClaimer $remoteReadGapClaimer,
         private readonly ReconciliationService $reconciliationService,
         ClockInterface $clock,
     ) {
@@ -98,19 +100,24 @@ class VerifyWorklogsService extends AbstractSyncRunService
             $from->format('Y-m-d'),
             $to->format('Y-m-d'),
         );
+        // A failed issue fetch, an unreadable worklog or a capped search can hide worklogs that
+        // still exist; a missing remote is then not reported as a deletion (see RemoteReadGaps).
+        $gaps = new RemoteReadGaps();
         $remoteByWorklogId = $this->remoteWorklogReader->readForAuthor(
             $api,
             static fn (JiraWorkLog $jiraWorkLog): bool => $myself->matchesWorklogAuthor($jiraWorkLog),
             $jql,
             $from,
             $to,
-            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun): void {
+            function (string $type, ?string $issueKey = null, ?Throwable $throwable = null, ?int $worklogId = null) use ($syncRun, $gaps): void {
+                $gaps->record($type, $worklogId);
                 $this->onRemoteNotice($syncRun, $type, $issueKey, $throwable, $worklogId);
             },
         );
 
         // --- Local side.
         $entries = $this->entryRepository->findJiraSyncCandidates($user, $ticketSystem, $from, $to);
+        $this->remoteReadGapClaimer->claimOwned($gaps, $entries, $ticketSystem);
         $entryIds = array_map(static fn (Entry $entry): int => (int) $entry->getId(), $entries);
         $syncStates = $this->worklogSyncStateRepository->findByEntryIds($entryIds);
 
@@ -136,6 +143,14 @@ class VerifyWorklogsService extends AbstractSyncRunService
             }
 
             $decision = $this->reconciliationService->reconcile($base, $local, $remote);
+
+            // A missing remote is evidence of a deletion only when the remote read was complete.
+            if (SyncAction::REMOTE_MISSING === $decision->action && !$gaps->allowsConclusionAbout($worklogId)) {
+                $syncRun->incrementCounter('absence_unverified');
+
+                continue;
+            }
+
             $syncRun->incrementCounter(self::ACTION_COUNTERS[$decision->action->value] ?? 'errors');
 
             $itemKind = self::ACTION_ITEM_KINDS[$decision->action->value] ?? null;
@@ -175,7 +190,9 @@ class VerifyWorklogsService extends AbstractSyncRunService
                 issueKey: $remoteData['snapshot']->issueKey,
                 remoteWorklogId: $worklogId,
                 author: $remoteData['author'],
-                reason: 'Jira worklog has no matching entry (import candidate)',
+                reason: $gaps->hidesMoves()
+                    ? 'Jira worklog has no matching entry; this run could not tell an import candidate from the move of an entry it failed to verify'
+                    : 'Jira worklog has no matching entry (import candidate)',
                 payload: ['remote' => $remoteData['snapshot']->toArray(), 'updated' => $remoteData['updated']],
             );
         }
