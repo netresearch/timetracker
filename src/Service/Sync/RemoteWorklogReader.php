@@ -85,6 +85,11 @@ class RemoteWorklogReader
      * `('error', $issueKey, $throwable, $worklogId)` notice and also yields null, so the caller
      * treats the worklog as unverified rather than gone.
      *
+     * Unlike readForAuthor() this applies no author predicate, deliberately: the caller asks by
+     * worklog id, which is the identity of one worklog in the whole instance, and a worklog whose
+     * author changed in Jira still exists — dropping it here would send its entry back down the
+     * deletion path, which is the outcome this read exists to prevent.
+     *
      * @param callable(string, ?string=, ?Throwable=, ?int=): void $onNotice
      *
      * @return array{snapshot: WorklogSnapshot, updated: ?string, author: ?string, issueKey: string}|null
