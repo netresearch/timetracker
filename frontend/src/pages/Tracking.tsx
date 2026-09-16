@@ -1956,14 +1956,17 @@ export default function Tracking() {
                   row marked grid-divider, so keyboard nav skips it while it stays
                   in the a11y tree. */}
               <For each={dayKeys()}>
-                {(day) => (
+                {(day, index) => (
                   <tbody class="worklog-day">
-                    {/* Real vertical space between day cards. A non-data row, so
-                        gridNav skips it (grid-divider) and it carries no content
-                        for assistive technology to read. */}
-                    <tr class="worklog-day-gap grid-divider" aria-hidden="true">
-                      <td colspan={visibleColumns().length + 1} />
-                    </tr>
+                    {/* Real vertical space BETWEEN day cards — never above the
+                        first, which would only push the grid away from its own
+                        column headers. A non-data row, so gridNav skips it
+                        (grid-divider) and assistive technology reads nothing. */}
+                    <Show when={index() > 0}>
+                      <tr class="worklog-day-gap grid-divider" aria-hidden="true">
+                        <td colspan={visibleColumns().length + 1} />
+                      </tr>
+                    </Show>
                     <tr class="worklog-day-head grid-divider">
                       <th scope="rowgroup" colspan={visibleColumns().length + 1}>
                         {/* The flex layout lives on an inner element: `display: flex`

@@ -5826,12 +5826,15 @@ div.calendar {
 
 /* Page header, from the canvas: what this is and which range on the left, the
    key and the one primary action on the right. */
+/* Everything in the header reads from the left edge, top to bottom: one reading
+   order, no cluster pinned to the far side of a wide screen. Stacked rather than
+   in one line — side by side the key sat level with the title and read as part
+   of it. */
 .tracking-header {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
 }
 
 .tracking-header-title {
@@ -5854,6 +5857,9 @@ div.calendar {
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  /* The action leads the row, the key explains what follows it. */
+  flex-direction: row-reverse;
+  justify-content: flex-end;
 }
 
 .tracking-key {
@@ -5900,10 +5906,6 @@ div.calendar {
   border: 0;
   padding: 0;
   background: none;
-}
-
-.tracking-table.is-grouped tbody.worklog-day:first-of-type .worklog-day-gap {
-  display: none;
 }
 
 .tracking-table.is-grouped tbody.worklog-day .tracking-row > td {
