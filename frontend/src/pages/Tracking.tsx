@@ -1864,6 +1864,12 @@ export default function Tracking() {
 
                     return before === undefined || blockKey(before, byContext) !== blockKey(entry, byContext)
                   }
+                  // The edge between two blocks — the same line as the end of the
+                  // one before it. The grouped view has no use for a day-break cue
+                  // (a day card IS a day, and under customer order the blocks are
+                  // days), so THIS is what the accent line marks here. Not drawn on
+                  // the first row of a card, where the heading already closes it.
+                  const startsLaterBlock = (): boolean => previous?.() !== undefined && startsBlock()
 
                   return (
                     <>
@@ -1876,7 +1882,7 @@ export default function Tracking() {
                         <td colspan={visibleColumns().length + 1}>{m.tracking_future_divider()}</td>
                       </tr>
                     </Show>
-                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : rowCues().get(id) ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id), 'is-future': rowIsFuture(entry) }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
+                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : rowCues().get(id) ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id), 'is-future': rowIsFuture(entry), 'is-block-break': view() === 'grouped' && startsLaterBlock() }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
                       <For each={visibleColumns()}>
                         {(col) => {
                           // In the grouped view a composite cell is editable through its
