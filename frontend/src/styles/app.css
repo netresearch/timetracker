@@ -2498,11 +2498,6 @@ kbd {
 .tracking-legend-item.is-pause::before { background: var(--color-class-pause); }
 .tracking-legend-item.is-overlap::before { background: var(--color-class-overlap); }
 
-/* Tighter gap so the icon legend reads as one block with the colour legend. */
-.tracking-legend-icons {
-  margin-top: 0.4rem;
-}
-
 /* Icon legend items carry an inline icon instead of a colour swatch. */
 .tracking-legend-icon {
   align-items: center;
@@ -5638,6 +5633,10 @@ div.calendar {
 
 .worklog-ticket {
   font-size: 0.83em;
+  /* The link accent on the page ground is 5.8:1 — enough for AA, short of the 7:1
+     this project holds itself to. The darker accent reads 8.9:1 in light and 9.0:1
+     in dark, and is what the day heading already uses. */
+  color: var(--color-accent-text);
 }
 
 /* Befund 4: the duration is the figure of record, so it gets weight and a bar
@@ -5747,21 +5746,6 @@ div.calendar {
   gap: 0.6rem;
 }
 
-.tracking-header-title {
-  display: flex;
-  flex-direction: column;
-}
-
-.tracking-header-title h2 {
-  margin: 0;
-  font-size: 1.6rem;
-  line-height: 1.2;
-}
-
-.tracking-header-range {
-  color: var(--color-text-muted);
-}
-
 .tracking-header-actions {
   display: flex;
   align-items: center;
@@ -5770,28 +5754,6 @@ div.calendar {
   /* The action leads the row, the key explains what follows it. */
   flex-direction: row-reverse;
   justify-content: flex-end;
-}
-
-.tracking-key {
-  display: flex;
-  gap: 0.9rem;
-  font-size: 0.82rem;
-  color: var(--color-text-muted);
-}
-
-.tracking-key-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.tracking-key-bar {
-  position: static;
-  display: inline-block;
-  inline-size: 18px;
-  block-size: 8px;
-  border-radius: 2px;
-  background: var(--color-accent);
 }
 
 /* Sticky column headers: the grid is long and the day cards repeat, so the
@@ -5865,6 +5827,15 @@ div.calendar {
    stays where it was — inside a box that is exactly as wide as the value, that
    padding pushes the text out of view (measured: 41px box, 61px of content, so
    "13:00–16:15" read as "13:00–.6:15"). */
+/* The browser's default placeholder is the text colour at half alpha, which lands
+   around 3.5:1 in light and 5.5:1 in dark — and a placeholder that names the field
+   (the grouped view has no column heading over a part) has to be readable. The
+   muted token measures 9.5:1 / 8.6:1. */
+.inline-editor::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
 .data-table td[data-inline-editing] .worklog-part-edit > .inline-editor:not(.inline-check):not(.inline-tags):not(.inline-date-input) {
   /* Exactly the ghost's box, no padding and no slack: the part is right-aligned
      (a numeric cell), so any extra width moves the value away from the separator —
@@ -5884,11 +5855,6 @@ div.calendar {
   flex-direction: column;
   align-items: stretch;
   gap: 0.5rem;
-}
-
-[data-nav-layout='side'] #sidebar-tools-slot .tracking-key {
-  flex-direction: column;
-  gap: 0.25rem;
 }
 
 /* The "add a ticket" target is quiet until the row is under the cursor or

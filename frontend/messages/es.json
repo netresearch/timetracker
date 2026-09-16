@@ -271,8 +271,6 @@
   "tracking_delete_confirm": "Eliminar",
   "tracking_date_format_hint": "Formato de fecha: AAAA-MM-DD",
   "tracking_edit_hint": "Haga doble clic en una celda — o enfóquela y pulse Enter — para editar. Tab dentro de una fila llega a sus acciones; Alt+C / Alt+P / Alt+I actúan sobre la fila actual. Una fila completa se guarda automáticamente; el icono del disquete fuerza el guardado de una fila sin guardar y el icono de restablecer la descarta.",
-  "tracking_legend_title": "Clave de colores de fila",
-  "tracking_legend_icons": "Iconos",
   "auswertung_title": "Evaluación",
   "auswertung_no_data": "No se encontraron datos.",
   "auswertung_label": "Nombre",
