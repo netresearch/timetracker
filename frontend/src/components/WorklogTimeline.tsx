@@ -3,10 +3,13 @@ import { For, type JSX } from 'solid-js'
 import type { TrackingEntry } from '../api/queries'
 import { m } from '../paraglide/messages.js'
 
-/** Minutes per pixel of block height, and the ceiling a block may reach. */
-const PIXELS_PER_MINUTE = 0.9
-const MIN_BLOCK_PX = 28
-const MAX_BLOCK_PX = 260
+/** Block height per minute, floored so a short entry stays readable and capped
+ *  so one long entry cannot push a whole day off the screen. Scaled so a full
+ *  eight-hour day fills roughly the cap: proportions stay comparable while a
+ *  normal day still fits in one view. */
+const PIXELS_PER_MINUTE = 0.34
+const MIN_BLOCK_PX = 30
+const MAX_BLOCK_PX = 170
 
 /**
  * Read-only view B: one block per entry, its height proportional to the
