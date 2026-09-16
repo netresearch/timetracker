@@ -2069,7 +2069,7 @@ export default function Tracking() {
                   title={option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context()}
                   onClick={() => chooseSort(option)}
                 >
-                  <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <Show
                       when={option === 'time'}
                       fallback={<><path d="M4 21V6l7-3 7 3v15" /><path d="M4 21h16M9 10h.01M9 14h.01M14 10h.01M14 14h.01" /></>}

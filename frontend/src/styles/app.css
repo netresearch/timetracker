@@ -4268,14 +4268,17 @@ th[aria-sort='descending'] .th-sort-glyph {
     padding-inline: var(--sidebar-gutter);
   }
 
+  /* Same icon button as the footer controls and the worklog tools: no frame, the
+     soft accent only under the pointer. A single bordered box in a column of bare
+     icons reads as a different kind of control than it is. */
   :root[data-nav-layout='side'] .sidebar-collapse {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--color-border);
+    width: 30px;
+    height: 30px;
+    border: 1px solid transparent;
     border-radius: 8px;
     background: transparent;
     color: inherit;
@@ -4380,8 +4383,8 @@ th[aria-sort='descending'] .th-sort-glyph {
 
   :root[data-nav-layout='side'] .sidebar-collapse:hover,
   :root[data-nav-layout='side'] .sidebar-collapse:focus-visible {
-    border-color: var(--color-border);
     background: var(--color-accent-soft);
+    color: var(--color-accent);
   }
 
   /* Resize handle — a thin grabbable strip tracking the column's right edge. */

@@ -60,7 +60,7 @@ export default function WorklogViewSwitch(props: {
   // there. The label stays in the markup and is hidden by CSS on the rail, so
   // assistive technology keeps reading the words.
   const icon = (view: WorklogView): JSX.Element => (
-    <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <Show
         when={view === 'grouped'}
         fallback={<><path d="M4 7h16M4 12h16M4 17h16" /></>}
