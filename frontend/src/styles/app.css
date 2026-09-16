@@ -5770,19 +5770,21 @@ div.calendar {
 /* Befund 7: the row actions appear at the active row, not as a permanent column
    of icons down the page. Keyboard focus counts as active, so they are never
    hover-only. */
-.tracking-table.is-grouped td[data-col-key='actions'] {
+/* The CONTENTS fade, not the cell: opacity on the <td> takes its background with
+   it, and the card then had a transparent notch where its actions column is. */
+.tracking-table.is-grouped td[data-col-key='actions'] > .row-actions {
   opacity: 0;
   transition: opacity 120ms;
 }
 
-.tracking-table.is-grouped tr:hover td[data-col-key='actions'],
-.tracking-table.is-grouped tr:focus-within td[data-col-key='actions'],
-.tracking-table.is-grouped tr[aria-current='true'] td[data-col-key='actions'] {
+.tracking-table.is-grouped tr:hover td[data-col-key='actions'] > .row-actions,
+.tracking-table.is-grouped tr:focus-within td[data-col-key='actions'] > .row-actions,
+.tracking-table.is-grouped tr[aria-current='true'] td[data-col-key='actions'] > .row-actions {
   opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tracking-table.is-grouped td[data-col-key='actions'] {
+  .tracking-table.is-grouped td[data-col-key='actions'] > .row-actions {
     transition: none;
   }
 }
