@@ -1489,19 +1489,22 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('Alt+R refetches the entries (the toolbar button is gone, the capability is not)', async () => {
-    // Befund 7 dropped the refresh button from the tool line; reloading stays
-    // reachable by keyboard, so the behaviour is pinned on that path instead.
+  it('refetches the entries from Alt+R and from the tool line', async () => {
+    // Both paths, because for a while only the shortcut was left: the button was
+    // dropped when the tool line was rebuilt, which took the action away from
+    // anyone working with a pointer or a touch screen.
     mockApi()
-    const { getByRole, unmount } = renderTracking()
+    const { getByRole, getByTitle, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
     const entryFetches = (): number => getJson.mock.calls.filter((args) => String(args[0]).startsWith('/getData/days/')).length
-    const before = entryFetches()
 
-    expect(() => getByRole('button', { name: 'Refresh' })).toThrow()
+    const beforeShortcut = entryFetches()
     fireEvent.keyDown(document, { key: 'r', altKey: true })
+    await waitFor(() => expect(entryFetches()).toBeGreaterThan(beforeShortcut))
 
-    await waitFor(() => expect(entryFetches()).toBeGreaterThan(before))
+    const beforeClick = entryFetches()
+    fireEvent.click(getByTitle(/Refresh/i))
+    await waitFor(() => expect(entryFetches()).toBeGreaterThan(beforeClick))
 
     unmount()
   })

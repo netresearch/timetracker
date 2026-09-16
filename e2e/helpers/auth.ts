@@ -25,14 +25,6 @@ export async function login(
   // appear on the first /ui load and could obscure a click target.
   await page.addInitScript(() => {
     window.localStorage.setItem('tt-kbd-hint-seen', '1');
-    // The worklog defaults to the GROUPED view, which packs several fields into one
-    // cell and therefore has no td[data-col-key="start"]. Most specs address the
-    // flat grid's columns, so a fresh context starts there; a spec that wants the
-    // grouped view sets the key itself and keeps it, because this only fills in a
-    // value that is not there yet (addInitScript runs on every navigation).
-    if (window.localStorage.getItem('tt-worklog-view') === null) {
-      window.localStorage.setItem('tt-worklog-view', 'flat');
-    }
   });
   // Under concurrent CI-shard load the auth round-trip (10 shards hitting one LDAP +
   // one MariaDB) occasionally fails and re-renders the login form, leaving us on

@@ -18,7 +18,7 @@ import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklog
 import { getWorklogSort, setWorklogSort, WORKLOG_SORTS, type WorklogSort } from '../lib/worklogSortPref'
 import SegmentedSwitch from '../components/SegmentedSwitch'
 import WorklogViewSwitch from '../components/WorklogViewSwitch'
-import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
+import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
 import { PageDialog } from '../components/PageDialog'
@@ -2070,7 +2070,13 @@ export default function Tracking() {
               <span class="worklog-view-text">{m.extras_title()}</span>
             </button>
           </Show>
-          {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
+          {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it.
+              It was dropped when the tool line was rebuilt; the shortcut kept working,
+              so only a pointer user lost the action. */}
+          <button type="button" class="action-button worklog-tool" aria-keyshortcuts="Alt+R" title={m.tracking_refresh()} onClick={() => refreshEntries()}>
+            <RefreshIcon />
+            <span class="worklog-view-text">{m.tracking_refresh()}</span>
+          </button>
           {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
               still act on the keyboard-cursor row via the global shortcut handler. */}
           <a class="action-button worklog-tool" href={exportHref()} aria-keyshortcuts="Alt+X" title={m.tracking_export()}>
