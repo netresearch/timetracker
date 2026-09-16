@@ -749,5 +749,9 @@
   "worklog_agent_duration": "Agent {duration}",
   "worklog_col_time": "Heure",
   "tracking_edit_hint_part": "Double-cliquer pour modifier : {field}",
-  "worklog_key_estimated": "estimé"
+  "worklog_key_estimated": "estimé",
+  "worklog_add_ticket": "Ajouter un ticket",
+  "worklog_sort_label": "Tri",
+  "worklog_sort_time": "Par heure",
+  "worklog_sort_context": "Par client · projet"
 }

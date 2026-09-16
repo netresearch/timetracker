@@ -749,5 +749,9 @@
   "worklog_agent_duration": "Агент {duration}",
   "worklog_col_time": "Время",
   "tracking_edit_hint_part": "Двойной щелчок для правки: {field}",
-  "worklog_key_estimated": "оценка"
+  "worklog_key_estimated": "оценка",
+  "worklog_add_ticket": "Добавить тикет",
+  "worklog_sort_label": "Сортировка",
+  "worklog_sort_time": "По времени",
+  "worklog_sort_context": "По клиенту · проекту"
 }

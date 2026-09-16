@@ -15,6 +15,7 @@ import { ChipSelect } from '../lib/chipSelect'
 import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklogViewPref'
+import { getWorklogSort, setWorklogSort, WORKLOG_SORTS, type WorklogSort } from '../lib/worklogSortPref'
 import WorklogViewSwitch from '../components/WorklogViewSwitch'
 import WorklogTimeline from '../components/WorklogTimeline'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
@@ -266,6 +267,7 @@ const COMPOSITE_PRIMARY_FIELD: Record<string, string> = {
 const COMPOSITE_PARTS: Record<string, string[]> = {
   context: ['project', 'customer', 'activity'],
   time: ['start', 'end'],
+  description: ['description', 'ticket'],
 }
 
 function blockKey(entry: TrackingEntry): string {
@@ -407,6 +409,12 @@ export default function Tracking() {
     window.addEventListener('tt:layout-change', onLayoutChange)
     onCleanup(() => window.removeEventListener('tt:layout-change', onLayoutChange))
   })
+
+  const [sort, setSortSignal] = createSignal<WorklogSort>(getWorklogSort())
+  const chooseSort = (next: WorklogSort): void => {
+    setSortSignal(next)
+    setWorklogSort(next)
+  }
 
   const [view, setViewSignal] = createSignal<WorklogView>(getWorklogView())
   const chooseView = (next: WorklogView): void => {
@@ -644,6 +652,18 @@ export default function Tracking() {
       }
 
       list.push(entry)
+    }
+
+    // Ordering by context gathers a day's work on one thing into one block,
+    // however scattered it was across the day — the blocks then mean something
+    // other than "these happened to be adjacent". Within a block the entries
+    // keep their time order, so a block still reads as a sequence. The sort is
+    // stable, so time order is exactly what the server sent.
+    if (sort() === 'context') {
+      const label = (entry: TrackingEntry): string => contextLabel(entry)
+      for (const list of map.values()) {
+        list.sort((a, b) => label(a).localeCompare(label(b)))
+      }
     }
 
     return map
@@ -1413,6 +1433,24 @@ export default function Tracking() {
   // The grouped view's cells, following the design canvas. The context block,
   // the composite time cell and the duration cell exist only here; description
   // keeps the shared renderer so inline editing works unchanged.
+  // The label a relation shows. The block cell and the context ordering both read
+  // it, so what the eye groups and what the sort groups can never disagree.
+  const relationLabel = (entry: TrackingEntry, key: string): string => {
+    const field = FIELD_BY_KEY.get(key)
+    if (field === undefined) {
+      return ''
+    }
+
+    const values = chipValues((editor.overlayRow(entry) as unknown as Record<string, unknown>)[key])
+    const options = fieldSelectOptions(field, readOptionLookup)
+
+    return values
+      .map((value) => options.find((option) => String(option.value) === String(value))?.label ?? String(value))
+      .join(', ')
+  }
+  const contextLabel = (entry: TrackingEntry): string =>
+    `${relationLabel(entry, 'customer')}/${relationLabel(entry, 'project')}/${relationLabel(entry, 'activity')}`
+
   const groupedCell = (entry: TrackingEntry, colKey: string, startsBlock: () => boolean): JSX.Element => {
     const row = editor.overlayRow(entry)
     const id = num(entry.id)
@@ -1421,29 +1459,57 @@ export default function Tracking() {
     // table cell — gridNav counts cells — but each part is its own edit target:
     // double-click or Enter on the part opens that field's editor in place. This
     // is what keeps the canvas layout without making the grouped view read-only.
-    const part = (fieldKey: string, text: () => string, extraClass = ''): JSX.Element => (
-      <Show
-        when={editor.isEditing(id, fieldKey)}
-        fallback={
-          <span
-            class={`worklog-part ${extraClass}`.trimEnd()}
-            tabindex={-1}
-            title={m.tracking_edit_hint_part({ field: FIELD_BY_KEY.get(fieldKey)?.label() ?? fieldKey })}
-            onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, fieldKey) }}
-          >{text()}</span>
-        }
-      >
-        <InlineEditor
-          field={FIELD_BY_KEY.get(fieldKey)!}
-          label={FIELD_BY_KEY.get(fieldKey)?.label() ?? fieldKey}
-          initial={editor.draftValue(id, fieldKey) ?? ''}
-          seed={editor.seedChar()}
-          options={optionLookup}
-          onCommit={editor.commitCell}
-          onCancel={editor.cancelCell}
-        />
-      </Show>
-    )
+    const part = (fieldKey: string, text: () => string, extraClass = ''): JSX.Element => {
+      const field = FIELD_BY_KEY.get(fieldKey)
+      const fieldType = field?.type
+      const isChip = fieldType === 'select' || fieldType === 'multiselect'
+
+      return (
+        <Show
+          when={editor.isEditing(id, fieldKey)}
+          fallback={
+            <span
+              class={`worklog-part ${extraClass}`.trimEnd()}
+              title={m.tracking_edit_hint_part({ field: field?.label() ?? fieldKey })}
+              onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, fieldKey) }}
+            >{text()}</span>
+          }
+        >
+          {/* The ghost holds the part's width while the editor overlays it, so
+              opening one does not shove its neighbours sideways — the same
+              device the flat grid's cells use. */}
+          <span class={`worklog-part-edit ${extraClass}`.trimEnd()}>
+            <span class="inline-ghost" aria-hidden="true">{text()}</span>
+            <Show
+              when={isChip}
+              fallback={
+                <InlineEditor
+                  field={field!}
+                  label={field?.label() ?? fieldKey}
+                  initial={editor.draftValue(id, fieldKey) ?? ''}
+                  seed={editor.seedChar()}
+                  options={optionLookup}
+                  onCommit={editor.commitCell}
+                  onCancel={editor.cancelCell}
+                />
+              }
+            >
+              {/* A relation must be picked, not typed: the plain text editor
+                  showed its raw id, which is what a user saw as "a number". */}
+              <ChipSelect
+                field={field!}
+                label={field?.label() ?? fieldKey}
+                initial={editor.draftValue(id, fieldKey) ?? (fieldType === 'multiselect' ? [] : '')}
+                options={optionLookup}
+                multiple={fieldType === 'multiselect'}
+                onCommit={editor.commitCell}
+                onCancel={editor.cancelCell}
+              />
+            </Show>
+          </span>
+        </Show>
+      )
+    }
 
     if (colKey === 'context') {
       // Continuation rows render nothing: the block already said it.
@@ -1451,19 +1517,7 @@ export default function Tracking() {
         return ''
       }
 
-      const label = (key: string): string => {
-        const field = FIELD_BY_KEY.get(key)
-        if (field === undefined) {
-          return ''
-        }
-
-        const values = chipValues((row as unknown as Record<string, unknown>)[key])
-        const options = fieldSelectOptions(field, readOptionLookup)
-
-        return values
-          .map((value) => options.find((option) => String(option.value) === String(value))?.label ?? String(value))
-          .join(', ')
-      }
+      const label = (key: string): string => relationLabel(entry, key)
 
       return (
         <span class="worklog-block">
@@ -1493,25 +1547,55 @@ export default function Tracking() {
     if (colKey === 'description') {
       return (
         <span class="worklog-desc">
-          <span class="cell-trunc">{displayCell(entry, 'description')}</span>
+          {part('description', () => displayCell(entry, 'description'), 'cell-trunc')}
           {/* Befund 8: a ticket sits under its description rather than in a
               column that stands empty in every row of most ranges. */}
-          <Show when={str(row.ticket) !== ''}>
-            {/* Same activation rule as the flat view's ticket column: a plain
-                click belongs to the cell (it starts inline editing), following
-                the link takes Ctrl/⌘. */}
-            <a
-              class="worklog-ticket ticket-link"
-              href={ticketUrlFor(str(row.ticket), num(row.project))}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={m.tracking_ticket_link_hint()}
-              onClick={(event) => {
-                if (!event.ctrlKey && !event.metaKey) {
-                  event.preventDefault()
+          {/* The ticket is editable here too — it had no target at all before.
+              In read mode it stays a link with the flat view's activation rule:
+              a plain click belongs to the cell and starts editing, following the
+              link takes Ctrl/⌘. An empty ticket still offers a target, otherwise
+              one could never be added in this view. */}
+          <Show
+            when={editor.isEditing(id, 'ticket')}
+            fallback={
+              <Show
+                when={str(row.ticket) !== ''}
+                fallback={
+                  <span
+                    class="worklog-part worklog-ticket is-empty"
+                    title={m.tracking_edit_hint_part({ field: FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket' })}
+                    onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, 'ticket') }}
+                  >{m.worklog_add_ticket()}</span>
                 }
-              }}
-            >{str(row.ticket)}</a>
+              >
+                <a
+                  class="worklog-ticket ticket-link"
+                  href={ticketUrlFor(str(row.ticket), num(row.project))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={m.tracking_ticket_link_hint()}
+                  onClick={(event) => {
+                    if (!event.ctrlKey && !event.metaKey) {
+                      event.preventDefault()
+                    }
+                  }}
+                  onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, 'ticket') }}
+                >{str(row.ticket)}</a>
+              </Show>
+            }
+          >
+            <span class="worklog-part-edit">
+              <span class="inline-ghost" aria-hidden="true">{str(row.ticket)}</span>
+              <InlineEditor
+                field={FIELD_BY_KEY.get('ticket')!}
+                label={FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket'}
+                initial={editor.draftValue(id, 'ticket') ?? ''}
+                seed={editor.seedChar()}
+                options={optionLookup}
+                onCommit={editor.commitCell}
+                onCancel={editor.cancelCell}
+              />
+            </span>
           </Show>
         </span>
       )
@@ -1737,12 +1821,22 @@ export default function Tracking() {
   }
 
   // Befund 7: "+ Eintrag" is the only primary action and stays with the content.
-  const renderPrimaryAction = (): JSX.Element => (
+  // Only what names the page stays with the content.
+  const renderPageTitle = (): JSX.Element => (
     <div class="tracking-header">
       <div class="tracking-header-title">
         <h2>{m.tracking_title()}</h2>
         <span class="num tracking-header-range">{m.tracking_days_option({ count: String(days()) })}</span>
       </div>
+    </div>
+  )
+
+  // Everything one does TO or WITH the grid — add, the key that explains the
+  // bars, the range, the tools and the view — belongs together in the menu when
+  // there is one. In the top-bar layout there is no menu, so it stays in the
+  // tool line rather than vanishing.
+  const renderMenuTools = (): JSX.Element => (
+    <div class="tracking-toolbar">
       <div class="tracking-header-actions">
         {/* Befund 7 removes the legends from under the table; the canvas keeps a
             compact key beside the primary action, where it explains the bars at
@@ -1756,19 +1850,9 @@ export default function Tracking() {
             <PlusIcon />
           </button>
       </div>
-    </div>
-  )
-
-  // Befund 7: the range and the tools are navigation and view choice, not actions
-  // on the content — in the sidebar layout they move there as a submenu under
-  // "Worklog"; in the top bar, where there is no sidebar, they stay in the tool
-  // line rather than disappearing.
-  const renderViewTools = (): JSX.Element => (
-    <div class="tracking-toolbar">
       {/* Befund 7: in the sidebar these read as a submenu under Worklog, so the
           two groups get headings there. In the tool line they are a single row
           and the headings would be noise — CSS shows them only in the sidebar. */}
-      <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_range()}</p>
           <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_tools()}</p>
           {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
           <Show when={canBulkEnter()}>
@@ -1782,6 +1866,7 @@ export default function Tracking() {
               (applyDays clamps + persists), or pick a preset — the menu always lists
               ALL presets regardless of what's typed, so switching ranges never needs
               clearing the field first. */}
+          <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_range()}</p>
           <div class="tracking-days">
             <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
             <div class="days-combo" ref={(el) => { daysComboRef = el }}>
@@ -1862,7 +1947,28 @@ export default function Tracking() {
           {/* View switch — the worklog's three presentations of the same rows.
               Sits in the tool line next to the range, because both narrow what the
               grid shows. */}
-          <WorklogViewSwitch value={view()} onChange={chooseView} />
+          <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_view_label()}</p>
+        <WorklogViewSwitch value={view()} onChange={chooseView} />
+
+        {/* Ordering only has meaning where blocks exist, so it is offered with
+            the grouped view and not as a setting that quietly does nothing. */}
+        <Show when={view() === 'grouped'}>
+          <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_sort_label()}</p>
+          <div class="worklog-view-switch" role="radiogroup" aria-label={m.worklog_sort_label()}>
+            <For each={WORKLOG_SORTS}>
+              {(option) => (
+                <button
+                  type="button"
+                  role="radio"
+                  class="worklog-view-option"
+                  aria-checked={sort() === option ? 'true' : 'false'}
+                  tabindex={sort() === option ? 0 : -1}
+                  onClick={() => chooseSort(option)}
+                >{option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context()}</button>
+              )}
+            </For>
+          </div>
+        </Show>
 
     </div>
   )
@@ -1894,9 +2000,9 @@ export default function Tracking() {
           one instance, never two: a mirrored copy would duplicate every label and
           make the focus order ambiguous. In the default top-bar layout there is no
           sidebar, so it stays here rather than disappearing. */}
-      {renderPrimaryAction()}
-      <Show when={navSideLayout() && toolsSlot()} fallback={renderViewTools()}>
-        <Portal mount={toolsSlot()!}>{renderViewTools()}</Portal>
+      {renderPageTitle()}
+      <Show when={navSideLayout() && toolsSlot()} fallback={renderMenuTools()}>
+        <Portal mount={toolsSlot()!}>{renderMenuTools()}</Portal>
       </Show>
       {renderHint()}
 
@@ -1956,17 +2062,8 @@ export default function Tracking() {
                   row marked grid-divider, so keyboard nav skips it while it stays
                   in the a11y tree. */}
               <For each={dayKeys()}>
-                {(day, index) => (
+                {(day) => (
                   <tbody class="worklog-day">
-                    {/* Real vertical space BETWEEN day cards — never above the
-                        first, which would only push the grid away from its own
-                        column headers. A non-data row, so gridNav skips it
-                        (grid-divider) and assistive technology reads nothing. */}
-                    <Show when={index() > 0}>
-                      <tr class="worklog-day-gap grid-divider" aria-hidden="true">
-                        <td colspan={visibleColumns().length + 1} />
-                      </tr>
-                    </Show>
                     <tr class="worklog-day-head grid-divider">
                       <th scope="rowgroup" colspan={visibleColumns().length + 1}>
                         {/* The flex layout lives on an inner element: `display: flex`

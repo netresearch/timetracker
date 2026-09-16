@@ -749,5 +749,9 @@
   "worklog_agent_duration": "Agent {duration}",
   "worklog_col_time": "Zeit",
   "tracking_edit_hint_part": "Zum Bearbeiten doppelklicken: {field}",
-  "worklog_key_estimated": "geschätzt"
+  "worklog_key_estimated": "geschätzt",
+  "worklog_add_ticket": "Ticket hinzufügen",
+  "worklog_sort_label": "Sortierung",
+  "worklog_sort_time": "Nach Zeit",
+  "worklog_sort_context": "Nach Kunde · Projekt"
 }

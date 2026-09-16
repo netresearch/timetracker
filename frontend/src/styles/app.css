@@ -5893,21 +5893,95 @@ div.calendar {
   background: var(--color-accent-soft);
 }
 
-/* The day heading sticks under the column header rather than over it. */
-.tracking-table.is-grouped .worklog-day-head > th {
-  position: sticky;
-  inset-block-start: 2.2rem;
-  z-index: 1;
+/* Only the COLUMN header sticks. A day heading that sticks too would sit on top
+   of the first row of its own card — sticky always overlaps what follows it, so
+   two stacked sticky rows plus a sticky block label simply ate the first entry
+   of every block. The day heading scrolls with its card, which is also what
+   makes the card read as one object. */
+
+/* Day cards: the space between them is a generated table row, so it exists in
+   layout but not in the DOM — `table.rows` never sees it, which keeps gridNav's
+   row arithmetic and the accessibility tree free of a filler row. Separate
+   borders are what make the corner radii below paint at all. */
+.tracking-table.is-grouped {
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-/* Day cards: real space between them, and each day reads as one surface. */
-.worklog-day-gap > td {
+.tracking-table.is-grouped tbody.worklog-day + tbody.worklog-day::before {
+  content: '';
+  display: table-row;
   block-size: 1.25rem;
-  border: 0;
-  padding: 0;
-  background: none;
+}
+
+/* Each day is one card: the heading rounds the top, the last row the bottom. */
+.tracking-table.is-grouped .worklog-day-head > th {
+  border-start-start-radius: 8px;
+  border-start-end-radius: 8px;
+}
+
+.tracking-table.is-grouped tbody.worklog-day > tr:last-child > td:first-child {
+  border-end-start-radius: 8px;
+}
+
+.tracking-table.is-grouped tbody.worklog-day > tr:last-child > td:last-child {
+  border-end-end-radius: 8px;
 }
 
 .tracking-table.is-grouped tbody.worklog-day .tracking-row > td {
   background: var(--color-surface);
+}
+
+/* An editing part overlays its own read-mode text: the ghost holds the width so
+   opening an editor never shifts its neighbours. */
+.worklog-part-edit {
+  position: relative;
+  display: inline-block;
+  min-inline-size: 4ch;
+}
+
+.worklog-part-edit > .inline-ghost {
+  visibility: hidden;
+}
+
+.worklog-part-edit > :not(.inline-ghost) {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: max(100%, 12ch);
+  z-index: 3;
+}
+
+/* An entry without a ticket still needs a target, or one could never be added
+   in this view. */
+.worklog-ticket.is-empty {
+  color: var(--color-text-muted);
+  cursor: text;
+}
+
+
+/* In the menu the action, the key and the tools stack; in the tool line they
+   stay one row. */
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-header-actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-key {
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* The "add a ticket" target is quiet until the row is under the cursor or
+   carries focus — a permanent prompt on every ticketless row would be the same
+   noise the badges were. */
+.worklog-ticket.is-empty {
+  opacity: 0;
+  font-size: 0.83em;
+}
+
+tr:hover .worklog-ticket.is-empty,
+tr:focus-within .worklog-ticket.is-empty {
+  opacity: 1;
 }
