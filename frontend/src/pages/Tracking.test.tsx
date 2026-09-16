@@ -454,6 +454,58 @@ describe('Tracking (Worklog grid)', () => {
     long.unmount()
   })
 
+  it('opens the date editor from the block cell when the rows are ordered by customer', async () => {
+    // A customer card names its customer and project, so its block column shows the
+    // day instead — which was printed as a caption and could not be edited at all.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    localStorage.setItem('tt-worklog-sort', 'context')
+    mockApi()
+    const { container, getByLabelText, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const datePart = container.querySelector<HTMLElement>('td[data-col-key="context"] .worklog-part')
+    expect(datePart?.textContent).toBe('2026-06-16')
+    fireEvent.dblClick(datePart!)
+
+    expect((getByLabelText('Date') as HTMLInputElement).value).toBe('2026-06-16')
+
+    unmount()
+  })
+
+  it('Tab walks the fields INSIDE a composite cell before leaving it', async () => {
+    // The grouped layout puts start and end in one cell. Tab used to walk cells, so
+    // it stepped straight over the end of the entry — and off the row.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, getByLabelText, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const startPart = container.querySelector<HTMLElement>('td[data-col-key="time"] .worklog-part')
+    fireEvent.dblClick(startPart!)
+    const startEditor = getByLabelText('Start')
+    expect(startEditor).toBeInTheDocument()
+
+    fireEvent.keyDown(startEditor, { key: 'Tab' })
+
+    await waitFor(() => expect(getByLabelText('End')).toBeInTheDocument())
+
+    unmount()
+  })
+
+  it('names an empty part instead of rendering nothing to click', async () => {
+    // A part with no value was a zero-width span: on a new row there was no target
+    // at all for the mouse.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApiWith([{ entry: { ...DEFAULT_ENTRY, activity: 0 } }])
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const empty = container.querySelector<HTMLElement>('td[data-col-key="context"] .worklog-part.is-empty')
+    expect(empty?.textContent).toBe('Activity')
+
+    unmount()
+  })
+
   it('the grouped view drops the date column — the day heading carries it (Befund 8)', async () => {
     localStorage.setItem('tt-worklog-view', 'grouped')
     mockApi()
@@ -813,13 +865,16 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('Add inserts a new row that saves as a create (no id)', async () => {
+  it('a new row saves as a create (no id)', async () => {
     mockApi()
     postJson.mockResolvedValue({})
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
-    fireEvent.click(getByRole('button', { name: 'Add entry' }))
+    // Continue, not Add: a row that has never been saved is only posted once it is
+    // bookable (customer/project/activity), and Continue clones those from the entry
+    // it continues — an Add row would sit here with nothing the server accepts.
+    fireEvent.click(getByRole('button', { name: 'Continue' }))
     // The new row is at the top; fill start + end (both required to save).
     let cell = editCell(container, 'start')
     fireEvent.input(cell, { target: { value: '9' } })

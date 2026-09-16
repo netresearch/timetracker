@@ -8,11 +8,12 @@ import { expect, type Locator, type Page } from '@playwright/test';
  */
 
 /**
- * A SUCCESSFUL (HTTP 200) POST to the worklog save endpoint. Picking the three
- * required relations one by one fires a partial auto-save after each, so the
- * endpoint answers 422 (incomplete) twice before the final 200 — matching on the
- * method alone would resolve on the first 422 and let the helper return while the
- * real save (and its reconciling refetch) is still in flight.
+ * A SUCCESSFUL (HTTP 200) POST to the worklog save endpoint. A row that has never
+ * been saved is no longer posted while it is still missing a required relation
+ * (that only ever produced a 422 and an error on a row the user was still filling
+ * in), but an EXISTING row's partial edit can still be rejected — so match on the
+ * status rather than on the method, which would resolve on a 422 and let the
+ * helper return while the real save (and its reconciling refetch) is in flight.
  */
 export const isSaveResponse = (r: { url(): string; status(): number; request(): { method(): string } }): boolean =>
   /\/tracking\/save$/.test(r.url()) && r.request().method() === 'POST' && r.status() === 200;

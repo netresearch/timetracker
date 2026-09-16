@@ -5942,6 +5942,14 @@ div.calendar {
 
 /* An editing part overlays its own read-mode text: the ghost holds the width so
    opening an editor never shifts its neighbours. */
+/* A part with no value yet shows the field's name instead, so there is something
+   to aim at — and the row says what it still needs. */
+.worklog-part.is-empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
 .worklog-part-edit {
   position: relative;
   display: inline-block;
@@ -6134,6 +6142,22 @@ tr:focus-within .worklog-ticket.is-empty {
   color: var(--color-text);
 }
 
+/* The primary action keeps its accent, as its colour rather than as a filled
+   block: a single solid tile in a column of bare icons was the last thing in the
+   rail that read as a different kind of control. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .primary-button {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--color-accent);
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .primary-button:hover,
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .primary-button:focus-visible {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
 :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-tool:hover, .worklog-view-option:hover, .days-combo:hover, .days-combo:focus-within) {
   background: var(--color-accent-soft);
   border-color: transparent;
@@ -6198,6 +6222,17 @@ tr:focus-within .worklog-ticket.is-empty {
     color-mix(in srgb, var(--color-accent-soft) 96%, transparent),
     color-mix(in srgb, var(--color-accent-soft) 78%, transparent)
   );
+}
+
+/* An open editor must never disappear under the two sticky bands. Two halves:
+   the cell being edited paints above them, and a row scrolled to by the keyboard
+   keeps their height clear (scrollIntoView honours scroll-margin). */
+.tracking-table.is-grouped td[data-inline-editing] {
+  z-index: 5;
+}
+
+.tracking-table.is-grouped tbody.worklog-day > tr {
+  scroll-margin-block-start: calc(var(--worklog-head-h) + var(--worklog-dayhead-h) + 0.5rem);
 }
 
 /* The block label follows its own block past the two sticky headers, so a long

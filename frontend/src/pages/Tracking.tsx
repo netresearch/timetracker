@@ -759,6 +759,24 @@ export default function Tracking() {
     return map
   })
 
+  // Which rows print their block cell. A continuation row shows nothing there, so
+  // Tab has to skip that cell rather than open an editor over an empty space.
+  const blockStartIds = createMemo<Set<number>>(() => {
+    const ids = new Set<number>()
+    const byContext = sort() === 'context'
+    for (const entries of entriesByGroup().values()) {
+      let previous: TrackingEntry | undefined
+      for (const entry of entries) {
+        if (previous === undefined || blockKey(previous, byContext) !== blockKey(entry, byContext)) {
+          ids.add(num(entry.id))
+        }
+        previous = entry
+      }
+    }
+
+    return ids
+  })
+
   // The card's own heading. A day card shows the date; a customer card shows
   // what it is called.
   const groupLabel = (key: string): string => (sort() === 'context' ? key : displayDate(key))
@@ -1041,6 +1059,24 @@ export default function Tracking() {
       const field = FIELD_BY_KEY.get(colKey)
 
       return field !== undefined && INLINE_TYPES.has(field.type)
+    },
+    // In the grouped view a cell holds several fields (the canvas's own layout),
+    // and Tab, Enter's guided fill and the activation path have to walk those
+    // rather than the column keys — which are not field names at all.
+    cellFields: (colKey, rowId) => {
+      if (view() !== 'grouped') {
+        return FIELD_BY_KEY.has(colKey) ? [colKey] : []
+      }
+      if (colKey === 'context') {
+        // The block cell prints only on its block's first row.
+        if (!blockStartIds().has(rowId)) {
+          return []
+        }
+
+        return sort() === 'context' ? ['date', 'activity'] : ['project', 'customer', 'activity']
+      }
+
+      return COMPOSITE_PARTS[colKey] ?? (FIELD_BY_KEY.has(colKey) ? [colKey] : [])
     },
     seedDraft: (entry) => {
       // A fresh row prefills start with the suggested start (see suggestedStart),
@@ -1373,8 +1409,27 @@ export default function Tracking() {
     // the "Datum" column heading instead of the previous cell (#588). Order
     // matters — beginEdit's editor grabs focus on mount, and a later td.focus()
     // would steal it back out of the input.
-    gridHandle?.focusCell(num(row.id), firstCol)
+    // The grid's cursor addresses CELLS: in the grouped view the field a new row
+    // opens in lives inside a composite cell, and focusing "ticket" there found no
+    // cell at all, which left the cursor behind and Tab walking out of the table.
+    gridHandle?.focusCell(num(row.id), cellKeyForField(firstCol))
     editor.beginEdit(num(row.id), firstCol)
+  }
+
+  // Which cell shows a field. Flat: the field IS the column. Grouped: most fields
+  // sit inside a composite cell, and anything addressing the grid's cursor needs
+  // that cell's key rather than the field's name.
+  const cellKeyForField = (fieldKey: string): string => {
+    if (view() !== 'grouped') {
+      return fieldKey
+    }
+    for (const [colKey, fields] of Object.entries(COMPOSITE_PARTS)) {
+      if (fields.includes(fieldKey)) {
+        return colKey
+      }
+    }
+
+    return fieldKey
   }
 
   // Add (Alt+A): a blank entry. suggestedStart continues from the end of today's
@@ -1574,9 +1629,13 @@ export default function Tracking() {
           fallback={
             <span
               class={`worklog-part ${extraClass}`.trimEnd()}
+              classList={{ 'is-empty': text() === '' }}
               title={m.tracking_edit_hint_part({ field: field?.label() ?? fieldKey })}
               onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, fieldKey) }}
-            >{text()}</span>
+            >{/* An empty part is a zero-width span: on a new row there was
+                  literally nothing to click. The field's own name stands in as
+                  the placeholder, which is also what the row still needs. */}
+              {text() === '' ? (field?.label() ?? fieldKey) : text()}</span>
           }
         >
           {/* The ghost holds the part's width while the editor overlays it, so
