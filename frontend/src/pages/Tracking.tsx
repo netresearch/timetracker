@@ -1851,7 +1851,7 @@ export default function Tracking() {
   // One worklog row, shared by every view: the flat grid and the grouped day
   // sections render the SAME <tr>, so inline editing, gridNav and the row cues
   // behave identically in both and cannot drift apart.
-  const renderRow = (entry: TrackingEntry, previous?: () => TrackingEntry | undefined): JSX.Element => {
+  const renderRow = (entry: TrackingEntry, previous?: () => TrackingEntry | undefined, next?: () => TrackingEntry | undefined): JSX.Element => {
                   const id = num(entry.id)
                   // First row of its block? Only that row prints the context; the
                   // rest render an empty cell whose top border is suppressed, so
@@ -1864,12 +1864,17 @@ export default function Tracking() {
 
                     return before === undefined || blockKey(before, byContext) !== blockKey(entry, byContext)
                   }
-                  // The edge between two blocks — the same line as the end of the
-                  // one before it. The grouped view has no use for a day-break cue
-                  // (a day card IS a day, and under customer order the blocks are
-                  // days), so THIS is what the accent line marks here. Not drawn on
-                  // the first row of a card, where the heading already closes it.
-                  const startsLaterBlock = (): boolean => previous?.() !== undefined && startsBlock()
+                  // The END of a block, which is where its closing line belongs: the
+                  // last row before the next block starts, and the last row of a card
+                  // (its final block ends with the card). The grouped view has no use
+                  // for a day-break cue — a day card IS a day, and ordered by customer
+                  // the blocks are days — so this is what the accent line marks here.
+                  const endsBlock = (): boolean => {
+                    const after = next?.()
+                    const byContext = sort() === 'context'
+
+                    return after === undefined || blockKey(after, byContext) !== blockKey(entry, byContext)
+                  }
 
                   return (
                     <>
@@ -1882,7 +1887,7 @@ export default function Tracking() {
                         <td colspan={visibleColumns().length + 1}>{m.tracking_future_divider()}</td>
                       </tr>
                     </Show>
-                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : rowCues().get(id) ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id), 'is-future': rowIsFuture(entry), 'is-block-break': view() === 'grouped' && startsLaterBlock() }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
+                    <tr class={`tracking-row ${id <= 0 ? 'is-new' : rowCues().get(id) ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id), 'is-future': rowIsFuture(entry), 'is-block-end': view() === 'grouped' && endsBlock() }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
                       <For each={visibleColumns()}>
                         {(col) => {
                           // In the grouped view a composite cell is editable through its
@@ -2311,7 +2316,11 @@ export default function Tracking() {
                       </th>
                     </tr>
                     <For each={entriesByGroup().get(key) ?? []}>
-                      {(entry, index) => renderRow(entry, () => (index() > 0 ? (entriesByGroup().get(key) ?? [])[index() - 1] : undefined))}
+                      {(entry, index) => renderRow(
+                        entry,
+                        () => (index() > 0 ? (entriesByGroup().get(key) ?? [])[index() - 1] : undefined),
+                        () => (entriesByGroup().get(key) ?? [])[index() + 1],
+                      )}
                     </For>
                   </tbody>
                 )}
