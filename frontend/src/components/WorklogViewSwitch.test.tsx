@@ -32,7 +32,7 @@ describe('WorklogViewSwitch', () => {
   it('selects on click', () => {
     const { getAllByRole, view } = renderSwitch()
 
-    const flat = getAllByRole('radio').find((el) => el.dataset.worklogView === 'flat')!
+    const flat = getAllByRole('radio').find((el) => el.dataset.segmentValue === 'flat')!
     fireEvent.click(flat)
 
     expect(view()).toBe('flat')

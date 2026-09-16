@@ -5648,13 +5648,12 @@ div.calendar {
 }
 
 /* A fixed-pixel bar cannot live in an auto-width cell: it overflowed the DAUER
-   column and painted over the row actions. The column therefore reserves the
-   width the scale needs (cap + the figure) and clips, so the bar can never
-   cover a neighbour. */
+   column and painted over the row actions. The column therefore clips, and its
+   width is stated ONCE with the other column widths below (15rem — the bar's
+   150px track plus its figure). An earlier 19rem here set a minimum the later
+   width could not undo, so the column stayed 4rem wider than intended. */
 .tracking-table.is-grouped td[data-col-key='duration'],
 .tracking-table.is-grouped th[data-col-key='duration'] {
-  inline-size: 19rem;
-  min-inline-size: 19rem;
   overflow: hidden;
 }
 

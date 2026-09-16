@@ -1,13 +1,15 @@
-import { For, Show, type JSX } from 'solid-js'
+import { Show, type JSX } from 'solid-js'
 
+import SegmentedSwitch from './SegmentedSwitch'
 import { m } from '../paraglide/messages.js'
 import { WORKLOG_VIEWS, type WorklogView } from '../lib/worklogViewPref'
 
 /**
  * Picks the worklog view. A radiogroup rather than a listbox or a row of
- * buttons: the three views are mutually exclusive and all visible, which is
- * exactly what a radio group models — so a screen reader announces "2 of 3"
- * and arrow keys move the selection, while Tab stays a single stop.
+ * buttons: the views are mutually exclusive and all visible, which is exactly
+ * what a radio group models — so a screen reader announces "2 of 2" and arrow
+ * keys move the selection, while Tab stays a single stop. The behaviour lives in
+ * SegmentedSwitch, shared with the order switch.
  */
 export default function WorklogViewSwitch(props: {
   value: WorklogView
@@ -31,34 +33,6 @@ export default function WorklogViewSwitch(props: {
     }
   }
 
-  // Arrow keys move the selection inside the group (WAI-ARIA radiogroup
-  // pattern); Tab enters and leaves it once, landing on the checked option.
-  const onKeyDown = (event: KeyboardEvent): void => {
-    const step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1
-      : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1
-      : 0
-    if (step === 0) {
-      return
-    }
-
-    event.preventDefault()
-    const index = WORKLOG_VIEWS.indexOf(props.value)
-    const next = WORKLOG_VIEWS[(index + step + WORKLOG_VIEWS.length) % WORKLOG_VIEWS.length]
-    if (next === undefined) {
-      return
-    }
-
-    props.onChange(next)
-    // The selection moved, so focus follows it — otherwise the next arrow key
-    // would act on a button that is no longer the checked one.
-    const el = document.querySelector<HTMLButtonElement>(`[data-worklog-view="${next}"]`)
-    el?.focus()
-  }
-
-  // Each option carries an icon as well as its label: the sidebar collapses to a
-  // 3.5rem rail where only icons fit, and a text-only control simply breaks
-  // there. The label stays in the markup and is hidden by CSS on the rail, so
-  // assistive technology keeps reading the words.
   const icon = (view: WorklogView): JSX.Element => (
     <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <Show
@@ -72,25 +46,14 @@ export default function WorklogViewSwitch(props: {
   )
 
   return (
-    <div class="worklog-view-switch" role="radiogroup" aria-label={m.worklog_view_label()} onKeyDown={onKeyDown}>
-      <For each={WORKLOG_VIEWS}>
-        {(view) => (
-          <button
-            type="button"
-            role="radio"
-            class="worklog-view-option"
-            data-worklog-view={view}
-            aria-checked={props.value === view ? 'true' : 'false'}
-            // Only the checked option is a tab stop — the group is one stop.
-            tabindex={props.value === view ? 0 : -1}
-            title={`${label(view)} — ${description(view)}`}
-            onClick={() => props.onChange(view)}
-          >
-            {icon(view)}
-            <span class="worklog-view-text">{label(view)}</span>
-          </button>
-        )}
-      </For>
-    </div>
+    <SegmentedSwitch
+      options={WORKLOG_VIEWS}
+      value={props.value}
+      onChange={props.onChange}
+      label={m.worklog_view_label()}
+      optionLabel={label}
+      optionTitle={(view) => `${label(view)} — ${description(view)}`}
+      icon={icon}
+    />
   )
 }

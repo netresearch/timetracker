@@ -16,6 +16,7 @@ import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklogViewPref'
 import { getWorklogSort, setWorklogSort, WORKLOG_SORTS, type WorklogSort } from '../lib/worklogSortPref'
+import SegmentedSwitch from '../components/SegmentedSwitch'
 import WorklogViewSwitch from '../components/WorklogViewSwitch'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
@@ -414,7 +415,7 @@ export default function Tracking() {
   // Which nav layout is live. navLayoutPref applies it to <html> and fires
   // tt:layout-change when the Settings page switches it, so the toolbar follows
   // without a reload.
-  const isSide = (): boolean => document.documentElement.getAttribute('data-nav-layout') === 'side'
+  const isSide = (): boolean => document.documentElement.dataset.navLayout === 'side'
   const [navSideLayout, setNavSideLayout] = createSignal(isSide())
   const [toolsSlot, setToolsSlot] = createSignal<HTMLElement | null>(null)
   onMount(() => {
@@ -719,94 +720,6 @@ export default function Tracking() {
     return rows().filter((entry) => !foldedAway.has(num(entry.id)))
   })
 
-  // What a card is, and what the block column inside it shows, follow the chosen
-  // order: by time the card is a DAY and the block is the context; by context the
-  // card is a CUSTOMER AND PROJECT and the block is the day. Either way the card
-  // header names the thing all its rows share, and the block column names what
-  // varies one level down — so the grouping always says something true rather
-  // than "these happened to be adjacent".
-  const groupKeyOf = (entry: TrackingEntry): string =>
-    sort() === 'context'
-      ? `${relationLabel(entry, 'customer')} · ${relationLabel(entry, 'project')}`
-      : (entry.date ?? '')
-
-  const groupKeys = createMemo<string[]>(() => {
-    const keys: string[] = []
-    for (const entry of visibleRows()) {
-      const key = groupKeyOf(entry)
-      if (!keys.includes(key)) {
-        keys.push(key)
-      }
-    }
-
-    // By time the server's order (newest first) already carries the meaning; by
-    // context the cards are named things, so they read alphabetically.
-    return sort() === 'context' ? [...keys].sort((a, b) => a.localeCompare(b)) : keys
-  })
-
-  const entriesByGroup = createMemo<Map<string, TrackingEntry[]>>(() => {
-    const map = new Map<string, TrackingEntry[]>()
-    for (const entry of visibleRows()) {
-      const key = groupKeyOf(entry)
-      const list = map.get(key)
-      if (list === undefined) {
-        map.set(key, [entry])
-        continue
-      }
-
-      list.push(entry)
-    }
-
-    return map
-  })
-
-  // Which rows print their block cell. A continuation row shows nothing there, so
-  // Tab has to skip that cell rather than open an editor over an empty space.
-  const blockStartIds = createMemo<Set<number>>(() => {
-    const ids = new Set<number>()
-    const byContext = sort() === 'context'
-    for (const entries of entriesByGroup().values()) {
-      let previous: TrackingEntry | undefined
-      for (const entry of entries) {
-        if (previous === undefined || blockKey(previous, byContext) !== blockKey(entry, byContext)) {
-          ids.add(num(entry.id))
-        }
-        previous = entry
-      }
-    }
-
-    return ids
-  })
-
-  // The card's own heading. A day card shows the date; a customer card shows
-  // what it is called.
-  const groupLabel = (key: string): string => (sort() === 'context' ? key : displayDate(key))
-
-  const groupFacts = (key: string): { human: number; agent: number; estimated: number; humanRows: number } => {
-    let human = 0
-    let agent = 0
-    let estimated = 0
-    let humanRows = 0
-    for (const entry of entriesByGroup().get(key) ?? []) {
-      const partner = pairedAgentOf(entry)
-      if (partner !== undefined) {
-        agent += partner.durationMinutes
-      }
-
-      if (entry.source === 'agent') {
-        agent += entry.durationMinutes
-        continue
-      }
-
-      human += entry.durationMinutes
-      humanRows += 1
-      if (entry.estimated) {
-        estimated += 1
-      }
-    }
-
-    return { human, agent, estimated, humanRows }
-  }
 
   // Day-break/pause/overlap cues, derived from the rendered rows (see
   // deriveRowCues) instead of the persisted `class` — so they are correct for
@@ -1616,6 +1529,100 @@ export default function Tracking() {
       .map((value) => options.find((option) => String(option.value) === String(value))?.label ?? String(value))
       .join(', ')
   }
+
+  // These memos live BELOW relationLabel on purpose: createMemo evaluates its body
+  // at once, and with the rows already in the query cache (coming back to the page)
+  // groupKeyOf would call relationLabel while that const is still in its temporal
+  // dead zone — "Cannot access 'relationLabel' before initialization", thrown out of
+  // the route's render, which left the app unresponsive until a reload.
+  // What a card is, and what the block column inside it shows, follow the chosen
+  // order: by time the card is a DAY and the block is the context; by context the
+  // card is a CUSTOMER AND PROJECT and the block is the day. Either way the card
+  // header names the thing all its rows share, and the block column names what
+  // varies one level down — so the grouping always says something true rather
+  // than "these happened to be adjacent".
+  const groupKeyOf = (entry: TrackingEntry): string =>
+    sort() === 'context'
+      ? `${relationLabel(entry, 'customer')} · ${relationLabel(entry, 'project')}`
+      : (entry.date ?? '')
+
+  const groupKeys = createMemo<string[]>(() => {
+    const keys: string[] = []
+    for (const entry of visibleRows()) {
+      const key = groupKeyOf(entry)
+      if (!keys.includes(key)) {
+        keys.push(key)
+      }
+    }
+
+    // By time the server's order (newest first) already carries the meaning; by
+    // context the cards are named things, so they read alphabetically.
+    return sort() === 'context' ? [...keys].sort((a, b) => a.localeCompare(b)) : keys
+  })
+
+  const entriesByGroup = createMemo<Map<string, TrackingEntry[]>>(() => {
+    const map = new Map<string, TrackingEntry[]>()
+    for (const entry of visibleRows()) {
+      const key = groupKeyOf(entry)
+      const list = map.get(key)
+      if (list === undefined) {
+        map.set(key, [entry])
+        continue
+      }
+
+      list.push(entry)
+    }
+
+    return map
+  })
+
+  // Which rows print their block cell. A continuation row shows nothing there, so
+  // Tab has to skip that cell rather than open an editor over an empty space.
+  const blockStartIds = createMemo<Set<number>>(() => {
+    const ids = new Set<number>()
+    const byContext = sort() === 'context'
+    for (const entries of entriesByGroup().values()) {
+      let previous: TrackingEntry | undefined
+      for (const entry of entries) {
+        if (previous === undefined || blockKey(previous, byContext) !== blockKey(entry, byContext)) {
+          ids.add(num(entry.id))
+        }
+        previous = entry
+      }
+    }
+
+    return ids
+  })
+
+  // The card's own heading. A day card shows the date; a customer card shows
+  // what it is called.
+  const groupLabel = (key: string): string => (sort() === 'context' ? key : displayDate(key))
+
+  const groupFacts = (key: string): { human: number; agent: number; estimated: number; humanRows: number } => {
+    let human = 0
+    let agent = 0
+    let estimated = 0
+    let humanRows = 0
+    for (const entry of entriesByGroup().get(key) ?? []) {
+      const partner = pairedAgentOf(entry)
+      if (partner !== undefined) {
+        agent += partner.durationMinutes
+      }
+
+      if (entry.source === 'agent') {
+        agent += entry.durationMinutes
+        continue
+      }
+
+      human += entry.durationMinutes
+      humanRows += 1
+      if (entry.estimated) {
+        estimated += 1
+      }
+    }
+
+    return { human, agent, estimated, humanRows }
+  }
   const groupedCell = (entry: TrackingEntry, colKey: string, startsBlock: () => boolean): JSX.Element => {
     const row = editor.overlayRow(entry)
     const id = num(entry.id)
@@ -2167,31 +2174,23 @@ export default function Tracking() {
             the grouped view and not as a setting that quietly does nothing. */}
         <Show when={view() === 'grouped'}>
           <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_sort_label()}</p>
-          <div class="worklog-view-switch" role="radiogroup" aria-label={m.worklog_sort_label()}>
-            <For each={WORKLOG_SORTS}>
-              {(option) => (
-                <button
-                  type="button"
-                  role="radio"
-                  class="worklog-view-option"
-                  aria-checked={sort() === option ? 'true' : 'false'}
-                  tabindex={sort() === option ? 0 : -1}
-                  title={option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context()}
-                  onClick={() => chooseSort(option)}
+          <SegmentedSwitch
+            options={WORKLOG_SORTS}
+            value={sort()}
+            onChange={chooseSort}
+            label={m.worklog_sort_label()}
+            optionLabel={(option) => (option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context())}
+            icon={(option) => (
+              <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <Show
+                  when={option === 'time'}
+                  fallback={<><path d="M4 21V6l7-3 7 3v15" /><path d="M4 21h16M9 10h.01M9 14h.01M14 10h.01M14 14h.01" /></>}
                 >
-                  <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <Show
-                      when={option === 'time'}
-                      fallback={<><path d="M4 21V6l7-3 7 3v15" /><path d="M4 21h16M9 10h.01M9 14h.01M14 10h.01M14 14h.01" /></>}
-                    >
-                      <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>
-                    </Show>
-                  </svg>
-                  <span class="worklog-view-text">{option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context()}</span>
-                </button>
-              )}
-            </For>
-          </div>
+                  <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>
+                </Show>
+              </svg>
+            )}
+          />
         </Show>
 
     </div>

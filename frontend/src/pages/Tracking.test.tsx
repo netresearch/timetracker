@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import { setDateFormat } from '../lib/dateFormat'
-import { renderWithProviders } from '../test/renderWithProviders'
+import { createTestQueryClient, renderWithProviders } from '../test/renderWithProviders'
 import Tracking from './Tracking'
 
 const getJson = vi.fn()
@@ -580,6 +580,47 @@ describe('Tracking (Worklog grid)', () => {
 
     const ghost = container.querySelector('tr.tracking-row.is-new .worklog-part-edit .inline-ghost')
     expect(ghost?.textContent).toBe('Ticket')
+
+    unmount()
+  })
+
+  it('renders customer cards when the rows are already in the query cache', async () => {
+    // createMemo evaluates its body at once. With the entries cached — which is
+    // what coming back to the page looks like — the grouping memo ran during setup
+    // and called relationLabel while that const was still in its temporal dead
+    // zone. The ReferenceError came out of the route's render, so the page stayed
+    // blank and the whole app stopped reacting to clicks until a reload.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    localStorage.setItem('tt-worklog-sort', 'context')
+    mockApi()
+    const queryClient = createTestQueryClient()
+    queryClient.setQueryData(['tracking-entries', 3], [{ entry: DEFAULT_ENTRY }])
+
+    const { container, unmount } = renderWithProviders(() => <Tracking />, { queryClient })
+
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+    expect(container.querySelectorAll('tr.tracking-row').length).toBeGreaterThan(0)
+
+    unmount()
+  })
+
+  it('changes the order with the arrow keys', async () => {
+    // The order switch is a radiogroup: only the checked option is a tab stop, so
+    // without arrow keys the other order could be reached by pointer only.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const groups = container.querySelectorAll('[role="radiogroup"]')
+    const order = groups[groups.length - 1]!
+    const checked = (): string | null =>
+      order.querySelector('[aria-checked="true"]')?.getAttribute('data-segment-value') ?? null
+    expect(checked()).toBe('time')
+
+    fireEvent.keyDown(order, { key: 'ArrowRight' })
+
+    expect(checked()).toBe('context')
 
     unmount()
   })

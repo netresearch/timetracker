@@ -271,7 +271,11 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       row.setAttribute('role', 'row')
       row.setAttribute('aria-rowindex', String(r + 1))
       cellsOf(row).forEach((cell, c) => {
-        cell.setAttribute('role', cell.tagName === 'TH' ? 'columnheader' : 'gridcell')
+        // A <th scope="rowgroup"> heads a group of rows (the worklog's day card),
+        // not a column: stamping columnheader on it told assistive technology the
+        // opposite of what it is.
+        const headerRole = cell.getAttribute('scope') === 'rowgroup' ? 'rowheader' : 'columnheader'
+        cell.setAttribute('role', cell.tagName === 'TH' ? headerRole : 'gridcell')
         cell.setAttribute('aria-colindex', String(c + 1))
         cell.tabIndex = -1 // bulk-reset the roving stop here (render-time); setActive then sets the one active cell
         for (const control of cell.querySelectorAll<HTMLElement>(INTERACTIVE)) {

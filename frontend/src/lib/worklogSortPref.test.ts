@@ -31,4 +31,14 @@ describe('worklogSortPref', () => {
 
     expect(getWorklogSort('context')).toBe('context')
   })
+
+  it('does not throw when the order cannot be persisted', () => {
+    // A private window refuses to write: choosing an order must still work, it
+    // simply will not survive the reload.
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('private mode')
+    })
+
+    expect(() => setWorklogSort('context')).not.toThrow()
+  })
 })
