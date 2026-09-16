@@ -106,10 +106,15 @@ test.describe('Worklog CRUD', () => {
 
   test('a relation cell edits via a filterable combobox, without reflow, and Escape cancels', async ({ page }) => {
     const stamp = await createEntry(page);
-    // Read mode: the customer cell renders its value as a single chip (not free text).
+    // Read mode: the worklog renders a relation as PLAIN TEXT. The chip is the
+    // admin grids' treatment, where a row is a record; repeated down two dozen
+    // worklog lines the same handful of labels in bordered pills was noise (design
+    // review, Befund 3 — see frontend/AGENTS.md). The chip editor is still what
+    // opens below.
     const cell = rowByStamp(page, stamp).locator('td[data-col-key="customer"]');
-    await expect(cell.locator('.inline-tags .tag')).toHaveCount(1);
-    const original = ((await cell.locator('.inline-tags .tag').textContent()) ?? '').trim();
+    await expect(cell.locator('.relation-text')).toHaveCount(1);
+    await expect(cell.locator('.inline-tags .tag')).toHaveCount(0);
+    const original = ((await cell.locator('.relation-text').textContent()) ?? '').trim();
     const before = await cell.boundingBox();
 
     // Edit mode: a combobox opens with a filter input and an option list.
@@ -126,13 +131,13 @@ test.describe('Worklog CRUD', () => {
     const during = await cell.boundingBox();
     expect(Math.abs(during!.width - before!.width)).toBeLessThanOrEqual(1);
 
-    // Escape cancels: the editor closes, the chip is unchanged, and nothing is saved.
+    // Escape cancels: the editor closes, the value is unchanged, and nothing is saved.
     let saveFired = false;
     page.on('request', (r) => { if (isSave(r)) saveFired = true; });
     await page.keyboard.press('Escape');
     await expect(page.locator('td[data-inline-editing]')).toHaveCount(0);
-    await expect(cell.locator('.inline-tags .tag')).toHaveCount(1);
-    await expect(cell.locator('.inline-tags .tag')).toHaveText(original);
+    await expect(cell.locator('.relation-text')).toHaveCount(1);
+    await expect(cell.locator('.relation-text')).toHaveText(original);
     expect(saveFired).toBe(false);
   });
 });

@@ -586,13 +586,11 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     }
     const targets = editTargets(rowId)
     const from = targets.findIndex((target) => target.field === fromColKey)
-    // Forward from the current field; a row that has never been saved may also wrap
-    // once, because its remaining fields can sit before the one it opened in.
-    const order = targets.slice(from + 1)
-    if (config.isNewRow?.(row) === true) {
-      order.push(...targets.slice(0, Math.max(0, from)))
-    }
-    for (const target of order) {
+    // Forward only, and never past the row's end: Enter guides, it does not cycle.
+    // (Tab is what walks the whole row — see stepWithinRow. Wrapping here as well
+    // opened an editor the caller had not asked for, which broke a flow that sets
+    // the fields in its own order.)
+    for (const target of targets.slice(from + 1)) {
       if (invalid.has(target.field)) {
         moveHandle?.focusCell(rowId, target.colKey)
         beginEdit(rowId, target.field)
