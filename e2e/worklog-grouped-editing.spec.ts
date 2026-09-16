@@ -157,9 +157,12 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
 
     const walk: string[] = [];
     for (let step = 0; step < 8; step += 1) {
-      walk.push(await focusedField());
+      const current = await focusedField();
+      walk.push(current);
       await page.keyboard.press('Tab');
-      await page.waitForTimeout(250);
+      // The next editor mounts and takes focus asynchronously (a select commits a
+      // frame later); wait for focus to actually be somewhere else.
+      await expect.poll(focusedField).not.toBe(current);
     }
 
     // The row opens on its ticket, which this layout places in the last editable
@@ -181,13 +184,13 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
     await expect(page.locator('input.combobox-input').first()).toBeFocused();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(400);
 
     // A select commits from a body-portalled popup, after which the roving cell no
     // longer says where the user was: Tab skipped the rest of the block cell and
     // landed in the time cell.
-    const cell = await page.evaluate(() => document.activeElement?.closest('td')?.getAttribute('data-col-key') ?? null);
-    expect(cell).toBe('context');
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.closest('td')?.getAttribute('data-col-key') ?? null))
+      .toBe('context');
   });
 
   test('a new row is not saved before it can be booked', async ({ page }) => {
@@ -210,7 +213,10 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
     await page.keyboard.press('Tab');
     await expect(page.locator('input.combobox-input').first()).toBeVisible();
     await page.locator('.combobox-content .combobox-item').first().click();
-    await page.waitForTimeout(500);
+    // The commit closes the popup and moves the edit on; once the next editor is
+    // up, any save this flow would have triggered has been issued.
+    await expect(page.locator('[data-chipselect-popup]')).toBeHidden();
+    await expect(page.locator('tr.tracking-row.is-new input.inline-editor')).toHaveCount(1);
 
     expect(saves).toEqual([]);
   });

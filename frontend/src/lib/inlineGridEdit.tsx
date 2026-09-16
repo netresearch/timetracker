@@ -490,44 +490,52 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   const editTargets = (rowId: number): { colKey: string; field: string }[] =>
     Array.from(tableEl?.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`) ?? [])
       .flatMap((td) => {
-        const colKey = td.getAttribute('data-col-key')
+        const colKey = td.dataset.colKey
 
-        return colKey === null ? [] : fieldsOfCell(colKey, rowId).map((field) => ({ colKey, field }))
+        return colKey === undefined ? [] : fieldsOfCell(colKey, rowId).map((field) => ({ colKey, field }))
       })
+
+  // Step from the open field to the next one in the ROW's own sequence of edit
+  // targets rather than walking cells: a composite cell holds several fields, and
+  // a select commits from a body-portalled popup, after which the roving cell is no
+  // longer a reliable account of where the user was (picking a customer then
+  // skipped the project beside it and landed in the next cell).
+  // Returns false when the open field is not one of the row's declared targets.
+  function stepWithinRow(direction: 'left' | 'right', open: { rowId: number; colKey: string }): boolean {
+    const targets = editTargets(open.rowId)
+    const at = targets.findIndex((target) => target.field === open.colKey)
+    if (at === -1) {
+      return false
+    }
+    const next = at + (direction === 'right' ? 1 : -1)
+    // Past the end: a row that has never been saved wraps to the other end of
+    // itself (the worklog opens one on its ticket, which the grouped layout places
+    // last, so everything else lies behind it); any other row stops at the row
+    // edge, as it always did.
+    const wrapped = next < 0 || next >= targets.length
+    if (wrapped) {
+      const row = rowById(open.rowId)
+      if (row === undefined || config.isNewRow?.(row) !== true) {
+        return true // handled: the row edge is where Tab stops
+      }
+    }
+    const target = wrapped
+      ? (direction === 'right' ? targets[0] : targets.at(-1))
+      : targets[next]
+    if (target !== undefined && !(wrapped && target.field === open.colKey)) {
+      moveHandle?.focusCell(open.rowId, target.colKey)
+      beginEdit(open.rowId, target.field)
+    }
+
+    return true
+  }
 
   function moveAndEdit(direction: 'left' | 'right', from?: { rowId: number; colKey: string }): void {
     // The field Tab left: commitCell clears the edit state before it moves, so the
     // caller passes what was open — reading editCell() here would always see null.
     const open = from ?? editCell()
-    if (open !== null) {
-      // Step through the ROW's own sequence of edit targets rather than walking
-      // cells: a composite cell holds several fields, and a select commits from a
-      // body-portalled popup, after which the roving cell is no longer a reliable
-      // account of where the user was (picking a customer then skipped the project
-      // beside it and landed in the next cell).
-      const targets = editTargets(open.rowId)
-      const at = targets.findIndex((target) => target.field === open.colKey)
-      if (at !== -1) {
-        const next = at + (direction === 'right' ? 1 : -1)
-        const row = rowById(open.rowId)
-        // Past the end: a row that has never been saved wraps to the other end of
-        // itself (the worklog opens one on its ticket, which the grouped layout
-        // places last, so everything else lies behind it); any other row stops at
-        // the row edge, as it always did.
-        const wrapped = next < 0 || next >= targets.length
-        if (wrapped && (row === undefined || config.isNewRow?.(row) !== true)) {
-          return
-        }
-        const target = wrapped
-          ? targets[direction === 'right' ? 0 : targets.length - 1]
-          : targets[next]
-        if (target !== undefined && !(wrapped && target.field === open.colKey)) {
-          moveHandle?.focusCell(open.rowId, target.colKey)
-          beginEdit(open.rowId, target.field)
-        }
-
-        return
-      }
+    if (open !== null && stepWithinRow(direction, open)) {
+      return
     }
     // The open field is not one of the row's declared targets (a host that declares
     // none, or a cell rendered outside the row): fall back to walking cells.
@@ -544,7 +552,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       const id = Number(cell.getAttribute('data-row-id'))
       const fields = colKey === null ? [] : fieldsOfCell(colKey, id)
       // Entering a cell from the left opens its first field, from the right its last.
-      const target = direction === 'right' ? fields[0] : fields[fields.length - 1]
+      const target = direction === 'right' ? fields[0] : fields.at(-1)
       if (id && target !== undefined) {
         beginEdit(id, target)
 

@@ -23,10 +23,16 @@ export default function SegmentedSwitch<T extends string>(props: {
 }): JSX.Element {
   let group: HTMLDivElement | undefined
 
+  const stepFor = (key: string): number => {
+    if (key === 'ArrowRight' || key === 'ArrowDown') {
+      return 1
+    }
+
+    return key === 'ArrowLeft' || key === 'ArrowUp' ? -1 : 0
+  }
+
   const onKeyDown = (event: KeyboardEvent): void => {
-    const step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1
-      : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1
-      : 0
+    const step = stepFor(event.key)
     if (step === 0) {
       return
     }
@@ -49,6 +55,11 @@ export default function SegmentedSwitch<T extends string>(props: {
       class="worklog-view-switch"
       role="radiogroup"
       aria-label={props.label}
+      // The handler sits on the GROUP, where the keydown from the focused radio
+      // bubbles to. SonarCloud's S6852 asks for a focusable radiogroup instead;
+      // that is the wrong shape here — WAI-ARIA's radiogroup pattern puts the tab
+      // stop on the checked radio, and making the container focusable would add a
+      // second one.
       onKeyDown={onKeyDown}
       ref={(el) => { group = el }}
     >

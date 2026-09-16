@@ -5424,11 +5424,6 @@ div.calendar {
   z-index: 1;
 }
 
-.worklog-day-total {
-  float: inline-end;
-  font-variant-numeric: tabular-nums;
-}
-
 /* Duration bar behind the figure in the grouped view. Sized from a fixed
    working day (see DURATION_BAR_CAP_MINUTES) so bars stay comparable across
    days; the number beside it carries the exact value, the bar is decoration
@@ -5437,100 +5432,9 @@ div.calendar {
   position: relative;
 }
 
-.duration-bar {
-  position: absolute;
-  inset-block: 0.35rem;
-  inset-inline-start: 0;
-  inline-size: var(--duration-share, 0%);
-  background: var(--color-accent-soft);
-  border-inline-start: 2px solid var(--color-accent);
-  border-radius: 2px;
-  pointer-events: none;
-  z-index: 0;
-}
-
 .tracking-table td[data-col-key='duration'] > :not(.duration-bar) {
   position: relative;
   z-index: 1;
-}
-
-/* ---------------------------------------------------------------------------
-   Read-only timeline (view B)
-   --------------------------------------------------------------------------- */
-
-.worklog-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.worklog-timeline-dayhead {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin: 0 0 0.35rem;
-  padding: 0.3rem 0.6rem;
-  background: var(--color-accent-soft);
-  color: var(--color-accent-text);
-  border-block: 1px solid var(--color-border);
-  font-size: 1rem;
-}
-
-.worklog-timeline-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* The block's HEIGHT carries the duration; the figure inside states it exactly,
-   so the proportion is a second, non-essential encoding (WCAG 1.4.1). */
-.worklog-timeline-block {
-  display: grid;
-  grid-template-columns: 9ch 10ch 1fr 6ch;
-  gap: 0.75rem;
-  align-items: start;
-  inline-size: 100%;
-  text-align: start;
-  padding: 0.4rem 0.6rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-inline-start: 4px solid var(--color-accent);
-  border-radius: 4px;
-  color: var(--color-text);
-  font: inherit;
-  cursor: pointer;
-}
-
-.worklog-timeline-block:hover {
-  background: var(--color-accent-soft);
-}
-
-.worklog-timeline-block:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.worklog-timeline-time,
-.worklog-timeline-duration {
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-muted);
-}
-
-.worklog-timeline-duration {
-  text-align: end;
-}
-
-.worklog-timeline-text {
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 40rem) {
-  .worklog-timeline-block {
-    grid-template-columns: 1fr auto;
-  }
 }
 
 /* The worklog toolbar moves into the sidebar column when that layout is active
@@ -5562,15 +5466,6 @@ div.calendar {
 /* The sidebar column is far narrower than the tool line, and three labels in a
    row clip ("Zeitstrahl" lost its tail). Stacked, each option gets the full
    width and stays readable; the separator moves to the block edge to match. */
-[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-switch {
-  inline-size: 100%;
-  flex-direction: column;
-}
-
-[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-option {
-  text-align: start;
-}
-
 [data-nav-layout='side'] #sidebar-tools-slot .worklog-view-option + .worklog-view-option {
   border-inline-start: 1px solid var(--color-border);
 }
@@ -5593,7 +5488,7 @@ div.calendar {
   margin-inline-start: auto;
   display: flex;
   gap: 1rem;
-  float: none;
+  font-variant-numeric: tabular-nums;
 }
 
 .worklog-total-agent {
@@ -5604,7 +5499,15 @@ div.calendar {
 /* Befund 4: a fixed scale (90 min = 150 px) rather than a share of the cell, so
    0:06 and 1:27 differ visibly and the row height never changes. */
 .duration-bar {
+  position: absolute;
+  inset-block: 0.35rem;
+  inset-inline-start: 0;
   inline-size: var(--duration-width, 0);
+  background: var(--color-accent-soft);
+  border-inline-start: 2px solid var(--color-accent);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Befund 3: a relation reads as plain text in the worklog. The chip returns in
@@ -5910,11 +5813,6 @@ div.calendar {
    layout but not in the DOM — `table.rows` never sees it, which keeps gridNav's
    row arithmetic and the accessibility tree free of a filler row. Separate
    borders are what make the corner radii below paint at all. */
-.tracking-table.is-grouped {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
 .tracking-table.is-grouped tbody.worklog-day + tbody.worklog-day::before {
   content: '';
   display: table-row;
@@ -5922,11 +5820,6 @@ div.calendar {
 }
 
 /* Each day is one card: the heading rounds the top, the last row the bottom. */
-.tracking-table.is-grouped .worklog-day-head > th {
-  border-start-start-radius: 8px;
-  border-start-end-radius: 8px;
-}
-
 .tracking-table.is-grouped tbody.worklog-day > tr:last-child > td:first-child {
   border-end-start-radius: 8px;
 }
@@ -5984,11 +5877,6 @@ div.calendar {
 
 /* An entry without a ticket still needs a target, or one could never be added
    in this view. */
-.worklog-ticket.is-empty {
-  color: var(--color-text-muted);
-  cursor: text;
-}
-
 
 /* In the menu the action, the key and the tools stack; in the tool line they
    stay one row. */
@@ -6007,6 +5895,8 @@ div.calendar {
    carries focus — a permanent prompt on every ticketless row would be the same
    noise the badges were. */
 .worklog-ticket.is-empty {
+  color: var(--color-text-muted);
+  cursor: text;
   opacity: 0;
   font-size: 0.83em;
 }
@@ -6063,11 +5953,6 @@ tr:focus-within .worklog-ticket.is-empty {
   display: none;
 }
 
-:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .tracking-days-input {
-  inline-size: 100%;
-  text-align: center;
-}
-
 /* One shape for everything you can press in the menu. Stacked in a narrow column
    the segmented switch, the range field and the tool buttons had arrived at four
    different heights, radii and fills; they are one control type here — full
@@ -6080,6 +5965,8 @@ tr:focus-within .worklog-ticket.is-empty {
 }
 
 [data-nav-layout='side'] #sidebar-tools-slot .worklog-view-switch {
+  inline-size: 100%;
+  flex-direction: column;
   border: 0;
   border-radius: 0;
   overflow: visible;
@@ -6087,6 +5974,7 @@ tr:focus-within .worklog-ticket.is-empty {
 }
 
 [data-nav-layout='side'] #sidebar-tools-slot .worklog-view-option {
+  text-align: start;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   padding-inline: 0.75rem;
@@ -6133,6 +6021,8 @@ tr:focus-within .worklog-ticket.is-empty {
 
 /* The range shows its number alone here, sized to fit the smaller square. */
 :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .tracking-days-input {
+  inline-size: 100%;
+  text-align: center;
   font-size: 0.85rem;
 }
 
@@ -6186,6 +6076,8 @@ tr:focus-within .worklog-ticket.is-empty {
    the grid its own vertical scroll makes that ancestor real, and both header
    levels then stick where they should. */
 .tracking-table.is-grouped {
+  border-collapse: separate;
+  border-spacing: 0;
   --worklog-head-h: 2.4rem;
   --worklog-dayhead-h: 2.4rem;
 }
@@ -6206,12 +6098,15 @@ tr:focus-within .worklog-ticket.is-empty {
   z-index: 4;
 }
 
-/* The day heading sticks BELOW the column header. */
+/* The day heading sticks BELOW the column header, and rounds the card's top. */
 .tracking-table.is-grouped .worklog-day-head > th {
   position: sticky;
   inset-block-start: var(--worklog-head-h);
   z-index: 3;
   block-size: var(--worklog-dayhead-h);
+  border-start-start-radius: 8px;
+  border-start-end-radius: 8px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 8%);
 }
 
 /* A sticky band has to HIDE what passes beneath it. A translucent one only does
@@ -6262,10 +6157,6 @@ tr:focus-within .worklog-ticket.is-empty {
 
 .tracking-table.is-grouped tbody.worklog-day > tr > td:last-child {
   box-shadow: 1px 1px 3px rgb(0 0 0 / 6%);
-}
-
-.tracking-table.is-grouped .worklog-day-head > th {
-  box-shadow: 0 2px 6px rgb(0 0 0 / 8%);
 }
 
 /* The row under the cursor lifts slightly — depth as feedback, not decoration. */

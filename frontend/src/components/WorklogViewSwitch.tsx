@@ -37,7 +37,7 @@ export default function WorklogViewSwitch(props: {
     <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <Show
         when={view === 'grouped'}
-        fallback={<><path d="M4 7h16M4 12h16M4 17h16" /></>}
+        fallback={<path d="M4 7h16M4 12h16M4 17h16" />}
       >
         {/* Grouped: a heading with its rows beneath it, twice. */}
         <><path d="M4 5h16" /><path d="M7 9h13M7 12h13" /><path d="M4 16h16" /><path d="M7 20h13" /></>
