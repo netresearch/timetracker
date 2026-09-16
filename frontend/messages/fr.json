@@ -736,5 +736,11 @@
   "worklog_view_flat_hint": "Une ligne par saisie, toutes les colonnes sur chaque ligne",
   "worklog_view_timeline_hint": "La hauteur de ligne suit la durée ; lecture seule",
   "worklog_timeline_open": "{ticket}, {duration} — ouvrir dans la grille",
-  "worklog_timeline_no_ticket": "sans ticket"
+  "worklog_timeline_no_ticket": "sans ticket",
+  "worklog_day_estimated": "{count} sur {total} temps humains estimés — à vérifier",
+  "worklog_total_human": "Humain",
+  "worklog_total_agent": "Agent",
+  "worklog_estimated_hint": "Estimé — à vérifier",
+  "worklog_tools_range": "Période",
+  "worklog_tools_tools": "Outils"
 }

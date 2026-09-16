@@ -736,5 +736,11 @@
   "worklog_view_flat_hint": "One row per entry, every column on every row",
   "worklog_view_timeline_hint": "Row height follows duration; read-only",
   "worklog_timeline_open": "{ticket}, {duration} — open in the grid",
-  "worklog_timeline_no_ticket": "no ticket"
+  "worklog_timeline_no_ticket": "no ticket",
+  "worklog_day_estimated": "{count} of {total} human times estimated — please check",
+  "worklog_total_human": "Human",
+  "worklog_total_agent": "Agent",
+  "worklog_estimated_hint": "Estimated — please check",
+  "worklog_tools_range": "Range",
+  "worklog_tools_tools": "Tools"
 }

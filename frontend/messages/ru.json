@@ -736,5 +736,11 @@
   "worklog_view_flat_hint": "Одна строка на запись, все столбцы в каждой строке",
   "worklog_view_timeline_hint": "Высота строки соответствует длительности; только чтение",
   "worklog_timeline_open": "{ticket}, {duration} — открыть в таблице",
-  "worklog_timeline_no_ticket": "без тикета"
+  "worklog_timeline_no_ticket": "без тикета",
+  "worklog_day_estimated": "{count} из {total} человеческих записей оценены — проверьте",
+  "worklog_total_human": "Человек",
+  "worklog_total_agent": "Агент",
+  "worklog_estimated_hint": "Оценка — проверьте",
+  "worklog_tools_range": "Период",
+  "worklog_tools_tools": "Инструменты"
 }

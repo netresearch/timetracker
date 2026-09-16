@@ -5568,3 +5568,100 @@ div.calendar {
   border-inline-start: 0;
   border-block-start: 1px solid var(--color-border);
 }
+
+/* Befund 4: the day header carries the totals, and human and agent time are
+   never added together (ADR-025 §7). Befund 6: "estimated" is counted here once
+   per day instead of badging almost every row. */
+.worklog-day-head > th {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.worklog-day-estimated {
+  font-weight: 400;
+  color: var(--color-warning-text);
+}
+
+.worklog-day-total {
+  margin-inline-start: auto;
+  display: flex;
+  gap: 1rem;
+  float: none;
+}
+
+.worklog-total-agent {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* Befund 4: a fixed scale (90 min = 150 px) rather than a share of the cell, so
+   0:06 and 1:27 differ visibly and the row height never changes. */
+.duration-bar {
+  inline-size: var(--duration-width, 0);
+}
+
+/* Befund 3: a relation reads as plain text in the worklog. The chip returns in
+   the editor, where "one selectable thing" is the point. */
+.relation-text {
+  color: var(--color-text);
+}
+
+/* Befund 2: three separation systems ran at once — zebra stripes, 4 px colour
+   edges and bordered chips. Proximity and shared area group better than lines,
+   so: a hairline between rows, the day as an area (the section heading), and
+   colour reserved for state. Overlap keeps its edge because it is a warning;
+   day-break and pause no longer need one — the heading and the gap say it. */
+.tracking-table tbody.worklog-day .tracking-row {
+  background: none;
+}
+
+.tracking-table tbody.worklog-day .tracking-row > td {
+  border-block-start: 1px solid var(--color-border);
+}
+
+.tracking-table tbody.worklog-day .tracking-row.is-daybreak > td,
+.tracking-table tbody.worklog-day .tracking-row.is-pause > td {
+  box-shadow: none;
+}
+
+/* Befund 6: the duration bar carries the source — solid for a person, hatched
+   for a machine — so the row needs no badge to say which it was. */
+.duration-bar.is-agent {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-accent-soft) 0 4px,
+    transparent 4px 8px
+  );
+  border-inline-start-style: dashed;
+}
+
+.duration-estimated {
+  color: var(--color-warning-text);
+  margin-inline-end: 0.15rem;
+}
+
+/* A fixed-pixel bar cannot live in an auto-width cell: it overflowed the DAUER
+   column and painted over the row actions. The column therefore reserves the
+   width the scale needs (cap + the figure) and clips, so the bar can never
+   cover a neighbour. */
+.tracking-table.is-grouped td[data-col-key='duration'],
+.tracking-table.is-grouped th[data-col-key='duration'] {
+  inline-size: 19rem;
+  min-inline-size: 19rem;
+  overflow: hidden;
+}
+
+/* Befund 7: the two groups are labelled only where they read as a submenu. */
+.tracking-tools-heading {
+  display: none;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-tools-heading {
+  display: block;
+  margin: 0.5rem 0 0.1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}

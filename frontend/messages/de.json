@@ -736,5 +736,11 @@
   "worklog_view_flat_hint": "Eine Zeile je Eintrag, jede Spalte in jeder Zeile",
   "worklog_view_timeline_hint": "Zeilenhöhe folgt der Dauer; nur lesend",
   "worklog_timeline_open": "{ticket}, {duration} — im Raster öffnen",
-  "worklog_timeline_no_ticket": "kein Ticket"
+  "worklog_timeline_no_ticket": "kein Ticket",
+  "worklog_day_estimated": "{count} von {total} Mensch-Zeiten geschätzt – bitte prüfen",
+  "worklog_total_human": "Mensch",
+  "worklog_total_agent": "Agent",
+  "worklog_estimated_hint": "Geschätzt – bitte prüfen",
+  "worklog_tools_range": "Zeitraum",
+  "worklog_tools_tools": "Werkzeuge"
 }

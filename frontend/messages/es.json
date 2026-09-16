@@ -736,5 +736,11 @@
   "worklog_view_flat_hint": "Una fila por entrada, todas las columnas en cada fila",
   "worklog_view_timeline_hint": "La altura de la fila sigue la duración; solo lectura",
   "worklog_timeline_open": "{ticket}, {duration} — abrir en la cuadrícula",
-  "worklog_timeline_no_ticket": "sin ticket"
+  "worklog_timeline_no_ticket": "sin ticket",
+  "worklog_day_estimated": "{count} de {total} tiempos humanos estimados — revísalos",
+  "worklog_total_human": "Humano",
+  "worklog_total_agent": "Agente",
+  "worklog_estimated_hint": "Estimado — revísalo",
+  "worklog_tools_range": "Periodo",
+  "worklog_tools_tools": "Herramientas"
 }

@@ -96,6 +96,13 @@ See [`README.md`](README.md) for the full stack description.
   disk icon forces a save and row-leave shows the full error). Relation cells
   use `ChipSelect` (`src/lib/chipSelect.tsx`, an Ark Combobox) body-portalled
   (whitelist `data-chipselect-popup`) to escape the table scroll container
+- **Relation columns read as chips in the ADMIN grids — but as plain text in the
+  Worklog.** Deliberately revised (design review, Befund 3): a chip is a
+  bordered, filled object saying "one selectable thing". That ink earns its
+  place while editing and buys nothing when the same handful of labels repeats
+  down two dozen rows. The Worklog therefore renders a relation as plain text in
+  read mode and shows the `ChipSelect` only in the editor; the admin grids, where
+  a row is a record rather than a line in a list, keep their chips
 
 ## Popups inside a modal dialog
 

@@ -10,7 +10,7 @@ import { num, str } from '../lib/coerce'
 import { dateFormat, formatUserDate } from '../lib/dateFormat'
 import { formatMinutes, isoDate } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
-import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
+import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
@@ -229,7 +229,14 @@ function formatDuration(minutes: number): string {
 // row on screen: a per-screen scale would silently re-draw every bar when the
 // range changes, so two days could never be compared. Anything longer simply
 // fills the bar (capped), which the number beside it still states exactly.
-const DURATION_BAR_CAP_MINUTES = 480
+// Befund 4 gives the scale as 90 min = 150 px, which makes 0:06 and 1:27 differ
+// at a glance. Its own example stays under the hour, so it says nothing about a
+// ceiling; capping at 150 px would flatten everything from 1:30 upwards into one
+// identical bar. The cap is therefore 240 px (~2:24) — long enough that ordinary
+// entries still separate, short enough for a table cell. Beyond it bars share the
+// maximum and the exact figure beside them carries the difference.
+const DURATION_BAR_PX_PER_MINUTE = 150 / 90
+const DURATION_BAR_MAX_PX = 240
 
 // Columns whose value is context rather than the entry itself: inside a day
 // section a repeat of these says nothing new, so it is shown once (see
@@ -575,8 +582,30 @@ export default function Tracking() {
 
     return map
   })
-  const dayMinutes = (day: string): number =>
-    (entriesByDay().get(day) ?? []).reduce((sum, entry) => sum + entry.durationMinutes, 0)
+  // Befund 4: the day totals belong in the day header, and human and agent time
+  // are never summed together (ADR-025 §7) — a machine's wall-clock is not
+  // attendance. Befund 6: "estimated" is a per-day count there instead of a badge
+  // on almost every row, which signalled nothing by being everywhere.
+  const dayFacts = (day: string): { human: number; agent: number; estimated: number; humanRows: number } => {
+    let human = 0
+    let agent = 0
+    let estimated = 0
+    let humanRows = 0
+    for (const entry of entriesByDay().get(day) ?? []) {
+      if (entry.source === 'agent') {
+        agent += entry.durationMinutes
+        continue
+      }
+
+      human += entry.durationMinutes
+      humanRows += 1
+      if (entry.estimated) {
+        estimated += 1
+      }
+    }
+
+    return { human, agent, estimated, humanRows }
+  }
 
   // Day-break/pause/overlap cues, derived from the rendered rows (see
   // deriveRowCues) instead of the persisted `class` — so they are correct for
@@ -675,7 +704,23 @@ export default function Tracking() {
   // aria-colcount consistent: a hidden-but-present cell would still be an
   // arrow-key stop.
   const hasExtTicket = createMemo<boolean>(() => rows().some((row) => str(row.extTicket) !== ''))
-  const visibleColumns = createMemo(() => (hasExtTicket() ? COLUMNS : COLUMNS.filter((col) => col.key !== 'extTicket')))
+  const visibleColumns = createMemo(() => {
+    let columns = hasExtTicket() ? COLUMNS : COLUMNS.filter((col) => col.key !== 'extTicket')
+    // Befund 8: in day sections the date is stated once in the heading, so
+    // repeating it in every row is 24 copies of one fact.
+    if (view() === 'grouped') {
+      columns = columns.filter((col) => col.key !== 'date')
+    }
+
+    // Befund 8: the ticket column was empty in every row of the range. Hidden in
+    // the grouped view when nothing in view carries a ticket; the flat view keeps
+    // every column by definition, which is what it is for.
+    if (view() === 'grouped' && !rows().some((entry) => entry.ticket !== '')) {
+      columns = columns.filter((col) => col.key !== 'ticket')
+    }
+
+    return columns
+  })
   const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
 
   // id→label maps, rebuilt only when the option list changes, so resolving a
@@ -985,10 +1030,20 @@ export default function Tracking() {
         </>
       )
     }
-    // Relation columns read as chips (matching the admin grid), not free text.
+    // Befund 3: in the WORKLOG a relation reads as plain text, not as a chip.
+    // A chip is a bordered, filled object that says "this is one selectable
+    // thing" — useful while editing, pure non-data ink when the same three
+    // labels repeat down 24 rows. The admin grids keep their chips (see the
+    // revised house rule in frontend/AGENTS.md); the editor still shows a
+    // ChipSelect, so the affordance appears exactly when it means something.
     const field = FIELD_BY_KEY.get(colKey)
     if (field !== undefined && (field.type === 'select' || field.type === 'multiselect')) {
-      return <ReadonlyChips values={chipValues((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey])} options={fieldSelectOptions(field, readOptionLookup)} />
+      const values = chipValues((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey])
+      const options = fieldSelectOptions(field, readOptionLookup)
+      const labelOf = (value: string | number): string =>
+        options.find((option) => String(option.value) === String(value))?.label ?? String(value)
+
+      return <span class="relation-text">{values.map(labelOf).join(', ')}</span>
     }
 
     // A truncation box so the responsive thinning can ellipsis free-text columns
@@ -996,12 +1051,16 @@ export default function Tracking() {
     // ADR-025: the description cell also carries the source/estimated badge —
     // source is fixed on the row (not inline-editable), so read the base entry.
     if (colKey === 'description') {
-      // The badge sits OUTSIDE the truncating span (flex, flex:none) so a long
-      // description never clips these row markers off the right edge.
+      // Befund 6: in the grouped view the badge is dropped — agent time reads
+      // from the hatched duration bar and "estimated" from the ≈ at the figure
+      // plus the count in the day heading. The flat view keeps it, having
+      // neither carrier.
       return (
         <span class="cell-desc-badged">
           <span class="cell-trunc">{displayCell(entry, colKey)}</span>
-          <EntrySourceBadge source={entry.source} estimated={entry.estimated} />
+          <Show when={view() !== 'grouped'}>
+            <EntrySourceBadge source={entry.source} estimated={entry.estimated} />
+          </Show>
         </span>
       )
     }
@@ -1365,9 +1424,13 @@ export default function Tracking() {
                                             so the bar is hidden from assistive technology. */}
                                         <span
                                           class="duration-bar"
+                                          classList={{ 'is-agent': entry.source === 'agent' }}
                                           aria-hidden="true"
-                                          style={{ '--duration-share': `${Math.min(100, (entry.durationMinutes / DURATION_BAR_CAP_MINUTES) * 100)}%` }}
+                                          style={{ '--duration-width': `${Math.min(DURATION_BAR_MAX_PX, entry.durationMinutes * DURATION_BAR_PX_PER_MINUTE)}px` }}
                                         />
+                                        <Show when={entry.estimated}>
+                                          <span class="duration-estimated" title={m.worklog_estimated_hint()}>≈</span>
+                                        </Show>
                                         {cellContent(entry, col.key)}
                                       </>
                                     )
@@ -1510,6 +1573,11 @@ export default function Tracking() {
   // line rather than disappearing.
   const renderViewTools = (): JSX.Element => (
     <div class="tracking-toolbar">
+      {/* Befund 7: in the sidebar these read as a submenu under Worklog, so the
+          two groups get headings there. In the tool line they are a single row
+          and the headings would be noise — CSS shows them only in the sidebar. */}
+      <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_range()}</p>
+          <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_tools()}</p>
           {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
           <Show when={canBulkEnter()}>
             <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
@@ -1649,14 +1717,14 @@ export default function Tracking() {
             days={dayKeys()}
             entriesFor={(day) => entriesByDay().get(day) ?? []}
             formatDay={displayDate}
-            formatTotal={(day) => formatDuration(dayMinutes(day))}
+            formatTotal={(day) => `${m.worklog_total_human()} ${formatDuration(dayFacts(day).human)}`}
             onJump={jumpToEntry}
           />
         }>
         <div class="table-scroll" ref={setScrollEl}>
           <table
             class="data-table tracking-table"
-            classList={{ 'is-fetching': entries.isFetching }}
+            classList={{ 'is-fetching': entries.isFetching, 'is-grouped': view() === 'grouped' }}
             // A refetch (refresh / range change) keeps the previous rows visible
             // (keepPreviousData) — aria-busy + a subtle dim are the only in-flight
             // cue a sighted user gets, since the first-load spinner won't fire.
@@ -1701,7 +1769,17 @@ export default function Tracking() {
                     <tr class="worklog-day-head grid-divider">
                       <th scope="rowgroup" colspan={visibleColumns().length + 1}>
                         <span class="worklog-day-date">{displayDate(day)}</span>
-                        <span class="worklog-day-total">{formatDuration(dayMinutes(day))}</span>
+                        <Show when={dayFacts(day).estimated > 0}>
+                          <span class="worklog-day-estimated">
+                            {m.worklog_day_estimated({ count: String(dayFacts(day).estimated), total: String(dayFacts(day).humanRows) })}
+                          </span>
+                        </Show>
+                        <span class="worklog-day-total">
+                          <span class="worklog-total-human">{m.worklog_total_human()} {formatDuration(dayFacts(day).human)}</span>
+                          <Show when={dayFacts(day).agent > 0}>
+                            <span class="worklog-total-agent">{m.worklog_total_agent()} {formatDuration(dayFacts(day).agent)}</span>
+                          </Show>
+                        </span>
                       </th>
                     </tr>
                     <For each={entriesByDay().get(day) ?? []}>

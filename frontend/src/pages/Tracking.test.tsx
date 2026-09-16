@@ -74,6 +74,13 @@ function mockApi(): void {
   mockApiWith([{ entry: DEFAULT_ENTRY }])
 }
 
+// The existing cases document the FLAT grid — every column on every row. The
+// grouped view is a different presentation with its own cases below, so the
+// default is pinned here rather than each test carrying the assumption.
+beforeEach(() => {
+  localStorage.setItem('tt-worklog-view', 'flat')
+})
+
 function renderTracking() {
   return renderWithProviders(() => <Tracking />)
 }
@@ -386,6 +393,18 @@ describe('Tracking (Worklog grid)', () => {
         id: 1, ticket: 'XYZ-9', date: '2026-06-16', start: '09:00', end: '10:30', customer: 1, project: 4, activity: 5,
       })),
     )
+
+    unmount()
+  })
+
+  it('the grouped view drops the date column — the day heading carries it (Befund 8)', async () => {
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    expect(container.querySelector('th[data-col-key="date"]')).toBeNull()
+    expect(container.querySelector('.worklog-day-date')).not.toBeNull()
 
     unmount()
   })
