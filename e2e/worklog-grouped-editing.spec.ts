@@ -209,9 +209,11 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
 
     // A select commits from a body-portalled popup, after which the roving cell no
     // longer says where the user was: Tab skipped the rest of the block cell and
-    // landed in the time cell.
+    // landed in the time cell. Asserted on the CELL that reports itself as editing,
+    // not on the focused element — a combobox moves focus into its portalled list,
+    // which is not inside any cell.
     await expect
-      .poll(() => page.evaluate(() => document.activeElement?.closest('td')?.getAttribute('data-col-key') ?? null))
+      .poll(() => page.locator('td[data-inline-editing]').first().getAttribute('data-col-key'))
       .toBe('context');
   });
 
@@ -235,10 +237,11 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
     await page.keyboard.press('Tab');
     await expect(page.locator('input.combobox-input').first()).toBeVisible();
     await page.locator('.combobox-content .combobox-item').first().click();
-    // The commit closes the popup and moves the edit on; once the next editor is
-    // up, any save this flow would have triggered has been issued.
-    await expect(page.locator('[data-chipselect-popup]')).toBeHidden();
-    await expect(page.locator('tr.tracking-row.is-new input.inline-editor')).toHaveCount(1);
+    // Picking with the mouse commits and closes — it does not walk on, which Tab
+    // does. Both are settled states; wait for this one, and any save this flow
+    // would have triggered has been issued by then.
+    await expect(page.locator('[data-chipselect-popup]')).toHaveCount(0);
+    await expect(page.locator('td[data-inline-editing]')).toHaveCount(0);
 
     expect(saves).toEqual([]);
   });
