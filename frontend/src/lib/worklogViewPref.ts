@@ -8,10 +8,12 @@ const STORAGE_KEY = 'tt-worklog-view'
 /**
  * `grouped` — day sections, shared context shown once per group (default).
  * `flat`    — one row per entry, every column on every row.
- * `timeline`— row height proportional to duration; READ-ONLY, a click jumps
- *             into the flat grid at that entry.
+ *
+ * A duration-proportional timeline was tried here and taken out again: the
+ * design canvas puts that idea under Übersicht as a day view, not in the
+ * worklog, and a stored 'timeline' now simply falls back to the default.
  */
-export const WORKLOG_VIEWS = ['grouped', 'flat', 'timeline'] as const
+export const WORKLOG_VIEWS = ['grouped', 'flat'] as const
 
 export type WorklogView = (typeof WORKLOG_VIEWS)[number]
 

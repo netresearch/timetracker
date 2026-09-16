@@ -1,4 +1,4 @@
-import { For, type JSX } from 'solid-js'
+import { For, Show, type JSX } from 'solid-js'
 
 import { m } from '../paraglide/messages.js'
 import { WORKLOG_VIEWS, type WorklogView } from '../lib/worklogViewPref'
@@ -19,8 +19,6 @@ export default function WorklogViewSwitch(props: {
         return m.worklog_view_grouped()
       case 'flat':
         return m.worklog_view_flat()
-      case 'timeline':
-        return m.worklog_view_timeline()
     }
   }
 
@@ -30,8 +28,6 @@ export default function WorklogViewSwitch(props: {
         return m.worklog_view_grouped_hint()
       case 'flat':
         return m.worklog_view_flat_hint()
-      case 'timeline':
-        return m.worklog_view_timeline_hint()
     }
   }
 
@@ -59,6 +55,22 @@ export default function WorklogViewSwitch(props: {
     el?.focus()
   }
 
+  // Each option carries an icon as well as its label: the sidebar collapses to a
+  // 3.5rem rail where only icons fit, and a text-only control simply breaks
+  // there. The label stays in the markup and is hidden by CSS on the rail, so
+  // assistive technology keeps reading the words.
+  const icon = (view: WorklogView): JSX.Element => (
+    <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <Show
+        when={view === 'grouped'}
+        fallback={<><path d="M4 7h16M4 12h16M4 17h16" /></>}
+      >
+        {/* Grouped: a heading with its rows beneath it, twice. */}
+        <><path d="M4 5h16" /><path d="M7 9h13M7 12h13" /><path d="M4 16h16" /><path d="M7 20h13" /></>
+      </Show>
+    </svg>
+  )
+
   return (
     <div class="worklog-view-switch" role="radiogroup" aria-label={m.worklog_view_label()} onKeyDown={onKeyDown}>
       <For each={WORKLOG_VIEWS}>
@@ -71,10 +83,11 @@ export default function WorklogViewSwitch(props: {
             aria-checked={props.value === view ? 'true' : 'false'}
             // Only the checked option is a tab stop — the group is one stop.
             tabindex={props.value === view ? 0 : -1}
-            title={description(view)}
+            title={`${label(view)} — ${description(view)}`}
             onClick={() => props.onChange(view)}
           >
-            {label(view)}
+            {icon(view)}
+            <span class="worklog-view-text">{label(view)}</span>
           </button>
         )}
       </For>

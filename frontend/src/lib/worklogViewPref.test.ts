@@ -13,9 +13,17 @@ describe('worklogViewPref', () => {
   })
 
   it('round-trips a stored view', () => {
-    setWorklogView('timeline')
+    setWorklogView('flat')
 
-    expect(getWorklogView()).toBe('timeline')
+    expect(getWorklogView()).toBe('flat')
+  })
+
+  it('falls back when a view that no longer exists is stored', () => {
+    // 'timeline' shipped for a while and may sit in a browser; it must not brick
+    // the page now that the view is gone.
+    localStorage.setItem('tt-worklog-view', 'timeline')
+
+    expect(getWorklogView()).toBe(DEFAULT_WORKLOG_VIEW)
   })
 
   it('falls back when the stored value is not a known view', () => {

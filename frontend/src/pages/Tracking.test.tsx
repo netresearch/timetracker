@@ -341,6 +341,29 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('opens the preset menu from the field itself and applies a pick', async () => {
+    // The field and the menu are one control: there is no separate toggle button,
+    // so a press in the field has to open the presets or they are unreachable by
+    // mouse.
+    mockApi()
+    const { getByRole, queryByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    expect(queryByRole('button', { name: /Letzte 7 Tage|Last 7 days/ })).toBeNull()
+
+    fireEvent.pointerDown(getByRole('combobox'))
+
+    // The panel is positioned on the next frame (it is fixed, to escape the
+    // sidebar rail), and stays visibility:hidden until then.
+    const preset = await waitFor(() => getByRole('button', { name: /Letzte 7 Tage|Last 7 days/ }))
+    fireEvent.click(preset)
+
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/getData/days/7'))
+    expect((getByRole('combobox') as HTMLInputElement).value).toBe('7')
+
+    unmount()
+  })
+
   it('accepts a freetext (non-preset) day range and refetches it', async () => {
     mockApi()
     const { getByRole, unmount } = renderTracking()

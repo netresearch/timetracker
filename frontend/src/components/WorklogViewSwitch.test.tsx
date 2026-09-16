@@ -3,7 +3,7 @@ import { createSignal } from 'solid-js'
 import { describe, expect, it } from 'vitest'
 
 import WorklogViewSwitch from './WorklogViewSwitch'
-import type { WorklogView } from '../lib/worklogViewPref'
+import { WORKLOG_VIEWS, type WorklogView } from '../lib/worklogViewPref'
 
 function renderSwitch(initial: WorklogView = 'grouped') {
   const [view, setView] = createSignal<WorklogView>(initial)
@@ -13,11 +13,11 @@ function renderSwitch(initial: WorklogView = 'grouped') {
 }
 
 describe('WorklogViewSwitch', () => {
-  it('exposes the three views as a radiogroup with one checked', () => {
+  it('exposes every view as a radiogroup with one checked', () => {
     const { getAllByRole } = renderSwitch()
 
     const options = getAllByRole('radio')
-    expect(options).toHaveLength(3)
+    expect(options).toHaveLength(WORKLOG_VIEWS.length)
     expect(options.filter((el) => el.getAttribute('aria-checked') === 'true')).toHaveLength(1)
   })
 
@@ -45,15 +45,12 @@ describe('WorklogViewSwitch', () => {
     fireEvent.keyDown(group, { key: 'ArrowRight' })
     expect(view()).toBe('flat')
 
-    fireEvent.keyDown(group, { key: 'ArrowRight' })
-    expect(view()).toBe('timeline')
-
     // Past the end wraps to the first, so the group is never a dead end.
     fireEvent.keyDown(group, { key: 'ArrowRight' })
     expect(view()).toBe('grouped')
 
     fireEvent.keyDown(group, { key: 'ArrowLeft' })
-    expect(view()).toBe('timeline')
+    expect(view()).toBe('flat')
   })
 
   it('ignores keys that are not arrows', () => {

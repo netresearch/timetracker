@@ -17,7 +17,6 @@ import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklogViewPref'
 import { getWorklogSort, setWorklogSort, WORKLOG_SORTS, type WorklogSort } from '../lib/worklogSortPref'
 import WorklogViewSwitch from '../components/WorklogViewSwitch'
-import WorklogTimeline from '../components/WorklogTimeline'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
@@ -426,17 +425,6 @@ export default function Tracking() {
     setViewSignal(next)
     setWorklogView(next)
   }
-  // Timeline is read-only by design, so activating an entry there hands it to the
-  // grid: switch to the flat view (every column present, nothing suppressed) and
-  // put the caret in that row, so the jump lands somewhere you can actually edit.
-  const jumpToEntry = (entryId: number): void => {
-    chooseView('flat')
-    queueMicrotask(() => {
-      const cell = document.querySelector<HTMLElement>(`td[data-row-id="${entryId}"][data-col-key="description"]`)
-      cell?.scrollIntoView({ block: 'center' })
-      cell?.focus()
-    })
-  }
   // Preset-range combobox: the menu always lists every preset (unlike a native
   // datalist, which filters by the typed value and forced the user to clear the
   // field to pick another range). Free typing still applies a custom day count.
@@ -444,12 +432,35 @@ export default function Tracking() {
   // Active option for keyboard navigation (aria-activedescendant), -1 = none.
   const [daysActiveIdx, setDaysActiveIdx] = createSignal(-1)
   let daysComboRef: HTMLDivElement | undefined
+  let daysInputRef: HTMLInputElement | undefined
   const openDaysMenu = (): void => {
     const current = DAYS_OPTIONS.indexOf(days() as (typeof DAYS_OPTIONS)[number])
     setDaysActiveIdx(Math.max(0, current))
     setDaysMenuOpen(true)
   }
   const closeDaysMenu = (): void => { setDaysMenuOpen(false); setDaysActiveIdx(-1) }
+  // The preset menu is position:fixed so it escapes the sidebar rail, which clips
+  // an absolutely-positioned panel to its 3.5rem width. Same pattern as the row
+  // actions popup: measured from the field's rect on the next frame, because at
+  // ref time the menu has no box yet.
+  const positionDaysMenu = (menu: HTMLElement): void => {
+    menu.style.visibility = 'hidden'
+    requestAnimationFrame(() => {
+      if (daysComboRef === undefined || !menu.isConnected) {
+        return
+      }
+      const anchorRect = daysComboRef.getBoundingClientRect()
+      const box = menu.getBoundingClientRect()
+      const gap = 2
+      const left = Math.max(4, Math.min(anchorRect.left, window.innerWidth - box.width - 4))
+      const below = anchorRect.bottom + gap
+      const flipUp = below + box.height > window.innerHeight && anchorRect.top - box.height - gap >= 0
+      menu.style.left = `${left}px`
+      menu.style.top = `${flipUp ? anchorRect.top - box.height - gap : below}px`
+      menu.style.visibility = 'visible'
+    })
+  }
+  const toggleDaysMenu = (): void => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }
   const chooseDays = (value: number): void => { applyDays(value); closeDaysMenu() }
   // The collapsed row-actions menu (kebab) — one open at a time, keyed by row id.
   // Opens on hover AND on click/tap (touch + keyboard have no hover; WCAG 1.4.13:
@@ -517,6 +528,19 @@ export default function Tracking() {
       window.removeEventListener('resize', dismiss)
     })
   })
+  // A fixed panel would strand from its field on scroll or resize.
+  createEffect(() => {
+    if (!daysMenuOpen()) {
+      return
+    }
+    const dismiss = (): void => closeDaysMenu()
+    window.addEventListener('scroll', dismiss, { capture: true, passive: true })
+    window.addEventListener('resize', dismiss, { passive: true })
+    onCleanup(() => {
+      window.removeEventListener('scroll', dismiss, { capture: true })
+      window.removeEventListener('resize', dismiss)
+    })
+  })
   onMount(() => {
     const onDocPointer = (event: PointerEvent): void => {
       if (daysComboRef !== undefined && !daysComboRef.contains(event.target as Node)) {
@@ -531,6 +555,44 @@ export default function Tracking() {
     }
     document.addEventListener('pointerdown', onDocPointer)
     onCleanup(() => document.removeEventListener('pointerdown', onDocPointer))
+  })
+  // The grouped grid scrolls inside itself so its two header levels have a real
+  // scrolling ancestor — which means its box has to end where the viewport does.
+  // A fixed offset cannot know where it starts: the side layout put the grid 120px
+  // higher than the top layout and left that much dead space beneath it. Measured
+  // instead, from the scroller's own position in the document (not the viewport,
+  // so a page that still scrolls cannot feed its own growth back in).
+  const fitGridToViewport = (): void => {
+    const el = scrollEl()
+    if (el === undefined) {
+      return
+    }
+    const top = el.getBoundingClientRect().top + window.scrollY
+    // A little room under the card so its shadow isn't cut off by the edge.
+    const available = Math.round(window.innerHeight - top - 16)
+    el.style.setProperty('--worklog-grid-max', `${Math.max(240, available)}px`)
+  }
+  createEffect(() => {
+    // Re-measure whenever something that sits above the grid may have changed
+    // height (the view switch shows/hides the sort row, the range moves rows).
+    view()
+    days()
+    const el = scrollEl()
+    if (el === undefined) {
+      return
+    }
+    fitGridToViewport()
+    window.addEventListener('resize', fitGridToViewport)
+    // The sidebar collapsing, the toolbar wrapping and a font-size change move the
+    // grid's top edge without firing a resize; the observer catches all of them.
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(() => fitGridToViewport())
+    if (el.parentElement !== null) {
+      observer?.observe(el.parentElement)
+    }
+    onCleanup(() => {
+      window.removeEventListener('resize', fitGridToViewport)
+      observer?.disconnect()
+    })
   })
   const entries = useQuery(() => trackingEntriesQuery(days()))
   const customers = useQuery(trackingCustomersQuery)
@@ -1855,16 +1917,6 @@ export default function Tracking() {
   }
 
   // Befund 7: "+ Eintrag" is the only primary action and stays with the content.
-  // Only what names the page stays with the content.
-  const renderPageTitle = (): JSX.Element => (
-    <div class="tracking-header">
-      <div class="tracking-header-title">
-        <h2>{m.tracking_title()}</h2>
-        <span class="num tracking-header-range">{m.tracking_days_option({ count: String(days()) })}</span>
-      </div>
-    </div>
-  )
-
   // Everything one does TO or WITH the grid — add, the key that explains the
   // bars, the range, the tools and the view — belongs together in the menu when
   // there is one. In the top-bar layout there is no menu, so it stays in the
@@ -1872,14 +1924,6 @@ export default function Tracking() {
   const renderMenuTools = (): JSX.Element => (
     <div class="tracking-toolbar">
       <div class="tracking-header-actions">
-        {/* Befund 7 removes the legends from under the table; the canvas keeps a
-            compact key beside the primary action, where it explains the bars at
-            the moment you first look at them. */}
-        <span class="tracking-key" aria-hidden="true">
-          <span class="tracking-key-item"><span class="duration-bar tracking-key-bar" /> {m.worklog_total_human()}</span>
-          <span class="tracking-key-item"><span class="duration-bar is-agent tracking-key-bar" /> {m.worklog_total_agent()}</span>
-          <span class="tracking-key-item"><span class="duration-estimated">≈</span> {m.worklog_key_estimated()}</span>
-        </span>
           <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
             <PlusIcon />
           </button>
@@ -1890,19 +1934,25 @@ export default function Tracking() {
           <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_tools()}</p>
           {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
           <Show when={canBulkEnter()}>
-            <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
+            <button type="button" class="action-button worklog-tool" title={m.extras_title()} onClick={() => setBulkOpen(true)}>
+              <ToolsIcon />
+              <span class="worklog-view-text">{m.extras_title()}</span>
+            </button>
           </Show>
           {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
           {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
               still act on the keyboard-cursor row via the global shortcut handler. */}
-          <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
-          {/* Freetext + always-full preset menu: type any whole number of days
-              (applyDays clamps + persists), or pick a preset — the menu always lists
-              ALL presets regardless of what's typed, so switching ranges never needs
-              clearing the field first. */}
+          <a class="action-button worklog-tool" href={exportHref()} aria-keyshortcuts="Alt+X" title={m.tracking_export()}>
+            <DownloadIcon />
+            <span class="worklog-view-text">{m.tracking_export()}</span>
+          </a>
+          {/* One control instead of four: the field takes any whole number of days
+              (applyDays clamps + persists) and the same click opens the preset menu,
+              which always lists ALL presets regardless of what's typed. The unit and
+              the chevron sit inside the field — the ZEITRAUM heading above already
+              says what the number counts, so a separate "Zeige" label said nothing. */}
           <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_range()}</p>
           <div class="tracking-days">
-            <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
             <div class="days-combo" ref={(el) => { daysComboRef = el }}>
               <input
                 id="tracking-days-input"
@@ -1912,10 +1962,12 @@ export default function Tracking() {
                 autocomplete="off"
                 class="tracking-days-input"
                 role="combobox"
-                aria-labelledby="tracking-days-lbl"
+                ref={(el) => { daysInputRef = el }}
+                aria-label={m.tracking_days_field()}
                 aria-expanded={daysMenuOpen()}
                 aria-controls="tracking-days-menu"
                 value={String(days())}
+                onPointerDown={() => { toggleDaysMenu() }}
                 onChange={(event) => {
                   const typed = Number(event.currentTarget.value.trim())
                   if (Number.isFinite(typed) && typed >= 1) {
@@ -1942,19 +1994,23 @@ export default function Tracking() {
                   }
                 }}
               />
-              <button
-                type="button"
-                class="days-combo-toggle"
-                tabindex="-1"
-                aria-label={m.tracking_days_presets()}
-                aria-expanded={daysMenuOpen()}
-                aria-controls="tracking-days-menu"
-                onClick={() => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }}
+              {/* The unit and the chevron are the field's own adornment, not controls:
+                  they carry no label and no tab stop, and a press on them does what a
+                  press on the field does — focus it and open the menu. */}
+              <span
+                class="days-combo-adornment"
+                aria-hidden="true"
+                onPointerDown={(event) => {
+                  event.preventDefault()
+                  daysInputRef?.focus()
+                  toggleDaysMenu()
+                }}
               >
+                <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-              </button>
+              </span>
               <Show when={daysMenuOpen()}>
-                <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
+                <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_field()} ref={positionDaysMenu}>
                   <For each={DAYS_OPTIONS}>
                     {(option, index) => (
                       <li>
@@ -1975,7 +2031,6 @@ export default function Tracking() {
                 </ul>
               </Show>
             </div>
-            <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
           </div>
 
           {/* View switch — the worklog's three presentations of the same rows.
@@ -1997,8 +2052,19 @@ export default function Tracking() {
                   class="worklog-view-option"
                   aria-checked={sort() === option ? 'true' : 'false'}
                   tabindex={sort() === option ? 0 : -1}
+                  title={option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context()}
                   onClick={() => chooseSort(option)}
-                >{option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context()}</button>
+                >
+                  <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <Show
+                      when={option === 'time'}
+                      fallback={<><path d="M4 21V6l7-3 7 3v15" /><path d="M4 21h16M9 10h.01M9 14h.01M14 10h.01M14 14h.01" /></>}
+                    >
+                      <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>
+                    </Show>
+                  </svg>
+                  <span class="worklog-view-text">{option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context()}</span>
+                </button>
               )}
             </For>
           </div>
@@ -2034,7 +2100,6 @@ export default function Tracking() {
           one instance, never two: a mirrored copy would duplicate every label and
           make the focus order ambiguous. In the default top-bar layout there is no
           sidebar, so it stays here rather than disappearing. */}
-      {renderPageTitle()}
       <Show when={navSideLayout() && toolsSlot()} fallback={renderMenuTools()}>
         <Portal mount={toolsSlot()!}>{renderMenuTools()}</Portal>
       </Show>
@@ -2044,15 +2109,6 @@ export default function Tracking() {
           last-good grid (and the user's drafts) visible+dimmed behind it, not a
           jarring "load error". A genuine error (session OK) still shows the fallback. */}
       <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
-        <Show when={view() !== 'timeline'} fallback={
-          <WorklogTimeline
-            days={groupKeys()}
-            entriesFor={(day) => entriesByGroup().get(day) ?? []}
-            formatDay={displayDate}
-            formatTotal={(day) => `${m.worklog_total_human()} ${formatDuration(groupFacts(day).human)}`}
-            onJump={jumpToEntry}
-          />
-        }>
         <div class="table-scroll" ref={setScrollEl}>
           <table
             class="data-table tracking-table"
@@ -2128,7 +2184,6 @@ export default function Tracking() {
             </Show>
           </table>
         </div>
-        </Show>
 
         <Show when={entries.isLoading}>
           <p class="tracking-loading">{m.app_loading()}</p>
