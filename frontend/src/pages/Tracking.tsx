@@ -566,44 +566,6 @@ export default function Tracking() {
     document.addEventListener('pointerdown', onDocPointer)
     onCleanup(() => document.removeEventListener('pointerdown', onDocPointer))
   })
-  // The grouped grid scrolls inside itself so its two header levels have a real
-  // scrolling ancestor — which means its box has to end where the viewport does.
-  // A fixed offset cannot know where it starts: the side layout put the grid 120px
-  // higher than the top layout and left that much dead space beneath it. Measured
-  // instead, from the scroller's own position in the document (not the viewport,
-  // so a page that still scrolls cannot feed its own growth back in).
-  const fitGridToViewport = (): void => {
-    const el = scrollEl()
-    if (el === undefined) {
-      return
-    }
-    const top = el.getBoundingClientRect().top + window.scrollY
-    // A little room under the card so its shadow isn't cut off by the edge.
-    const available = Math.round(window.innerHeight - top - 16)
-    el.style.setProperty('--worklog-grid-max', `${Math.max(240, available)}px`)
-  }
-  createEffect(() => {
-    // Re-measure whenever something that sits above the grid may have changed
-    // height (the view switch shows/hides the sort row, the range moves rows).
-    view()
-    days()
-    const el = scrollEl()
-    if (el === undefined) {
-      return
-    }
-    fitGridToViewport()
-    window.addEventListener('resize', fitGridToViewport)
-    // The sidebar collapsing, the toolbar wrapping and a font-size change move the
-    // grid's top edge without firing a resize; the observer catches all of them.
-    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(() => fitGridToViewport())
-    if (el.parentElement !== null) {
-      observer?.observe(el.parentElement)
-    }
-    onCleanup(() => {
-      window.removeEventListener('resize', fitGridToViewport)
-      observer?.disconnect()
-    })
-  })
   const entries = useQuery(() => trackingEntriesQuery(days()))
   const customers = useQuery(trackingCustomersQuery)
   const projects = useQuery(trackingProjectsQuery)
@@ -660,6 +622,45 @@ export default function Tracking() {
   // the <Show>-wrapped table unmounts and remounts (e.g. after a load error
   // clears), rather than staying bound to a detached element.
   const [scrollEl, setScrollEl] = createSignal<HTMLDivElement>()
+
+  // The grouped grid scrolls inside itself so its two header levels have a real
+  // scrolling ancestor — which means its box has to end where the viewport does.
+  // A fixed offset cannot know where it starts: the side layout put the grid 120px
+  // higher than the top layout and left that much dead space beneath it. Measured
+  // instead, from the scroller's own position in the document (not the viewport,
+  // so a page that still scrolls cannot feed its own growth back in).
+  const fitGridToViewport = (): void => {
+    const el = scrollEl()
+    if (el === undefined) {
+      return
+    }
+    const top = el.getBoundingClientRect().top + window.scrollY
+    // A little room under the card so its shadow isn't cut off by the edge.
+    const available = Math.round(window.innerHeight - top - 16)
+    el.style.setProperty('--worklog-grid-max', `${Math.max(240, available)}px`)
+  }
+  createEffect(() => {
+    // Re-measure whenever something that sits above the grid may have changed
+    // height (the view switch shows/hides the sort row, the range moves rows).
+    view()
+    days()
+    const el = scrollEl()
+    if (el === undefined) {
+      return
+    }
+    fitGridToViewport()
+    window.addEventListener('resize', fitGridToViewport)
+    // The sidebar collapsing, the toolbar wrapping and a font-size change move the
+    // grid's top edge without firing a resize; the observer catches all of them.
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(() => fitGridToViewport())
+    if (el.parentElement !== null) {
+      observer?.observe(el.parentElement)
+    }
+    onCleanup(() => {
+      window.removeEventListener('resize', fitGridToViewport)
+      observer?.disconnect()
+    })
+  })
   // The grid's move handle — used to restore cell focus after a row is deleted.
   let gridHandle: GridMoveHandle | null = null
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])

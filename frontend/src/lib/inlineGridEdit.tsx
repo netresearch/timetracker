@@ -485,6 +485,16 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     return config.isInlineEditable(colKey) ? [colKey] : []
   }
 
+  // One flat sequence of (cell, field) pairs in a row's reading order, so a field
+  // inside a composite cell takes its turn like any other.
+  const editTargets = (rowId: number): { colKey: string; field: string }[] =>
+    Array.from(tableEl?.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`) ?? [])
+      .flatMap((td) => {
+        const colKey = td.getAttribute('data-col-key')
+
+        return colKey === null ? [] : fieldsOfCell(colKey, rowId).map((field) => ({ colKey, field }))
+      })
+
   function moveAndEdit(direction: 'left' | 'right', from?: { rowId: number; colKey: string }): void {
     // Track the roving tab stop (the single td[tabindex="0"] that setActive owns), NOT
     // document.activeElement: committing a text editor unmounts its <input> and drops
@@ -528,12 +538,19 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
         return
       }
     }
-    // Nothing editable that way. On a row that is still being filled in, Tab
-    // continues the guided fill instead of dropping out of the grid: the fields a
-    // new row still needs may well lie to the LEFT of where it opened (the worklog
-    // opens a new row at its ticket, which the grouped layout places last).
-    if (open !== null) {
-      moveToNextRequired(open.rowId, open.colKey)
+    // Nothing editable that way. On a row that has never been saved, Tab wraps to
+    // the other end of the SAME row rather than dropping out of the grid: the
+    // worklog opens a new row on its ticket, which the grouped layout places last,
+    // so every other field of the row lies behind it. A cycle through the row's
+    // own fields is predictable; jumping to "whatever is still missing" is not.
+    const row = open === null ? undefined : rowById(open.rowId)
+    if (open !== null && row !== undefined && config.isNewRow?.(row) === true) {
+      const targets = editTargets(open.rowId)
+      const target = direction === 'right' ? targets[0] : targets[targets.length - 1]
+      if (target !== undefined && target.field !== open.colKey) {
+        moveHandle?.focusCell(open.rowId, target.colKey)
+        beginEdit(open.rowId, target.field)
+      }
     }
   }
 
@@ -560,14 +577,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     if (invalid.size === 0) {
       return false
     }
-    // One flat sequence of (cell, field) pairs in the row's reading order, so a
-    // field inside a composite cell takes its turn like any other.
-    const targets = Array.from(tableEl.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`))
-      .flatMap((td) => {
-        const colKey = td.getAttribute('data-col-key')
-
-        return colKey === null ? [] : fieldsOfCell(colKey, rowId).map((field) => ({ colKey, field }))
-      })
+    const targets = editTargets(rowId)
     const from = targets.findIndex((target) => target.field === fromColKey)
     // Forward from the current field; a row that has never been saved may also wrap
     // once, because its remaining fields can sit before the one it opened in.

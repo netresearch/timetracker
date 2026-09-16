@@ -127,6 +127,49 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
     expect(box!.width).toBeGreaterThan(10);
   });
 
+  test('leaving the worklog and coming back keeps the page interactive', async ({ page }) => {
+    const crashes: string[] = [];
+    page.on('pageerror', (error) => crashes.push(String(error)));
+
+    await useGroupedView(page);
+    await page.locator('a.main-nav-link[data-nav="month"]').click();
+    await page.waitForURL(/\/ui\/month/, { timeout: 10000 });
+    await page.locator('a.main-nav-link[data-nav="tracking"]').click();
+    await page.waitForSelector('table.tracking-table.is-grouped', { timeout: 10000 });
+
+    // The grid's height is measured in an effect. Placed above the signal it reads,
+    // it threw "Cannot access … before initialization" on the SECOND mount, which
+    // aborted the route's render and left the whole app dead to clicks until a
+    // reload — no error was visible on the page itself.
+    expect(crashes).toEqual([]);
+    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+    await expect(page.locator('tr.tracking-row.is-new')).toBeVisible();
+  });
+
+  test('Tab cycles through every field of a new row', async ({ page }) => {
+    await useGroupedView(page);
+
+    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+    await expect(page.locator('tr.tracking-row.is-new')).toBeVisible();
+
+    const focusedField = (): Promise<string> =>
+      page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? '');
+
+    const walk: string[] = [];
+    for (let step = 0; step < 8; step += 1) {
+      walk.push(await focusedField());
+      await page.keyboard.press('Tab');
+      await page.waitForTimeout(250);
+    }
+
+    // The row opens on its ticket, which this layout places in the last editable
+    // cell — Tab used to leave the table on the first press, so customer, project,
+    // activity, start and end could not be reached at all. Every field takes its
+    // turn now, and the walk closes back on the one it started from.
+    expect(new Set(walk).size).toBeGreaterThanOrEqual(6);
+    expect(await focusedField()).toBe(walk[0]);
+  });
+
   test('a new row is not saved before it can be booked', async ({ page }) => {
     await useGroupedView(page);
 
