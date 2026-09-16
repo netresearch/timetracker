@@ -5987,3 +5987,24 @@ tr:hover .worklog-ticket.is-empty,
 tr:focus-within .worklog-ticket.is-empty {
   opacity: 1;
 }
+
+/* In the menu the ZEITRAUM heading already says what the control is for, so the
+   "Zeige" label is redundant there — it stays in the tool line, which has no
+   heading. The field holds at most a few digits; sizing it for them keeps the
+   row compact instead of stretching a two-character value across the column. */
+[data-nav-layout='side'] #sidebar-tools-slot #tracking-days-lbl {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-days-input {
+  inline-size: 4.5ch;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-days {
+  gap: 0.35rem;
+}

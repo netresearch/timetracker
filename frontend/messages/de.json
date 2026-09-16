@@ -753,5 +753,6 @@
   "worklog_add_ticket": "Ticket hinzufügen",
   "worklog_sort_label": "Sortierung",
   "worklog_sort_time": "Nach Zeit",
-  "worklog_sort_context": "Nach Kunde · Projekt"
+  "worklog_sort_context": "Nach Kunde · Projekt",
+  "worklog_col_day_activity": "Tag · Tätigkeit"
 }

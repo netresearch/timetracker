@@ -270,8 +270,13 @@ const COMPOSITE_PARTS: Record<string, string[]> = {
   description: ['description', 'ticket'],
 }
 
-function blockKey(entry: TrackingEntry): string {
-  return `${entry.customer ?? ''}/${entry.project ?? ''}/${entry.activity ?? ''}`
+// Two entries share a block when the dimension the block column shows is the
+// same. Inside a day card that is customer/project/activity; inside a customer
+// card those are already the card's own name, so the block is the day.
+function blockKey(entry: TrackingEntry, byContext: boolean): string {
+  return byContext
+    ? (entry.date ?? '')
+    : `${entry.customer ?? ''}/${entry.project ?? ''}/${entry.activity ?? ''}`
 }
 
 // Non-colour cue for the derived row cue (WCAG 1.4.1 / 1.3.1).
@@ -630,54 +635,62 @@ export default function Tracking() {
     return rows().filter((entry) => !foldedAway.has(num(entry.id)))
   })
 
-  const dayKeys = createMemo<string[]>(() => {
-    const seen: string[] = []
+  // What a card is, and what the block column inside it shows, follow the chosen
+  // order: by time the card is a DAY and the block is the context; by context the
+  // card is a CUSTOMER AND PROJECT and the block is the day. Either way the card
+  // header names the thing all its rows share, and the block column names what
+  // varies one level down — so the grouping always says something true rather
+  // than "these happened to be adjacent".
+  const groupKeyOf = (entry: TrackingEntry): string =>
+    sort() === 'context'
+      ? `${relationLabel(entry, 'customer')} · ${relationLabel(entry, 'project')}`
+      : (entry.date ?? '')
+
+  const groupKeys = createMemo<string[]>(() => {
+    const keys: string[] = []
     for (const entry of visibleRows()) {
-      const day = entry.date ?? ''
-      if (seen[seen.length - 1] !== day) {
-        seen.push(day)
+      const key = groupKeyOf(entry)
+      if (!keys.includes(key)) {
+        keys.push(key)
       }
     }
 
-    return seen
+    // By time the server's order (newest first) already carries the meaning; by
+    // context the cards are named things, so they read alphabetically.
+    return sort() === 'context' ? [...keys].sort((a, b) => a.localeCompare(b)) : keys
   })
-  const entriesByDay = createMemo<Map<string, TrackingEntry[]>>(() => {
+
+  const entriesByGroup = createMemo<Map<string, TrackingEntry[]>>(() => {
     const map = new Map<string, TrackingEntry[]>()
     for (const entry of visibleRows()) {
-      const day = entry.date ?? ''
-      const list = map.get(day)
+      const key = groupKeyOf(entry)
+      const list = map.get(key)
       if (list === undefined) {
-        map.set(day, [entry])
+        map.set(key, [entry])
         continue
       }
 
       list.push(entry)
     }
 
-    // Ordering by context gathers a day's work on one thing into one block,
-    // however scattered it was across the day — the blocks then mean something
-    // other than "these happened to be adjacent". Within a block the entries
-    // keep their time order, so a block still reads as a sequence. The sort is
-    // stable, so time order is exactly what the server sent.
-    if (sort() === 'context') {
-      const label = (entry: TrackingEntry): string => contextLabel(entry)
-      for (const list of map.values()) {
-        list.sort((a, b) => label(a).localeCompare(label(b)))
-      }
-    }
-
     return map
   })
-  // Befund 4: the day totals belong in the day header, and human and agent time
-  // are never summed together (ADR-025 §7) — a machine's wall-clock is not
-  // attendance. Befund 6: "estimated" is a per-day count there instead of a badge
-  // on almost every row, which signalled nothing by being everywhere.
-  const dayFacts = (day: string): { human: number; agent: number; estimated: number; humanRows: number } => {
+
+  // The card's own heading. A day card shows the date; a customer card shows
+  // what it is called.
+  const groupLabel = (key: string): string => (sort() === 'context' ? key : displayDate(key))
+
+  const groupFacts = (key: string): { human: number; agent: number; estimated: number; humanRows: number } => {
     let human = 0
     let agent = 0
     let estimated = 0
     let humanRows = 0
-    for (const entry of entriesByDay().get(day) ?? []) {
+    for (const entry of entriesByGroup().get(key) ?? []) {
+      const partner = pairedAgentOf(entry)
+      if (partner !== undefined) {
+        agent += partner.durationMinutes
+      }
+
       if (entry.source === 'agent') {
         agent += entry.durationMinutes
         continue
@@ -696,7 +709,14 @@ export default function Tracking() {
   // Day-break/pause/overlap cues, derived from the rendered rows (see
   // deriveRowCues) instead of the persisted `class` — so they are correct for
   // future-dated and never-saved-through-the-app entries too.
-  const rowCues = createMemo<Map<number, RowCue>>(() => deriveRowCues(rows()))
+  // Day break, pause and overlap are statements about ADJACENCY IN TIME: "this
+  // row starts after the previous one ended". Ordered by customer and project the
+  // neighbouring row is no longer the neighbouring minute, so the cues would
+  // decorate pairs that never met — worse than absent, because a red edge still
+  // reads as a warning. They are withheld for that order; the time order, where
+  // they mean what they say, keeps them.
+  const timeOrdered = (): boolean => !(view() === 'grouped' && sort() === 'context')
+  const rowCues = createMemo<Map<number, RowCue>>(() => (timeOrdered() ? deriveRowCues(rows()) : new Map()))
   // Local today (client clock, per Month.tsx convention) — future entries are
   // days strictly after it. Only relevant when the user opted into show-future.
   const todayIso = isoDate(new Date())
@@ -796,7 +816,11 @@ export default function Tracking() {
     // bars. The date lives in the day heading, and a ticket appears under its
     // description rather than in a column that was empty in every row.
     if (view() === 'grouped') {
-      return GROUPED_COLUMNS
+      // The block column names what it actually shows, which the order decides —
+      // a header reading "Kunde · Projekt" over a column of dates is just wrong.
+      return GROUPED_COLUMNS.map((col) => (col.key === 'context'
+        ? { ...col, label: (): string => (sort() === 'context' ? m.worklog_col_day_activity() : m.worklog_col_context()) }
+        : col))
     }
 
     return hasExtTicket() ? COLUMNS : COLUMNS.filter((col) => col.key !== 'extTicket')
@@ -1448,9 +1472,6 @@ export default function Tracking() {
       .map((value) => options.find((option) => String(option.value) === String(value))?.label ?? String(value))
       .join(', ')
   }
-  const contextLabel = (entry: TrackingEntry): string =>
-    `${relationLabel(entry, 'customer')}/${relationLabel(entry, 'project')}/${relationLabel(entry, 'activity')}`
-
   const groupedCell = (entry: TrackingEntry, colKey: string, startsBlock: () => boolean): JSX.Element => {
     const row = editor.overlayRow(entry)
     const id = num(entry.id)
@@ -1518,6 +1539,17 @@ export default function Tracking() {
       }
 
       const label = (key: string): string => relationLabel(entry, key)
+
+      // A customer card already names its customer and project, so its block
+      // column states the day and the activity instead — what still varies there.
+      if (sort() === 'context') {
+        return (
+          <span class="worklog-block">
+            <span class="worklog-block-project num">{displayDate(str(row.date))}</span>
+            <span class="worklog-block-meta">{part('activity', () => label('activity'))}</span>
+          </span>
+        )
+      }
 
       return (
         <span class="worklog-block">
@@ -1648,7 +1680,9 @@ export default function Tracking() {
                   const startsBlock = (): boolean => {
                     const before = previous?.()
 
-                    return before === undefined || blockKey(before) !== blockKey(entry)
+                    const byContext = sort() === 'context'
+
+                    return before === undefined || blockKey(before, byContext) !== blockKey(entry, byContext)
                   }
 
                   return (
@@ -2012,10 +2046,10 @@ export default function Tracking() {
       <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
         <Show when={view() !== 'timeline'} fallback={
           <WorklogTimeline
-            days={dayKeys()}
-            entriesFor={(day) => entriesByDay().get(day) ?? []}
+            days={groupKeys()}
+            entriesFor={(day) => entriesByGroup().get(day) ?? []}
             formatDay={displayDate}
-            formatTotal={(day) => `${m.worklog_total_human()} ${formatDuration(dayFacts(day).human)}`}
+            formatTotal={(day) => `${m.worklog_total_human()} ${formatDuration(groupFacts(day).human)}`}
             onJump={jumpToEntry}
           />
         }>
@@ -2061,8 +2095,8 @@ export default function Tracking() {
                   keeps working on cellIndex. The day heading is a rowgroup header
                   row marked grid-divider, so keyboard nav skips it while it stays
                   in the a11y tree. */}
-              <For each={dayKeys()}>
-                {(day) => (
+              <For each={groupKeys()}>
+                {(key) => (
                   <tbody class="worklog-day">
                     <tr class="worklog-day-head grid-divider">
                       <th scope="rowgroup" colspan={visibleColumns().length + 1}>
@@ -2070,23 +2104,23 @@ export default function Tracking() {
                             on a <th> stops it being a table-cell, and the colspan is
                             then ignored — the heading collapsed to column one. */}
                         <span class="worklog-day-headline">
-                        <span class="worklog-day-date">{displayDate(day)}</span>
-                        <Show when={dayFacts(day).estimated > 0}>
+                        <span class="worklog-day-date">{groupLabel(key)}</span>
+                        <Show when={groupFacts(key).estimated > 0}>
                           <span class="worklog-day-estimated">
-                            {m.worklog_day_estimated({ count: String(dayFacts(day).estimated), total: String(dayFacts(day).humanRows) })}
+                            {m.worklog_day_estimated({ count: String(groupFacts(key).estimated), total: String(groupFacts(key).humanRows) })}
                           </span>
                         </Show>
                         <span class="worklog-day-total">
-                          <span class="worklog-total-human">{m.worklog_total_human()} {formatDuration(dayFacts(day).human)}</span>
-                          <Show when={dayFacts(day).agent > 0}>
-                            <span class="worklog-total-agent">{m.worklog_total_agent()} {formatDuration(dayFacts(day).agent)}</span>
+                          <span class="worklog-total-human">{m.worklog_total_human()} {formatDuration(groupFacts(key).human)}</span>
+                          <Show when={groupFacts(key).agent > 0}>
+                            <span class="worklog-total-agent">{m.worklog_total_agent()} {formatDuration(groupFacts(key).agent)}</span>
                           </Show>
                         </span>
                         </span>
                       </th>
                     </tr>
-                    <For each={entriesByDay().get(day) ?? []}>
-                      {(entry, index) => renderRow(entry, () => (index() > 0 ? (entriesByDay().get(day) ?? [])[index() - 1] : undefined))}
+                    <For each={entriesByGroup().get(key) ?? []}>
+                      {(entry, index) => renderRow(entry, () => (index() > 0 ? (entriesByGroup().get(key) ?? [])[index() - 1] : undefined))}
                     </For>
                   </tbody>
                 )}

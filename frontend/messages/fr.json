@@ -753,5 +753,6 @@
   "worklog_add_ticket": "Ajouter un ticket",
   "worklog_sort_label": "Tri",
   "worklog_sort_time": "Par heure",
-  "worklog_sort_context": "Par client · projet"
+  "worklog_sort_context": "Par client · projet",
+  "worklog_col_day_activity": "Jour · Activité"
 }

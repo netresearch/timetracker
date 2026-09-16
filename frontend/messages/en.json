@@ -753,5 +753,6 @@
   "worklog_add_ticket": "Add ticket",
   "worklog_sort_label": "Order",
   "worklog_sort_time": "By time",
-  "worklog_sort_context": "By customer · project"
+  "worklog_sort_context": "By customer · project",
+  "worklog_col_day_activity": "Day · Activity"
 }

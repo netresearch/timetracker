@@ -753,5 +753,6 @@
   "worklog_add_ticket": "Добавить тикет",
   "worklog_sort_label": "Сортировка",
   "worklog_sort_time": "По времени",
-  "worklog_sort_context": "По клиенту · проекту"
+  "worklog_sort_context": "По клиенту · проекту",
+  "worklog_col_day_activity": "День · Деятельность"
 }
