@@ -17,7 +17,7 @@ import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklogViewPref'
 import WorklogViewSwitch from '../components/WorklogViewSwitch'
 import WorklogTimeline from '../components/WorklogTimeline'
-import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
+import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
 import { PageDialog } from '../components/PageDialog'
@@ -1495,19 +1495,26 @@ export default function Tracking() {
                   )
   }
 
-  const renderToolbar = (): JSX.Element => (
-        <div class="tracking-toolbar">
+  // Befund 7: "+ Eintrag" is the only primary action and stays with the content.
+  const renderPrimaryAction = (): JSX.Element => (
+    <div class="tracking-primary">
           <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
             <PlusIcon />
           </button>
+    </div>
+  )
+
+  // Befund 7: the range and the tools are navigation and view choice, not actions
+  // on the content — in the sidebar layout they move there as a submenu under
+  // "Worklog"; in the top bar, where there is no sidebar, they stay in the tool
+  // line rather than disappearing.
+  const renderViewTools = (): JSX.Element => (
+    <div class="tracking-toolbar">
           {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
           <Show when={canBulkEnter()}>
             <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
           </Show>
           {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
-          <button type="button" class="action-button is-icon" aria-keyshortcuts="Alt+R" aria-label={m.tracking_refresh()} title={m.tracking_refresh()} onClick={() => refreshEntries()}>
-            <RefreshIcon />
-          </button>
           {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
               still act on the keyboard-cursor row via the global shortcut handler. */}
           <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
@@ -1597,11 +1604,13 @@ export default function Tracking() {
               grid shows. */}
           <WorklogViewSwitch value={view()} onChange={chooseView} />
 
-          {/* Inline-edit + keyboard discoverability hint — last in the tool line, so
-              the only otherwise-on-screen cue (a hover text-cursor on editable cells)
-              gets a written explanation without a separate band above the grid. */}
-          <p class="tracking-hint">{m.tracking_edit_hint()}</p>
-        </div>
+    </div>
+  )
+
+  // The inline-edit hint explains the grid, so it stays with the content whichever
+  // layout is live.
+  const renderHint = (): JSX.Element => (
+    <p class="tracking-hint">{m.tracking_edit_hint()}</p>
   )
 
   return (
@@ -1625,9 +1634,11 @@ export default function Tracking() {
           one instance, never two: a mirrored copy would duplicate every label and
           make the focus order ambiguous. In the default top-bar layout there is no
           sidebar, so it stays here rather than disappearing. */}
-      <Show when={navSideLayout() && toolsSlot()} fallback={renderToolbar()}>
-        <Portal mount={toolsSlot()!}>{renderToolbar()}</Portal>
+      {renderPrimaryAction()}
+      <Show when={navSideLayout() && toolsSlot()} fallback={renderViewTools()}>
+        <Portal mount={toolsSlot()!}>{renderViewTools()}</Portal>
       </Show>
+      {renderHint()}
 
       {/* A session-expiry refetch errors too, but the overlay owns that — keep the
           last-good grid (and the user's drafts) visible+dimmed behind it, not a
@@ -1721,27 +1732,6 @@ export default function Tracking() {
           </div>
         </Show>
 
-        {/* Legend for the colour-coded row borders — the colour alone is not an
-            accessible cue, so each swatch is paired with its label. */}
-        <Show when={rows().length > 0}>
-          <p class="tracking-legend">
-            <span class="visually-hidden">{m.tracking_legend_title()}: </span>
-            <span class="tracking-legend-item is-daybreak">{m.tracking_class_daybreak()}</span>
-            <span class="tracking-legend-item is-pause">{m.tracking_class_pause()}</span>
-            <span class="tracking-legend-item is-overlap">{m.tracking_class_overlap()}</span>
-          </p>
-          {/* Row-action icon key — the icons in the Actions column are also discoverable
-              by hover/keyboard, but listing them here aids at-a-glance recognition. */}
-          <p class="tracking-legend tracking-legend-icons">
-            <span class="visually-hidden">{m.tracking_legend_icons()}: </span>
-            <span class="tracking-legend-icon"><ContinueIcon /> {m.tracking_continue()}</span>
-            <span class="tracking-legend-icon"><ProlongIcon /> {m.tracking_prolong()}</span>
-            <span class="tracking-legend-icon"><InfoIcon /> {m.tracking_info()}</span>
-            <span class="tracking-legend-icon"><TrashIcon /> {m.admin_delete()}</span>
-            <span class="tracking-legend-icon"><DiskIcon /> {m.app_save()}</span>
-            <span class="tracking-legend-icon"><ResetIcon /> {m.tracking_reset()}</span>
-          </p>
-        </Show>
       </Show>
 
       <PageDialog open={summary() !== null} onClose={() => setSummary(null)} title={m.tracking_info()}>

@@ -1239,14 +1239,17 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('the refresh toolbar button refetches the entries', async () => {
+  it('Alt+R refetches the entries (the toolbar button is gone, the capability is not)', async () => {
+    // Befund 7 dropped the refresh button from the tool line; reloading stays
+    // reachable by keyboard, so the behaviour is pinned on that path instead.
     mockApi()
     const { getByRole, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
     const entryFetches = (): number => getJson.mock.calls.filter((args) => String(args[0]).startsWith('/getData/days/')).length
     const before = entryFetches()
 
-    fireEvent.click(getByRole('button', { name: 'Refresh' }))
+    expect(() => getByRole('button', { name: 'Refresh' })).toThrow()
+    fireEvent.keyDown(document, { key: 'r', altKey: true })
 
     await waitFor(() => expect(entryFetches()).toBeGreaterThan(before))
 
