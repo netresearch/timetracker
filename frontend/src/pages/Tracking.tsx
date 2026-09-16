@@ -1073,7 +1073,12 @@ export default function Tracking() {
           return []
         }
 
-        return sort() === 'context' ? ['date', 'activity'] : ['project', 'customer', 'activity']
+        if (sort() !== 'context') {
+          return ['project', 'customer', 'activity']
+        }
+
+        // A new row shows (and needs) its customer and project here too.
+        return rowId <= 0 ? ['date', 'customer', 'project', 'activity'] : ['date', 'activity']
       }
 
       return COMPOSITE_PARTS[colKey] ?? (FIELD_BY_KEY.has(colKey) ? [colKey] : [])
@@ -1642,7 +1647,11 @@ export default function Tracking() {
               opening one does not shove its neighbours sideways — the same
               device the flat grid's cells use. */}
           <span class={`worklog-part-edit ${extraClass}`.trimEnd()}>
-            <span class="inline-ghost" aria-hidden="true">{text()}</span>
+            {/* The ghost holds the editor's box, so it carries the same text the
+                part shows — including the placeholder for an empty value. With an
+                empty ghost the box is zero high and the editor, which fills it,
+                was invisible: a new row showed no ticket field at all. */}
+            <span class="inline-ghost" aria-hidden="true">{text() === '' ? (field?.label() ?? fieldKey) : text()}</span>
             <Show
               when={isChip}
               fallback={
@@ -1695,7 +1704,17 @@ export default function Tracking() {
                 what varies from row to row, so it has to be editable like any
                 other part. */}
             {part('date', () => displayDate(str(row.date)), 'worklog-block-project num')}
-            <span class="worklog-block-meta">{part('activity', () => label('activity'))}</span>
+            <span class="worklog-block-meta">
+              {/* A row that has never been saved belongs to no card yet — its
+                  customer and project are empty, so THIS cell is the only place
+                  they can be entered. Leaving them out (the card names them, for
+                  every saved row) made a new entry impossible to complete in this
+                  order. */}
+              <Show when={id <= 0}>
+                {part('customer', () => label('customer'))} · {part('project', () => label('project'))} ·{' '}
+              </Show>
+              {part('activity', () => label('activity'))}
+            </span>
           </span>
         )
       }
@@ -1766,7 +1785,7 @@ export default function Tracking() {
             }
           >
             <span class="worklog-part-edit">
-              <span class="inline-ghost" aria-hidden="true">{str(row.ticket)}</span>
+              <span class="inline-ghost" aria-hidden="true">{str(row.ticket) === '' ? (FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket') : str(row.ticket)}</span>
               <InlineEditor
                 field={FIELD_BY_KEY.get('ticket')!}
                 label={FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket'}

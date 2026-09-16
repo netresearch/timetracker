@@ -112,6 +112,21 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
     expect(visible).toBe(true);
   });
 
+  test('the ticket editor of a new row is actually visible', async ({ page }) => {
+    await useGroupedView(page);
+
+    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+    const editor = page.locator('tr.tracking-row.is-new input.inline-editor').first();
+    await expect(editor).toBeVisible();
+
+    // It fills its ghost, and an empty ghost is zero pixels high: the field was in
+    // the row, focused, and invisible.
+    const box = await editor.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThan(10);
+    expect(box!.width).toBeGreaterThan(10);
+  });
+
   test('a new row is not saved before it can be booked', async ({ page }) => {
     await useGroupedView(page);
 

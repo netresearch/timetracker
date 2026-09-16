@@ -545,6 +545,45 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('a new row offers customer and project even when the cards are customers', async () => {
+    // Ordered by customer, the block column shows the day and the activity — the
+    // card names the rest. A row that has never been saved belongs to no card, so
+    // that cell is the only place its customer and project can be entered, and
+    // without them the entry could not be completed in this order at all.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    localStorage.setItem('tt-worklog-sort', 'context')
+    mockApi()
+    const { container, getByTitle, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    fireEvent.click(getByTitle(/Add entry/i))
+    await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).not.toBeNull())
+
+    const parts = [...container.querySelectorAll('tr.tracking-row.is-new td[data-col-key="context"] .worklog-part')]
+      .map((part) => part.textContent)
+    expect(parts).toEqual(['2024-01-15', 'Customer', 'Project', 'Activity'])
+
+    unmount()
+  })
+
+  it('an empty editor keeps the box its placeholder needs', async () => {
+    // The editor fills its ghost. An empty ghost is zero pixels high, so the
+    // ticket editor of a new row was there but invisible — the row showed no
+    // ticket field at all.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, getByTitle, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    fireEvent.click(getByTitle(/Add entry/i))
+    await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).not.toBeNull())
+
+    const ghost = container.querySelector('tr.tracking-row.is-new .worklog-part-edit .inline-ghost')
+    expect(ghost?.textContent).toBe('Ticket')
+
+    unmount()
+  })
+
   it('the grouped view drops the date column — the day heading carries it (Befund 8)', async () => {
     localStorage.setItem('tt-worklog-view', 'grouped')
     mockApi()
