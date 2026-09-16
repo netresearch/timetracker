@@ -3979,6 +3979,12 @@ th[aria-sort='descending'] .th-sort-glyph {
     height: 100vh;
     position: sticky;
     top: 0;
+    /* Sticky makes this column its own stacking context, and with z-index auto it
+       sits at the same level as the content that follows it in the DOM — so the
+       grid's sticky headers painted OVER a menu opened in the sidebar. The column
+       is chrome: it belongs above the grid, and stays below the dialog (1200) and
+       the header's own popups (1000). */
+    z-index: 50;
     /* The column itself never scrolls — only the nav region inside does (below),
        so the logo and the footer (worktime/controls/account) stay pinned and the
        main nav can never be scrolled out of view. */
@@ -6070,6 +6076,30 @@ tr:focus-within .worklog-ticket.is-empty {
   min-block-size: 2.5rem;
   padding: 0;
   justify-content: center;
+}
+
+/* On the rail the tools stand among the navigation icons, and a white tile with
+   a border around each one reads far heavier than the bare icons above them.
+   Same treatment as a nav item: no box, and the soft accent only under the
+   pointer or on what is selected. The primary action keeps its fill — it is the
+   one control that should stand out. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-tool, .worklog-view-option, .days-combo) {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--color-text);
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-tool:hover, .worklog-view-option:hover, .days-combo:hover, .days-combo:focus-within) {
+  background: var(--color-accent-soft);
+  border-color: transparent;
+  color: var(--color-accent);
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .worklog-view-option[aria-checked='true'] {
+  background: var(--color-accent-soft);
+  border-color: transparent;
+  color: var(--color-accent);
 }
 
 /* ---------------------------------------------------------------------------
