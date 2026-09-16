@@ -152,25 +152,47 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
     await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
     await expect(page.locator('tr.tracking-row.is-new')).toBeVisible();
 
-    const focusedField = (): Promise<string> =>
-      page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? '');
+    // Only an OPEN EDITOR counts as a stop. Between two of them focus passes
+    // through the cell and, when a select commits, through <body> for a frame —
+    // reading those as "the next field" made the walk drift by a step and land
+    // somewhere different on every run.
+    const focusedField = (): Promise<string | null> =>
+      page.evaluate(() => {
+        const el = document.activeElement;
 
-    const walk: string[] = [];
-    for (let step = 0; step < 8; step += 1) {
-      const current = await focusedField();
-      walk.push(current);
+        return el instanceof HTMLInputElement && el.matches('input.inline-editor, input.combobox-input')
+          ? el.getAttribute('aria-label')
+          : null;
+      });
+
+    const tabToNextField = async (from: string): Promise<string> => {
       await page.keyboard.press('Tab');
-      // The next editor mounts and takes focus asynchronously (a select commits a
-      // frame later); wait for focus to actually be somewhere else.
-      await expect.poll(focusedField).not.toBe(current);
+      await expect.poll(async () => (await focusedField()) ?? from).not.toBe(from);
+
+      return (await focusedField()) as string;
+    };
+
+    const first = (await focusedField()) as string;
+    expect(first).not.toBeNull();
+    const seen = new Set([first]);
+    let current = first;
+    let closed = false;
+    // Bounded: the row has seven fields ordered by time, eight ordered by customer.
+    for (let step = 0; step < 12; step += 1) {
+      current = await tabToNextField(current);
+      if (current === first) {
+        closed = true;
+        break;
+      }
+      seen.add(current);
     }
 
     // The row opens on its ticket, which this layout places in the last editable
     // cell — Tab used to leave the table on the first press, so customer, project,
     // activity, start and end could not be reached at all. Every field takes its
     // turn now, and the walk closes back on the one it started from.
-    expect(new Set(walk).size).toBeGreaterThanOrEqual(6);
-    expect(await focusedField()).toBe(walk[0]);
+    expect(seen.size).toBeGreaterThanOrEqual(6);
+    expect(closed).toBe(true);
   });
 
   test('Tab out of a relation stays in the cell it was picked in', async ({ page }) => {
