@@ -747,5 +747,7 @@
   "worklog_overlap_until": "занято до {time}",
   "worklog_agent_until": "Агент {duration} · до {time}",
   "worklog_agent_duration": "Агент {duration}",
-  "worklog_col_time": "Время"
+  "worklog_col_time": "Время",
+  "tracking_edit_hint_part": "Двойной щелчок для правки: {field}",
+  "worklog_key_estimated": "оценка"
 }

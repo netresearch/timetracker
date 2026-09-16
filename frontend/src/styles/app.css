@@ -5795,3 +5795,117 @@ div.calendar {
 .tracking-table.is-grouped th[data-col-key='context'] { inline-size: 208px; }
 .tracking-table.is-grouped th[data-col-key='time'] { inline-size: 7rem; }
 .tracking-table.is-grouped th[data-col-key='duration'] { inline-size: 15rem; }
+
+/* Each part of a composite cell is its own edit target, so it needs its own
+   hit area and the same text cursor the editable cells carry. */
+.worklog-part {
+  cursor: text;
+  border-radius: 3px;
+  padding-inline: 2px;
+  margin-inline: -2px;
+}
+
+.worklog-part:hover {
+  background: var(--color-accent-soft);
+}
+
+/* The agent half of a pair sits under the human one — same scale, hatched, and
+   its figure stays separate because machine walltime is never human attendance
+   (ADR-025 §7). */
+.worklog-duration {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.worklog-duration-agent {
+  text-align: end;
+  color: var(--color-text-muted);
+  font-size: 0.86em;
+}
+
+/* Page header, from the canvas: what this is and which range on the left, the
+   key and the one primary action on the right. */
+.tracking-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tracking-header-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.tracking-header-title h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.tracking-header-range {
+  color: var(--color-text-muted);
+}
+
+.tracking-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tracking-key {
+  display: flex;
+  gap: 0.9rem;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.tracking-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tracking-key-bar {
+  position: static;
+  display: inline-block;
+  inline-size: 18px;
+  block-size: 8px;
+  border-radius: 2px;
+  background: var(--color-accent);
+}
+
+/* Sticky column headers: the grid is long and the day cards repeat, so the
+   column meanings must stay on screen while scrolling. */
+.tracking-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  background: var(--color-accent-soft);
+}
+
+/* The day heading sticks under the column header rather than over it. */
+.tracking-table.is-grouped .worklog-day-head > th {
+  position: sticky;
+  inset-block-start: 2.2rem;
+  z-index: 1;
+}
+
+/* Day cards: real space between them, and each day reads as one surface. */
+.worklog-day-gap > td {
+  block-size: 1.25rem;
+  border: 0;
+  padding: 0;
+  background: none;
+}
+
+.tracking-table.is-grouped tbody.worklog-day:first-of-type .worklog-day-gap {
+  display: none;
+}
+
+.tracking-table.is-grouped tbody.worklog-day .tracking-row > td {
+  background: var(--color-surface);
+}

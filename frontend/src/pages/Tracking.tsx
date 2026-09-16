@@ -253,6 +253,21 @@ const GROUPED_COLUMNS: { key: string; label: () => string; numeric?: boolean }[]
 
 // Two entries belong to the same block when customer, project and activity all
 // match — the block is the unit whose context is stated once.
+// What Enter (or a double-click on the cell rather than one of its parts) edits
+// in a composite cell. The parts themselves are addressed directly; this is the
+// keyboard's way in, so a composite cell is never a dead end.
+const COMPOSITE_PRIMARY_FIELD: Record<string, string> = {
+  context: 'project',
+  time: 'start',
+}
+
+/** Every field a composite cell holds — the cell counts as "editing" while any
+ *  of them is, so gridNav keeps its hands off the roving tabindex. */
+const COMPOSITE_PARTS: Record<string, string[]> = {
+  context: ['project', 'customer', 'activity'],
+  time: ['start', 'end'],
+}
+
 function blockKey(entry: TrackingEntry): string {
   return `${entry.customer ?? ''}/${entry.project ?? ''}/${entry.activity ?? ''}`
 }
@@ -569,9 +584,47 @@ export default function Tracking() {
   // every <tbody> — and with it every row — on any change, which tears focus out
   // of an open inline editor. The day keys are stable by value and the entry
   // objects inside are the same references, so unchanged rows are reused.
+  // Befund 5 / the design canvas: a human entry and the agent walltime it was
+  // logged with are one unit, and since #693 the link is a real field
+  // (pairedEntry). In the grouped view the pair renders as ONE row carrying two
+  // bars; an agent entry whose partner is outside the range still stands alone,
+  // so nothing is ever hidden.
+  const entryById = createMemo<Map<number, TrackingEntry>>(() => {
+    const map = new Map<number, TrackingEntry>()
+    for (const entry of rows()) {
+      map.set(num(entry.id), entry)
+    }
+
+    return map
+  })
+  const pairedAgentOf = (entry: TrackingEntry): TrackingEntry | undefined => {
+    if (entry.source === 'agent' || entry.pairedEntry === null || entry.pairedEntry === undefined) {
+      return undefined
+    }
+
+    const partner = entryById().get(entry.pairedEntry)
+
+    return partner?.source === 'agent' ? partner : undefined
+  }
+  const visibleRows = createMemo<TrackingEntry[]>(() => {
+    if (view() !== 'grouped') {
+      return rows()
+    }
+
+    const foldedAway = new Set<number>()
+    for (const entry of rows()) {
+      const agent = pairedAgentOf(entry)
+      if (agent !== undefined) {
+        foldedAway.add(num(agent.id))
+      }
+    }
+
+    return rows().filter((entry) => !foldedAway.has(num(entry.id)))
+  })
+
   const dayKeys = createMemo<string[]>(() => {
     const seen: string[] = []
-    for (const entry of rows()) {
+    for (const entry of visibleRows()) {
       const day = entry.date ?? ''
       if (seen[seen.length - 1] !== day) {
         seen.push(day)
@@ -582,7 +635,7 @@ export default function Tracking() {
   })
   const entriesByDay = createMemo<Map<string, TrackingEntry[]>>(() => {
     const map = new Map<string, TrackingEntry[]>()
-    for (const entry of rows()) {
+    for (const entry of visibleRows()) {
       const day = entry.date ?? ''
       const list = map.get(day)
       if (list === undefined) {
@@ -1362,6 +1415,35 @@ export default function Tracking() {
   // keeps the shared renderer so inline editing works unchanged.
   const groupedCell = (entry: TrackingEntry, colKey: string, startsBlock: () => boolean): JSX.Element => {
     const row = editor.overlayRow(entry)
+    const id = num(entry.id)
+
+    // A composite cell (context, time) holds several real fields. It is still ONE
+    // table cell — gridNav counts cells — but each part is its own edit target:
+    // double-click or Enter on the part opens that field's editor in place. This
+    // is what keeps the canvas layout without making the grouped view read-only.
+    const part = (fieldKey: string, text: () => string, extraClass = ''): JSX.Element => (
+      <Show
+        when={editor.isEditing(id, fieldKey)}
+        fallback={
+          <span
+            class={`worklog-part ${extraClass}`.trimEnd()}
+            tabindex={-1}
+            title={m.tracking_edit_hint_part({ field: FIELD_BY_KEY.get(fieldKey)?.label() ?? fieldKey })}
+            onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, fieldKey) }}
+          >{text()}</span>
+        }
+      >
+        <InlineEditor
+          field={FIELD_BY_KEY.get(fieldKey)!}
+          label={FIELD_BY_KEY.get(fieldKey)?.label() ?? fieldKey}
+          initial={editor.draftValue(id, fieldKey) ?? ''}
+          seed={editor.seedChar()}
+          options={optionLookup}
+          onCommit={editor.commitCell}
+          onCancel={editor.cancelCell}
+        />
+      </Show>
+    )
 
     if (colKey === 'context') {
       // Continuation rows render nothing: the block already said it.
@@ -1385,8 +1467,10 @@ export default function Tracking() {
 
       return (
         <span class="worklog-block">
-          <span class="worklog-block-project">{label('project')}</span>
-          <span class="worklog-block-meta">{label('customer')} · {label('activity')}</span>
+          {part('project', () => label('project'), 'worklog-block-project')}
+          <span class="worklog-block-meta">
+            {part('customer', () => label('customer'))} · {part('activity', () => label('activity'))}
+          </span>
         </span>
       )
     }
@@ -1396,7 +1480,7 @@ export default function Tracking() {
 
       return (
         <span class="worklog-time" classList={{ 'is-overlap': cue === 'is-overlap' }}>
-          <span class="num">{str(row.start)}–{str(row.end)}</span>
+          <span class="num">{part('start', () => str(row.start))}–{part('end', () => str(row.end))}</span>
           {/* Befund 2: colour is left for state, and an overlap is the one state
               that warrants it — named in words, never colour alone. */}
           <Show when={cue === 'is-overlap'}>
@@ -1413,25 +1497,54 @@ export default function Tracking() {
           {/* Befund 8: a ticket sits under its description rather than in a
               column that stands empty in every row of most ranges. */}
           <Show when={str(row.ticket) !== ''}>
-            <a class="worklog-ticket" href={ticketUrlFor(str(row.ticket), num(row.project))} target="_blank" rel="noopener noreferrer">{str(row.ticket)}</a>
+            {/* Same activation rule as the flat view's ticket column: a plain
+                click belongs to the cell (it starts inline editing), following
+                the link takes Ctrl/⌘. */}
+            <a
+              class="worklog-ticket ticket-link"
+              href={ticketUrlFor(str(row.ticket), num(row.project))}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={m.tracking_ticket_link_hint()}
+              onClick={(event) => {
+                if (!event.ctrlKey && !event.metaKey) {
+                  event.preventDefault()
+                }
+              }}
+            >{str(row.ticket)}</a>
           </Show>
         </span>
       )
     }
 
     if (colKey === 'duration') {
-      const agent = entry.source === 'agent'
-      const width = `${Math.max(3, Math.round(entry.durationMinutes * DURATION_BAR_PX_PER_MINUTE))}px`
+      const barWidth = (minutes: number): string => `${Math.max(3, Math.round(minutes * DURATION_BAR_PX_PER_MINUTE))}px`
+      const agentHalf = pairedAgentOf(entry)
 
       return (
         <span class="worklog-duration">
+          {/* The figure is the data; the bar is a second, non-essential encoding
+              of it (WCAG 1.4.1) and is hidden from assistive technology. */}
           <span class="worklog-duration-line">
-            <span class="duration-bar" classList={{ 'is-agent': agent }} aria-hidden="true" style={{ '--duration-width': width }} />
+            <span
+              class="duration-bar"
+              classList={{ 'is-agent': entry.source === 'agent' }}
+              aria-hidden="true"
+              style={{ '--duration-width': barWidth(entry.durationMinutes) }}
+            />
             <span class="num worklog-duration-value">
               <Show when={entry.estimated}><span class="duration-estimated" title={m.worklog_estimated_hint()}>≈ </span></Show>
               {entry.duration}
             </span>
           </span>
+          {/* The agent half of the pair: its own hatched bar and its own figure,
+              never added to the human one (ADR-025 §7). */}
+          <Show when={agentHalf !== undefined}>
+            <span class="worklog-duration-line is-agent-line">
+              <span class="duration-bar is-agent" aria-hidden="true" style={{ '--duration-width': barWidth(agentHalf!.durationMinutes) }} />
+              <span class="num worklog-duration-agent">{m.worklog_agent_duration({ duration: agentHalf!.duration })}</span>
+            </span>
+          </Show>
         </span>
       )
     }
@@ -1468,7 +1581,10 @@ export default function Tracking() {
                     <tr class={`tracking-row ${id <= 0 ? 'is-new' : rowCues().get(id) ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id), 'is-future': rowIsFuture(entry) }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
                       <For each={visibleColumns()}>
                         {(col) => {
-                          const editable = FIELD_BY_KEY.has(col.key)
+                          // In the grouped view a composite cell is editable through its
+                          // primary field; elsewhere the column key IS the field key.
+                          const fieldKey = view() === 'grouped' ? (COMPOSITE_PRIMARY_FIELD[col.key] ?? col.key) : col.key
+                          const editable = FIELD_BY_KEY.has(fieldKey)
                           const fieldType = FIELD_BY_KEY.get(col.key)?.type
                           // Single-line editors overlay a hidden ghost of the value
                           // (below) so opening one can't re-flow the auto-layout column.
@@ -1488,9 +1604,9 @@ export default function Tracking() {
                               }}
                               data-row-id={String(id)}
                               data-col-key={col.key}
-                              data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
+                              data-inline-editing={editor.isEditing(id, col.key) || (view() === 'grouped' && COMPOSITE_PARTS[col.key]?.some((key) => editor.isEditing(id, key))) ? '' : undefined}
                               title={col.key === 'date' ? displayDate(str(editor.overlayRow(entry).date)) : undefined}
-                              onDblClick={() => { if (editable) editor.beginEdit(id, col.key) }}
+                              onDblClick={() => { if (editable) editor.beginEdit(id, fieldKey) }}
                             >
                               <Show
                                 when={editor.isEditing(id, col.key)}
@@ -1622,10 +1738,24 @@ export default function Tracking() {
 
   // Befund 7: "+ Eintrag" is the only primary action and stays with the content.
   const renderPrimaryAction = (): JSX.Element => (
-    <div class="tracking-primary">
+    <div class="tracking-header">
+      <div class="tracking-header-title">
+        <h2>{m.tracking_title()}</h2>
+        <span class="num tracking-header-range">{m.tracking_days_option({ count: String(days()) })}</span>
+      </div>
+      <div class="tracking-header-actions">
+        {/* Befund 7 removes the legends from under the table; the canvas keeps a
+            compact key beside the primary action, where it explains the bars at
+            the moment you first look at them. */}
+        <span class="tracking-key" aria-hidden="true">
+          <span class="tracking-key-item"><span class="duration-bar tracking-key-bar" /> {m.worklog_total_human()}</span>
+          <span class="tracking-key-item"><span class="duration-bar is-agent tracking-key-bar" /> {m.worklog_total_agent()}</span>
+          <span class="tracking-key-item"><span class="duration-estimated">≈</span> {m.worklog_key_estimated()}</span>
+        </span>
           <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
             <PlusIcon />
           </button>
+      </div>
     </div>
   )
 
@@ -1828,6 +1958,12 @@ export default function Tracking() {
               <For each={dayKeys()}>
                 {(day) => (
                   <tbody class="worklog-day">
+                    {/* Real vertical space between day cards. A non-data row, so
+                        gridNav skips it (grid-divider) and it carries no content
+                        for assistive technology to read. */}
+                    <tr class="worklog-day-gap grid-divider" aria-hidden="true">
+                      <td colspan={visibleColumns().length + 1} />
+                    </tr>
                     <tr class="worklog-day-head grid-divider">
                       <th scope="rowgroup" colspan={visibleColumns().length + 1}>
                         {/* The flex layout lives on an inner element: `display: flex`

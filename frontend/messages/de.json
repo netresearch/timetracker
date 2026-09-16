@@ -747,5 +747,7 @@
   "worklog_overlap_until": "bis {time} belegt",
   "worklog_agent_until": "Agent {duration} · bis {time}",
   "worklog_agent_duration": "Agent {duration}",
-  "worklog_col_time": "Zeit"
+  "worklog_col_time": "Zeit",
+  "tracking_edit_hint_part": "Zum Bearbeiten doppelklicken: {field}",
+  "worklog_key_estimated": "geschätzt"
 }

@@ -747,5 +747,7 @@
   "worklog_overlap_until": "busy until {time}",
   "worklog_agent_until": "Agent {duration} · until {time}",
   "worklog_agent_duration": "Agent {duration}",
-  "worklog_col_time": "Time"
+  "worklog_col_time": "Time",
+  "tracking_edit_hint_part": "Double-click to edit: {field}",
+  "worklog_key_estimated": "estimated"
 }
