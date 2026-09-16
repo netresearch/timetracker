@@ -13,6 +13,8 @@ import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INL
 import { ChipSelect } from '../lib/chipSelect'
 import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
+import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklogViewPref'
+import WorklogViewSwitch from '../components/WorklogViewSwitch'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
@@ -212,6 +214,15 @@ const COLUMNS: { key: string; label: () => string; numeric?: boolean }[] = [
   { key: 'duration', label: () => m.tracking_col_duration(), numeric: true },
 ]
 
+// Day totals are summed from durationMinutes and rendered in the same H:MM
+// shape the server already sends per row, so a group header and its rows read
+// as one unit rather than two notations.
+function formatDuration(minutes: number): string {
+  const total = Math.max(0, Math.round(minutes))
+
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
+}
+
 // Non-colour cue for the derived row cue (WCAG 1.4.1 / 1.3.1).
 function cueLabel(cue: RowCue): string {
   switch (cue) {
@@ -334,6 +345,12 @@ export default function Tracking() {
   const queryClient = useQueryClient()
   // The day range persists across remounts/logins (client-side, like the theme).
   const [days, setDays] = createSignal<number>(Math.min(getTrackingDays(DEFAULT_DAYS), MAX_DAYS))
+  // The chosen view persists the same way the day range does (client-side).
+  const [view, setViewSignal] = createSignal<WorklogView>(getWorklogView())
+  const chooseView = (next: WorklogView): void => {
+    setViewSignal(next)
+    setWorklogView(next)
+  }
   // Preset-range combobox: the menu always lists every preset (unlike a native
   // datalist, which filters by the typed value and forced the user to clear the
   // field to pick another range). Free typing still applies a custom day count.
@@ -488,6 +505,40 @@ export default function Tracking() {
   // The grid's move handle — used to restore cell focus after a row is deleted.
   let gridHandle: GridMoveHandle | null = null
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
+
+  // Day sections, keyed by the day STRING rather than by a freshly built group
+  // object: <For> keys by reference, so a new object per recompute would rebuild
+  // every <tbody> — and with it every row — on any change, which tears focus out
+  // of an open inline editor. The day keys are stable by value and the entry
+  // objects inside are the same references, so unchanged rows are reused.
+  const dayKeys = createMemo<string[]>(() => {
+    const seen: string[] = []
+    for (const entry of rows()) {
+      const day = entry.date ?? ''
+      if (seen[seen.length - 1] !== day) {
+        seen.push(day)
+      }
+    }
+
+    return seen
+  })
+  const entriesByDay = createMemo<Map<string, TrackingEntry[]>>(() => {
+    const map = new Map<string, TrackingEntry[]>()
+    for (const entry of rows()) {
+      const day = entry.date ?? ''
+      const list = map.get(day)
+      if (list === undefined) {
+        map.set(day, [entry])
+        continue
+      }
+
+      list.push(entry)
+    }
+
+    return map
+  })
+  const dayMinutes = (day: string): number =>
+    (entriesByDay().get(day) ?? []).reduce((sum, entry) => sum + entry.durationMinutes, 0)
 
   // Day-break/pause/overlap cues, derived from the rendered rows (see
   // deriveRowCues) instead of the persisted `class` — so they are correct for
@@ -1202,166 +1253,10 @@ export default function Tracking() {
     { id: 'wl-days-5weeks', group: wl, label: () => m.cmd_days_5weeks(), run: () => applyDays(35) },
   ]))
 
-  return (
-    <section class="tracking">
-      <h2 class="visually-hidden">{m.tracking_title()}</h2>
-
-      {/* Polite live region — save/delete/prolong confirmations for AT users. */}
-      <p class="visually-hidden" role="status" aria-live="polite">{notice()}</p>
-      {/* In-page error for delete/prolong/info failures (was window.alert). */}
-      <Show when={pageError() !== ''}>
-        <p class="form-status is-error" role="alert">{pageError()}</p>
-      </Show>
-      {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue).
-          Purely visual: aria-hidden so AT users aren't told twice — the polite
-          live region above already announces the save. */}
-      <Show when={savedNotice() !== ''}>
-        <p class="save-toast" aria-hidden="true">{savedNotice()}</p>
-      </Show>
-
-      <div class="tracking-toolbar">
-        <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
-          <PlusIcon />
-        </button>
-        {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
-        <Show when={canBulkEnter()}>
-          <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
-        </Show>
-        {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
-        <button type="button" class="action-button is-icon" aria-keyshortcuts="Alt+R" aria-label={m.tracking_refresh()} title={m.tracking_refresh()} onClick={() => refreshEntries()}>
-          <RefreshIcon />
-        </button>
-        {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
-            still act on the keyboard-cursor row via the global shortcut handler. */}
-        <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
-        {/* Freetext + always-full preset menu: type any whole number of days
-            (applyDays clamps + persists), or pick a preset — the menu always lists
-            ALL presets regardless of what's typed, so switching ranges never needs
-            clearing the field first. */}
-        <div class="tracking-days">
-          <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
-          <div class="days-combo" ref={(el) => { daysComboRef = el }}>
-            <input
-              id="tracking-days-input"
-              name="days"
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              class="tracking-days-input"
-              role="combobox"
-              aria-labelledby="tracking-days-lbl"
-              aria-expanded={daysMenuOpen()}
-              aria-controls="tracking-days-menu"
-              value={String(days())}
-              onChange={(event) => {
-                const typed = Number(event.currentTarget.value.trim())
-                if (Number.isFinite(typed) && typed >= 1) {
-                  applyDays(typed)
-                }
-                // Re-sync to the effective (clamped) value, reverting invalid input.
-                event.currentTarget.value = String(days())
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault()
-                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.min(DAYS_OPTIONS.length - 1, i + 1)) }
-                  else { openDaysMenu() }
-                } else if (event.key === 'ArrowUp') {
-                  event.preventDefault()
-                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
-                } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
-                  event.preventDefault()
-                  const option = DAYS_OPTIONS[daysActiveIdx()]
-                  if (option !== undefined) { chooseDays(option) }
-                } else if (event.key === 'Escape' && daysMenuOpen()) {
-                  event.preventDefault()
-                  closeDaysMenu()
-                }
-              }}
-            />
-            <button
-              type="button"
-              class="days-combo-toggle"
-              tabindex="-1"
-              aria-label={m.tracking_days_presets()}
-              aria-expanded={daysMenuOpen()}
-              aria-controls="tracking-days-menu"
-              onClick={() => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-            <Show when={daysMenuOpen()}>
-              <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
-                <For each={DAYS_OPTIONS}>
-                  {(option, index) => (
-                    <li>
-                      <button
-                        type="button"
-                        class="days-combo-option"
-                        tabindex="-1"
-                        classList={{ 'is-active': index() === daysActiveIdx() }}
-                        aria-current={days() === option ? 'true' : undefined}
-                        onClick={() => chooseDays(option)}
-                        onPointerEnter={() => setDaysActiveIdx(index())}
-                      >
-                        {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
-                      </button>
-                    </li>
-                  )}
-                </For>
-              </ul>
-            </Show>
-          </div>
-          <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
-        </div>
-
-        {/* Inline-edit + keyboard discoverability hint — last in the tool line, so
-            the only otherwise-on-screen cue (a hover text-cursor on editable cells)
-            gets a written explanation without a separate band above the grid. */}
-        <p class="tracking-hint">{m.tracking_edit_hint()}</p>
-      </div>
-
-      {/* A session-expiry refetch errors too, but the overlay owns that — keep the
-          last-good grid (and the user's drafts) visible+dimmed behind it, not a
-          jarring "load error". A genuine error (session OK) still shows the fallback. */}
-      <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
-        <div class="table-scroll" ref={setScrollEl}>
-          <table
-            class="data-table tracking-table"
-            classList={{ 'is-fetching': entries.isFetching }}
-            // A refetch (refresh / range change) keeps the previous rows visible
-            // (keepPreviousData) — aria-busy + a subtle dim are the only in-flight
-            // cue a sighted user gets, since the first-load spinner won't fire.
-            aria-busy={entries.isFetching ? 'true' : undefined}
-            ref={(el) => { editor.setTableEl(el); tableEl = el }}
-            onFocusIn={editor.onTableFocusIn}
-            onFocusOut={editor.onTableFocusOut}
-            use:gridNav={{
-              items: rows,
-              // ArrowUp off the top row hands focus to the #main-content pivot
-              // (NOT the days <select>, whose own arrow keys change its value and
-              // trap the cursor). From the pivot the header handles ArrowUp→nav /
-              // ArrowDown→grid, so the keyboard chain stays escapable both ways.
-              onExit: (direction) => { if (direction === 'up') document.getElementById('main-content')?.focus() },
-              onActivate: editor.onActivate,
-              moveRef: (handle) => { editor.setMoveHandle(handle); gridHandle = handle },
-            }}
-          >
-            <thead>
-              <tr>
-                <For each={visibleColumns()}>
-                  {(col) => (
-                    <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>
-                      <ColumnHeader label={col.label()} icon={col.key === 'date' ? <CalendarIcon /> : undefined} />
-                    </th>
-                  )}
-                </For>
-                <th scope="col" data-col-key="actions"><ColumnHeader label={m.tracking_actions()} icon={<ToolsIcon />} /></th>
-              </tr>
-            </thead>
-            <tbody>
-              <For each={rows()}>
-                {(entry) => {
+  // One worklog row, shared by every view: the flat grid and the grouped day
+  // sections render the SAME <tr>, so inline editing, gridNav and the row cues
+  // behave identically in both and cannot drift apart.
+  const renderRow = (entry: TrackingEntry): JSX.Element => {
                   const id = num(entry.id)
 
                   return (
@@ -1517,9 +1412,192 @@ export default function Tracking() {
                     </Show>
                     </>
                   )
-                }}
+  }
+
+  return (
+    <section class="tracking">
+      <h2 class="visually-hidden">{m.tracking_title()}</h2>
+
+      {/* Polite live region — save/delete/prolong confirmations for AT users. */}
+      <p class="visually-hidden" role="status" aria-live="polite">{notice()}</p>
+      {/* In-page error for delete/prolong/info failures (was window.alert). */}
+      <Show when={pageError() !== ''}>
+        <p class="form-status is-error" role="alert">{pageError()}</p>
+      </Show>
+      {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue).
+          Purely visual: aria-hidden so AT users aren't told twice — the polite
+          live region above already announces the save. */}
+      <Show when={savedNotice() !== ''}>
+        <p class="save-toast" aria-hidden="true">{savedNotice()}</p>
+      </Show>
+
+      <div class="tracking-toolbar">
+        <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
+          <PlusIcon />
+        </button>
+        {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
+        <Show when={canBulkEnter()}>
+          <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
+        </Show>
+        {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
+        <button type="button" class="action-button is-icon" aria-keyshortcuts="Alt+R" aria-label={m.tracking_refresh()} title={m.tracking_refresh()} onClick={() => refreshEntries()}>
+          <RefreshIcon />
+        </button>
+        {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
+            still act on the keyboard-cursor row via the global shortcut handler. */}
+        <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
+        {/* Freetext + always-full preset menu: type any whole number of days
+            (applyDays clamps + persists), or pick a preset — the menu always lists
+            ALL presets regardless of what's typed, so switching ranges never needs
+            clearing the field first. */}
+        <div class="tracking-days">
+          <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
+          <div class="days-combo" ref={(el) => { daysComboRef = el }}>
+            <input
+              id="tracking-days-input"
+              name="days"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              class="tracking-days-input"
+              role="combobox"
+              aria-labelledby="tracking-days-lbl"
+              aria-expanded={daysMenuOpen()}
+              aria-controls="tracking-days-menu"
+              value={String(days())}
+              onChange={(event) => {
+                const typed = Number(event.currentTarget.value.trim())
+                if (Number.isFinite(typed) && typed >= 1) {
+                  applyDays(typed)
+                }
+                // Re-sync to the effective (clamped) value, reverting invalid input.
+                event.currentTarget.value = String(days())
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault()
+                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.min(DAYS_OPTIONS.length - 1, i + 1)) }
+                  else { openDaysMenu() }
+                } else if (event.key === 'ArrowUp') {
+                  event.preventDefault()
+                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
+                } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
+                  event.preventDefault()
+                  const option = DAYS_OPTIONS[daysActiveIdx()]
+                  if (option !== undefined) { chooseDays(option) }
+                } else if (event.key === 'Escape' && daysMenuOpen()) {
+                  event.preventDefault()
+                  closeDaysMenu()
+                }
+              }}
+            />
+            <button
+              type="button"
+              class="days-combo-toggle"
+              tabindex="-1"
+              aria-label={m.tracking_days_presets()}
+              aria-expanded={daysMenuOpen()}
+              aria-controls="tracking-days-menu"
+              onClick={() => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+            <Show when={daysMenuOpen()}>
+              <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
+                <For each={DAYS_OPTIONS}>
+                  {(option, index) => (
+                    <li>
+                      <button
+                        type="button"
+                        class="days-combo-option"
+                        tabindex="-1"
+                        classList={{ 'is-active': index() === daysActiveIdx() }}
+                        aria-current={days() === option ? 'true' : undefined}
+                        onClick={() => chooseDays(option)}
+                        onPointerEnter={() => setDaysActiveIdx(index())}
+                      >
+                        {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
+                      </button>
+                    </li>
+                  )}
+                </For>
+              </ul>
+            </Show>
+          </div>
+          <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
+        </div>
+
+        {/* View switch — the worklog's three presentations of the same rows.
+            Sits in the tool line next to the range, because both narrow what the
+            grid shows. */}
+        <WorklogViewSwitch value={view()} onChange={chooseView} />
+
+        {/* Inline-edit + keyboard discoverability hint — last in the tool line, so
+            the only otherwise-on-screen cue (a hover text-cursor on editable cells)
+            gets a written explanation without a separate band above the grid. */}
+        <p class="tracking-hint">{m.tracking_edit_hint()}</p>
+      </div>
+
+      {/* A session-expiry refetch errors too, but the overlay owns that — keep the
+          last-good grid (and the user's drafts) visible+dimmed behind it, not a
+          jarring "load error". A genuine error (session OK) still shows the fallback. */}
+      <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
+        <div class="table-scroll" ref={setScrollEl}>
+          <table
+            class="data-table tracking-table"
+            classList={{ 'is-fetching': entries.isFetching }}
+            // A refetch (refresh / range change) keeps the previous rows visible
+            // (keepPreviousData) — aria-busy + a subtle dim are the only in-flight
+            // cue a sighted user gets, since the first-load spinner won't fire.
+            aria-busy={entries.isFetching ? 'true' : undefined}
+            ref={(el) => { editor.setTableEl(el); tableEl = el }}
+            onFocusIn={editor.onTableFocusIn}
+            onFocusOut={editor.onTableFocusOut}
+            use:gridNav={{
+              items: rows,
+              // ArrowUp off the top row hands focus to the #main-content pivot
+              // (NOT the days <select>, whose own arrow keys change its value and
+              // trap the cursor). From the pivot the header handles ArrowUp→nav /
+              // ArrowDown→grid, so the keyboard chain stays escapable both ways.
+              onExit: (direction) => { if (direction === 'up') document.getElementById('main-content')?.focus() },
+              onActivate: editor.onActivate,
+              moveRef: (handle) => { editor.setMoveHandle(handle); gridHandle = handle },
+            }}
+          >
+            <thead>
+              <tr>
+                <For each={visibleColumns()}>
+                  {(col) => (
+                    <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>
+                      <ColumnHeader label={col.label()} icon={col.key === 'date' ? <CalendarIcon /> : undefined} />
+                    </th>
+                  )}
+                </For>
+                <th scope="col" data-col-key="actions"><ColumnHeader label={m.tracking_actions()} icon={<ToolsIcon />} /></th>
+              </tr>
+            </thead>
+            <Show
+              when={view() === 'grouped'}
+              fallback={<tbody><For each={rows()}>{(entry) => renderRow(entry)}</For></tbody>}
+            >
+              {/* One <tbody> per day — real table semantics, no rowspan, so gridNav
+                  keeps working on cellIndex. The day heading is a rowgroup header
+                  row marked grid-divider, so keyboard nav skips it while it stays
+                  in the a11y tree. */}
+              <For each={dayKeys()}>
+                {(day) => (
+                  <tbody class="worklog-day">
+                    <tr class="worklog-day-head grid-divider">
+                      <th scope="rowgroup" colspan={visibleColumns().length + 1}>
+                        <span class="worklog-day-date">{displayDate(day)}</span>
+                        <span class="worklog-day-total">{formatDuration(dayMinutes(day))}</span>
+                      </th>
+                    </tr>
+                    <For each={entriesByDay().get(day) ?? []}>{(entry) => renderRow(entry)}</For>
+                  </tbody>
+                )}
               </For>
-            </tbody>
+            </Show>
           </table>
         </div>
 

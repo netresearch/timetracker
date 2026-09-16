@@ -727,5 +727,12 @@
   "personiomatch_confirm_selected": "Подтвердить выбранное",
   "personiomatch_confirm_error": "Не удалось применить сопоставления.",
   "personiomatch_applied": "Применено сопоставлений: {count}.",
-  "settings_apitoken_expiry_past": "Дата окончания не может быть в прошлом."
+  "settings_apitoken_expiry_past": "Дата окончания не может быть в прошлом.",
+  "worklog_view_label": "Вид журнала",
+  "worklog_view_grouped": "Сгруппированный",
+  "worklog_view_flat": "Плоский",
+  "worklog_view_timeline": "Хронология",
+  "worklog_view_grouped_hint": "Один раздел на день; общий контекст показан один раз",
+  "worklog_view_flat_hint": "Одна строка на запись, все столбцы в каждой строке",
+  "worklog_view_timeline_hint": "Высота строки соответствует длительности; только чтение"
 }

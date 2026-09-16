@@ -5358,3 +5358,66 @@ div.calendar {
   flex-wrap: wrap;
   gap: 0.6rem;
 }
+
+/* ---------------------------------------------------------------------------
+   Worklog view switch + grouped day sections
+   --------------------------------------------------------------------------- */
+
+/* Segmented control. One tab stop (roving tabindex lives in the component);
+   the checked option carries the accent so the selection survives a
+   forced-colours / no-colour reading via aria-checked too. */
+.worklog-view-switch {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.worklog-view-option {
+  appearance: none;
+  border: 0;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  padding: 0.35rem 0.75rem;
+  /* Density modes may shrink this below 44px (documented exception); the
+     control stays keyboard-reachable as one group either way. */
+  min-height: 2rem;
+  cursor: pointer;
+}
+
+.worklog-view-option + .worklog-view-option {
+  border-inline-start: 1px solid var(--color-border);
+}
+
+.worklog-view-option[aria-checked='true'] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  font-weight: 600;
+}
+
+.worklog-view-option:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* A day section header. Rendered as a real rowgroup header row inside its own
+   <tbody>, so screen readers announce the grouping and gridNav skips it
+   (.grid-divider) without any rowspan trickery. */
+.worklog-day-head > th {
+  text-align: start;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  border-block: 1px solid var(--color-border);
+  padding: 0.3rem 0.6rem;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.worklog-day-total {
+  float: inline-end;
+  font-variant-numeric: tabular-nums;
+}

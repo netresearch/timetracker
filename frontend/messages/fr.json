@@ -727,5 +727,12 @@
   "personiomatch_confirm_selected": "Confirmer la sélection",
   "personiomatch_confirm_error": "Impossible d'appliquer les associations.",
   "personiomatch_applied": "{count} association(s) appliquée(s).",
-  "settings_apitoken_expiry_past": "La date d'expiration ne peut pas être dans le passé."
+  "settings_apitoken_expiry_past": "La date d'expiration ne peut pas être dans le passé.",
+  "worklog_view_label": "Vue du journal",
+  "worklog_view_grouped": "Groupée",
+  "worklog_view_flat": "Plate",
+  "worklog_view_timeline": "Chronologie",
+  "worklog_view_grouped_hint": "Une section par jour ; le contexte commun affiché une fois",
+  "worklog_view_flat_hint": "Une ligne par saisie, toutes les colonnes sur chaque ligne",
+  "worklog_view_timeline_hint": "La hauteur de ligne suit la durée ; lecture seule"
 }

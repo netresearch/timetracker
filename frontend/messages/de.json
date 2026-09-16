@@ -727,5 +727,12 @@
   "personiomatch_confirm_selected": "Auswahl bestätigen",
   "personiomatch_confirm_error": "Die Zuordnungen konnten nicht angewendet werden.",
   "personiomatch_applied": "{count} Zuordnung(en) angewendet.",
-  "settings_apitoken_expiry_past": "Das Ablaufdatum darf nicht in der Vergangenheit liegen."
+  "settings_apitoken_expiry_past": "Das Ablaufdatum darf nicht in der Vergangenheit liegen.",
+  "worklog_view_label": "Worklog-Ansicht",
+  "worklog_view_grouped": "Gruppiert",
+  "worklog_view_flat": "Flach",
+  "worklog_view_timeline": "Zeitstrahl",
+  "worklog_view_grouped_hint": "Ein Abschnitt je Tag; gemeinsamer Kontext einmal gezeigt",
+  "worklog_view_flat_hint": "Eine Zeile je Eintrag, jede Spalte in jeder Zeile",
+  "worklog_view_timeline_hint": "Zeilenhöhe folgt der Dauer; nur lesend"
 }

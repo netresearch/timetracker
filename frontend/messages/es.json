@@ -727,5 +727,12 @@
   "personiomatch_confirm_selected": "Confirmar selección",
   "personiomatch_confirm_error": "No se pudieron aplicar las asignaciones.",
   "personiomatch_applied": "{count} asignación(es) aplicada(s).",
-  "settings_apitoken_expiry_past": "La fecha de caducidad no puede estar en el pasado."
+  "settings_apitoken_expiry_past": "La fecha de caducidad no puede estar en el pasado.",
+  "worklog_view_label": "Vista del registro",
+  "worklog_view_grouped": "Agrupada",
+  "worklog_view_flat": "Plana",
+  "worklog_view_timeline": "Cronología",
+  "worklog_view_grouped_hint": "Una sección por día; el contexto común se muestra una vez",
+  "worklog_view_flat_hint": "Una fila por entrada, todas las columnas en cada fila",
+  "worklog_view_timeline_hint": "La altura de la fila sigue la duración; solo lectura"
 }

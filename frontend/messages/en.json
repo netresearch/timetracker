@@ -727,5 +727,12 @@
   "personiomatch_confirm_selected": "Confirm selected",
   "personiomatch_confirm_error": "Could not apply the matches.",
   "personiomatch_applied": "Applied {count} mapping(s).",
-  "settings_apitoken_expiry_past": "The expiry date can't be in the past."
+  "settings_apitoken_expiry_past": "The expiry date can't be in the past.",
+  "worklog_view_label": "Worklog view",
+  "worklog_view_grouped": "Grouped",
+  "worklog_view_flat": "Flat",
+  "worklog_view_timeline": "Timeline",
+  "worklog_view_grouped_hint": "One section per day; shared context shown once",
+  "worklog_view_flat_hint": "One row per entry, every column on every row",
+  "worklog_view_timeline_hint": "Row height follows duration; read-only"
 }
