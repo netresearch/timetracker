@@ -79,6 +79,10 @@ export function InlineEditor(props: {
   label: string
   initial: FormValues[string]
   seed?: string
+  /** Shown in the empty input. The grouped worklog has no column headings over
+   *  its fields, so without it a blank editor says nothing about what belongs in
+   *  it. Ignored for a date (which states its format instead). */
+  placeholder?: string
   options: OptionLookup
   onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => void
   onCancel: () => void
@@ -255,7 +259,7 @@ export function InlineEditor(props: {
           // date control renders in the browser's locale (mm/dd/yyyy, dd.mm.yyyy),
           // which changes the format on edit. Text keeps it yyyy-mm-dd throughout.
           type={props.field.type === 'number' ? 'number' : 'text'}
-          placeholder={props.field.type === 'date' ? 'YYYY-MM-DD' : undefined}
+          placeholder={props.field.type === 'date' ? 'YYYY-MM-DD' : props.placeholder}
           aria-describedby={props.field.type === 'date' ? dateHintId : undefined}
           class="inline-editor"
           aria-label={props.label}

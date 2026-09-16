@@ -506,6 +506,45 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('the editor of a part names its own field while it is empty', async () => {
+    // No column heading stands over a part, so a new row opened on an empty box
+    // with a caret and nothing saying a ticket number belongs in it.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, getByTitle, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    fireEvent.click(getByTitle(/Add entry/i))
+    await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).not.toBeNull())
+
+    const editor = container.querySelector<HTMLInputElement>('tr.tracking-row.is-new input.inline-editor')
+    expect(editor?.placeholder).toBe('Ticket')
+
+    unmount()
+  })
+
+  it('a double-click inside an open editor stays in that field', async () => {
+    // Double-clicking to select a word bubbles to the cell, which reopened it on
+    // its primary field: editing the END time then committed the end value into
+    // the START, and the row failed validation.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, getByLabelText, queryByLabelText, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const parts = container.querySelectorAll<HTMLElement>('td[data-col-key="time"] .worklog-part')
+    fireEvent.dblClick(parts[1]!)
+    const endEditor = getByLabelText('End') as HTMLInputElement
+    expect(endEditor.value).toBe('10:30')
+
+    fireEvent.dblClick(endEditor)
+
+    expect(queryByLabelText('Start')).toBeNull()
+    expect((getByLabelText('End') as HTMLInputElement).value).toBe('10:30')
+
+    unmount()
+  })
+
   it('the grouped view drops the date column — the day heading carries it (Befund 8)', async () => {
     localStorage.setItem('tt-worklog-view', 'grouped')
     mockApi()

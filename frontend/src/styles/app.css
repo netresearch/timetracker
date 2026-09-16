@@ -5974,14 +5974,14 @@ div.calendar {
    padding pushes the text out of view (measured: 41px box, 61px of content, so
    "13:00–16:15" read as "13:00–.6:15"). */
 .data-table td[data-inline-editing] .worklog-part-edit > .inline-editor:not(.inline-check):not(.inline-tags):not(.inline-date-input) {
+  /* Exactly the ghost's box, no padding and no slack: the part is right-aligned
+     (a numeric cell), so any extra width moves the value away from the separator —
+     which is what a reader sees as "the dash jumped". The ghost is the value's own
+     rendered width, so the editor is never narrower than what it holds. */
   padding-inline: 0;
 }
 
-/* Two pixels of slack on each side, so a value whose rendered width lands just
-   above the ghost's cannot clip its last character. */
-.worklog-part-edit > .inline-ghost {
-  padding-inline: 2px;
-}
+
 
 /* An entry without a ticket still needs a target, or one could never be added
    in this view. */
@@ -6118,6 +6118,13 @@ tr:focus-within .worklog-ticket.is-empty {
 
 :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.tracking-toolbar, .worklog-view-switch) {
   gap: 5px;
+}
+
+/* The view and sort switches are a full-width column of 30px buttons; without
+   this their buttons align to the column's start and sit 13px left of every
+   other icon in the rail. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .worklog-view-switch {
+  align-items: center;
 }
 
 :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-view-ico, .worklog-tool svg, .primary-button svg) {

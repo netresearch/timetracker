@@ -1649,6 +1649,10 @@ export default function Tracking() {
                 <InlineEditor
                   field={field!}
                   label={field?.label() ?? fieldKey}
+                  // No column heading stands over a part, so the empty editor
+                  // names its own field — a new row opens on the ticket, and an
+                  // empty box with a caret says nothing about what belongs there.
+                  placeholder={field?.label() ?? fieldKey}
                   initial={editor.draftValue(id, fieldKey) ?? ''}
                   seed={editor.seedChar()}
                   options={optionLookup}
@@ -1766,6 +1770,7 @@ export default function Tracking() {
               <InlineEditor
                 field={FIELD_BY_KEY.get('ticket')!}
                 label={FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket'}
+                placeholder={FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket'}
                 initial={editor.draftValue(id, 'ticket') ?? ''}
                 seed={editor.seedChar()}
                 options={optionLookup}
@@ -1873,7 +1878,19 @@ export default function Tracking() {
                               data-col-key={col.key}
                               data-inline-editing={editor.isEditing(id, col.key) || (view() === 'grouped' && COMPOSITE_PARTS[col.key]?.some((key) => editor.isEditing(id, key))) ? '' : undefined}
                               title={col.key === 'date' ? displayDate(str(editor.overlayRow(entry).date)) : undefined}
-                              onDblClick={() => { if (editable) editor.beginEdit(id, fieldKey) }}
+                              onDblClick={(event) => {
+                                // A double-click INSIDE an open editor selects a word —
+                                // it must not re-open the cell. In a composite cell that
+                                // switched the edit from the part the user was in (the
+                                // end time) to the cell's primary field (the start), and
+                                // the end value was then committed into the start.
+                                if ((event.target as HTMLElement).closest('.inline-editor, .worklog-part-edit') !== null) {
+                                  return
+                                }
+                                if (editable) {
+                                  editor.beginEdit(id, fieldKey)
+                                }
+                              }}
                             >
                               <Show
                                 when={editor.isEditing(id, col.key)}
