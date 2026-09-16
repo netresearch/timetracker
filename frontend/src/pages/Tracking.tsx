@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createEffect, createMemo, createSignal, For, on, onCleanup, onMount, Show, type JSX } from 'solid-js'
+import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postForm, postJson, ValidationError } from '../api/client'
 import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, upsertSavedEntry, type EntrySummaryResponse, type NamedOption, type SavedEntryResult, type SummaryScope, type TrackingEntry } from '../api/queries'
@@ -359,6 +360,19 @@ export default function Tracking() {
   // The day range persists across remounts/logins (client-side, like the theme).
   const [days, setDays] = createSignal<number>(Math.min(getTrackingDays(DEFAULT_DAYS), MAX_DAYS))
   // The chosen view persists the same way the day range does (client-side).
+  // Which nav layout is live. navLayoutPref applies it to <html> and fires
+  // tt:layout-change when the Settings page switches it, so the toolbar follows
+  // without a reload.
+  const isSide = (): boolean => document.documentElement.getAttribute('data-nav-layout') === 'side'
+  const [navSideLayout, setNavSideLayout] = createSignal(isSide())
+  const [toolsSlot, setToolsSlot] = createSignal<HTMLElement | null>(null)
+  onMount(() => {
+    setToolsSlot(document.getElementById('sidebar-tools-slot'))
+    const onLayoutChange = (): void => { setNavSideLayout(isSide()) }
+    window.addEventListener('tt:layout-change', onLayoutChange)
+    onCleanup(() => window.removeEventListener('tt:layout-change', onLayoutChange))
+  })
+
   const [view, setViewSignal] = createSignal<WorklogView>(getWorklogView())
   const chooseView = (next: WorklogView): void => {
     setViewSignal(next)
@@ -1481,6 +1495,115 @@ export default function Tracking() {
                   )
   }
 
+  const renderToolbar = (): JSX.Element => (
+        <div class="tracking-toolbar">
+          <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
+            <PlusIcon />
+          </button>
+          {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
+          <Show when={canBulkEnter()}>
+            <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
+          </Show>
+          {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
+          <button type="button" class="action-button is-icon" aria-keyshortcuts="Alt+R" aria-label={m.tracking_refresh()} title={m.tracking_refresh()} onClick={() => refreshEntries()}>
+            <RefreshIcon />
+          </button>
+          {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
+              still act on the keyboard-cursor row via the global shortcut handler. */}
+          <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
+          {/* Freetext + always-full preset menu: type any whole number of days
+              (applyDays clamps + persists), or pick a preset — the menu always lists
+              ALL presets regardless of what's typed, so switching ranges never needs
+              clearing the field first. */}
+          <div class="tracking-days">
+            <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
+            <div class="days-combo" ref={(el) => { daysComboRef = el }}>
+              <input
+                id="tracking-days-input"
+                name="days"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                class="tracking-days-input"
+                role="combobox"
+                aria-labelledby="tracking-days-lbl"
+                aria-expanded={daysMenuOpen()}
+                aria-controls="tracking-days-menu"
+                value={String(days())}
+                onChange={(event) => {
+                  const typed = Number(event.currentTarget.value.trim())
+                  if (Number.isFinite(typed) && typed >= 1) {
+                    applyDays(typed)
+                  }
+                  // Re-sync to the effective (clamped) value, reverting invalid input.
+                  event.currentTarget.value = String(days())
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowDown') {
+                    event.preventDefault()
+                    if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.min(DAYS_OPTIONS.length - 1, i + 1)) }
+                    else { openDaysMenu() }
+                  } else if (event.key === 'ArrowUp') {
+                    event.preventDefault()
+                    if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
+                  } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
+                    event.preventDefault()
+                    const option = DAYS_OPTIONS[daysActiveIdx()]
+                    if (option !== undefined) { chooseDays(option) }
+                  } else if (event.key === 'Escape' && daysMenuOpen()) {
+                    event.preventDefault()
+                    closeDaysMenu()
+                  }
+                }}
+              />
+              <button
+                type="button"
+                class="days-combo-toggle"
+                tabindex="-1"
+                aria-label={m.tracking_days_presets()}
+                aria-expanded={daysMenuOpen()}
+                aria-controls="tracking-days-menu"
+                onClick={() => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }}
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+              </button>
+              <Show when={daysMenuOpen()}>
+                <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
+                  <For each={DAYS_OPTIONS}>
+                    {(option, index) => (
+                      <li>
+                        <button
+                          type="button"
+                          class="days-combo-option"
+                          tabindex="-1"
+                          classList={{ 'is-active': index() === daysActiveIdx() }}
+                          aria-current={days() === option ? 'true' : undefined}
+                          onClick={() => chooseDays(option)}
+                          onPointerEnter={() => setDaysActiveIdx(index())}
+                        >
+                          {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
+                        </button>
+                      </li>
+                    )}
+                  </For>
+                </ul>
+              </Show>
+            </div>
+            <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
+          </div>
+
+          {/* View switch — the worklog's three presentations of the same rows.
+              Sits in the tool line next to the range, because both narrow what the
+              grid shows. */}
+          <WorklogViewSwitch value={view()} onChange={chooseView} />
+
+          {/* Inline-edit + keyboard discoverability hint — last in the tool line, so
+              the only otherwise-on-screen cue (a hover text-cursor on editable cells)
+              gets a written explanation without a separate band above the grid. */}
+          <p class="tracking-hint">{m.tracking_edit_hint()}</p>
+        </div>
+  )
+
   return (
     <section class="tracking">
       <h2 class="visually-hidden">{m.tracking_title()}</h2>
@@ -1498,112 +1621,13 @@ export default function Tracking() {
         <p class="save-toast" aria-hidden="true">{savedNotice()}</p>
       </Show>
 
-      <div class="tracking-toolbar">
-        <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
-          <PlusIcon />
-        </button>
-        {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
-        <Show when={canBulkEnter()}>
-          <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
-        </Show>
-        {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
-        <button type="button" class="action-button is-icon" aria-keyshortcuts="Alt+R" aria-label={m.tracking_refresh()} title={m.tracking_refresh()} onClick={() => refreshEntries()}>
-          <RefreshIcon />
-        </button>
-        {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
-            still act on the keyboard-cursor row via the global shortcut handler. */}
-        <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
-        {/* Freetext + always-full preset menu: type any whole number of days
-            (applyDays clamps + persists), or pick a preset — the menu always lists
-            ALL presets regardless of what's typed, so switching ranges never needs
-            clearing the field first. */}
-        <div class="tracking-days">
-          <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
-          <div class="days-combo" ref={(el) => { daysComboRef = el }}>
-            <input
-              id="tracking-days-input"
-              name="days"
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              class="tracking-days-input"
-              role="combobox"
-              aria-labelledby="tracking-days-lbl"
-              aria-expanded={daysMenuOpen()}
-              aria-controls="tracking-days-menu"
-              value={String(days())}
-              onChange={(event) => {
-                const typed = Number(event.currentTarget.value.trim())
-                if (Number.isFinite(typed) && typed >= 1) {
-                  applyDays(typed)
-                }
-                // Re-sync to the effective (clamped) value, reverting invalid input.
-                event.currentTarget.value = String(days())
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault()
-                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.min(DAYS_OPTIONS.length - 1, i + 1)) }
-                  else { openDaysMenu() }
-                } else if (event.key === 'ArrowUp') {
-                  event.preventDefault()
-                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
-                } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
-                  event.preventDefault()
-                  const option = DAYS_OPTIONS[daysActiveIdx()]
-                  if (option !== undefined) { chooseDays(option) }
-                } else if (event.key === 'Escape' && daysMenuOpen()) {
-                  event.preventDefault()
-                  closeDaysMenu()
-                }
-              }}
-            />
-            <button
-              type="button"
-              class="days-combo-toggle"
-              tabindex="-1"
-              aria-label={m.tracking_days_presets()}
-              aria-expanded={daysMenuOpen()}
-              aria-controls="tracking-days-menu"
-              onClick={() => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-            <Show when={daysMenuOpen()}>
-              <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
-                <For each={DAYS_OPTIONS}>
-                  {(option, index) => (
-                    <li>
-                      <button
-                        type="button"
-                        class="days-combo-option"
-                        tabindex="-1"
-                        classList={{ 'is-active': index() === daysActiveIdx() }}
-                        aria-current={days() === option ? 'true' : undefined}
-                        onClick={() => chooseDays(option)}
-                        onPointerEnter={() => setDaysActiveIdx(index())}
-                      >
-                        {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
-                      </button>
-                    </li>
-                  )}
-                </For>
-              </ul>
-            </Show>
-          </div>
-          <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
-        </div>
-
-        {/* View switch — the worklog's three presentations of the same rows.
-            Sits in the tool line next to the range, because both narrow what the
-            grid shows. */}
-        <WorklogViewSwitch value={view()} onChange={chooseView} />
-
-        {/* Inline-edit + keyboard discoverability hint — last in the tool line, so
-            the only otherwise-on-screen cue (a hover text-cursor on editable cells)
-            gets a written explanation without a separate band above the grid. */}
-        <p class="tracking-hint">{m.tracking_edit_hint()}</p>
-      </div>
+      {/* The toolbar MOVES into the left sidebar when that layout is active —
+          one instance, never two: a mirrored copy would duplicate every label and
+          make the focus order ambiguous. In the default top-bar layout there is no
+          sidebar, so it stays here rather than disappearing. */}
+      <Show when={navSideLayout() && toolsSlot()} fallback={renderToolbar()}>
+        <Portal mount={toolsSlot()!}>{renderToolbar()}</Portal>
+      </Show>
 
       {/* A session-expiry refetch errors too, but the overlay owns that — keep the
           last-good grid (and the user's drafts) visible+dimmed behind it, not a

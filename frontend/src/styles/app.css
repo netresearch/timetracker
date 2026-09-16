@@ -5525,3 +5525,46 @@ div.calendar {
     grid-template-columns: 1fr auto;
   }
 }
+
+/* The worklog toolbar moves into the sidebar column when that layout is active
+   (one instance, portalled — never a second copy). Empty and hidden in the top
+   bar, where the page keeps its own tool line. */
+#sidebar-tools-slot:empty {
+  display: none;
+}
+
+:root:not([data-nav-layout='side']) #sidebar-tools-slot {
+  display: none;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-block-start: 1px solid var(--color-border);
+}
+
+/* The tool line is a row of controls; stacked in a narrow column each one needs
+   the full width, and the inline hint would swamp the column, so it is dropped
+   there — the same text stays reachable from Help and the shortcut dialog. */
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-hint {
+  display: none;
+}
+
+/* The sidebar column is far narrower than the tool line, and three labels in a
+   row clip ("Zeitstrahl" lost its tail). Stacked, each option gets the full
+   width and stays readable; the separator moves to the block edge to match. */
+[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-switch {
+  inline-size: 100%;
+  flex-direction: column;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-option {
+  text-align: start;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-option + .worklog-view-option {
+  border-inline-start: 0;
+  border-block-start: 1px solid var(--color-border);
+}
