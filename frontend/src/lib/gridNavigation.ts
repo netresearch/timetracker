@@ -107,7 +107,9 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   }
 
   function pageRows(): number {
-    const sample = table.tBodies[0]?.rows[0]
+    // A DATA row, not simply the first one: in the grouped view row 0 of the
+    // first <tbody> is the day heading, which is a different height.
+    const sample = dataRows()[0]
     const rowHeight = sample?.getBoundingClientRect().height ?? 0
     // Unmeasurable row height (no rows / detached / jsdom) → sane default. Once
     // measurable, page by the visible rows clamped to ≥1 — NOT `visible ||
@@ -191,13 +193,15 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     return active
   }
 
-  // The data rows of the first <tbody>, excluding any non-data rows (e.g. a
-  // `.row-error` row rendered beneath an entry) so the top/bottom-edge tests and
-  // the page-edge landing target track real entries, not error rows.
+  // Every data row of the grid, excluding non-data rows (e.g. a `.row-error` row
+  // beneath an entry, or a day heading) so the top/bottom-edge tests and the
+  // page-edge landing target track real entries. Spans ALL <tbody> elements: the
+  // worklog's grouped view renders one per day, and reading only the first would
+  // confine paging and the edge tests to day one.
   function dataRows(): HTMLTableRowElement[] {
-    const body = table.tBodies[0]
-
-    return body ? Array.from(body.rows).filter((row) => !isNonDataRow(row)) : []
+    return Array.from(table.tBodies)
+      .flatMap((body) => Array.from(body.rows))
+      .filter((row) => !isNonDataRow(row))
   }
 
   // After a page change (onPageEdge), land on the last data row (came up from
@@ -267,7 +271,11 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       row.setAttribute('role', 'row')
       row.setAttribute('aria-rowindex', String(r + 1))
       cellsOf(row).forEach((cell, c) => {
-        cell.setAttribute('role', cell.tagName === 'TH' ? 'columnheader' : 'gridcell')
+        // A <th scope="rowgroup"> heads a group of rows (the worklog's day card),
+        // not a column: stamping columnheader on it told assistive technology the
+        // opposite of what it is.
+        const headerRole = cell.getAttribute('scope') === 'rowgroup' ? 'rowheader' : 'columnheader'
+        cell.setAttribute('role', cell.tagName === 'TH' ? headerRole : 'gridcell')
         cell.setAttribute('aria-colindex', String(c + 1))
         cell.tabIndex = -1 // bulk-reset the roving stop here (render-time); setActive then sets the one active cell
         for (const control of cell.querySelectorAll<HTMLElement>(INTERACTIVE)) {

@@ -79,6 +79,10 @@ export function InlineEditor(props: {
   label: string
   initial: FormValues[string]
   seed?: string
+  /** Shown in the empty input. The grouped worklog has no column headings over
+   *  its fields, so without it a blank editor says nothing about what belongs in
+   *  it. Ignored for a date (which states its format instead). */
+  placeholder?: string
   options: OptionLookup
   onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => void
   onCancel: () => void
@@ -255,7 +259,7 @@ export function InlineEditor(props: {
           // date control renders in the browser's locale (mm/dd/yyyy, dd.mm.yyyy),
           // which changes the format on edit. Text keeps it yyyy-mm-dd throughout.
           type={props.field.type === 'number' ? 'number' : 'text'}
-          placeholder={props.field.type === 'date' ? 'YYYY-MM-DD' : undefined}
+          placeholder={props.field.type === 'date' ? 'YYYY-MM-DD' : props.placeholder}
           aria-describedby={props.field.type === 'date' ? dateHintId : undefined}
           class="inline-editor"
           aria-label={props.label}
@@ -281,6 +285,14 @@ export interface InlineGridEditConfig<R extends object> {
   fieldFor: (colKey: string) => FieldDef | undefined
   /** Whether a column can be edited in place (vs modal-only / read-only). */
   isInlineEditable: (colKey: string) => boolean
+  /** The edit targets a cell holds, in the order it shows them. A composite cell
+   *  (the worklog's grouped view puts customer, project and activity in one cell)
+   *  answers with each field it renders; everything else answers with its own key,
+   *  which is the default. Tab, Enter's guided fill and the activation path walk
+   *  THESE, so a field that is not a column of its own is still reachable — and a
+   *  cell that shows nothing on this row (a block continuation) answers with an
+   *  empty list and is skipped. */
+  cellFields?: (colKey: string, rowId: number) => string[]
   /** Seed a fresh draft from a row (the editable form values). */
   seedDraft: (row: R) => FormValues
   /** Persist one row's draft (POST + refetch); rejects to surface a row error.
@@ -441,8 +453,10 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     if (!id || colKey === null) {
       return false
     }
-    if (config.isInlineEditable(colKey)) {
-      return beginEdit(id, colKey, key === 'type' ? initial : undefined)
+    // A composite cell opens the first field it shows, so Enter is never a dead end.
+    const fields = fieldsOfCell(colKey, id)
+    if (fields.length > 0) {
+      return beginEdit(id, fields[0]!, key === 'type' ? initial : undefined)
     }
     // A modal-only column (multiselect / locked relation) opens the full editor
     // on Enter/F2 so it stays reachable from the keyboard.
@@ -461,12 +475,70 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   // (the classic-grid behaviour), skipping non-editable cells (duration, actions)
   // and stopping at the row edge. Reads document.activeElement because the grid's
   // move handle is the single writer of focus + the roving tabindex.
-  function moveAndEdit(direction: 'left' | 'right'): void {
-    // Track the roving tab stop (the single td[tabindex="0"] that setActive owns), NOT
-    // document.activeElement: committing a text editor unmounts its <input> and drops
-    // focus to <body>, so reading activeElement would see "no move" and bail at the
-    // first step. The roving cell is always current, so the walk stays reliable even
-    // while focus is momentarily on <body>; beginEdit's editor re-grabs focus on mount.
+  // The editable fields a cell holds; see config.cellFields.
+  const fieldsOfCell = (colKey: string, rowId: number): string[] => {
+    const declared = config.cellFields?.(colKey, rowId)
+    if (declared !== undefined) {
+      return declared.filter((key) => config.isInlineEditable(key))
+    }
+
+    return config.isInlineEditable(colKey) ? [colKey] : []
+  }
+
+  // One flat sequence of (cell, field) pairs in a row's reading order, so a field
+  // inside a composite cell takes its turn like any other.
+  const editTargets = (rowId: number): { colKey: string; field: string }[] =>
+    Array.from(tableEl?.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`) ?? [])
+      .flatMap((td) => {
+        const colKey = td.dataset.colKey
+
+        return colKey === undefined ? [] : fieldsOfCell(colKey, rowId).map((field) => ({ colKey, field }))
+      })
+
+  // Step from the open field to the next one in the ROW's own sequence of edit
+  // targets rather than walking cells: a composite cell holds several fields, and
+  // a select commits from a body-portalled popup, after which the roving cell is no
+  // longer a reliable account of where the user was (picking a customer then
+  // skipped the project beside it and landed in the next cell).
+  // Returns false when the open field is not one of the row's declared targets.
+  function stepWithinRow(direction: 'left' | 'right', open: { rowId: number; colKey: string }): boolean {
+    const targets = editTargets(open.rowId)
+    const at = targets.findIndex((target) => target.field === open.colKey)
+    if (at === -1) {
+      return false
+    }
+    const next = at + (direction === 'right' ? 1 : -1)
+    // Past the end: a row that has never been saved wraps to the other end of
+    // itself (the worklog opens one on its ticket, which the grouped layout places
+    // last, so everything else lies behind it); any other row stops at the row
+    // edge, as it always did.
+    const wrapped = next < 0 || next >= targets.length
+    if (wrapped) {
+      const row = rowById(open.rowId)
+      if (row === undefined || config.isNewRow?.(row) !== true) {
+        return true // handled: the row edge is where Tab stops
+      }
+    }
+    const target = wrapped
+      ? (direction === 'right' ? targets[0] : targets.at(-1))
+      : targets[next]
+    if (target !== undefined && !(wrapped && target.field === open.colKey)) {
+      moveHandle?.focusCell(open.rowId, target.colKey)
+      beginEdit(open.rowId, target.field)
+    }
+
+    return true
+  }
+
+  function moveAndEdit(direction: 'left' | 'right', from?: { rowId: number; colKey: string }): void {
+    // The field Tab left: commitCell clears the edit state before it moves, so the
+    // caller passes what was open — reading editCell() here would always see null.
+    const open = from ?? editCell()
+    if (open !== null && stepWithinRow(direction, open)) {
+      return
+    }
+    // The open field is not one of the row's declared targets (a host that declares
+    // none, or a cell rendered outside the row): fall back to walking cells.
     const rovingCell = (): HTMLElement | null =>
       tableEl?.querySelector<HTMLElement>('td[tabindex="0"], th[tabindex="0"]') ?? null
     for (let i = 0; i < 30; i++) {
@@ -478,8 +550,11 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       }
       const colKey = cell.getAttribute('data-col-key')
       const id = Number(cell.getAttribute('data-row-id'))
-      if (id && colKey !== null && config.isInlineEditable(colKey)) {
-        beginEdit(id, colKey)
+      const fields = colKey === null ? [] : fieldsOfCell(colKey, id)
+      // Entering a cell from the left opens its first field, from the right its last.
+      const target = direction === 'right' ? fields[0] : fields.at(-1)
+      if (id && target !== undefined) {
+        beginEdit(id, target)
 
         return
       }
@@ -497,23 +572,28 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     if (config.invalidFields === undefined || tableEl === undefined) {
       return false
     }
-    const draft = drafts[rowId]
     const row = rowById(rowId)
-    if (draft === undefined || row === undefined) {
+    if (row === undefined) {
       return false
     }
+    // A Tab out of an untouched field drops the row's draft again (it equalled its
+    // seed), so read the row itself when there is none — otherwise the guided fill
+    // silently stops exactly when it is most needed: on a fresh, empty row.
+    const draft = drafts[rowId] ?? config.seedDraft(row)
     const invalid = new Set(config.invalidFields(draft, row))
     if (invalid.size === 0) {
       return false
     }
-    const colKeys = Array.from(tableEl.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`))
-      .map((td) => td.getAttribute('data-col-key'))
-    const from = colKeys.indexOf(fromColKey)
-    for (let next = from + 1; next < colKeys.length; next++) {
-      const colKey = colKeys[next]
-      if (colKey != null && invalid.has(colKey) && config.isInlineEditable(colKey)) {
-        moveHandle?.focusCell(rowId, colKey)
-        beginEdit(rowId, colKey)
+    const targets = editTargets(rowId)
+    const from = targets.findIndex((target) => target.field === fromColKey)
+    // Forward only, and never past the row's end: Enter guides, it does not cycle.
+    // (Tab is what walks the whole row — see stepWithinRow. Wrapping here as well
+    // opened an editor the caller had not asked for, which broke a flow that sets
+    // the fields in its own order.)
+    for (const target of targets.slice(from + 1)) {
+      if (invalid.has(target.field)) {
+        moveHandle?.focusCell(rowId, target.colKey)
+        beginEdit(rowId, target.field)
 
         return true
       }
@@ -556,7 +636,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     const { rowId, colKey } = cell
     const advance = (): void => {
       if (direction === 'left' || direction === 'right') {
-        moveAndEdit(direction)
+        moveAndEdit(direction, { rowId, colKey })
 
         return
       }
@@ -712,6 +792,20 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       resumePending.delete(id)
 
       return
+    }
+    // A row that was never persisted and is not bookable yet cannot be saved: the
+    // server rejects it (422) and the user is told a save failed while they are
+    // still filling the row in. Half-filling one is the normal state of a new row —
+    // every focus move into a select's popup used to post it — so mark what is
+    // still missing and keep the draft instead.
+    if (config.invalidFields !== undefined && config.isNewRow?.(row) === true) {
+      const missing = config.invalidFields(draft, row)
+      if (missing.length > 0) {
+        setFieldHints(id, missing)
+        resumePending.delete(id)
+
+        return
+      }
     }
     setSavingRows(id, true)
     setRowErrors(id, '')

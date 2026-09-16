@@ -2324,69 +2324,72 @@ kbd {
   gap: 0.5rem;
 }
 
-/* The days-range combobox must use the theme tokens (like .field select) — an
-   unstyled native control renders a light box in dark mode. color-scheme keeps
-   the datalist popup legible in both themes. Narrow: it holds a number, not a
-   sentence. */
-.tracking-days-input {
+/* Day-range combobox: ONE field. The box is the combo wrapper, the number is a
+   borderless input inside it and the unit + chevron are its adornment, so typing
+   a range and picking a preset happen in the same control. It must use the theme
+   tokens (like .field select) — an unstyled native control renders a light box in
+   dark mode; color-scheme keeps the menu legible in both themes. */
+.days-combo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: var(--color-text);
   color-scheme: light dark;
-  font: inherit;
+  cursor: pointer;
   min-height: 44px; /* match the 44px touch-target the rest of the toolbar commits to */
-  padding: 0 0.4rem;
-  width: 4.5rem;
+  padding-inline: 0.5rem;
 }
 
-.tracking-days-input:focus-visible {
+.days-combo:hover {
+  border-color: var(--color-accent);
+}
+
+/* The box carries the focus ring for the input it contains — the input itself
+   draws none, so the control reads as one field rather than a field in a frame. */
+.days-combo:focus-within {
   border-color: var(--color-accent);
   outline: 2px solid var(--color-accent);
   outline-offset: -1px;
+}
+
+.tracking-days-input {
+  background: none;
+  border: 0;
+  color: var(--color-text);
+  font: inherit;
+  padding: 0;
+  /* Wide enough for the largest range the field accepts (366). */
+  width: 3.5ch;
+}
+
+.tracking-days-input:focus-visible {
+  outline: none;
+}
+
+.days-combo-adornment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--color-text-muted);
 }
 
 .tracking-days-unit {
   color: var(--color-text-muted);
 }
 
-/* Day-range combobox: freetext input + a toggle that opens a menu of all presets
-   (always the full list, never filtered by what's typed). */
-.days-combo {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.days-combo-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  min-height: 44px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.days-combo-toggle:hover,
-.days-combo-toggle:focus-visible {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
+/* Fixed, not absolute: on the collapsed sidebar rail an absolute panel is clipped
+   to the rail's 3.5rem width. Its viewport coordinates come from the field's rect
+   (positionDaysMenu). */
 .days-combo-menu {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
+  position: fixed;
   z-index: 30;
   margin: 0;
   padding: 4px;
   list-style: none;
-  min-width: max(100%, 9em);
+  min-width: 9em;
   white-space: nowrap;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -2494,11 +2497,6 @@ kbd {
 .tracking-legend-item.is-daybreak::before { background: var(--color-class-daybreak); }
 .tracking-legend-item.is-pause::before { background: var(--color-class-pause); }
 .tracking-legend-item.is-overlap::before { background: var(--color-class-overlap); }
-
-/* Tighter gap so the icon legend reads as one block with the colour legend. */
-.tracking-legend-icons {
-  margin-top: 0.4rem;
-}
 
 /* Icon legend items carry an inline icon instead of a colour swatch. */
 .tracking-legend-icon {
@@ -2843,7 +2841,14 @@ kbd {
 
 .combobox-positioner {
   /* Above every incidental fixed overlay (modal 100/101, first-run hint 1100):
-     the popup is body-portalled and only present while a cell is being edited. */
+     the popup is body-portalled and only present while a cell is being edited.
+     Ark writes `z-index: var(--z-index)` into the positioner's inline style, and
+     an inline declaration beats this rule — so the variable is what has to carry
+     the value. Left at its `auto` default the popup lost to the grid's sticky
+     headers (z-index 3/4), which painted over the open list. */
+  /* !important is the only way past an inline declaration, and Ark writes this
+     variable inline on every render. */
+  --z-index: 1200 !important;
   z-index: 1200;
 }
 
@@ -3744,8 +3749,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='compact'] .action-button,
 :root[data-density='compact'] .admin-subnav-link,
 :root[data-density='compact'] .primary-button,
-:root[data-density='compact'] .days-combo-toggle,
-:root[data-density='compact'] .tracking-days-input,
+:root[data-density='compact'] .days-combo,
 /* All interactive controls commit to the same tighter target in dense mode, not
    just the worklog toolbar: form inputs/selects (Auswertung date range + filters,
    modals), the range presets, the admin filter, and the Month year/month/today
@@ -3770,11 +3774,6 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='compact'] .primary-button.is-icon {
   min-width: 30px;
   padding: 0; /* keep the icon-only button square (beats the .primary-button padding above) */
-}
-
-/* Match the day-range toggle's width to its shrunk height so it stays square. */
-:root[data-density='compact'] .days-combo-toggle {
-  width: 30px;
 }
 
 /* ── Ultra-compact — even tighter than Compact, plus a compacted header and no
@@ -3816,8 +3815,7 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='ultra-compact'] .action-button,
 :root[data-density='ultra-compact'] .admin-subnav-link,
 :root[data-density='ultra-compact'] .primary-button,
-:root[data-density='ultra-compact'] .days-combo-toggle,
-:root[data-density='ultra-compact'] .tracking-days-input,
+:root[data-density='ultra-compact'] .days-combo,
 :root[data-density='ultra-compact'] .field input:not([type='checkbox']):not([type='radio']),
 :root[data-density='ultra-compact'] .field select,
 :root[data-density='ultra-compact'] .searchable-select-trigger,
@@ -3838,10 +3836,6 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density='ultra-compact'] .primary-button.is-icon {
   min-width: 26px;
   padding: 0; /* keep the icon-only button square (beats the .primary-button padding above) */
-}
-
-:root[data-density='ultra-compact'] .days-combo-toggle {
-  width: 26px;
 }
 
 /* Header compaction — overrides the header.css defaults (imported first).
@@ -3871,9 +3865,8 @@ th[aria-sort='descending'] .th-sort-glyph {
 :root[data-density] :is(.settings-page,.modal) .field input:not([type='checkbox']):not([type='radio']),
 :root[data-density] :is(.settings-page,.modal) .field select,
 :root[data-density] :is(.settings-page,.modal) .searchable-select-trigger,
-:root[data-density] :is(.settings-page,.modal) :is(.link-button,.action-button,.primary-button,.days-combo-toggle){ min-height:44px; }
+:root[data-density] :is(.settings-page,.modal) :is(.link-button,.action-button,.primary-button,.days-combo){ min-height:44px; }
 :root[data-density] :is(.settings-page,.modal) .primary-button{ padding:0 1.2rem; }
-:root[data-density] :is(.settings-page,.modal) .days-combo-toggle{ width:auto; }
 :root[data-density='ultra-compact'] :is(.settings-page,.modal) :is(.field-hint,.settings-section-hint,.field-help){ display:revert; }
 
 /* Sidebar chrome (collapse / resize / reopen) is hidden by default — it only
@@ -3988,6 +3981,12 @@ th[aria-sort='descending'] .th-sort-glyph {
     height: 100vh;
     position: sticky;
     top: 0;
+    /* Sticky makes this column its own stacking context, and with z-index auto it
+       sits at the same level as the content that follows it in the DOM — so the
+       grid's sticky headers painted OVER a menu opened in the sidebar. The column
+       is chrome: it belongs above the grid, and stays below the dialog (1200) and
+       the header's own popups (1000). */
+    z-index: 50;
     /* The column itself never scrolls — only the nav region inside does (below),
        so the logo and the footer (worktime/controls/account) stay pinned and the
        main nav can never be scrolled out of view. */
@@ -4271,14 +4270,17 @@ th[aria-sort='descending'] .th-sort-glyph {
     padding-inline: var(--sidebar-gutter);
   }
 
+  /* Same icon button as the footer controls and the worklog tools: no frame, the
+     soft accent only under the pointer. A single bordered box in a column of bare
+     icons reads as a different kind of control than it is. */
   :root[data-nav-layout='side'] .sidebar-collapse {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--color-border);
+    width: 30px;
+    height: 30px;
+    border: 1px solid transparent;
     border-radius: 8px;
     background: transparent;
     color: inherit;
@@ -4383,8 +4385,8 @@ th[aria-sort='descending'] .th-sort-glyph {
 
   :root[data-nav-layout='side'] .sidebar-collapse:hover,
   :root[data-nav-layout='side'] .sidebar-collapse:focus-visible {
-    border-color: var(--color-border);
     background: var(--color-accent-soft);
+    color: var(--color-accent);
   }
 
   /* Resize handle — a thin grabbable strip tracking the column's right edge. */
@@ -5357,4 +5359,774 @@ div.calendar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Worklog view switch + grouped day sections
+   --------------------------------------------------------------------------- */
+
+/* Segmented control. One tab stop (roving tabindex lives in the component);
+   the checked option carries the accent so the selection survives a
+   forced-colours / no-colour reading via aria-checked too. */
+.worklog-view-switch {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.worklog-view-option {
+  appearance: none;
+  border: 0;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  padding: 0.35rem 0.75rem;
+  /* Density modes may shrink this below 44px (documented exception); the
+     control stays keyboard-reachable as one group either way. */
+  min-height: 2rem;
+  cursor: pointer;
+}
+
+.worklog-view-option + .worklog-view-option {
+  border-inline-start: 1px solid var(--color-border);
+}
+
+.worklog-view-option[aria-checked='true'] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  font-weight: 600;
+}
+
+.worklog-view-option:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* A day section header. Rendered as a real rowgroup header row inside its own
+   <tbody>, so screen readers announce the grouping and gridNav skips it
+   (.grid-divider) without any rowspan trickery. */
+.worklog-day-head > th {
+  text-align: start;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  border-block: 1px solid var(--color-border);
+  padding: 0.3rem 0.6rem;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Duration bar behind the figure in the grouped view. Sized from a fixed
+   working day (see DURATION_BAR_CAP_MINUTES) so bars stay comparable across
+   days; the number beside it carries the exact value, the bar is decoration
+   and hidden from assistive technology. */
+.tracking-table td[data-col-key='duration'] {
+  position: relative;
+}
+
+.tracking-table td[data-col-key='duration'] > :not(.duration-bar) {
+  position: relative;
+  z-index: 1;
+}
+
+/* The worklog toolbar moves into the sidebar column when that layout is active
+   (one instance, portalled — never a second copy). Empty and hidden in the top
+   bar, where the page keeps its own tool line. */
+#sidebar-tools-slot:empty {
+  display: none;
+}
+
+:root:not([data-nav-layout='side']) #sidebar-tools-slot {
+  display: none;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-block-start: 1px solid var(--color-border);
+}
+
+/* The tool line is a row of controls; stacked in a narrow column each one needs
+   the full width, and the inline hint would swamp the column, so it is dropped
+   there — the same text stays reachable from Help and the shortcut dialog. */
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-hint {
+  display: none;
+}
+
+/* The sidebar column is far narrower than the tool line, and three labels in a
+   row clip ("Zeitstrahl" lost its tail). Stacked, each option gets the full
+   width and stays readable; the separator moves to the block edge to match. */
+[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-option + .worklog-view-option {
+  border-inline-start: 1px solid var(--color-border);
+}
+
+/* Befund 4: the day header carries the totals, and human and agent time are
+   never added together (ADR-025 §7). Befund 6: "estimated" is counted here once
+   per day instead of badging almost every row. */
+.worklog-day-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.worklog-day-estimated {
+  font-weight: 400;
+  color: var(--color-warning-text);
+}
+
+.worklog-day-total {
+  margin-inline-start: auto;
+  display: flex;
+  gap: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.worklog-total-agent {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* Befund 4: a fixed scale (90 min = 150 px) rather than a share of the cell, so
+   0:06 and 1:27 differ visibly and the row height never changes. */
+.duration-bar {
+  position: absolute;
+  inset-block: 0.35rem;
+  inset-inline-start: 0;
+  inline-size: var(--duration-width, 0);
+  background: var(--color-accent-soft);
+  border-inline-start: 2px solid var(--color-accent);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Befund 3: a relation reads as plain text in the worklog. The chip returns in
+   the editor, where "one selectable thing" is the point. */
+.relation-text {
+  color: var(--color-text);
+}
+
+/* Befund 2: three separation systems ran at once — zebra stripes, 4 px colour
+   edges and bordered chips. Proximity and shared area group better than lines,
+   so: a hairline between rows, the day as an area (the section heading), and
+   colour reserved for state. Overlap keeps its edge because it is a warning;
+   day-break and pause no longer need one — the heading and the gap say it. */
+.tracking-table tbody.worklog-day .tracking-row {
+  background: none;
+}
+
+.tracking-table tbody.worklog-day .tracking-row > td {
+  border-block-start: 1px solid var(--color-border);
+}
+
+.tracking-table tbody.worklog-day .tracking-row.is-daybreak > td,
+.tracking-table tbody.worklog-day .tracking-row.is-pause > td {
+  box-shadow: none;
+}
+
+/* Befund 6: the duration bar carries the source — solid for a person, hatched
+   for a machine — so the row needs no badge to say which it was. */
+.duration-bar.is-agent {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-accent-soft) 0 4px,
+    transparent 4px 8px
+  );
+  border-inline-start-style: dashed;
+}
+
+.duration-estimated {
+  color: var(--color-warning-text);
+  margin-inline-end: 0.15rem;
+}
+
+/* A fixed-pixel bar cannot live in an auto-width cell: it overflowed the DAUER
+   column and painted over the row actions. The column therefore clips, and its
+   width is stated ONCE with the other column widths below (15rem — the bar's
+   150px track plus its figure). An earlier 19rem here set a minimum the later
+   width could not undo, so the column stayed 4rem wider than intended. */
+.tracking-table.is-grouped td[data-col-key='duration'],
+.tracking-table.is-grouped th[data-col-key='duration'] {
+  overflow: hidden;
+}
+
+/* Befund 7: the two groups are labelled only where they read as a submenu. */
+.tracking-tools-heading {
+  display: none;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-tools-heading {
+  display: block;
+  margin: 0.5rem 0 0.1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   Grouped view — the design canvas's structure
+   --------------------------------------------------------------------------- */
+
+/* Befund 3: the context is one block cell, printed on the block's first row and
+   left blank on the rest. No rowspan: gridNav counts cells, so a merged cell
+   would break its arithmetic. Dropping the top border on the continuation cells
+   is what makes the block read as one area. */
+.tracking-table.is-grouped td[data-col-key='context'] {
+  inline-size: 208px;
+  min-inline-size: 208px;
+  background: var(--color-bg);
+  border-inline-end: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.tracking-table.is-grouped td[data-col-key='context'].is-continuation {
+  border-block-start-color: transparent;
+}
+
+.worklog-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.worklog-block-project {
+  font-weight: 700;
+}
+
+.worklog-block-meta {
+  font-size: 0.83em;
+  color: var(--color-text-muted);
+}
+
+/* Time is one cell, "09:00–10:30". An overlap is the one state that keeps
+   colour (Befund 2), and it is named in words as well. */
+.tracking-table.is-grouped td[data-col-key='time'] {
+  inline-size: 7rem;
+  min-inline-size: 7rem;
+}
+
+.worklog-time {
+  display: flex;
+  flex-direction: column;
+}
+
+.worklog-time.is-overlap > .num {
+  color: var(--color-danger-text);
+  font-weight: 700;
+}
+
+.worklog-overlap {
+  font-size: 0.78em;
+  color: var(--color-danger-text);
+}
+
+.worklog-desc {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.worklog-ticket {
+  font-size: 0.83em;
+  /* The link accent on the page ground is 5.8:1 — enough for AA, short of the 7:1
+     this project holds itself to. The darker accent reads 8.9:1 in light and 9.0:1
+     in dark, and is what the day heading already uses. */
+  color: var(--color-accent-text);
+}
+
+/* Befund 4: the duration is the figure of record, so it gets weight and a bar
+   on a fixed scale in a fixed track — the row height never changes. */
+.tracking-table.is-grouped td[data-col-key='duration'] {
+  inline-size: 15rem;
+  min-inline-size: 15rem;
+}
+
+.worklog-duration-line {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.worklog-duration-value {
+  font-weight: 700;
+  text-align: end;
+}
+
+.tracking-table.is-grouped .duration-bar {
+  position: static;
+  display: block;
+  block-size: 8px;
+  inline-size: var(--duration-width, 3px);
+  max-inline-size: 150px;
+  border-radius: 2px;
+  border: 0;
+  background: var(--color-accent);
+}
+
+.tracking-table.is-grouped .duration-bar.is-agent {
+  background: repeating-linear-gradient(135deg, var(--color-accent) 0 2px, transparent 2px 5px);
+  border: 1px solid var(--color-accent);
+}
+
+/* Befund 7: the row actions appear at the active row, not as a permanent column
+   of icons down the page. Keyboard focus counts as active, so they are never
+   hover-only. */
+/* The CONTENTS fade, not the cell: opacity on the <td> takes its background with
+   it, and the card then had a transparent notch where its actions column is. */
+.tracking-table.is-grouped td[data-col-key='actions'] > .row-actions {
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+.tracking-table.is-grouped tr:hover td[data-col-key='actions'] > .row-actions,
+.tracking-table.is-grouped tr:focus-within td[data-col-key='actions'] > .row-actions,
+.tracking-table.is-grouped tr[aria-current='true'] td[data-col-key='actions'] > .row-actions {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tracking-table.is-grouped td[data-col-key='actions'] > .row-actions {
+    transition: none;
+  }
+}
+
+/* The canvas widths (208 / 112 / 1fr / 236 px) are stated on the header cells as
+   well as the body cells: under the auto layout a width on the body cell alone
+   is only a hint, and `table-layout: fixed` is not an option here because the
+   first row is a day heading with a colspan, which leaves it no per-column
+   widths to read. */
+.tracking-table.is-grouped th[data-col-key='context'] { inline-size: 208px; }
+.tracking-table.is-grouped th[data-col-key='time'] { inline-size: 7rem; }
+.tracking-table.is-grouped th[data-col-key='duration'] { inline-size: 15rem; }
+
+/* Each part of a composite cell is its own edit target, so it needs its own
+   hit area and the same text cursor the editable cells carry. */
+.worklog-part {
+  cursor: text;
+  border-radius: 3px;
+  padding-inline: 2px;
+  margin-inline: -2px;
+}
+
+.worklog-part:hover {
+  background: var(--color-accent-soft);
+}
+
+/* The agent half of a pair sits under the human one — same scale, hatched, and
+   its figure stays separate because machine walltime is never human attendance
+   (ADR-025 §7). */
+.worklog-duration {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.worklog-duration-agent {
+  text-align: end;
+  color: var(--color-text-muted);
+  font-size: 0.86em;
+}
+
+/* Page header, from the canvas: what this is and which range on the left, the
+   key and the one primary action on the right. */
+/* Everything in the header reads from the left edge, top to bottom: one reading
+   order, no cluster pinned to the far side of a wide screen. Stacked rather than
+   in one line — side by side the key sat level with the title and read as part
+   of it. */
+.tracking-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.tracking-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  /* The action leads the row, the key explains what follows it. */
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+/* Sticky column headers: the grid is long and the day cards repeat, so the
+   column meanings must stay on screen while scrolling. */
+.tracking-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  background: var(--color-accent-soft);
+}
+
+/* Only the COLUMN header sticks. A day heading that sticks too would sit on top
+   of the first row of its own card — sticky always overlaps what follows it, so
+   two stacked sticky rows plus a sticky block label simply ate the first entry
+   of every block. The day heading scrolls with its card, which is also what
+   makes the card read as one object. */
+
+/* Day cards: the space between them is a generated table row, so it exists in
+   layout but not in the DOM — `table.rows` never sees it, which keeps gridNav's
+   row arithmetic and the accessibility tree free of a filler row. Separate
+   borders are what make the corner radii below paint at all. */
+.tracking-table.is-grouped tbody.worklog-day + tbody.worklog-day::before {
+  content: '';
+  display: table-row;
+  block-size: 1.25rem;
+}
+
+/* Each day is one card: the heading rounds the top, the last row the bottom. */
+.tracking-table.is-grouped tbody.worklog-day > tr:last-child > td:first-child {
+  border-end-start-radius: 8px;
+}
+
+.tracking-table.is-grouped tbody.worklog-day > tr:last-child > td:last-child {
+  border-end-end-radius: 8px;
+}
+
+.tracking-table.is-grouped tbody.worklog-day .tracking-row > td {
+  background: var(--color-surface);
+}
+
+/* An editing part overlays its own read-mode text: the ghost holds the width so
+   opening an editor never shifts its neighbours. */
+/* A part with no value yet shows the field's name instead, so there is something
+   to aim at — and the row says what it still needs. */
+.worklog-part.is-empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.worklog-part-edit {
+  position: relative;
+  display: inline-block;
+  min-inline-size: 4ch;
+}
+
+.worklog-part-edit > .inline-ghost {
+  visibility: hidden;
+}
+
+.worklog-part-edit > :not(.inline-ghost) {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: max(100%, 12ch);
+  z-index: 3;
+}
+
+/* The editor overlays the PART, not the cell, and a part carries no padding of
+   its own. The flat grid's rule re-applies the cell's x-padding so the value
+   stays where it was — inside a box that is exactly as wide as the value, that
+   padding pushes the text out of view (measured: 41px box, 61px of content, so
+   "13:00–16:15" read as "13:00–.6:15"). */
+/* The browser's default placeholder is the text colour at half alpha, which lands
+   around 3.5:1 in light and 5.5:1 in dark — and a placeholder that names the field
+   (the grouped view has no column heading over a part) has to be readable. The
+   muted token measures 9.5:1 / 8.6:1. */
+.inline-editor::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.data-table td[data-inline-editing] .worklog-part-edit > .inline-editor:not(.inline-check):not(.inline-tags):not(.inline-date-input) {
+  /* Exactly the ghost's box, no padding and no slack: the part is right-aligned
+     (a numeric cell), so any extra width moves the value away from the separator —
+     which is what a reader sees as "the dash jumped". The ghost is the value's own
+     rendered width, so the editor is never narrower than what it holds. */
+  padding-inline: 0;
+}
+
+
+
+/* An entry without a ticket still needs a target, or one could never be added
+   in this view. */
+
+/* In the menu the action, the key and the tools stack; in the tool line they
+   stay one row. */
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-header-actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+/* The "add a ticket" target is quiet until the row is under the cursor or
+   carries focus — a permanent prompt on every ticketless row would be the same
+   noise the badges were. */
+.worklog-ticket.is-empty {
+  color: var(--color-text-muted);
+  cursor: text;
+  opacity: 0;
+  font-size: 0.83em;
+}
+
+tr:hover .worklog-ticket.is-empty,
+tr:focus-within .worklog-ticket.is-empty {
+  opacity: 1;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .tracking-days {
+  gap: 0.35rem;
+}
+
+/* Menu items pair an icon with a label. On the collapsed rail (3.5rem) only the
+   icon fits: the label is hidden visually but stays in the markup, so a screen
+   reader still reads the words and the control keeps working. */
+.worklog-view-ico {
+  inline-size: 18px;
+  block-size: 18px;
+  flex: none;
+}
+
+.worklog-view-option,
+.worklog-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .worklog-view-text,
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .tracking-tools-heading,
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .tracking-days-unit {
+  display: none;
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .tracking-toolbar {
+  align-items: center;
+  padding-inline: 0;
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .worklog-view-option,
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .worklog-tool {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* The range control is a number field; on the rail it shows the number alone. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .tracking-days {
+  inline-size: 100%;
+  justify-content: center;
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .days-combo-adornment {
+  display: none;
+}
+
+/* One shape for everything you can press in the menu. Stacked in a narrow column
+   the segmented switch, the range field and the tool buttons had arrived at four
+   different heights, radii and fills; they are one control type here — full
+   width, the same target, the same radius and the same surface, with the accent
+   reserved for what is selected. On the rail the same set becomes one square. */
+[data-nav-layout='side'] #sidebar-tools-slot :is(.worklog-tool, .worklog-view-option, .days-combo, .primary-button) {
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  border-radius: 10px;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-switch {
+  inline-size: 100%;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  gap: 0.35rem;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-option {
+  text-align: start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding-inline: 0.75rem;
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .worklog-view-option[aria-checked='true'] {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+
+[data-nav-layout='side'] #sidebar-tools-slot .days-combo {
+  background: var(--color-surface);
+}
+
+/* On the rail the tools are icon buttons like the ones in the footer below them
+   (settings, help, theme): the same 30px square, the same 8px radius, the same
+   20px glyph and the same 5px rhythm. Three different button shapes in one 56px
+   column read as three unrelated groups. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-tool, .worklog-view-option, .days-combo, .primary-button) {
+  inline-size: 30px;
+  min-inline-size: 30px;
+  block-size: 30px;
+  min-block-size: 30px;
+  border-radius: 8px;
+  padding: 0;
+  justify-content: center;
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.tracking-toolbar, .worklog-view-switch) {
+  gap: 5px;
+}
+
+/* The view and sort switches are a full-width column of 30px buttons; without
+   this their buttons align to the column's start and sit 13px left of every
+   other icon in the rail. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .worklog-view-switch {
+  align-items: center;
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-view-ico, .worklog-tool svg, .primary-button svg) {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+/* The range shows its number alone here, sized to fit the smaller square. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .tracking-days-input {
+  inline-size: 100%;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* On the rail the tools stand among the navigation icons, and a white tile with
+   a border around each one reads far heavier than the bare icons above them.
+   Same treatment as a nav item: no box, and the soft accent only under the
+   pointer or on what is selected. The primary action keeps its fill — it is the
+   one control that should stand out. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-tool, .worklog-view-option, .days-combo) {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--color-text);
+}
+
+/* The primary action keeps its accent, as its colour rather than as a filled
+   block: a single solid tile in a column of bare icons was the last thing in the
+   rail that read as a different kind of control. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .primary-button {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--color-accent);
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .primary-button:hover,
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .primary-button:focus-visible {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-tool:hover, .worklog-view-option:hover, .days-combo:hover, .days-combo:focus-within) {
+  background: var(--color-accent-soft);
+  border-color: transparent;
+  color: var(--color-accent);
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .worklog-view-option[aria-checked='true'] {
+  background: var(--color-accent-soft);
+  border-color: transparent;
+  color: var(--color-accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Sticky headers, and some depth
+   --------------------------------------------------------------------------- */
+
+/* Sticky resolves against the nearest scrolling ancestor. .table-scroll is one
+   (overflow: auto for the horizontal case) but never scrolled vertically, so the
+   headers inside it could never engage — they scrolled away with the page. Giving
+   the grid its own vertical scroll makes that ancestor real, and both header
+   levels then stick where they should. */
+.tracking-table.is-grouped {
+  border-collapse: separate;
+  border-spacing: 0;
+  --worklog-head-h: 2.4rem;
+  --worklog-dayhead-h: 2.4rem;
+}
+
+.table-scroll:has(.tracking-table.is-grouped) {
+  /* --worklog-grid-max is measured on the element (Tracking.tsx): the space from
+     the grid's top edge to the bottom of the viewport. The calc() is only the
+     value before the first measurement. */
+  max-block-size: var(--worklog-grid-max, calc(100dvh - 11rem));
+  overflow: auto;
+  /* The card shadows below would be clipped flat against the scroller's edge. */
+  padding-inline: 2px;
+}
+
+.tracking-table.is-grouped thead th {
+  block-size: var(--worklog-head-h);
+  inset-block-start: 0;
+  z-index: 4;
+}
+
+/* The day heading sticks BELOW the column header, and rounds the card's top. */
+.tracking-table.is-grouped .worklog-day-head > th {
+  position: sticky;
+  inset-block-start: var(--worklog-head-h);
+  z-index: 3;
+  block-size: var(--worklog-dayhead-h);
+  border-start-start-radius: 8px;
+  border-start-end-radius: 8px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 8%);
+}
+
+/* A sticky band has to HIDE what passes beneath it. A translucent one only does
+   that with a real blur behind it, and there is none to rely on: the build emits
+   backdrop-filter prefixed only, which Chromium ignores, so rows read straight
+   through the band and the first rows look broken. The band is therefore opaque —
+   an opaque base with a tinted gradient over it, which keeps the glassy sheen
+   without letting anything through. */
+.tracking-table.is-grouped thead th,
+.tracking-table.is-grouped .worklog-day-head > th {
+  background-color: var(--color-surface);
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-accent-soft) 96%, transparent),
+    color-mix(in srgb, var(--color-accent-soft) 78%, transparent)
+  );
+}
+
+/* An open editor must never disappear under the two sticky bands. Two halves:
+   the cell being edited paints above them, and a row scrolled to by the keyboard
+   keeps their height clear (scrollIntoView honours scroll-margin). */
+.tracking-table.is-grouped td[data-inline-editing] {
+  z-index: 5;
+}
+
+.tracking-table.is-grouped tbody.worklog-day > tr {
+  scroll-margin-block-start: calc(var(--worklog-head-h) + var(--worklog-dayhead-h) + 0.5rem);
+}
+
+/* The block label follows its own block past the two sticky headers, so a long
+   block never loses the name of what it is. */
+.tracking-table.is-grouped .worklog-block {
+  position: sticky;
+  inset-block-start: calc(var(--worklog-head-h) + var(--worklog-dayhead-h) + 0.5rem);
+}
+
+/* Depth: each day is a card lifted off the page, not a band drawn on it. The
+   shadow goes on the cells (a <tbody> cannot carry one) — the outer columns take
+   the sides, every cell takes the ambient drop. */
+.tracking-table.is-grouped tbody.worklog-day > tr > td,
+.tracking-table.is-grouped tbody.worklog-day > tr > th {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+.tracking-table.is-grouped tbody.worklog-day > tr > td:first-child {
+  box-shadow: -1px 1px 3px rgb(0 0 0 / 6%);
+}
+
+.tracking-table.is-grouped tbody.worklog-day > tr > td:last-child {
+  box-shadow: 1px 1px 3px rgb(0 0 0 / 6%);
+}
+
+/* The row under the cursor lifts slightly — depth as feedback, not decoration. */
+.tracking-table.is-grouped tbody.worklog-day > tr.tracking-row:hover > td {
+  background: color-mix(in srgb, var(--color-accent-soft) 35%, var(--color-surface));
+  box-shadow: 0 2px 6px rgb(0 0 0 / 8%);
 }

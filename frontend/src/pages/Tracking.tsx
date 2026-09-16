@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/solid-query'
 import { createEffect, createMemo, createSignal, For, on, onCleanup, onMount, Show, type JSX } from 'solid-js'
+import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postForm, postJson, ValidationError } from '../api/client'
 import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, upsertSavedEntry, type EntrySummaryResponse, type NamedOption, type SavedEntryResult, type SummaryScope, type TrackingEntry } from '../api/queries'
@@ -9,10 +10,14 @@ import { num, str } from '../lib/coerce'
 import { dateFormat, formatUserDate } from '../lib/dateFormat'
 import { formatMinutes, isoDate } from '../lib/format'
 import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
-import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES, ReadonlyChips } from '../lib/inlineGridEdit'
+import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
+import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklogViewPref'
+import { getWorklogSort, setWorklogSort, WORKLOG_SORTS, type WorklogSort } from '../lib/worklogSortPref'
+import SegmentedSwitch from '../components/SegmentedSwitch'
+import WorklogViewSwitch from '../components/WorklogViewSwitch'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
@@ -212,6 +217,78 @@ const COLUMNS: { key: string; label: () => string; numeric?: boolean }[] = [
   { key: 'duration', label: () => m.tracking_col_duration(), numeric: true },
 ]
 
+// Day totals are summed from durationMinutes and rendered in the same H:MM
+// shape the server already sends per row, so a group header and its rows read
+// as one unit rather than two notations.
+function formatDuration(minutes: number): string {
+  const total = Math.max(0, Math.round(minutes))
+
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
+}
+
+// The bar's track (the canvas's 150 px) and the scale it is read against.
+// A fixed scale capped every longer entry at the full track, so 01:30, 02:00 and
+// 03:15 all drew the same bar — the one comparison the bar exists to make. The
+// scale is therefore the longest entry on screen, with an hour as its floor: as
+// long as nothing runs past an hour, an hour is a full bar and the picture is
+// the same from day to day; the moment something does, THAT entry is the
+// yardstick and every other bar is read against it. The figure beside the bar
+// states the exact value either way.
+const DURATION_BAR_TRACK_PX = 150
+const DURATION_BAR_FLOOR_MINUTES = 60
+
+// Columns whose value is context rather than the entry itself: inside a day
+// section a repeat of these says nothing new, so it is shown once (see
+// renderRow). Start/end/ticket/description/duration always differ per entry and
+// are never suppressed.
+// The grouped view's own columns, from the design canvas: the context (customer,
+// project, activity) is ONE block cell shown once per block, start and end are
+// one "12:41–13:17" cell, and the duration cell carries the bars. Widths follow
+// the canvas: 208px block, 112px time, 1fr description, 236px duration.
+const GROUPED_COLUMNS: { key: string; label: () => string; numeric?: boolean }[] = [
+  { key: 'context', label: () => m.worklog_col_context() },
+  { key: 'time', label: () => m.worklog_col_time(), numeric: true },
+  { key: 'description', label: () => m.tracking_col_description() },
+  { key: 'duration', label: () => m.tracking_col_duration(), numeric: true },
+]
+
+// Two entries belong to the same block when customer, project and activity all
+// match — the block is the unit whose context is stated once.
+// What Enter (or a double-click on the cell rather than one of its parts) edits
+// in a composite cell. The parts themselves are addressed directly; this is the
+// keyboard's way in, so a composite cell is never a dead end.
+const COMPOSITE_PRIMARY_FIELD: Record<string, string> = {
+  context: 'project',
+  time: 'start',
+}
+
+/** In a customer card the block column shows the day and the activity, not the
+ *  customer and project the card already names — so Enter has to open what is
+ *  actually standing there. */
+const CONTEXT_PRIMARY_FIELD_BY_SORT: Record<WorklogSort, string> = {
+  time: 'project',
+  context: 'date',
+}
+
+/** Every field a composite cell holds — the cell counts as "editing" while any
+ *  of them is, so gridNav keeps its hands off the roving tabindex. The block
+ *  column carries the date too, because that is what it shows in a customer
+ *  card. */
+const COMPOSITE_PARTS: Record<string, string[]> = {
+  context: ['project', 'customer', 'activity', 'date'],
+  time: ['start', 'end'],
+  description: ['description', 'ticket'],
+}
+
+// Two entries share a block when the dimension the block column shows is the
+// same. Inside a day card that is customer/project/activity; inside a customer
+// card those are already the card's own name, so the block is the day.
+function blockKey(entry: TrackingEntry, byContext: boolean): string {
+  return byContext
+    ? (entry.date ?? '')
+    : `${entry.customer ?? ''}/${entry.project ?? ''}/${entry.activity ?? ''}`
+}
+
 // Non-colour cue for the derived row cue (WCAG 1.4.1 / 1.3.1).
 function cueLabel(cue: RowCue): string {
   switch (cue) {
@@ -334,6 +411,31 @@ export default function Tracking() {
   const queryClient = useQueryClient()
   // The day range persists across remounts/logins (client-side, like the theme).
   const [days, setDays] = createSignal<number>(Math.min(getTrackingDays(DEFAULT_DAYS), MAX_DAYS))
+  // The chosen view persists the same way the day range does (client-side).
+  // Which nav layout is live. navLayoutPref applies it to <html> and fires
+  // tt:layout-change when the Settings page switches it, so the toolbar follows
+  // without a reload.
+  const isSide = (): boolean => document.documentElement.dataset.navLayout === 'side'
+  const [navSideLayout, setNavSideLayout] = createSignal(isSide())
+  const [toolsSlot, setToolsSlot] = createSignal<HTMLElement | null>(null)
+  onMount(() => {
+    setToolsSlot(document.getElementById('sidebar-tools-slot'))
+    const onLayoutChange = (): void => { setNavSideLayout(isSide()) }
+    window.addEventListener('tt:layout-change', onLayoutChange)
+    onCleanup(() => window.removeEventListener('tt:layout-change', onLayoutChange))
+  })
+
+  const [sort, setSortSignal] = createSignal<WorklogSort>(getWorklogSort())
+  const chooseSort = (next: WorklogSort): void => {
+    setSortSignal(next)
+    setWorklogSort(next)
+  }
+
+  const [view, setViewSignal] = createSignal<WorklogView>(getWorklogView())
+  const chooseView = (next: WorklogView): void => {
+    setViewSignal(next)
+    setWorklogView(next)
+  }
   // Preset-range combobox: the menu always lists every preset (unlike a native
   // datalist, which filters by the typed value and forced the user to clear the
   // field to pick another range). Free typing still applies a custom day count.
@@ -341,12 +443,35 @@ export default function Tracking() {
   // Active option for keyboard navigation (aria-activedescendant), -1 = none.
   const [daysActiveIdx, setDaysActiveIdx] = createSignal(-1)
   let daysComboRef: HTMLDivElement | undefined
+  let daysInputRef: HTMLInputElement | undefined
   const openDaysMenu = (): void => {
     const current = DAYS_OPTIONS.indexOf(days() as (typeof DAYS_OPTIONS)[number])
     setDaysActiveIdx(Math.max(0, current))
     setDaysMenuOpen(true)
   }
   const closeDaysMenu = (): void => { setDaysMenuOpen(false); setDaysActiveIdx(-1) }
+  // The preset menu is position:fixed so it escapes the sidebar rail, which clips
+  // an absolutely-positioned panel to its 3.5rem width. Same pattern as the row
+  // actions popup: measured from the field's rect on the next frame, because at
+  // ref time the menu has no box yet.
+  const positionDaysMenu = (menu: HTMLElement): void => {
+    menu.style.visibility = 'hidden'
+    requestAnimationFrame(() => {
+      if (daysComboRef === undefined || !menu.isConnected) {
+        return
+      }
+      const anchorRect = daysComboRef.getBoundingClientRect()
+      const box = menu.getBoundingClientRect()
+      const gap = 2
+      const left = Math.max(4, Math.min(anchorRect.left, window.innerWidth - box.width - 4))
+      const below = anchorRect.bottom + gap
+      const flipUp = below + box.height > window.innerHeight && anchorRect.top - box.height - gap >= 0
+      menu.style.left = `${left}px`
+      menu.style.top = `${flipUp ? anchorRect.top - box.height - gap : below}px`
+      menu.style.visibility = 'visible'
+    })
+  }
+  const toggleDaysMenu = (): void => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }
   const chooseDays = (value: number): void => { applyDays(value); closeDaysMenu() }
   // The collapsed row-actions menu (kebab) — one open at a time, keyed by row id.
   // Opens on hover AND on click/tap (touch + keyboard have no hover; WCAG 1.4.13:
@@ -407,6 +532,19 @@ export default function Tracking() {
     }
     const dismiss = (): void => closeActionsMenu()
     // Capture phase so a scroll on the inner .table-scroll container is caught too.
+    window.addEventListener('scroll', dismiss, { capture: true, passive: true })
+    window.addEventListener('resize', dismiss, { passive: true })
+    onCleanup(() => {
+      window.removeEventListener('scroll', dismiss, { capture: true })
+      window.removeEventListener('resize', dismiss)
+    })
+  })
+  // A fixed panel would strand from its field on scroll or resize.
+  createEffect(() => {
+    if (!daysMenuOpen()) {
+      return
+    }
+    const dismiss = (): void => closeDaysMenu()
     window.addEventListener('scroll', dismiss, { capture: true, passive: true })
     window.addEventListener('resize', dismiss, { passive: true })
     onCleanup(() => {
@@ -485,14 +623,115 @@ export default function Tracking() {
   // the <Show>-wrapped table unmounts and remounts (e.g. after a load error
   // clears), rather than staying bound to a detached element.
   const [scrollEl, setScrollEl] = createSignal<HTMLDivElement>()
+
+  // The grouped grid scrolls inside itself so its two header levels have a real
+  // scrolling ancestor — which means its box has to end where the viewport does.
+  // A fixed offset cannot know where it starts: the side layout put the grid 120px
+  // higher than the top layout and left that much dead space beneath it. Measured
+  // instead, from the scroller's own position in the document (not the viewport,
+  // so a page that still scrolls cannot feed its own growth back in).
+  const fitGridToViewport = (): void => {
+    const el = scrollEl()
+    if (el === undefined) {
+      return
+    }
+    const top = el.getBoundingClientRect().top + window.scrollY
+    // A little room under the card so its shadow isn't cut off by the edge.
+    const available = Math.round(window.innerHeight - top - 16)
+    el.style.setProperty('--worklog-grid-max', `${Math.max(240, available)}px`)
+  }
+  createEffect(() => {
+    // Re-measure whenever something that sits above the grid may have changed
+    // height (the view switch shows/hides the sort row, the range moves rows).
+    view()
+    days()
+    const el = scrollEl()
+    if (el === undefined) {
+      return
+    }
+    fitGridToViewport()
+    window.addEventListener('resize', fitGridToViewport)
+    // The sidebar collapsing, the toolbar wrapping and a font-size change move the
+    // grid's top edge without firing a resize; the observer catches all of them.
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(() => fitGridToViewport())
+    if (el.parentElement !== null) {
+      observer?.observe(el.parentElement)
+    }
+    onCleanup(() => {
+      window.removeEventListener('resize', fitGridToViewport)
+      observer?.disconnect()
+    })
+  })
   // The grid's move handle — used to restore cell focus after a row is deleted.
   let gridHandle: GridMoveHandle | null = null
   const rows = createMemo<TrackingEntry[]>(() => [...newRows(), ...(entries.data ?? [])])
 
+  // Day sections, keyed by the day STRING rather than by a freshly built group
+  // object: <For> keys by reference, so a new object per recompute would rebuild
+  // every <tbody> — and with it every row — on any change, which tears focus out
+  // of an open inline editor. The day keys are stable by value and the entry
+  // objects inside are the same references, so unchanged rows are reused.
+  // Befund 5 / the design canvas: a human entry and the agent walltime it was
+  // logged with are one unit, and since #693 the link is a real field
+  // (pairedEntry). In the grouped view the pair renders as ONE row carrying two
+  // bars; an agent entry whose partner is outside the range still stands alone,
+  // so nothing is ever hidden.
+  const entryById = createMemo<Map<number, TrackingEntry>>(() => {
+    const map = new Map<number, TrackingEntry>()
+    for (const entry of rows()) {
+      map.set(num(entry.id), entry)
+    }
+
+    return map
+  })
+  const pairedAgentOf = (entry: TrackingEntry): TrackingEntry | undefined => {
+    if (entry.source === 'agent' || entry.pairedEntry === null || entry.pairedEntry === undefined) {
+      return undefined
+    }
+
+    const partner = entryById().get(entry.pairedEntry)
+
+    return partner?.source === 'agent' ? partner : undefined
+  }
+  // The longest entry currently loaded sets the bar scale (see the constants):
+  // agent rows count too, because their bar shares the same track.
+  const barScaleMinutes = createMemo<number>(() => {
+    let longest = DURATION_BAR_FLOOR_MINUTES
+    for (const entry of rows()) {
+      if (entry.durationMinutes > longest) {
+        longest = entry.durationMinutes
+      }
+    }
+    return longest
+  })
+  const visibleRows = createMemo<TrackingEntry[]>(() => {
+    if (view() !== 'grouped') {
+      return rows()
+    }
+
+    const foldedAway = new Set<number>()
+    for (const entry of rows()) {
+      const agent = pairedAgentOf(entry)
+      if (agent !== undefined) {
+        foldedAway.add(num(agent.id))
+      }
+    }
+
+    return rows().filter((entry) => !foldedAway.has(num(entry.id)))
+  })
+
+
   // Day-break/pause/overlap cues, derived from the rendered rows (see
   // deriveRowCues) instead of the persisted `class` — so they are correct for
   // future-dated and never-saved-through-the-app entries too.
-  const rowCues = createMemo<Map<number, RowCue>>(() => deriveRowCues(rows()))
+  // Day break, pause and overlap are statements about ADJACENCY IN TIME: "this
+  // row starts after the previous one ended". Ordered by customer and project the
+  // neighbouring row is no longer the neighbouring minute, so the cues would
+  // decorate pairs that never met — worse than absent, because a red edge still
+  // reads as a warning. They are withheld for that order; the time order, where
+  // they mean what they say, keeps them.
+  const timeOrdered = (): boolean => !(view() === 'grouped' && sort() === 'context')
+  const rowCues = createMemo<Map<number, RowCue>>(() => (timeOrdered() ? deriveRowCues(rows()) : new Map()))
   // Local today (client clock, per Month.tsx convention) — future entries are
   // days strictly after it. Only relevant when the user opted into show-future.
   const todayIso = isoDate(new Date())
@@ -586,7 +825,21 @@ export default function Tracking() {
   // aria-colcount consistent: a hidden-but-present cell would still be an
   // arrow-key stop.
   const hasExtTicket = createMemo<boolean>(() => rows().some((row) => str(row.extTicket) !== ''))
-  const visibleColumns = createMemo(() => (hasExtTicket() ? COLUMNS : COLUMNS.filter((col) => col.key !== 'extTicket')))
+  const visibleColumns = createMemo(() => {
+    // The grouped view has its own column model (see GROUPED_COLUMNS): a block
+    // cell for the context, one time cell, and the duration cell carrying the
+    // bars. The date lives in the day heading, and a ticket appears under its
+    // description rather than in a column that was empty in every row.
+    if (view() === 'grouped') {
+      // The block column names what it actually shows, which the order decides —
+      // a header reading "Kunde · Projekt" over a column of dates is just wrong.
+      return GROUPED_COLUMNS.map((col) => (col.key === 'context'
+        ? { ...col, label: (): string => (sort() === 'context' ? m.worklog_col_day_activity() : m.worklog_col_context()) }
+        : col))
+    }
+
+    return hasExtTicket() ? COLUMNS : COLUMNS.filter((col) => col.key !== 'extTicket')
+  })
   const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
 
   // id→label maps, rebuilt only when the option list changes, so resolving a
@@ -720,6 +973,29 @@ export default function Tracking() {
       const field = FIELD_BY_KEY.get(colKey)
 
       return field !== undefined && INLINE_TYPES.has(field.type)
+    },
+    // In the grouped view a cell holds several fields (the canvas's own layout),
+    // and Tab, Enter's guided fill and the activation path have to walk those
+    // rather than the column keys — which are not field names at all.
+    cellFields: (colKey, rowId) => {
+      if (view() !== 'grouped') {
+        return FIELD_BY_KEY.has(colKey) ? [colKey] : []
+      }
+      if (colKey === 'context') {
+        // The block cell prints only on its block's first row.
+        if (!blockStartIds().has(rowId)) {
+          return []
+        }
+
+        if (sort() !== 'context') {
+          return ['project', 'customer', 'activity']
+        }
+
+        // A new row shows (and needs) its customer and project here too.
+        return rowId <= 0 ? ['date', 'customer', 'project', 'activity'] : ['date', 'activity']
+      }
+
+      return COMPOSITE_PARTS[colKey] ?? (FIELD_BY_KEY.has(colKey) ? [colKey] : [])
     },
     seedDraft: (entry) => {
       // A fresh row prefills start with the suggested start (see suggestedStart),
@@ -896,10 +1172,20 @@ export default function Tracking() {
         </>
       )
     }
-    // Relation columns read as chips (matching the admin grid), not free text.
+    // Befund 3: in the WORKLOG a relation reads as plain text, not as a chip.
+    // A chip is a bordered, filled object that says "this is one selectable
+    // thing" — useful while editing, pure non-data ink when the same three
+    // labels repeat down 24 rows. The admin grids keep their chips (see the
+    // revised house rule in frontend/AGENTS.md); the editor still shows a
+    // ChipSelect, so the affordance appears exactly when it means something.
     const field = FIELD_BY_KEY.get(colKey)
     if (field !== undefined && (field.type === 'select' || field.type === 'multiselect')) {
-      return <ReadonlyChips values={chipValues((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey])} options={fieldSelectOptions(field, readOptionLookup)} />
+      const values = chipValues((editor.overlayRow(entry) as unknown as Record<string, unknown>)[colKey])
+      const options = fieldSelectOptions(field, readOptionLookup)
+      const labelOf = (value: string | number): string =>
+        options.find((option) => String(option.value) === String(value))?.label ?? String(value)
+
+      return <span class="relation-text">{values.map(labelOf).join(', ')}</span>
     }
 
     // A truncation box so the responsive thinning can ellipsis free-text columns
@@ -907,12 +1193,16 @@ export default function Tracking() {
     // ADR-025: the description cell also carries the source/estimated badge —
     // source is fixed on the row (not inline-editable), so read the base entry.
     if (colKey === 'description') {
-      // The badge sits OUTSIDE the truncating span (flex, flex:none) so a long
-      // description never clips these row markers off the right edge.
+      // Befund 6: in the grouped view the badge is dropped — agent time reads
+      // from the hatched duration bar and "estimated" from the ≈ at the figure
+      // plus the count in the day heading. The flat view keeps it, having
+      // neither carrier.
       return (
         <span class="cell-desc-badged">
           <span class="cell-trunc">{displayCell(entry, colKey)}</span>
-          <EntrySourceBadge source={entry.source} estimated={entry.estimated} />
+          <Show when={view() !== 'grouped'}>
+            <EntrySourceBadge source={entry.source} estimated={entry.estimated} />
+          </Show>
         </span>
       )
     }
@@ -1038,8 +1328,27 @@ export default function Tracking() {
     // the "Datum" column heading instead of the previous cell (#588). Order
     // matters — beginEdit's editor grabs focus on mount, and a later td.focus()
     // would steal it back out of the input.
-    gridHandle?.focusCell(num(row.id), firstCol)
+    // The grid's cursor addresses CELLS: in the grouped view the field a new row
+    // opens in lives inside a composite cell, and focusing "ticket" there found no
+    // cell at all, which left the cursor behind and Tab walking out of the table.
+    gridHandle?.focusCell(num(row.id), cellKeyForField(firstCol))
     editor.beginEdit(num(row.id), firstCol)
+  }
+
+  // Which cell shows a field. Flat: the field IS the column. Grouped: most fields
+  // sit inside a composite cell, and anything addressing the grid's cursor needs
+  // that cell's key rather than the field's name.
+  const cellKeyForField = (fieldKey: string): string => {
+    if (view() !== 'grouped') {
+      return fieldKey
+    }
+    for (const [colKey, fields] of Object.entries(COMPOSITE_PARTS)) {
+      if (fields.includes(fieldKey)) {
+        return colKey
+      }
+    }
+
+    return fieldKey
   }
 
   // Add (Alt+A): a blank entry. suggestedStart continues from the end of today's
@@ -1202,167 +1511,359 @@ export default function Tracking() {
     { id: 'wl-days-5weeks', group: wl, label: () => m.cmd_days_5weeks(), run: () => applyDays(35) },
   ]))
 
-  return (
-    <section class="tracking">
-      <h2 class="visually-hidden">{m.tracking_title()}</h2>
+  // The grouped view's cells, following the design canvas. The context block,
+  // the composite time cell and the duration cell exist only here; description
+  // keeps the shared renderer so inline editing works unchanged.
+  // The label a relation shows. The block cell and the context ordering both read
+  // it, so what the eye groups and what the sort groups can never disagree.
+  const relationLabel = (entry: TrackingEntry, key: string): string => {
+    const field = FIELD_BY_KEY.get(key)
+    if (field === undefined) {
+      return ''
+    }
 
-      {/* Polite live region — save/delete/prolong confirmations for AT users. */}
-      <p class="visually-hidden" role="status" aria-live="polite">{notice()}</p>
-      {/* In-page error for delete/prolong/info failures (was window.alert). */}
-      <Show when={pageError() !== ''}>
-        <p class="form-status is-error" role="alert">{pageError()}</p>
-      </Show>
-      {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue).
-          Purely visual: aria-hidden so AT users aren't told twice — the polite
-          live region above already announces the save. */}
-      <Show when={savedNotice() !== ''}>
-        <p class="save-toast" aria-hidden="true">{savedNotice()}</p>
-      </Show>
+    const values = chipValues((editor.overlayRow(entry) as unknown as Record<string, unknown>)[key])
+    const options = fieldSelectOptions(field, readOptionLookup)
 
-      <div class="tracking-toolbar">
-        <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
-          <PlusIcon />
-        </button>
-        {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
-        <Show when={canBulkEnter()}>
-          <button type="button" class="action-button" onClick={() => setBulkOpen(true)}>{m.extras_title()}</button>
-        </Show>
-        {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it. */}
-        <button type="button" class="action-button is-icon" aria-keyshortcuts="Alt+R" aria-label={m.tracking_refresh()} title={m.tracking_refresh()} onClick={() => refreshEntries()}>
-          <RefreshIcon />
-        </button>
-        {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
-            still act on the keyboard-cursor row via the global shortcut handler. */}
-        <a class="action-button is-icon" href={exportHref()} aria-keyshortcuts="Alt+X" aria-label={m.tracking_export()} title={m.tracking_export()}><DownloadIcon /></a>
-        {/* Freetext + always-full preset menu: type any whole number of days
-            (applyDays clamps + persists), or pick a preset — the menu always lists
-            ALL presets regardless of what's typed, so switching ranges never needs
-            clearing the field first. */}
-        <div class="tracking-days">
-          <span id="tracking-days-lbl">{m.tracking_days_label()}</span>
-          <div class="days-combo" ref={(el) => { daysComboRef = el }}>
-            <input
-              id="tracking-days-input"
-              name="days"
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              class="tracking-days-input"
-              role="combobox"
-              aria-labelledby="tracking-days-lbl"
-              aria-expanded={daysMenuOpen()}
-              aria-controls="tracking-days-menu"
-              value={String(days())}
-              onChange={(event) => {
-                const typed = Number(event.currentTarget.value.trim())
-                if (Number.isFinite(typed) && typed >= 1) {
-                  applyDays(typed)
-                }
-                // Re-sync to the effective (clamped) value, reverting invalid input.
-                event.currentTarget.value = String(days())
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault()
-                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.min(DAYS_OPTIONS.length - 1, i + 1)) }
-                  else { openDaysMenu() }
-                } else if (event.key === 'ArrowUp') {
-                  event.preventDefault()
-                  if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
-                } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
-                  event.preventDefault()
-                  const option = DAYS_OPTIONS[daysActiveIdx()]
-                  if (option !== undefined) { chooseDays(option) }
-                } else if (event.key === 'Escape' && daysMenuOpen()) {
-                  event.preventDefault()
-                  closeDaysMenu()
-                }
-              }}
-            />
-            <button
-              type="button"
-              class="days-combo-toggle"
-              tabindex="-1"
-              aria-label={m.tracking_days_presets()}
-              aria-expanded={daysMenuOpen()}
-              aria-controls="tracking-days-menu"
-              onClick={() => { if (daysMenuOpen()) { closeDaysMenu() } else { openDaysMenu() } }}
+    return values
+      .map((value) => options.find((option) => String(option.value) === String(value))?.label ?? String(value))
+      .join(', ')
+  }
+
+  // These memos live BELOW relationLabel on purpose: createMemo evaluates its body
+  // at once, and with the rows already in the query cache (coming back to the page)
+  // groupKeyOf would call relationLabel while that const is still in its temporal
+  // dead zone — "Cannot access 'relationLabel' before initialization", thrown out of
+  // the route's render, which left the app unresponsive until a reload.
+  // What a card is, and what the block column inside it shows, follow the chosen
+  // order: by time the card is a DAY and the block is the context; by context the
+  // card is a CUSTOMER AND PROJECT and the block is the day. Either way the card
+  // header names the thing all its rows share, and the block column names what
+  // varies one level down — so the grouping always says something true rather
+  // than "these happened to be adjacent".
+  const groupKeyOf = (entry: TrackingEntry): string =>
+    sort() === 'context'
+      ? `${relationLabel(entry, 'customer')} · ${relationLabel(entry, 'project')}`
+      : (entry.date ?? '')
+
+  const groupKeys = createMemo<string[]>(() => {
+    const keys: string[] = []
+    for (const entry of visibleRows()) {
+      const key = groupKeyOf(entry)
+      if (!keys.includes(key)) {
+        keys.push(key)
+      }
+    }
+
+    // By time the server's order (newest first) already carries the meaning; by
+    // context the cards are named things, so they read alphabetically.
+    return sort() === 'context' ? [...keys].sort((a, b) => a.localeCompare(b)) : keys
+  })
+
+  const entriesByGroup = createMemo<Map<string, TrackingEntry[]>>(() => {
+    const map = new Map<string, TrackingEntry[]>()
+    for (const entry of visibleRows()) {
+      const key = groupKeyOf(entry)
+      const list = map.get(key)
+      if (list === undefined) {
+        map.set(key, [entry])
+        continue
+      }
+
+      list.push(entry)
+    }
+
+    return map
+  })
+
+  // Which rows print their block cell. A continuation row shows nothing there, so
+  // Tab has to skip that cell rather than open an editor over an empty space.
+  const blockStartIds = createMemo<Set<number>>(() => {
+    const ids = new Set<number>()
+    const byContext = sort() === 'context'
+    for (const entries of entriesByGroup().values()) {
+      let previous: TrackingEntry | undefined
+      for (const entry of entries) {
+        if (previous === undefined || blockKey(previous, byContext) !== blockKey(entry, byContext)) {
+          ids.add(num(entry.id))
+        }
+        previous = entry
+      }
+    }
+
+    return ids
+  })
+
+  // The card's own heading. A day card shows the date; a customer card shows
+  // what it is called.
+  const groupLabel = (key: string): string => (sort() === 'context' ? key : displayDate(key))
+
+  const groupFacts = (key: string): { human: number; agent: number; estimated: number; humanRows: number } => {
+    let human = 0
+    let agent = 0
+    let estimated = 0
+    let humanRows = 0
+    for (const entry of entriesByGroup().get(key) ?? []) {
+      const partner = pairedAgentOf(entry)
+      if (partner !== undefined) {
+        agent += partner.durationMinutes
+      }
+
+      if (entry.source === 'agent') {
+        agent += entry.durationMinutes
+        continue
+      }
+
+      human += entry.durationMinutes
+      humanRows += 1
+      if (entry.estimated) {
+        estimated += 1
+      }
+    }
+
+    return { human, agent, estimated, humanRows }
+  }
+  const groupedCell = (entry: TrackingEntry, colKey: string, startsBlock: () => boolean): JSX.Element => {
+    const row = editor.overlayRow(entry)
+    const id = num(entry.id)
+
+    // A composite cell (context, time) holds several real fields. It is still ONE
+    // table cell — gridNav counts cells — but each part is its own edit target:
+    // double-click or Enter on the part opens that field's editor in place. This
+    // is what keeps the canvas layout without making the grouped view read-only.
+    const part = (fieldKey: string, text: () => string, extraClass = ''): JSX.Element => {
+      const field = FIELD_BY_KEY.get(fieldKey)
+      const fieldType = field?.type
+      const isChip = fieldType === 'select' || fieldType === 'multiselect'
+
+      return (
+        <Show
+          when={editor.isEditing(id, fieldKey)}
+          fallback={
+            <span
+              class={`worklog-part ${extraClass}`.trimEnd()}
+              classList={{ 'is-empty': text() === '' }}
+              title={m.tracking_edit_hint_part({ field: field?.label() ?? fieldKey })}
+              onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, fieldKey) }}
+            >{/* An empty part is a zero-width span: on a new row there was
+                  literally nothing to click. The field's own name stands in as
+                  the placeholder, which is also what the row still needs. */}
+              {text() === '' ? (field?.label() ?? fieldKey) : text()}</span>
+          }
+        >
+          {/* The ghost holds the part's width while the editor overlays it, so
+              opening one does not shove its neighbours sideways — the same
+              device the flat grid's cells use. */}
+          <span class={`worklog-part-edit ${extraClass}`.trimEnd()}>
+            {/* The ghost holds the editor's box, so it carries the same text the
+                part shows — including the placeholder for an empty value. With an
+                empty ghost the box is zero high and the editor, which fills it,
+                was invisible: a new row showed no ticket field at all. */}
+            <span class="inline-ghost" aria-hidden="true">{text() === '' ? (field?.label() ?? fieldKey) : text()}</span>
+            <Show
+              when={isChip}
+              fallback={
+                <InlineEditor
+                  field={field!}
+                  label={field?.label() ?? fieldKey}
+                  // No column heading stands over a part, so the empty editor
+                  // names its own field — a new row opens on the ticket, and an
+                  // empty box with a caret says nothing about what belongs there.
+                  placeholder={field?.label() ?? fieldKey}
+                  initial={editor.draftValue(id, fieldKey) ?? ''}
+                  seed={editor.seedChar()}
+                  options={optionLookup}
+                  onCommit={editor.commitCell}
+                  onCancel={editor.cancelCell}
+                />
+              }
             >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-            <Show when={daysMenuOpen()}>
-              <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_label()}>
-                <For each={DAYS_OPTIONS}>
-                  {(option, index) => (
-                    <li>
-                      <button
-                        type="button"
-                        class="days-combo-option"
-                        tabindex="-1"
-                        classList={{ 'is-active': index() === daysActiveIdx() }}
-                        aria-current={days() === option ? 'true' : undefined}
-                        onClick={() => chooseDays(option)}
-                        onPointerEnter={() => setDaysActiveIdx(index())}
-                      >
-                        {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
-                      </button>
-                    </li>
-                  )}
-                </For>
-              </ul>
+              {/* A relation must be picked, not typed: the plain text editor
+                  showed its raw id, which is what a user saw as "a number". */}
+              <ChipSelect
+                field={field!}
+                label={field?.label() ?? fieldKey}
+                initial={editor.draftValue(id, fieldKey) ?? (fieldType === 'multiselect' ? [] : '')}
+                options={optionLookup}
+                multiple={fieldType === 'multiselect'}
+                onCommit={editor.commitCell}
+                onCancel={editor.cancelCell}
+              />
             </Show>
-          </div>
-          <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
-        </div>
+          </span>
+        </Show>
+      )
+    }
 
-        {/* Inline-edit + keyboard discoverability hint — last in the tool line, so
-            the only otherwise-on-screen cue (a hover text-cursor on editable cells)
-            gets a written explanation without a separate band above the grid. */}
-        <p class="tracking-hint">{m.tracking_edit_hint()}</p>
-      </div>
+    if (colKey === 'context') {
+      // Continuation rows render nothing: the block already said it.
+      if (!startsBlock()) {
+        return ''
+      }
 
-      {/* A session-expiry refetch errors too, but the overlay owns that — keep the
-          last-good grid (and the user's drafts) visible+dimmed behind it, not a
-          jarring "load error". A genuine error (session OK) still shows the fallback. */}
-      <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
-        <div class="table-scroll" ref={setScrollEl}>
-          <table
-            class="data-table tracking-table"
-            classList={{ 'is-fetching': entries.isFetching }}
-            // A refetch (refresh / range change) keeps the previous rows visible
-            // (keepPreviousData) — aria-busy + a subtle dim are the only in-flight
-            // cue a sighted user gets, since the first-load spinner won't fire.
-            aria-busy={entries.isFetching ? 'true' : undefined}
-            ref={(el) => { editor.setTableEl(el); tableEl = el }}
-            onFocusIn={editor.onTableFocusIn}
-            onFocusOut={editor.onTableFocusOut}
-            use:gridNav={{
-              items: rows,
-              // ArrowUp off the top row hands focus to the #main-content pivot
-              // (NOT the days <select>, whose own arrow keys change its value and
-              // trap the cursor). From the pivot the header handles ArrowUp→nav /
-              // ArrowDown→grid, so the keyboard chain stays escapable both ways.
-              onExit: (direction) => { if (direction === 'up') document.getElementById('main-content')?.focus() },
-              onActivate: editor.onActivate,
-              moveRef: (handle) => { editor.setMoveHandle(handle); gridHandle = handle },
-            }}
+      const label = (key: string): string => relationLabel(entry, key)
+
+      // A customer card already names its customer and project, so its block
+      // column states the day and the activity instead — what still varies there.
+      if (sort() === 'context') {
+        return (
+          <span class="worklog-block">
+            {/* The date is a field here, not a caption: in a customer card it is
+                what varies from row to row, so it has to be editable like any
+                other part. */}
+            {part('date', () => displayDate(str(row.date)), 'worklog-block-project num')}
+            <span class="worklog-block-meta">
+              {/* A row that has never been saved belongs to no card yet — its
+                  customer and project are empty, so THIS cell is the only place
+                  they can be entered. Leaving them out (the card names them, for
+                  every saved row) made a new entry impossible to complete in this
+                  order. */}
+              <Show when={id <= 0}>
+                {part('customer', () => label('customer'))} · {part('project', () => label('project'))} ·{' '}
+              </Show>
+              {part('activity', () => label('activity'))}
+            </span>
+          </span>
+        )
+      }
+
+      return (
+        <span class="worklog-block">
+          {part('project', () => label('project'), 'worklog-block-project')}
+          <span class="worklog-block-meta">
+            {part('customer', () => label('customer'))} · {part('activity', () => label('activity'))}
+          </span>
+        </span>
+      )
+    }
+
+    if (colKey === 'time') {
+      const cue = rowCues().get(num(entry.id)) ?? ''
+
+      return (
+        <span class="worklog-time" classList={{ 'is-overlap': cue === 'is-overlap' }}>
+          <span class="num">{part('start', () => str(row.start))}–{part('end', () => str(row.end))}</span>
+          {/* Befund 2: colour is left for state, and an overlap is the one state
+              that warrants it — named in words, never colour alone. */}
+          <Show when={cue === 'is-overlap'}>
+            <span class="worklog-overlap">{m.tracking_class_overlap()}</span>
+          </Show>
+        </span>
+      )
+    }
+
+    if (colKey === 'description') {
+      return (
+        <span class="worklog-desc">
+          {part('description', () => displayCell(entry, 'description'), 'cell-trunc')}
+          {/* Befund 8: a ticket sits under its description rather than in a
+              column that stands empty in every row of most ranges. */}
+          {/* The ticket is editable here too — it had no target at all before.
+              In read mode it stays a link with the flat view's activation rule:
+              a plain click belongs to the cell and starts editing, following the
+              link takes Ctrl/⌘. An empty ticket still offers a target, otherwise
+              one could never be added in this view. */}
+          <Show
+            when={editor.isEditing(id, 'ticket')}
+            fallback={
+              <Show
+                when={str(row.ticket) !== ''}
+                fallback={
+                  <span
+                    class="worklog-part worklog-ticket is-empty"
+                    title={m.tracking_edit_hint_part({ field: FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket' })}
+                    onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, 'ticket') }}
+                  >{m.worklog_add_ticket()}</span>
+                }
+              >
+                <a
+                  class="worklog-ticket ticket-link"
+                  href={ticketUrlFor(str(row.ticket), num(row.project))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={m.tracking_ticket_link_hint()}
+                  onClick={(event) => {
+                    if (!event.ctrlKey && !event.metaKey) {
+                      event.preventDefault()
+                    }
+                  }}
+                  onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, 'ticket') }}
+                >{str(row.ticket)}</a>
+              </Show>
+            }
           >
-            <thead>
-              <tr>
-                <For each={visibleColumns()}>
-                  {(col) => (
-                    <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>
-                      <ColumnHeader label={col.label()} icon={col.key === 'date' ? <CalendarIcon /> : undefined} />
-                    </th>
-                  )}
-                </For>
-                <th scope="col" data-col-key="actions"><ColumnHeader label={m.tracking_actions()} icon={<ToolsIcon />} /></th>
-              </tr>
-            </thead>
-            <tbody>
-              <For each={rows()}>
-                {(entry) => {
+            <span class="worklog-part-edit">
+              <span class="inline-ghost" aria-hidden="true">{str(row.ticket) === '' ? (FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket') : str(row.ticket)}</span>
+              <InlineEditor
+                field={FIELD_BY_KEY.get('ticket')!}
+                label={FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket'}
+                placeholder={FIELD_BY_KEY.get('ticket')?.label() ?? 'Ticket'}
+                initial={editor.draftValue(id, 'ticket') ?? ''}
+                seed={editor.seedChar()}
+                options={optionLookup}
+                onCommit={editor.commitCell}
+                onCancel={editor.cancelCell}
+              />
+            </span>
+          </Show>
+        </span>
+      )
+    }
+
+    if (colKey === 'duration') {
+      const scale = barScaleMinutes()
+      // Floored at 3 px so a six-minute entry still draws something (the canvas's
+      // own `px()` does the same).
+      const barWidth = (minutes: number): string => `${Math.max(3, Math.round((minutes / scale) * DURATION_BAR_TRACK_PX))}px`
+      const agentHalf = pairedAgentOf(entry)
+
+      return (
+        <span class="worklog-duration">
+          {/* The figure is the data; the bar is a second, non-essential encoding
+              of it (WCAG 1.4.1) and is hidden from assistive technology. */}
+          <span class="worklog-duration-line">
+            <span
+              class="duration-bar"
+              classList={{ 'is-agent': entry.source === 'agent' }}
+              aria-hidden="true"
+              style={{ '--duration-width': barWidth(entry.durationMinutes) }}
+            />
+            <span class="num worklog-duration-value">
+              <Show when={entry.estimated}><span class="duration-estimated" title={m.worklog_estimated_hint()}>≈ </span></Show>
+              {entry.duration}
+            </span>
+          </span>
+          {/* The agent half of the pair: its own hatched bar and its own figure,
+              never added to the human one (ADR-025 §7). */}
+          <Show when={agentHalf !== undefined}>
+            <span class="worklog-duration-line is-agent-line">
+              <span class="duration-bar is-agent" aria-hidden="true" style={{ '--duration-width': barWidth(agentHalf!.durationMinutes) }} />
+              <span class="num worklog-duration-agent">{m.worklog_agent_duration({ duration: agentHalf!.duration })}</span>
+            </span>
+          </Show>
+        </span>
+      )
+    }
+
+    return cellContent(entry, colKey)
+  }
+
+  // One worklog row, shared by every view: the flat grid and the grouped day
+  // sections render the SAME <tr>, so inline editing, gridNav and the row cues
+  // behave identically in both and cannot drift apart.
+  const renderRow = (entry: TrackingEntry, previous?: () => TrackingEntry | undefined): JSX.Element => {
                   const id = num(entry.id)
+                  // First row of its block? Only that row prints the context; the
+                  // rest render an empty cell whose top border is suppressed, so
+                  // the block reads as one area without a rowspan — which would
+                  // break gridNav's cellIndex arithmetic (design review, Befund 3).
+                  const startsBlock = (): boolean => {
+                    const before = previous?.()
+
+                    const byContext = sort() === 'context'
+
+                    return before === undefined || blockKey(before, byContext) !== blockKey(entry, byContext)
+                  }
 
                   return (
                     <>
@@ -1378,7 +1879,11 @@ export default function Tracking() {
                     <tr class={`tracking-row ${id <= 0 ? 'is-new' : rowCues().get(id) ?? ''}`.trimEnd()} classList={{ 'is-dirty': editor.isDirty(id), 'is-future': rowIsFuture(entry) }} aria-busy={editor.savingRows[id] ? 'true' : undefined}>
                       <For each={visibleColumns()}>
                         {(col) => {
-                          const editable = FIELD_BY_KEY.has(col.key)
+                          // In the grouped view a composite cell is editable through its
+                          // primary field; elsewhere the column key IS the field key.
+                          const primary = col.key === 'context' ? CONTEXT_PRIMARY_FIELD_BY_SORT[sort()] : COMPOSITE_PRIMARY_FIELD[col.key]
+                          const fieldKey = view() === 'grouped' ? (primary ?? col.key) : col.key
+                          const editable = FIELD_BY_KEY.has(fieldKey)
                           const fieldType = FIELD_BY_KEY.get(col.key)?.type
                           // Single-line editors overlay a hidden ghost of the value
                           // (below) so opening one can't re-flow the auto-layout column.
@@ -1386,16 +1891,39 @@ export default function Tracking() {
 
                           return (
                             <td
-                              classList={{ numeric: col.numeric, 'is-editable': editable, 'is-invalid': editor.fieldInvalid(id, col.key) }}
+                              classList={{
+                                numeric: col.numeric,
+                                'is-editable': editable,
+                                'is-invalid': editor.fieldInvalid(id, col.key),
+                                // The block cell only shows its content on the block's
+                                // first row; the continuation cells drop the top border
+                                // so the block reads as one area (Befund 3).
+                                'worklog-block-cell': view() === 'grouped' && col.key === 'context',
+                                'is-continuation': view() === 'grouped' && col.key === 'context' && !startsBlock(),
+                              }}
                               data-row-id={String(id)}
                               data-col-key={col.key}
-                              data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
+                              data-inline-editing={editor.isEditing(id, col.key) || (view() === 'grouped' && COMPOSITE_PARTS[col.key]?.some((key) => editor.isEditing(id, key))) ? '' : undefined}
                               title={col.key === 'date' ? displayDate(str(editor.overlayRow(entry).date)) : undefined}
-                              onDblClick={() => { if (editable) editor.beginEdit(id, col.key) }}
+                              onDblClick={(event) => {
+                                // A double-click INSIDE an open editor selects a word —
+                                // it must not re-open the cell. In a composite cell that
+                                // switched the edit from the part the user was in (the
+                                // end time) to the cell's primary field (the start), and
+                                // the end value was then committed into the start.
+                                if ((event.target as HTMLElement).closest('.inline-editor, .worklog-part-edit') !== null) {
+                                  return
+                                }
+                                if (editable) {
+                                  editor.beginEdit(id, fieldKey)
+                                }
+                              }}
                             >
                               <Show
                                 when={editor.isEditing(id, col.key)}
-                                fallback={cellContent(entry, col.key)}
+                                fallback={view() === 'grouped'
+                                  ? groupedCell(entry, col.key, startsBlock)
+                                  : cellContent(entry, col.key)}
                               >
                                 <Show
                                   when={fieldType === 'select' || fieldType === 'multiselect'}
@@ -1517,9 +2045,272 @@ export default function Tracking() {
                     </Show>
                     </>
                   )
+  }
+
+  // Befund 7: "+ Eintrag" is the only primary action and stays with the content.
+  // Everything one does TO or WITH the grid — add, the key that explains the
+  // bars, the range, the tools and the view — belongs together in the menu when
+  // there is one. In the top-bar layout there is no menu, so it stays in the
+  // tool line rather than vanishing.
+  const renderMenuTools = (): JSX.Element => (
+    <div class="tracking-toolbar">
+      <div class="tracking-header-actions">
+          <button type="button" class="primary-button is-icon" data-keyboard-add aria-keyshortcuts="Alt+A" aria-label={m.tracking_add()} title={m.tracking_add()} onClick={() => addEntry()}>
+            <PlusIcon />
+          </button>
+      </div>
+      {/* Befund 7: in the sidebar these read as a submenu under Worklog, so the
+          two groups get headings there. In the tool line they are a single row
+          and the headings would be noise — CSS shows them only in the sidebar. */}
+          <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_tools()}</p>
+          {/* Bulk entry uses ROLE_ADMIN-only presets — gate it like the (now removed) Extras page did. */}
+          <Show when={canBulkEnter()}>
+            <button type="button" class="action-button worklog-tool" title={m.extras_title()} onClick={() => setBulkOpen(true)}>
+              <ToolsIcon />
+              <span class="worklog-view-text">{m.extras_title()}</span>
+            </button>
+          </Show>
+          {/* Reload the entries (Alt+R). Outside the admin gate — every user gets it.
+              It was dropped when the tool line was rebuilt; the shortcut kept working,
+              so only a pointer user lost the action. */}
+          <button type="button" class="action-button worklog-tool" aria-keyshortcuts="Alt+R" title={m.tracking_refresh()} onClick={() => refreshEntries()}>
+            <RefreshIcon />
+            <span class="worklog-view-text">{m.tracking_refresh()}</span>
+          </button>
+          {/* Continue / Prolong / Info moved to per-row action icons; Alt+C/P/I
+              still act on the keyboard-cursor row via the global shortcut handler. */}
+          <a class="action-button worklog-tool" href={exportHref()} aria-keyshortcuts="Alt+X" title={m.tracking_export()}>
+            <DownloadIcon />
+            <span class="worklog-view-text">{m.tracking_export()}</span>
+          </a>
+          {/* One control instead of four: the field takes any whole number of days
+              (applyDays clamps + persists) and the same click opens the preset menu,
+              which always lists ALL presets regardless of what's typed. The unit and
+              the chevron sit inside the field — the ZEITRAUM heading above already
+              says what the number counts, so a separate "Zeige" label said nothing. */}
+          <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_tools_range()}</p>
+          <div class="tracking-days">
+            <div class="days-combo" ref={(el) => { daysComboRef = el }}>
+              <input
+                id="tracking-days-input"
+                name="days"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                class="tracking-days-input"
+                role="combobox"
+                ref={(el) => { daysInputRef = el }}
+                aria-label={m.tracking_days_field()}
+                aria-expanded={daysMenuOpen()}
+                aria-controls="tracking-days-menu"
+                value={String(days())}
+                onPointerDown={() => { toggleDaysMenu() }}
+                onChange={(event) => {
+                  const typed = Number(event.currentTarget.value.trim())
+                  if (Number.isFinite(typed) && typed >= 1) {
+                    applyDays(typed)
+                  }
+                  // Re-sync to the effective (clamped) value, reverting invalid input.
+                  event.currentTarget.value = String(days())
                 }}
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowDown') {
+                    event.preventDefault()
+                    if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.min(DAYS_OPTIONS.length - 1, i + 1)) }
+                    else { openDaysMenu() }
+                  } else if (event.key === 'ArrowUp') {
+                    event.preventDefault()
+                    if (daysMenuOpen()) { setDaysActiveIdx((i) => Math.max(0, i - 1)) }
+                  } else if (event.key === 'Enter' && daysMenuOpen() && daysActiveIdx() >= 0) {
+                    event.preventDefault()
+                    const option = DAYS_OPTIONS[daysActiveIdx()]
+                    if (option !== undefined) { chooseDays(option) }
+                  } else if (event.key === 'Escape' && daysMenuOpen()) {
+                    event.preventDefault()
+                    closeDaysMenu()
+                  }
+                }}
+              />
+              {/* The unit and the chevron are the field's own adornment, not controls:
+                  they carry no label and no tab stop, and a press on them does what a
+                  press on the field does — focus it and open the menu. */}
+              <span
+                class="days-combo-adornment"
+                aria-hidden="true"
+                onPointerDown={(event) => {
+                  event.preventDefault()
+                  daysInputRef?.focus()
+                  toggleDaysMenu()
+                }}
+              >
+                <span class="tracking-days-unit">{m.tracking_days_unit()}</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+              </span>
+              <Show when={daysMenuOpen()}>
+                <ul class="days-combo-menu" id="tracking-days-menu" aria-label={m.tracking_days_field()} ref={positionDaysMenu}>
+                  <For each={DAYS_OPTIONS}>
+                    {(option, index) => (
+                      <li>
+                        <button
+                          type="button"
+                          class="days-combo-option"
+                          tabindex="-1"
+                          classList={{ 'is-active': index() === daysActiveIdx() }}
+                          aria-current={days() === option ? 'true' : undefined}
+                          onClick={() => chooseDays(option)}
+                          onPointerEnter={() => setDaysActiveIdx(index())}
+                        >
+                          {option === 1 ? m.tracking_days_option_one() : m.tracking_days_option({ count: String(option) })}
+                        </button>
+                      </li>
+                    )}
+                  </For>
+                </ul>
+              </Show>
+            </div>
+          </div>
+
+          {/* View switch — the worklog's three presentations of the same rows.
+              Sits in the tool line next to the range, because both narrow what the
+              grid shows. */}
+          <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_view_label()}</p>
+        <WorklogViewSwitch value={view()} onChange={chooseView} />
+
+        {/* Ordering only has meaning where blocks exist, so it is offered with
+            the grouped view and not as a setting that quietly does nothing. */}
+        <Show when={view() === 'grouped'}>
+          <p class="tracking-tools-heading" aria-hidden="true">{m.worklog_sort_label()}</p>
+          <SegmentedSwitch
+            options={WORKLOG_SORTS}
+            value={sort()}
+            onChange={chooseSort}
+            label={m.worklog_sort_label()}
+            optionLabel={(option) => (option === 'time' ? m.worklog_sort_time() : m.worklog_sort_context())}
+            icon={(option) => (
+              <svg class="worklog-view-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <Show
+                  when={option === 'time'}
+                  fallback={<><path d="M4 21V6l7-3 7 3v15" /><path d="M4 21h16M9 10h.01M9 14h.01M14 10h.01M14 14h.01" /></>}
+                >
+                  <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>
+                </Show>
+              </svg>
+            )}
+          />
+        </Show>
+
+    </div>
+  )
+
+  // The inline-edit hint explains the grid, so it stays with the content whichever
+  // layout is live.
+  const renderHint = (): JSX.Element => (
+    <p class="tracking-hint">{m.tracking_edit_hint()}</p>
+  )
+
+  return (
+    <section class="tracking">
+      <h2 class="visually-hidden">{m.tracking_title()}</h2>
+
+      {/* Polite live region — save/delete/prolong confirmations for AT users. */}
+      <p class="visually-hidden" role="status" aria-live="polite">{notice()}</p>
+      {/* In-page error for delete/prolong/info failures (was window.alert). */}
+      <Show when={pageError() !== ''}>
+        <p class="form-status is-error" role="alert">{pageError()}</p>
+      </Show>
+      {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue).
+          Purely visual: aria-hidden so AT users aren't told twice — the polite
+          live region above already announces the save. */}
+      <Show when={savedNotice() !== ''}>
+        <p class="save-toast" aria-hidden="true">{savedNotice()}</p>
+      </Show>
+
+      {/* The toolbar MOVES into the left sidebar when that layout is active —
+          one instance, never two: a mirrored copy would duplicate every label and
+          make the focus order ambiguous. In the default top-bar layout there is no
+          sidebar, so it stays here rather than disappearing. */}
+      <Show when={navSideLayout() && toolsSlot()} fallback={renderMenuTools()}>
+        <Portal mount={toolsSlot()!}>{renderMenuTools()}</Portal>
+      </Show>
+      {renderHint()}
+
+      {/* A session-expiry refetch errors too, but the overlay owns that — keep the
+          last-good grid (and the user's drafts) visible+dimmed behind it, not a
+          jarring "load error". A genuine error (session OK) still shows the fallback. */}
+      <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
+        <div class="table-scroll" ref={setScrollEl}>
+          <table
+            class="data-table tracking-table"
+            classList={{ 'is-fetching': entries.isFetching, 'is-grouped': view() === 'grouped' }}
+            // A refetch (refresh / range change) keeps the previous rows visible
+            // (keepPreviousData) — aria-busy + a subtle dim are the only in-flight
+            // cue a sighted user gets, since the first-load spinner won't fire.
+            aria-busy={entries.isFetching ? 'true' : undefined}
+            ref={(el) => { editor.setTableEl(el); tableEl = el }}
+            onFocusIn={editor.onTableFocusIn}
+            onFocusOut={editor.onTableFocusOut}
+            use:gridNav={{
+              items: rows,
+              // ArrowUp off the top row hands focus to the #main-content pivot
+              // (NOT the days <select>, whose own arrow keys change its value and
+              // trap the cursor). From the pivot the header handles ArrowUp→nav /
+              // ArrowDown→grid, so the keyboard chain stays escapable both ways.
+              onExit: (direction) => { if (direction === 'up') document.getElementById('main-content')?.focus() },
+              onActivate: editor.onActivate,
+              moveRef: (handle) => { editor.setMoveHandle(handle); gridHandle = handle },
+            }}
+          >
+            <thead>
+              <tr>
+                <For each={visibleColumns()}>
+                  {(col) => (
+                    <th scope="col" data-col-key={col.key} classList={{ numeric: col.numeric }}>
+                      <ColumnHeader label={col.label()} icon={col.key === 'date' ? <CalendarIcon /> : undefined} />
+                    </th>
+                  )}
+                </For>
+                <th scope="col" data-col-key="actions"><ColumnHeader label={m.tracking_actions()} icon={<ToolsIcon />} /></th>
+              </tr>
+            </thead>
+            <Show
+              when={view() === 'grouped'}
+              fallback={<tbody><For each={rows()}>{(entry) => renderRow(entry)}</For></tbody>}
+            >
+              {/* One <tbody> per day — real table semantics, no rowspan, so gridNav
+                  keeps working on cellIndex. The day heading is a rowgroup header
+                  row marked grid-divider, so keyboard nav skips it while it stays
+                  in the a11y tree. */}
+              <For each={groupKeys()}>
+                {(key) => (
+                  <tbody class="worklog-day">
+                    <tr class="worklog-day-head grid-divider">
+                      <th scope="rowgroup" colspan={visibleColumns().length + 1}>
+                        {/* The flex layout lives on an inner element: `display: flex`
+                            on a <th> stops it being a table-cell, and the colspan is
+                            then ignored — the heading collapsed to column one. */}
+                        <span class="worklog-day-headline">
+                        <span class="worklog-day-date">{groupLabel(key)}</span>
+                        <Show when={groupFacts(key).estimated > 0}>
+                          <span class="worklog-day-estimated">
+                            {m.worklog_day_estimated({ count: String(groupFacts(key).estimated), total: String(groupFacts(key).humanRows) })}
+                          </span>
+                        </Show>
+                        <span class="worklog-day-total">
+                          <span class="worklog-total-human">{m.worklog_total_human()} {formatDuration(groupFacts(key).human)}</span>
+                          <Show when={groupFacts(key).agent > 0}>
+                            <span class="worklog-total-agent">{m.worklog_total_agent()} {formatDuration(groupFacts(key).agent)}</span>
+                          </Show>
+                        </span>
+                        </span>
+                      </th>
+                    </tr>
+                    <For each={entriesByGroup().get(key) ?? []}>
+                      {(entry, index) => renderRow(entry, () => (index() > 0 ? (entriesByGroup().get(key) ?? [])[index() - 1] : undefined))}
+                    </For>
+                  </tbody>
+                )}
               </For>
-            </tbody>
+            </Show>
           </table>
         </div>
 
@@ -1540,27 +2331,6 @@ export default function Tracking() {
           </div>
         </Show>
 
-        {/* Legend for the colour-coded row borders — the colour alone is not an
-            accessible cue, so each swatch is paired with its label. */}
-        <Show when={rows().length > 0}>
-          <p class="tracking-legend">
-            <span class="visually-hidden">{m.tracking_legend_title()}: </span>
-            <span class="tracking-legend-item is-daybreak">{m.tracking_class_daybreak()}</span>
-            <span class="tracking-legend-item is-pause">{m.tracking_class_pause()}</span>
-            <span class="tracking-legend-item is-overlap">{m.tracking_class_overlap()}</span>
-          </p>
-          {/* Row-action icon key — the icons in the Actions column are also discoverable
-              by hover/keyboard, but listing them here aids at-a-glance recognition. */}
-          <p class="tracking-legend tracking-legend-icons">
-            <span class="visually-hidden">{m.tracking_legend_icons()}: </span>
-            <span class="tracking-legend-icon"><ContinueIcon /> {m.tracking_continue()}</span>
-            <span class="tracking-legend-icon"><ProlongIcon /> {m.tracking_prolong()}</span>
-            <span class="tracking-legend-icon"><InfoIcon /> {m.tracking_info()}</span>
-            <span class="tracking-legend-icon"><TrashIcon /> {m.admin_delete()}</span>
-            <span class="tracking-legend-icon"><DiskIcon /> {m.app_save()}</span>
-            <span class="tracking-legend-icon"><ResetIcon /> {m.tracking_reset()}</span>
-          </p>
-        </Show>
       </Show>
 
       <PageDialog open={summary() !== null} onClose={() => setSummary(null)} title={m.tracking_info()}>

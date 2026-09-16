@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import { setDateFormat } from '../lib/dateFormat'
-import { renderWithProviders } from '../test/renderWithProviders'
+import { createTestQueryClient, renderWithProviders } from '../test/renderWithProviders'
 import Tracking from './Tracking'
 
 const getJson = vi.fn()
@@ -73,6 +73,13 @@ function mockApiWith(entries: unknown[]): void {
 function mockApi(): void {
   mockApiWith([{ entry: DEFAULT_ENTRY }])
 }
+
+// The existing cases document the FLAT grid — every column on every row. The
+// grouped view is a different presentation with its own cases below, so the
+// default is pinned here rather than each test carrying the assumption.
+beforeEach(() => {
+  localStorage.setItem('tt-worklog-view', 'flat')
+})
 
 function renderTracking() {
   return renderWithProviders(() => <Tracking />)
@@ -334,6 +341,29 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('opens the preset menu from the field itself and applies a pick', async () => {
+    // The field and the menu are one control: there is no separate toggle button,
+    // so a press in the field has to open the presets or they are unreachable by
+    // mouse.
+    mockApi()
+    const { getByRole, queryByRole, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'Work' })).toBeInTheDocument())
+
+    expect(queryByRole('button', { name: /Letzte 7 Tage|Last 7 days/ })).toBeNull()
+
+    fireEvent.pointerDown(getByRole('combobox'))
+
+    // The panel is positioned on the next frame (it is fixed, to escape the
+    // sidebar rail), and stays visibility:hidden until then.
+    const preset = await waitFor(() => getByRole('button', { name: /Letzte 7 Tage|Last 7 days/ }))
+    fireEvent.click(preset)
+
+    await waitFor(() => expect(getJson).toHaveBeenCalledWith('/getData/days/7'))
+    expect((getByRole('combobox') as HTMLInputElement).value).toBe('7')
+
+    unmount()
+  })
+
   it('accepts a freetext (non-preset) day range and refetches it', async () => {
     mockApi()
     const { getByRole, unmount } = renderTracking()
@@ -386,6 +416,223 @@ describe('Tracking (Worklog grid)', () => {
         id: 1, ticket: 'XYZ-9', date: '2026-06-16', start: '09:00', end: '10:30', customer: 1, project: 4, activity: 5,
       })),
     )
+
+    unmount()
+  })
+
+  it('scales the duration bars against the longest entry, with an hour as the floor', async () => {
+    // A fixed scale drew 01:30, 02:00 and 03:15 as the same full bar. The longest
+    // entry is the yardstick; below an hour the hour is, so short days keep the
+    // same picture from one to the next.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApiWith([
+      { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '09:30', duration: '0:30', durationMinutes: 30 } },
+      { entry: { ...DEFAULT_ENTRY, id: 2, start: '10:00', end: '10:15', duration: '0:15', durationMinutes: 15 } },
+    ])
+    const short = renderTracking()
+    await waitFor(() => expect(short.container.querySelector('.duration-bar')).not.toBeNull())
+
+    const widths = (root: HTMLElement): string[] =>
+      [...root.querySelectorAll<HTMLElement>('.duration-bar')].map((bar) => bar.style.getPropertyValue('--duration-width'))
+
+    // Nothing runs past an hour, so the hour is the scale: 30 min = half the track
+    // (rows read latest-first, so the 15-minute entry comes first).
+    expect(widths(short.container)).toEqual(['38px', '75px'])
+    short.unmount()
+
+    mockApiWith([
+      { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '12:00', duration: '3:00', durationMinutes: 180 } },
+      { entry: { ...DEFAULT_ENTRY, id: 2, start: '13:00', end: '14:30', duration: '1:30', durationMinutes: 90 } },
+    ])
+    const long = renderTracking()
+    await waitFor(() => expect(long.container.querySelector('.duration-bar')).not.toBeNull())
+
+    // The three-hour entry fills the track and the 90-minute one is half of it —
+    // under the old fixed scale both filled it.
+    expect(widths(long.container)).toEqual(['75px', '150px'])
+
+    long.unmount()
+  })
+
+  it('opens the date editor from the block cell when the rows are ordered by customer', async () => {
+    // A customer card names its customer and project, so its block column shows the
+    // day instead — which was printed as a caption and could not be edited at all.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    localStorage.setItem('tt-worklog-sort', 'context')
+    mockApi()
+    const { container, getByLabelText, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const datePart = container.querySelector<HTMLElement>('td[data-col-key="context"] .worklog-part')
+    expect(datePart?.textContent).toBe('2026-06-16')
+    fireEvent.dblClick(datePart!)
+
+    expect((getByLabelText('Date') as HTMLInputElement).value).toBe('2026-06-16')
+
+    unmount()
+  })
+
+  it('Tab walks the fields INSIDE a composite cell before leaving it', async () => {
+    // The grouped layout puts start and end in one cell. Tab used to walk cells, so
+    // it stepped straight over the end of the entry — and off the row.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, getByLabelText, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const startPart = container.querySelector<HTMLElement>('td[data-col-key="time"] .worklog-part')
+    fireEvent.dblClick(startPart!)
+    const startEditor = getByLabelText('Start')
+    expect(startEditor).toBeInTheDocument()
+
+    fireEvent.keyDown(startEditor, { key: 'Tab' })
+
+    await waitFor(() => expect(getByLabelText('End')).toBeInTheDocument())
+
+    unmount()
+  })
+
+  it('names an empty part instead of rendering nothing to click', async () => {
+    // A part with no value was a zero-width span: on a new row there was no target
+    // at all for the mouse.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApiWith([{ entry: { ...DEFAULT_ENTRY, activity: 0 } }])
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const empty = container.querySelector<HTMLElement>('td[data-col-key="context"] .worklog-part.is-empty')
+    expect(empty?.textContent).toBe('Activity')
+
+    unmount()
+  })
+
+  it('the editor of a part names its own field while it is empty', async () => {
+    // No column heading stands over a part, so a new row opened on an empty box
+    // with a caret and nothing saying a ticket number belongs in it.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, getByTitle, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    fireEvent.click(getByTitle(/Add entry/i))
+    await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).not.toBeNull())
+
+    const editor = container.querySelector<HTMLInputElement>('tr.tracking-row.is-new input.inline-editor')
+    expect(editor?.placeholder).toBe('Ticket')
+
+    unmount()
+  })
+
+  it('a double-click inside an open editor stays in that field', async () => {
+    // Double-clicking to select a word bubbles to the cell, which reopened it on
+    // its primary field: editing the END time then committed the end value into
+    // the START, and the row failed validation.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, getByLabelText, queryByLabelText, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const parts = container.querySelectorAll<HTMLElement>('td[data-col-key="time"] .worklog-part')
+    fireEvent.dblClick(parts[1]!)
+    const endEditor = getByLabelText('End') as HTMLInputElement
+    expect(endEditor.value).toBe('10:30')
+
+    fireEvent.dblClick(endEditor)
+
+    expect(queryByLabelText('Start')).toBeNull()
+    expect((getByLabelText('End') as HTMLInputElement).value).toBe('10:30')
+
+    unmount()
+  })
+
+  it('a new row offers customer and project even when the cards are customers', async () => {
+    // Ordered by customer, the block column shows the day and the activity — the
+    // card names the rest. A row that has never been saved belongs to no card, so
+    // that cell is the only place its customer and project can be entered, and
+    // without them the entry could not be completed in this order at all.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    localStorage.setItem('tt-worklog-sort', 'context')
+    mockApi()
+    const { container, getByTitle, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    fireEvent.click(getByTitle(/Add entry/i))
+    await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).not.toBeNull())
+
+    const parts = [...container.querySelectorAll('tr.tracking-row.is-new td[data-col-key="context"] .worklog-part')]
+      .map((part) => part.textContent)
+    expect(parts).toEqual(['2024-01-15', 'Customer', 'Project', 'Activity'])
+
+    unmount()
+  })
+
+  it('an empty editor keeps the box its placeholder needs', async () => {
+    // The editor fills its ghost. An empty ghost is zero pixels high, so the
+    // ticket editor of a new row was there but invisible — the row showed no
+    // ticket field at all.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, getByTitle, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    fireEvent.click(getByTitle(/Add entry/i))
+    await waitFor(() => expect(container.querySelector('tr.tracking-row.is-new')).not.toBeNull())
+
+    const ghost = container.querySelector('tr.tracking-row.is-new .worklog-part-edit .inline-ghost')
+    expect(ghost?.textContent).toBe('Ticket')
+
+    unmount()
+  })
+
+  it('renders customer cards when the rows are already in the query cache', async () => {
+    // createMemo evaluates its body at once. With the entries cached — which is
+    // what coming back to the page looks like — the grouping memo ran during setup
+    // and called relationLabel while that const was still in its temporal dead
+    // zone. The ReferenceError came out of the route's render, so the page stayed
+    // blank and the whole app stopped reacting to clicks until a reload.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    localStorage.setItem('tt-worklog-sort', 'context')
+    mockApi()
+    const queryClient = createTestQueryClient()
+    queryClient.setQueryData(['tracking-entries', 3], [{ entry: DEFAULT_ENTRY }])
+
+    const { container, unmount } = renderWithProviders(() => <Tracking />, { queryClient })
+
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+    expect(container.querySelectorAll('tr.tracking-row').length).toBeGreaterThan(0)
+
+    unmount()
+  })
+
+  it('changes the order with the arrow keys', async () => {
+    // The order switch is a radiogroup: only the checked option is a tab stop, so
+    // without arrow keys the other order could be reached by pointer only.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const groups = container.querySelectorAll('[role="radiogroup"]')
+    const order = groups[groups.length - 1]!
+    const checked = (): string | null =>
+      order.querySelector('[aria-checked="true"]')?.getAttribute('data-segment-value') ?? null
+    expect(checked()).toBe('time')
+
+    fireEvent.keyDown(order, { key: 'ArrowRight' })
+
+    expect(checked()).toBe('context')
+
+    unmount()
+  })
+
+  it('the grouped view drops the date column — the day heading carries it (Befund 8)', async () => {
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApi()
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    expect(container.querySelector('th[data-col-key="date"]')).toBeNull()
+    expect(container.querySelector('.worklog-day-date')).not.toBeNull()
 
     unmount()
   })
@@ -737,13 +984,16 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('Add inserts a new row that saves as a create (no id)', async () => {
+  it('a new row saves as a create (no id)', async () => {
     mockApi()
     postJson.mockResolvedValue({})
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
-    fireEvent.click(getByRole('button', { name: 'Add entry' }))
+    // Continue, not Add: a row that has never been saved is only posted once it is
+    // bookable (customer/project/activity), and Continue clones those from the entry
+    // it continues — an Add row would sit here with nothing the server accepts.
+    fireEvent.click(getByRole('button', { name: 'Continue' }))
     // The new row is at the top; fill start + end (both required to save).
     let cell = editCell(container, 'start')
     fireEvent.input(cell, { target: { value: '9' } })
@@ -1239,16 +1489,22 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
-  it('the refresh toolbar button refetches the entries', async () => {
+  it('refetches the entries from Alt+R and from the tool line', async () => {
+    // Both paths, because for a while only the shortcut was left: the button was
+    // dropped when the tool line was rebuilt, which took the action away from
+    // anyone working with a pointer or a touch screen.
     mockApi()
-    const { getByRole, unmount } = renderTracking()
+    const { getByRole, getByTitle, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
     const entryFetches = (): number => getJson.mock.calls.filter((args) => String(args[0]).startsWith('/getData/days/')).length
-    const before = entryFetches()
 
-    fireEvent.click(getByRole('button', { name: 'Refresh' }))
+    const beforeShortcut = entryFetches()
+    fireEvent.keyDown(document, { key: 'r', altKey: true })
+    await waitFor(() => expect(entryFetches()).toBeGreaterThan(beforeShortcut))
 
-    await waitFor(() => expect(entryFetches()).toBeGreaterThan(before))
+    const beforeClick = entryFetches()
+    fireEvent.click(getByTitle(/Refresh/i))
+    await waitFor(() => expect(entryFetches()).toBeGreaterThan(beforeClick))
 
     unmount()
   })

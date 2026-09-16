@@ -43,6 +43,11 @@ Object.defineProperty(window, 'localStorage', {
 // jsdom has no ResizeObserver; Ark UI's Zag machines expect it. The methods are
 // intentional no-ops — jsdom never lays out, so there is nothing to observe.
 class ResizeObserverStub implements ResizeObserver {
+  // Constructed as `new ResizeObserver(callback)`; accepting it keeps the stub's
+  // shape honest (CodeQL flagged the superfluous argument). The callback is never
+  // invoked — jsdom does not lay out, so nothing ever resizes.
+  constructor(readonly callback?: ResizeObserverCallback) {}
+
   observe(): void {
     /* no-op: jsdom does not lay out elements */
   }

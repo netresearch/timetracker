@@ -58,6 +58,11 @@
                 <div id="sidebar-admin-slot"></div>
             {% endif %}
 
+            {# A page may move its own toolbar in here (the Worklog does). CSS shows
+               this slot only in the left-sidebar layout; in the top bar it stays
+               empty and the page keeps its toolbar in its own tool line. #}
+            <div id="sidebar-tools-slot"></div>
+
             {# Overflow disclosure — empty until the priority-overflow script
                folds bar items into it; the whole control hides when it's empty
                (header-behavior.html.twig). #}
