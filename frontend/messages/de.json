@@ -734,5 +734,7 @@
   "worklog_view_timeline": "Zeitstrahl",
   "worklog_view_grouped_hint": "Ein Abschnitt je Tag; gemeinsamer Kontext einmal gezeigt",
   "worklog_view_flat_hint": "Eine Zeile je Eintrag, jede Spalte in jeder Zeile",
-  "worklog_view_timeline_hint": "Zeilenhöhe folgt der Dauer; nur lesend"
+  "worklog_view_timeline_hint": "Zeilenhöhe folgt der Dauer; nur lesend",
+  "worklog_timeline_open": "{ticket}, {duration} — im Raster öffnen",
+  "worklog_timeline_no_ticket": "kein Ticket"
 }

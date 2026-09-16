@@ -734,5 +734,7 @@
   "worklog_view_timeline": "Хронология",
   "worklog_view_grouped_hint": "Один раздел на день; общий контекст показан один раз",
   "worklog_view_flat_hint": "Одна строка на запись, все столбцы в каждой строке",
-  "worklog_view_timeline_hint": "Высота строки соответствует длительности; только чтение"
+  "worklog_view_timeline_hint": "Высота строки соответствует длительности; только чтение",
+  "worklog_timeline_open": "{ticket}, {duration} — открыть в таблице",
+  "worklog_timeline_no_ticket": "без тикета"
 }

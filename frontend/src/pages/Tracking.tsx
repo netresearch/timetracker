@@ -15,6 +15,7 @@ import { registerCommands } from '../lib/commandPalette'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklogViewPref'
 import WorklogViewSwitch from '../components/WorklogViewSwitch'
+import WorklogTimeline from '../components/WorklogTimeline'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
@@ -223,6 +224,18 @@ function formatDuration(minutes: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
 }
 
+// Duration bars are scaled against a fixed working day, not against the longest
+// row on screen: a per-screen scale would silently re-draw every bar when the
+// range changes, so two days could never be compared. Anything longer simply
+// fills the bar (capped), which the number beside it still states exactly.
+const DURATION_BAR_CAP_MINUTES = 480
+
+// Columns whose value is context rather than the entry itself: inside a day
+// section a repeat of these says nothing new, so it is shown once (see
+// renderRow). Start/end/ticket/description/duration always differ per entry and
+// are never suppressed.
+const REPEATABLE_CONTEXT = new Set(['date', 'customer', 'project'])
+
 // Non-colour cue for the derived row cue (WCAG 1.4.1 / 1.3.1).
 function cueLabel(cue: RowCue): string {
   switch (cue) {
@@ -350,6 +363,17 @@ export default function Tracking() {
   const chooseView = (next: WorklogView): void => {
     setViewSignal(next)
     setWorklogView(next)
+  }
+  // Timeline is read-only by design, so activating an entry there hands it to the
+  // grid: switch to the flat view (every column present, nothing suppressed) and
+  // put the caret in that row, so the jump lands somewhere you can actually edit.
+  const jumpToEntry = (entryId: number): void => {
+    chooseView('flat')
+    queueMicrotask(() => {
+      const cell = document.querySelector<HTMLElement>(`td[data-row-id="${entryId}"][data-col-key="description"]`)
+      cell?.scrollIntoView({ block: 'center' })
+      cell?.focus()
+    })
   }
   // Preset-range combobox: the menu always lists every preset (unlike a native
   // datalist, which filters by the typed value and forced the user to clear the
@@ -1256,8 +1280,36 @@ export default function Tracking() {
   // One worklog row, shared by every view: the flat grid and the grouped day
   // sections render the SAME <tr>, so inline editing, gridNav and the row cues
   // behave identically in both and cannot drift apart.
-  const renderRow = (entry: TrackingEntry): JSX.Element => {
+  const renderRow = (entry: TrackingEntry, previous?: () => TrackingEntry | undefined): JSX.Element => {
                   const id = num(entry.id)
+                  // In a day section the shared context is already stated by the
+                  // group heading and the row above, so a repeat is rendered
+                  // visually-hidden: the eye sees the change, a screen reader and
+                  // the inline editor still get the full value.
+                  // An accessor, not a value: the preceding row changes when rows are
+                  // inserted or removed above this one, and repeats() is read inside
+                  // JSX, so the comparison must re-run there rather than freeze at setup.
+                  const repeats = (colKey: string): boolean => {
+                    if (previous === undefined || !REPEATABLE_CONTEXT.has(colKey)) {
+                      return false
+                    }
+
+                    const before = previous()
+                    if (before === undefined) {
+                      return false
+                    }
+
+                    switch (colKey) {
+                      case 'date':
+                        return entry.date === before.date
+                      case 'customer':
+                        return entry.customer === before.customer
+                      case 'project':
+                        return entry.project === before.project
+                      default:
+                        return false
+                    }
+                  }
 
                   return (
                     <>
@@ -1290,7 +1342,22 @@ export default function Tracking() {
                             >
                               <Show
                                 when={editor.isEditing(id, col.key)}
-                                fallback={cellContent(entry, col.key)}
+                                fallback={repeats(col.key)
+                                  ? <span class="visually-hidden">{cellContent(entry, col.key)}</span>
+                                  : col.key === 'duration' && view() === 'grouped'
+                                    ? (
+                                      <>
+                                        {/* Decoration only — the figure beside it is the data,
+                                            so the bar is hidden from assistive technology. */}
+                                        <span
+                                          class="duration-bar"
+                                          aria-hidden="true"
+                                          style={{ '--duration-share': `${Math.min(100, (entry.durationMinutes / DURATION_BAR_CAP_MINUTES) * 100)}%` }}
+                                        />
+                                        {cellContent(entry, col.key)}
+                                      </>
+                                    )
+                                    : cellContent(entry, col.key)}
                               >
                                 <Show
                                   when={fieldType === 'select' || fieldType === 'multiselect'}
@@ -1542,6 +1609,15 @@ export default function Tracking() {
           last-good grid (and the user's drafts) visible+dimmed behind it, not a
           jarring "load error". A genuine error (session OK) still shows the fallback. */}
       <Show when={!entries.isError || sessionExpired()} fallback={<p role="alert">{m.app_load_error()}</p>}>
+        <Show when={view() !== 'timeline'} fallback={
+          <WorklogTimeline
+            days={dayKeys()}
+            entriesFor={(day) => entriesByDay().get(day) ?? []}
+            formatDay={displayDate}
+            formatTotal={(day) => formatDuration(dayMinutes(day))}
+            onJump={jumpToEntry}
+          />
+        }>
         <div class="table-scroll" ref={setScrollEl}>
           <table
             class="data-table tracking-table"
@@ -1593,13 +1669,16 @@ export default function Tracking() {
                         <span class="worklog-day-total">{formatDuration(dayMinutes(day))}</span>
                       </th>
                     </tr>
-                    <For each={entriesByDay().get(day) ?? []}>{(entry) => renderRow(entry)}</For>
+                    <For each={entriesByDay().get(day) ?? []}>
+                      {(entry, index) => renderRow(entry, () => (index() > 0 ? (entriesByDay().get(day) ?? [])[index() - 1] : undefined))}
+                    </For>
                   </tbody>
                 )}
               </For>
             </Show>
           </table>
         </div>
+        </Show>
 
         <Show when={entries.isLoading}>
           <p class="tracking-loading">{m.app_loading()}</p>

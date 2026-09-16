@@ -734,5 +734,7 @@
   "worklog_view_timeline": "Timeline",
   "worklog_view_grouped_hint": "One section per day; shared context shown once",
   "worklog_view_flat_hint": "One row per entry, every column on every row",
-  "worklog_view_timeline_hint": "Row height follows duration; read-only"
+  "worklog_view_timeline_hint": "Row height follows duration; read-only",
+  "worklog_timeline_open": "{ticket}, {duration} — open in the grid",
+  "worklog_timeline_no_ticket": "no ticket"
 }

@@ -734,5 +734,7 @@
   "worklog_view_timeline": "Chronologie",
   "worklog_view_grouped_hint": "Une section par jour ; le contexte commun affiché une fois",
   "worklog_view_flat_hint": "Une ligne par saisie, toutes les colonnes sur chaque ligne",
-  "worklog_view_timeline_hint": "La hauteur de ligne suit la durée ; lecture seule"
+  "worklog_view_timeline_hint": "La hauteur de ligne suit la durée ; lecture seule",
+  "worklog_timeline_open": "{ticket}, {duration} — ouvrir dans la grille",
+  "worklog_timeline_no_ticket": "sans ticket"
 }
