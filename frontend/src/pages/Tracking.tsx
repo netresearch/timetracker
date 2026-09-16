@@ -229,20 +229,33 @@ function formatDuration(minutes: number): string {
 // row on screen: a per-screen scale would silently re-draw every bar when the
 // range changes, so two days could never be compared. Anything longer simply
 // fills the bar (capped), which the number beside it still states exactly.
-// Befund 4 gives the scale as 90 min = 150 px, which makes 0:06 and 1:27 differ
-// at a glance. Its own example stays under the hour, so it says nothing about a
-// ceiling; capping at 150 px would flatten everything from 1:30 upwards into one
-// identical bar. The cap is therefore 240 px (~2:24) — long enough that ordinary
-// entries still separate, short enough for a table cell. Beyond it bars share the
-// maximum and the exact figure beside them carries the difference.
+// The design canvas's scale, verbatim: 150 px per 90 minutes, floored at 3 px so
+// a six-minute entry still draws something (Main.dc.html, `px()`). The bar sits
+// in a fixed 150 px track, so anything past 90 minutes fills it and the exact
+// figure beside it carries the rest — the canvas accepts that, and a bar that
+// grew without limit would push the figure out of the cell.
 const DURATION_BAR_PX_PER_MINUTE = 150 / 90
-const DURATION_BAR_MAX_PX = 240
 
 // Columns whose value is context rather than the entry itself: inside a day
 // section a repeat of these says nothing new, so it is shown once (see
 // renderRow). Start/end/ticket/description/duration always differ per entry and
 // are never suppressed.
-const REPEATABLE_CONTEXT = new Set(['date', 'customer', 'project'])
+// The grouped view's own columns, from the design canvas: the context (customer,
+// project, activity) is ONE block cell shown once per block, start and end are
+// one "12:41–13:17" cell, and the duration cell carries the bars. Widths follow
+// the canvas: 208px block, 112px time, 1fr description, 236px duration.
+const GROUPED_COLUMNS: { key: string; label: () => string; numeric?: boolean }[] = [
+  { key: 'context', label: () => m.worklog_col_context() },
+  { key: 'time', label: () => m.worklog_col_time(), numeric: true },
+  { key: 'description', label: () => m.tracking_col_description() },
+  { key: 'duration', label: () => m.tracking_col_duration(), numeric: true },
+]
+
+// Two entries belong to the same block when customer, project and activity all
+// match — the block is the unit whose context is stated once.
+function blockKey(entry: TrackingEntry): string {
+  return `${entry.customer ?? ''}/${entry.project ?? ''}/${entry.activity ?? ''}`
+}
 
 // Non-colour cue for the derived row cue (WCAG 1.4.1 / 1.3.1).
 function cueLabel(cue: RowCue): string {
@@ -705,21 +718,15 @@ export default function Tracking() {
   // arrow-key stop.
   const hasExtTicket = createMemo<boolean>(() => rows().some((row) => str(row.extTicket) !== ''))
   const visibleColumns = createMemo(() => {
-    let columns = hasExtTicket() ? COLUMNS : COLUMNS.filter((col) => col.key !== 'extTicket')
-    // Befund 8: in day sections the date is stated once in the heading, so
-    // repeating it in every row is 24 copies of one fact.
+    // The grouped view has its own column model (see GROUPED_COLUMNS): a block
+    // cell for the context, one time cell, and the duration cell carrying the
+    // bars. The date lives in the day heading, and a ticket appears under its
+    // description rather than in a column that was empty in every row.
     if (view() === 'grouped') {
-      columns = columns.filter((col) => col.key !== 'date')
+      return GROUPED_COLUMNS
     }
 
-    // Befund 8: the ticket column was empty in every row of the range. Hidden in
-    // the grouped view when nothing in view carries a ticket; the flat view keeps
-    // every column by definition, which is what it is for.
-    if (view() === 'grouped' && !rows().some((entry) => entry.ticket !== '')) {
-      columns = columns.filter((col) => col.key !== 'ticket')
-    }
-
-    return columns
+    return hasExtTicket() ? COLUMNS : COLUMNS.filter((col) => col.key !== 'extTicket')
   })
   const allProjectOptions = createMemo<NamedOption[]>(() => (projects.data ?? []).map((project) => ({ id: project.id, label: project.name })))
 
@@ -1350,38 +1357,101 @@ export default function Tracking() {
     { id: 'wl-days-5weeks', group: wl, label: () => m.cmd_days_5weeks(), run: () => applyDays(35) },
   ]))
 
+  // The grouped view's cells, following the design canvas. The context block,
+  // the composite time cell and the duration cell exist only here; description
+  // keeps the shared renderer so inline editing works unchanged.
+  const groupedCell = (entry: TrackingEntry, colKey: string, startsBlock: () => boolean): JSX.Element => {
+    const row = editor.overlayRow(entry)
+
+    if (colKey === 'context') {
+      // Continuation rows render nothing: the block already said it.
+      if (!startsBlock()) {
+        return ''
+      }
+
+      const label = (key: string): string => {
+        const field = FIELD_BY_KEY.get(key)
+        if (field === undefined) {
+          return ''
+        }
+
+        const values = chipValues((row as unknown as Record<string, unknown>)[key])
+        const options = fieldSelectOptions(field, readOptionLookup)
+
+        return values
+          .map((value) => options.find((option) => String(option.value) === String(value))?.label ?? String(value))
+          .join(', ')
+      }
+
+      return (
+        <span class="worklog-block">
+          <span class="worklog-block-project">{label('project')}</span>
+          <span class="worklog-block-meta">{label('customer')} · {label('activity')}</span>
+        </span>
+      )
+    }
+
+    if (colKey === 'time') {
+      const cue = rowCues().get(num(entry.id)) ?? ''
+
+      return (
+        <span class="worklog-time" classList={{ 'is-overlap': cue === 'is-overlap' }}>
+          <span class="num">{str(row.start)}–{str(row.end)}</span>
+          {/* Befund 2: colour is left for state, and an overlap is the one state
+              that warrants it — named in words, never colour alone. */}
+          <Show when={cue === 'is-overlap'}>
+            <span class="worklog-overlap">{m.tracking_class_overlap()}</span>
+          </Show>
+        </span>
+      )
+    }
+
+    if (colKey === 'description') {
+      return (
+        <span class="worklog-desc">
+          <span class="cell-trunc">{displayCell(entry, 'description')}</span>
+          {/* Befund 8: a ticket sits under its description rather than in a
+              column that stands empty in every row of most ranges. */}
+          <Show when={str(row.ticket) !== ''}>
+            <a class="worklog-ticket" href={ticketUrlFor(str(row.ticket), num(row.project))} target="_blank" rel="noopener noreferrer">{str(row.ticket)}</a>
+          </Show>
+        </span>
+      )
+    }
+
+    if (colKey === 'duration') {
+      const agent = entry.source === 'agent'
+      const width = `${Math.max(3, Math.round(entry.durationMinutes * DURATION_BAR_PX_PER_MINUTE))}px`
+
+      return (
+        <span class="worklog-duration">
+          <span class="worklog-duration-line">
+            <span class="duration-bar" classList={{ 'is-agent': agent }} aria-hidden="true" style={{ '--duration-width': width }} />
+            <span class="num worklog-duration-value">
+              <Show when={entry.estimated}><span class="duration-estimated" title={m.worklog_estimated_hint()}>≈ </span></Show>
+              {entry.duration}
+            </span>
+          </span>
+        </span>
+      )
+    }
+
+    return cellContent(entry, colKey)
+  }
+
   // One worklog row, shared by every view: the flat grid and the grouped day
   // sections render the SAME <tr>, so inline editing, gridNav and the row cues
   // behave identically in both and cannot drift apart.
   const renderRow = (entry: TrackingEntry, previous?: () => TrackingEntry | undefined): JSX.Element => {
                   const id = num(entry.id)
-                  // In a day section the shared context is already stated by the
-                  // group heading and the row above, so a repeat is rendered
-                  // visually-hidden: the eye sees the change, a screen reader and
-                  // the inline editor still get the full value.
-                  // An accessor, not a value: the preceding row changes when rows are
-                  // inserted or removed above this one, and repeats() is read inside
-                  // JSX, so the comparison must re-run there rather than freeze at setup.
-                  const repeats = (colKey: string): boolean => {
-                    if (previous === undefined || !REPEATABLE_CONTEXT.has(colKey)) {
-                      return false
-                    }
+                  // First row of its block? Only that row prints the context; the
+                  // rest render an empty cell whose top border is suppressed, so
+                  // the block reads as one area without a rowspan — which would
+                  // break gridNav's cellIndex arithmetic (design review, Befund 3).
+                  const startsBlock = (): boolean => {
+                    const before = previous?.()
 
-                    const before = previous()
-                    if (before === undefined) {
-                      return false
-                    }
-
-                    switch (colKey) {
-                      case 'date':
-                        return entry.date === before.date
-                      case 'customer':
-                        return entry.customer === before.customer
-                      case 'project':
-                        return entry.project === before.project
-                      default:
-                        return false
-                    }
+                    return before === undefined || blockKey(before) !== blockKey(entry)
                   }
 
                   return (
@@ -1406,7 +1476,16 @@ export default function Tracking() {
 
                           return (
                             <td
-                              classList={{ numeric: col.numeric, 'is-editable': editable, 'is-invalid': editor.fieldInvalid(id, col.key) }}
+                              classList={{
+                                numeric: col.numeric,
+                                'is-editable': editable,
+                                'is-invalid': editor.fieldInvalid(id, col.key),
+                                // The block cell only shows its content on the block's
+                                // first row; the continuation cells drop the top border
+                                // so the block reads as one area (Befund 3).
+                                'worklog-block-cell': view() === 'grouped' && col.key === 'context',
+                                'is-continuation': view() === 'grouped' && col.key === 'context' && !startsBlock(),
+                              }}
                               data-row-id={String(id)}
                               data-col-key={col.key}
                               data-inline-editing={editor.isEditing(id, col.key) ? '' : undefined}
@@ -1415,26 +1494,9 @@ export default function Tracking() {
                             >
                               <Show
                                 when={editor.isEditing(id, col.key)}
-                                fallback={repeats(col.key)
-                                  ? <span class="visually-hidden">{cellContent(entry, col.key)}</span>
-                                  : col.key === 'duration' && view() === 'grouped'
-                                    ? (
-                                      <>
-                                        {/* Decoration only — the figure beside it is the data,
-                                            so the bar is hidden from assistive technology. */}
-                                        <span
-                                          class="duration-bar"
-                                          classList={{ 'is-agent': entry.source === 'agent' }}
-                                          aria-hidden="true"
-                                          style={{ '--duration-width': `${Math.min(DURATION_BAR_MAX_PX, entry.durationMinutes * DURATION_BAR_PX_PER_MINUTE)}px` }}
-                                        />
-                                        <Show when={entry.estimated}>
-                                          <span class="duration-estimated" title={m.worklog_estimated_hint()}>≈</span>
-                                        </Show>
-                                        {cellContent(entry, col.key)}
-                                      </>
-                                    )
-                                    : cellContent(entry, col.key)}
+                                fallback={view() === 'grouped'
+                                  ? groupedCell(entry, col.key, startsBlock)
+                                  : cellContent(entry, col.key)}
                               >
                                 <Show
                                   when={fieldType === 'select' || fieldType === 'multiselect'}
@@ -1768,6 +1830,10 @@ export default function Tracking() {
                   <tbody class="worklog-day">
                     <tr class="worklog-day-head grid-divider">
                       <th scope="rowgroup" colspan={visibleColumns().length + 1}>
+                        {/* The flex layout lives on an inner element: `display: flex`
+                            on a <th> stops it being a table-cell, and the colspan is
+                            then ignored — the heading collapsed to column one. */}
+                        <span class="worklog-day-headline">
                         <span class="worklog-day-date">{displayDate(day)}</span>
                         <Show when={dayFacts(day).estimated > 0}>
                           <span class="worklog-day-estimated">
@@ -1779,6 +1845,7 @@ export default function Tracking() {
                           <Show when={dayFacts(day).agent > 0}>
                             <span class="worklog-total-agent">{m.worklog_total_agent()} {formatDuration(dayFacts(day).agent)}</span>
                           </Show>
+                        </span>
                         </span>
                       </th>
                     </tr>

@@ -742,5 +742,10 @@
   "worklog_total_agent": "Агент",
   "worklog_estimated_hint": "Оценка — проверьте",
   "worklog_tools_range": "Период",
-  "worklog_tools_tools": "Инструменты"
+  "worklog_tools_tools": "Инструменты",
+  "worklog_col_context": "Клиент · Проект · Деятельность",
+  "worklog_overlap_until": "занято до {time}",
+  "worklog_agent_until": "Агент {duration} · до {time}",
+  "worklog_agent_duration": "Агент {duration}",
+  "worklog_col_time": "Время"
 }

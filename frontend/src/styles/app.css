@@ -5572,7 +5572,7 @@ div.calendar {
 /* Befund 4: the day header carries the totals, and human and agent time are
    never added together (ADR-025 §7). Befund 6: "estimated" is counted here once
    per day instead of badging almost every row. */
-.worklog-day-head > th {
+.worklog-day-headline {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
@@ -5665,3 +5665,133 @@ div.calendar {
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
+
+/* ---------------------------------------------------------------------------
+   Grouped view — the design canvas's structure
+   --------------------------------------------------------------------------- */
+
+/* Befund 3: the context is one block cell, printed on the block's first row and
+   left blank on the rest. No rowspan: gridNav counts cells, so a merged cell
+   would break its arithmetic. Dropping the top border on the continuation cells
+   is what makes the block read as one area. */
+.tracking-table.is-grouped td[data-col-key='context'] {
+  inline-size: 208px;
+  min-inline-size: 208px;
+  background: var(--color-bg);
+  border-inline-end: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.tracking-table.is-grouped td[data-col-key='context'].is-continuation {
+  border-block-start-color: transparent;
+}
+
+.worklog-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.worklog-block-project {
+  font-weight: 700;
+}
+
+.worklog-block-meta {
+  font-size: 0.83em;
+  color: var(--color-text-muted);
+}
+
+/* Time is one cell, "09:00–10:30". An overlap is the one state that keeps
+   colour (Befund 2), and it is named in words as well. */
+.tracking-table.is-grouped td[data-col-key='time'] {
+  inline-size: 7rem;
+  min-inline-size: 7rem;
+}
+
+.worklog-time {
+  display: flex;
+  flex-direction: column;
+}
+
+.worklog-time.is-overlap > .num {
+  color: var(--color-danger-text);
+  font-weight: 700;
+}
+
+.worklog-overlap {
+  font-size: 0.78em;
+  color: var(--color-danger-text);
+}
+
+.worklog-desc {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.worklog-ticket {
+  font-size: 0.83em;
+}
+
+/* Befund 4: the duration is the figure of record, so it gets weight and a bar
+   on a fixed scale in a fixed track — the row height never changes. */
+.tracking-table.is-grouped td[data-col-key='duration'] {
+  inline-size: 15rem;
+  min-inline-size: 15rem;
+}
+
+.worklog-duration-line {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.worklog-duration-value {
+  font-weight: 700;
+  text-align: end;
+}
+
+.tracking-table.is-grouped .duration-bar {
+  position: static;
+  display: block;
+  block-size: 8px;
+  inline-size: var(--duration-width, 3px);
+  max-inline-size: 150px;
+  border-radius: 2px;
+  border: 0;
+  background: var(--color-accent);
+}
+
+.tracking-table.is-grouped .duration-bar.is-agent {
+  background: repeating-linear-gradient(135deg, var(--color-accent) 0 2px, transparent 2px 5px);
+  border: 1px solid var(--color-accent);
+}
+
+/* Befund 7: the row actions appear at the active row, not as a permanent column
+   of icons down the page. Keyboard focus counts as active, so they are never
+   hover-only. */
+.tracking-table.is-grouped td[data-col-key='actions'] {
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+.tracking-table.is-grouped tr:hover td[data-col-key='actions'],
+.tracking-table.is-grouped tr:focus-within td[data-col-key='actions'],
+.tracking-table.is-grouped tr[aria-current='true'] td[data-col-key='actions'] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tracking-table.is-grouped td[data-col-key='actions'] {
+    transition: none;
+  }
+}
+
+/* The canvas widths (208 / 112 / 1fr / 236 px) are stated on the header cells as
+   well as the body cells: under the auto layout a width on the body cell alone
+   is only a hint, and `table-layout: fixed` is not an option here because the
+   first row is a day heading with a colspan, which leaves it no per-column
+   widths to read. */
+.tracking-table.is-grouped th[data-col-key='context'] { inline-size: 208px; }
+.tracking-table.is-grouped th[data-col-key='time'] { inline-size: 7rem; }
+.tracking-table.is-grouped th[data-col-key='duration'] { inline-size: 15rem; }

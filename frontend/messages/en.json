@@ -742,5 +742,10 @@
   "worklog_total_agent": "Agent",
   "worklog_estimated_hint": "Estimated — please check",
   "worklog_tools_range": "Range",
-  "worklog_tools_tools": "Tools"
+  "worklog_tools_tools": "Tools",
+  "worklog_col_context": "Customer · Project · Activity",
+  "worklog_overlap_until": "busy until {time}",
+  "worklog_agent_until": "Agent {duration} · until {time}",
+  "worklog_agent_duration": "Agent {duration}",
+  "worklog_col_time": "Time"
 }

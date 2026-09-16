@@ -742,5 +742,10 @@
   "worklog_total_agent": "Agent",
   "worklog_estimated_hint": "Geschätzt – bitte prüfen",
   "worklog_tools_range": "Zeitraum",
-  "worklog_tools_tools": "Werkzeuge"
+  "worklog_tools_tools": "Werkzeuge",
+  "worklog_col_context": "Kunde · Projekt · Tätigkeit",
+  "worklog_overlap_until": "bis {time} belegt",
+  "worklog_agent_until": "Agent {duration} · bis {time}",
+  "worklog_agent_duration": "Agent {duration}",
+  "worklog_col_time": "Zeit"
 }

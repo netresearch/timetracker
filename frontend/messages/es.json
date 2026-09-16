@@ -742,5 +742,10 @@
   "worklog_total_agent": "Agente",
   "worklog_estimated_hint": "Estimado — revísalo",
   "worklog_tools_range": "Periodo",
-  "worklog_tools_tools": "Herramientas"
+  "worklog_tools_tools": "Herramientas",
+  "worklog_col_context": "Cliente · Proyecto · Actividad",
+  "worklog_overlap_until": "ocupado hasta {time}",
+  "worklog_agent_until": "Agente {duration} · hasta {time}",
+  "worklog_agent_duration": "Agente {duration}",
+  "worklog_col_time": "Hora"
 }
