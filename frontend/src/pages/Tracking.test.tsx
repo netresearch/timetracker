@@ -645,6 +645,26 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('marks the block edge in customer order too, where the blocks are days', async () => {
+    // The other order compares a different key (the day, not the context), so the
+    // divider needs its own case here — the claim is that it works in BOTH.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    localStorage.setItem('tt-worklog-sort', 'context')
+    mockApiWith([
+      { entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026' } },
+      { entry: { ...DEFAULT_ENTRY, id: 2, date: '15/06/2026', start: '08:00', end: '09:00' } },
+    ])
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const rows = [...container.querySelectorAll('tr.tracking-row')]
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.classList.contains('is-block-break')).toBe(false)
+    expect(rows[1]?.classList.contains('is-block-break')).toBe(true)
+
+    unmount()
+  })
+
   it('the grouped view drops the date column — the day heading carries it (Befund 8)', async () => {
     localStorage.setItem('tt-worklog-view', 'grouped')
     mockApi()
