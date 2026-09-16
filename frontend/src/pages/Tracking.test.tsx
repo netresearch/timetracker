@@ -420,6 +420,40 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('scales the duration bars against the longest entry, with an hour as the floor', async () => {
+    // A fixed scale drew 01:30, 02:00 and 03:15 as the same full bar. The longest
+    // entry is the yardstick; below an hour the hour is, so short days keep the
+    // same picture from one to the next.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApiWith([
+      { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '09:30', duration: '0:30', durationMinutes: 30 } },
+      { entry: { ...DEFAULT_ENTRY, id: 2, start: '10:00', end: '10:15', duration: '0:15', durationMinutes: 15 } },
+    ])
+    const short = renderTracking()
+    await waitFor(() => expect(short.container.querySelector('.duration-bar')).not.toBeNull())
+
+    const widths = (root: HTMLElement): string[] =>
+      [...root.querySelectorAll<HTMLElement>('.duration-bar')].map((bar) => bar.style.getPropertyValue('--duration-width'))
+
+    // Nothing runs past an hour, so the hour is the scale: 30 min = half the track
+    // (rows read latest-first, so the 15-minute entry comes first).
+    expect(widths(short.container)).toEqual(['38px', '75px'])
+    short.unmount()
+
+    mockApiWith([
+      { entry: { ...DEFAULT_ENTRY, id: 1, start: '09:00', end: '12:00', duration: '3:00', durationMinutes: 180 } },
+      { entry: { ...DEFAULT_ENTRY, id: 2, start: '13:00', end: '14:30', duration: '1:30', durationMinutes: 90 } },
+    ])
+    const long = renderTracking()
+    await waitFor(() => expect(long.container.querySelector('.duration-bar')).not.toBeNull())
+
+    // The three-hour entry fills the track and the 90-minute one is half of it —
+    // under the old fixed scale both filled it.
+    expect(widths(long.container)).toEqual(['75px', '150px'])
+
+    long.unmount()
+  })
+
   it('the grouped view drops the date column — the day heading carries it (Befund 8)', async () => {
     localStorage.setItem('tt-worklog-view', 'grouped')
     mockApi()

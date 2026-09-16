@@ -225,16 +225,16 @@ function formatDuration(minutes: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
 }
 
-// Duration bars are scaled against a fixed working day, not against the longest
-// row on screen: a per-screen scale would silently re-draw every bar when the
-// range changes, so two days could never be compared. Anything longer simply
-// fills the bar (capped), which the number beside it still states exactly.
-// The design canvas's scale, verbatim: 150 px per 90 minutes, floored at 3 px so
-// a six-minute entry still draws something (Main.dc.html, `px()`). The bar sits
-// in a fixed 150 px track, so anything past 90 minutes fills it and the exact
-// figure beside it carries the rest — the canvas accepts that, and a bar that
-// grew without limit would push the figure out of the cell.
-const DURATION_BAR_PX_PER_MINUTE = 150 / 90
+// The bar's track (the canvas's 150 px) and the scale it is read against.
+// A fixed scale capped every longer entry at the full track, so 01:30, 02:00 and
+// 03:15 all drew the same bar — the one comparison the bar exists to make. The
+// scale is therefore the longest entry on screen, with an hour as its floor: as
+// long as nothing runs past an hour, an hour is a full bar and the picture is
+// the same from day to day; the moment something does, THAT entry is the
+// yardstick and every other bar is read against it. The figure beside the bar
+// states the exact value either way.
+const DURATION_BAR_TRACK_PX = 150
+const DURATION_BAR_FLOOR_MINUTES = 60
 
 // Columns whose value is context rather than the entry itself: inside a day
 // section a repeat of these says nothing new, so it is shown once (see
@@ -681,6 +681,17 @@ export default function Tracking() {
 
     return partner?.source === 'agent' ? partner : undefined
   }
+  // The longest entry currently loaded sets the bar scale (see the constants):
+  // agent rows count too, because their bar shares the same track.
+  const barScaleMinutes = createMemo<number>(() => {
+    let longest = DURATION_BAR_FLOOR_MINUTES
+    for (const entry of rows()) {
+      if (entry.durationMinutes > longest) {
+        longest = entry.durationMinutes
+      }
+    }
+    return longest
+  })
   const visibleRows = createMemo<TrackingEntry[]>(() => {
     if (view() !== 'grouped') {
       return rows()
@@ -1696,7 +1707,10 @@ export default function Tracking() {
     }
 
     if (colKey === 'duration') {
-      const barWidth = (minutes: number): string => `${Math.max(3, Math.round(minutes * DURATION_BAR_PX_PER_MINUTE))}px`
+      const scale = barScaleMinutes()
+      // Floored at 3 px so a six-minute entry still draws something (the canvas's
+      // own `px()` does the same).
+      const barWidth = (minutes: number): string => `${Math.max(3, Math.round((minutes / scale) * DURATION_BAR_TRACK_PX))}px`
       const agentHalf = pairedAgentOf(entry)
 
       return (

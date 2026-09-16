@@ -6069,13 +6069,32 @@ tr:focus-within .worklog-ticket.is-empty {
   background: var(--color-surface);
 }
 
+/* On the rail the tools are icon buttons like the ones in the footer below them
+   (settings, help, theme): the same 30px square, the same 8px radius, the same
+   20px glyph and the same 5px rhythm. Three different button shapes in one 56px
+   column read as three unrelated groups. */
 :root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-tool, .worklog-view-option, .days-combo, .primary-button) {
-  inline-size: 2.5rem;
-  min-inline-size: 2.5rem;
-  block-size: 2.5rem;
-  min-block-size: 2.5rem;
+  inline-size: 30px;
+  min-inline-size: 30px;
+  block-size: 30px;
+  min-block-size: 30px;
+  border-radius: 8px;
   padding: 0;
   justify-content: center;
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.tracking-toolbar, .worklog-view-switch) {
+  gap: 5px;
+}
+
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot :is(.worklog-view-ico, .worklog-tool svg, .primary-button svg) {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+/* The range shows its number alone here, sized to fit the smaller square. */
+:root[data-nav-layout='side'][data-sidebar-collapsed='true'] #sidebar-tools-slot .tracking-days-input {
+  font-size: 0.85rem;
 }
 
 /* On the rail the tools stand among the navigation icons, and a white tile with
