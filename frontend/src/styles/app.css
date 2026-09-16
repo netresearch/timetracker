@@ -2846,7 +2846,14 @@ kbd {
 
 .combobox-positioner {
   /* Above every incidental fixed overlay (modal 100/101, first-run hint 1100):
-     the popup is body-portalled and only present while a cell is being edited. */
+     the popup is body-portalled and only present while a cell is being edited.
+     Ark writes `z-index: var(--z-index)` into the positioner's inline style, and
+     an inline declaration beats this rule — so the variable is what has to carry
+     the value. Left at its `auto` default the popup lost to the grid's sticky
+     headers (z-index 3/4), which painted over the open list. */
+  /* !important is the only way past an inline declaration, and Ark writes this
+     variable inline on every render. */
+  --z-index: 1200 !important;
   z-index: 1200;
 }
 
@@ -5951,6 +5958,21 @@ div.calendar {
   inset-inline-start: 0;
   inline-size: max(100%, 12ch);
   z-index: 3;
+}
+
+/* The editor overlays the PART, not the cell, and a part carries no padding of
+   its own. The flat grid's rule re-applies the cell's x-padding so the value
+   stays where it was — inside a box that is exactly as wide as the value, that
+   padding pushes the text out of view (measured: 41px box, 61px of content, so
+   "13:00–16:15" read as "13:00–.6:15"). */
+.data-table td[data-inline-editing] .worklog-part-edit > .inline-editor:not(.inline-check):not(.inline-tags):not(.inline-date-input) {
+  padding-inline: 0;
+}
+
+/* Two pixels of slack on each side, so a value whose rendered width lands just
+   above the ghost's cannot clip its last character. */
+.worklog-part-edit > .inline-ghost {
+  padding-inline: 2px;
 }
 
 /* An entry without a ticket still needs a target, or one could never be added

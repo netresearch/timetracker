@@ -261,10 +261,20 @@ const COMPOSITE_PRIMARY_FIELD: Record<string, string> = {
   time: 'start',
 }
 
+/** In a customer card the block column shows the day and the activity, not the
+ *  customer and project the card already names — so Enter has to open what is
+ *  actually standing there. */
+const CONTEXT_PRIMARY_FIELD_BY_SORT: Record<WorklogSort, string> = {
+  time: 'project',
+  context: 'date',
+}
+
 /** Every field a composite cell holds — the cell counts as "editing" while any
- *  of them is, so gridNav keeps its hands off the roving tabindex. */
+ *  of them is, so gridNav keeps its hands off the roving tabindex. The block
+ *  column carries the date too, because that is what it shows in a customer
+ *  card. */
 const COMPOSITE_PARTS: Record<string, string[]> = {
-  context: ['project', 'customer', 'activity'],
+  context: ['project', 'customer', 'activity', 'date'],
   time: ['start', 'end'],
   description: ['description', 'ticket'],
 }
@@ -1618,7 +1628,10 @@ export default function Tracking() {
       if (sort() === 'context') {
         return (
           <span class="worklog-block">
-            <span class="worklog-block-project num">{displayDate(str(row.date))}</span>
+            {/* The date is a field here, not a caption: in a customer card it is
+                what varies from row to row, so it has to be editable like any
+                other part. */}
+            {part('date', () => displayDate(str(row.date)), 'worklog-block-project num')}
             <span class="worklog-block-meta">{part('activity', () => label('activity'))}</span>
           </span>
         )
@@ -1777,7 +1790,8 @@ export default function Tracking() {
                         {(col) => {
                           // In the grouped view a composite cell is editable through its
                           // primary field; elsewhere the column key IS the field key.
-                          const fieldKey = view() === 'grouped' ? (COMPOSITE_PRIMARY_FIELD[col.key] ?? col.key) : col.key
+                          const primary = col.key === 'context' ? CONTEXT_PRIMARY_FIELD_BY_SORT[sort()] : COMPOSITE_PRIMARY_FIELD[col.key]
+                          const fieldKey = view() === 'grouped' ? (primary ?? col.key) : col.key
                           const editable = FIELD_BY_KEY.has(fieldKey)
                           const fieldType = FIELD_BY_KEY.get(col.key)?.type
                           // Single-line editors overlay a hidden ghost of the value
