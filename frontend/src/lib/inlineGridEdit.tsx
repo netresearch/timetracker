@@ -496,36 +496,49 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       })
 
   function moveAndEdit(direction: 'left' | 'right', from?: { rowId: number; colKey: string }): void {
-    // Track the roving tab stop (the single td[tabindex="0"] that setActive owns), NOT
-    // document.activeElement: committing a text editor unmounts its <input> and drops
-    // focus to <body>, so reading activeElement would see "no move" and bail at the
-    // first step. The roving cell is always current, so the walk stays reliable even
-    // while focus is momentarily on <body>; beginEdit's editor re-grabs focus on mount.
-    const rovingCell = (): HTMLElement | null =>
-      tableEl?.querySelector<HTMLElement>('td[tabindex="0"], th[tabindex="0"]') ?? null
-    // Inside a composite cell Tab walks its own fields first: from the customer to
-    // the project without leaving the cell, exactly as they read on screen.
-    // The cell Tab left: commitCell clears the edit state before it moves, so the
+    // The field Tab left: commitCell clears the edit state before it moves, so the
     // caller passes what was open — reading editCell() here would always see null.
     const open = from ?? editCell()
-    const cellEl = rovingCell()
-    if (open !== null && cellEl !== null) {
-      const colKey = cellEl.getAttribute('data-col-key')
-      const fields = colKey === null ? [] : fieldsOfCell(colKey, open.rowId)
-      const at = fields.indexOf(open.colKey)
-      const next = at + (direction === 'right' ? 1 : -1)
-      if (at !== -1 && next >= 0 && next < fields.length) {
-        beginEdit(open.rowId, fields[next]!)
+    if (open !== null) {
+      // Step through the ROW's own sequence of edit targets rather than walking
+      // cells: a composite cell holds several fields, and a select commits from a
+      // body-portalled popup, after which the roving cell is no longer a reliable
+      // account of where the user was (picking a customer then skipped the project
+      // beside it and landed in the next cell).
+      const targets = editTargets(open.rowId)
+      const at = targets.findIndex((target) => target.field === open.colKey)
+      if (at !== -1) {
+        const next = at + (direction === 'right' ? 1 : -1)
+        const row = rowById(open.rowId)
+        // Past the end: a row that has never been saved wraps to the other end of
+        // itself (the worklog opens one on its ticket, which the grouped layout
+        // places last, so everything else lies behind it); any other row stops at
+        // the row edge, as it always did.
+        const wrapped = next < 0 || next >= targets.length
+        if (wrapped && (row === undefined || config.isNewRow?.(row) !== true)) {
+          return
+        }
+        const target = wrapped
+          ? targets[direction === 'right' ? 0 : targets.length - 1]
+          : targets[next]
+        if (target !== undefined && !(wrapped && target.field === open.colKey)) {
+          moveHandle?.focusCell(open.rowId, target.colKey)
+          beginEdit(open.rowId, target.field)
+        }
 
         return
       }
     }
+    // The open field is not one of the row's declared targets (a host that declares
+    // none, or a cell rendered outside the row): fall back to walking cells.
+    const rovingCell = (): HTMLElement | null =>
+      tableEl?.querySelector<HTMLElement>('td[tabindex="0"], th[tabindex="0"]') ?? null
     for (let i = 0; i < 30; i++) {
       const before = rovingCell()
       moveHandle?.move(direction)
       const cell = rovingCell()
       if (cell === null || cell === before) {
-        break // clamped at the row edge — no editable cell that way
+        return // clamped at the row edge — no editable cell that way
       }
       const colKey = cell.getAttribute('data-col-key')
       const id = Number(cell.getAttribute('data-row-id'))
@@ -536,20 +549,6 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
         beginEdit(id, target)
 
         return
-      }
-    }
-    // Nothing editable that way. On a row that has never been saved, Tab wraps to
-    // the other end of the SAME row rather than dropping out of the grid: the
-    // worklog opens a new row on its ticket, which the grouped layout places last,
-    // so every other field of the row lies behind it. A cycle through the row's
-    // own fields is predictable; jumping to "whatever is still missing" is not.
-    const row = open === null ? undefined : rowById(open.rowId)
-    if (open !== null && row !== undefined && config.isNewRow?.(row) === true) {
-      const targets = editTargets(open.rowId)
-      const target = direction === 'right' ? targets[0] : targets[targets.length - 1]
-      if (target !== undefined && target.field !== open.colKey) {
-        moveHandle?.focusCell(open.rowId, target.colKey)
-        beginEdit(open.rowId, target.field)
       }
     }
   }

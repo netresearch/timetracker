@@ -170,6 +170,26 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
     expect(await focusedField()).toBe(walk[0]);
   });
 
+  test('Tab out of a relation stays in the cell it was picked in', async ({ page }) => {
+    await useGroupedView(page);
+
+    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+    await expect(page.locator('tr.tracking-row.is-new')).toBeVisible();
+
+    // Ticket → the first relation of the block cell.
+    await page.keyboard.press('Tab');
+    await expect(page.locator('input.combobox-input').first()).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(400);
+
+    // A select commits from a body-portalled popup, after which the roving cell no
+    // longer says where the user was: Tab skipped the rest of the block cell and
+    // landed in the time cell.
+    const cell = await page.evaluate(() => document.activeElement?.closest('td')?.getAttribute('data-col-key') ?? null);
+    expect(cell).toBe('context');
+  });
+
   test('a new row is not saved before it can be booked', async ({ page }) => {
     await useGroupedView(page);
 
