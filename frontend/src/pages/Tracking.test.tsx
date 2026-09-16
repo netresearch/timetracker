@@ -625,6 +625,26 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('marks where one block ends and the next begins, in both orders', async () => {
+    // A day break cannot happen inside a day card, and ordered by customer the
+    // blocks are days — so in this view the accent line is the BLOCK divider. The
+    // first row of a card never carries it: the heading already closes that edge.
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockApiWith([
+      { entry: { ...DEFAULT_ENTRY, id: 1, activity: 5 } },
+      { entry: { ...DEFAULT_ENTRY, id: 2, activity: 9, start: '08:00', end: '09:00' } },
+    ])
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const rows = [...container.querySelectorAll('tr.tracking-row')]
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.classList.contains('is-block-break')).toBe(false)
+    expect(rows[1]?.classList.contains('is-block-break')).toBe(true)
+
+    unmount()
+  })
+
   it('the grouped view drops the date column — the day heading carries it (Befund 8)', async () => {
     localStorage.setItem('tt-worklog-view', 'grouped')
     mockApi()

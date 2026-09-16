@@ -5589,6 +5589,23 @@ div.calendar {
   border-block-start-color: transparent;
 }
 
+/* The divider between two blocks. A day break cannot happen inside a day card,
+   and ordered by customer the blocks ARE days — so in this view the accent line
+   marks where one block ends, not where a day does. Drawn at the top of the row
+   that opens the next block, which is the same edge. */
+.tracking-table.is-grouped tbody.worklog-day > tr.tracking-row.is-block-break > td {
+  border-block-start: 3px solid var(--color-class-daybreak);
+}
+
+/* A cue line stops at the block column, exactly as the ordinary row border does
+   (.is-continuation above): running it through the customer/project area cut the
+   block in two. The colour goes, the 4px stay, so nothing shifts. */
+.tracking-table.is-grouped .tracking-row.is-daybreak > td[data-col-key='context'],
+.tracking-table.is-grouped .tracking-row.is-pause > td[data-col-key='context'],
+.tracking-table.is-grouped .tracking-row.is-overlap > td[data-col-key='context'] {
+  border-bottom-color: transparent;
+}
+
 .worklog-block {
   display: flex;
   flex-direction: column;
