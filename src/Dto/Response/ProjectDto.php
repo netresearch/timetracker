@@ -25,6 +25,10 @@ final readonly class ProjectDto implements JsonSerializable
         public string $jiraId,
         public bool $active,
         public bool $global,
+        public ?int $ticketSystemId,
+        /** False when the assigned ticket system does not book worklogs — the
+         *  entries stay unsynced even though a system is set (#688). */
+        public ?bool $ticketSystemBooksTime,
     ) {
     }
 
@@ -37,11 +41,13 @@ final readonly class ProjectDto implements JsonSerializable
             jiraId: (string) $project->getJiraId(),
             active: $project->getActive(),
             global: $project->getGlobal(),
+            ticketSystemId: $project->getTicketSystem()?->getId(),
+            ticketSystemBooksTime: $project->getTicketSystem()?->getBookTime(),
         );
     }
 
     /**
-     * @return array{project: array{id: int, name: string, customer_id: int|null, jira_id: string, active: bool, global: bool}}
+     * @return array{project: array{id: int, name: string, customer_id: int|null, jira_id: string, active: bool, global: bool, ticket_system_id: int|null, ticket_system_books_time: bool|null}}
      */
     public function jsonSerialize(): array
     {
@@ -53,6 +59,8 @@ final readonly class ProjectDto implements JsonSerializable
                 'jira_id' => $this->jiraId,
                 'active' => $this->active,
                 'global' => $this->global,
+                'ticket_system_id' => $this->ticketSystemId,
+                'ticket_system_books_time' => $this->ticketSystemBooksTime,
             ],
         ];
     }

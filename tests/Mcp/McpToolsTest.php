@@ -49,6 +49,7 @@ use App\Mcp\Tool\SetProjectActiveTool;
 use App\Mcp\Tool\SetUserActiveTool;
 use App\Mcp\Tool\SyncJiraWorklogsTool;
 use App\Mcp\Tool\UpdateEntryTool;
+use App\Mcp\Tool\UpdateProjectTool;
 use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
@@ -575,6 +576,7 @@ final class McpToolsTest extends AbstractWebTestCase
             'set_user_active' => $container->get(SetUserActiveTool::class)->setUserActive('developer', true),
             'sync_jira_worklogs' => $container->get(SyncJiraWorklogsTool::class)->syncJiraWorklogs(type: 'verify', ticketSystemId: 1),
             'update_entry' => $container->get(UpdateEntryTool::class)->updateEntry(entryId: $entryId, description: 'edited via guard'),
+            'update_project' => $container->get(UpdateProjectTool::class)->updateProject(project: '1', ticketPrefix: 'GUARD'),
         ];
         $results['delete_entry'] = $container->get(DeleteEntryTool::class)->deleteEntry($entryId);
 

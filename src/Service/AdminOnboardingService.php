@@ -13,6 +13,7 @@ use App\Dto\CustomerOnboardDto;
 use App\Dto\CustomerSaveDto;
 use App\Dto\ProjectOnboardDto;
 use App\Dto\ProjectSaveDto;
+use App\Dto\ProjectUpdateDto;
 use App\Dto\Response\CustomerDto;
 use App\Dto\Response\ProjectDto;
 use App\Dto\Response\UserDto;
@@ -21,6 +22,7 @@ use App\Dto\UserSaveDto;
 use App\Entity\Customer;
 use App\Entity\Project;
 use App\Entity\Team;
+use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\UserType;
 use Doctrine\Persistence\ManagerRegistry;
@@ -86,11 +88,80 @@ final readonly class AdminOnboardingService
             ->setGlobal($projectOnboardDto->global)
             ->setEstimation(0);
 
+        if (null !== $projectOnboardDto->ticket_system_id) {
+            $project->setTicketSystem($this->requireTicketSystem($projectOnboardDto->ticket_system_id));
+        }
+
         $objectManager = $this->managerRegistry->getManager();
         $objectManager->persist($project);
         $objectManager->flush();
 
         return ProjectDto::fromEntity($project);
+    }
+
+    /**
+     * Change an existing project's onboarding surface. Every field is optional;
+     * null means "leave as it is" — a project onboarded without a ticket system
+     * books no worklogs until one is assigned, and this is the only way to
+     * repair that without the admin UI (#688).
+     *
+     * @throws InvalidArgumentException on an unknown project or a validation failure
+     */
+    public function updateProject(ProjectUpdateDto $projectUpdateDto): ProjectDto
+    {
+        $project = $this->managerRegistry->getRepository(Project::class)->find($projectUpdateDto->id);
+        if (!$project instanceof Project) {
+            throw new InvalidArgumentException(sprintf('Unknown project id %d.', $projectUpdateDto->id));
+        }
+
+        $name = null !== $projectUpdateDto->name ? trim($projectUpdateDto->name) : $project->getName();
+        $jiraId = null !== $projectUpdateDto->jira_id ? strtoupper(trim($projectUpdateDto->jira_id)) : (string) $project->getJiraId();
+        $customerId = $projectUpdateDto->customer_id ?? $project->getCustomer()?->getId() ?? 0;
+        $active = $projectUpdateDto->active ?? $project->getActive();
+        $global = $projectUpdateDto->global ?? $project->getGlobal();
+
+        $this->assertValid(new ProjectSaveDto(
+            id: (int) $project->getId(),
+            name: $name,
+            customer: $customerId,
+            jiraId: '' !== $jiraId ? $jiraId : null,
+            active: $active,
+            global: $global,
+        ));
+
+        if (null !== $projectUpdateDto->customer_id) {
+            $customer = $this->managerRegistry->getRepository(Customer::class)->find($projectUpdateDto->customer_id);
+            if (!$customer instanceof Customer) {
+                throw new InvalidArgumentException('Please choose a customer.');
+            }
+            $project->setCustomer($customer);
+        }
+
+        if (null !== $projectUpdateDto->ticket_system_id) {
+            $project->setTicketSystem($this->requireTicketSystem($projectUpdateDto->ticket_system_id));
+        }
+
+        $project->setName($name)
+            ->setJiraId($jiraId)
+            ->setActive($active)
+            ->setGlobal($global);
+
+        $this->managerRegistry->getManager()->flush();
+
+        return ProjectDto::fromEntity($project);
+    }
+
+    /**
+     * @throws InvalidArgumentException when no ticket system carries that id
+     */
+    private function requireTicketSystem(int $ticketSystemId): TicketSystem
+    {
+        $ticketSystem = $this->managerRegistry->getRepository(TicketSystem::class)->find($ticketSystemId);
+        if (!$ticketSystem instanceof TicketSystem) {
+            throw new InvalidArgumentException(sprintf('Unknown ticket system id %d.', $ticketSystemId));
+        }
+
+        return $ticketSystem;
     }
 
     /**

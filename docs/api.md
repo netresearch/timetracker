@@ -782,9 +782,9 @@ A static OpenAPI 3.0 specification ships at `public/api.yml` (title "Time Tracke
 
 **Authentication**: Admin session, or Bearer PAT of an admin with the matching write scope (`projects:write` / `customers:write` / `users:write`) — both gates apply; a write scope on a non-admin token stays forbidden
 
-**Bodies** (JSON): projects `{name, customer_id, jira_id?, global?}`; customers `{name, global?, team_ids?}` (a non-global customer needs at least one team); users `{username, abbr (≤3 chars), type?, locale?, team_ids}` (at least one team; the account authenticates against the directory — no local password)
+**Bodies** (JSON): projects `{name, customer_id, jira_id?, global?, ticket_system_id?}` (without a ticket system a project's entries sync to no worklog at all); customers `{name, global?, team_ids?}` (a non-global customer needs at least one team); users `{username, abbr (≤3 chars), type?, locale?, team_ids}` (at least one team; the account authenticates against the directory — no local password)
 
-**Responses**: `201` with `{project: {...}}` / `{customer: {...}}` / `{user: {...}}`; toggles answer `200` with the same shape; `422 {message}` on validation failure, `404` on unknown id. MCP mirrors: `onboard_project`, `onboard_customer`, `onboard_user`, `set_project_active`, `set_customer_active`, `set_user_active`.
+**Responses**: `201` with `{project: {...}}` / `{customer: {...}}` / `{user: {...}}`; toggles answer `200` with the same shape; `422 {message}` on validation failure, `404` on unknown id. MCP mirrors: `onboard_project`, `onboard_customer`, `onboard_user`, `set_project_active`, `set_customer_active`, `set_user_active`. The project responses also carry `ticket_system_id` and `ticket_system_books_time` — the latter is `false` when the assigned system does not book worklogs, which leaves entries unsynced just as an unset system does. `update_project` (MCP only) changes an existing project — name, customer, ticket prefix, ticket system, active/global — and every field it does not receive is left as it is; it is the way to assign a ticket system to a project that was onboarded without one (#688).
 
 ### PATCH /api/v2/entries/{id}
 

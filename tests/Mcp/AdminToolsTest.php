@@ -14,6 +14,7 @@ use App\Mcp\Tool\OnboardProjectTool;
 use App\Mcp\Tool\OnboardUserTool;
 use App\Mcp\Tool\SetProjectActiveTool;
 use App\Mcp\Tool\SetUserActiveTool;
+use App\Mcp\Tool\UpdateProjectTool;
 use Mcp\Exception\ToolCallException;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\ActsAsApiTokenUser;
@@ -61,6 +62,97 @@ final class AdminToolsTest extends AbstractWebTestCase
 
         $this->expectException(ToolCallException::class);
         self::getContainer()->get(OnboardProjectTool::class)->onboardProject(name: 'Orphan', customer: 'no-such-customer');
+    }
+
+    public function testOnboardProjectAssignsTheTicketSystemById(): void
+    {
+        $this->useToken(['projects:write']);
+
+        $result = self::getContainer()->get(OnboardProjectTool::class)->onboardProject(name: 'Booked Project', customer: '1', ticketSystem: '1');
+
+        self::assertIsArray($result['project']);
+        self::assertSame(1, $result['project']['ticket_system_id']);
+        // The fixture system has book_time = 0, so the caller is told that
+        // entries on this project still sync nowhere (#688).
+        self::assertFalse($result['project']['ticket_system_books_time']);
+    }
+
+    public function testOnboardProjectResolvesTheTicketSystemByName(): void
+    {
+        $this->useToken(['projects:write']);
+
+        $result = self::getContainer()->get(OnboardProjectTool::class)->onboardProject(name: 'Named System Project', customer: '1', ticketSystem: 'testSystem');
+
+        self::assertIsArray($result['project']);
+        self::assertSame(1, $result['project']['ticket_system_id']);
+    }
+
+    public function testOnboardProjectWithoutATicketSystemReportsNone(): void
+    {
+        $this->useToken(['projects:write']);
+
+        $result = self::getContainer()->get(OnboardProjectTool::class)->onboardProject(name: 'Unbooked Project', customer: '1');
+
+        self::assertIsArray($result['project']);
+        self::assertNull($result['project']['ticket_system_id']);
+        self::assertNull($result['project']['ticket_system_books_time']);
+    }
+
+    public function testOnboardProjectRejectsUnknownTicketSystem(): void
+    {
+        $this->useToken(['projects:write']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(OnboardProjectTool::class)->onboardProject(name: 'Bad System', customer: '1', ticketSystem: 'no-such-system');
+    }
+
+    /**
+     * The shape #688 reports: a project onboarded without a ticket system books
+     * no worklogs, and nothing but the admin UI could repair it.
+     */
+    public function testUpdateProjectAssignsATicketSystemAfterOnboarding(): void
+    {
+        $this->useToken(['projects:write']);
+        $container = self::getContainer();
+        $created = $container->get(OnboardProjectTool::class)->onboardProject(name: 'Repairable Project', customer: '1');
+        self::assertIsArray($created['project']);
+        self::assertNull($created['project']['ticket_system_id']);
+
+        $projectId = $created['project']['id'];
+        self::assertIsInt($projectId);
+
+        $updated = $container->get(UpdateProjectTool::class)->updateProject(project: (string) $projectId, ticketSystem: 'testSystem');
+
+        self::assertIsArray($updated['project']);
+        self::assertSame(1, $updated['project']['ticket_system_id']);
+        self::assertSame('Repairable Project', $updated['project']['name']);
+    }
+
+    public function testUpdateProjectLeavesOmittedFieldsAlone(): void
+    {
+        $this->useToken(['projects:write']);
+        $container = self::getContainer();
+        $created = $container->get(OnboardProjectTool::class)->onboardProject(name: 'Untouched Project', customer: '1', ticketPrefix: 'UNT', global: true);
+        self::assertIsArray($created['project']);
+
+        $projectId = $created['project']['id'];
+        self::assertIsInt($projectId);
+
+        $updated = $container->get(UpdateProjectTool::class)->updateProject(project: (string) $projectId, name: 'Renamed Project');
+
+        self::assertIsArray($updated['project']);
+        self::assertSame('Renamed Project', $updated['project']['name']);
+        self::assertSame('UNT', $updated['project']['jira_id']);
+        self::assertTrue($updated['project']['global']);
+        self::assertTrue($updated['project']['active']);
+    }
+
+    public function testUpdateProjectRejectsUnknownProject(): void
+    {
+        $this->useToken(['projects:write']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(UpdateProjectTool::class)->updateProject(project: 'no-such-project', ticketSystem: '1');
     }
 
     public function testOnboardCustomerRequiresTeamUnlessGlobal(): void
