@@ -41,6 +41,16 @@ Node 26 (`.nvmrc`); the Playwright tooling is the only npm usage at the repo roo
   `worklog-crud`/`worklog-grid-editing`/`session-expiry`/`admin-inline-edit`
   must be validated in CI — CI is authoritative for those
 
+## The worklog view a spec starts in
+
+The worklog defaults to the GROUPED view, which packs several fields into one
+cell and therefore has no `td[data-col-key="start"]` — the columns nearly every
+spec addresses. `playwright.config.ts` seeds `tt-worklog-view=flat` (and
+`tt-kbd-hint-seen`) into every context's `localStorage` via `use.storageState`,
+so specs meet the flat grid unless they say otherwise. Set the key yourself to
+test the grouped view (`worklog-grouped-editing.spec.ts` does); the seed only
+provides the initial value, so your setting survives reloads.
+
 ## Test data & clock
 
 - Server time is FROZEN via `APP_FROZEN_TIME="2024-01-15 12:00:00"`

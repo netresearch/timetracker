@@ -94,7 +94,21 @@ and delete **your own** entries.
 
 The Worklog is a spreadsheet-like grid. Each row is one block of time with
 **date, start, end, ticket, customer, project, activity** and **description**.
-Rows are grouped per day, newest first.
+
+It offers two presentations of the same rows, switched from the toolbar:
+
+- **Grouped** (the default) — rows sit in cards. Ordered by time a card is a
+  **day**; ordered by customer a card is a **customer and project**. Inside a
+  card, rows that share the same context form a **block** whose shared values
+  are printed once, on the block's first row, and the block closes with an
+  accent line. Several fields share a cell: customer · project · activity in
+  one, `09:00–10:30` in one, the description with its ticket beneath it, and the
+  duration with a bar beside the figure. The bar is scaled against the longest
+  entry on screen, with one hour as its floor.
+- **Flat** — one row per entry with every column, as before.
+
+Your choice of presentation, of order and of day range is remembered in this
+browser.
 
 ### Adding and editing entries
 
@@ -147,6 +161,13 @@ also on the in-app Help page):
 - **Break** — starts after the previous entry ended, so there is an unbooked gap.
 - **Time overlap** — starts before the previous entry ended; the two ranges overlap.
 
+In the grouped view these lines stop at the customer/project column, so a cue
+never cuts a block in two, and the accent line means something else there: it
+closes a **block**, because a day break cannot happen inside a day card. Ordered
+by customer the cues are left out altogether — they are statements about what
+happened immediately before, and in that order the row above is no longer the
+minute before.
+
 ### Toolbar
 
 - **Bulk entry** — see [below](#bulk-entry-vacation-sickness-).
@@ -154,9 +175,16 @@ also on the in-app Help page):
   working-time badges.
 - **Export CSV** (<kbd>Alt</kbd>+<kbd>X</kbd> or the download icon) downloads
   your entries for the currently shown day range as a CSV file.
-- **Show N days** controls how far back the grid reaches: pick a preset
-  (1, 3, 7 or 35 days) or type any number of days up to 366. Your choice is
-  remembered on this device.
+- **Range** is one field: type any number of days up to 366, or press the field
+  to pick a preset (1, 3, 7 or 35 days). Your choice is remembered on this
+  device.
+- **View** switches between the grouped and the flat presentation.
+- **Order** (grouped view only) switches between **time** — newest first, cards
+  are days — and **customer · project**, where cards are customers and projects
+  and a day's work on one thing stands together however scattered it was.
+
+In the sidebar layout these controls move into the sidebar; on the collapsed
+rail they are icons with their labels hidden.
 
 Ticket numbers in the grid link directly to the ticket in the configured
 ticket system.

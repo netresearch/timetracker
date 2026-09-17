@@ -1,6 +1,6 @@
 # ADR-025: Agent vs. Human Time Attribution
 
-**Status:** Proposed — 2026-07-11
+**Status:** Accepted — 2026-07-11, implemented 2026-09 (`Entry::pairedEntry` links the pair; the grouped worklog renders a pair as one row and never sums the two figures)
 **Relates to:** [ADR-023](ADR-023-jira-worklog-bidirectional-sync.md) (accountability under a responsible person's token — reused here as agent→human attribution), [ADR-024](ADR-024-personio-attendance-absence-sync.md) (Personio attendance; the ArbZG boundary this ADR must not cross).
 
 ## Context

@@ -8,13 +8,19 @@ explains each feature in detail, with screenshots.
 - **Worklog grid** ([guide](user-guide.md#worklog--tracking-your-time)):
   spreadsheet-style inline editing (double-click, <kbd>Enter</kbd>/<kbd>F2</kbd>,
   type-to-edit), terse time input (`930` → `09:30`), auto-save of completed rows.
+- **Two presentations of the same rows:** *grouped* (the default) puts rows in
+  day or customer cards, prints shared context once per block and draws a
+  duration bar scaled to the longest entry on screen; *flat* keeps every column
+  on every row. View, order and day range are remembered per browser.
 - **Smart assistance:** typing a ticket number derives project and customer
   from the project's configured ticket prefixes; suggested start/end times
   continue from your latest entry.
 - **Row actions:** Continue, Prolong-to-now, per-scope Info totals, Delete
   with confirmation.
 - **Visual cues:** rows are color-coded for day breaks, unbooked gaps (breaks)
-  and time overlaps.
+  and time overlaps. In the grouped view the accent line closes a block instead,
+  and the cues are left out when the rows are ordered by customer, where the row
+  above is no longer the minute before.
 - **Adjustable range:** show 1–366 days of entries; choice is remembered.
 - **Bulk entry** ([guide](user-guide.md#bulk-entry-vacation-sickness-)):
   one entry per day over a date range from admin-managed presets (e.g.
