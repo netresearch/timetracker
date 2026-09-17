@@ -102,7 +102,7 @@ make reset-test-db
 
 ## LDAP login failures
 
-Login always goes through [`src/Security/LdapAuthenticator.php`](../src/Security/LdapAuthenticator.php).
+Login always goes through [`src/Security/LoginFormAuthenticator.php`](../src/Security/LoginFormAuthenticator.php), which binds against LDAP via `App\Service\Ldap\LdapClientService` (the class was renamed; its log lines still say `LdapAuthenticator`).
 
 1. **Check the `LDAP_*` variables** (`.env` / `.env.local`): `LDAP_HOST`,
    `LDAP_PORT`, `LDAP_USESSL`, `LDAP_READUSER`, `LDAP_READPASS`, `LDAP_BASEDN`,

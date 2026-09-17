@@ -96,6 +96,25 @@ See [`README.md`](README.md) for the full stack description.
   disk icon forces a save and row-leave shows the full error). Relation cells
   use `ChipSelect` (`src/lib/chipSelect.tsx`, an Ark Combobox) body-portalled
   (whitelist `data-chipselect-popup`) to escape the table scroll container
+- **The Worklog's grouped view puts several fields in ONE cell, and the shared
+  edit controller knows it.** A composite cell (`context` = customer/project/
+  activity, or date/activity ordered by customer; `time` = start/end;
+  `description` = description/ticket) is still one `<td>` — gridNav counts cells,
+  so no `rowspan` — and each part inside it is its own edit target. The controller
+  is told what a cell holds through `createInlineGridEdit`'s `cellFields(colKey,
+  rowId)`: Tab, Enter's guided fill and the activation path walk THOSE, not the
+  column keys, and a cell that shows nothing on this row (a block continuation)
+  answers with an empty list so Tab skips it. A row that has never been saved
+  cycles: it opens on its ticket, which this layout places last. Anything that
+  addresses the grid's cursor needs the CELL key, not the field name
+  (`focusCell(id, cellKeyForField(field))`) — a `focusCell(id, 'ticket')` finds no
+  cell here and silently leaves the cursor behind. The flat grid passes no
+  `cellFields` and behaves exactly as before, as do the admin grids.
+- **A segmented radiogroup is `SegmentedSwitch`, not a hand-rolled one.** The view
+  and order switches were two copies and only one had the arrow-key handler, so
+  the order could not be changed without a pointer. One component owns the
+  pattern: roving tabindex (one tab stop), arrow keys with wrap, focus following
+  the selection.
 - **Relation columns read as chips in the ADMIN grids — but as plain text in the
   Worklog.** Deliberately revised (design review, Befund 3): a chip is a
   bordered, filled object saying "one selectable thing". That ink earns its
