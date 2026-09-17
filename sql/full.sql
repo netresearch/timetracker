@@ -267,9 +267,9 @@ CREATE TABLE `entries` (
   KEY (`user_id`),
   KEY (`activity_id`),
   KEY (`customer_id`),
-  KEY `idx_entries_user_day` (`user_id`, `day` DESC),
-  KEY `idx_entries_customer_day` (`customer_id`, `day` DESC),
-  KEY `idx_entries_project_day` (`project_id`, `day` DESC),
+  KEY `idx_entries_user_day` (`user_id`, `day`),
+  KEY `idx_entries_customer_day` (`customer_id`, `day`),
+  KEY `idx_entries_project_day` (`project_id`, `day`),
   KEY `idx_entries_day` (`day`),
   KEY `idx_entries_ticket` (`ticket`),
   KEY `idx_entries_user_project` (`user_id`, `project_id`),
@@ -319,7 +319,7 @@ ALTER TABLE `presets`
 --
 CREATE TABLE `holidays` (
   `day` date NOT NULL PRIMARY KEY,
-  `name` varchar(31) NULL
+  `name` varchar(255) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -330,7 +330,7 @@ CREATE TABLE `users_ticket_systems` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `ticket_system_id` int(11) NOT NULL,
-  `accesstoken` varchar(50) NOT NULL,
+  `accesstoken` TEXT NOT NULL,
   `tokensecret` TEXT NULL,
   `refresh_token` TEXT NULL,
   `token_expires_at` DATETIME NULL,
