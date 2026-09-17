@@ -713,6 +713,13 @@ paths:
                 global:
                   type: boolean
                   default: false
+                ticket_system_id:
+                  type: integer
+                  nullable: true
+                  description: >-
+                    Ticket system whose worklogs this project's entries are booked
+                    into. Omitted or null leaves the project without one of its own.
+                  example: 1
       responses:
         '422':
           description: Validation failure
@@ -3171,6 +3178,17 @@ components:
               type: boolean
             global:
               type: boolean
+            ticket_system_id:
+              type: integer
+              nullable: true
+              description: The project's own ticket system, null when it has none.
+            ticket_system_books_time:
+              type: boolean
+              nullable: true
+              description: >-
+                Whether that ticket system books worklogs at all. False means the
+                entries stay unsynced through this path even though a system is set;
+                null when no system is assigned.
 
     AdminCustomer:
       type: object

@@ -12,6 +12,7 @@ namespace Tests\Mcp;
 use App\Mcp\Tool\OnboardCustomerTool;
 use App\Mcp\Tool\OnboardProjectTool;
 use App\Mcp\Tool\OnboardUserTool;
+use App\Mcp\Tool\SaveTicketSystemTool;
 use App\Mcp\Tool\SetProjectActiveTool;
 use App\Mcp\Tool\SetUserActiveTool;
 use App\Mcp\Tool\UpdateProjectTool;
@@ -145,6 +146,89 @@ final class AdminToolsTest extends AbstractWebTestCase
         self::assertSame('UNT', $updated['project']['jira_id']);
         self::assertTrue($updated['project']['global']);
         self::assertTrue($updated['project']['active']);
+    }
+
+    /**
+     * A legacy project carries a ticket prefix that today's format rule would
+     * refuse — fixture projects 2 and 3 have 'TIM-1'. Giving such a project a
+     * ticket system must not fail on a field the caller never touched, which is
+     * exactly the repair #688 asks for.
+     */
+    public function testUpdateProjectAcceptsALegacyTicketPrefixItDoesNotTouch(): void
+    {
+        $this->useToken(['projects:write']);
+
+        $updated = self::getContainer()->get(UpdateProjectTool::class)->updateProject(project: '2', ticketSystem: 'testSystem');
+
+        self::assertIsArray($updated['project']);
+        self::assertSame(1, $updated['project']['ticket_system_id']);
+        self::assertSame('TIM-1', $updated['project']['jira_id']);
+    }
+
+    public function testUpdateProjectChangesTheTicketPrefix(): void
+    {
+        $this->useToken(['projects:write']);
+        $container = self::getContainer();
+        $created = $container->get(OnboardProjectTool::class)->onboardProject(name: 'Prefix Project', customer: '1', ticketPrefix: 'OLD');
+        self::assertIsArray($created['project']);
+        $projectId = $created['project']['id'];
+        self::assertIsInt($projectId);
+
+        $updated = $container->get(UpdateProjectTool::class)->updateProject(project: (string) $projectId, ticketPrefix: 'new');
+
+        self::assertIsArray($updated['project']);
+        // Uppercased on the way in, as onboarding does.
+        self::assertSame('NEW', $updated['project']['jira_id']);
+    }
+
+    public function testUpdateProjectTogglesActiveAndGlobal(): void
+    {
+        $this->useToken(['projects:write']);
+        $container = self::getContainer();
+        $created = $container->get(OnboardProjectTool::class)->onboardProject(name: 'Toggle Project', customer: '1', global: true);
+        self::assertIsArray($created['project']);
+        $projectId = $created['project']['id'];
+        self::assertIsInt($projectId);
+
+        $updated = $container->get(UpdateProjectTool::class)->updateProject(project: (string) $projectId, active: false, global: false);
+
+        self::assertIsArray($updated['project']);
+        self::assertFalse($updated['project']['active']);
+        self::assertFalse($updated['project']['global']);
+    }
+
+    public function testUpdateProjectReassignsTheCustomer(): void
+    {
+        $this->useToken(['projects:write', 'customers:write']);
+        $container = self::getContainer();
+        $customer = $container->get(OnboardCustomerTool::class)->onboardCustomer(name: 'Second Corp', global: true);
+        self::assertIsArray($customer['customer']);
+        $created = $container->get(OnboardProjectTool::class)->onboardProject(name: 'Moving Project', customer: '1');
+        self::assertIsArray($created['project']);
+        $projectId = $created['project']['id'];
+        self::assertIsInt($projectId);
+
+        $updated = $container->get(UpdateProjectTool::class)->updateProject(project: (string) $projectId, customer: 'Second Corp');
+
+        self::assertIsArray($updated['project']);
+        self::assertSame($customer['customer']['id'], $updated['project']['customer_id']);
+    }
+
+    /**
+     * The fixture ticket system has book_time = 0, so a constant `false` would
+     * satisfy every other assertion about this flag. This one can only pass if
+     * the value is read from the assigned system.
+     */
+    public function testProjectReportsATicketSystemThatDoesBookTime(): void
+    {
+        $this->useToken(['projects:write', 'ticketsystems:write']);
+        $container = self::getContainer();
+        $container->get(SaveTicketSystemTool::class)->saveTicketSystem(name: 'Booking-TS', type: 'JIRA', bookTime: true);
+
+        $result = $container->get(OnboardProjectTool::class)->onboardProject(name: 'Really Booked', customer: '1', ticketSystem: 'Booking-TS');
+
+        self::assertIsArray($result['project']);
+        self::assertTrue($result['project']['ticket_system_books_time']);
     }
 
     public function testUpdateProjectRejectsUnknownProject(): void
