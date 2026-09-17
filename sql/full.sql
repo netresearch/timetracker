@@ -331,7 +331,7 @@ CREATE TABLE `users_ticket_systems` (
   `user_id` int(11) NOT NULL,
   `ticket_system_id` int(11) NOT NULL,
   `accesstoken` TEXT NOT NULL,
-  `tokensecret` TEXT NOT NULL,
+  `tokensecret` TEXT NULL,
   `refresh_token` TEXT NULL,
   `token_expires_at` DATETIME NULL,
   `avoidconnection` TINYINT(1) unsigned DEFAULT '0' NOT NULL,
