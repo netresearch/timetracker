@@ -74,6 +74,50 @@ describe('gridNav cursor restoration across a reorder (#702)', () => {
     unmount()
   })
 
+  it('marks no row as current when the tracked row id is replaced in place', () => {
+    // Tracking reads tr[aria-current="true"] to decide which entry Alt+C clones
+    // and Alt+I describes. When a row keeps its DOM node but changes identity —
+    // a temp row re-keyed to its persisted id — the stale aria-current would
+    // otherwise point both shortcuts at a record the person never selected.
+    const [rowId, setRowId] = createSignal(-1)
+    const { container, unmount } = render(() => (
+      <table class="data-table" use:gridNav={{ items: () => [rowId()] }}>
+        <thead><tr><th>Start</th></tr></thead>
+        <tbody>
+          <tr>
+            <td data-row-id={rowId()} data-col-key="description">desc</td>
+          </tr>
+        </tbody>
+      </table>
+    ))
+
+    const cell = container.querySelector('td') as HTMLElement
+    cell.focus()
+    expect(container.querySelector('tr[aria-current="true"]')).not.toBeNull()
+
+    setRowId(11) // same <tr>, different record
+
+    expect(container.querySelector('tr[aria-current="true"]')).toBeNull()
+    unmount()
+  })
+
+  it('adopts the cursor again when the user tabs into the leftover tab stop', () => {
+    // Without this the grid stays pinned to the vanished row and never restores
+    // focus again — the guard would have no way out but an arrow key or a click.
+    const [rows, setRows] = createSignal<Row[]>(unsaved)
+    const { container, unmount } = render(() => <ReorderingGrid rows={rows()} />)
+    cellOf(container, -1, 'description').focus()
+    setRows(saved)
+
+    const stop = container.querySelector('[tabindex="0"]') as HTMLElement
+    stop.focus()
+    // A further re-render now restores focus to the row the user actually sits on.
+    setRows([{ id: 10, start: '08:00' }, { id: 11, start: '07:00' }])
+
+    expect(document.activeElement).not.toBe(document.body)
+    unmount()
+  })
+
   it('does not hand focus to the foreign row on a LATER re-render either', () => {
     const [rows, setRows] = createSignal<Row[]>(unsaved)
     const { container, unmount } = render(() => <ReorderingGrid rows={rows()} />)

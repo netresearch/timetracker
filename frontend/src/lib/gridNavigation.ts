@@ -318,16 +318,26 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     // out, and therefore the next keystroke too.
     const lostFocus = activeCellEl !== null && !table.contains(activeCellEl) && document.activeElement === document.body
     const target = byIdentity ?? cellAt(active[0], active[1])
-    if (target) {
-      const trackedBefore: [string | null, string | null, Cell | null] = [activeRowId, activeColKey, activeCellEl]
-      setActive(target, lostFocus && !rowGone)
-      if (rowGone) {
-        // The fallback cell belongs to another record; adopting its identity would
-        // make the NEXT sync believe the cursor is legitimately there and focus it.
-        // Keep the cursor marked as gone until a real focus moves it.
-        [activeRowId, activeColKey, activeCellEl] = trackedBefore
-      }
+    if (!target) {
+      return
     }
+
+    if (rowGone) {
+      // The fallback cell belongs to ANOTHER record. It gets the tab stop, so the
+      // grid keeps exactly one and stays reachable by Tab — but nothing else:
+      // going through setActive() would hand it the cursor's identity (the next
+      // sync would then focus it, which is the #702 keystroke path one render
+      // later) and stamp aria-current on it, which is what Tracking reads to
+      // decide which entry Alt+C clones and Alt+I describes. No row is current
+      // until the user picks one.
+      target.tabIndex = 0
+      table.querySelector('tr[aria-current="true"]')?.removeAttribute('aria-current')
+      active = position(target) ?? active
+
+      return
+    }
+
+    setActive(target, lostFocus)
   }
 
   function onKeydown(event: KeyboardEvent): void {
@@ -497,7 +507,12 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     const target = event.target
     if (target instanceof HTMLElement) {
       const cell = target.closest('th, td') as Cell | null
-      if (cell !== null && table.contains(cell) && cell.tabIndex !== 0) {
+      // `cell.tabIndex !== 0` alone would skip the cell that already holds the tab
+      // stop — including the fallback cell a vanished row left behind, which would
+      // keep the cursor pinned to a row that no longer exists and stop focus
+      // restoration for good. Adopting on an identity mismatch clears that.
+      const adopts = cell !== null && (cell.tabIndex !== 0 || (cell.dataset.rowId ?? null) !== activeRowId)
+      if (cell !== null && adopts && table.contains(cell)) {
         setActive(cell, false)
       }
     }
