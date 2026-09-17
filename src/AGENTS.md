@@ -149,14 +149,21 @@ public function list(EntityManagerInterface $em): JsonResponse
 
 ## Deployment, CI & merge (operational)
 
-- Merge gate for `netresearch/timetracker` (PRs to `main`) has two required
-  parts: the `Copilot review for default branch` ruleset (a Copilot review on
-  the HEAD commit — feature PRs open as DRAFTS, `gh pr ready` un-drafts and
-  triggers Copilot) AND the required status check `CI Success`
-  (`.github/workflows/ci.yml` `ci-success` job — a single aggregate over
+- Merge gate for `netresearch/timetracker` (PRs to `main`) blocks on two things:
+  the required status check `CI Success` and the branch's
+  `required_conversation_resolution`. A **Copilot review is NOT part of the
+  gate**: the `Copilot review for default branch` ruleset carries a
+  `copilot_code_review` rule, which only auto-REQUESTS a review once the PR
+  leaves draft (`review_draft_pull_requests: false`), and no
+  `required_approving_review_count` rule exists at all. The account's Copilot
+  review quota runs out regularly, so treat a delivered Copilot review as a
+  bonus: wait for it when it comes, never block on it. What IS mandatory is
+  that the PR was reviewed and no findings are left open — an agent review
+  counts. `CI Success` is the
+  `.github/workflows/ci.yml` `ci-success` job — a single aggregate over
   `[setup, frontend, lint, test-unit, test-integration, e2e]`, added so branch
   protection needs one check instead of enumerating all jobs + the e2e
-  shards). Codecov/SonarCloud are NOT part of that aggregate — they stay
+  shards. Codecov/SonarCloud are NOT part of that aggregate — they stay
   reporting-only and a red result there does not block merge. Rector is a
   CI-only lint gate, NOT in CaptainHook — run `composer rector`/`--dry-run` on
   changed PHP before pushing. Local PHPStan gives false negatives from a stale
