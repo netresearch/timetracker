@@ -236,22 +236,36 @@ jobs:
       - name: Pull E2E image
         run: docker pull ghcr.io/netresearch/timetracker:e2e-${{ github.sha }} || docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
-      - name: Prepare config files
+      # Owned by the image's user rather than made world-writable: this job only
+      # needs the bind mount writable for composer and the Symfony cache.
+      - name: Prepare writable directories
+        env:
+          COMPOSE_PROFILES: e2e
         run: |
           mkdir -p var/cache var/log vendor bin
-          chmod -R 777 var bin vendor
+          docker compose run --rm --user root -T app-e2e chown -R www-data:www-data var vendor bin
 
       - name: Install PHP dependencies
         env:
           COMPOSE_PROFILES: e2e
         run: docker compose run --rm app-e2e composer install --no-interaction --prefer-dist --ignore-platform-req=php
 
+      # The throwaway database gets a per-run password, so none is written down
+      # here. compose reads UNITTEST_DB_ROOT_PASSWORD for db_unittest's root, and
+      # every later step in this job inherits it from the job environment.
+      - name: Generate a database password for this run
+        run: |
+          PASSWORD="$(openssl rand -hex 24)"
+          echo "::add-mask::$PASSWORD"
+          echo "UNITTEST_DB_ROOT_PASSWORD=$PASSWORD" >> "$GITHUB_ENV"
+
       - name: Start database
         env:
           COMPOSE_PROFILES: e2e
         run: |
           docker compose up -d db_unittest
-          docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
+          docker compose exec -T -e MYSQL_PWD="$UNITTEST_DB_ROOT_PASSWORD" db_unittest \
+            mariadb-admin ping -h 127.0.0.1 -uroot --wait --connect-timeout=60
 
       # Seeds one database from sql/full.sql and a second by replaying every
       # migration over a clone of it, then diffs the two structures. A difference
@@ -260,11 +274,12 @@ jobs:
       - name: Compare the dump against the migrated schema
         env:
           COMPOSE_PROFILES: e2e
-          DB_CLIENT: docker compose exec -T -e MYSQL_PWD=global123 db_unittest mariadb -uroot
-          DB_DUMP: docker compose exec -T -e MYSQL_PWD=global123 db_unittest mariadb-dump -uroot
+          DB_CLIENT: docker compose exec -T -e MYSQL_PWD db_unittest mariadb -uroot
+          DB_DUMP: docker compose exec -T -e MYSQL_PWD db_unittest mariadb-dump -uroot
+          MYSQL_PWD: ${{ env.UNITTEST_DB_ROOT_PASSWORD }}
           PHP_CONSOLE: docker compose run --rm -T -e APP_ENV=test -e DATABASE_URL app-e2e bin/console
-          DUMP_DATABASE_URL: mysql://root:global123@db_unittest:3306/drift_dump?charset=utf8mb4
-          MIGRATE_DATABASE_URL: mysql://root:global123@db_unittest:3306/drift_migrated?charset=utf8mb4
+          DUMP_DATABASE_URL: mysql://root:${{ env.UNITTEST_DB_ROOT_PASSWORD }}@db_unittest:3306/drift_dump?charset=utf8mb4
+          MIGRATE_DATABASE_URL: mysql://root:${{ env.UNITTEST_DB_ROOT_PASSWORD }}@db_unittest:3306/drift_migrated?charset=utf8mb4
         run: bash scripts/schema-drift-check.sh
 
       - name: Stop database
