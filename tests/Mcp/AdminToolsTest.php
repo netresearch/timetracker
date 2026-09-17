@@ -241,16 +241,28 @@ final class AdminToolsTest extends AbstractWebTestCase
     {
         $this->useToken(['projects:write']);
 
-        $this->expectException(ToolCallException::class);
-        self::getContainer()->get(UpdateProjectTool::class)->updateProject(project: '2', ticketPrefix: 'bad-1');
+        // Caught rather than expected, so the MESSAGE can be asserted: fixture drift
+        // must not leave this green for the wrong reason — AdminEntityResolver
+        // throws the same class for an unknown project. (expectExceptionMessage is
+        // deprecated in PHPUnit 13.)
+        try {
+            self::getContainer()->get(UpdateProjectTool::class)->updateProject(project: '2', ticketPrefix: 'bad-1');
+            self::fail('an invalid new ticket prefix must be refused');
+        } catch (ToolCallException $toolCallException) {
+            self::assertStringContainsString('Jira', $toolCallException->getMessage());
+        }
     }
 
     public function testUpdateProjectStillRejectsATooShortNewName(): void
     {
         $this->useToken(['projects:write']);
 
-        $this->expectException(ToolCallException::class);
-        self::getContainer()->get(UpdateProjectTool::class)->updateProject(project: '2', name: 'ab');
+        try {
+            self::getContainer()->get(UpdateProjectTool::class)->updateProject(project: '2', name: 'ab');
+            self::fail('a too short new name must be refused');
+        } catch (ToolCallException $toolCallException) {
+            self::assertStringContainsString('3', $toolCallException->getMessage());
+        }
     }
 
     public function testUpdateProjectRejectsUnknownProject(): void

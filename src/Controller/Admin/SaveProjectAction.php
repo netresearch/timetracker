@@ -31,6 +31,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
 use function assert;
+use function strtoupper;
+use function trim;
 
 final class SaveProjectAction extends BaseController
 {
@@ -85,7 +87,11 @@ final class SaveProjectAction extends BaseController
         // same reason (#688): a project whose prefix predates the format rule must
         // stay editable. Without this the DTO lets the legacy value through and the
         // save fails here instead — a 406 in place of a 422, equally unsaveable.
-        $prefixUnchanged = $projectSaveDto->id > 0 && (string) $project->getJiraId() === $jiraId;
+        // Normalised the same way the DTO's ValidProjectJiraPrefix does, so the two
+        // grandfathers cannot disagree. Must stay ABOVE the objectMapper->map()
+        // below: mapping first would compare the submitted value with itself.
+        $prefixUnchanged = $projectSaveDto->id > 0
+            && strtoupper(trim((string) $project->getJiraId())) === strtoupper(trim($jiraId));
         if (!$prefixUnchanged && '' !== $jiraId && 0 === $objectRepository->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);

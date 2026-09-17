@@ -41,7 +41,7 @@ class ValidProjectNameValidator extends ConstraintValidator
         // editable.
         if ($projectId > 0 && is_string($value)) {
             $current = $this->entityManager->getRepository(Project::class)->find($projectId);
-            if ($current instanceof Project && $current->getName() === $value) {
+            if ($current instanceof Project && trim($current->getName()) === trim($value)) {
                 return;
             }
         }
