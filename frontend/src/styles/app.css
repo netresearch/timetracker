@@ -5589,12 +5589,21 @@ div.calendar {
   border-block-start-color: transparent;
 }
 
-/* The divider between two blocks. A day break cannot happen inside a day card,
-   and ordered by customer the blocks ARE days — so in this view the accent line
-   marks where one block ends, not where a day does. Drawn at the top of the row
-   that opens the next block, which is the same edge. */
-.tracking-table.is-grouped tbody.worklog-day > tr.tracking-row.is-block-break > td {
-  border-block-start: 3px solid var(--color-class-daybreak);
+/* Every block closes with the accent line — including the last one in a card,
+   where it is the card's own bottom edge. A day break cannot happen inside a day
+   card, and ordered by customer the blocks ARE days, so in this view the line
+   marks a block, not a day. It sits under the block's LAST row: that is the edge
+   it belongs to, and drawing it on the next block's first row left the final
+   block of every card without one. */
+.tracking-table.is-grouped tbody.worklog-day > tr.tracking-row.is-block-end > td {
+  border-block-end: 3px solid var(--color-class-daybreak);
+}
+
+/* The row after a closed block keeps its 1px top border for the geometry, but not
+   its colour: a grey hairline directly under the accent line reads as a second,
+   fainter divider for the same edge. */
+.tracking-table.is-grouped tbody.worklog-day > tr.tracking-row.is-block-end + tr.tracking-row > td {
+  border-block-start-color: transparent;
 }
 
 /* A cue line stops at the block column, exactly as the ordinary row border does
