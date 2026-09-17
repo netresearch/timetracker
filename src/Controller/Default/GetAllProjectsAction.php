@@ -54,11 +54,17 @@ final class GetAllProjectsAction extends BaseController
         // entry-form path, which doesn't show the column.
         $lastActivity = $customerId > 0 ? [] : $objectRepository->lastActivityBy('project_id');
 
+        // The caller's OWN last booking per project (#687): when a ticket prefix matches
+        // several projects, the entry form prefers the one this person booked on last
+        // instead of the lowest id, which is usually the oldest, long-retired project.
+        $lastBookedByUser = $customerId > 0 ? [] : $objectRepository->lastActivityBy('project_id', $user->getId());
+
         $data = [];
         foreach ($result as $project) {
             if ($project instanceof Project) {
                 $row = $project->toArray();
                 $row['last_activity'] = $lastActivity[(int) $project->getId()] ?? null;
+                $row['last_booked_by_user'] = $lastBookedByUser[(int) $project->getId()] ?? null;
                 $data[] = ['project' => $row];
             }
         }
