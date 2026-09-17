@@ -52,7 +52,7 @@ class ValidProjectJiraPrefixValidator extends ConstraintValidator
         // legacy prefix equals a submitted ''.
         if ($projectId > 0) {
             $current = $this->entityManager->getRepository(Project::class)->find($projectId);
-            if ($current instanceof Project && (string) $current->getJiraId() === $value) {
+            if ($current instanceof Project && trim((string) $current->getJiraId()) === trim($value)) {
                 return;
             }
         }

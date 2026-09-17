@@ -120,6 +120,10 @@ final readonly class AdminOnboardingService
         $active = $projectUpdateDto->active ?? $project->getActive();
         $global = $projectUpdateDto->global ?? $project->getGlobal();
 
+        // Must stay ABOVE the set* calls below: ValidProjectName and
+        // ValidProjectJiraPrefix grandfather an unchanged value by comparing the
+        // submitted one against the PERSISTED one, and mutating the managed entity
+        // first would make every comparison match and the rules never fire.
         $this->assertValid(new ProjectSaveDto(
             id: (int) $project->getId(),
             name: $name,

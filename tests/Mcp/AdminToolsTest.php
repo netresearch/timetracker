@@ -231,6 +231,28 @@ final class AdminToolsTest extends AbstractWebTestCase
         self::assertTrue($result['project']['ticket_system_books_time']);
     }
 
+    /**
+     * The grandfathering must not swallow the rule itself: a CHANGED prefix on an
+     * existing project is still format-checked. Without this case an early return
+     * on `id > 0` alone — the obvious way to get the legacy case passing — would
+     * leave the rule dead for every update and no test would notice.
+     */
+    public function testUpdateProjectStillRejectsAnInvalidNewTicketPrefix(): void
+    {
+        $this->useToken(['projects:write']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(UpdateProjectTool::class)->updateProject(project: '2', ticketPrefix: 'bad-1');
+    }
+
+    public function testUpdateProjectStillRejectsATooShortNewName(): void
+    {
+        $this->useToken(['projects:write']);
+
+        $this->expectException(ToolCallException::class);
+        self::getContainer()->get(UpdateProjectTool::class)->updateProject(project: '2', name: 'ab');
+    }
+
     public function testUpdateProjectRejectsUnknownProject(): void
     {
         $this->useToken(['projects:write']);

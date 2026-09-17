@@ -81,7 +81,12 @@ final class SaveProjectAction extends BaseController
 
         // Validation is now handled by the DTO with MapRequestPayload
 
-        if ('' !== $jiraId && 0 === $objectRepository->isValidJiraPrefix($jiraId)) {
+        // The same grandfathering ValidProjectJiraPrefix applies on the DTO, for the
+        // same reason (#688): a project whose prefix predates the format rule must
+        // stay editable. Without this the DTO lets the legacy value through and the
+        // save fails here instead — a 406 in place of a 422, equally unsaveable.
+        $prefixUnchanged = $projectSaveDto->id > 0 && (string) $project->getJiraId() === $jiraId;
+        if (!$prefixUnchanged && '' !== $jiraId && 0 === $objectRepository->isValidJiraPrefix($jiraId)) {
             $response = new Response($this->translate('Please provide a valid ticket prefix with only capital letters.'));
             $response->setStatusCode(\Symfony\Component\HttpFoundation\Response::HTTP_NOT_ACCEPTABLE);
 

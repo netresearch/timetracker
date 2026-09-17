@@ -19,6 +19,10 @@ use Symfony\Component\Validator\Constraint;
  * (the fixture's 'TIM-1', and plenty of them in production) can still be edited:
  * assigning it a ticket system must not fail on a field the caller never touched.
  *
+ * SaveProjectAction carries the same grandfathering for its own second check
+ * (ProjectRepository::isValidJiraPrefix); without it the admin UI would let the
+ * value through here and refuse it there, 406 instead of 422.
+ *
  * Same shape and same reason as ValidUserAbbr — a declarative Assert cannot see
  * the persisted value, so the check has to fetch it.
  */
