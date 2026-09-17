@@ -21,15 +21,15 @@ final class Version20260709_TicketSystemSyncConfig extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE ticket_systems ADD sync_user_id INT DEFAULT NULL, ADD sync_default_activity_id INT DEFAULT NULL, ADD worklog_sync_cursor BIGINT DEFAULT NULL');
-        $this->addSql('ALTER TABLE ticket_systems ADD CONSTRAINT fk_ts_sync_user FOREIGN KEY (sync_user_id) REFERENCES users (id) ON DELETE SET NULL');
-        $this->addSql('ALTER TABLE ticket_systems ADD CONSTRAINT fk_ts_sync_activity FOREIGN KEY (sync_default_activity_id) REFERENCES activities (id) ON DELETE SET NULL');
+        $this->addSql('ALTER TABLE ticket_systems ADD COLUMN IF NOT EXISTS sync_user_id INT DEFAULT NULL, ADD COLUMN IF NOT EXISTS sync_default_activity_id INT DEFAULT NULL, ADD COLUMN IF NOT EXISTS worklog_sync_cursor BIGINT DEFAULT NULL');
+        $this->addSql('ALTER TABLE ticket_systems ADD CONSTRAINT fk_ts_sync_user FOREIGN KEY IF NOT EXISTS (sync_user_id) REFERENCES users (id) ON DELETE SET NULL');
+        $this->addSql('ALTER TABLE ticket_systems ADD CONSTRAINT fk_ts_sync_activity FOREIGN KEY IF NOT EXISTS (sync_default_activity_id) REFERENCES activities (id) ON DELETE SET NULL');
     }
 
     public function down(Schema $schema): void
     {
         $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY fk_ts_sync_user');
         $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY fk_ts_sync_activity');
-        $this->addSql('ALTER TABLE ticket_systems DROP COLUMN sync_user_id, DROP COLUMN sync_default_activity_id, DROP COLUMN worklog_sync_cursor');
+        $this->addSql('ALTER TABLE ticket_systems DROP COLUMN IF EXISTS sync_user_id, DROP COLUMN IF EXISTS sync_default_activity_id, DROP COLUMN IF EXISTS worklog_sync_cursor');
     }
 }

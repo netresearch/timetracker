@@ -30,7 +30,7 @@ final class Version20260612_FixHolidaysSchema extends AbstractMigration
     public function up(Schema $schema): void
     {
         if ($schema->hasTable('holidays') && !$schema->getTable('holidays')->hasColumn('name')) {
-            $this->addSql("ALTER TABLE holidays ADD name VARCHAR(255) NOT NULL DEFAULT ''");
+            $this->addSql("ALTER TABLE holidays ADD COLUMN IF NOT EXISTS name VARCHAR(255) NOT NULL DEFAULT ''");
         }
     }
 

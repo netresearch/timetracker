@@ -29,11 +29,11 @@ final class Version20260702_AddUserPassword extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users ADD password VARCHAR(255) DEFAULT NULL');
+        $this->addSql('ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT NULL');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users DROP COLUMN password');
+        $this->addSql('ALTER TABLE users DROP COLUMN IF EXISTS password');
     }
 }

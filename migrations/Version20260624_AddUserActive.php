@@ -29,11 +29,11 @@ final class Version20260624_AddUserActive extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users ADD active TINYINT(1) NOT NULL DEFAULT 1');
+        $this->addSql('ALTER TABLE users ADD COLUMN IF NOT EXISTS active TINYINT(1) NOT NULL DEFAULT 1');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users DROP COLUMN active');
+        $this->addSql('ALTER TABLE users DROP COLUMN IF EXISTS active');
     }
 }

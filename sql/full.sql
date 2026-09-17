@@ -52,7 +52,7 @@ CREATE TABLE `users` (
   `webauthn_user_handle` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
-  UNIQUE KEY `webauthn_user_handle` (`webauthn_user_handle`)
+  UNIQUE KEY `UNIQ_users_webauthn_user_handle` (`webauthn_user_handle`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 
@@ -263,10 +263,10 @@ CREATE TABLE `entries` (
   `touchpoints` JSON DEFAULT NULL,
   `paired_entry_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY (`project_id`),
+  KEY `idx_entries_project` (`project_id`),
   KEY (`user_id`),
-  KEY (`activity_id`),
-  KEY (`customer_id`),
+  KEY `idx_entries_activity` (`activity_id`),
+  KEY `idx_entries_customer` (`customer_id`),
   KEY `idx_entries_user_day` (`user_id`, `day`),
   KEY `idx_entries_customer_day` (`customer_id`, `day`),
   KEY `idx_entries_project_day` (`project_id`, `day`),
@@ -339,7 +339,7 @@ CREATE TABLE `users_ticket_systems` (
   `sync_enabled` TINYINT(1) NOT NULL DEFAULT '0',
   `sync_all` TINYINT(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
-  KEY `fk_user_id_idx` (`user_id`),
+  KEY `idx_user_ticket_system_user` (`user_id`),
   KEY `fk_ticket_system_id_idx` (`ticket_system_id`),
   KEY `idx_uts_remote_account` (`ticket_system_id`, `remote_account_id`),
   CONSTRAINT `fk_ticket_system_id` FOREIGN KEY (`ticket_system_id`) REFERENCES `ticket_systems` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,

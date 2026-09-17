@@ -22,15 +22,15 @@ final class Version20260711_EntrySourceAttribution extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql("ALTER TABLE entries
-            ADD source VARCHAR(8) DEFAULT 'human' NOT NULL,
-            ADD logged_by_id INT DEFAULT NULL,
-            ADD estimated TINYINT(1) DEFAULT 0 NOT NULL,
-            ADD responsible_user_id INT DEFAULT NULL,
-            ADD touchpoints JSON DEFAULT NULL");
+            ADD COLUMN IF NOT EXISTS source VARCHAR(8) DEFAULT 'human' NOT NULL,
+            ADD COLUMN IF NOT EXISTS logged_by_id INT DEFAULT NULL,
+            ADD COLUMN IF NOT EXISTS estimated TINYINT(1) DEFAULT 0 NOT NULL,
+            ADD COLUMN IF NOT EXISTS responsible_user_id INT DEFAULT NULL,
+            ADD COLUMN IF NOT EXISTS touchpoints JSON DEFAULT NULL");
         $this->addSql('ALTER TABLE entries
-            ADD CONSTRAINT FK_entries_logged_by FOREIGN KEY (logged_by_id) REFERENCES users (id) ON DELETE SET NULL,
-            ADD CONSTRAINT FK_entries_responsible FOREIGN KEY (responsible_user_id) REFERENCES users (id) ON DELETE SET NULL');
-        $this->addSql('CREATE INDEX IDX_entries_source ON entries (source)');
+            ADD CONSTRAINT FK_entries_logged_by FOREIGN KEY IF NOT EXISTS (logged_by_id) REFERENCES users (id) ON DELETE SET NULL,
+            ADD CONSTRAINT FK_entries_responsible FOREIGN KEY IF NOT EXISTS (responsible_user_id) REFERENCES users (id) ON DELETE SET NULL');
+        $this->addSql('CREATE INDEX IF NOT EXISTS IDX_entries_source ON entries (source)');
     }
 
     public function down(Schema $schema): void

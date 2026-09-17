@@ -28,8 +28,8 @@ final class Version20260712_CustomerTempoKey extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE customers ADD tempo_customer_key VARCHAR(63) DEFAULT NULL');
-        $this->addSql('CREATE UNIQUE INDEX uniq_customers_tempo_customer_key ON customers (tempo_customer_key)');
+        $this->addSql('ALTER TABLE customers ADD COLUMN IF NOT EXISTS tempo_customer_key VARCHAR(63) DEFAULT NULL');
+        $this->addSql('CREATE UNIQUE INDEX IF NOT EXISTS uniq_customers_tempo_customer_key ON customers (tempo_customer_key)');
     }
 
     public function down(Schema $schema): void

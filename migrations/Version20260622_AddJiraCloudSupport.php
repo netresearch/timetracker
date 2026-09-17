@@ -31,24 +31,24 @@ final class Version20260622_AddJiraCloudSupport extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql("ALTER TABLE ticket_systems
-            ADD deployment_type VARCHAR(15) NOT NULL DEFAULT 'SERVER',
-            ADD oauth2_client_id VARCHAR(255) NULL,
-            ADD oauth2_client_secret VARCHAR(255) NULL,
-            ADD cloud_id VARCHAR(64) NULL");
+            ADD COLUMN IF NOT EXISTS deployment_type VARCHAR(15) NOT NULL DEFAULT 'SERVER',
+            ADD COLUMN IF NOT EXISTS oauth2_client_id VARCHAR(255) NULL,
+            ADD COLUMN IF NOT EXISTS oauth2_client_secret VARCHAR(255) NULL,
+            ADD COLUMN IF NOT EXISTS cloud_id VARCHAR(64) NULL");
 
         $this->addSql('ALTER TABLE users_ticket_systems
-            ADD refresh_token TEXT NULL,
-            ADD token_expires_at DATETIME NULL,
+            ADD COLUMN IF NOT EXISTS refresh_token TEXT NULL,
+            ADD COLUMN IF NOT EXISTS token_expires_at DATETIME NULL,
             MODIFY tokensecret TEXT NULL');
     }
 
     public function down(Schema $schema): void
     {
         $this->addSql('ALTER TABLE ticket_systems
-            DROP deployment_type,
-            DROP oauth2_client_id,
-            DROP oauth2_client_secret,
-            DROP cloud_id');
+            DROP COLUMN IF EXISTS deployment_type,
+            DROP COLUMN IF EXISTS oauth2_client_id,
+            DROP COLUMN IF EXISTS oauth2_client_secret,
+            DROP COLUMN IF EXISTS cloud_id');
 
         // Cloud rows may have written a NULL tokensecret while this migration was
         // applied (it relaxed the column to nullable); blank those before restoring
@@ -57,8 +57,8 @@ final class Version20260622_AddJiraCloudSupport extends AbstractMigration
         // migration immediately preceding this one — not the original VARCHAR(50).
         $this->addSql("UPDATE users_ticket_systems SET tokensecret = '' WHERE tokensecret IS NULL");
         $this->addSql('ALTER TABLE users_ticket_systems
-            DROP refresh_token,
-            DROP token_expires_at,
+            DROP COLUMN IF EXISTS refresh_token,
+            DROP COLUMN IF EXISTS token_expires_at,
             MODIFY tokensecret TEXT NOT NULL');
     }
 

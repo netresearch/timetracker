@@ -220,6 +220,57 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
+  schema-drift:
+    name: Schema Drift (full.sql vs migrations)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Pull E2E image
+        run: docker pull ghcr.io/netresearch/timetracker:e2e-${{ github.sha }} || docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
+
+      - name: Prepare config files
+        run: |
+          mkdir -p var/cache var/log vendor bin
+          chmod -R 777 var bin vendor
+
+      - name: Install PHP dependencies
+        env:
+          COMPOSE_PROFILES: e2e
+        run: docker compose run --rm app-e2e composer install --no-interaction --prefer-dist --ignore-platform-req=php
+
+      - name: Start database
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          docker compose up -d db_unittest
+          docker compose exec -T db_unittest mariadb-admin ping -h 127.0.0.1 -uroot -pglobal123 --wait --connect-timeout=60
+
+      # Seeds one database from sql/full.sql and a second by replaying every
+      # migration over a clone of it, then diffs the two structures. A difference
+      # is schema the dump promises and no migration will ever deliver, and it
+      # reaches fresh installs only — see #715 and #717 for the three that shipped.
+      - name: Compare the dump against the migrated schema
+        env:
+          COMPOSE_PROFILES: e2e
+          DB_CLIENT: docker compose exec -T -e MYSQL_PWD=global123 db_unittest mariadb -uroot
+          DB_DUMP: docker compose exec -T -e MYSQL_PWD=global123 db_unittest mariadb-dump -uroot
+          PHP_CONSOLE: docker compose run --rm -T -e APP_ENV=test -e DATABASE_URL app-e2e bin/console
+          DUMP_DATABASE_URL: mysql://root:global123@db_unittest:3306/drift_dump?charset=utf8mb4
+          MIGRATE_DATABASE_URL: mysql://root:global123@db_unittest:3306/drift_migrated?charset=utf8mb4
+        run: bash scripts/schema-drift-check.sh
+
+      - name: Stop database
+        if: always()
+        run: docker compose down
+
   test-integration:
     name: Integration Tests
     runs-on: ubuntu-latest
@@ -440,7 +491,7 @@ jobs:
     permissions:
       contents: read
     if: always()
-    needs: [frontend, lint, test-unit, test-integration, e2e]
+    needs: [frontend, lint, test-unit, test-integration, e2e, schema-drift]
     steps:
       - name: Verify all jobs succeeded
         # Pass the results through env (never interpolate ${{ }} into the shell —

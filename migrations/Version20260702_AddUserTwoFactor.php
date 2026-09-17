@@ -33,11 +33,11 @@ final class Version20260702_AddUserTwoFactor extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users ADD totp_secret VARCHAR(255) DEFAULT NULL, ADD backup_codes JSON DEFAULT NULL');
+        $this->addSql('ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(255) DEFAULT NULL, ADD COLUMN IF NOT EXISTS backup_codes JSON DEFAULT NULL');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users DROP COLUMN totp_secret, DROP COLUMN backup_codes');
+        $this->addSql('ALTER TABLE users DROP COLUMN IF EXISTS totp_secret, DROP COLUMN IF EXISTS backup_codes');
     }
 }

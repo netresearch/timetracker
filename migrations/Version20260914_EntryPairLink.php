@@ -21,10 +21,10 @@ final class Version20260914_EntryPairLink extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE entries ADD paired_entry_id INT DEFAULT NULL');
-        $this->addSql('CREATE UNIQUE INDEX UNIQ_entries_paired_entry ON entries (paired_entry_id)');
+        $this->addSql('ALTER TABLE entries ADD COLUMN IF NOT EXISTS paired_entry_id INT DEFAULT NULL');
+        $this->addSql('CREATE UNIQUE INDEX IF NOT EXISTS UNIQ_entries_paired_entry ON entries (paired_entry_id)');
         $this->addSql('ALTER TABLE entries
-            ADD CONSTRAINT FK_entries_paired_entry FOREIGN KEY (paired_entry_id) REFERENCES entries (id) ON DELETE SET NULL');
+            ADD CONSTRAINT FK_entries_paired_entry FOREIGN KEY IF NOT EXISTS (paired_entry_id) REFERENCES entries (id) ON DELETE SET NULL');
 
         // Backfill pairs written by LogTimeTool::dualWrite before the link existed. It
         // writes the agent entry first and the delegated human estimate directly after
