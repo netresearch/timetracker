@@ -22,7 +22,7 @@ final class Version20260710_WorklogSyncOptIn extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql('ALTER TABLE users_ticket_systems ADD COLUMN IF NOT EXISTS sync_enabled TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS sync_all TINYINT(1) NOT NULL DEFAULT 0');
-        $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY fk_ts_sync_user');
+        $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY IF EXISTS fk_ts_sync_user');
         $this->addSql('ALTER TABLE ticket_systems DROP COLUMN IF EXISTS sync_user_id, DROP COLUMN IF EXISTS worklog_sync_cursor');
     }
 

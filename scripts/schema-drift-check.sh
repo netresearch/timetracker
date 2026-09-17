@@ -11,9 +11,24 @@
 # EXISTS guards, so a replay is a no-op wherever the dump already agrees. Any
 # diff line is a finding.
 #
-# Blind spot worth knowing: a difference inside a CREATE TABLE IF NOT EXISTS —
-# an index named differently there, say — is invisible, because the replay skips
-# the statement entirely when the table is present.
+# Blind spots, all of them the same shape — the replay only sees a definition it
+# actually re-applies:
+#   * every IF [NOT] EXISTS guard short-circuits on the object's NAME, so a
+#     difference inside a CREATE TABLE, a CREATE INDEX, an ADD COLUMN or an
+#     ADD … FOREIGN KEY is skipped when something of that name is already there;
+#   * a migration gated on $schema->hasColumn(...) emits nothing at all against
+#     the clone — Version20260612_FixHolidaysSchema and
+#     Version20260622_AddMinEntryDuration are such, so the holidays.name width
+#     that #716 fixed would NOT be caught by this check;
+#   * an object the dump declares and no migration touches is identical on both
+#     sides by construction.
+# A statement that cannot be guarded — MODIFY COLUMN above all — is fully
+# covered, which is where the sharper defects have been.
+#
+# To convince yourself the check still bites after editing it, put a known defect
+# back and run it:
+#   sed -i 's/`accesstoken` TEXT NOT NULL/`accesstoken` varchar(50) NOT NULL/' sql/full.sql
+# It must fail naming that column; restore the line afterwards.
 #
 # The three commands it needs are injectable, because the app image ships no
 # database client and CI has neither on the same host:

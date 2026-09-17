@@ -28,8 +28,8 @@ final class Version20260709_TicketSystemSyncConfig extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY fk_ts_sync_user');
-        $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY fk_ts_sync_activity');
+        $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY IF EXISTS fk_ts_sync_user');
+        $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY IF EXISTS fk_ts_sync_activity');
         $this->addSql('ALTER TABLE ticket_systems DROP COLUMN IF EXISTS sync_user_id, DROP COLUMN IF EXISTS sync_default_activity_id, DROP COLUMN IF EXISTS worklog_sync_cursor');
     }
 }

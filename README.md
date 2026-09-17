@@ -121,7 +121,7 @@ Sign in with one of the seeded development LDAP users, e.g. `i.myself` /
 ### Manual Installation
 
 ```bash
-# Prerequisites: PHP 8.5+, MariaDB/MySQL, Composer, bun (frontend), Node.js 26+ (e2e)
+# Prerequisites: PHP 8.5+, MariaDB 12+, Composer, bun (frontend), Node.js 26+ (e2e)
 composer install
 cd frontend && bun install && bun run build && cd ..
 
@@ -138,7 +138,9 @@ symfony server:start
 ## Requirements
 
 - **PHP**: 8.5 with extensions: `ldap`, `pdo_mysql`, `intl`, `mbstring`
-- **Database**: MariaDB 12+ or MySQL 8.0+
+- **Database**: MariaDB 12+. **Not MySQL** — the migrations use MariaDB's
+  `IF [NOT] EXISTS` clauses on `ADD COLUMN`, `DROP COLUMN`, `CREATE INDEX` and
+  `ADD … FOREIGN KEY`, which MySQL 8 rejects, so they cannot even parse there
 - **LDAP / Active Directory**: any LDAP v3 server for authentication
   (a preconfigured dev LDAP container ships with the Docker setup)
 - **Node.js**: 26+ (for the Playwright e2e tooling; the frontend builds with bun)
@@ -157,7 +159,7 @@ The most important variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | MariaDB/MySQL connection string |
+| `DATABASE_URL` | MariaDB connection string |
 | `LDAP_HOST`, `LDAP_BASEDN`, … | LDAP/AD connection (8 variables) |
 | `LDAP_CREATE_USER` | Auto-create accounts on first successful login |
 | `APP_TITLE`, `APP_LOGO_URL` | Branding |
