@@ -376,6 +376,13 @@ Header buttons (explained on the in-app Help page too):
 
   ![The app with the navigation in a right sidebar](images/nav-sidebar-right.png)
 
+  Collapsed, the sidebar keeps every control as an icon — navigation, the add
+  button, the tools, the day range and the view and order switches — and gives
+  the width back to the grid. The labels stay in the markup, so a screen reader
+  still reads them.
+
+  ![The left sidebar collapsed to an icon rail, the worklog using the full width](images/nav-sidebar-collapsed.png)
+
 All of these are remembered per device.
 
 ## Keyboard shortcuts
