@@ -157,9 +157,13 @@ public function list(EntityManagerInterface $em): JsonResponse
   leaves draft (`review_draft_pull_requests: false`), and no
   `required_approving_review_count` rule exists at all. The account's Copilot
   review quota runs out regularly, so treat a delivered Copilot review as a
-  bonus: wait for it when it comes, never block on it. What IS mandatory is
-  that the PR was reviewed and no findings are left open — an agent review
-  counts. `CI Success` is the
+  bonus: wait for it when it comes, never block on it. What the machine
+  enforces is narrower than the team rule: `required_conversation_resolution`
+  only closes open threads, it cannot tell whether anybody reviewed. The team
+  rule is that a PR gets reviewed until a round turns up no findings — an agent
+  review counts. `strict_required_status_checks_policy: true` also means the
+  branch must be up to date with `main` before `CI Success` counts, so a moved
+  base needs a rebase and a re-run. `CI Success` is the
   `.github/workflows/ci.yml` `ci-success` job — a single aggregate over
   `[setup, frontend, lint, test-unit, test-integration, e2e]`, added so branch
   protection needs one check instead of enumerating all jobs + the e2e

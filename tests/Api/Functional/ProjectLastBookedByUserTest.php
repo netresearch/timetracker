@@ -85,11 +85,9 @@ final class ProjectLastBookedByUserTest extends AbstractWebTestCase
     }
 
     /**
-     * @param mixed $payload
-     *
      * @return array<string, mixed>
      */
-    private function projectRow($payload, int $projectId): array
+    private function projectRow(mixed $payload, int $projectId): array
     {
         self::assertIsArray($payload);
         foreach ($payload as $row) {

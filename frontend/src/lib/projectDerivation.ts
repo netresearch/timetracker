@@ -12,9 +12,13 @@ export interface DerivableProject {
 const keys = (list: string): string[] => list.toUpperCase().split(/[\s,]+/).filter((key) => key !== '')
 
 /** The candidate this user booked on most recently; '' (never booked) loses to
- *  every date, and equal dates go to the lower id. The id is compared rather
- *  than left to array order: /getAllProjects runs `findAll()` with no ORDER BY,
- *  so the row order is whatever the database returns. */
+ *  every date, and equal dates — in practice: no history on either — go to the
+ *  HIGHEST id, the youngest project. Where one prefix is carried by several
+ *  active projects they are usually a succession, and the survivor created last
+ *  is the live one: for DHLSUP that is 982 "DHL (New) Shipping M2 Support",
+ *  which is the project #687 names as the right answer, over 849. The id is
+ *  compared rather than left to array order, because /getAllProjects runs
+ *  `findAll()` with no ORDER BY and the row order is the database's to choose. */
 function preferred<T extends DerivableProject>(candidates: T[]): T | undefined {
   return candidates.reduce<T | undefined>((best, candidate) => {
     if (best === undefined) {
@@ -24,7 +28,7 @@ function preferred<T extends DerivableProject>(candidates: T[]): T | undefined {
       return candidate.lastBookedByUser > best.lastBookedByUser ? candidate : best
     }
 
-    return candidate.id < best.id ? candidate : best
+    return candidate.id > best.id ? candidate : best
   }, undefined)
 }
 
