@@ -317,6 +317,10 @@ export interface TrackingProject {
   // Comma-separated Jira sub-issue keys synced from the ticket system; an exact
   // match here maps a ticket to this project even when its prefix isn't in jiraId.
   subtickets: string
+  // ISO day of the CURRENT user's most recent booking on this project, '' when
+  // they never booked on it. Breaks the tie when a ticket prefix matches several
+  // active projects (#687).
+  lastBookedByUser: string
 }
 
 export function trackingProjectsQuery() {
@@ -336,6 +340,7 @@ export function trackingProjectsQuery() {
           jiraId: String(project.jiraId ?? project.jira_id ?? ''),
           ticketSystem: Number(project.ticket_system ?? project.ticketSystem ?? 0),
           subtickets: String(project.subtickets ?? ''),
+          lastBookedByUser: String(project.last_booked_by_user ?? project.lastBookedByUser ?? ''),
         })),
     staleTime: REFERENCE_STALE_TIME,
   }

@@ -13,6 +13,7 @@ import { gridNav, type GridMoveHandle } from '../lib/gridNavigation'
 import { chipValues, createInlineGridEdit, fieldSelectOptions, InlineEditor, INLINE_OVERLAY_TYPES, INLINE_TYPES } from '../lib/inlineGridEdit'
 import { ChipSelect } from '../lib/chipSelect'
 import { registerCommands } from '../lib/commandPalette'
+import { deriveProjectForTicket } from '../lib/projectDerivation'
 import { getTrackingDays, setTrackingDays } from '../lib/trackingDaysPref'
 import { getWorklogView, setWorklogView, type WorklogView } from '../lib/worklogViewPref'
 import { getWorklogSort, setWorklogSort, WORKLOG_SORTS, type WorklogSort } from '../lib/worklogSortPref'
@@ -919,29 +920,7 @@ export default function Tracking() {
   // cell shows the fixed value immediately, not on the next refetch.
   function handleCommit(id: number, colKey: string, value: unknown): void {
     if (colKey === 'ticket') {
-      const ticketKey = str(value).toUpperCase().trim()
-      if (ticketKey === '') {
-        return
-      }
-      const prefix = ticketKey.split(/[-:]/)[0] ?? ''
-      const candidates = projects.data ?? []
-      // Exact subticket match wins over a prefix match: the synced subtickets list
-      // enumerates specific keys (possibly from another Jira project), so it is more
-      // precise than the jiraId prefix rule — the backend accepts it the same way
-      // (SaveEntryAction::isKnownSubticket).
-      const bySubticket = candidates.find(
-        (candidate) => candidate.subtickets !== '' && candidate.subtickets.toUpperCase().split(/[\s,]+/).includes(ticketKey),
-      )
-      // Fallback: jiraId is a comma/space-separated list of allowed prefixes (the
-      // backend splits it the same way in validateTicketPrefix), so match membership —
-      // an exact === missed multi-prefix projects, so an external ticket like
-      // DHLSUP-1 derived the wrong/no project and the save was rejected (#453).
-      const byPrefix = prefix === ''
-        ? undefined
-        : candidates.find(
-            (candidate) => candidate.jiraId !== '' && candidate.jiraId.toUpperCase().split(/[\s,]+/).includes(prefix),
-          )
-      const project = bySubticket ?? byPrefix
+      const project = deriveProjectForTicket(str(value), projects.data ?? [])
       if (project !== undefined) {
         editor.setDraftField(id, 'project', project.id)
         if (project.customer > 0) {

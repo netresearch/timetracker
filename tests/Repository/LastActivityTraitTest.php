@@ -45,4 +45,35 @@ final class LastActivityTraitTest extends TestCase
             new LastActivityDouble($entityManager)->lastActivityBy('customer_id'),
         );
     }
+
+    public function testUserIdNarrowsTheAggregateToThatUsersOwnEntries(): void
+    {
+        $connection = self::createMock(Connection::class);
+        $connection->expects(self::once())
+            ->method('fetchAllKeyValue')
+            ->with(self::stringContains('AND user_id = :userId'), ['userId' => 7])
+            ->willReturn([849 => '2026-09-16']);
+
+        $entityManager = self::createStub(EntityManagerInterface::class);
+        $entityManager->method('getConnection')->willReturn($connection);
+
+        self::assertSame(
+            [849 => '2026-09-16'],
+            new LastActivityDouble($entityManager)->lastActivityBy('project_id', 7),
+        );
+    }
+
+    public function testWithoutUserIdTheQueryCarriesNoUserFilterAndNoParameters(): void
+    {
+        $connection = self::createMock(Connection::class);
+        $connection->expects(self::once())
+            ->method('fetchAllKeyValue')
+            ->with(self::logicalNot(self::stringContains('user_id = :userId')), [])
+            ->willReturn([]);
+
+        $entityManager = self::createStub(EntityManagerInterface::class);
+        $entityManager->method('getConnection')->willReturn($connection);
+
+        self::assertSame([], new LastActivityDouble($entityManager)->lastActivityBy('project_id'));
+    }
 }
