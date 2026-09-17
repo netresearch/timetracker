@@ -11,15 +11,20 @@ export interface DerivableProject {
 
 const keys = (list: string): string[] => list.toUpperCase().split(/[\s,]+/).filter((key) => key !== '')
 
-/** Most recently booked by this user first; never booked sorts last, and an
- *  untouched pair keeps the lowest id — the order the list arrives in. */
+/** The candidate this user booked on most recently; '' (never booked) loses to
+ *  every date, and equal dates go to the lower id. The id is compared rather
+ *  than left to array order: /getAllProjects runs `findAll()` with no ORDER BY,
+ *  so the row order is whatever the database returns. */
 function preferred<T extends DerivableProject>(candidates: T[]): T | undefined {
   return candidates.reduce<T | undefined>((best, candidate) => {
     if (best === undefined) {
       return candidate
     }
+    if (candidate.lastBookedByUser !== best.lastBookedByUser) {
+      return candidate.lastBookedByUser > best.lastBookedByUser ? candidate : best
+    }
 
-    return candidate.lastBookedByUser > best.lastBookedByUser ? candidate : best
+    return candidate.id < best.id ? candidate : best
   }, undefined)
 }
 
@@ -36,6 +41,13 @@ function preferred<T extends DerivableProject>(candidates: T[]): T | undefined {
  * enumerates specific keys (possibly from another Jira project), so it is more
  * precise, and the backend accepts it the same way (SaveEntryAction::isKnownSubticket).
  * Within either group, ties go to the project this user booked on last.
+ *
+ * When the ONLY exact subticket hit sits on a retired project, the prefix rule
+ * still runs and may fill in a different, active project: for the shape this was
+ * written for — a support project superseded by its successor under the same
+ * prefix — that successor is the better guess, and the person sees the filled
+ * cell and can change it. The alternative, leaving the field empty, is the
+ * safer-looking option but tells them nothing.
  */
 export function deriveProjectForTicket<T extends DerivableProject>(ticket: string, projects: T[]): T | undefined {
   const ticketKey = ticket.toUpperCase().trim()

@@ -27,8 +27,20 @@ describe('deriveProjectForTicket', () => {
   it('never derives an inactive project (#687)', () => {
     const derived = deriveProjectForTicket('DHLSUP-123', dhl())
 
-    expect(derived?.id).not.toBe(49)
+    expect(derived?.id).toBe(849)
     expect(derived?.active).toBe(true)
+  })
+
+  it('fills nothing when every project matching the prefix is retired', () => {
+    const retired = dhl().map((candidate) => ({ ...candidate, active: false }))
+
+    expect(deriveProjectForTicket('DHLSUP-123', retired)).toBeUndefined()
+  })
+
+  it('breaks a tie on the lower id rather than on the order the rows arrive in', () => {
+    const reversed = [...dhl()].reverse()
+
+    expect(deriveProjectForTicket('DHLSUP-123', reversed)?.id).toBe(849)
   })
 
   it('prefers the project this user booked on last when several are active', () => {

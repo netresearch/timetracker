@@ -920,11 +920,7 @@ export default function Tracking() {
   // cell shows the fixed value immediately, not on the next refetch.
   function handleCommit(id: number, colKey: string, value: unknown): void {
     if (colKey === 'ticket') {
-      const ticketKey = str(value).toUpperCase().trim()
-      if (ticketKey === '') {
-        return
-      }
-      const project = deriveProjectForTicket(ticketKey, projects.data ?? [])
+      const project = deriveProjectForTicket(str(value), projects.data ?? [])
       if (project !== undefined) {
         editor.setDraftField(id, 'project', project.id)
         if (project.customer > 0) {
