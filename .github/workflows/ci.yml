@@ -244,6 +244,10 @@ jobs:
         run: |
           mkdir -p var/cache var/log vendor bin
           docker compose run --rm --user root -T app-e2e chown -R www-data:www-data var vendor bin
+          # compose bind-mounts this generated file into db_unittest's initdb;
+          # it is gitignored, and without it `docker compose up` cannot start.
+          # This job ignores the seeded `unittest` database and builds its own.
+          sed '1s/^/USE unittest;\n/' sql/full.sql > sql/unittest/001_testtables.sql
 
       - name: Install PHP dependencies
         env:
