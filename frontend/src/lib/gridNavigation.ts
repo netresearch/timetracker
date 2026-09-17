@@ -86,6 +86,10 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   let active: [number, number] = [0, 0]
   // The element we last focused, so a re-render that removes it is detectable.
   let activeCellEl: Cell | null = null
+  // Its row/column identity, which survives a reorder that the coordinates do
+  // not (#702). Null for cells that carry no data-row-id, e.g. header cells.
+  let activeRowId: string | null = null
+  let activeColKey: string | null = null
 
   const rows = (): HTMLTableRowElement[] => Array.from(table.rows)
   const cellsOf = (row: HTMLTableRowElement): Cell[] => Array.from(row.cells)
@@ -155,6 +159,11 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       active = pos
     }
     activeCellEl = cell
+    // Remember WHICH row the cursor sits on, not only where it sat (#702). Rows
+    // reorder under the grid — a saved worklog row sorts into place by start
+    // time — and a coordinate then names a different record.
+    activeRowId = cell.dataset.rowId ?? null
+    activeColKey = cell.dataset.colKey ?? null
     const prevRow = table.querySelector('tr[aria-current="true"]')
     if (prevRow !== null && prevRow !== cell.parentElement) {
       prevRow.removeAttribute('aria-current')
@@ -284,12 +293,21 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       })
     })
 
-    // Restore the roving tab stop to the tracked coordinates; re-focus only if a
-    // re-render removed the focused cell and dropped focus to <body>.
+    // Restore the roving tab stop to the row the cursor was on, by identity —
+    // rows reorder under the grid (a saved worklog row sorts into place by its
+    // start time) and the old coordinates then name a different record (#702).
+    const byIdentity = activeRowId !== null && activeColKey !== null
+      ? table.querySelector<Cell>(`td[data-row-id="${CSS.escape(activeRowId)}"][data-col-key="${CSS.escape(activeColKey)}"]`)
+      : null
+    // Re-focus only if a re-render removed the focused cell and dropped focus to
+    // <body> — and only onto the SAME row. When the tracked row is gone (a temp
+    // row replaced by its persisted id), the coordinate belongs to somebody
+    // else: keep the tab stop there, but never put focus, and therefore the next
+    // keystroke, into a foreign row.
     const lostFocus = activeCellEl !== null && !table.contains(activeCellEl) && document.activeElement === document.body
-    const target = cellAt(active[0], active[1])
+    const target = byIdentity ?? cellAt(active[0], active[1])
     if (target) {
-      setActive(target, lostFocus)
+      setActive(target, lostFocus && byIdentity !== null)
     }
   }
 
