@@ -12,7 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ark-ui/solid": "^5.39.1",
+    "@ark-ui/solid": "^5.39.2",
     "@simplewebauthn/browser": "^14.0.0",
     "@solidjs/router": "~1.0.0",
     "@tanstack/solid-query": "^5.102.8",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@inlang/paraglide-js": "^2.25.1",
+    "@inlang/paraglide-js": "^2.25.2",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
