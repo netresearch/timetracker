@@ -161,10 +161,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # 30 min headroom for the nightly/dispatch coverage run: xdebug branch
-    # coverage over the full unit suite is ~6x slower than a plain run (the PR
-    # path, which skips coverage, finishes in ~90s well under this). See #624 S9.
-    timeout-minutes: 30
+    # 60 min for the nightly/dispatch coverage run. The "~6x slower" estimate
+    # this cap was built on was wrong by a factor of three: measured on
+    # 2026-09-17, xdebug BRANCH coverage over the 1974 unit tests takes 33m36s
+    # (36m46s wall including container start and the Cobertura report, 645 MB).
+    # The nightlies of 2026-09-16 and -17 were cancelled at 1816s and 1817s
+    # against the old 30-minute cap, so CI Success went red every night and the
+    # coverage upload never happened. The PR path skips coverage and finishes in
+    # ~90s, nowhere near this. See #624 S9.
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
