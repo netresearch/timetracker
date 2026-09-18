@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import type { NamedOption } from '../api/queries'
 
 /** Named, shared dropdown sources an admin form field can reference. */

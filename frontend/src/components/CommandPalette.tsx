@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Dialog } from '@ark-ui/solid/dialog'
 import { useNavigate } from '@solidjs/router'
 import { createEffect, createMemo, createSignal, For, Show } from 'solid-js'

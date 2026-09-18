@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 // Dynamics for the server-rendered page header
 // (templates/partials/header.html.twig): worktime sums and login-status
 // polling against the header's element IDs.

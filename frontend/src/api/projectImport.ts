@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { getJson, postJson } from './client'
 
 // ── ADR-026 P1 project-import DTOs ───────────────────────────────────────────

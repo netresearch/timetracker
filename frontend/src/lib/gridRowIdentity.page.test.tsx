@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { render } from '@solidjs/testing-library'
 import { createSignal, For } from 'solid-js'
 import { describe, expect, it } from 'vitest'

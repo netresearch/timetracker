@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 /** Coerce an unknown value to a number, treating null/undefined as 0. */
 export const num = (value: unknown): number => Number(value ?? 0)
 

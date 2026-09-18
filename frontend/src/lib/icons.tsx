@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import type { JSX } from 'solid-js'
 
 // 24×24 line icons (stroke = currentColor) shared by the grid action buttons,

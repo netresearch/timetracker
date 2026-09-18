@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { createResource, createSignal, Show, For, type JSX } from 'solid-js'
 
 import { ApiError, apiErrorMessage, postJson } from '../api/client'

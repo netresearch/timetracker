@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export interface AppConfig {
   locale: 'en' | 'de' | 'es' | 'fr' | 'ru'
   userId: number

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import type { ContractHoursRecord } from '../api/queries'
 
 // Expected working hours per weekday come from the current user's contract

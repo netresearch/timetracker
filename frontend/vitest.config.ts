@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { paraglideVitePlugin } from '@inlang/paraglide-js'
 import { defineConfig } from 'vitest/config'
 import solid from 'vite-plugin-solid'

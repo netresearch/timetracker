@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Combobox } from '@ark-ui/solid/combobox'
 import { createEffect, createMemo, createSignal, For, type JSX } from 'solid-js'
 

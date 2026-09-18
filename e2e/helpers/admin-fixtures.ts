@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { randomInt } from 'node:crypto';
 
 import { test, type Page } from '@playwright/test';

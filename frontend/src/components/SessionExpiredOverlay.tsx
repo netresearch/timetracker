@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Dialog } from '@ark-ui/solid/dialog'
 import { createEffect, createSignal, onCleanup, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'
