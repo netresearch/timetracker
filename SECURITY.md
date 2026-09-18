@@ -2,12 +2,17 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-|---------|--------------------|
-| 5.x.x   | :white_check_mark: |
-| < 5.0   | :x:                |
+Only the current minor line receives fixes. A new minor release ends support for the previous one; upgrade to the latest patch of the current minor.
 
-The 4.x line reached end of life on 2025-03-15 (tag [`v4_EOL`](https://github.com/netresearch/timetracker/tree/v4_EOL)).
+| Version         | Supported          | End of life                                   |
+|-----------------|--------------------|-----------------------------------------------|
+| 6.3.x           | :white_check_mark: | when 6.4.0 is released                        |
+| 6.0.x – 6.2.x   | :x:                | superseded by the following minor release     |
+| 5.x             | :x:                | 2026-07-04, with the release of v6.0.0        |
+| 4.x             | :x:                | 2026-07-05, final release [`v4.5.0`](https://github.com/netresearch/timetracker/releases/tag/v4.5.0) |
+| < 4.0           | :x:                | unsupported                                   |
+
+There are no long-term-support branches. Security fixes are released as a patch on the current minor line and are not backported.
 
 ## Reporting a Vulnerability
 
@@ -29,7 +34,7 @@ Include the following information:
 
 - **Acknowledgment**: We will acknowledge receipt within 48 hours
 - **Initial Assessment**: We will provide an initial assessment within 5 business days
-- **Resolution Timeline**: Critical issues will be addressed as quickly as possible
+- **Resolution Timeline**: a fix for a Critical finding is released within 7 days of the report, for a High finding within 30 days. The full table, including dependency findings, is in [docs/vulnerability-management.md](docs/vulnerability-management.md).
 - **Credit**: We will credit reporters in our release notes (unless you prefer to remain anonymous)
 
 ### Security Measures
@@ -45,7 +50,16 @@ This project implements several security measures:
 - CodeQL code scanning ([codeql.yml](.github/workflows/codeql.yml)) and npm dependency audits ([security.yml](.github/workflows/security.yml)) in CI; `composer audit` via `make audit`
 - OpenSSF Scorecard and Best Practices compliance
 
-For detailed security documentation, see [docs/security.md](docs/security.md).
+### Related policies
+
+| Document | What it answers |
+|----------|-----------------|
+| [docs/security.md](docs/security.md) | How authentication, authorisation, CSRF and token encryption are implemented |
+| [docs/threat-model.md](docs/threat-model.md) | What is worth attacking, which control answers each threat, and what risk is accepted |
+| [docs/vulnerability-management.md](docs/vulnerability-management.md) | Which scanners run, what blocks a build, and how long a finding may stay open |
+| [docs/dependency-policy.md](docs/dependency-policy.md) | How third-party code enters the project and what the bots may merge |
+| [docs/secrets-management.md](docs/secrets-management.md) | Where secrets live, who can read them, when they are rotated |
+| [GOVERNANCE.md](GOVERNANCE.md) | Who decides, and why no approving review is required |
 
 ## Security Updates
 

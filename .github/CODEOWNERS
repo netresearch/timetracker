@@ -1,0 +1,22 @@
+# Code owners for netresearch/timetracker.
+#
+# GitHub requests a review from the owner of every changed path when a pull
+# request is opened. Review by an owner is requested, not required: the branch
+# protection on `main` demands green checks, not approvals — see CONTRIBUTING.md
+# and GOVERNANCE.md for why.
+#
+# Keep this file in sync with MAINTAINERS.md.
+
+*                       @CybotTM
+
+# Security policy, disclosure process and the governance documents.
+/SECURITY.md            @CybotTM
+/MAINTAINERS.md         @CybotTM
+/GOVERNANCE.md          @CybotTM
+/docs/security.md       @CybotTM
+
+# CI, release and supply-chain configuration.
+/.github/               @CybotTM
+/Dockerfile             @CybotTM
+/docker-bake.hcl        @CybotTM
+/compose.yml            @CybotTM
