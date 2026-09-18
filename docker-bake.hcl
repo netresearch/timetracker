@@ -19,8 +19,14 @@ variable "PHP_BASE_IMAGE" {
   default = "php:8.5-fpm"
 }
 
-variable "NODE_VERSION" {
-  default = "26"
+# Node is copied out of the official image rather than installed from
+# NodeSource. Keep the Debian release in step with PHP_BASE_IMAGE's (trixie).
+variable "NODE_BASE_IMAGE" {
+  default = "node:26-trixie-slim"
+}
+
+variable "SYMFONY_CLI_IMAGE" {
+  default = "ghcr.io/symfony-cli/symfony-cli:5.20.0"
 }
 
 variable "COMPOSER_IMAGE" {
@@ -77,11 +83,12 @@ target "_common" {
   context    = "."
   dockerfile = "Dockerfile"
   args = {
-    PHP_BASE_IMAGE = PHP_BASE_IMAGE
-    NODE_VERSION   = NODE_VERSION
-    COMPOSER_IMAGE = COMPOSER_IMAGE
-    XDEBUG_VERSION = XDEBUG_VERSION
-    APCU_VERSION   = APCU_VERSION
+    PHP_BASE_IMAGE    = PHP_BASE_IMAGE
+    NODE_BASE_IMAGE   = NODE_BASE_IMAGE
+    SYMFONY_CLI_IMAGE = SYMFONY_CLI_IMAGE
+    COMPOSER_IMAGE    = COMPOSER_IMAGE
+    XDEBUG_VERSION    = XDEBUG_VERSION
+    APCU_VERSION      = APCU_VERSION
   }
 }
 
