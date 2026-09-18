@@ -33,12 +33,15 @@ function isNonDataRow(row: HTMLTableRowElement | undefined): boolean {
  *  one seeded with the printable character the user pressed. */
 export type ActivateKey = 'Enter' | 'F2' | 'type'
 
+/** The four directions the roving cursor can move. */
+export type MoveDirection = 'up' | 'down' | 'left' | 'right'
+
 /** Imperative roving handle the grid hands to an inline-edit owner so it can
  *  move the active cell through the SAME `setActive()` the arrow keys use —
  *  keeping the grid the single writer of the roving tabindex + aria-current. */
 export interface GridMoveHandle {
   /** Move the active cell one step (clamped at the edges) and focus it. */
-  move: (direction: 'up' | 'down' | 'left' | 'right') => void
+  move: (direction: MoveDirection) => void
   /** Re-focus the current active cell (e.g. after an editor is dismissed). */
   focusActive: () => void
   /** Make a specific cell (by data-row-id + data-col-key) the active one and focus
@@ -53,7 +56,7 @@ export interface GridNavOptions {
   /** Read-only data table → role=grid with aria-readonly (no cell editing). */
   readonly?: boolean
   /** Called when navigating off an edge (currently 'up' off the header row). */
-  onExit?: (direction: 'up' | 'down' | 'left' | 'right') => void
+  onExit?: (direction: MoveDirection) => void
   /** Begin editing the focused cell. Called on Enter/F2 and on a printable key
    *  (key='type', `initial` = the character). Return true if an editor was
    *  opened so the grid suppresses its default "focus first control". */
@@ -250,7 +253,7 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   // Move the active cell one step, reusing focusAt's clamping. Unlike the
   // ArrowUp handler this never calls onExit — an inline editor committing with
   // Enter on the top data row should stay in the grid, not leave it.
-  function focusRelative(direction: 'up' | 'down' | 'left' | 'right'): void {
+  function focusRelative(direction: MoveDirection): void {
     const [r, c] = currentPos()
     if (direction === 'up' || direction === 'down') {
       focusAt(verticalStep(r, direction === 'up' ? -1 : 1), c)

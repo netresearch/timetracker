@@ -24,7 +24,10 @@ const STORAGE_KEY = 'tt-date-format'
 export const DEFAULT_PREF: DateFormatPref = { mode: 'iso', pattern: 'DD.MM.YYYY' }
 const ISO_SHAPE = /^\d{4}-\d{2}-\d{2}$/
 
-type Token = { lit: string } | { field: 'y' | 'm' | 'd'; width: 1 | 2 | 4 }
+/** The three date components a display format can order. */
+type DateField = 'y' | 'm' | 'd'
+
+type Token = { lit: string } | { field: DateField; width: 1 | 2 | 4 }
 
 // Canonical digit-only tokens + PHP-style %-aliases, matched longest-source-first
 // so YYYY beats YY and MM beats M. Month/weekday NAMES are intentionally absent —
@@ -173,17 +176,17 @@ export function formatUserDate(iso: string): string {
   return formatWith(iso, dateFormat())
 }
 
-const isFieldToken = (token: Token): token is Extract<Token, { field: 'y' | 'm' | 'd' }> => 'field' in token
+const isFieldToken = (token: Token): token is Extract<Token, { field: DateField }> => 'field' in token
 
 /** The order the y/m/d fields appear in the active display format (first
  *  occurrence of each), or null when the format is plain ISO (only ISO input is
  *  then accepted) or doesn't carry all three fields. */
-export function fieldOrder(pref: DateFormatPref): ('y' | 'm' | 'd')[] | null {
+export function fieldOrder(pref: DateFormatPref): DateField[] | null {
   if (pref.mode === 'iso') {
     return null
   }
   if (pref.mode === 'custom') {
-    const seen: ('y' | 'm' | 'd')[] = []
+    const seen: DateField[] = []
     for (const token of tokenize(pref.pattern)) {
       if (isFieldToken(token) && !seen.includes(token.field)) {
         seen.push(token.field)
@@ -199,7 +202,7 @@ export function fieldOrder(pref: DateFormatPref): ('y' | 'm' | 'd')[] | null {
       .formatToParts(new Date(Date.UTC(2001, 11, 25)))
     const order = parts
       .filter((part) => part.type === 'year' || part.type === 'month' || part.type === 'day')
-      .map((part) => (part.type === 'year' ? 'y' : part.type === 'month' ? 'm' : 'd') as 'y' | 'm' | 'd')
+      .map((part) => (part.type === 'year' ? 'y' : part.type === 'month' ? 'm' : 'd') as DateField)
 
     return order.length === 3 ? order : ['y', 'm', 'd']
   } catch {
@@ -241,7 +244,7 @@ export function parseUserDate(input: string, pref: DateFormatPref = dateFormat()
   if (groups === null || groups.length < 3) {
     return null
   }
-  const part: Record<'y' | 'm' | 'd', string> = { y: '', m: '', d: '' }
+  const part: Record<DateField, string> = { y: '', m: '', d: '' }
   order.forEach((field, index) => {
     part[field] = groups[index]!
   })

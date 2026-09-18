@@ -10,6 +10,9 @@ import { getEnterBehavior } from './gridEditPref'
 import type { ActivateKey, GridMoveHandle } from './gridNavigation'
 import { m } from '../paraglide/messages.js'
 
+/** Where the grid cursor goes after a cell commits. */
+type CommitDirection = 'down' | 'left' | 'right' | 'stay' | 'next'
+
 export type Row = Record<string, unknown>
 
 // The inline grid date editor is ISO-only: it shows the ISO value + a fixed
@@ -84,7 +87,7 @@ export function InlineEditor(props: {
    *  it. Ignored for a date (which states its format instead). */
   placeholder?: string
   options: OptionLookup
-  onCommit: (value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => void
+  onCommit: (value: FormValues[string], direction?: CommitDirection) => void
   onCancel: () => void
 }) {
   const isCheckbox = (): boolean => props.field.type === 'checkbox'
@@ -130,7 +133,7 @@ export function InlineEditor(props: {
   // cell's ISO value + placeholder (see ISO_PREF).
   const dateGhostText = createMemo(() => (isEnhancedDate() ? dateGhost(value() as string, today(), ISO_PREF) : ''))
 
-  const finish = (direction?: 'down' | 'left' | 'right' | 'stay' | 'next') => {
+  const finish = (direction?: CommitDirection) => {
     if (done) {
       return
     }
@@ -602,7 +605,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     return false
   }
 
-  function commitCell(value: FormValues[string], direction?: 'down' | 'left' | 'right' | 'stay' | 'next'): void {
+  function commitCell(value: FormValues[string], direction?: CommitDirection): void {
     const cell = editCell()
     if (cell === null) {
       return
