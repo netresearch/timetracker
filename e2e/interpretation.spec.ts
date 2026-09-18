@@ -207,12 +207,14 @@ test.describe('CSV Export', () => {
     await login(page);
   });
 
-  // The route is /export/{days} with days defaulting to 10000. The old call used
-  // /export/csv, where "csv" lands in the {days} segment; the controller's
-  // is_numeric() guard falls back to the default, so it answered 200 by
-  // accident rather than by contract.
+  // The route is /export/{days}. The old call used /export/csv, where "csv"
+  // lands in the {days} segment; the controller's is_numeric() guard falls back
+  // to the default of 10000, so it answered 200 by accident rather than by
+  // contract. public/api.yml documents the parameterised form, so that is what
+  // this covers. (The controller also answers a bare /export via the route
+  // default; that variant is not in api.yml.)
   test('should export entries to CSV', async ({ page }) => {
-    const response = await page.request.get('/export');
+    const response = await page.request.get('/export/10000');
 
     expect(response.ok()).toBe(true);
     expect(response.headers()['content-type']).toContain('text/csv');
