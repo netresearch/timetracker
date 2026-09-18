@@ -46,3 +46,14 @@ updates:
       composer:
         patterns:
           - "*"
+  # Container images in compose.yml (nginx, mariadb, openldap). Were unmonitored,
+  # so base-image CVEs there never produced a bump PR. docker-bake.hcl is NOT
+  # covered by either ecosystem - see the note at the top of that file.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      docker-compose:
+        patterns:
+          - "*"

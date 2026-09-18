@@ -941,12 +941,18 @@ private function validateTimeRange(DateTime $start, DateTime $end): ValidationRe
 
 ### Merge Requirements
 
-Before a PR can be merged, it must have:
-- ✅ **2+ approvals** from maintainers
-- ✅ **All CI checks passing** (tests, code quality, security)
-- ✅ **No merge conflicts** with target branch
-- ✅ **Documentation updated** if needed
-- ✅ **Breaking changes approved** by lead maintainers
+What branch protection on `main` enforces today, read back from the API on 2026-09-18:
+
+- ✅ **`CI Success` and `DCO` are required status checks.** `CI Success` is the aggregate job in [`ci.yml`](.github/workflows/ci.yml) over the frontend build, lint and static analysis, unit, integration and E2E tests. Codecov and SonarCloud report but do not gate.
+- ✅ **The branch must be up to date with `main`** (`strict` required status checks), so a moved base needs a rebase and a re-run.
+- ✅ **All review conversations resolved.**
+- ✅ **Every commit signed** — pushes with an unsigned commit are rejected.
+- ✅ **No force pushes, no branch deletion.**
+
+Two things are *not* enforced by the machine, and both are project convention:
+
+- **No approving review is required** (`required_approving_review_count: 0`). The `Copilot review for default branch` ruleset auto-requests a Copilot review once a PR leaves draft, but nothing blocks on the outcome. The rule we hold ourselves to is that a PR is reviewed until a round turns up no findings.
+- **Documentation updated** when the change needs it, and a **breaking change agreed with a maintainer** before it is merged.
 
 ---
 

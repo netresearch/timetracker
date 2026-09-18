@@ -43,6 +43,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
+      # The frontend dependency tree was unaudited: security.yml covers only the
+      # root npm lockfile and this workflow only ran composer audit, so Bun
+      # advisories surfaced nowhere in CI.
+      - name: Audit dependencies (bun)
+        run: bun audit --audit-level=high
+
       - name: Lint (ESLint)
         run: bun run lint
 

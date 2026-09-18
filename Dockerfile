@@ -18,6 +18,7 @@
 ARG PHP_BASE_IMAGE
 ARG NODE_BASE_IMAGE
 ARG SYMFONY_CLI_IMAGE
+ARG BUN_IMAGE
 ARG COMPOSER_IMAGE
 
 # =============================================================================
@@ -40,6 +41,11 @@ FROM ${NODE_BASE_IMAGE} AS node
 # SYMFONY CLI - Stage to copy the symfony binary from (dev shell only)
 # =============================================================================
 FROM ${SYMFONY_CLI_IMAGE} AS symfony-cli
+
+# =============================================================================
+# BUN - Stage to copy the bun binary from (package manager of frontend/)
+# =============================================================================
+FROM ${BUN_IMAGE} AS bun
 
 # =============================================================================
 # BASE - Runtime with PHP extensions
@@ -109,7 +115,7 @@ RUN ln -sf ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -sf ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Bun is the package manager of the new SolidJS frontend (frontend/)
-COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
 # Copy dependency manifests first (better cache). Root npm deps are just
 # Playwright + axe for e2e.
@@ -199,7 +205,7 @@ RUN ln -sf ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -sf ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Bun is the package manager of the new SolidJS frontend (frontend/)
-COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
 # Install dev tools
 RUN set -ex \
