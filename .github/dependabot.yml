@@ -57,3 +57,21 @@ updates:
       docker-compose:
         patterns:
           - "*"
+    # Dependency pull requests auto-merge in this repository, so an
+    # unconstrained entry ships major and minor jumps unattended: four minutes
+    # after #723 landed, #724 auto-merged MariaDB 12.3 -> 13.0 and nginx
+    # 1.28 -> 1.31, and left every serverVersion declaration in .env,
+    # doctrine.yaml, the Makefile and the docs pointing at a version the image
+    # no longer was. A major database version is a decision, not a bump.
+    #
+    # Patch-level version updates still flow. Whether a pure DIGEST refresh (the
+    # tag unchanged, the image rebuilt) is also filtered by these update-types
+    # is NOT documented by GitHub and has not been tested here - and that is the
+    # case this entry exists for, since it is how a base-image CVE fix arrives.
+    # Check the next weekly run: if digest refreshes stop appearing, narrow the
+    # ignore to `dependency-name: mariadb` instead of `*`.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor

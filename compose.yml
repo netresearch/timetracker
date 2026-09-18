@@ -122,7 +122,7 @@ services:
 
   # Production database
   db:
-    image: mariadb:13.0@sha256:d4fdec0510ad498e4f3127da30a99df3745bd6d5e611ae6ac5f76403d9284a8d
+    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
       # Run mariadb-upgrade when the datadir predates the image (CodeRabbit on
       # #723). A 12.1 datadir does start and serve under 12.3, but the
@@ -148,7 +148,7 @@ services:
 
   # Unit test database (for PHPUnit tests)
   db_unittest:
-    image: mariadb:13.0@sha256:d4fdec0510ad498e4f3127da30a99df3745bd6d5e611ae6ac5f76403d9284a8d
+    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${UNITTEST_DB_ROOT_PASSWORD:-global123}
@@ -167,7 +167,7 @@ services:
 
   # E2E test database (separate from dev to avoid data conflicts)
   db-e2e:
-    image: mariadb:13.0@sha256:d4fdec0510ad498e4f3127da30a99df3745bd6d5e611ae6ac5f76403d9284a8d
+    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${E2E_DB_ROOT_PASSWORD:-global123}
