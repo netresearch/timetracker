@@ -122,7 +122,7 @@ services:
 
   # Production database
   db:
-    image: mariadb:12.1
+    image: mariadb:12.3
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${DB_USER:-timetracker}
@@ -143,7 +143,7 @@ services:
 
   # Unit test database (for PHPUnit tests)
   db_unittest:
-    image: mariadb:12.1
+    image: mariadb:12.3
     environment:
       - MYSQL_ROOT_PASSWORD=${UNITTEST_DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${UNITTEST_DB_USER:-unittest}
@@ -161,7 +161,7 @@ services:
 
   # E2E test database (separate from dev to avoid data conflicts)
   db-e2e:
-    image: mariadb:12.1
+    image: mariadb:12.3
     environment:
       - MYSQL_ROOT_PASSWORD=${E2E_DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${E2E_DB_USER:-timetracker}
@@ -193,7 +193,7 @@ services:
       # Frozen time for deterministic E2E tests - matches test data in sql/testdata.sql
       - APP_FROZEN_TIME=2024-01-15 12:00:00
       # Use separate E2E database to avoid conflicts with dev
-      - DATABASE_URL=mysql://timetracker:${E2E_DB_PASSWORD:-timetracker}@db-e2e:3306/timetracker?serverVersion=mariadb-12.1.2&charset=utf8mb4
+      - DATABASE_URL=mysql://timetracker:${E2E_DB_PASSWORD:-timetracker}@db-e2e:3306/timetracker?serverVersion=mariadb-12.3.3&charset=utf8mb4
       # Coverage collection (set COVERAGE_ENABLED=1 XDEBUG_MODE=coverage to enable)
       - COVERAGE_ENABLED=${COVERAGE_ENABLED:-0}
       - XDEBUG_MODE=${XDEBUG_MODE:-off}

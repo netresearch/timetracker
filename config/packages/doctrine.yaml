@@ -6,7 +6,15 @@ doctrine:
         # either here or in the DATABASE_URL env var (see .env file)
         # Be explicit to avoid version detection deprecations in DBAL 4
         # (a serverVersion in DATABASE_URL takes precedence over this)
-        server_version: 'mariadb-12.1.2'
+        #
+        # This value tracks the bundled `db` compose service and is a FALLBACK
+        # only: every environment we run sets serverVersion in its DATABASE_URL
+        # and therefore overrides it. Production on utility3.nr is the one that
+        # matters — it runs mariadb 10.11.16 and its own .env carries
+        # `serverVersion=10.11.16-MariaDB`, so raising this line does not change
+        # the SQL DBAL generates there. Do not read it as a statement about
+        # production.
+        server_version: 'mariadb-12.3.3'
 
         # only needed for MySQL
         charset: utf8mb4

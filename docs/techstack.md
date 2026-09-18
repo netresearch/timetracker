@@ -48,4 +48,4 @@ The UI is a SolidJS single-page application in `frontend/`, served under `/ui`
 ## Infrastructure
 
 *   **Nginx:** (`nginx:1.28-alpine` Docker image, see `compose.yml`) Web server and reverse proxy, serving static assets and forwarding PHP requests to the application container (PHP-FPM).
-*   **MariaDB:** (`mariadb:12.1` Docker image) The relational database used to store application data.
+*   **MariaDB:** (`mariadb:12.3` Docker image) The relational database used to store application data.

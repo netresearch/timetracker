@@ -15,7 +15,7 @@ The production stack (Compose profile `prod`) consists of three containers:
 |---------|-------|------|
 | `httpd` | `nginx:1.28-alpine` | Web server; serves static assets, forwards PHP to `app` via FastCGI. Publishes port `${HTTP_PORT:-8765}`. |
 | `app`   | `ghcr.io/netresearch/timetracker:production` | PHP-FPM 8.5 running the Symfony application (non-root user, listens on 9000 inside the network). |
-| `db`    | `mariadb:12.1` | Database; schema seeded from [`sql/full.sql`](../sql/full.sql) on first start. |
+| `db`    | `mariadb:12.3` | Database; schema seeded from [`sql/full.sql`](../sql/full.sql) on first start. |
 
 Named volumes: `app-pub` (built assets, shared between `app` and `httpd`),
 `app-cache`, `app-logs`, `db-data`.
@@ -93,7 +93,7 @@ or set them in a compose override. The relevant ones:
 | `APP_ENV` / `APP_DEBUG` | `prod` / `0` (baked into the image) | Override only via a compose override file |
 | `APP_SECRET` | **required** — `docker compose up` fails fast when unset (the repository `.env` supplies an insecure dev placeholder; replace it) | Symfony secret (CSRF, remember-me). Generate: `openssl rand -base64 32` |
 | `APP_ENCRYPTION_KEY` | falls back to `APP_SECRET` | Dedicated key for Jira OAuth token encryption at rest |
-| `DATABASE_URL` | **required** — `docker compose up` fails fast when unset (the repository `.env` supplies a value matching the bundled `db` service) | Doctrine DBAL connection, e.g. `mysql://user:pass@db:3306/timetracker?serverVersion=mariadb-12.1.2&charset=utf8mb4` |
+| `DATABASE_URL` | **required** — `docker compose up` fails fast when unset (the repository `.env` supplies a value matching the bundled `db` service) | Doctrine DBAL connection, e.g. `mysql://user:pass@db:3306/timetracker?serverVersion=mariadb-12.3.3&charset=utf8mb4` |
 | `SENTRY_DSN` | empty | Optional error tracking |
 | `APP_LOCALE` | `en` | Instance default locale (users pick their own in Settings) |
 | `APP_TITLE`, `APP_LOGO_URL`, `APP_HEADER_URL` | see `.env` | Branding |
