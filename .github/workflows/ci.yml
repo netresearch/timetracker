@@ -161,10 +161,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # 30 min headroom for the nightly/dispatch coverage run: xdebug branch
-    # coverage over the full unit suite is ~6x slower than a plain run (the PR
-    # path, which skips coverage, finishes in ~90s well under this). See #624 S9.
-    timeout-minutes: 30
+    # 60 min for the nightly/dispatch coverage run. The "~6x slower" estimate this
+    # cap was built on was wrong by a factor of three: measured locally on
+    # 2026-09-17 in the :dev image, xdebug BRANCH coverage over the 1974 unit
+    # tests takes 33m36s (36m46s wall including container start and writing the
+    # Cobertura report) and peaks at 645 MB — worth watching against the 1G
+    # memory_limit the run below passes. The job's own overhead before the tests
+    # (checkout, image pull, composer, cache warmup) measured 87s on the real
+    # nightly, so ~39 min of 60 is used. The nightlies of 2026-09-17 and -16 were
+    # cancelled at 1816s and 1817s against the old 30-minute cap, so CI Success
+    # went red every night and the coverage upload never happened. The PR path
+    # skips coverage and finishes in ~90s, nowhere near this. See #624 S9.
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -295,8 +303,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # 25 min headroom for the nightly/dispatch coverage run (xdebug branch
-    # coverage ~6x slower; measured ~700s). PR path skips coverage. See #624 S9.
+    # 25 min headroom for the nightly/dispatch coverage run. Measured on the
+    # nightlies of 2026-09-16/17: 827s of tests, 903-932s job wall — 60% of the
+    # cap, so it stays at 25. (The "~6x slower, ~700s" estimate this comment
+    # carried was the same wrong one the unit job's cap was built on.) The PR
+    # path skips coverage. See #624 S9.
     timeout-minutes: 25
     steps:
       - name: Checkout
