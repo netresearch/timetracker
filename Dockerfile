@@ -57,12 +57,12 @@ RUN set -ex \
     && apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
-        libzip-dev \
-        libpng-dev \
-        libldap2-dev \
-        libjpeg62-turbo-dev \
         libfreetype6-dev \
         libicu-dev \
+        libjpeg62-turbo-dev \
+        libldap2-dev \
+        libpng-dev \
+        libzip-dev \
         procps \
         unzip \
         zlib1g-dev \
@@ -80,7 +80,7 @@ RUN set -ex \
 
 # Install APCu (pinned; backs the Symfony app cache — see config/packages/cache.yaml)
 ARG APCU_VERSION
-RUN pecl install apcu-${APCU_VERSION} \
+RUN pecl install "apcu-${APCU_VERSION}" \
     && docker-php-ext-enable apcu
 
 COPY docker/php/apcu.ini /usr/local/etc/php/conf.d/
@@ -211,14 +211,14 @@ COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 RUN set -ex \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-        git \
-        curl \
         bash-completion \
+        curl \
+        git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Xdebug (debugging and coverage driver; enable coverage via XDEBUG_MODE=coverage)
-RUN pecl install xdebug-${XDEBUG_VERSION} \
+RUN pecl install "xdebug-${XDEBUG_VERSION}" \
     && docker-php-ext-enable xdebug
 
 COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/

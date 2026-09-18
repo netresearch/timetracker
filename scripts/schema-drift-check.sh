@@ -80,7 +80,8 @@ DATABASE_URL="$MIGRATE_DATABASE_URL" $PHP_CONSOLE doctrine:migrations:migrate -n
 # moves its line to the end without changing anything. Sort those lines so the
 # diff reports definitions, not history.
 dump_structure() {
-  $DB_DUMP --no-data --skip-comments --compact "$1" \
+  local database="$1"
+  $DB_DUMP --no-data --skip-comments --compact "$database" \
     | sed -E 's/ AUTO_INCREMENT=[0-9]+//' \
     | grep -v '^/\*!' \
     | sed -E 's/[[:space:]]+$//' \
