@@ -71,23 +71,14 @@ jobs:
       - name: Pull E2E image
         run: docker pull ghcr.io/netresearch/timetracker:e2e-${{ github.sha }} || docker pull ghcr.io/netresearch/timetracker:e2e || docker buildx bake app-e2e --load
 
-      # Owned by the image's user rather than made world-writable
-      # (githubactions:S2612), the same way the schema-drift job does it:
-      # php-fpm serves as www-data, so the bind mount has to be writable for it.
-      - name: Prepare directories
-        env:
-          COMPOSE_PROFILES: e2e
-        run: |
-          mkdir -p var/cache var/log vendor bin
-          docker compose run --rm --user root -T app-e2e chown -R www-data:www-data var bin vendor
-          if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
-
       # Persist the PHP static-analysis tool caches across runs so PHPStan runs
       # incrementally (cold ~148s -> warm ~87s). The app-e2e container runs as
       # root with umask 022, so the cache files it writes are 0644/0755
       # (world-readable) and the post-job save (running as the runner user) can
       # read them without a chmod. Restore before the tool steps; the dirs are
-      # created on demand by each tool on a cold run.
+      # created on demand by each tool on a cold run. This step restores as the
+      # runner user, so it has to run BEFORE the chown below hands var/ to
+      # www-data - afterwards the runner could no longer create the directories.
       - name: Cache PHP static-analysis caches
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -105,6 +96,17 @@ jobs:
           key: php-static-analysis-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             php-static-analysis-${{ runner.os }}-
+
+      # Owned by the image's user rather than made world-writable
+      # (githubactions:S2612), the same way the schema-drift job does it:
+      # php-fpm serves as www-data, so the bind mount has to be writable for it.
+      - name: Prepare directories
+        env:
+          COMPOSE_PROFILES: e2e
+        run: |
+          mkdir -p var/cache var/log vendor bin
+          docker compose run --rm --user root -T app-e2e chown -R www-data:www-data var bin vendor
+          if [ ! -f phpstan.neon ] && [ -f phpstan.dist.neon ]; then cp phpstan.dist.neon phpstan.neon; fi
 
       - name: Install PHP dependencies
         env:
