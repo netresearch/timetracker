@@ -19,7 +19,7 @@ Scope: everything that grants access to something. Credentials, API tokens, sign
 | Jira OAuth tokens of application users | Encrypted at rest in the application database with AES-256-GCM (`TokenEncryptionService`), key from `JIRA_TOKEN_ENCRYPTION_KEY`, falling back to `APP_SECRET` | The running application |
 | Local development values | `.env.local`, git-ignored; never `.env` | The developer on their own machine |
 
-`.env` is committed on purpose. It carries Symfony's development defaults — including the placeholder `APP_SECRET=ThisTokenIsNotSoSecretChangeIt` — and is not a secret store. Every deployment overrides these through real environment variables or `.env.local`. A deployment that still runs with the placeholder `APP_SECRET` is misconfigured: it weakens CSRF token signing and, where no dedicated key is set, the encryption of stored Jira tokens.
+`.env` is committed on purpose. It carries Symfony's development defaults — including the placeholder `APP_SECRET=ThisTokenIsNotSoSecretChangeIt` — and is not a secret store. Every deployment overrides these through real environment variables or `.env.local`. A deployment that still runs with the placeholder `APP_SECRET` is misconfigured: where no dedicated `JIRA_TOKEN_ENCRYPTION_KEY` is set, `APP_SECRET` is what encrypts the stored Jira tokens, and a value that is published in this repository encrypts nothing.
 
 ## Access
 
@@ -36,7 +36,7 @@ Scope: everything that grants access to something. Credentials, API tokens, sign
 | Scheduled | At least once every twelve months for every long-lived credential. |
 | Never needed | Keyless signing material and `GITHUB_TOKEN` — they are short-lived by construction and expire on their own. |
 
-The application secret `APP_SECRET` is a special case: rotating it invalidates existing CSRF tokens and, where `JIRA_TOKEN_ENCRYPTION_KEY` is unset, makes stored Jira tokens undecryptable. Set a dedicated `JIRA_TOKEN_ENCRYPTION_KEY` so the two can be rotated independently.
+The application secret `APP_SECRET` is a special case: where `JIRA_TOKEN_ENCRYPTION_KEY` is unset, rotating it makes every stored Jira token undecryptable. Set a dedicated `JIRA_TOKEN_ENCRYPTION_KEY` so the two can be rotated independently.
 
 ## Inventory
 

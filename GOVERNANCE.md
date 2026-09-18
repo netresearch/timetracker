@@ -45,7 +45,7 @@ A maintainer who has been inactive for twelve months moves to the emeritus secti
 
 ## Succession
 
-If the current maintainer becomes unavailable, the Netresearch organisation owners retain full administrative access to the repository, the `ghcr.io/netresearch/timetracker` package namespace and the GitHub Actions configuration, and can appoint a new maintainer without any handover from the previous one. Nothing needed to run, release or fix this project depends on a personal account: the release path runs on `GITHUB_TOKEN` and keyless OIDC signing inside GitHub Actions, and deployment credentials are held by Netresearch IT, not by an individual — see [`docs/secrets-management.md`](docs/secrets-management.md).
+If the current maintainer becomes unavailable, the Netresearch organisation owners retain full administrative access to the repository, the `ghcr.io/netresearch/timetracker` package namespace and the GitHub Actions configuration, and can appoint a new maintainer without any handover from the previous one. Nothing needed to run, release or fix this project depends on a personal account: the release path runs on the `GITHUB_TOKEN` that GitHub Actions mints per run, and deployment credentials are held by Netresearch IT, not by an individual — see [`docs/secrets-management.md`](docs/secrets-management.md).
 
 The project is AGPL-3.0 licensed, so a fork is always available as a last resort.
 

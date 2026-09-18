@@ -60,13 +60,13 @@ Four boundaries carry untrusted data: the browser, the MCP client, and the two o
 ### 4. Vertical privilege escalation
 
 **Threat** — a user reaching admin functionality, including the onboarding and sync tools.
-**Controls** — role checks on every admin controller and every MCP tool; user impersonation is restricted to administrators and is logged.
+**Controls** — role checks on every admin controller and every MCP tool. User switching (`simulateUserId`) is configured but unreachable: it needs `ROLE_ALLOWED_TO_SWITCH`, which only `ROLE_SUPER_ADMIN` grants, and no user type in `src/Enum/UserType.php` maps to it — `ROLE_ADMIN` is the ceiling.
 
 ### 5. Cross-site request forgery
 
 **Threat** — a third-party page making an authenticated browser create or delete entries.
-**Control** — stateless CSRF protection on every state-changing operation, tokens signed with `APP_SECRET`.
-**Residual risk** — a deployment still running the committed placeholder `APP_SECRET` has forgeable tokens. See [`secrets-management.md`](secrets-management.md).
+**Controls** — Symfony's stateless CSRF tokens on the `authenticate` and `logout` flows, validated from the `Sec-Fetch-Site`, `Origin` and `Referer` headers of a same-origin navigation rather than from server-side state; `cookie_samesite: lax` on the session cookie for everything else.
+**Residual risk** — the CSRF token IDs cover login and logout only. Every other state-changing endpoint rests on `SameSite=Lax`, which stops cross-site POST but not a same-site subdomain attacker. A deployment that serves TimeTracker from a domain it shares with less trusted applications loses that control.
 
 ### 6. Cross-site scripting
 
@@ -77,7 +77,7 @@ Four boundaries carry untrusted data: the browser, the MCP client, and the two o
 ### 7. Hostile data from Jira or Personio
 
 **Threat** — a compromised integration endpoint returning oversized, malformed or malicious payloads.
-**Controls** — responses are decoded into typed DTOs and validated rather than used as raw arrays; the sync services record conflicts instead of overwriting blindly; MCP outbound hosts are restricted by `MCP_ALLOWED_HOSTS`.
+**Controls** — responses are decoded into typed DTOs and validated rather than used as raw arrays; the sync services record conflicts instead of overwriting blindly.
 **Residual risk** — an integration that has been compromised can still write plausible but wrong time data. Detection is reconciliation, not prevention.
 
 ### 8. Theft of stored Jira tokens
@@ -89,12 +89,12 @@ Four boundaries carry untrusted data: the browser, the MCP client, and the two o
 ### 9. SQL injection
 
 **Threat** — injection through a filter, a date range or an export parameter.
-**Control** — Doctrine ORM and the query builder with bound parameters. Ten places in `src/` drop to native SQL or `executeQuery()`; each binds its parameters rather than concatenating them, and a new one is a review point.
+**Control** — Doctrine ORM and the query builder with bound parameters. Ten call sites in `src/` drop to DBAL — eight in `EntryRepository`, one in `OptimizedEntryRepository`, one in `GetHolidaysAction` — and all ten pass their values through `executeQuery($sql, $params)` or `bindValue()` rather than concatenating them. A new one is a review point.
 
 ### 10. Abuse of the MCP interface
 
 **Threat** — an agent or an MCP client reaching tools beyond what its user may do. The MCP surface exposes 31 tools, including user onboarding, contract changes and Personio sync.
-**Controls** — MCP requests authenticate as a user and inherit that user's role; `ScopeGuard` restricts which tools a token may call; admin-only tools resolve through `AdminEntityResolver`, which re-checks the role.
+**Controls** — MCP requests authenticate as a user and inherit that user's role; `ScopeGuard` checks the token's scopes per tool and narrows what the user may do, never widens it; admin tools additionally require `ROLE_ADMIN` on the owning user. The Streamable-HTTP transport accepts only the `Host`/`Origin` values listed in `MCP_ALLOWED_HOSTS`, which is a DNS-rebinding guard on the inbound request.
 **Residual risk** — an API token is a bearer credential. Its blast radius is the role of the user who issued it, which is why admin tokens are issued narrowly.
 
 ### 11. Supply-chain compromise
