@@ -77,66 +77,28 @@ test.describe('Interpretation API Endpoints', () => {
     }
   });
 
-  test('/interpretation/groupByCustomer should group entries by customer', async ({ page }) => {
-    // First check if the endpoint exists
-    const response = await page.request.get('/interpretation/groupByCustomer');
+  // The five grouped-interpretation endpoints. Until 2026-09 these were called
+  // as /interpretation/groupByCustomer and friends, which do not exist: every
+  // request 404'd and the `if (response.ok())` wrapper made the test pass
+  // anyway. `debug:router` names them /interpretation/{customer,project,
+  // activity,user,ticket}. Like /interpretation/entries they need at least one
+  // filter, so each passes user=1.
+  for (const [route, label] of [
+    ['customer', 'customer'],
+    ['project', 'project'],
+    ['activity', 'activity'],
+    ['user', 'user'],
+    ['ticket', 'ticket'],
+  ] as const) {
+    test(`/interpretation/${route} should group entries by ${label}`, async ({ page }) => {
+      const response = await page.request.get(`/interpretation/${route}?user=1`);
 
-    if (response.ok()) {
-      const data = await response.json();
+      expect(response.ok()).toBe(true);
 
-      // Should be an array of grouped entries
-      expect(Array.isArray(data)).toBe(true);
-
-      if (data.length > 0) {
-        // Each group should have customer info
-        const firstGroup = data[0];
-        console.log('GroupByCustomer sample:', firstGroup);
-      }
-    } else {
-      // Endpoint might require POST with parameters
-      console.log('GroupByCustomer requires POST or parameters');
-    }
-  });
-
-  test('/interpretation/groupByProject should group entries by project', async ({ page }) => {
-    const response = await page.request.get('/interpretation/groupByProject');
-
-    if (response.ok()) {
       const data = await response.json();
       expect(Array.isArray(data)).toBe(true);
-
-      if (data.length > 0) {
-        console.log('GroupByProject sample:', data[0]);
-      }
-    }
-  });
-
-  test('/interpretation/groupByActivity should group entries by activity', async ({ page }) => {
-    const response = await page.request.get('/interpretation/groupByActivity');
-
-    if (response.ok()) {
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-    }
-  });
-
-  test('/interpretation/groupByUser should group entries by user', async ({ page }) => {
-    const response = await page.request.get('/interpretation/groupByUser');
-
-    if (response.ok()) {
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-    }
-  });
-
-  test('/interpretation/groupByTicket should group entries by ticket', async ({ page }) => {
-    const response = await page.request.get('/interpretation/groupByTicket');
-
-    if (response.ok()) {
-      const data = await response.json();
-      expect(Array.isArray(data)).toBe(true);
-    }
-  });
+    });
+  }
 });
 
 test.describe('Entry Filtering', () => {
@@ -217,14 +179,26 @@ test.describe('Time Summary', () => {
     }
   });
 
-  test('/getTicketTimeSummary should return ticket times', async ({ page }) => {
-    // This endpoint returns time spent per ticket
-    const response = await page.request.get('/getTicketTimeSummary?ticket=TEST-001');
+  // The ticket is a PATH segment (/getTicketTimeSummary/{ticket}), not a query
+  // parameter. The old call passed ?ticket=… , which left the route's default
+  // (null) in place, and the `if (response.ok())` hid the result either way.
+  test('/getTicketTimeSummary/{ticket} should return the per-ticket breakdown', async ({ page }) => {
+    // LK-12 carries two human entries in sql/testdata.sql.
+    const response = await page.request.get('/getTicketTimeSummary/LK-12');
 
-    if (response.ok()) {
-      const data = await response.json();
-      console.log('Ticket time summary:', data);
-    }
+    expect(response.ok()).toBe(true);
+
+    const data = await response.json();
+    expect(data).toHaveProperty('total_time');
+    expect(data.total_time).toHaveProperty('time');
+    expect(data.total_time).toHaveProperty('seconds');
+    expect(data).toHaveProperty('users');
+  });
+
+  test('/getTicketTimeSummary/{ticket} should 404 for a ticket with no entries', async ({ page }) => {
+    const response = await page.request.get('/getTicketTimeSummary/NOSUCHTICKET-9999');
+
+    expect(response.status()).toBe(404);
   });
 });
 
@@ -233,20 +207,17 @@ test.describe('CSV Export', () => {
     await login(page);
   });
 
+  // The route is /export/{days}. The old call used /export/csv, where "csv"
+  // lands in the {days} segment; the controller's is_numeric() guard falls back
+  // to the default of 10000, so it answered 200 by accident rather than by
+  // contract. public/api.yml documents the parameterised form, so that is what
+  // this covers. (The controller also answers a bare /export via the route
+  // default; that variant is not in api.yml.)
   test('should export entries to CSV', async ({ page }) => {
-    // CSV export endpoint
-    const response = await page.request.get('/export/csv');
+    const response = await page.request.get('/export/10000');
 
-    if (response.ok()) {
-      const contentType = response.headers()['content-type'];
-      console.log('CSV export content-type:', contentType);
-
-      // Should be CSV or text content
-      expect(
-        contentType?.includes('text/csv') ||
-        contentType?.includes('text/plain') ||
-        contentType?.includes('application/csv')
-      ).toBe(true);
-    }
+    expect(response.ok()).toBe(true);
+    expect(response.headers()['content-type']).toContain('text/csv');
+    expect(response.headers()['content-disposition']).toContain('.csv');
   });
 });
