@@ -13,7 +13,7 @@ The production stack (Compose profile `prod`) consists of three containers:
 
 | Service | Image | Role |
 |---------|-------|------|
-| `httpd` | `nginx:1.28-alpine` | Web server; serves static assets, forwards PHP to `app` via FastCGI. Publishes port `${HTTP_PORT:-8765}`. |
+| `httpd` | `nginx:1.31-alpine` | Web server; serves static assets, forwards PHP to `app` via FastCGI. Publishes port `${HTTP_PORT:-8765}`. |
 | `app`   | `ghcr.io/netresearch/timetracker:production` | PHP-FPM 8.5 running the Symfony application (non-root user, listens on 9000 inside the network). |
 | `db`    | `mariadb:12.3` | Database; schema seeded from [`sql/full.sql`](../sql/full.sql) on first start. |
 
