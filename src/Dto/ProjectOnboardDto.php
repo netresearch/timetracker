@@ -26,6 +26,9 @@ final readonly class ProjectOnboardDto
         public int $customer_id = 0,
         public string $jira_id = '',
         public bool $global = false,
+        /** Ticket system this project books worklogs into; null leaves it unset (#688). */
+        #[Assert\Positive(message: 'Please choose a ticket system.')]
+        public ?int $ticket_system_id = null,
     ) {
     }
 }

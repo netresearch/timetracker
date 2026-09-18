@@ -11,11 +11,12 @@ namespace App\Dto;
 
 use App\Entity\Project;
 use App\Validator\Constraints\UniqueProjectNameForCustomer;
+use App\Validator\Constraints\ValidProjectJiraPrefix;
+use App\Validator\Constraints\ValidProjectName;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\ObjectMapper\Attribute\Map;
-use Symfony\Component\Validator\Constraints as Assert;
 use UnexpectedValueException;
 
 #[Map(target: Project::class)]
@@ -24,12 +25,15 @@ final readonly class ProjectSaveDto
 {
     public function __construct(
         public int $id = 0,
-        #[Assert\NotBlank(message: 'Please provide a valid project name with at least 3 letters.')]
-        #[Assert\Length(min: 3, minMessage: 'Please provide a valid project name with at least 3 letters.')]
+        // Grandfathered for an unchanged name on an existing project (#688):
+        // a declarative Assert cannot see the persisted value, so a legacy name
+        // would block every update of that project.
+        #[ValidProjectName]
         public string $name = '',
         #[Map(if: false)]
         public ?int $customer = null,
-        #[Assert\Regex(pattern: '/^[A-Z]+$/', message: 'The Jira prefix must contain only uppercase letters.', normalizer: 'trim')]
+        // Grandfathered the same way — the fixture's 'TIM-1' predates the rule.
+        #[ValidProjectJiraPrefix]
         public ?string $jiraId = null,
         public ?string $jiraTicket = null,
         public bool $active = false,

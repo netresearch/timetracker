@@ -13,6 +13,7 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Preset;
 use App\Entity\Project;
+use App\Entity\TicketSystem;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 use Mcp\Exception\ToolCallException;
@@ -81,6 +82,19 @@ final readonly class AdminEntityResolver
         }
 
         return $customer;
+    }
+
+    /**
+     * @throws ToolCallException when the ticket system cannot be resolved
+     */
+    public function ticketSystem(string $input): TicketSystem
+    {
+        $ticketSystem = $this->find(TicketSystem::class, $input, 'name');
+        if (!$ticketSystem instanceof TicketSystem) {
+            throw new ToolCallException(sprintf('Unknown ticket system "%s" — use list_ticketsystems to see valid names/ids.', trim($input)));
+        }
+
+        return $ticketSystem;
     }
 
     /**
