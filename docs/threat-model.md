@@ -101,7 +101,7 @@ Four boundaries carry untrusted data: the browser, the MCP client, and the two o
 
 **Threat** — a malicious dependency, action or base image reaching the published container.
 **Controls** — lockfiles committed and installed frozen; third-party actions pinned by commit SHA; base images pinned by digest; blocking `composer audit`, `bun audit` and `npm audit` in CI; Trivy scanning of the produced images; Dependabot and Renovate; signed commits required on `main`.
-**Residual risk** — the `Dockerfile` still installs Node.js and the Symfony CLI by piping a downloaded script into a shell, with no checksum. Until that is replaced, a compromise of those download endpoints reaches the build, and `build_reproducible` cannot be claimed. Tracked in [ROADMAP.md](../ROADMAP.md).
+**Residual risk** — nothing is fetched over the network by an unverified installer any more: Node.js, the Symfony CLI, Bun and Composer all arrive as `COPY --from` a digest-pinned image stage. What remains is that a rebuild is not independently verifiable — there is no documented procedure by which an outsider can reproduce a published image and compare digests. Tracked in [ROADMAP.md](../ROADMAP.md).
 
 ### 12. Compromise of the release path
 

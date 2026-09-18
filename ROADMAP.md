@@ -16,7 +16,7 @@ Last reviewed: 2026-09-18. Current release line: 6.3.x — see [SECURITY.md](SEC
 ## Next — agreed direction, not scheduled
 
 - **SPDX headers on every source file.** 623 of 897 files carry one; the remainder are mostly `e2e/`, `frontend/` and `config/`. Required for the OpenSSF Gold criteria `copyright_per_file` and `license_per_file`.
-- **Reproducible builds.** The container image installs Node.js and the Symfony CLI over the network at build time; until every downloaded artefact is verified against a checksum or replaced by a pinned image layer, `build_reproducible` cannot be claimed.
+- **Reproducible builds.** Every base image and every tool the container build consumes is already pinned by digest in `docker-bake.hcl`, and the Node.js and Symfony CLI binaries are copied from pinned image stages rather than downloaded by a piped installer. What is still missing for `build_reproducible` is the other half: a documented procedure by which somebody outside the project can rebuild a published image and compare it, and a build that is bit-for-bit stable when they do.
 - **Frontend test depth.** The SolidJS SPA is covered by Vitest and Playwright; coverage of the newer interpretation and reporting views is thinner than the backend's.
 - **Personio and Jira synchronisation hardening.** Both integrations talk to systems outside our trust boundary; see [`docs/threat-model.md`](docs/threat-model.md) for the boundaries this affects.
 
