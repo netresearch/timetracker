@@ -14,23 +14,35 @@
 # =============================================================================
 # DEPENDENCY VERSIONS (single source of truth)
 # =============================================================================
+#
+# Every image is pinned by digest, so the same source rebuilds to the same
+# image. NOTE: no bot updates this file - Dependabot's docker ecosystem reads
+# Dockerfiles and its docker-compose ecosystem reads compose.yml, and neither
+# parses HCL (Renovate, which has a customManager for it, is not installed on
+# this repository). All five digests are therefore bumped by hand. The base
+# stage runs `apt-get upgrade -y`, so OS-level CVEs are still picked up at
+# build time while a digest sits still.
 
 variable "PHP_BASE_IMAGE" {
-  default = "php:8.5-fpm"
+  default = "php:8.5-fpm@sha256:14e08327efdcb7bb53f249b7f7c9ab50791f9ae77bae3585303d48a5d5a7409a"
 }
 
 # Node is copied out of the official image rather than installed from
 # NodeSource. Keep the Debian release in step with PHP_BASE_IMAGE's (trixie).
 variable "NODE_BASE_IMAGE" {
-  default = "node:26-trixie-slim"
+  default = "node:26-trixie-slim@sha256:65f816afd401c1c4de3293acc46dce115398152af4bdcd73c103b096988922d7"
 }
 
 variable "SYMFONY_CLI_IMAGE" {
-  default = "ghcr.io/symfony-cli/symfony-cli:5.20.0"
+  default = "ghcr.io/symfony-cli/symfony-cli:5.20.0@sha256:7b3e16d91ded7702769104f82c42643dbd82ebfa48cba824893ac2a71da9ae4f"
+}
+
+variable "BUN_IMAGE" {
+  default = "oven/bun:1.3.14@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d700e5c4"
 }
 
 variable "COMPOSER_IMAGE" {
-  default = "composer:2.10"
+  default = "composer:2.10@sha256:a5f59b9fd2faf31218632be4809dc6491761085e8064c31dc3b84378c48c248b"
 }
 
 variable "XDEBUG_VERSION" {
@@ -86,6 +98,7 @@ target "_common" {
     PHP_BASE_IMAGE    = PHP_BASE_IMAGE
     NODE_BASE_IMAGE   = NODE_BASE_IMAGE
     SYMFONY_CLI_IMAGE = SYMFONY_CLI_IMAGE
+    BUN_IMAGE         = BUN_IMAGE
     COMPOSER_IMAGE    = COMPOSER_IMAGE
     XDEBUG_VERSION    = XDEBUG_VERSION
     APCU_VERSION      = APCU_VERSION

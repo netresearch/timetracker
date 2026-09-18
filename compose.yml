@@ -92,7 +92,7 @@ services:
 
   # Production web server
   httpd:
-    image: nginx:1.28-alpine
+    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
     volumes:
       - app-pub:/var/www/html/public
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -107,7 +107,7 @@ services:
 
   # Development web server
   httpd-dev:
-    image: nginx:1.28-alpine
+    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
     volumes:
       - ./public:/var/www/html/public
       - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf
@@ -122,8 +122,13 @@ services:
 
   # Production database
   db:
-    image: mariadb:12.1
+    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
+      # Run mariadb-upgrade when the datadir predates the image (CodeRabbit on
+      # #723). A 12.1 datadir does start and serve under 12.3, but the
+      # entrypoint then logs "MariaDB upgrade ... required, but skipped" and
+      # leaves the system tables and the healthcheck users un-migrated.
+      - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${DB_USER:-timetracker}
       - MYSQL_PASSWORD=${DB_PASSWORD:-timetracker}
@@ -143,8 +148,9 @@ services:
 
   # Unit test database (for PHPUnit tests)
   db_unittest:
-    image: mariadb:12.1
+    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
+      - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${UNITTEST_DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${UNITTEST_DB_USER:-unittest}
       - MYSQL_PASSWORD=${UNITTEST_DB_PASSWORD:-unittest}
@@ -161,8 +167,9 @@ services:
 
   # E2E test database (separate from dev to avoid data conflicts)
   db-e2e:
-    image: mariadb:12.1
+    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
+      - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${E2E_DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${E2E_DB_USER:-timetracker}
       - MYSQL_PASSWORD=${E2E_DB_PASSWORD:-timetracker}
@@ -193,7 +200,7 @@ services:
       # Frozen time for deterministic E2E tests - matches test data in sql/testdata.sql
       - APP_FROZEN_TIME=2024-01-15 12:00:00
       # Use separate E2E database to avoid conflicts with dev
-      - DATABASE_URL=mysql://timetracker:${E2E_DB_PASSWORD:-timetracker}@db-e2e:3306/timetracker?serverVersion=mariadb-12.1.2&charset=utf8mb4
+      - DATABASE_URL=mysql://timetracker:${E2E_DB_PASSWORD:-timetracker}@db-e2e:3306/timetracker?serverVersion=mariadb-12.3.3&charset=utf8mb4
       # Coverage collection (set COVERAGE_ENABLED=1 XDEBUG_MODE=coverage to enable)
       - COVERAGE_ENABLED=${COVERAGE_ENABLED:-0}
       - XDEBUG_MODE=${XDEBUG_MODE:-off}
@@ -211,7 +218,7 @@ services:
 
   # E2E test web server (port 8766 to avoid conflict with dev)
   httpd-e2e:
-    image: nginx:1.28-alpine
+    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
     volumes:
       - ./public:/var/www/html/public
       - ./docker/nginx/e2e.conf:/etc/nginx/conf.d/default.conf
@@ -225,7 +232,7 @@ services:
 
   # Development LDAP server
   ldap-dev:
-    image: osixia/openldap:1.5.0
+    image: osixia/openldap:1.5.0@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28
     environment:
       - LDAP_ORGANISATION=Development Company
       - LDAP_DOMAIN=dev.local

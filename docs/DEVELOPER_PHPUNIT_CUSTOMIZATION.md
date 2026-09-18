@@ -23,7 +23,7 @@ The default test database is the `db_unittest` container
 
 ```xml
 <php>
-    <env name="DATABASE_URL" value="mysql://unittest:unittest@127.0.0.1:3306/unittest?serverVersion=mariadb-12.1.2&amp;charset=utf8mb4"/>
+    <env name="DATABASE_URL" value="mysql://unittest:unittest@127.0.0.1:3306/unittest?serverVersion=mariadb-12.3.3&amp;charset=utf8mb4"/>
 </php>
 ```
 

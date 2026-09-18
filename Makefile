@@ -122,7 +122,7 @@ npm-watch:
 # All PHPUnit tests (default for developers)
 test: prepare-test-sql
 	@echo "Running all PHPUnit tests..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
 
 # Unit tests only (fast, no database required)
 test-unit:
@@ -132,17 +132,17 @@ test-unit:
 # Integration tests only (requires database)
 test-integration: prepare-test-sql
 	@echo "Running integration tests..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=integration
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=integration
 
 # Controller tests only (requires database)
 test-controller: prepare-test-sql
 	@echo "Running controller tests..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=controller
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=controller
 
 # API Functional tests (CRUD operations + response-format checks with real database, for CI)
 test-api-functional: prepare-test-sql
 	@echo "Running API functional tests..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=api-functional
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4" app-dev php -d memory_limit=512M ./bin/phpunit --testsuite=api-functional
 
 # All API tests
 test-api: test-api-functional
@@ -159,12 +159,12 @@ test-all: test e2e
 # Test with Xdebug enabled for debugging failing tests
 test-debug: prepare-test-sql
 	@echo "Running tests with Xdebug enabled for debugging..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=debug,develop -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=debug,develop -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit
 
 # Test with verbose configuration (full output for debugging)
 test-verbose: prepare-test-sql
 	@echo "Running tests with verbose output for debugging..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=config/testing/phpunit.xml.verbose
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=off -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --configuration=config/testing/phpunit.xml.verbose
 
 # E2E test infrastructure
 e2e-up: bake-e2e
@@ -214,7 +214,7 @@ e2e-install:
 # Coverage (Xdebug coverage mode)
 coverage: prepare-test-sql
 	@echo "Running test coverage with Xdebug..."
-	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
+	docker compose run --rm -e APP_ENV=test -e XDEBUG_MODE=coverage -e DATABASE_URL="mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4" app-dev php -d memory_limit=2G -d max_execution_time=0 ./bin/phpunit --coverage-html var/coverage
 	@echo "Coverage HTML: var/coverage/index.html"
 
 stan:

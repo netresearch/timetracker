@@ -78,7 +78,7 @@ Symptoms: `SQLSTATE[HY000] [2002] Connection refused`, or the entrypoint's
 2. Check `DATABASE_URL` — host must be the Compose **service name**:
 
    ```text
-   mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.1.2
+   mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.3.3
    ```
 
    PHPUnit uses `db_unittest`, e2e uses `db-e2e` (see the [Makefile](../Makefile)

@@ -148,7 +148,7 @@ public function testSyncWithJiraHandlesApiError(): void
 
 ```bash
 docker compose --profile dev exec -T -e APP_ENV=test \
-  -e 'DATABASE_URL=mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4' \
+  -e 'DATABASE_URL=mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4' \
   app-dev bin/phpunit tests/...
 ```
 

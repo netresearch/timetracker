@@ -39,11 +39,11 @@ defaults in [.env](../.env):
 
 | Variable | Default ([.env](../.env)) | Purpose |
 |----------|---------------------------|---------|
-| `DATABASE_URL` | `mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.1.2` | Doctrine DBAL connection ([config/packages/doctrine.yaml](../config/packages/doctrine.yaml)) |
+| `DATABASE_URL` | `mysql://timetracker:timetracker@db:3306/timetracker?serverVersion=mariadb-12.3.3` | Doctrine DBAL connection ([config/packages/doctrine.yaml](../config/packages/doctrine.yaml)) |
 
 The test environment ([.env.test](../.env.test)) points at the dedicated
 `db_unittest` container:
-`mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.1.2&charset=utf8mb4`
+`mysql://unittest:unittest@db_unittest:3306/unittest?serverVersion=mariadb-12.3.3&charset=utf8mb4`
 (no host port is published for it).
 
 ## Authentication (LDAP + local accounts)
