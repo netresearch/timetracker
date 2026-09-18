@@ -86,6 +86,10 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   let active: [number, number] = [0, 0]
   // The element we last focused, so a re-render that removes it is detectable.
   let activeCellEl: Cell | null = null
+  // Its row/column identity, which survives a reorder that the coordinates do
+  // not (#702). Null for cells that carry no data-row-id, e.g. header cells.
+  let activeRowId: string | null = null
+  let activeColKey: string | null = null
 
   const rows = (): HTMLTableRowElement[] => Array.from(table.rows)
   const cellsOf = (row: HTMLTableRowElement): Cell[] => Array.from(row.cells)
@@ -155,6 +159,11 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       active = pos
     }
     activeCellEl = cell
+    // Remember WHICH row the cursor sits on, not only where it sat (#702). Rows
+    // reorder under the grid — a saved worklog row sorts into place by start
+    // time — and a coordinate then names a different record.
+    activeRowId = cell.dataset.rowId ?? null
+    activeColKey = cell.dataset.colKey ?? null
     const prevRow = table.querySelector('tr[aria-current="true"]')
     if (prevRow !== null && prevRow !== cell.parentElement) {
       prevRow.removeAttribute('aria-current')
@@ -284,13 +293,51 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       })
     })
 
-    // Restore the roving tab stop to the tracked coordinates; re-focus only if a
-    // re-render removed the focused cell and dropped focus to <body>.
+    // Restore the roving tab stop to the row the cursor was on, by identity —
+    // rows reorder under the grid (a saved worklog row sorts into place by its
+    // start time) and the old coordinates then name a different record (#702).
+    // Only the ROW is resolved by id: columns do not reorder, so a cell without
+    // a data-col-key (the admin grids' select and action columns) still lands on
+    // its coordinate INSIDE the right row.
+    const trackedRow = activeRowId !== null
+      ? table.querySelector(`[data-row-id="${CSS.escape(activeRowId)}"]`)?.closest('tr') ?? null
+      : null
+    const byIdentity = trackedRow !== null
+      ? (activeColKey !== null ? trackedRow.querySelector<Cell>(`td[data-col-key="${CSS.escape(activeColKey)}"]`) : null)
+        ?? (trackedRow.cells[active[1]] as Cell | undefined)
+        ?? null
+      : null
+    // A grid whose cells carry no data-row-id at all (the read-only Auswertung
+    // table) never tracked a row, so it keeps the old coordinate behaviour — the
+    // guard below is about a row that VANISHED, not about a grid without ids.
+    const rowGone = activeRowId !== null && trackedRow === null
+    // Re-focus only if a re-render removed the focused cell and dropped focus to
+    // <body> — and never onto a foreign row. When the tracked row is gone (a temp
+    // row replaced by its persisted id), the coordinate belongs to somebody else:
+    // keep the tab stop there so the grid still has exactly one, but leave focus
+    // out, and therefore the next keystroke too.
     const lostFocus = activeCellEl !== null && !table.contains(activeCellEl) && document.activeElement === document.body
-    const target = cellAt(active[0], active[1])
-    if (target) {
-      setActive(target, lostFocus)
+    const target = byIdentity ?? cellAt(active[0], active[1])
+    if (!target) {
+      return
     }
+
+    if (rowGone) {
+      // The fallback cell belongs to ANOTHER record. It gets the tab stop, so the
+      // grid keeps exactly one and stays reachable by Tab — but nothing else:
+      // going through setActive() would hand it the cursor's identity (the next
+      // sync would then focus it, which is the #702 keystroke path one render
+      // later) and stamp aria-current on it, which is what Tracking reads to
+      // decide which entry Alt+C clones and Alt+I describes. No row is current
+      // until the user picks one.
+      target.tabIndex = 0
+      table.querySelector('tr[aria-current="true"]')?.removeAttribute('aria-current')
+      active = position(target) ?? active
+
+      return
+    }
+
+    setActive(target, lostFocus)
   }
 
   function onKeydown(event: KeyboardEvent): void {
@@ -460,7 +507,12 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
     const target = event.target
     if (target instanceof HTMLElement) {
       const cell = target.closest('th, td') as Cell | null
-      if (cell !== null && table.contains(cell) && cell.tabIndex !== 0) {
+      // `cell.tabIndex !== 0` alone would skip the cell that already holds the tab
+      // stop — including the fallback cell a vanished row left behind, which would
+      // keep the cursor pinned to a row that no longer exists and stop focus
+      // restoration for good. Adopting on an identity mismatch clears that.
+      const adopts = cell !== null && (cell.tabIndex !== 0 || (cell.dataset.rowId ?? null) !== activeRowId)
+      if (cell !== null && adopts && table.contains(cell)) {
         setActive(cell, false)
       }
     }
