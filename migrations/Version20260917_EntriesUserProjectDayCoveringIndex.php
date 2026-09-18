@@ -47,7 +47,7 @@ final class Version20260917_EntriesUserProjectDayCoveringIndex extends AbstractM
         // installation may have applied it by hand; the entrypoint migrates under
         // `set -eu` and a duplicate-key error would keep the container from starting.
         $this->addSql('DROP INDEX IF EXISTS idx_entries_user_project_day ON entries');
-        $this->addSql('CREATE INDEX idx_entries_user_project_day ON entries (user_id, project_id, day)');
+        $this->addSql('CREATE INDEX IF NOT EXISTS idx_entries_user_project_day ON entries (user_id, project_id, day)');
         // (user_id, project_id) is a strict prefix of the new index and can serve
         // nothing it cannot, so keeping it would be write cost on every entry with no
         // read benefit. The user_id FK stays covered by the plain KEY (user_id).
@@ -56,7 +56,7 @@ final class Version20260917_EntriesUserProjectDayCoveringIndex extends AbstractM
 
     public function down(Schema $schema): void
     {
-        $this->addSql('CREATE INDEX idx_entries_user_project ON entries (user_id, project_id)');
+        $this->addSql('CREATE INDEX IF NOT EXISTS idx_entries_user_project ON entries (user_id, project_id)');
         $this->addSql('DROP INDEX IF EXISTS idx_entries_user_project_day ON entries');
     }
 }

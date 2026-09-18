@@ -22,7 +22,7 @@ final class Version20260709_WorklogSyncFoundation extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(<<<'SQL'
-            CREATE TABLE sync_runs (
+            CREATE TABLE IF NOT EXISTS sync_runs (
                 id INT AUTO_INCREMENT NOT NULL,
                 ticket_system_id INT NOT NULL,
                 triggered_by_id INT NOT NULL,
@@ -42,7 +42,7 @@ final class Version20260709_WorklogSyncFoundation extends AbstractMigration
             SQL);
 
         $this->addSql(<<<'SQL'
-            CREATE TABLE sync_run_items (
+            CREATE TABLE IF NOT EXISTS sync_run_items (
                 id INT AUTO_INCREMENT NOT NULL,
                 sync_run_id INT NOT NULL,
                 entry_id INT DEFAULT NULL,
@@ -62,7 +62,7 @@ final class Version20260709_WorklogSyncFoundation extends AbstractMigration
             SQL);
 
         $this->addSql(<<<'SQL'
-            CREATE TABLE worklog_sync_state (
+            CREATE TABLE IF NOT EXISTS worklog_sync_state (
                 id INT AUTO_INCREMENT NOT NULL,
                 entry_id INT NOT NULL,
                 ticket_system_id INT NOT NULL,

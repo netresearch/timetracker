@@ -27,11 +27,11 @@ final class Version20260704_AddProjectSubticketsSyncedAt extends AbstractMigrati
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE projects ADD subtickets_synced_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
+        $this->addSql('ALTER TABLE projects ADD COLUMN IF NOT EXISTS subtickets_synced_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE projects DROP COLUMN subtickets_synced_at');
+        $this->addSql('ALTER TABLE projects DROP COLUMN IF EXISTS subtickets_synced_at');
     }
 }

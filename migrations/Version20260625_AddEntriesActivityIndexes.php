@@ -31,8 +31,8 @@ final class Version20260625_AddEntriesActivityIndexes extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('CREATE INDEX idx_entries_customer_day ON entries (customer_id, day DESC)');
-        $this->addSql('CREATE INDEX idx_entries_project_day ON entries (project_id, day DESC)');
+        $this->addSql('CREATE INDEX IF NOT EXISTS idx_entries_customer_day ON entries (customer_id, day DESC)');
+        $this->addSql('CREATE INDEX IF NOT EXISTS idx_entries_project_day ON entries (project_id, day DESC)');
     }
 
     public function down(Schema $schema): void

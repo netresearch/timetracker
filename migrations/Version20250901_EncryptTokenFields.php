@@ -29,7 +29,7 @@ final class Version20250901_EncryptTokenFields extends AbstractMigration
         $this->addSql('ALTER TABLE users_ticket_systems MODIFY COLUMN tokensecret TEXT NOT NULL');
 
         // Add index for performance on user_id since we query by user frequently
-        $this->addSql('CREATE INDEX idx_user_ticket_system_user ON users_ticket_systems (user_id)');
+        $this->addSql('CREATE INDEX IF NOT EXISTS idx_user_ticket_system_user ON users_ticket_systems (user_id)');
     }
 
     public function down(Schema $schema): void

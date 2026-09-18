@@ -21,13 +21,13 @@ final class Version20260709_UserTicketsystemRemoteAccountId extends AbstractMigr
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users_ticket_systems ADD remote_account_id VARCHAR(255) DEFAULT NULL');
-        $this->addSql('CREATE INDEX idx_uts_remote_account ON users_ticket_systems (ticket_system_id, remote_account_id)');
+        $this->addSql('ALTER TABLE users_ticket_systems ADD COLUMN IF NOT EXISTS remote_account_id VARCHAR(255) DEFAULT NULL');
+        $this->addSql('CREATE INDEX IF NOT EXISTS idx_uts_remote_account ON users_ticket_systems (ticket_system_id, remote_account_id)');
     }
 
     public function down(Schema $schema): void
     {
         $this->addSql('DROP INDEX IF EXISTS idx_uts_remote_account ON users_ticket_systems');
-        $this->addSql('ALTER TABLE users_ticket_systems DROP COLUMN remote_account_id');
+        $this->addSql('ALTER TABLE users_ticket_systems DROP COLUMN IF EXISTS remote_account_id');
     }
 }

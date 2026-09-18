@@ -30,7 +30,7 @@ final class Version20260704_AddApiTokens extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(<<<'SQL'
-            CREATE TABLE api_tokens (
+            CREATE TABLE IF NOT EXISTS api_tokens (
                 id INT AUTO_INCREMENT NOT NULL,
                 user_id INT NOT NULL,
                 name VARCHAR(100) NOT NULL,
@@ -45,7 +45,7 @@ final class Version20260704_AddApiTokens extends AbstractMigration
                 PRIMARY KEY(id)
             ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
             SQL);
-        $this->addSql('ALTER TABLE api_tokens ADD CONSTRAINT FK_api_tokens_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE');
+        $this->addSql('ALTER TABLE api_tokens ADD CONSTRAINT FK_api_tokens_user FOREIGN KEY IF NOT EXISTS (user_id) REFERENCES users (id) ON DELETE CASCADE');
     }
 
     #[\Override]

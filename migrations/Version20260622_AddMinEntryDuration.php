@@ -29,14 +29,14 @@ final class Version20260622_AddMinEntryDuration extends AbstractMigration
     public function up(Schema $schema): void
     {
         if ($schema->hasTable('users') && !$schema->getTable('users')->hasColumn('min_entry_duration')) {
-            $this->addSql('ALTER TABLE users ADD min_entry_duration INT NOT NULL DEFAULT 5');
+            $this->addSql('ALTER TABLE users ADD COLUMN IF NOT EXISTS min_entry_duration INT NOT NULL DEFAULT 5');
         }
     }
 
     public function down(Schema $schema): void
     {
         if ($schema->hasTable('users') && $schema->getTable('users')->hasColumn('min_entry_duration')) {
-            $this->addSql('ALTER TABLE users DROP min_entry_duration');
+            $this->addSql('ALTER TABLE users DROP COLUMN IF EXISTS min_entry_duration');
         }
     }
 }

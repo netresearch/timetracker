@@ -45,14 +45,14 @@ final class Version20260624_RemoveAccountEntity extends AbstractMigration
             $this->addSql(sprintf('ALTER TABLE entries DROP FOREIGN KEY %s', $fkName));
         }
 
-        $this->addSql('ALTER TABLE entries DROP COLUMN account_id');
+        $this->addSql('ALTER TABLE entries DROP COLUMN IF EXISTS account_id');
         $this->addSql('DROP TABLE IF EXISTS accounts');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('CREATE TABLE accounts (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(50) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8 ENGINE=InnoDB');
-        $this->addSql('ALTER TABLE entries ADD account_id INT DEFAULT NULL');
-        $this->addSql('ALTER TABLE entries ADD CONSTRAINT FK_entries_account FOREIGN KEY (account_id) REFERENCES accounts (id)');
+        $this->addSql('CREATE TABLE IF NOT EXISTS accounts (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(50) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8 ENGINE=InnoDB');
+        $this->addSql('ALTER TABLE entries ADD COLUMN IF NOT EXISTS account_id INT DEFAULT NULL');
+        $this->addSql('ALTER TABLE entries ADD CONSTRAINT FK_entries_account FOREIGN KEY IF NOT EXISTS (account_id) REFERENCES accounts (id)');
     }
 }

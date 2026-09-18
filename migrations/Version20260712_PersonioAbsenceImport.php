@@ -22,7 +22,7 @@ final class Version20260712_PersonioAbsenceImport extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql(<<<'SQL'
-            CREATE TABLE personio_absence_import (
+            CREATE TABLE IF NOT EXISTS personio_absence_import (
                 id INT AUTO_INCREMENT NOT NULL,
                 user_id INT NOT NULL,
                 last_sync_run_id INT DEFAULT NULL,

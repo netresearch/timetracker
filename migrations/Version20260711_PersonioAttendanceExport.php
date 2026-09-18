@@ -21,10 +21,10 @@ final class Version20260711_PersonioAttendanceExport extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users ADD personio_sync_enabled TINYINT(1) NOT NULL DEFAULT 0, ADD personio_employee_id BIGINT DEFAULT NULL');
+        $this->addSql('ALTER TABLE users ADD COLUMN IF NOT EXISTS personio_sync_enabled TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS personio_employee_id BIGINT DEFAULT NULL');
 
         $this->addSql(<<<'SQL'
-            CREATE TABLE personio_configs (
+            CREATE TABLE IF NOT EXISTS personio_configs (
                 id INT AUTO_INCREMENT NOT NULL,
                 absence_project_id INT DEFAULT NULL,
                 name VARCHAR(63) NOT NULL,
@@ -40,7 +40,7 @@ final class Version20260711_PersonioAttendanceExport extends AbstractMigration
             SQL);
 
         $this->addSql(<<<'SQL'
-            CREATE TABLE personio_attendance_export (
+            CREATE TABLE IF NOT EXISTS personio_attendance_export (
                 id INT AUTO_INCREMENT NOT NULL,
                 user_id INT NOT NULL,
                 last_sync_run_id INT DEFAULT NULL,
@@ -61,6 +61,6 @@ final class Version20260711_PersonioAttendanceExport extends AbstractMigration
     {
         $this->addSql('DROP TABLE personio_attendance_export');
         $this->addSql('DROP TABLE personio_configs');
-        $this->addSql('ALTER TABLE users DROP COLUMN personio_sync_enabled, DROP COLUMN personio_employee_id');
+        $this->addSql('ALTER TABLE users DROP COLUMN IF EXISTS personio_sync_enabled, DROP COLUMN IF EXISTS personio_employee_id');
     }
 }

@@ -28,11 +28,11 @@ final class Version20260712_AutoImportProjectsFlag extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE ticket_systems ADD auto_import_unresolved_projects TINYINT(1) NOT NULL DEFAULT 0');
+        $this->addSql('ALTER TABLE ticket_systems ADD COLUMN IF NOT EXISTS auto_import_unresolved_projects TINYINT(1) NOT NULL DEFAULT 0');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE ticket_systems DROP COLUMN auto_import_unresolved_projects');
+        $this->addSql('ALTER TABLE ticket_systems DROP COLUMN IF EXISTS auto_import_unresolved_projects');
     }
 }

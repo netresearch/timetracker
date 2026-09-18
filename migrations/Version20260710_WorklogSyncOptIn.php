@@ -21,15 +21,15 @@ final class Version20260710_WorklogSyncOptIn extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users_ticket_systems ADD sync_enabled TINYINT(1) NOT NULL DEFAULT 0, ADD sync_all TINYINT(1) NOT NULL DEFAULT 0');
-        $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY fk_ts_sync_user');
-        $this->addSql('ALTER TABLE ticket_systems DROP COLUMN sync_user_id, DROP COLUMN worklog_sync_cursor');
+        $this->addSql('ALTER TABLE users_ticket_systems ADD COLUMN IF NOT EXISTS sync_enabled TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS sync_all TINYINT(1) NOT NULL DEFAULT 0');
+        $this->addSql('ALTER TABLE ticket_systems DROP FOREIGN KEY IF EXISTS fk_ts_sync_user');
+        $this->addSql('ALTER TABLE ticket_systems DROP COLUMN IF EXISTS sync_user_id, DROP COLUMN IF EXISTS worklog_sync_cursor');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE ticket_systems ADD sync_user_id INT DEFAULT NULL, ADD worklog_sync_cursor BIGINT DEFAULT NULL');
-        $this->addSql('ALTER TABLE ticket_systems ADD CONSTRAINT fk_ts_sync_user FOREIGN KEY (sync_user_id) REFERENCES users (id) ON DELETE SET NULL');
-        $this->addSql('ALTER TABLE users_ticket_systems DROP COLUMN sync_enabled, DROP COLUMN sync_all');
+        $this->addSql('ALTER TABLE ticket_systems ADD COLUMN IF NOT EXISTS sync_user_id INT DEFAULT NULL, ADD COLUMN IF NOT EXISTS worklog_sync_cursor BIGINT DEFAULT NULL');
+        $this->addSql('ALTER TABLE ticket_systems ADD CONSTRAINT fk_ts_sync_user FOREIGN KEY IF NOT EXISTS (sync_user_id) REFERENCES users (id) ON DELETE SET NULL');
+        $this->addSql('ALTER TABLE users_ticket_systems DROP COLUMN IF EXISTS sync_enabled, DROP COLUMN IF EXISTS sync_all');
     }
 }
