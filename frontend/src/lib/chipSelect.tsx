@@ -40,7 +40,7 @@ export function ChipSelect(props: {
   const initialValues = (): string[] => {
     const raw = props.initial
     if (Array.isArray(raw)) {
-      return (raw as unknown[]).map((value) => Number(value)).filter((value) => value > 0).map(String)
+      return (raw as unknown[]).map(Number).filter((value) => value > 0).map(String)
     }
     if (props.field.stringValue === true) {
       const value = raw === undefined || raw === null ? '' : String(raw)

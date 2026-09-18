@@ -219,7 +219,7 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
   // (Solid applies the row update synchronously when the page signal changes).
   function focusPageLanding(edge: 'first' | 'last', column: number): void {
     const rows = dataRows()
-    const target = edge === 'first' ? rows[0] : rows[rows.length - 1]
+    const target = edge === 'first' ? rows[0] : rows.at(-1)
     if (target === undefined) {
       return
     }
@@ -432,7 +432,7 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
         // its first row); otherwise it moves a viewport of rows within the page.
         // `cell` is the focused cell (always set here), so its row is reliable —
         // and never undefined-matches an empty dataRows().
-        if (cell.parentElement === rows[rows.length - 1] && options.onPageEdge?.('next')) {
+        if (cell.parentElement === rows.at(-1) && options.onPageEdge?.('next')) {
           focusPageLanding('first', c)
         } else {
           focusAt(r + pageRows(), c)

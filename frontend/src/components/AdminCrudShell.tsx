@@ -29,7 +29,7 @@ function csvCell(value: string): string {
   // still run "   =cmd", so a non-trimmed test could be bypassed.
   const safe = /^[=+\-@]/.test(value.trim()) ? `'${value}` : value
 
-  return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
+  return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe
 }
 
 
@@ -392,7 +392,7 @@ export function AdminCrudShell(props: {
     // editor so the inline and modal paths can't both save the same row.
     const rowId = row !== null ? Number(row.id) : 0
     const draft = rowId ? editor.takeDraft(rowId) : undefined
-    const form = draft !== undefined ? draft : props.descriptor.toForm(row)
+    const form = draft ?? props.descriptor.toForm(row)
     // reconcile replaces every key (and drops stale ones) in one diffed update.
     setValues(reconcile(form))
     setEditing(form)

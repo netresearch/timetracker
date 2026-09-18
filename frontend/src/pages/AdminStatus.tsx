@@ -99,7 +99,7 @@ function statusLabel(status: string): string {
 
 // Config keys are technical identifiers (driver, save_path, totp_users…); render
 // them humanized rather than carrying an i18n entry per key.
-const humanizeKey = (key: string): string => key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
+const humanizeKey = (key: string): string => key.replaceAll('_', ' ').replace(/^./, (c) => c.toUpperCase())
 
 function fmt(value: unknown): string {
   if (value === null || value === undefined || value === '') {
