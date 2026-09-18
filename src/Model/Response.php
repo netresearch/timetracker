@@ -26,10 +26,16 @@ declare(strict_types=1);
 
 namespace App\Model;
 
-use Override;
-
 /**
  * Class Response.
+ *
+ * Marker type for the JSON/AJAX replies of the controller actions.
+ *
+ * Until 2026-09 this overrode send() to add `Access-Control-Allow-Origin: *`
+ * (php:S5122). The SPA is served from the same origin as the API and no
+ * cross-origin client is documented, so the wildcard only widened the reach of
+ * every unauthenticated response. Cross-origin access, if it is ever needed,
+ * belongs in a CORS configuration with an explicit origin list, not here.
  *
  * @category   Netresearch
  *
@@ -40,18 +46,4 @@ use Override;
  */
 class Response extends \Symfony\Component\HttpFoundation\Response
 {
-    /**
-     * Add additional headers before sending an ajax reply to the client.
-     */
-    #[Override]
-    public function send(bool $flush = true): static
-    {
-        $this->headers->set('Access-Control-Allow-Origin', '*');
-        $this->headers->set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        $this->headers->set('Access-Control-Max-Age', '3600');
-
-        parent::send($flush);
-
-        return $this;
-    }
 }

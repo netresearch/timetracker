@@ -16,13 +16,30 @@
 # ARGS - Values provided by docker-bake.hcl (no defaults here!)
 # =============================================================================
 ARG PHP_BASE_IMAGE
-ARG NODE_VERSION
+ARG NODE_BASE_IMAGE
+ARG SYMFONY_CLI_IMAGE
 ARG COMPOSER_IMAGE
 
 # =============================================================================
 # COMPOSER - Stage to copy composer binary from
 # =============================================================================
 FROM ${COMPOSER_IMAGE} AS composer
+
+# =============================================================================
+# NODE - Stage to copy the Node.js runtime from
+#
+# Replaces `curl https://deb.nodesource.com/setup_X.x | bash -`, which executed
+# a downloaded script unverified (docker:S8482) over a redirect-capable URL
+# (docker:S6506). NODE_BASE_IMAGE's Debian release must match PHP_BASE_IMAGE's
+# (both trixie today) — node is glibc-linked and a newer build will not run on
+# an older base.
+# =============================================================================
+FROM ${NODE_BASE_IMAGE} AS node
+
+# =============================================================================
+# SYMFONY CLI - Stage to copy the symfony binary from (dev shell only)
+# =============================================================================
+FROM ${SYMFONY_CLI_IMAGE} AS symfony-cli
 
 # =============================================================================
 # BASE - Runtime with PHP extensions
@@ -79,15 +96,17 @@ FROM base AS deps
 # Get composer from official image
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 
-# Install Node.js
-ARG NODE_VERSION
+# Install Node.js (copied from the official image, see the `node` stage)
 RUN set -ex \
     && apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates \
-    && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -sf ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Bun is the package manager of the new SolidJS frontend (frontend/)
 COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
@@ -95,12 +114,15 @@ COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
 # Copy dependency manifests first (better cache). Root npm deps are just
 # Playwright + axe for e2e.
 COPY --chown=app:app package.json package-lock.json ./
-RUN npm ci
+# --ignore-scripts (docker:S6505): the only lifecycle script here is
+# playwright's browser download, and the browsers are installed explicitly in
+# the devtools stage instead — this stage never uses them.
+RUN npm ci --ignore-scripts
 
 # Root-owned and read-only for the runtime user (docker:S6504); the deps
 # stage builds as root, so bun needs no ownership change here.
 COPY frontend/package.json frontend/bun.lock ./frontend/
-RUN bun install --cwd frontend --frozen-lockfile
+RUN bun install --cwd frontend --frozen-lockfile --ignore-scripts
 
 COPY --chown=app:app composer.json composer.lock symfony.lock ./
 
@@ -151,7 +173,6 @@ USER app
 # =============================================================================
 FROM base AS devtools
 
-ARG NODE_VERSION
 ARG XDEBUG_VERSION
 
 # Reproduce the env `dev`'s composer install ran under when it was FROM deps:
@@ -164,14 +185,18 @@ ENV APP_ENV=prod
 # Get composer from official image
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 
-# Install Node.js (Playwright/chromium need it; also handy in the dev shell)
+# Install Node.js (Playwright/chromium need it; also handy in the dev shell) —
+# copied from the official image, see the `node` stage
 RUN set -ex \
     && apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates \
-    && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -sf ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Bun is the package manager of the new SolidJS frontend (frontend/)
 COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
@@ -192,10 +217,10 @@ RUN pecl install xdebug-${XDEBUG_VERSION} \
 
 COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
 
-# Install Symfony CLI
-RUN curl -sS https://get.symfony.com/cli/installer | bash \
-    && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony \
-    && mkdir -p /etc/bash_completion.d \
+# Install Symfony CLI — copied from the official image instead of piping
+# get.symfony.com's installer into bash unverified (docker:S8482/S6506)
+COPY --from=symfony-cli /usr/local/bin/symfony /usr/local/bin/symfony
+RUN mkdir -p /etc/bash_completion.d \
     && symfony completion bash > /etc/bash_completion.d/symfony \
     && echo 'source /etc/bash_completion.d/symfony' >> /etc/bash.bashrc
 
@@ -206,8 +231,12 @@ RUN curl -sS https://get.symfony.com/cli/installer | bash \
 # it survives the cleanup. Kept LAST of the manifest-independent installs so a
 # package.json bump doesn't invalidate the apt/pecl layers above.
 COPY --chown=app:app package.json package-lock.json ./
-RUN npm ci \
-    && npx playwright install chromium --with-deps \
+# --ignore-scripts (docker:S6505) skips playwright's implicit browser download;
+# the explicit install below is the one that counts. Calling the binary from
+# node_modules rather than `npx` keeps the lockfile's version authoritative
+# instead of resolving a package on demand (docker:S6505/S8543).
+RUN npm ci --ignore-scripts \
+    && ./node_modules/.bin/playwright install chromium --with-deps \
     && rm -rf node_modules package.json package-lock.json
 
 # =============================================================================
