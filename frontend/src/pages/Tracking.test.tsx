@@ -1053,7 +1053,7 @@ describe('Tracking (Worklog grid)', () => {
     fireEvent.click(getByRole('button', { name: 'Continue' }))
 
     // Original entry + the cloned new row both show the customer 'ACME'.
-    await waitFor(() => expect(getAllByRole('gridcell', { name: 'ACME' }).length).toBe(2))
+    await waitFor(() => expect(getAllByRole('gridcell', { name: 'ACME' })).toHaveLength(2))
 
     unmount()
   })
@@ -1344,9 +1344,9 @@ describe('Tracking (Worklog grid)', () => {
     fireEvent.keyDown(document.body, { key: 'c', altKey: true })
 
     // The cloned new row carries the cursor row's customer + ticket (not ABC-1/ACME).
-    await waitFor(() => expect(getAllByRole('gridcell', { name: 'BroCorp' }).length).toBe(2))
+    await waitFor(() => expect(getAllByRole('gridcell', { name: 'BroCorp' })).toHaveLength(2))
     const xyzLinks = Array.from(container.querySelectorAll('a.ticket-link')).filter((a) => a.textContent === 'XYZ-9')
-    expect(xyzLinks.length).toBe(2)
+    expect(xyzLinks).toHaveLength(2)
 
     unmount()
   })

@@ -98,7 +98,7 @@ export default function Admin() {
             links[0]?.focus()
           } else if (event.key === 'End') {
             event.preventDefault()
-            links[links.length - 1]?.focus()
+            links.at(-1)?.focus()
           }
         }}
       >

@@ -19,7 +19,7 @@ describe('ChipSelect (jsdom)', () => {
   it('renders the options and filters as you type', async () => {
     render(() => <ChipSelect field={field} label="Customer" initial={0} options={options} multiple={false} onCommit={vi.fn()} onCancel={vi.fn()} />)
 
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
     fireEvent.input(screen.getByRole('combobox'), { target: { value: 'Ap' } })
     await waitFor(() => {
       const labels = screen.getAllByRole('option').map((o) => o.textContent)
@@ -31,7 +31,7 @@ describe('ChipSelect (jsdom)', () => {
   it('picking an option commits its numeric id', async () => {
     const onCommit = vi.fn()
     render(() => <ChipSelect field={field} label="Customer" initial={0} options={options} multiple={false} onCommit={onCommit} onCancel={vi.fn()} />)
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
 
     fireEvent.click(screen.getByRole('option', { name: 'Zeus' }))
     await waitFor(() => expect(onCommit).toHaveBeenCalledWith(8, expect.anything()))
@@ -42,7 +42,7 @@ describe('ChipSelect (jsdom)', () => {
     // closed and commit selected()=0 instead of selecting the highlighted option.
     const onCommit = vi.fn()
     render(() => <ChipSelect field={field} label="Customer" initial={0} options={options} multiple={false} onCommit={onCommit} onCancel={vi.fn()} />)
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
 
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Enter' })
     await Promise.resolve()
@@ -78,7 +78,7 @@ describe('ChipSelect (jsdom)', () => {
     const onCommit = vi.fn()
     const onCancel = vi.fn()
     render(() => <ChipSelect field={field} label="Customer" initial={7} options={options} multiple={false} onCommit={onCommit} onCancel={onCancel} />)
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
 
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Escape' })
     await waitFor(() => expect(onCancel).toHaveBeenCalledTimes(1))
@@ -95,7 +95,7 @@ describe('ChipSelect (jsdom)', () => {
     const noOptions: OptionLookup = () => []
     const onCommit = vi.fn()
     render(() => <ChipSelect field={typeField} label="Type" initial="DEV" options={noOptions} multiple={false} onCommit={onCommit} onCancel={vi.fn()} />)
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
 
     // The existing value is preserved and shown as the checked option (not lost to NaN).
     expect(screen.getByRole('option', { name: 'DEV' })).toHaveAttribute('data-state', 'checked')
@@ -109,7 +109,7 @@ describe('ChipSelect (jsdom)', () => {
     const onCommit = vi.fn()
     render(() => <ChipSelect field={tsField} label="Ticket system" initial={5} options={tsOptions} multiple={false} onCommit={onCommit} onCancel={vi.fn()} />)
     // 2 real options + the prepended clear option.
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
 
     fireEvent.click(screen.getByRole('option', { name: /None/ }))
     await waitFor(() => expect(onCommit).toHaveBeenCalledWith(0, expect.anything()))
@@ -121,19 +121,19 @@ describe('ChipSelect (jsdom)', () => {
 
   it('multi: shows the initial selection as chips and adds another on pick', async () => {
     render(() => <ChipSelect field={teamsField} label="Teams" initial={[1]} options={teamOptions} multiple onCommit={vi.fn()} onCancel={vi.fn()} />)
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
 
-    expect(screen.getAllByRole('listitem').length).toBe(1) // initial chip (id 1 = Backend)
+    expect(screen.getAllByRole('listitem')).toHaveLength(1) // initial chip (id 1 = Backend)
     fireEvent.click(screen.getByRole('option', { name: 'Design' })) // add id 3 (stays open for multi)
-    await waitFor(() => expect(screen.getAllByRole('listitem').length).toBe(2))
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(2))
   })
 
   it('multi: removing a chip with its × drops it from the selection', async () => {
     render(() => <ChipSelect field={teamsField} label="Teams" initial={[1, 2]} options={teamOptions} multiple onCommit={vi.fn()} onCancel={vi.fn()} />)
-    await waitFor(() => expect(screen.getAllByRole('listitem').length).toBe(2))
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(2))
 
     fireEvent.click(screen.getByRole('button', { name: /Backend/ })) // the × on the Backend chip
-    await waitFor(() => expect(screen.getAllByRole('listitem').length).toBe(1))
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(1))
   })
 
   it('multi: commits the selected ids as a number[] on Tab (add)', async () => {
@@ -141,10 +141,10 @@ describe('ChipSelect (jsdom)', () => {
     // multi commits not on pick but on the deferred finish (Tab / blur / Enter-closed).
     const onCommit = vi.fn()
     render(() => <ChipSelect field={teamsField} label="Teams" initial={[1]} options={teamOptions} multiple onCommit={onCommit} onCancel={vi.fn()} />)
-    await waitFor(() => expect(screen.getAllByRole('option').length).toBe(3))
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(3))
 
     fireEvent.click(screen.getByRole('option', { name: 'Design' })) // add id 3
-    await waitFor(() => expect(screen.getAllByRole('listitem').length).toBe(2))
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(2))
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Tab' })
     await waitFor(() => expect(onCommit).toHaveBeenCalledWith([1, 3], expect.anything()))
   })
@@ -164,10 +164,10 @@ describe('ChipSelect (jsdom)', () => {
   it('multi: removing the last chip commits an empty array on Tab', async () => {
     const onCommit = vi.fn()
     render(() => <ChipSelect field={teamsField} label="Teams" initial={[1]} options={teamOptions} multiple onCommit={onCommit} onCancel={vi.fn()} />)
-    await waitFor(() => expect(screen.getAllByRole('listitem').length).toBe(1))
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(1))
 
     fireEvent.click(screen.getByRole('button', { name: /Backend/ }))
-    await waitFor(() => expect(screen.queryAllByRole('listitem').length).toBe(0))
+    await waitFor(() => expect(screen.queryAllByRole('listitem')).toHaveLength(0))
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Tab' })
     await waitFor(() => expect(onCommit).toHaveBeenCalledWith([], expect.anything()))
   })

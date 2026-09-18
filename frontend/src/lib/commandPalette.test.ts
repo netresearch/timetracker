@@ -8,11 +8,11 @@ describe('commandPalette registry', () => {
   it('register adds commands; the disposer removes exactly those', () => {
     const before = registeredCommands().length
     const off = registerCommands([make('a'), make('b')])
-    expect(registeredCommands().length).toBe(before + 2)
+    expect(registeredCommands()).toHaveLength(before + 2)
     expect(registeredCommands().some((command) => command.id === 'a')).toBe(true)
 
     off()
-    expect(registeredCommands().length).toBe(before)
+    expect(registeredCommands()).toHaveLength(before)
     expect(registeredCommands().some((command) => command.id === 'a')).toBe(false)
   })
 

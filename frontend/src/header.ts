@@ -82,7 +82,7 @@ export function initialsFrom(name: string): string {
   if (parts.length === 1) {
     return first.slice(0, 2).toUpperCase()
   }
-  const last = parts[parts.length - 1] ?? first
+  const last = parts.at(-1) ?? first
 
   return `${first[0] ?? ''}${last[0] ?? ''}`.toUpperCase()
 }
@@ -437,7 +437,7 @@ export function handleShortcut(event: KeyboardEvent): void {
       if (event.key === 'ArrowDown') {
         items[0]?.focus()
       } else {
-        items[items.length - 1]?.focus()
+        items.at(-1)?.focus()
       }
 
       return
@@ -457,7 +457,7 @@ export function handleShortcut(event: KeyboardEvent): void {
       } else if (event.key === 'Home') {
         items[0]?.focus()
       } else {
-        items[items.length - 1]?.focus()
+        items.at(-1)?.focus()
       }
 
       return
@@ -520,7 +520,7 @@ export function handleShortcut(event: KeyboardEvent): void {
       } else if (event.key === 'Home') {
         items[0]?.focus()
       } else if (event.key === 'End') {
-        items[items.length - 1]?.focus()
+        items.at(-1)?.focus()
       } else {
         // ArrowDown descends only into a real arrow-navigable target — the
         // active sub-nav, the search field, or an arrow-exitable grid — each of
