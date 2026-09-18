@@ -34,10 +34,10 @@ afterEach(() => {
 describe('enableGridNavigation', () => {
   it('sets grid roles and a single roving tab stop', () => {
     expect(grid.table.getAttribute('role')).toBe('grid')
-    expect(grid.table.querySelectorAll('[role="row"]').length).toBe(3)
+    expect(grid.table.querySelectorAll('[role="row"]')).toHaveLength(3)
     expect(grid.table.querySelector('[role="columnheader"]')).not.toBeNull()
     expect(grid.table.querySelector('[role="gridcell"]')).not.toBeNull()
-    expect(grid.table.querySelectorAll('[tabindex="0"]').length).toBe(1)
+    expect(grid.table.querySelectorAll('[tabindex="0"]')).toHaveLength(1)
   })
 
   it('exposes grid row/column counts and indices', () => {
@@ -278,7 +278,7 @@ describe('enableGridNavigation', () => {
     const betaRow = (document.activeElement as HTMLElement).closest('tr')
     expect(betaRow?.getAttribute('aria-current')).toBe('true')
     // Only one current row at a time.
-    expect(grid.table.querySelectorAll('tr[aria-current="true"]').length).toBe(1)
+    expect(grid.table.querySelectorAll('tr[aria-current="true"]')).toHaveLength(1)
   })
 
   it('Enter enters the cell, Tab/Shift+Tab reach every control, Escape returns', () => {
@@ -435,8 +435,8 @@ describe('inline-edit hooks', () => {
 
     handle!.move('down')
     expect((document.activeElement as HTMLElement).textContent).toBe('Beta')
-    expect(table.querySelectorAll('[tabindex="0"]').length).toBe(1)
-    expect(table.querySelectorAll('tr[aria-current="true"]').length).toBe(1)
+    expect(table.querySelectorAll('[tabindex="0"]')).toHaveLength(1)
+    expect(table.querySelectorAll('tr[aria-current="true"]')).toHaveLength(1)
 
     handle!.focusActive()
     expect((document.activeElement as HTMLElement).textContent).toBe('Beta')

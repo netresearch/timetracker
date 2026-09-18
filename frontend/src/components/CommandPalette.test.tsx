@@ -65,7 +65,7 @@ describe('CommandPalette', () => {
     await waitFor(() => expect(screen.getByRole('combobox')).toBeInTheDocument())
 
     fireEvent.input(screen.getByRole('combobox'), { target: { value: 'zzzz-no-such-command' } })
-    await waitFor(() => expect(screen.queryAllByRole('option').length).toBe(0))
+    await waitFor(() => expect(screen.queryAllByRole('option')).toHaveLength(0))
     expect(document.querySelector('.command-empty')).not.toBeNull()
   })
 })

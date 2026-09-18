@@ -70,7 +70,7 @@ describe('gridNav cursor restoration across a reorder (#702)', () => {
 
     expect(document.activeElement).toBe(document.body)
     // The grid still has exactly one tab stop, so it stays reachable by Tab.
-    expect(container.querySelectorAll('[tabindex="0"]').length).toBe(1)
+    expect(container.querySelectorAll('[tabindex="0"]')).toHaveLength(1)
     unmount()
   })
 

@@ -67,8 +67,8 @@ describe('EffortChart', () => {
     const { container, unmount } = render(() => <EffortChart title="Effort by customer" rows={rows} />)
 
     expect(container.querySelector('caption')).toHaveTextContent('Effort by customer')
-    expect(container.querySelectorAll('th[scope="col"]').length).toBe(3)
-    expect(container.querySelectorAll('th[scope="row"]').length).toBe(rows.length)
+    expect(container.querySelectorAll('th[scope="col"]')).toHaveLength(3)
+    expect(container.querySelectorAll('th[scope="row"]')).toHaveLength(rows.length)
     expect(await axe(container)).toHaveNoViolations()
     unmount()
   })
@@ -88,7 +88,7 @@ describe('EffortChart', () => {
       // a zero-agent row shows a dash, never folded into the human hours.
       expect(getByRole('cell', { name: formatMinutes(90) })).toBeInTheDocument()
       const dashes = getAllByRole('cell').filter((cell) => cell.textContent === '—')
-      expect(dashes.length).toBe(1)
+      expect(dashes).toHaveLength(1)
       unmount()
     })
 

@@ -157,7 +157,7 @@ describe('Admin', () => {
 
     await waitFor(() => expect(getByRole('gridcell', { name: 'ACME' })).toBeInTheDocument())
     // Only the one well-formed customer renders; the malformed rows are dropped.
-    expect(queryAllByRole('row').length).toBe(2) // header + 1 data row
+    expect(queryAllByRole('row')).toHaveLength(2) // header + 1 data row
 
     unmount()
   })
@@ -644,7 +644,7 @@ describe('Admin list — inactive filter, paging, CSV export', () => {
     await waitFor(() => expect(getByRole('gridcell', { name: 'C001' })).toBeInTheDocument())
 
     // First page renders only PAGE_SIZE (50) data rows + the header row.
-    expect(getAllByRole('row').length).toBe(51)
+    expect(getAllByRole('row')).toHaveLength(51)
     expect(queryByRole('gridcell', { name: 'C051' })).not.toBeInTheDocument()
 
     fireEvent.click(getByRole('button', { name: 'Next' }))
