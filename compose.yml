@@ -92,7 +92,7 @@ services:
 
   # Production web server
   httpd:
-    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    image: nginx:1.31-alpine@sha256:62ff2089abf5a9ed33bd232895bef5e22f7bb4b200675cec49a5ebc48e3d4ac8
     volumes:
       - app-pub:/var/www/html/public
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -107,7 +107,7 @@ services:
 
   # Development web server
   httpd-dev:
-    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    image: nginx:1.31-alpine@sha256:62ff2089abf5a9ed33bd232895bef5e22f7bb4b200675cec49a5ebc48e3d4ac8
     volumes:
       - ./public:/var/www/html/public
       - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf
@@ -122,7 +122,7 @@ services:
 
   # Production database
   db:
-    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
+    image: mariadb:13.0@sha256:d4fdec0510ad498e4f3127da30a99df3745bd6d5e611ae6ac5f76403d9284a8d
     environment:
       # Run mariadb-upgrade when the datadir predates the image (CodeRabbit on
       # #723). A 12.1 datadir does start and serve under 12.3, but the
@@ -148,7 +148,7 @@ services:
 
   # Unit test database (for PHPUnit tests)
   db_unittest:
-    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
+    image: mariadb:13.0@sha256:d4fdec0510ad498e4f3127da30a99df3745bd6d5e611ae6ac5f76403d9284a8d
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${UNITTEST_DB_ROOT_PASSWORD:-global123}
@@ -167,7 +167,7 @@ services:
 
   # E2E test database (separate from dev to avoid data conflicts)
   db-e2e:
-    image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
+    image: mariadb:13.0@sha256:d4fdec0510ad498e4f3127da30a99df3745bd6d5e611ae6ac5f76403d9284a8d
     environment:
       - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${E2E_DB_ROOT_PASSWORD:-global123}
@@ -218,7 +218,7 @@ services:
 
   # E2E test web server (port 8766 to avoid conflict with dev)
   httpd-e2e:
-    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    image: nginx:1.31-alpine@sha256:62ff2089abf5a9ed33bd232895bef5e22f7bb4b200675cec49a5ebc48e3d4ac8
     volumes:
       - ./public:/var/www/html/public
       - ./docker/nginx/e2e.conf:/etc/nginx/conf.d/default.conf
