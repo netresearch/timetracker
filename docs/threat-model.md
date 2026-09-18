@@ -13,12 +13,13 @@ The implementation detail behind every control named here is in [`security.md`](
 | Customer, project and ticket structure | Reveals who a company works for and on what. Commercially sensitive. |
 | Stored Jira OAuth tokens | Let the holder act in the customer's Jira as the user who granted them. |
 | LDAP bind credentials | Read access to the corporate directory. |
+| Local password hashes and TOTP secrets | On the user rows of accounts that do not authenticate against the directory. A database leak makes those hashes crackable offline. |
 | The application secret | Signs CSRF tokens and, without a dedicated key, encrypts the Jira tokens. |
 | The published container image | Runs in every deployment. Compromising the build reaches every installation at once. |
 
 ## Who the adversaries are
 
-1. **An unauthenticated network attacker** who can reach the web interface. Cannot authenticate without a directory account.
+1. **An unauthenticated network attacker** who can reach the web interface. Needs a valid account — a directory account, a local one, or an enrolled passkey.
 2. **An authenticated employee** (`DEV`) trying to see or change other people's entries, or to raise their own privileges.
 3. **A team lead or controller** (`PL`, `CTL`) trying to reach data outside their teams or customers.
 4. **A compromised or hostile external system** — the Jira instance, the Personio API, the LDAP directory — returning malicious data.
@@ -43,8 +44,8 @@ Four boundaries carry untrusted data: the browser, the MCP client, and the two o
 ### 1. Unauthenticated access to the application
 
 **Threat** — reaching time data without an account.
-**Controls** — every route except the login endpoints requires authentication; authentication runs against the corporate LDAP directory, so there is no local password store to attack; optional WebAuthn second factor (`REQUIRE_TWO_FACTOR`, `WEBAUTHN_RP_ID`).
-**Residual risk** — the second factor is optional. A deployment that leaves `REQUIRE_TWO_FACTOR` off is as strong as the directory password alone.
+**Controls** — every route except the login endpoints requires authentication. There are three ways in, and `LoginFormAuthenticator` routes each user to exactly one of them: an LDAP bind against the corporate directory, a local password verified against an `auto` hash on the user row (ADR-018 D1), or a passkey over WebAuthn as a login of its own (ADR-018 D3), not as a second factor. `login_throttling` caps a username plus IP at five attempts. `UserChecker` refuses a deactivated account on every path. The second factor is TOTP (ADR-018 D2): it challenges only users with an enrolled secret.
+**Residual risk** — two, and both are deployment decisions. Local accounts put offline-crackable password hashes in the database, which an LDAP-only deployment would not have; the firewall configuration says as much where it explains the throttling. And `REQUIRE_TWO_FACTOR` ships as `false`, so unless a deployment turns it on and users enrol, an account is as strong as its single factor.
 
 ### 2. LDAP injection during authentication
 
