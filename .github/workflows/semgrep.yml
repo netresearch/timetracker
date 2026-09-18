@@ -49,7 +49,11 @@ jobs:
       # version inside a `run:` line without it.
       - name: Install Semgrep
         # renovate: datasource=pypi depName=semgrep
-        run: pip install semgrep==1.177.0
+        # --only-binary=:all: refuses source distributions, so no package's
+        # setup script runs during the install. Block scalar because the flag
+        # contains a colon followed by a space, which ends a plain YAML scalar.
+        run: |
+          pip install --only-binary=:all: semgrep==1.177.0
 
       # Registry rulesets, not Semgrep AppSec Platform: no SEMGREP_APP_TOKEN is
       # configured and none is needed for the open rulesets.
