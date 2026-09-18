@@ -943,7 +943,7 @@ private function validateTimeRange(DateTime $start, DateTime $end): ValidationRe
 
 What branch protection on `main` enforces today, read back from the API on 2026-09-18:
 
-- ✅ **`CI Success` and `DCO` are required status checks.** `CI Success` is the aggregate job in [`ci.yml`](.github/workflows/ci.yml) over the frontend build, lint and static analysis, unit, integration and E2E tests. Codecov and SonarCloud report but do not gate.
+- ✅ **`CI Success` and `DCO` are required status checks.** `CI Success` is the aggregate job in [`ci.yml`](.github/workflows/ci.yml) over the frontend build, lint and static analysis, unit, integration and E2E tests, and the schema-drift check that compares `sql/full.sql` against the schema the migrations produce. Codecov and SonarCloud report but do not gate.
 - ✅ **The branch must be up to date with `main`** (`strict` required status checks), so a moved base needs a rebase and a re-run.
 - ✅ **All review conversations resolved.**
 - ✅ **Every commit signed** — pushes with an unsigned commit are rejected.

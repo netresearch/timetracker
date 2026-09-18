@@ -124,6 +124,11 @@ services:
   db:
     image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
+      # Run mariadb-upgrade when the datadir predates the image (CodeRabbit on
+      # !723). A 12.1 datadir does start and serve under 12.3, but the
+      # entrypoint then logs "MariaDB upgrade ... required, but skipped" and
+      # leaves the system tables and the healthcheck users un-migrated.
+      - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${DB_USER:-timetracker}
       - MYSQL_PASSWORD=${DB_PASSWORD:-timetracker}
@@ -145,6 +150,7 @@ services:
   db_unittest:
     image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
+      - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${UNITTEST_DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${UNITTEST_DB_USER:-unittest}
       - MYSQL_PASSWORD=${UNITTEST_DB_PASSWORD:-unittest}
@@ -163,6 +169,7 @@ services:
   db-e2e:
     image: mariadb:12.3@sha256:805c8e104bd563d5bfa24fadd3f31cd419ea859cb5277f32b5dbf2db714f9ed1
     environment:
+      - MARIADB_AUTO_UPGRADE=1
       - MYSQL_ROOT_PASSWORD=${E2E_DB_ROOT_PASSWORD:-global123}
       - MYSQL_USER=${E2E_DB_USER:-timetracker}
       - MYSQL_PASSWORD=${E2E_DB_PASSWORD:-timetracker}
