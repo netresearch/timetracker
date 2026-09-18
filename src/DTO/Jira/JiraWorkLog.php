@@ -43,17 +43,49 @@ final readonly class JiraWorkLog
         $author = isset($data['author']) && is_object($data['author']) ? (array) $data['author'] : [];
 
         return new self(
-            id: isset($data['id']) && is_scalar($data['id']) ? (int) $data['id'] : null,
-            self: isset($data['self']) && is_string($data['self']) ? $data['self'] : null,
-            comment: isset($data['comment']) && is_string($data['comment']) ? $data['comment'] : null,
-            started: isset($data['started']) && is_string($data['started']) ? $data['started'] : null,
-            timeSpentSeconds: isset($data['timeSpentSeconds']) && is_scalar($data['timeSpentSeconds']) ? (int) $data['timeSpentSeconds'] : null,
-            updated: isset($data['updated']) && is_string($data['updated']) ? $data['updated'] : null,
-            authorAccountId: isset($author['accountId']) && is_string($author['accountId']) ? $author['accountId'] : null,
-            authorName: isset($author['name']) && is_string($author['name']) ? $author['name'] : null,
-            authorEmail: isset($author['emailAddress']) && is_string($author['emailAddress']) ? $author['emailAddress'] : null,
-            issueId: isset($data['issueId']) && is_scalar($data['issueId']) ? (string) $data['issueId'] : null,
+            id: self::intOrNull($data, 'id'),
+            self: self::stringOrNull($data, 'self'),
+            comment: self::stringOrNull($data, 'comment'),
+            started: self::stringOrNull($data, 'started'),
+            timeSpentSeconds: self::intOrNull($data, 'timeSpentSeconds'),
+            updated: self::stringOrNull($data, 'updated'),
+            authorAccountId: self::stringOrNull($author, 'accountId'),
+            authorName: self::stringOrNull($author, 'name'),
+            authorEmail: self::stringOrNull($author, 'emailAddress'),
+            issueId: self::scalarAsStringOrNull($data, 'issueId'),
         );
+    }
+
+    /**
+     * A key Jira sends as a JSON string, taken only when it really is one.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function stringOrNull(array $data, string $key): ?string
+    {
+        return isset($data[$key]) && is_string($data[$key]) ? $data[$key] : null;
+    }
+
+    /**
+     * A numeric key. Jira sends ids as either a number or a string, so any
+     * scalar is accepted and cast.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function intOrNull(array $data, string $key): ?int
+    {
+        return isset($data[$key]) && is_scalar($data[$key]) ? (int) $data[$key] : null;
+    }
+
+    /**
+     * Like intOrNull, but kept as a string — issueId is an identifier, not a
+     * number to do arithmetic on.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function scalarAsStringOrNull(array $data, string $key): ?string
+    {
+        return isset($data[$key]) && is_scalar($data[$key]) ? (string) $data[$key] : null;
     }
 
     /**
