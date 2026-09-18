@@ -19,7 +19,7 @@
 # image. NOTE: no bot updates this file - Dependabot's docker ecosystem reads
 # Dockerfiles and its docker-compose ecosystem reads compose.yml, and neither
 # parses HCL (Renovate, which has a customManager for it, is not installed on
-# this repository). These four digests are therefore bumped by hand. The base
+# this repository). All five digests are therefore bumped by hand. The base
 # stage runs `apt-get upgrade -y`, so OS-level CVEs are still picked up at
 # build time while a digest sits still.
 
