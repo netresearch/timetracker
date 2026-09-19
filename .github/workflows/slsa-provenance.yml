@@ -61,16 +61,23 @@ jobs:
           echo "name=$name" >> "$GITHUB_OUTPUT"
           cat "${name}.sha256"
 
+      # base64-subjects takes base64-encoded `sha256sum` OUTPUT — the literal
+      # "<digest>  <name>" line — not JSON. The generator's README spells out
+      # the decoded form it expects. Encoding a JSON array here parses as no
+      # subject at all and fails the provenance job on every release, which is
+      # the failure this workflow exists to stop having.
+      #
+      # The .sha256 file uploaded to the release is exactly that line, so it is
+      # the one encoded: the attested subject and the published checksum cannot
+      # drift apart.
       - name: Compute provenance subjects
         id: subjects
         env:
           NAME: ${{ steps.archive.outputs.name }}
         run: |
           set -euo pipefail
-          digest="$(sha256sum "$NAME" | cut -d' ' -f1)"
-          subjects="$(jq -nc --arg n "$NAME" --arg d "$digest" \
-            '[{name:$n, digest:{sha256:$d}}]' | base64 -w0)"
-          echo "subjects=$subjects" >> "$GITHUB_OUTPUT"
+          cat "${NAME}.sha256"
+          echo "subjects=$(base64 -w0 < "${NAME}.sha256")" >> "$GITHUB_OUTPUT"
 
       - name: Attach the archive to the release
         env:
