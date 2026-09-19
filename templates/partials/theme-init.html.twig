@@ -9,7 +9,7 @@
    rendered in the header (partials/header.html.twig) — a no-op on pages
    without that button. Single source of truth for theming — the Solid app
    deliberately ships no theme code (see frontend/src/App.tsx). #}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function () {
     var KEY = 'timetracker-theme';
     function read() {
