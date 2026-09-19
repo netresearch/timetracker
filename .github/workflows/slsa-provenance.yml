@@ -40,9 +40,14 @@ jobs:
           ref: ${{ github.event.release.tag_name }}
           persist-credentials: false
 
-      # `git archive` is deterministic for a given tree: same tag, same bytes.
-      # --format=tar plus a fixed gzip level keeps the digest stable across
-      # reruns, which is what makes re-verification meaningful.
+      # Archives HEAD, not the tag name: checkout resolved `ref` to this commit
+      # already, and a shallow clone need not carry the tag ref itself. Same
+      # bytes either way, one fewer thing that has to be present.
+      #
+      # `git archive` stamps entries with the commit time, and `gzip -n` writes
+      # no timestamp or name, so two runs over the same tag with the same git
+      # produce the same digest. Across git versions that is not guaranteed —
+      # the archive is a stable subject to attest, not a reproducibility claim.
       - name: Build the source archive
         id: archive
         env:
@@ -50,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           name="timetracker-${TAG}-source.tar.gz"
-          git archive --format=tar --prefix="timetracker-${TAG}/" "$TAG" \
+          git archive --format=tar --prefix="timetracker-${TAG}/" HEAD \
             | gzip -9 -n > "$name"
           sha256sum "$name" > "${name}.sha256"
           echo "name=$name" >> "$GITHUB_OUTPUT"
