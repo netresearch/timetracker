@@ -42,9 +42,12 @@ final class ContentSecurityPolicyBuilderTest extends TestCase
     {
         yield 'plain host' => ['https://nav.example.com/menu.html', 'frame-src https://nav.example.com'];
         yield 'explicit port' => ['https://nav.example.com:8443/menu', 'frame-src https://nav.example.com:8443'];
-        yield 'http' => ['http://nav.internal/menu', 'frame-src http://nav.internal'];
         yield 'unset' => ['', "frame-src 'none'"];
         yield 'unparsable' => ['not a url', "frame-src 'none'"];
+        // Not accommodated on purpose: a plaintext origin in frame-src writes
+        // an active-content downgrade into the policy, and an https deployment
+        // blocks that iframe as mixed content regardless.
+        yield 'plaintext origin' => ['http://nav.internal/menu', "frame-src 'none'"];
     }
 
     /**
