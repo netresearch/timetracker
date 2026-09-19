@@ -45,7 +45,6 @@ This project implements several security measures:
 - Role-based access control (DEV, PL, CTL, ADMIN)
 - Stateless CSRF tokens on the login and logout flows, and `SameSite=Lax` on the session cookie
 - AES-256-GCM encryption for sensitive tokens
-- Strict Content Security Policy
 - Automated dependency updates via GitHub Dependabot ([.github/dependabot.yml](.github/dependabot.yml))
 - CodeQL code scanning ([codeql.yml](.github/workflows/codeql.yml)) and npm dependency audits ([security.yml](.github/workflows/security.yml)) in CI; `composer audit` via `make audit`
 - OpenSSF Scorecard and Best Practices compliance

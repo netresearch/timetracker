@@ -72,8 +72,10 @@ Four boundaries carry untrusted data: the browser, the MCP client, and the two o
 ### 6. Cross-site scripting
 
 **Threat** — script injected through a project name, a ticket summary pulled from Jira, or a free-text entry description.
-**Controls** — the SolidJS frontend escapes interpolated values; a strict Content Security Policy; Twig autoescaping on the server-rendered shell.
-**Residual risk** — data arriving from Jira is attacker-influenced whenever the customer's Jira is. It is rendered as text, never as markup.
+**Controls** — the SolidJS frontend escapes interpolated values, and Twig autoescapes the server-rendered shell. `templates/login.html.twig` passes `JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT` to `|json_encode` so an encoded value cannot close a `<script>` element.
+**Residual risk** — **there is no Content Security Policy, and no security response headers at all.** Neither the nginx configuration under `docker/nginx/` nor any Symfony listener sets `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options` or `Referrer-Policy`; the only response header the application adds is a `Link` for discovery. Escaping is therefore the single layer between injected markup and execution, with nothing behind it. `docs/security.md` has carried "Add CSP for XSS prevention" as a recommendation since it was written. Tracked in [ROADMAP.md](../ROADMAP.md).
+
+Data arriving from Jira is attacker-influenced whenever the customer's Jira is. It is rendered as text, never as markup.
 
 ### 7. Hostile data from Jira or Personio
 
