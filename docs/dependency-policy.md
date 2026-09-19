@@ -23,7 +23,7 @@ Adding a heavy dependency is one of the things [AGENTS.md](../AGENTS.md) says to
 | Frontend (bun) | `frontend/bun.lock`, committed. |
 | E2E tooling (npm) | `package-lock.json`, committed. |
 | GitHub Actions | Third-party actions pinned to a full commit SHA with the version in a trailing comment. Reusable workflows from `netresearch/.github` use `@main` by convention — they are inside our own trust boundary. |
-| Container base images | Pinned by digest in `compose.yml` and in the `Dockerfile`. |
+| Container base images | Pinned by digest in `compose.yml`, and in `docker-bake.hcl` for everything the image build consumes. The `Dockerfile` itself carries no digest: it takes each base as an `ARG` (`PHP_BASE_IMAGE`, `NODE_BASE_IMAGE`, `SYMFONY_CLI_IMAGE`, `BUN_IMAGE`, `COMPOSER_IMAGE`), and the bake file supplies the pinned value. |
 
 An `overrides` or `resolutions` entry that exists to force a vulnerable transitive package upwards names the advisory in a comment or in the commit message, and its floor is the **first patched version**, not the version that happened to be current when it was written. A floor below the first patched version is not a fix: it merely happens to resolve to something safe today.
 
