@@ -110,7 +110,7 @@ Data arriving from Jira is attacker-influenced whenever the customer's Jira is. 
 
 **Threat** — publishing an image that nobody authorised.
 **Controls** — `main` is protected: no direct pushes, no force pushes, required checks, required signed commits; images are built only by GitHub Actions with `GITHUB_TOKEN`; signing is keyless and leaves a transparency-log record.
-**Residual risk** — `enforce_admins` is off, so a repository administrator can bypass branch protection. This is a deliberate trade-off for a single-maintainer project and is recorded in [GOVERNANCE.md](../GOVERNANCE.md).
+**Residual risk** — administrators are now bound by the branch protection too (`enforce_admins` was switched on 2026-09-19), so the bypass that used to exist is closed. What remains is that an administrator can switch it off again, which is a deliberate escape hatch for a stuck required check: the setting is a toggle, not a lock. The audit log records who flipped it.
 
 ### 13. Denial of service
 
