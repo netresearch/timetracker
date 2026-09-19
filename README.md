@@ -264,6 +264,11 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md)
 first — it covers the workflow (fork → branch → PR), Conventional Commits,
 the DCO sign-off requirement, and the quality gates your change must pass.
 
+Who decides what, and why no approving review is required, is described in
+[GOVERNANCE.md](GOVERNANCE.md); the maintainers are named in
+[MAINTAINERS.md](MAINTAINERS.md), and what is planned next is in
+[ROADMAP.md](ROADMAP.md).
+
 Good first steps: check the
 [open issues](https://github.com/netresearch/timetracker/issues) or improve
 the documentation.

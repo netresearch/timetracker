@@ -1,0 +1,94 @@
+name: Semgrep
+
+# Static analysis for PHP. CodeQL cannot analyse PHP at all, so without this
+# workflow the 424 files under src/ never reach code scanning — see
+# docs/vulnerability-management.md. Findings are reported to code scanning and
+# triaged there; the job does not fail the build, so a new ruleset release
+# cannot block every pull request at once.
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: '30 3 * * 1' # Weekly on Monday, an hour after CodeQL
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions: {}
+
+jobs:
+  semgrep:
+    name: Scan PHP
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+
+      # Pinned: an unpinned scanner changes its findings under you, and a
+      # scanner release then looks like a code regression. The annotation lets
+      # Renovate bump the pin; neither Dependabot nor Renovate would find a
+      # version inside a `run:` line without it.
+      - name: Install Semgrep
+        # renovate: datasource=pypi depName=semgrep
+        # --only-binary=:all: refuses source distributions, so no package's
+        # setup script runs during the install. Block scalar because the flag
+        # contains a colon followed by a space, which ends a plain YAML scalar.
+        run: |
+          pip install --only-binary=:all: semgrep==1.177.0
+
+      # Registry rulesets, not Semgrep AppSec Platform: no SEMGREP_APP_TOKEN is
+      # configured and none is needed for the open rulesets.
+      #
+      # Exit codes are load-bearing. 0 is a completed scan, findings included —
+      # `--error` is not passed, so findings alone never raise the code; 1 only
+      # appears with `--error`; 2 and above are semgrep itself failing (fatal
+      # error, unparsable config, unknown language). `continue-on-error: true`
+      # would swallow all of them, and the upload would then fail on a missing
+      # SARIF file, which reads as a broken workflow rather than a crashed
+      # scanner. So: a completed scan passes whatever it found, a crash fails
+      # the job and says why.
+      - name: Run Semgrep
+        run: |
+          set +e
+          semgrep scan \
+            --config p/php \
+            --config p/security-audit \
+            --config p/secrets \
+            --sarif \
+            --output semgrep.sarif \
+            --metrics off \
+            --exclude public/docs/swagger \
+            --exclude vendor --exclude node_modules --exclude var \
+            src config public
+          rc=$?
+          set -e
+          if [ "$rc" -gt 1 ]; then
+            echo "::error::semgrep exited $rc — the scan did not complete"
+            exit "$rc"
+          fi
+          test -s semgrep.sarif
+
+      - name: Upload SARIF to code scanning
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
