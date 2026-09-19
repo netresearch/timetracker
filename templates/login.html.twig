@@ -16,7 +16,7 @@
         {# Apply the saved light/dark preference before first paint (shared with the app). #}
         {% include 'partials/theme-init.html.twig' %}
         {{ vite_entry_link_tags('login') }}
-        <script>
+        <script nonce="{{ csp_nonce() }}">
             window.LOGIN_CONFIG = {{ {
                 'locale': locale,
                 'appTitle': apptitle,

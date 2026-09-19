@@ -13,7 +13,7 @@
         <title>{{ apptitle }}</title>
         {# Structured data for agents/search (schema.org). Hex-escaped like APP_CONFIG
            so a crafted app title can't break out of the script element. #}
-        <script type="application/ld+json">{{ {
+        <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ {
             '@context': 'https://schema.org',
             '@type': 'WebApplication',
             'name': apptitle,
@@ -27,7 +27,7 @@
         {% include 'partials/font-init.html.twig' %}
         {% include 'partials/nav-layout-init.html.twig' %}
         {{ vite_entry_link_tags('app') }}
-        <script>
+        <script nonce="{{ csp_nonce() }}">
             {# csrfToken + loginPath power the in-place re-login overlay (issue #408):
                the 'authenticate' token is stateless, so it — and the CSRF cookie this
                render sets — survive a session that expires while the SPA is open. #}

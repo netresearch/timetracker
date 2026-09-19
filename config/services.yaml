@@ -36,6 +36,9 @@ services:
         public: false       # Allows optimizing the container by removing unused services
         bind:
             $projectDir: '%kernel.project_dir%'
+            # The Content-Security-Policy's frame-src has to name the origin the
+            # corporate navigation iframe loads, which is per deployment.
+            $headerUrl: '%app_header_url%'
 
     # Makes classes in src/ available to be used as services
     # This creates a service per class whose id is the fully-qualified class name
