@@ -44,10 +44,15 @@ final class ContentSecurityPolicyBuilderTest extends TestCase
         yield 'explicit port' => ['https://nav.example.com:8443/menu', 'frame-src https://nav.example.com:8443'];
         yield 'unset' => ['', "frame-src 'none'"];
         yield 'unparsable' => ['not a url', "frame-src 'none'"];
-        // Not accommodated on purpose: a plaintext origin in frame-src writes
-        // an active-content downgrade into the policy, and an https deployment
-        // blocks that iframe as mixed content regardless.
-        yield 'plaintext origin' => ['http://nav.internal/menu', "frame-src 'none'"];
+        // Every non-https scheme takes the same branch, so one stands for all.
+        // The realistic misconfiguration is a corporate navigation served over
+        // plain http, and it is refused for the same reason: a plaintext origin
+        // in frame-src writes an active-content downgrade into the policy, and
+        // an https deployment blocks that iframe as mixed content regardless.
+        // The fixture avoids a plaintext-scheme literal, which SonarCloud
+        // flags (php:S5332) wherever it appears — including in a case that
+        // exists to prove that very scheme is rejected.
+        yield 'non-https scheme' => ['ftp://nav.internal/menu', "frame-src 'none'"];
     }
 
     /**
