@@ -19,7 +19,7 @@ The implementation detail behind every control named here is in [`security.md`](
 
 ## Who the adversaries are
 
-1. **An unauthenticated network attacker** who can reach the web interface. Needs a valid account — a directory account, a local one, or an enrolled passkey.
+1. **An unauthenticated network attacker** who can reach the web interface. Holds no credentials, so the login surface is all that answers: guessing and credential stuffing against it, and exhausting what it costs to serve. Reaching any time data needs an account — a directory one, a local one, or an enrolled passkey.
 2. **An authenticated employee** (`DEV`) trying to see or change other people's entries, or to raise their own privileges.
 3. **A team lead or controller** (`PL`, `CTL`) trying to reach data outside their teams or customers.
 4. **A compromised or hostile external system** — the Jira instance, the Personio API, the LDAP directory — returning malicious data.
