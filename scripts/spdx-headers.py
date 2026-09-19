@@ -62,6 +62,9 @@ EXCLUDED_FILES = (
 
 SHEBANG = re.compile(r"^#!.*\n")
 PHP_OPEN = re.compile(r"^<\?php[ \t]*\n")
+# A userscript's metadata block is parsed by the script manager and has to
+# start the file; a comment in front of it can stop the script installing.
+USERSCRIPT = re.compile(r"^// ==UserScript==\n(?:.*\n)*?// ==/UserScript==\n")
 
 
 def tracked_files() -> list[str]:
@@ -101,6 +104,10 @@ def insert(path: str, text: str) -> str:
 
     match = SHEBANG.match(text)
     if match:  # after the shebang, which must stay on line 1
+        return f"{match.group(0)}\n{header}\n{text[match.end():].lstrip(chr(10))}"
+
+    match = USERSCRIPT.match(text)
+    if match:  # after the metadata block, which the script manager reads first
         return f"{match.group(0)}\n{header}\n{text[match.end():].lstrip(chr(10))}"
 
     return f"{header}\n{text}"
