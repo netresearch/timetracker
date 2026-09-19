@@ -57,8 +57,18 @@ jobs:
 
       # Registry rulesets, not Semgrep AppSec Platform: no SEMGREP_APP_TOKEN is
       # configured and none is needed for the open rulesets.
+      #
+      # Exit codes are load-bearing. 0 is a completed scan, findings included —
+      # `--error` is not passed, so findings alone never raise the code; 1 only
+      # appears with `--error`; 2 and above are semgrep itself failing (fatal
+      # error, unparsable config, unknown language). `continue-on-error: true`
+      # would swallow all of them, and the upload would then fail on a missing
+      # SARIF file, which reads as a broken workflow rather than a crashed
+      # scanner. So: a completed scan passes whatever it found, a crash fails
+      # the job and says why.
       - name: Run Semgrep
         run: |
+          set +e
           semgrep scan \
             --config p/php \
             --config p/security-audit \
@@ -66,9 +76,16 @@ jobs:
             --sarif \
             --output semgrep.sarif \
             --metrics off \
+            --exclude public/docs/swagger \
             --exclude vendor --exclude node_modules --exclude var \
             src config public
-        continue-on-error: true
+          rc=$?
+          set -e
+          if [ "$rc" -gt 1 ]; then
+            echo "::error::semgrep exited $rc — the scan did not complete"
+            exit "$rc"
+          fi
+          test -s semgrep.sarif
 
       - name: Upload SARIF to code scanning
         uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
