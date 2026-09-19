@@ -57,6 +57,33 @@ jobs:
           echo "GIT_REF=$GITHUB_REF_NAME"
           echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         } >> "$GITHUB_ENV"
+      # Supply chain. All four are gated on push=true inside the reusable, so
+      # pull_request validation builds skip them instead of failing.
+      #   sign        Cosign keyless signature per pushed tag
+      #   attest      buildx SLSA provenance, mode=max, in-image
+      #   sbom        buildx in-image SBOM attestation
+      #   sbom-attest merged CycloneDX SBOM (composer.lock + Syft scan of the
+      #               pushed digest), attached to the digest as a Cosign
+      #               attestation and uploaded as a workflow artifact
+      sign: true
+      attest: true
+      sbom: true
+      sbom-attest: true
+
+  # GitHub-issued SBOM attestation on top of the Cosign one the build already
+  # attaches. Separate job because it needs `attestations: write`, which the
+  # build workflow deliberately does not request.
+  attest-sbom:
+    needs: build
+    if: github.event_name != 'pull_request'
+    uses: netresearch/.github/.github/workflows/attest-sbom.yml@main
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      subjects: ${{ needs.build.outputs.sbom-subjects }}
 
   # Prod-like image with the Symfony profiler (admin-gated); operators switch
   # to it on demand — never the default deployment. Built ONLY on a tag push
@@ -76,9 +103,26 @@ jobs:
       targets: app-profiling
       push: true
       bake-source: .
+      sign: true
+      attest: true
+      sbom: true
+      sbom-attest: true
       pre-build-command: |
         {
           echo "GIT_SHA=$GITHUB_SHA"
           echo "GIT_REF=$GITHUB_REF_NAME"
           echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         } >> "$GITHUB_ENV"
+
+  # Same pairing for the profiling image: it is deployed to production on
+  # demand, so it gets the same attestation as the default one.
+  attest-sbom-profiling:
+    needs: build-profiling
+    uses: netresearch/.github/.github/workflows/attest-sbom.yml@main
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    with:
+      subjects: ${{ needs.build-profiling.outputs.sbom-subjects }}
