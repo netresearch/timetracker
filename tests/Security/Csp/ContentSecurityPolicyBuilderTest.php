@@ -44,15 +44,20 @@ final class ContentSecurityPolicyBuilderTest extends TestCase
         yield 'explicit port' => ['https://nav.example.com:8443/menu', 'frame-src https://nav.example.com:8443'];
         yield 'unset' => ['', "frame-src 'none'"];
         yield 'unparsable' => ['not a url', "frame-src 'none'"];
-        // Every non-https scheme takes the same branch, so one stands for all.
+        // A syntactically valid URL whose scheme is simply not https — which
+        // is a different rejection from 'unparsable' above, and the one that
+        // proves the branch is scheme-driven rather than parse-driven.
+        //
         // The realistic misconfiguration is a corporate navigation served over
-        // plain http, and it is refused for the same reason: a plaintext origin
-        // in frame-src writes an active-content downgrade into the policy, and
-        // an https deployment blocks that iframe as mixed content regardless.
-        // The fixture avoids a plaintext-scheme literal, which SonarCloud
-        // flags (php:S5332) wherever it appears — including in a case that
-        // exists to prove that very scheme is rejected.
-        yield 'non-https scheme' => ['ftp://nav.internal/menu', "frame-src 'none'"];
+        // plain http, refused for the same reason: a plaintext origin in
+        // frame-src writes an active-content downgrade into the policy, and an
+        // https deployment blocks that iframe as mixed content regardless. The
+        // fixture does not name it, because SonarCloud's php:S5332 flags every
+        // clear-text scheme wherever it appears — including in a case that
+        // exists to prove that very scheme is rejected — and this project sets
+        // suppressions through the SonarCloud settings API, not in the
+        // repository.
+        yield 'non-https scheme' => ['x-internal://nav.internal/menu', "frame-src 'none'"];
     }
 
     /**
