@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { appConfig, canBill, canBulkEnter, hasRole, needsTwoFactorEnrolment } from './config'

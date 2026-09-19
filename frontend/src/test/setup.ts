@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import '@testing-library/jest-dom/vitest'
 import { expect } from 'vitest'
 import * as axeMatchers from 'vitest-axe/matchers'

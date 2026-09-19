@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';

@@ -1,4 +1,8 @@
 #!/bin/sh
+
+# Copyright (c) 2026 Netresearch DTT GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
 #
 # Production entrypoint: bring the database schema up to date before starting
 # PHP-FPM, so deploying a new image over an existing database applies any pending

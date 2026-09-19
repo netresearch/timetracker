@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 // User preference for what happens to focus after committing an inline cell
 // edit with Enter. Client-side only (like the theme) — a pure keyboard-interaction
 // preference, so it lives in localStorage rather than the server-side settings.

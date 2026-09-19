@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { A, useLocation, useParams } from '@solidjs/router'
 import { createEffect, createMemo, For, type Component } from 'solid-js'
 import { Dynamic } from 'solid-js/web'

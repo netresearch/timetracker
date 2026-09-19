@@ -1,3 +1,8 @@
+{#
+ # Copyright (c) 2026 Netresearch DTT GmbH
+ # SPDX-License-Identifier: AGPL-3.0-only
+ -#}
+
 {# JSON_HEX_* flags so |json_encode output cannot break out of <script> #}
 {% set jsonHexFlags = constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT') %}
 <!DOCTYPE html>

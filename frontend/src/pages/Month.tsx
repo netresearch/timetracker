@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { A, useSearchParams } from '@solidjs/router'
 import { useQueries, useQuery } from '@tanstack/solid-query'
 import { createMemo, For, Index, Match, Show, Switch } from 'solid-js'

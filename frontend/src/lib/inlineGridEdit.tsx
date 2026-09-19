@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { createMemo, createSignal, createUniqueId, For, Match, onCleanup, onMount, Show, Switch, type Accessor } from 'solid-js'
 import { createStore, produce } from 'solid-js/store'
 

@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Copyright (c) 2026 Netresearch DTT GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
 # Database State Verification for Test Isolation
 # Ensures database remains unchanged after test runs
 

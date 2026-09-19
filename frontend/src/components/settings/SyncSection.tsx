@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { WorklogImportSection } from '../WorklogImportSection'
 import { WorklogSyncPreferences } from '../WorklogSyncPreferences'
 import { PersonioOptIn } from './PersonioOptIn'

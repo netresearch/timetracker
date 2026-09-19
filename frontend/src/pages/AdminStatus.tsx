@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { createResource, For, Show, Switch, Match } from 'solid-js'
 
 import { getJson } from '../api/client'

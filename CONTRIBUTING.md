@@ -893,6 +893,7 @@ Any special deployment or migration steps required
 - ✅ **Breaking changes documented**: Migration notes included
 - ✅ **Performance considered**: No obvious performance regressions
 - ✅ **Security reviewed**: No obvious security issues
+- ✅ **Licence header present**: every new source file carries the SPDX header — `python3 scripts/spdx-headers.py` writes it, and the `Lint & Static Analysis` job fails without it
 
 #### For Reviewers
 - ✅ **Code quality**: Follows project standards and best practices

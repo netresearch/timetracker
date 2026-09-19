@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 // User preference for the worklog day-range filter. Client-side only (like the
 // theme and the Enter-commit behaviour) — a pure view preference, so it lives in
 // localStorage rather than the server-side settings. Persisting it keeps the

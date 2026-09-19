@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 // User preference for the worklog view (grouped day sections / flat grid /
 // read-only timeline). Client-side only, like the theme and the day range
 // (see trackingDaysPref) — a pure view preference, so it lives in localStorage

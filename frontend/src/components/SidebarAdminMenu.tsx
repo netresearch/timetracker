@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { useLocation, useNavigate } from '@solidjs/router'
 import { createSignal, For, type JSX, onMount, Show } from 'solid-js'
 import { Portal } from 'solid-js/web'

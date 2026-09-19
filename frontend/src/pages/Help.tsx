@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { ShortcutTable } from '../components/ShortcutTable'
 import { ContinueIcon, DiskIcon, InfoIcon, ProlongIcon, ResetIcon, TrashIcon } from '../lib/icons'
 import { GLOBAL_SHORTCUTS, GRID_SHORTCUTS, TRACKING_SHORTCUTS } from '../lib/shortcuts'

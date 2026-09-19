@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Combobox, createListCollection } from '@ark-ui/solid/combobox'
 import { For, type JSX, Show } from 'solid-js'
 

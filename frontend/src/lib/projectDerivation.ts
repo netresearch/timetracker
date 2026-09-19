@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 /** The project fields the ticket→project derivation reads. Kept structural so a
  *  test fixture (and any future caller) needs no full TrackingProject. */
 export interface DerivableProject {

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_WORKLOG_SORT, getWorklogSort, setWorklogSort } from './worklogSortPref'

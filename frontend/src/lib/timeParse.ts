@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 /**
  * Parse a terse time entry into 24-hour "H:i", accepting flexible formats
  * (g:ia | gi | Gi | H:i | ga | …) so users can type times tersely.

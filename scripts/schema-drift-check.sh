@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+# Copyright (c) 2026 Netresearch DTT GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
 # Does sql/full.sql describe the schema its own doctrine_migration_versions seed
 # claims? The dump records every shipped migration as applied, so a fresh install
 # runs none of them — any column, index or table the dump states differently from

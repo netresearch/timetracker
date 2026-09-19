@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { getJson, patchJson } from './client'
 
 /** Wire shape of GET/PATCH /api/v2/settings (UserSettingsDto). */

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Netresearch DTT GmbH
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Popover } from '@ark-ui/solid/popover'
 import type { JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
