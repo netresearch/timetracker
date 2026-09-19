@@ -22,6 +22,10 @@ import { goToWorklogPage, goToAuswertungPage, goToAdminPage } from './helpers/na
  * source the application legitimately uses. Either way it must be settled
  * before the header is switched from Report-Only to enforcing — at which point
  * every violation listed here becomes a blocked resource.
+ *
+ * Readiness comes from the goTo* helpers, which already wait on each page's
+ * settled marker; there is no `networkidle`, which the suite's conventions rule
+ * out and which would only add flake here.
  */
 
 interface CspViolation {
@@ -91,7 +95,7 @@ test.describe('Content Security Policy', () => {
   test('login raises no violation', async ({ page }) => {
     await collectViolations(page);
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('#form-submit');
 
     const found = (await violations(page)).filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
@@ -101,7 +105,6 @@ test.describe('Content Security Policy', () => {
     await collectViolations(page);
     await loginIsolated(page);
     await goToWorklogPage(page);
-    await page.waitForLoadState('networkidle');
 
     const found = (await violations(page)).filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
@@ -111,7 +114,6 @@ test.describe('Content Security Policy', () => {
     await collectViolations(page);
     await loginIsolated(page);
     await goToAuswertungPage(page);
-    await page.waitForLoadState('networkidle');
 
     const found = (await violations(page)).filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
@@ -123,7 +125,6 @@ test.describe('Content Security Policy', () => {
     await collectViolations(page);
     await loginAs(page, 'myself');
     await goToAdminPage(page);
-    await page.waitForLoadState('networkidle');
 
     const found = (await violations(page)).filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);

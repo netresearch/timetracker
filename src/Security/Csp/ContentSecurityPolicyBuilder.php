@@ -74,8 +74,15 @@ final readonly class ContentSecurityPolicyBuilder
     }
 
     /**
-     * The scheme, host and port of APP_HEADER_URL, or 'none' when unset or
-     * unparsable. A deployment without a corporate header frames nothing.
+     * The origin of APP_HEADER_URL, or 'none' when unset, unparsable or not
+     * https.
+     *
+     * https only, deliberately. Widening frame-src to a plaintext origin would
+     * write an active-content downgrade into the policy — and on an https
+     * deployment the browser blocks that iframe as mixed content anyway, so
+     * the directive would grant something that cannot load. A corporate
+     * navigation served over http is a misconfiguration to surface, not one to
+     * accommodate: the iframe simply does not load and frame-src says why.
      */
     private function frameSource(): string
     {
@@ -85,14 +92,14 @@ final readonly class ContentSecurityPolicyBuilder
 
         $scheme = parse_url($this->headerUrl, PHP_URL_SCHEME);
         $host = parse_url($this->headerUrl, PHP_URL_HOST);
-        if (!is_string($scheme) || !is_string($host) || '' === $scheme || '' === $host) {
+        if ('https' !== $scheme || !is_string($host) || '' === $host) {
             return "'none'";
         }
 
         $port = parse_url($this->headerUrl, PHP_URL_PORT);
 
         return is_int($port)
-            ? sprintf('%s://%s:%d', $scheme, $host, $port)
-            : sprintf('%s://%s', $scheme, $host);
+            ? sprintf('https://%s:%d', $host, $port)
+            : sprintf('https://%s', $host);
     }
 }
