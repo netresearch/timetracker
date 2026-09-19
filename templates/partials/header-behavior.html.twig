@@ -12,7 +12,7 @@
        hamburger drawer.
    Theme cycling lives in theme-init.html.twig. Idempotent — guarded so an
    accidental re-include wires handlers only once. #}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function () {
     if (window.__ttHeaderBehaviorWired) {
         return;

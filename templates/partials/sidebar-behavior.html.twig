@@ -8,7 +8,7 @@
    paint by partials/nav-layout-init; this wires the interactive controls and
    persists changes. All controls are CSS-hidden outside the left-sidebar layout,
    so the handlers are inert in the top-bar layout. #}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function () {
     var root = document.documentElement;
     var MIN_WIDTH = 150;

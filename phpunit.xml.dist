@@ -34,6 +34,7 @@
             <directory>tests/DependencyInjection</directory>
             <directory>tests/Event</directory>
             <directory>tests/EventSubscriber</directory>
+            <directory>tests/Security/Csp</directory>
             <directory>tests/Extension</directory>
             <directory>tests/Helper</directory>
             <directory>tests/Model</directory>

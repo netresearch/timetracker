@@ -8,7 +8,7 @@
    chosen font/size — no flash. Mirrors theme-init / density-init. The controls
    live in the SolidJS Settings page (frontend/src/lib/fontPref.ts), which shares
    these localStorage keys; this partial only applies them on load. #}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function () {
     var FONT_KEY = 'timetracker-font';
     var SCALE_KEY = 'timetracker-font-scale';

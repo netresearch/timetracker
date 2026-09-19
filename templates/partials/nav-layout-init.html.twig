@@ -11,7 +11,7 @@
    sidebar switch lives on the Settings page (lib/navLayoutPref.ts); the collapse
    and resize controls live in the sidebar itself (partials/sidebar-behavior).
    All three share their localStorage keys with this boot-time apply. #}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function () {
     var root = document.documentElement;
     try {
