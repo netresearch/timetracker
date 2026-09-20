@@ -12,8 +12,10 @@
         <meta name="robots" content="noindex,nofollow" />
         {% include 'partials/theme-init.html.twig' %}
         {# Self-contained inline styles (no Vite bundle on error pages), using
-           the app's light-dark() palette so the page follows the saved theme. #}
-        <style>
+           the app's light-dark() palette so the page follows the saved theme.
+           Nonced like the inline scripts: style-src carries no 'unsafe-inline'
+           outside debug builds. #}
+        <style nonce="{{ csp_nonce() }}">
             :root {
                 color-scheme: light dark;
             }

@@ -73,6 +73,30 @@ final class ContentSecurityPolicyBuilderTest extends TestCase
     }
 
     /**
+     * The whole point of nonces on the error page's <style> block: a
+     * production build must not carry 'unsafe-inline' in style-src either.
+     */
+    public function testStyleSourceIsNonceBasedWithoutTheDebugAllowance(): void
+    {
+        $policy = new ContentSecurityPolicyBuilder('', false)->build('abc123');
+
+        self::assertStringContainsString("style-src 'self' 'nonce-abc123'", $policy);
+        self::assertStringNotContainsString("'unsafe-inline'", $policy);
+    }
+
+    /**
+     * Debug builds keep it, because the Vite dev server injects a <style>
+     * element that nothing can nonce.
+     */
+    public function testDebugBuildsKeepTheInlineStyleAllowance(): void
+    {
+        $policy = new ContentSecurityPolicyBuilder('', true)->build('abc123');
+
+        self::assertStringContainsString("style-src 'self' 'nonce-abc123' 'unsafe-inline'", $policy);
+        self::assertStringNotContainsString("script-src 'self' 'nonce-abc123' 'unsafe-inline'", $policy);
+    }
+
+    /**
      * @return iterable<string, array{string}>
      */
     public static function requiredDirectives(): iterable

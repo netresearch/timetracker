@@ -37,8 +37,19 @@ use const PHP_URL_SCHEME;
  */
 final readonly class ContentSecurityPolicyBuilder
 {
-    public function __construct(private string $headerUrl)
-    {
+    /**
+     * @param bool $allowInlineStyles keep 'unsafe-inline' in style-src, for
+     *                                debug builds only: Vite injects a
+     *                                <style> element it does not nonce while
+     *                                serving from the dev server. A production
+     *                                build links its stylesheet, so the
+     *                                allowance is not needed there and is not
+     *                                granted.
+     */
+    public function __construct(
+        private string $headerUrl,
+        private bool $allowInlineStyles = false,
+    ) {
     }
 
     /**
@@ -54,11 +65,15 @@ final readonly class ContentSecurityPolicyBuilder
             // The nonce covers the inline bootstrap blocks; Vite's built assets
             // are same-origin files.
             sprintf("script-src 'self' 'nonce-%s'", $nonce),
-            // 'unsafe-inline' is still needed for styles: the error pages carry
-            // an inline <style> block and Vite injects one in development. It is
-            // a far smaller exposure than script-src would be, and narrowing it
-            // is what the report-only phase should tell us the cost of.
-            "style-src 'self' 'unsafe-inline'",
+            // The error page's inline <style> carries the nonce like the
+            // scripts do. 'unsafe-inline' is added only for a debug build,
+            // where Vite's dev server injects a <style> element of its own
+            // that nothing can nonce.
+            sprintf(
+                "style-src 'self' 'nonce-%s'%s",
+                $nonce,
+                $this->allowInlineStyles ? " 'unsafe-inline'" : '',
+            ),
             "img-src 'self' data:",
             "font-src 'self'",
             "connect-src 'self'",

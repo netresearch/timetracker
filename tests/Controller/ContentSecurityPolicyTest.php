@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use App\Security\Csp\CspNonceProvider;
 use Tests\AbstractWebTestCase;
 
 use function preg_match_all;
@@ -28,17 +29,17 @@ use function str_contains;
  */
 final class ContentSecurityPolicyTest extends AbstractWebTestCase
 {
-    private const string REPORT_ONLY = 'Content-Security-Policy-Report-Only';
+    private const string POLICY = 'Content-Security-Policy';
 
-    public function testTheSpaShellCarriesAReportOnlyPolicy(): void
+    public function testTheSpaShellCarriesAnEnforcedPolicy(): void
     {
         $this->openShell();
-        $policy = (string) $this->client->getResponse()->headers->get(self::REPORT_ONLY);
+        $policy = (string) $this->client->getResponse()->headers->get(self::POLICY);
 
         self::assertStringContainsString("default-src 'self'", $policy);
         self::assertFalse(
-            $this->client->getResponse()->headers->has('Content-Security-Policy'),
-            'The policy is deliberately report-only for now.',
+            $this->client->getResponse()->headers->has('Content-Security-Policy-Report-Only'),
+            'The report-only round is over; two headers would make a violation ambiguous.',
         );
     }
 
@@ -52,8 +53,11 @@ final class ContentSecurityPolicyTest extends AbstractWebTestCase
         $this->openShell();
         $response = $this->client->getResponse();
 
-        $policy = (string) $response->headers->get(self::REPORT_ONLY);
-        self::assertSame(1, preg_match_all("/'nonce-([A-Za-z0-9+\/=]+)'/", $policy, $headerMatches));
+        $policy = (string) $response->headers->get(self::POLICY);
+        // script-src and style-src both name it, and they must name the same
+        // one — two nonces in one policy would mean two generators.
+        self::assertGreaterThan(0, preg_match_all("/'nonce-([A-Za-z0-9+\/=]+)'/", $policy, $headerMatches));
+        self::assertSame([$headerMatches[1][0]], array_values(array_unique($headerMatches[1])));
         $nonce = $headerMatches[1][0];
 
         $found = preg_match_all('/<script(?![^>]*\bsrc=)([^>]*)>/i', (string) $response->getContent(), $scriptMatches);
@@ -74,12 +78,32 @@ final class ContentSecurityPolicyTest extends AbstractWebTestCase
     public function testTheNonceChangesBetweenRequests(): void
     {
         $this->openShell();
-        $first = (string) $this->client->getResponse()->headers->get(self::REPORT_ONLY);
+        $first = (string) $this->client->getResponse()->headers->get(self::POLICY);
 
         $this->openShell();
-        $second = (string) $this->client->getResponse()->headers->get(self::REPORT_ONLY);
+        $second = (string) $this->client->getResponse()->headers->get(self::POLICY);
 
         self::assertNotSame($first, $second);
+    }
+
+    /**
+     * The 403 template is Twig-rendered without a Vite bundle and carries an
+     * inline <style> block — the one place style-src is exercised rather than
+     * assumed, now that 'unsafe-inline' is gone outside debug builds.
+     *
+     * Rendered directly rather than reached over HTTP: every /ui/* path is
+     * served by the SPA shell with a 200 and gates the admin area client-side,
+     * so no request produces this template deterministically.
+     */
+    public function testTheAccessDeniedTemplateNoncesItsInlineStyle(): void
+    {
+        $this->client->request('GET', '/login');
+
+        $container = self::getContainer();
+        $nonce = $container->get(CspNonceProvider::class)->getNonce();
+        $html = $container->get('twig')->render('bundles/TwigBundle/Exception/error403.html.twig');
+
+        self::assertStringContainsString(sprintf('<style nonce="%s">', $nonce), $html);
     }
 
     /**
@@ -90,7 +114,7 @@ final class ContentSecurityPolicyTest extends AbstractWebTestCase
         $this->logInSession('unittest');
         $this->client->request('GET', '/api/v2/settings');
 
-        self::assertFalse($this->client->getResponse()->headers->has(self::REPORT_ONLY));
+        self::assertFalse($this->client->getResponse()->headers->has(self::POLICY));
     }
 
     /**

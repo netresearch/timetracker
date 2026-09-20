@@ -11,17 +11,16 @@ import { goToWorklogPage, goToAuswertungPage, goToAdminPage } from './helpers/na
 /**
  * Reads what the Content-Security-Policy would have blocked (issue #739).
  *
- * The policy ships report-only, and there is no `report-uri` collector — so
- * without this spec the reports go to a browser console nobody watches, and
- * "report-only first" would be a gesture rather than a measurement. The browser
- * fires `securitypolicyviolation` for a report-only policy too, with
- * `disposition: "report"`, so listening for the event is the collector.
+ * The policy is enforced and there is no `report-uri` collector, so the
+ * browser event is the only signal. It fires either way: `disposition:
+ * "enforce"` now, `"report"` during the report-only round this spec was
+ * written for. A violation used to mean a report; it now means a resource the
+ * browser refused.
  *
  * A violation here means one of two things, and both need a human: a template
  * renders an inline <script> without `csp_nonce()`, or the policy is missing a
- * source the application legitimately uses. Either way it must be settled
- * before the header is switched from Report-Only to enforcing — at which point
- * every violation listed here becomes a blocked resource.
+ * source the application legitimately uses. Either way something on that page
+ * did not load.
  *
  * Readiness comes from the goTo* helpers, which already wait on each page's
  * settled marker; there is no `networkidle`, which the suite's conventions rule
@@ -38,19 +37,34 @@ interface CspViolation {
 
 declare global {
   interface Window {
-    __cspViolations?: CspViolation[];
+    __reportCspViolation?: (violation: CspViolation) => void;
   }
 }
 
 /**
- * Install the listener before any document script runs — a violation raised by
- * the page's own bootstrap fires before anything a test could attach later.
+ * Collect violations on the Node side, not in `window`.
+ *
+ * A navigation destroys the page context, and `addInitScript` runs again on
+ * the new document — anything accumulated in a page-scoped array is lost with
+ * it. A test that visits three settings sections would then assert over the
+ * third one alone and report the first two as clean. `exposeFunction` survives
+ * navigation because Playwright re-installs the binding per document, so every
+ * violation from every document in the test lands in one array.
+ *
+ * The listener is installed before any document script runs: a violation
+ * raised by the page's own bootstrap fires before anything a test could attach
+ * afterwards.
  */
-async function collectViolations(page: Page): Promise<void> {
+async function collectViolations(page: Page): Promise<CspViolation[]> {
+  const collected: CspViolation[] = [];
+
+  await page.exposeFunction('__reportCspViolation', (violation: CspViolation) => {
+    collected.push(violation);
+  });
+
   await page.addInitScript(() => {
-    window.__cspViolations = [];
     document.addEventListener('securitypolicyviolation', (event) => {
-      window.__cspViolations?.push({
+      window.__reportCspViolation?.({
         directive: event.effectiveDirective || event.violatedDirective,
         blockedURI: event.blockedURI,
         sourceFile: event.sourceFile,
@@ -59,10 +73,8 @@ async function collectViolations(page: Page): Promise<void> {
       });
     });
   });
-}
 
-async function violations(page: Page): Promise<CspViolation[]> {
-  return (await page.evaluate(() => window.__cspViolations ?? [])) as CspViolation[];
+  return collected;
 }
 
 /**
@@ -81,7 +93,7 @@ function describe(list: CspViolation[]): string {
 }
 
 test.describe('Content Security Policy', () => {
-  test('the shell declares a report-only policy with a nonce', async ({ page }) => {
+  test('the shell declares an enforced policy with a nonce', async ({ page }) => {
     // Authenticated first: SpaAction redirects an anonymous visitor to /login,
     // so an unauthenticated goto would assert the login page's header while
     // claiming to test the shell's — and pass, because both carry one.
@@ -89,9 +101,9 @@ test.describe('Content Security Policy', () => {
     const response = await page.goto('/ui/');
     expect(page.url()).toContain('/ui/');
 
-    const policy = response?.headers()['content-security-policy-report-only'] ?? '';
+    const policy = response?.headers()['content-security-policy'] ?? '';
 
-    expect(policy, 'no report-only policy on the shell').toContain("default-src 'self'");
+    expect(policy, 'no policy on the shell').toContain("default-src 'self'");
     expect(policy, 'script-src must be nonce-based, never unsafe-inline').toMatch(
       /script-src 'self' 'nonce-[A-Za-z0-9+/=]+'/,
     );
@@ -99,40 +111,57 @@ test.describe('Content Security Policy', () => {
   });
 
   test('login raises no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await page.goto('/login');
     await page.waitForSelector('#form-submit');
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 
   test('the worklog view raises no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await loginIsolated(page);
     await goToWorklogPage(page);
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 
   test('the evaluation view raises no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await loginIsolated(page);
     await goToAuswertungPage(page);
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 
   // The admin page is ROLE_ADMIN-only and the per-worker isolation slot cannot
   // reach it, so log in as the admin user — same reasoning as accessibility.spec.ts.
   test('the admin view raises no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await loginAs(page, 'myself');
     await goToAdminPage(page);
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
+    expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
+  });
+
+  // The settings sections render their own inline bootstrap through the same
+  // shell, and the account section is where a passkey/TOTP widget mounts.
+  test('the settings sections raise no violation', async ({ page }) => {
+    const collected = await collectViolations(page);
+    await loginIsolated(page);
+
+    // Three documents in one test: the Node-side collector is what makes the
+    // first two count. A page-scoped array would report only the last.
+    for (const section of ['account', 'appearance', 'security']) {
+      await page.goto(`/ui/settings/${section}`);
+      await page.waitForURL(new RegExp(`/ui/settings/${section}`));
+    }
+
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 });

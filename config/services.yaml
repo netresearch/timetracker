@@ -39,6 +39,9 @@ services:
             # The Content-Security-Policy's frame-src has to name the origin the
             # corporate navigation iframe loads, which is per deployment.
             $headerUrl: '%app_header_url%'
+            # style-src keeps 'unsafe-inline' only in a debug build, where the
+            # Vite dev server injects a <style> element nothing can nonce.
+            $allowInlineStyles: '%kernel.debug%'
 
     # Makes classes in src/ available to be used as services
     # This creates a service per class whose id is the fully-qualified class name

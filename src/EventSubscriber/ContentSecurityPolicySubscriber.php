@@ -18,15 +18,19 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use function str_contains;
 
 /**
- * Attach the Content-Security-Policy in report-only mode (issue #739).
+ * Attach the Content-Security-Policy (issue #739).
  *
- * Report-only on purpose, for one round: the policy is nonce-based and refuses
- * inline script, so a single template that renders a <script> without
- * `csp_nonce()` would break that page outright. Report-only turns that failure
- * into a violation report instead, and e2e/csp.spec.ts is what reads those
- * reports — there is no report-uri collector, so the browser event is the
- * signal. Flipping to the enforcing header is a one-word change once the suite
- * has been green across a release.
+ * Enforcing since the report-only round produced data: e2e/csp.spec.ts drove
+ * the login page, the application shell, the worklog, the evaluation, the
+ * admin area and the three settings sections in CI and reported zero
+ * violations. Until that run existed this header was
+ * Content-Security-Policy-Report-Only, because a nonce-based policy refuses
+ * inline script and a single template rendering a <script> without
+ * `csp_nonce()` would have broken that page outright.
+ *
+ * `frame-ancestors 'none'` is live now, which supersedes the X-Frame-Options
+ * SecurityHeadersSubscriber sets — that header stays for the sake of anything
+ * that reads it and never becomes the weaker of the two.
  *
  * Only HTML responses carry it. A JSON API response cannot execute script, and
  * a policy on it would only add bytes to every request the SPA makes.
@@ -79,7 +83,7 @@ final readonly class ContentSecurityPolicySubscriber implements EventSubscriberI
         }
 
         $headers->set(
-            'Content-Security-Policy-Report-Only',
+            'Content-Security-Policy',
             $this->builder->build($this->nonceProvider->getNonce()),
         );
     }

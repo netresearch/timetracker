@@ -29,7 +29,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 #[CoversClass(ContentSecurityPolicySubscriber::class)]
 final class ContentSecurityPolicySubscriberTest extends TestCase
 {
-    private const string REPORT_ONLY = 'Content-Security-Policy-Report-Only';
+    private const string POLICY = 'Content-Security-Policy';
 
     /**
      * The priority is not cosmetic: at 0 this ran before Symfony's
@@ -45,21 +45,23 @@ final class ContentSecurityPolicySubscriberTest extends TestCase
         self::assertSame(['onKernelResponse', -100], $events[KernelEvents::RESPONSE]);
     }
 
-    public function testAnHtmlResponseGetsTheReportOnlyPolicy(): void
+    public function testAnHtmlResponseGetsThePolicy(): void
     {
         $response = $this->dispatch($this->html());
 
-        self::assertStringContainsString("default-src 'self'", (string) $response->headers->get(self::REPORT_ONLY));
+        self::assertStringContainsString("default-src 'self'", (string) $response->headers->get(self::POLICY));
     }
 
     /**
-     * Report-only for the first round: a template that renders a <script>
-     * without csp_nonce() would otherwise break that page outright instead of
-     * reporting itself.
+     * Enforcing, not report-only — the report-only round is over. A stray
+     * report-only header alongside the real one would make a violation
+     * ambiguous about which policy raised it.
      */
-    public function testTheEnforcingHeaderIsNotSet(): void
+    public function testTheReportOnlyHeaderIsNotSet(): void
     {
-        self::assertFalse($this->dispatch($this->html())->headers->has('Content-Security-Policy'));
+        self::assertFalse(
+            $this->dispatch($this->html())->headers->has('Content-Security-Policy-Report-Only'),
+        );
     }
 
     /**
@@ -79,7 +81,7 @@ final class ContentSecurityPolicySubscriberTest extends TestCase
 
         self::assertStringContainsString(
             "'nonce-" . $provider->getNonce() . "'",
-            (string) $event->getResponse()->headers->get(self::REPORT_ONLY),
+            (string) $event->getResponse()->headers->get(self::POLICY),
         );
     }
 
@@ -91,7 +93,7 @@ final class ContentSecurityPolicySubscriberTest extends TestCase
     {
         $response = $this->dispatch(new Response('{}', 200, ['Content-Type' => 'application/json']));
 
-        self::assertFalse($response->headers->has(self::REPORT_ONLY));
+        self::assertFalse($response->headers->has(self::POLICY));
     }
 
     /**
@@ -103,15 +105,18 @@ final class ContentSecurityPolicySubscriberTest extends TestCase
         $response = $this->html();
         $response->headers->set('Content-Security-Policy', "default-src 'none'");
 
-        self::assertSame("default-src 'none'", $this->dispatch($response)->headers->get('Content-Security-Policy'));
-        self::assertFalse($this->dispatch($response)->headers->has(self::REPORT_ONLY));
+        self::assertSame("default-src 'none'", $this->dispatch($response)->headers->get(self::POLICY));
+        self::assertFalse(
+            $this->dispatch($response)->headers->has('Content-Security-Policy-Report-Only'),
+            'The subscriber must not add a second policy beside the proxy\'s.',
+        );
     }
 
     public function testASubRequestIsLeftAlone(): void
     {
         $response = $this->dispatch($this->html(), HttpKernelInterface::SUB_REQUEST);
 
-        self::assertFalse($response->headers->has(self::REPORT_ONLY));
+        self::assertFalse($response->headers->has(self::POLICY));
     }
 
     private function html(): Response
