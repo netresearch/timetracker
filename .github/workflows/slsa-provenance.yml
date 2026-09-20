@@ -1,101 +1,166 @@
 name: SLSA Provenance
 
-# Runs when a release is published and gives that release something to attest.
+# Attaches build provenance to a published release.
 #
-# Previously this workflow downloaded the release's assets, found none — our
-# releases carry no assets — and therefore never reached the SLSA generator at
-# all. What it did upload was a hand-written in-toto statement with no
-# signature, which is not provenance: anyone can write that JSON.
+# WHY NOT slsa-github-generator
+# =============================
+# The generic generator cannot run in this repository, and the reason is
+# structural rather than a misconfiguration. This organisation sets
+# `sha_pinning_required: true` on the repository AND the organisation, so every
+# action must be referenced by a full-length commit SHA. The generator's
+# reusable workflow calls its own nested actions by tag
+# (`detect-workflow-js@v2.1.0`), and it refuses to be called by SHA itself,
+# because it verifies its own provenance through the tag. The first release
+# that reached it therefore failed in `detect-env` before doing any work:
 #
-# Now the workflow produces the artefact first: a reproducible source archive
-# built with `git archive` from the release tag, plus its SHA-256 checksum.
-# Those become release assets, and the SLSA generic generator issues signed
-# Level 3 provenance over them. The published container images carry their own
-# provenance and signature from docker-publish.yml; this covers the source
-# release.
+#   The action slsa-framework/slsa-github-generator/.github/actions/
+#   detect-workflow-js@v2.1.0 is not allowed in netresearch/timetracker
+#   because all actions must be pinned to a full-length commit SHA.
+#
+# actions/attest-build-provenance is pinnable, is what netresearch/.github's
+# release-go-app.yml already uses for the Go repositories, and produces the
+# same in-toto statement.
 
 on:
   release:
     types: [published]
+  # For a release whose provenance failed or predates this workflow: the
+  # `release` event reads this file from the default branch, so a fix here
+  # serves an existing tag — but only a dispatch can replay it.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to attest (e.g. v6.4.0)"
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
-  package:
-    name: Build source archive
+  provenance:
+    name: Attest the source archive
     runs-on: ubuntu-latest
     permissions:
-      contents: write # upload the archive and checksum as release assets
-    outputs:
-      subjects: ${{ steps.subjects.outputs.subjects }}
+      contents: write # upload the archive, its checksum and the provenance
+      id-token: write # Sigstore OIDC identity
+      attestations: write # file the attestation with GitHub
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
+      - name: Resolve the tag
+        id: tag
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          tag="${EVENT_TAG:-$INPUT_TAG}"
+          if [ -z "$tag" ]; then
+            echo "::error::no tag from the release event and none given as input"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
       - name: Checkout the release tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ steps.tag.outputs.tag }}
           persist-credentials: false
 
-      # Archives HEAD, not the tag name: checkout resolved `ref` to this commit
-      # already, and a shallow clone need not carry the tag ref itself. Same
-      # bytes either way, one fewer thing that has to be present.
-      #
-      # `git archive` stamps entries with the commit time, and `gzip -n` writes
-      # no timestamp or name, so two runs over the same tag with the same git
-      # produce the same digest. Across git versions that is not guaranteed —
-      # the archive is a stable subject to attest, not a reproducibility claim.
-      - name: Build the source archive
+      # Two paths, because a backfill must not rewrite what consumers already
+      # have. On a release the archive is built here and published. On a
+      # dispatch the archive is DOWNLOADED from the release and attested as
+      # published: `git archive` output is stable for one git version but not
+      # guaranteed across them, and `gh release upload --clobber` deletes
+      # before it uploads — so rebuilding would risk replacing the published
+      # tarball with different bytes, invalidating the .sha256 people already
+      # hold and attesting an artefact nobody downloaded.
+      - name: Take the archive
         id: archive
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          IS_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
           name="timetracker-${TAG}-source.tar.gz"
-          git archive --format=tar --prefix="timetracker-${TAG}/" HEAD \
-            | gzip -9 -n > "$name"
-          sha256sum "$name" > "${name}.sha256"
-          echo "name=$name" >> "$GITHUB_OUTPUT"
-          cat "${name}.sha256"
 
-      # base64-subjects takes base64-encoded `sha256sum` OUTPUT — the literal
-      # "<digest>  <name>" line — not JSON. The generator's README spells out
-      # the decoded form it expects. Encoding a JSON array here parses as no
-      # subject at all and fails the provenance job on every release, which is
-      # the failure this workflow exists to stop having.
+          if [ "$IS_DISPATCH" = "true" ]; then
+            gh release download "$TAG" --pattern "$name" --clobber
+            if [ ! -s "$name" ]; then
+              echo "::error::release $TAG carries no $name to attest"
+              exit 1
+            fi
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            # `git archive` stamps entries with the commit time and `gzip -n`
+            # writes no timestamp or name, so the digest is stable for a given
+            # tag and git version. HEAD, not the tag name: checkout resolved
+            # `ref` to this commit already, and a shallow clone need not carry
+            # the tag ref.
+            git archive --format=tar --prefix="timetracker-${TAG}/" HEAD \
+              | gzip -9 -n > "$name"
+            sha256sum "$name" > "${name}.sha256"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          sha256sum "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Attest the archive
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ steps.archive.outputs.name }}
+
+      # The step above files the attestation in GitHub's attestation store,
+      # where `gh attestation verify` finds it but a release consumer does not:
+      # nothing about the release itself says it carries provenance. OpenSSF
+      # Scorecard reads release *assets* and its releasesHaveProvenance probe
+      # matches on a `.intoto.jsonl` suffix.
       #
-      # The .sha256 file uploaded to the release is exactly that line, so it is
-      # the one encoded: the attested subject and the published checksum cannot
-      # drift apart.
-      - name: Compute provenance subjects
-        id: subjects
+      # The bundle the action writes is a Sigstore bundle wrapping a DSSE
+      # envelope. Renaming it would satisfy the probe while misdescribing the
+      # format, so the envelope is unwrapped instead: one DSSE envelope on one
+      # line is exactly the JSON Lines provenance the extension denotes, and it
+      # is the same in-toto statement.
+      - name: Emit the provenance as a release asset
+        id: bundle
         env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
           NAME: ${{ steps.archive.outputs.name }}
         run: |
           set -euo pipefail
-          cat "${NAME}.sha256"
-          echo "subjects=$(base64 -w0 < "${NAME}.sha256")" >> "$GITHUB_OUTPUT"
+          if [ -z "${BUNDLE_PATH}" ] || [ ! -f "${BUNDLE_PATH}" ]; then
+            echo "::error::attest-build-provenance reported no bundle at '${BUNDLE_PATH}'"
+            exit 1
+          fi
+          out="${NAME}.intoto.jsonl"
+          jq -c '.dsseEnvelope' "${BUNDLE_PATH}" > "$out"
+          # An absent field leaves jq printing "null", which would ship an asset
+          # that looks like provenance and carries none.
+          if [ ! -s "$out" ] || [ "$(cat "$out")" = "null" ]; then
+            echo "::error::bundle at '${BUNDLE_PATH}' has no dsseEnvelope"
+            exit 1
+          fi
+          echo "name=$out" >> "$GITHUB_OUTPUT"
 
-      - name: Attach the archive to the release
+      - name: Attach the assets to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ steps.tag.outputs.tag }}
           NAME: ${{ steps.archive.outputs.name }}
+          BUNDLE: ${{ steps.bundle.outputs.name }}
+          PUBLISH_ARCHIVE: ${{ steps.archive.outputs.publish }}
         run: |
           set -euo pipefail
-          gh release upload "$TAG" "$NAME" "${NAME}.sha256" --clobber
-
-  provenance:
-    name: SLSA Level 3 provenance
-    needs: package
-    permissions:
-      actions: read # read the workflow run that built the archive
-      id-token: write # keyless signing identity
-      contents: write # upload the provenance as a release asset
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
-    with:
-      base64-subjects: ${{ needs.package.outputs.subjects }}
-      upload-assets: true
+          if [ "$PUBLISH_ARCHIVE" = "true" ]; then
+            gh release upload "$TAG" "$NAME" "${NAME}.sha256" "$BUNDLE" --clobber
+          else
+            # Backfill: the archive and its checksum on the release are the
+            # ones that were attested, so only the provenance is added.
+            gh release upload "$TAG" "$BUNDLE" --clobber
+          fi
