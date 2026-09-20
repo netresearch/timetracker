@@ -70,25 +70,45 @@ jobs:
           ref: ${{ steps.tag.outputs.tag }}
           persist-credentials: false
 
-      # Archives HEAD, not the tag name: checkout resolved `ref` to this commit
-      # already, and a shallow clone need not carry the tag ref itself.
-      #
-      # `git archive` stamps entries with the commit time and `gzip -n` writes
-      # no timestamp or name, so two runs over the same tag with the same git
-      # produce the same digest. Across git versions that is not guaranteed —
-      # the archive is a stable subject to attest, not a reproducibility claim.
-      - name: Build the source archive
+      # Two paths, because a backfill must not rewrite what consumers already
+      # have. On a release the archive is built here and published. On a
+      # dispatch the archive is DOWNLOADED from the release and attested as
+      # published: `git archive` output is stable for one git version but not
+      # guaranteed across them, and `gh release upload --clobber` deletes
+      # before it uploads — so rebuilding would risk replacing the published
+      # tarball with different bytes, invalidating the .sha256 people already
+      # hold and attesting an artefact nobody downloaded.
+      - name: Take the archive
         id: archive
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.tag.outputs.tag }}
+          IS_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
           name="timetracker-${TAG}-source.tar.gz"
-          git archive --format=tar --prefix="timetracker-${TAG}/" HEAD \
-            | gzip -9 -n > "$name"
-          sha256sum "$name" > "${name}.sha256"
+
+          if [ "$IS_DISPATCH" = "true" ]; then
+            gh release download "$TAG" --pattern "$name" --clobber
+            if [ ! -s "$name" ]; then
+              echo "::error::release $TAG carries no $name to attest"
+              exit 1
+            fi
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            # `git archive` stamps entries with the commit time and `gzip -n`
+            # writes no timestamp or name, so the digest is stable for a given
+            # tag and git version. HEAD, not the tag name: checkout resolved
+            # `ref` to this commit already, and a shallow clone need not carry
+            # the tag ref.
+            git archive --format=tar --prefix="timetracker-${TAG}/" HEAD \
+              | gzip -9 -n > "$name"
+            sha256sum "$name" > "${name}.sha256"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          sha256sum "$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
-          cat "${name}.sha256"
 
       - name: Attest the archive
         id: attest
@@ -134,6 +154,13 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
           NAME: ${{ steps.archive.outputs.name }}
           BUNDLE: ${{ steps.bundle.outputs.name }}
+          PUBLISH_ARCHIVE: ${{ steps.archive.outputs.publish }}
         run: |
           set -euo pipefail
-          gh release upload "$TAG" "$NAME" "${NAME}.sha256" "$BUNDLE" --clobber
+          if [ "$PUBLISH_ARCHIVE" = "true" ]; then
+            gh release upload "$TAG" "$NAME" "${NAME}.sha256" "$BUNDLE" --clobber
+          else
+            # Backfill: the archive and its checksum on the release are the
+            # ones that were attested, so only the provenance is added.
+            gh release upload "$TAG" "$BUNDLE" --clobber
+          fi
