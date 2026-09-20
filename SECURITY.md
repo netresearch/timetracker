@@ -79,26 +79,32 @@ gh attestation verify "timetracker-$TAG-source.tar.gz" --repo netresearch/timetr
 
 # 3. the image is ours, signed without a long-lived key
 cosign verify "ghcr.io/netresearch/timetracker:${TAG#v}" \
-  --certificate-identity-regexp '^https://github.com/netresearch/' \
+  --certificate-identity-regexp '^https://github\.com/netresearch/\.github/\.github/workflows/build-container-bake\.yml@refs/heads/main$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
 # 4. the image's SBOM is the one that was attested to it
 cosign verify-attestation --type cyclonedx \
   "ghcr.io/netresearch/timetracker:${TAG#v}" \
-  --certificate-identity-regexp '^https://github.com/netresearch/' \
+  --certificate-identity-regexp '^https://github\.com/netresearch/\.github/\.github/workflows/(build-container-bake|attest-sbom)\.yml@refs/heads/main$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-Each command exits non-zero when the check fails; nothing prints on success in step 2, so read the exit status rather than the output.
+The identity patterns name the workflows that actually sign — both are reusables in `netresearch/.github`, not workflows in this repository. Do not loosen them to `^https://github.com/netresearch/`: that accepts a certificate from **any** workflow in the organisation, so a signature produced somewhere else entirely would satisfy the check.
+
+Each command exits non-zero when the check fails. Read the exit status rather than the output: `gh attestation verify` at the version used here (gh 2.100.0) prints nothing at all on success, and other versions print a summary instead.
 
 **From the first release after v6.4.0, step 2 needs one more flag.** The attestation is then issued by a reusable workflow in `netresearch/.github`, so the signer is that workflow rather than this repository, and `--repo` alone rejects it:
 
 ```bash
-gh attestation verify "timetracker-$TAG-source.tar.gz" --repo netresearch/timetracker \
+NEWER=v6.5.0   # any release after v6.4.0 — not the TAG set above
+
+gh release download "$NEWER" --repo netresearch/timetracker \
+  --pattern "timetracker-$NEWER-source.tar.gz"
+gh attestation verify "timetracker-$NEWER-source.tar.gz" --repo netresearch/timetracker \
   --signer-workflow netresearch/.github/.github/workflows/attest-release-files.yml
 ```
 
-Releases up to and including v6.4.0 were signed by this repository's own workflow and verify with `--repo` alone.
+Releases up to and including v6.4.0 were signed by this repository's own workflow and verify with `--repo` alone — running the command above against v6.4.0 fails, because that flag asks for a signer it does not have.
 
 ## Security Updates
 
