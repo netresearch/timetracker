@@ -35,14 +35,30 @@ final class SecurityHeadersTest extends AbstractWebTestCase
     }
 
     /**
-     * The login page is the one route an unauthenticated visitor reaches, so it
-     * is the response an attacker sees first.
+     * The login route is the one an unauthenticated visitor reaches, so it is
+     * the response an attacker sees first. Note that an authenticated test
+     * session is redirected away from it, so what is asserted here is the 302 —
+     * which is exactly the kind of response a header can be forgotten on.
      */
     #[DataProvider('expectedHeaders')]
-    public function testLoginPageCarriesTheHeader(string $name, string $value): void
+    public function testLoginRouteCarriesTheHeader(string $name, string $value): void
     {
         $this->client->request('GET', '/login');
 
+        self::assertSame($value, $this->client->getResponse()->headers->get($name));
+    }
+
+    /**
+     * The rendered application shell, which is the page a user actually sits
+     * on and the one an injected script would run in.
+     */
+    #[DataProvider('expectedHeaders')]
+    public function testTheSpaShellCarriesTheHeader(string $name, string $value): void
+    {
+        $this->logInSession('unittest');
+        $this->client->request('GET', '/ui/');
+
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
         self::assertSame($value, $this->client->getResponse()->headers->get($name));
     }
 

@@ -44,7 +44,8 @@ This project implements several security measures:
 - LDAP-based authentication with LDAP injection prevention
 - Role-based access control (DEV, PL, CTL, ADMIN)
 - Stateless CSRF tokens on the login and logout flows, and `SameSite=Lax` on the session cookie
-- `X-Frame-Options`, `X-Content-Type-Options` and `Referrer-Policy` on every response ([`SecurityHeadersSubscriber`](src/EventSubscriber/SecurityHeadersSubscriber.php)); a Content Security Policy is not yet in place ([#739](https://github.com/netresearch/timetracker/issues/739))
+- `X-Frame-Options`, `X-Content-Type-Options` and `Referrer-Policy` on every response ([`SecurityHeadersSubscriber`](src/EventSubscriber/SecurityHeadersSubscriber.php))
+- A nonce-based Content Security Policy, currently in report-only mode, on main-request HTML responses that do not already carry one ([`ContentSecurityPolicySubscriber`](src/EventSubscriber/ContentSecurityPolicySubscriber.php), [#739](https://github.com/netresearch/timetracker/issues/739))
 - AES-256-GCM encryption for sensitive tokens
 - Automated dependency updates via GitHub Dependabot ([.github/dependabot.yml](.github/dependabot.yml))
 - CodeQL code scanning ([codeql.yml](.github/workflows/codeql.yml)) and npm dependency audits ([security.yml](.github/workflows/security.yml)) in CI; `composer audit` via `make audit`
