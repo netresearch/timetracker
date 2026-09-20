@@ -18,7 +18,7 @@ Add `nonce="{{ csp_nonce() }}"` to each inline `<script>` and `<style>` you intr
 
 ## 2026-09-20 — v6.4.0: the API no longer sends wildcard CORS headers
 
-`App\Model\Response::send()` set `Access-Control-Allow-Origin: *` on roughly every API response. The header arrived in an unlabelled commit with no rationale, and let any page read whatever the API answers. It is gone, along with `send()`; the class remains as the marker type its call sites use.
+`App\Model\Response::send()` set `Access-Control-Allow-Origin: *` on roughly every API response. The header arrived in an unlabelled commit with no rationale, and let any page read whatever the API answers. The **override** of `send()` that added them is gone; `App\Model\Response` still extends Symfony's `Response` and still has an inherited `send()`, and the class remains as the marker type its call sites use.
 
 ### Impact
 
