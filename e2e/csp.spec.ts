@@ -38,19 +38,34 @@ interface CspViolation {
 
 declare global {
   interface Window {
-    __cspViolations?: CspViolation[];
+    __reportCspViolation?: (violation: CspViolation) => void;
   }
 }
 
 /**
- * Install the listener before any document script runs — a violation raised by
- * the page's own bootstrap fires before anything a test could attach later.
+ * Collect violations on the Node side, not in `window`.
+ *
+ * A navigation destroys the page context, and `addInitScript` runs again on
+ * the new document — anything accumulated in a page-scoped array is lost with
+ * it. A test that visits three settings sections would then assert over the
+ * third one alone and report the first two as clean. `exposeFunction` survives
+ * navigation because Playwright re-installs the binding per document, so every
+ * violation from every document in the test lands in one array.
+ *
+ * The listener is installed before any document script runs: a violation
+ * raised by the page's own bootstrap fires before anything a test could attach
+ * afterwards.
  */
-async function collectViolations(page: Page): Promise<void> {
+async function collectViolations(page: Page): Promise<CspViolation[]> {
+  const collected: CspViolation[] = [];
+
+  await page.exposeFunction('__reportCspViolation', (violation: CspViolation) => {
+    collected.push(violation);
+  });
+
   await page.addInitScript(() => {
-    window.__cspViolations = [];
     document.addEventListener('securitypolicyviolation', (event) => {
-      window.__cspViolations?.push({
+      window.__reportCspViolation?.({
         directive: event.effectiveDirective || event.violatedDirective,
         blockedURI: event.blockedURI,
         sourceFile: event.sourceFile,
@@ -59,10 +74,8 @@ async function collectViolations(page: Page): Promise<void> {
       });
     });
   });
-}
 
-async function violations(page: Page): Promise<CspViolation[]> {
-  return (await page.evaluate(() => window.__cspViolations ?? [])) as CspViolation[];
+  return collected;
 }
 
 /**
@@ -99,55 +112,57 @@ test.describe('Content Security Policy', () => {
   });
 
   test('login raises no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await page.goto('/login');
     await page.waitForSelector('#form-submit');
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 
   test('the worklog view raises no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await loginIsolated(page);
     await goToWorklogPage(page);
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 
   test('the evaluation view raises no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await loginIsolated(page);
     await goToAuswertungPage(page);
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 
   // The admin page is ROLE_ADMIN-only and the per-worker isolation slot cannot
   // reach it, so log in as the admin user — same reasoning as accessibility.spec.ts.
   test('the admin view raises no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await loginAs(page, 'myself');
     await goToAdminPage(page);
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 
   // The settings sections render their own inline bootstrap through the same
   // shell, and the account section is where a passkey/TOTP widget mounts.
   test('the settings sections raise no violation', async ({ page }) => {
-    await collectViolations(page);
+    const collected = await collectViolations(page);
     await loginIsolated(page);
 
+    // Three documents in one test: the Node-side collector is what makes the
+    // first two count. A page-scoped array would report only the last.
     for (const section of ['account', 'appearance', 'security']) {
       await page.goto(`/ui/settings/${section}`);
       await page.waitForURL(new RegExp(`/ui/settings/${section}`));
     }
 
-    const found = (await violations(page)).filter(isOurs);
+    const found = collected.filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
 });
