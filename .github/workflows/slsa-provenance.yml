@@ -1,32 +1,50 @@
-name: SLSA Provenance
-
-# Attaches build provenance to a published release.
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Netresearch DTT GmbH
+#
+# Build provenance for the source archive of a published release.
+#
+# WHO SIGNS, AND WHY IT IS NOT THIS FILE
+# ======================================
+# The attestation is issued by netresearch/.github's attest-release-files.yml,
+# not by a step here. The signing identity in the Sigstore certificate is then
+# that reusable workflow -- one this repository cannot modify -- rather than a
+# workflow any maintainer here can edit. That is the property SLSA's higher
+# build levels are about, and it is what `--signer-workflow` checks.
+#
+# Honest about the half that does NOT follow: the archive is still produced by
+# the `archive` job below, in this repository, from steps a maintainer here
+# can change. The signer is isolated; the build is not. Claim the level that
+# describes, not Level 3.
 #
 # WHY NOT slsa-github-generator
 # =============================
-# The generic generator cannot run in this repository, and the reason is
-# structural rather than a misconfiguration. This organisation sets
-# `sha_pinning_required: true` on the repository AND the organisation, so every
-# action must be referenced by a full-length commit SHA. The generator's
-# reusable workflow calls its own nested actions by tag
-# (`detect-workflow-js@v2.1.0`), and it refuses to be called by SHA itself,
-# because it verifies its own provenance through the tag. The first release
-# that reached it therefore failed in `detect-env` before doing any work:
-#
 #   The action slsa-framework/slsa-github-generator/.github/actions/
-#   detect-workflow-js@v2.1.0 is not allowed in netresearch/timetracker
-#   because all actions must be pinned to a full-length commit SHA.
+#   detect-workflow-js is referenced by TAG inside the generator's own
+#   workflow, and `sha_pinning_required` is on for this repository and the
+#   organisation, so the run is rejected before it starts. Pinning the
+#   generator's own `uses:` does not help -- the rejected references are
+#   inside it -- and it refuses to run from a SHA anyway. Upstream issue 4440
+#   is open.
 #
-# actions/attest-build-provenance is pinnable, is what netresearch/.github's
-# release-go-app.yml already uses for the Go repositories, and produces the
-# same in-toto statement.
+# VERIFYING
+# =========
+#   gh attestation verify timetracker-<tag>-source.tar.gz \
+#     --repo netresearch/timetracker \
+#     --signer-workflow netresearch/.github/.github/workflows/attest-release-files.yml
+#
+# `--repo` ALONE FAILS from the first release attested this way: it checks the
+# signer against this repository, and the signer is the reusable. Releases up
+# to and including v6.4.0 were signed by this workflow itself and verify with
+# `--repo` alone.
+
+name: SLSA Provenance
 
 on:
   release:
     types: [published]
   # For a release whose provenance failed or predates this workflow: the
   # `release` event reads this file from the default branch, so a fix here
-  # serves an existing tag — but only a dispatch can replay it.
+  # serves an existing tag -- but only a dispatch can replay it.
   workflow_dispatch:
     inputs:
       tag:
@@ -37,13 +55,15 @@ on:
 permissions: {}
 
 jobs:
-  provenance:
-    name: Attest the source archive
+  archive:
+    name: Take the source archive
     runs-on: ubuntu-latest
     permissions:
-      contents: write # upload the archive, its checksum and the provenance
-      id-token: write # Sigstore OIDC identity
-      attestations: write # file the attestation with GitHub
+      contents: read # read the tag; the release upload happens in `publish`
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      name: ${{ steps.archive.outputs.name }}
+      publish: ${{ steps.archive.outputs.publish }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -75,7 +95,7 @@ jobs:
       # dispatch the archive is DOWNLOADED from the release and attested as
       # published: `git archive` output is stable for one git version but not
       # guaranteed across them, and `gh release upload --clobber` deletes
-      # before it uploads — so rebuilding would risk replacing the published
+      # before it uploads -- so rebuilding would risk replacing the published
       # tarball with different bytes, invalidating the .sha256 people already
       # hold and attesting an artefact nobody downloaded.
       - name: Take the archive
@@ -86,11 +106,12 @@ jobs:
           IS_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           set -euo pipefail
+          mkdir -p archive
           name="timetracker-${TAG}-source.tar.gz"
 
           if [ "$IS_DISPATCH" = "true" ]; then
-            gh release download "$TAG" --pattern "$name" --clobber
-            if [ ! -s "$name" ]; then
+            gh release download "$TAG" --pattern "$name" --dir archive --clobber
+            if [ ! -s "archive/$name" ]; then
               echo "::error::release $TAG carries no $name to attest"
               exit 1
             fi
@@ -102,65 +123,88 @@ jobs:
             # `ref` to this commit already, and a shallow clone need not carry
             # the tag ref.
             git archive --format=tar --prefix="timetracker-${TAG}/" HEAD \
-              | gzip -9 -n > "$name"
-            sha256sum "$name" > "${name}.sha256"
+              | gzip -9 -n > "archive/$name"
+            ( cd archive && sha256sum "$name" > "${name}.sha256" )
             echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
 
-          sha256sum "$name"
+          sha256sum "archive/$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
-      - name: Attest the archive
-        id: attest
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      # The attestation runs in another workflow on another runner, so the
+      # archive travels as an artifact rather than in the workspace.
+      - name: Hand the archive to the attesting workflow
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          subject-path: ${{ steps.archive.outputs.name }}
+          name: source-archive
+          path: archive/
+          if-no-files-found: error
 
-      # The step above files the attestation in GitHub's attestation store,
-      # where `gh attestation verify` finds it but a release consumer does not:
+  # The signer. `attestations: write` is granted here and nowhere else in this
+  # file, which is the point: nothing in this repository can mint one.
+  attest:
+    name: Attest the source archive
+    needs: archive
+    uses: netresearch/.github/.github/workflows/attest-release-files.yml@main
+    permissions:
+      id-token: write # Sigstore OIDC identity
+      attestations: write # file the attestation with GitHub
+    with:
+      # Only the tarball. The checksum file rides along in the artifact and is
+      # not a subject: attesting it would add a subject nobody verifies.
+      subject-path: "dist/*.tar.gz"
+      artifact-name: source-archive
+      emit-bundle: true
+
+  publish:
+    name: Attach the assets to the release
+    needs: [archive, attest]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # upload the archive, its checksum and the provenance
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Fetch the archive
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: source-archive
+          path: archive
+
+      # The attestation is filed in GitHub's attestation store, where
+      # `gh attestation verify` finds it but a release consumer does not:
       # nothing about the release itself says it carries provenance. OpenSSF
       # Scorecard reads release *assets* and its releasesHaveProvenance probe
-      # matches on a `.intoto.jsonl` suffix.
-      #
-      # The bundle the action writes is a Sigstore bundle wrapping a DSSE
-      # envelope. Renaming it would satisfy the probe while misdescribing the
-      # format, so the envelope is unwrapped instead: one DSSE envelope on one
-      # line is exactly the JSON Lines provenance the extension denotes, and it
-      # is the same in-toto statement.
-      - name: Emit the provenance as a release asset
-        id: bundle
-        env:
-          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
-          NAME: ${{ steps.archive.outputs.name }}
-        run: |
-          set -euo pipefail
-          if [ -z "${BUNDLE_PATH}" ] || [ ! -f "${BUNDLE_PATH}" ]; then
-            echo "::error::attest-build-provenance reported no bundle at '${BUNDLE_PATH}'"
-            exit 1
-          fi
-          out="${NAME}.intoto.jsonl"
-          jq -c '.dsseEnvelope' "${BUNDLE_PATH}" > "$out"
-          # An absent field leaves jq printing "null", which would ship an asset
-          # that looks like provenance and carries none.
-          if [ ! -s "$out" ] || [ "$(cat "$out")" = "null" ]; then
-            echo "::error::bundle at '${BUNDLE_PATH}' has no dsseEnvelope"
-            exit 1
-          fi
-          echo "name=$out" >> "$GITHUB_OUTPUT"
+      # matches on a `.intoto.jsonl` suffix, so the envelope is attached too.
+      - name: Fetch the provenance
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.attest.outputs.bundle-artifact }}
+          path: provenance
 
-      - name: Attach the assets to the release
+      - name: Attach
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.tag.outputs.tag }}
-          NAME: ${{ steps.archive.outputs.name }}
-          BUNDLE: ${{ steps.bundle.outputs.name }}
-          PUBLISH_ARCHIVE: ${{ steps.archive.outputs.publish }}
+          TAG: ${{ needs.archive.outputs.tag }}
+          NAME: ${{ needs.archive.outputs.name }}
+          PUBLISH_ARCHIVE: ${{ needs.archive.outputs.publish }}
         run: |
           set -euo pipefail
+          envelope="provenance/${NAME}.intoto.jsonl"
+          if [ ! -s "$envelope" ]; then
+            echo "::error::no provenance envelope for ${NAME}; the attesting workflow produced:"
+            ls -1 provenance/ || true
+            exit 1
+          fi
+
           if [ "$PUBLISH_ARCHIVE" = "true" ]; then
-            gh release upload "$TAG" "$NAME" "${NAME}.sha256" "$BUNDLE" --clobber
+            gh release upload "$TAG" \
+              "archive/${NAME}" "archive/${NAME}.sha256" "$envelope" --clobber
           else
             # Backfill: the archive and its checksum on the release are the
             # ones that were attested, so only the provenance is added.
-            gh release upload "$TAG" "$BUNDLE" --clobber
+            gh release upload "$TAG" "$envelope" --clobber
           fi

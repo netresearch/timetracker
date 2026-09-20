@@ -62,6 +62,44 @@ This project implements several security measures:
 | [docs/secrets-management.md](docs/secrets-management.md) | Where secrets live, who can read them, when they are rotated |
 | [GOVERNANCE.md](GOVERNANCE.md) | Who decides, and why no approving review is required |
 
+## Verifying a release
+
+Every release carries a source archive, its SHA-256 and a build-provenance attestation; every published image carries a Cosign signature and an SBOM attestation. Check them before you deploy.
+
+```bash
+TAG=v6.4.0
+
+# 1. the source archive matches the checksum published beside it
+gh release download "$TAG" --repo netresearch/timetracker \
+  --pattern "timetracker-$TAG-source.tar.gz*"
+sha256sum -c "timetracker-$TAG-source.tar.gz.sha256"
+
+# 2. the archive is the one our CI built, and GitHub says so
+gh attestation verify "timetracker-$TAG-source.tar.gz" --repo netresearch/timetracker
+
+# 3. the image is ours, signed without a long-lived key
+cosign verify "ghcr.io/netresearch/timetracker:${TAG#v}" \
+  --certificate-identity-regexp '^https://github.com/netresearch/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+
+# 4. the image's SBOM is the one that was attested to it
+cosign verify-attestation --type cyclonedx \
+  "ghcr.io/netresearch/timetracker:${TAG#v}" \
+  --certificate-identity-regexp '^https://github.com/netresearch/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+Each command exits non-zero when the check fails; nothing prints on success in step 2, so read the exit status rather than the output.
+
+**From the first release after v6.4.0, step 2 needs one more flag.** The attestation is then issued by a reusable workflow in `netresearch/.github`, so the signer is that workflow rather than this repository, and `--repo` alone rejects it:
+
+```bash
+gh attestation verify "timetracker-$TAG-source.tar.gz" --repo netresearch/timetracker \
+  --signer-workflow netresearch/.github/.github/workflows/attest-release-files.yml
+```
+
+Releases up to and including v6.4.0 were signed by this repository's own workflow and verify with `--repo` alone.
+
 ## Security Updates
 
 Security updates are released as patch versions. We recommend:
