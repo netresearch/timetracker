@@ -82,7 +82,13 @@ function describe(list: CspViolation[]): string {
 
 test.describe('Content Security Policy', () => {
   test('the shell declares a report-only policy with a nonce', async ({ page }) => {
+    // Authenticated first: SpaAction redirects an anonymous visitor to /login,
+    // so an unauthenticated goto would assert the login page's header while
+    // claiming to test the shell's — and pass, because both carry one.
+    await loginIsolated(page);
     const response = await page.goto('/ui/');
+    expect(page.url()).toContain('/ui/');
+
     const policy = response?.headers()['content-security-policy-report-only'] ?? '';
 
     expect(policy, 'no report-only policy on the shell').toContain("default-src 'self'");

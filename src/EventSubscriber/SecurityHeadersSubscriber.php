@@ -22,7 +22,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * execution — see docs/threat-model.md, threat 6.
  *
  * A Content-Security-Policy is deliberately NOT set here. It needs nonces on
- * eight inline <script> blocks and an allowance for the corporate-navigation
+ * nine inline <script> blocks and an allowance for the corporate-navigation
  * iframe (APP_HEADER_URL), so it carries a test surface this subscriber does
  * not; it follows separately.
  *

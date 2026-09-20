@@ -22,10 +22,12 @@ use const PHP_URL_SCHEME;
 /**
  * Builds the Content-Security-Policy header value.
  *
- * Nonce-based rather than 'unsafe-inline': the eight inline <script> blocks in
- * templates/ each carry `nonce="{{ csp_nonce() }}"`, so the policy can name the
- * nonce and refuse everything else. A policy with 'unsafe-inline' in script-src
- * would allow exactly the injection it exists to stop.
+ * Nonce-based rather than 'unsafe-inline': the nine inline <script> blocks in
+ * templates/ each carry `nonce="{{ csp_nonce() }}"` — the eight executable ones
+ * and the application/ld+json block, which is not subject to script-src but
+ * costs nothing to nonce — so the policy can name the nonce and refuse
+ * everything else. A policy with 'unsafe-inline' in script-src would allow
+ * exactly the injection it exists to stop.
  *
  * frame-src is the one directive that cannot be a constant. The corporate
  * navigation in partials/header.html.twig loads APP_HEADER_URL into an iframe,
