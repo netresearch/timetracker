@@ -135,4 +135,19 @@ test.describe('Content Security Policy', () => {
     const found = (await violations(page)).filter(isOurs);
     expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
   });
+
+  // The settings sections render their own inline bootstrap through the same
+  // shell, and the account section is where a passkey/TOTP widget mounts.
+  test('the settings sections raise no violation', async ({ page }) => {
+    await collectViolations(page);
+    await loginIsolated(page);
+
+    for (const section of ['account', 'appearance', 'security']) {
+      await page.goto(`/ui/settings/${section}`);
+      await page.waitForURL(new RegExp(`/ui/settings/${section}`));
+    }
+
+    const found = (await violations(page)).filter(isOurs);
+    expect(found, `CSP would have blocked:\n${describe(found)}`).toEqual([]);
+  });
 });

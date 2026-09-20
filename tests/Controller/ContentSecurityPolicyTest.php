@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use App\Security\Csp\CspNonceProvider;
 use Tests\AbstractWebTestCase;
 
 use function preg_match_all;
@@ -53,7 +54,10 @@ final class ContentSecurityPolicyTest extends AbstractWebTestCase
         $response = $this->client->getResponse();
 
         $policy = (string) $response->headers->get(self::REPORT_ONLY);
-        self::assertSame(1, preg_match_all("/'nonce-([A-Za-z0-9+\/=]+)'/", $policy, $headerMatches));
+        // script-src and style-src both name it, and they must name the same
+        // one — two nonces in one policy would mean two generators.
+        self::assertGreaterThan(0, preg_match_all("/'nonce-([A-Za-z0-9+\/=]+)'/", $policy, $headerMatches));
+        self::assertSame([$headerMatches[1][0]], array_values(array_unique($headerMatches[1])));
         $nonce = $headerMatches[1][0];
 
         $found = preg_match_all('/<script(?![^>]*\bsrc=)([^>]*)>/i', (string) $response->getContent(), $scriptMatches);
@@ -80,6 +84,26 @@ final class ContentSecurityPolicyTest extends AbstractWebTestCase
         $second = (string) $this->client->getResponse()->headers->get(self::REPORT_ONLY);
 
         self::assertNotSame($first, $second);
+    }
+
+    /**
+     * The 403 template is Twig-rendered without a Vite bundle and carries an
+     * inline <style> block — the one place style-src is exercised rather than
+     * assumed, now that 'unsafe-inline' is gone outside debug builds.
+     *
+     * Rendered directly rather than reached over HTTP: every /ui/* path is
+     * served by the SPA shell with a 200 and gates the admin area client-side,
+     * so no request produces this template deterministically.
+     */
+    public function testTheAccessDeniedTemplateNoncesItsInlineStyle(): void
+    {
+        $this->client->request('GET', '/login');
+
+        $container = self::getContainer();
+        $nonce = $container->get(CspNonceProvider::class)->getNonce();
+        $html = $container->get('twig')->render('bundles/TwigBundle/Exception/error403.html.twig');
+
+        self::assertStringContainsString(sprintf('<style nonce="%s">', $nonce), $html);
     }
 
     /**
