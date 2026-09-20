@@ -1,5 +1,41 @@
 # Breaking Changes
 
+## 2026-09-20 — v6.4.0: enforced Content Security Policy
+
+`ContentSecurityPolicySubscriber` sets an enforcing `Content-Security-Policy` on every main-request HTML response. `script-src` names a per-request nonce and nothing else, so **any inline `<script>` without `nonce="{{ csp_nonce() }}"` is refused by the browser**.
+
+### Impact
+
+A stock installation is unaffected: every inline block in `templates/` carries the nonce, and the six end-to-end cases covering login, the shell, the worklog, the evaluation, the admin area and the settings sections report no violation.
+
+A deployment with a **customised Twig shell** — an added tracking snippet, a support-chat widget, a modified `partials/header.html.twig` — loses those scripts silently from the operator's point of view; the browser console names them.
+
+`frame-ancestors 'none'` also becomes active, so the application can no longer be framed. It still frames others, so the `APP_HEADER_URL` corporate navigation keeps working; its origin must be https, because `frame-src` refuses a plaintext one.
+
+### Migration
+
+Add `nonce="{{ csp_nonce() }}"` to each inline `<script>` and `<style>` you introduced. The function is available in every template. A third-party origin the application must load needs its directive extended in `App\Security\Csp\ContentSecurityPolicyBuilder`.
+
+## 2026-09-20 — v6.4.0: the API no longer sends wildcard CORS headers
+
+`App\Model\Response::send()` set `Access-Control-Allow-Origin: *` on roughly every API response. The header arrived in an unlabelled commit with no rationale, and let any page read whatever the API answers. It is gone, along with `send()`; the class remains as the marker type its call sites use.
+
+### Impact
+
+None for the shipped SPA, which is served from the same origin as the API. A **cross-origin client** — a script on another host calling this API directly — stops working.
+
+### Migration
+
+Cross-origin access belongs in a CORS configuration with an explicit origin list, not a wildcard. Nothing in the repository documented such a client, which is why none is configured; open an issue if your deployment has one.
+
+## 2026-09-20 — v6.4.0: security response headers
+
+Every response now carries `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: same-origin`, from the application and — for files served straight off disk — from `docker/nginx/*.conf`. An existing value set by a reverse proxy is never overwritten.
+
+### Impact
+
+`Referrer-Policy: same-origin` stops sending the referrer to other origins. An external analytics or support tool that attributed traffic by referrer no longer receives one.
+
 ## 2025-09-01 — AccessDenied subscriber and PL role attribute adoption
 
 - Added `App\EventSubscriber\AccessDeniedSubscriber` to convert authorization denials into a legacy 403 with message "You are not allowed to perform this action." while we migrate to attribute-based security. This preserves UI/test expectations during the transition.

@@ -6,8 +6,8 @@ Only the current minor line receives fixes. A new minor release ends support for
 
 | Version         | Supported          | End of life                                   |
 |-----------------|--------------------|-----------------------------------------------|
-| 6.3.x           | :white_check_mark: | when 6.4.0 is released                        |
-| 6.0.x – 6.2.x   | :x:                | superseded by the following minor release     |
+| 6.4.x           | :white_check_mark: | when 6.5.0 is released                        |
+| 6.0.x – 6.3.x   | :x:                | superseded by the following minor release     |
 | 5.x             | :x:                | 2026-07-04, with the release of v6.0.0        |
 | 4.x             | :x:                | 2026-07-05, final release [`v4.5.0`](https://github.com/netresearch/timetracker/releases/tag/v4.5.0) |
 | < 4.0           | :x:                | unsupported                                   |
