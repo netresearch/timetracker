@@ -11,17 +11,16 @@ import { goToWorklogPage, goToAuswertungPage, goToAdminPage } from './helpers/na
 /**
  * Reads what the Content-Security-Policy would have blocked (issue #739).
  *
- * The policy ships report-only, and there is no `report-uri` collector — so
- * without this spec the reports go to a browser console nobody watches, and
- * "report-only first" would be a gesture rather than a measurement. The browser
- * fires `securitypolicyviolation` for a report-only policy too, with
- * `disposition: "report"`, so listening for the event is the collector.
+ * The policy is enforced and there is no `report-uri` collector, so the
+ * browser event is the only signal. It fires either way: `disposition:
+ * "enforce"` now, `"report"` during the report-only round this spec was
+ * written for. A violation used to mean a report; it now means a resource the
+ * browser refused.
  *
  * A violation here means one of two things, and both need a human: a template
  * renders an inline <script> without `csp_nonce()`, or the policy is missing a
- * source the application legitimately uses. Either way it must be settled
- * before the header is switched from Report-Only to enforcing — at which point
- * every violation listed here becomes a blocked resource.
+ * source the application legitimately uses. Either way something on that page
+ * did not load.
  *
  * Readiness comes from the goTo* helpers, which already wait on each page's
  * settled marker; there is no `networkidle`, which the suite's conventions rule
@@ -94,7 +93,7 @@ function describe(list: CspViolation[]): string {
 }
 
 test.describe('Content Security Policy', () => {
-  test('the shell declares a report-only policy with a nonce', async ({ page }) => {
+  test('the shell declares an enforced policy with a nonce', async ({ page }) => {
     // Authenticated first: SpaAction redirects an anonymous visitor to /login,
     // so an unauthenticated goto would assert the login page's header while
     // claiming to test the shell's — and pass, because both carry one.
@@ -102,9 +101,9 @@ test.describe('Content Security Policy', () => {
     const response = await page.goto('/ui/');
     expect(page.url()).toContain('/ui/');
 
-    const policy = response?.headers()['content-security-policy-report-only'] ?? '';
+    const policy = response?.headers()['content-security-policy'] ?? '';
 
-    expect(policy, 'no report-only policy on the shell').toContain("default-src 'self'");
+    expect(policy, 'no policy on the shell').toContain("default-src 'self'");
     expect(policy, 'script-src must be nonce-based, never unsafe-inline').toMatch(
       /script-src 'self' 'nonce-[A-Za-z0-9+/=]+'/,
     );

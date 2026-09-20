@@ -29,17 +29,17 @@ use function str_contains;
  */
 final class ContentSecurityPolicyTest extends AbstractWebTestCase
 {
-    private const string REPORT_ONLY = 'Content-Security-Policy-Report-Only';
+    private const string POLICY = 'Content-Security-Policy';
 
-    public function testTheSpaShellCarriesAReportOnlyPolicy(): void
+    public function testTheSpaShellCarriesAnEnforcedPolicy(): void
     {
         $this->openShell();
-        $policy = (string) $this->client->getResponse()->headers->get(self::REPORT_ONLY);
+        $policy = (string) $this->client->getResponse()->headers->get(self::POLICY);
 
         self::assertStringContainsString("default-src 'self'", $policy);
         self::assertFalse(
-            $this->client->getResponse()->headers->has('Content-Security-Policy'),
-            'The policy is deliberately report-only for now.',
+            $this->client->getResponse()->headers->has('Content-Security-Policy-Report-Only'),
+            'The report-only round is over; two headers would make a violation ambiguous.',
         );
     }
 
@@ -53,7 +53,7 @@ final class ContentSecurityPolicyTest extends AbstractWebTestCase
         $this->openShell();
         $response = $this->client->getResponse();
 
-        $policy = (string) $response->headers->get(self::REPORT_ONLY);
+        $policy = (string) $response->headers->get(self::POLICY);
         // script-src and style-src both name it, and they must name the same
         // one — two nonces in one policy would mean two generators.
         self::assertGreaterThan(0, preg_match_all("/'nonce-([A-Za-z0-9+\/=]+)'/", $policy, $headerMatches));
@@ -78,10 +78,10 @@ final class ContentSecurityPolicyTest extends AbstractWebTestCase
     public function testTheNonceChangesBetweenRequests(): void
     {
         $this->openShell();
-        $first = (string) $this->client->getResponse()->headers->get(self::REPORT_ONLY);
+        $first = (string) $this->client->getResponse()->headers->get(self::POLICY);
 
         $this->openShell();
-        $second = (string) $this->client->getResponse()->headers->get(self::REPORT_ONLY);
+        $second = (string) $this->client->getResponse()->headers->get(self::POLICY);
 
         self::assertNotSame($first, $second);
     }
@@ -114,7 +114,7 @@ final class ContentSecurityPolicyTest extends AbstractWebTestCase
         $this->logInSession('unittest');
         $this->client->request('GET', '/api/v2/settings');
 
-        self::assertFalse($this->client->getResponse()->headers->has(self::REPORT_ONLY));
+        self::assertFalse($this->client->getResponse()->headers->has(self::POLICY));
     }
 
     /**
