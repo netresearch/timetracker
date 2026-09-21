@@ -17,6 +17,16 @@ import { cleanupWorklogEntries, createWorklogEntry } from './helpers/worklog';
  * reported by hand three times.
  */
 test.describe('Worklog grouped view — editing in composite cells', () => {
+  // Each case creates an entry (three relation picks, a save and a refetch),
+  // switches the view with a reload, opens an editor and then MEASURES the
+  // rendered geometry. That is a lot for one 30s budget, and the nightly of
+  // 2026-09-21 showed why: across three attempts the same case failed at two
+  // different points — twice waiting for a combobox, once hitting the 30s cap
+  // inside the geometry evaluate, having got all the way there. A run slow
+  // enough to fail wherever it happens to be is contention, not a defect, so
+  // the budget is what gets fixed (#750).
+  test.slow();
+
   const useGroupedView = async (page: Page, sort: 'time' | 'context' = 'time'): Promise<void> => {
     await page.evaluate((chosen) => {
       window.localStorage.setItem('tt-worklog-view', 'grouped');
