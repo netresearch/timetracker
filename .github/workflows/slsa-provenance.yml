@@ -110,7 +110,12 @@ jobs:
           name="timetracker-${TAG}-source.tar.gz"
 
           if [ "$IS_DISPATCH" = "true" ]; then
-            gh release download "$TAG" --pattern "$name" --dir archive --clobber
+            # --repo for the same reason as in `publish`: this job happens to
+            # have a checkout, so gh could infer the repository, but a step that
+            # works only because of an unrelated step above it breaks the day
+            # that step moves.
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --pattern "$name" --dir archive --clobber
             if [ ! -s "archive/$name" ]; then
               echo "::error::release $TAG carries no $name to attest"
               exit 1
@@ -200,11 +205,17 @@ jobs:
             exit 1
           fi
 
+          # --repo is not optional here. This job only downloads artifacts, so
+          # it has no checkout, and gh without a repository argument tries to
+          # infer one from the git remote: "failed to run git: fatal: not a
+          # git repository". Measured on run 35571464756, where the archive
+          # and the attestation both succeeded and this step was the only one
+          # that fell over.
           if [ "$PUBLISH_ARCHIVE" = "true" ]; then
-            gh release upload "$TAG" \
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" \
               "archive/${NAME}" "archive/${NAME}.sha256" "$envelope" --clobber
           else
             # Backfill: the archive and its checksum on the release are the
             # ones that were attested, so only the provenance is added.
-            gh release upload "$TAG" "$envelope" --clobber
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "$envelope" --clobber
           fi
