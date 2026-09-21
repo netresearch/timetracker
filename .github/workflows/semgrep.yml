@@ -59,13 +59,20 @@ jobs:
       # configured and none is needed for the open rulesets.
       #
       # Exit codes are load-bearing. 0 is a completed scan, findings included —
-      # `--error` is not passed, so findings alone never raise the code; 1 only
-      # appears with `--error`; 2 and above are semgrep itself failing (fatal
-      # error, unparsable config, unknown language). `continue-on-error: true`
-      # would swallow all of them, and the upload would then fail on a missing
-      # SARIF file, which reads as a broken workflow rather than a crashed
-      # scanner. So: a completed scan passes whatever it found, a crash fails
-      # the job and says why.
+      # `--error` is not passed, so findings alone never raise the code here;
+      # 2 and above are semgrep itself failing (fatal error, unparsable
+      # config, unknown language). `continue-on-error: true` would swallow all
+      # of them, and the upload would then fail on a missing SARIF file, which
+      # reads as a broken workflow rather than a crashed scanner. So: a
+      # completed scan passes whatever it found, a crash fails the job.
+      #
+      # The scan deliberately does NOT gate. Adding `--error` would fail the
+      # job on any finding at any severity, and the policy in
+      # docs/vulnerability-management.md is narrower than that: ERROR blocks,
+      # WARNING is triaged within 30 days. Narrowing with `--severity=ERROR`
+      # would instead stop WARNING findings being scanned at all, so code
+      # scanning would lose them. The scan therefore reports everything and
+      # the step after it decides.
       - name: Run Semgrep
         run: |
           set +e
@@ -92,3 +99,15 @@ jobs:
         with:
           sarif_file: semgrep.sarif
           category: semgrep
+
+      # The gate, and it runs AFTER the upload on purpose: a finding that
+      # fails the build must still be visible in code scanning, or the only
+      # record of why the build went red is a log that expires.
+      #
+      # SARIF severity is a per-result `level`, defaulting to the rule's
+      # `defaultConfiguration.level` when the result omits it, so both are
+      # consulted. Only `error` blocks; `warning` and `note` are counted and
+      # printed so the 30-day triage clock in
+      # docs/vulnerability-management.md has a number to start from.
+      - name: Block on ERROR findings
+        run: python3 scripts/semgrep-gate.py semgrep.sarif
