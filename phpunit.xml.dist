@@ -45,6 +45,19 @@
             <directory>tests/ValueObject</directory>
             <!-- Exclude integration tests that require external services -->
             <exclude>tests/Service/Ldap/LdapClientServiceIntegrationTest.php</exclude>
+            <!--
+                These three boot the kernel and resolve a real EntityManager, so
+                they need MySQL. They sat here and passed whenever the database
+                happened to be up before the suite started; when it was not, a
+                pull request touching two lines of README went red (#756). They
+                run in the `integration` suite instead, which `CI Success`
+                depends on just the same, so nothing is covered less than before
+                — only the suite that promises no infrastructure keeps its
+                promise.
+            -->
+            <exclude>tests/Dto/EntrySaveDtoTest.php</exclude>
+            <exclude>tests/Service/DaySummaryServiceSourceTest.php</exclude>
+            <exclude>tests/Service/TimeBalanceServiceSourceTest.php</exclude>
             <!-- Entity unit tests (not *DatabaseTest) -->
             <file>tests/Entity/ActivityTest.php</file>
             <file>tests/Entity/CustomerTest.php</file>
@@ -75,6 +88,10 @@
         </testsuite>
         <!-- Integration tests requiring database -->
         <testsuite name="integration">
+            <!-- Moved out of `unit` in #756: they need a database. -->
+            <file>tests/Dto/EntrySaveDtoTest.php</file>
+            <file>tests/Service/DaySummaryServiceSourceTest.php</file>
+            <file>tests/Service/TimeBalanceServiceSourceTest.php</file>
             <file>tests/Entity/ActivityDatabaseTest.php</file>
             <file>tests/Entity/CustomerDatabaseTest.php</file>
             <file>tests/Entity/HolidayDatabaseTest.php</file>
