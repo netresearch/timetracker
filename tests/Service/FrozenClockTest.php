@@ -86,7 +86,11 @@ final class FrozenClockTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageIsOrContains('Invalid frozen time format: "21.09.2026"');
 
-        new FrozenClock('21.09.2026');
+        // Kept and used: a bare `new` reads as a useless instantiation, and the
+        // failure message says what a silent pass would mean.
+        $frozenClock = new FrozenClock('21.09.2026');
+
+        self::fail('A day-first date was accepted and froze the clock at ' . $frozenClock->now()->format('Y-m-d'));
     }
 
     public function testTheFactoryReturnsTheFrozenClockWhenTheVariableIsSet(): void
