@@ -251,6 +251,15 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
+      # Codecov's branch column is structurally 0 for this project and will
+      # stay there: php-code-coverage writes branch data only in aggregate,
+      # never as the per-line attributes Codecov reads. The numbers are in the
+      # report we already produced, so read them there — see the script's
+      # header for the measurement behind that claim.
+      - name: Report unit branch coverage
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: python3 scripts/branch-coverage.py --summary var/coverage/unit.xml
+
   schema-drift:
     name: Schema Drift (full.sql vs migrations)
     runs-on: ubuntu-latest
@@ -397,6 +406,10 @@ jobs:
           flags: integration
           fail_ci_if_error: false
           verbose: true
+
+      - name: Report integration branch coverage
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: python3 scripts/branch-coverage.py --summary var/coverage/integration.xml
 
       - name: Stop database
         if: always()
