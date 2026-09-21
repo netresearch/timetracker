@@ -45,8 +45,28 @@ def main() -> int:
     parser.add_argument("sarif", help="SARIF file written by the scan")
     args = parser.parse_args()
 
+    # The gate reads the SARIF its own scan just wrote, which is always inside
+    # the workspace. Requiring that is a true invariant rather than a
+    # concession to a scanner: a gate pointed outside the tree it is gating is
+    # a gate reading somebody else's findings. The sibling script
+    # branch-coverage.py deliberately does NOT have this restriction — a
+    # coverage report from another worktree is a legitimate thing to inspect.
     try:
-        with open(args.sarif, encoding="utf-8") as handle:
+        path = os.path.realpath(args.sarif, strict=True)
+    except OSError as error:
+        print(f"error: {args.sarif}: {error}", file=sys.stderr)
+        return 1
+    workspace = os.path.realpath(os.getcwd())
+    if os.path.commonpath([path, workspace]) != workspace:
+        print(
+            f"error: {args.sarif} resolves to {path}, outside the workspace "
+            f"{workspace}; the gate reads the report of its own run",
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        with open(path, encoding="utf-8") as handle:
             report = json.load(handle)
     except (OSError, json.JSONDecodeError) as error:
         print(f"error: {args.sarif}: {error}", file=sys.stderr)
