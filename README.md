@@ -9,7 +9,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/netresearch/timetracker)](https://github.com/netresearch/timetracker/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/netresearch/timetracker/badge)](https://securityscorecards.dev/viewer/?uri=github.com/netresearch/timetracker)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11719/badge)](https://www.bestpractices.dev/projects/11719)
-[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
+[![SLSA 2](https://slsa.dev/images/gh-badge-level2.svg)](https://github.com/netresearch/timetracker/attestations)
 
 **Professional time tracking solution for teams and enterprises with advanced LDAP integration, Jira synchronization, and comprehensive reporting.**
 
@@ -186,7 +186,7 @@ flowchart LR
 - **Testing**: PHPUnit 13 (unit/integration/controller/api), Playwright e2e,
   Vitest for the frontend, PHPStan level 10, PHP-CS-Fixer, Rector
 - **Infrastructure**: Docker (multi-stage bake), GitHub Actions CI/CD,
-  SLSA 3 provenance
+  build provenance on every release ([how to verify](SECURITY.md#verifying-a-release))
 
 Details: [docs/techstack.md](docs/techstack.md) ·
 Decisions: [docs/adr/](docs/adr/README.md)
