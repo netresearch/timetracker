@@ -41,7 +41,12 @@ export async function pickFirstOption(page: Page, row: Locator, colKey: string, 
     await row.locator(`td[data-col-key="${colKey}"]`).focus();
     await page.keyboard.press('Enter');
   }
-  await expect(page.locator('.combobox-input').first()).toBeVisible();
+  // 8s, matching the option wait below rather than Playwright's 5s default.
+  // The relation cell rebuilds when the customer above it commits — projects
+  // and activities are scoped to it — so under CI contention the keypress can
+  // land while SolidJS is mid-reconcile and the combobox appears late. This
+  // was the tightest budget in the helper and the one that fired (#750).
+  await expect(page.locator('.combobox-input').first()).toBeVisible({ timeout: 8000 });
   const option = page.locator('.combobox-content .combobox-item').first();
   await expect(option).toBeVisible({ timeout: 8000 });
   await option.click();
@@ -65,7 +70,7 @@ export async function pickOptionByText(page: Page, row: Locator, colKey: string,
   await row.locator(`td[data-col-key="${colKey}"]`).focus();
   await page.keyboard.press('Enter');
   const input = page.locator('.combobox-input').first();
-  await expect(input).toBeVisible();
+  await expect(input).toBeVisible({ timeout: 8000 });
   await input.fill(text);
   const option = page.locator('.combobox-content .combobox-item').filter({ hasText: text }).first();
   await expect(option).toBeVisible({ timeout: 8000 });
