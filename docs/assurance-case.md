@@ -4,7 +4,7 @@ Why we believe this application's security requirements are met.
 
 [`threat-model.md`](threat-model.md) says what is worth attacking and which control answers each threat. This document asks the harder question: for each requirement, *why should a reader believe it holds?* The answer is always the same shape — a control that implements it, a test that would fail if it stopped holding, and an honest statement of what the argument leaves uncovered.
 
-Every test named below exists in `tests/` and runs in the `CI Success` gate. Where a requirement rests on a deployment decision rather than on code, it says so: that part of the argument is not ours to make.
+Every test named below exists in the repository and runs in the `CI Success` gate — the PHPUnit suites under `tests/`, and the Playwright specs under `e2e/`, which the `e2e` job runs and `CI Success` depends on. Where a requirement rests on a deployment decision rather than on code, it says so: that part of the argument is not ours to make.
 
 ## R1 — An unauthenticated request cannot read time data
 
