@@ -78,13 +78,13 @@ Every test named below exists in the repository and runs in the `CI Success` gat
 
 ## R8 — A released artefact is the one this repository built
 
-**Control.** Signed annotated tags; Cosign keyless signatures and an SBOM attestation on every published image; a build-provenance attestation on the source archive, issued by a reusable workflow in `netresearch/.github` that this repository cannot edit. See [threat 12](threat-model.md#12-compromise-of-the-release-path).
+**Control.** Signed annotated tags; Cosign keyless signatures and an SBOM attestation on every published image; for the source archive, a build in `netresearch/.github`'s `release-source-archive.yml` — a reusable workflow this repository cannot edit — that also signs it, attests its provenance and SBOM, and creates the release. A rebuild on every release and weekly checks the archive is reproducible. See [threat 12](threat-model.md#12-compromise-of-the-release-path).
 
 **Evidence.** Verifiable by anyone, which is stronger than a test: the commands are in [SECURITY.md](../SECURITY.md#verifying-a-release), and the identity patterns there name the signing workflows rather than accepting any workflow in the organisation.
 
 **If the control fails**, a substituted image or archive is indistinguishable from ours to a deployer who checks nothing.
 
-**Not covered.** The archive is built in this repository and signed in the reusable, so the signer is isolated and the build is not. That is below SLSA Build Level 3, and the workflow says so rather than claiming the level.
+**Not covered.** Releases up to and including v6.4.0 were built in this repository, so their provenance is SLSA Build Level 2. The reusable is referenced by `@main`, so the build instructions are whatever that branch holds when the tag is pushed; the provenance records the exact commit, which is what a reviewer checks after the fact.
 
 ## What this assurance case does not argue
 

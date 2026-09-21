@@ -169,7 +169,8 @@ CI is authoritative for test results. Workflows in
 - **[security.yml](../.github/workflows/security.yml)** — npm dependency audit
 - **[codeql.yml](../.github/workflows/codeql.yml)** — CodeQL (JavaScript/TypeScript)
 - **[docker-publish.yml](../.github/workflows/docker-publish.yml)** — image builds/publishing
-- **[scorecard.yml](../.github/workflows/scorecard.yml)**, **[slsa-provenance.yml](../.github/workflows/slsa-provenance.yml)** — supply-chain checks
+- **[release.yml](../.github/workflows/release.yml)** — on a tag push: source archive, SBOMs, signatures, provenance and the GitHub Release, built in `netresearch/.github`'s `release-source-archive.yml`
+- **[scorecard.yml](../.github/workflows/scorecard.yml)**, **[reproducible-archive.yml](../.github/workflows/reproducible-archive.yml)** — supply-chain checks
 - **[auto-merge-deps.yml](../.github/workflows/auto-merge-deps.yml)** — dependency PR automation
 
 Coverage reporting is configured in [codecov.yml](../codecov.yml).

@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Netresearch DTT GmbH
+#
+# Creates the GitHub Release for a pushed tag.
+#
+# Everything happens in netresearch/.github's release-source-archive.yml:
+# checkout, the source archive, SPDX and CycloneDX SBOMs, checksums, Cosign
+# signatures, the build-provenance and SBOM attestations, and the release
+# itself, created last with every file attached. Because the build runs in a
+# reusable workflow this repository cannot edit, the provenance meets SLSA
+# Build Level 3; see that file's header for the reasoning and GitHub's
+# statement.
+#
+# Container images are built and signed by docker-publish.yml on the same tag
+# push; this workflow does not touch them.
+#
+# Tag with `git tag -s vX.Y.Z -m "vX.Y.Z"`. A lightweight tag is refused.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+jobs:
+  release:
+    uses: netresearch/.github/.github/workflows/release-source-archive.yml@main
+    permissions:
+      contents: write # create the release
+      id-token: write # Sigstore OIDC identity
+      attestations: write # file the attestations with GitHub
+
+  # Rebuild the archive from the tag and compare it with the published
+  # checksum. Runs here because the release, created with GITHUB_TOKEN, fires
+  # no `release` event that could start it.
+  reproducible:
+    needs: release
+    uses: ./.github/workflows/reproducible-archive.yml
+    permissions:
+      contents: read
+    with:
+      tag: ${{ github.ref_name }}
