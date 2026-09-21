@@ -91,9 +91,13 @@ def main() -> int:
             locations = result.get("locations") or [{}]
             physical = locations[0].get("physicalLocation") or {}
             artifact = (physical.get("artifactLocation") or {}).get("uri", "?")
-            line = (physical.get("region") or {}).get("startLine", "?")
+            line = (physical.get("region") or {}).get("startLine")
             message = ((result.get("message") or {}).get("text") or "").strip()
-            blocking.append((f"{artifact}:{line}", str(result.get("ruleId")), message))
+            # Kept apart rather than as one "path:line" string: the annotation
+            # needs the number in its own `line=` field, and a workflow command
+            # without it silently annotates line 1 — pointing every finding at
+            # the top of the file it is not in.
+            blocking.append((artifact, line, str(result.get("ruleId")), message))
 
     total = sum(counts.values())
     print(
@@ -122,16 +126,23 @@ def main() -> int:
         f"\n{len(blocking)} finding(s) at {BLOCKING} severity block this build:",
         file=sys.stderr,
     )
-    for where, rule_id, message in blocking:
+    for artifact, line, rule_id, message in blocking:
+        where = artifact if line is None else f"{artifact}:{line}"
         print(f"  {where}  {rule_id}", file=sys.stderr)
         if message:
             print(f"    {message}", file=sys.stderr)
         # An annotation puts it on the diff, where the author is looking.
-        print(f"::error file={where.rsplit(':', 1)[0]}::{rule_id}: {message}")
+        location = (
+            f"file={artifact}" if line is None else f"file={artifact},line={line}"
+        )
+        print(f"::error {location}::{rule_id}: {message}")
     print(
-        "\nFix it, or if it is not exploitable here, add "
-        "`# nosemgrep: <rule-id>` with the reason on the line it flags — the "
-        "reason belongs in the code, not in the scanner configuration.",
+        "\nFix it, or, if it is not exploitable here, have it dismissed in "
+        "GitHub code scanning with a reason. Not with an inline `# nosemgrep`: "
+        "the SARIF is uploaded before this gate runs, so suppressing in the "
+        "source removes the finding from the record as well as from the build, "
+        "and docs/vulnerability-management.md asks for a dismissal somebody "
+        "can audit.",
         file=sys.stderr,
     )
     return 1
