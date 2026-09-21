@@ -32,9 +32,26 @@ jobs:
       id-token: write # Sigstore OIDC identity
       attestations: write # file the attestations with GitHub
 
+  # Both checks below run here because the release, created with
+  # GITHUB_TOKEN, fires no `release` event that could start them.
+
+  # Download the published release and check it the way SECURITY.md tells a
+  # user to: every file signed, checksums.txt listing exactly the files, and
+  # build provenance from the reusable above on every artefact.
+  verify:
+    needs: release
+    uses: netresearch/.github/.github/workflows/verify-release.yml@main
+    permissions:
+      contents: read
+      attestations: read
+      id-token: write # cosign verify-blob
+    with:
+      tag: ${{ github.ref_name }}
+      identity-regexp: '^https://github\.com/netresearch/\.github/\.github/workflows/release-source-archive\.yml@'
+      signer-workflow: netresearch/.github/.github/workflows/release-source-archive.yml
+
   # Rebuild the archive from the tag and compare it with the published
-  # checksum. Runs here because the release, created with GITHUB_TOKEN, fires
-  # no `release` event that could start it.
+  # checksum.
   reproducible:
     needs: release
     uses: ./.github/workflows/reproducible-archive.yml

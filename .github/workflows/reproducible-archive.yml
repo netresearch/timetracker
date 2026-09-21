@@ -116,7 +116,9 @@ jobs:
           published=""
           if gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
               --pattern checksums.txt --clobber 2>/dev/null; then
-            published=$(awk -v f="./${name}" '$2 == f || $2 == "*"f { print $1 }' checksums.txt)
+            # sha256sum writes the name bare, with ./, or with a leading * in
+            # binary mode; accept all three.
+            published=$(awk -v f="${name}" '$2 == f || $2 == "./"f || $2 == "*"f || $2 == "*./"f { print $1 }' checksums.txt)
           elif gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
               --pattern "${name}.sha256" --clobber 2>/dev/null; then
             published=$(cut -d' ' -f1 < "${name}.sha256")

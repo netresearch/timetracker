@@ -76,7 +76,10 @@ SIGNER=netresearch/.github/.github/workflows/release-source-archive.yml
 
 gh release download "$TAG" --repo netresearch/timetracker
 
-# 1. every file matches the published checksum
+# 1. the checksum list was signed by that reusable workflow, and every file matches it
+cosign verify-blob checksums.txt --bundle checksums.txt.sigstore.json \
+  --certificate-identity-regexp '^https://github\.com/netresearch/\.github/\.github/workflows/release-source-archive\.yml@refs/heads/main$' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
 sha256sum -c checksums.txt
 
 # 2. the archive was built by that reusable workflow from this repository
