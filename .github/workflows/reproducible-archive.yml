@@ -1,0 +1,132 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Netresearch DTT GmbH
+#
+# Rebuild a published release's source archive and check that the bytes match
+# the checksum that release carries.
+#
+# WHAT THIS PROVES, AND WHAT IT DOES NOT
+# ======================================
+# It proves the archive is reproducible: anyone holding the tag can rebuild
+# byte-for-byte what we published, so the published tarball is exactly the
+# tagged tree and nothing was slipped in on the way. That is the claim OpenSSF
+# `build_reproducible` asks about for this artefact.
+#
+# It says nothing about the container image. The image is built from this
+# source but through apt, composer and buildx, none of which are byte-stable
+# without further work, and the image is verified a different way — by its
+# Cosign signature and SBOM attestation, see SECURITY.md.
+#
+# WHY THE COMPARISON IS WORTH RUNNING REPEATEDLY
+# ==============================================
+# `git archive` output is deterministic for a given git version, not across
+# all of them: the tar layout is stable, but a future git that changed padding
+# or ordering would silently break the guarantee. Measured on 2026-09-21,
+# v6.4.0 rebuilt identically under git 2.55.0 on a developer machine and under
+# whatever ubuntu-latest carried when the release ran — that is evidence the
+# format has held across at least those two, not a promise it always will.
+# This job is what turns the promise into a measurement that keeps being made.
+
+name: Reproducible source archive
+
+on:
+  release:
+    types: [published]
+  schedule:
+    # Weekly, so a git upgrade on the runner image is caught within days
+    # rather than at the next release.
+    - cron: "37 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to verify (e.g. v6.4.0)"
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  verify:
+    name: Rebuild and compare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Resolve the tag
+        id: tag
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          # gh needs a token even for a public read, and the weekly schedule
+          # sets neither of the two above.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${EVENT_TAG:-$INPUT_TAG}"
+          if [ -z "$tag" ]; then
+            # On the weekly schedule neither is set; take the latest release.
+            tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          fi
+          if [ -z "$tag" ]; then
+            echo "::error::no tag from the event, the input, or the latest release"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout the tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+          # A shallow clone is enough: git archive reads the checked-out tree.
+          persist-credentials: false
+
+      - name: Rebuild and compare
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          name="timetracker-${TAG}-source.tar.gz"
+
+          # Exactly the command slsa-provenance.yml publishes with. If that one
+          # changes, this comparison stops meaning anything, so the two are
+          # kept in step deliberately.
+          git archive --format=tar --prefix="timetracker-${TAG}/" HEAD \
+            | gzip -9 -n > "rebuilt-${name}"
+
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "${name}.sha256" --clobber
+          if [ ! -s "${name}.sha256" ]; then
+            echo "::error::release ${TAG} publishes no ${name}.sha256 to compare against"
+            exit 1
+          fi
+
+          published=$(cut -d' ' -f1 < "${name}.sha256")
+          rebuilt=$(sha256sum "rebuilt-${name}" | cut -d' ' -f1)
+
+          echo "git:        $(git --version)"
+          echo "published:  ${published}"
+          echo "rebuilt:    ${rebuilt}"
+
+          {
+            echo "### Reproducible source archive"
+            echo
+            echo "| | SHA-256 |"
+            echo "|---|---|"
+            echo "| published \`${TAG}\` | \`${published}\` |"
+            echo "| rebuilt here | \`${rebuilt}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$published" != "$rebuilt" ]; then
+            echo "::error::the rebuilt archive differs from the published one"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "**Differs.** Either the published archive is not the tagged tree, or \`git archive\` output changed between the git that built it and $(git --version)." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo "Identical." >> "$GITHUB_STEP_SUMMARY"
