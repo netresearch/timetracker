@@ -1,0 +1,225 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Netresearch DTT GmbH
+#
+# Rebuild the production image of a published tag and compare its CONTENTS with
+# the image that was published.
+#
+# WHAT IS COMPARED, AND WHY NOT THE DIGEST
+# ========================================
+# Two builds of the same commit do not produce the same image digest, and that
+# says nothing about the software: layer tars carry file timestamps, and the
+# image config carries build-time metadata. What a consumer cares about is
+# whether the rebuilt image holds the SAME FILES WITH THE SAME CONTENTS.
+#
+# So both images are exported as a flattened filesystem and compared as a list
+# of `sha256  path` lines. Mode, owner and mtime are deliberately not compared:
+# they are what makes the digests differ, and they do not change what runs.
+#
+# EXPECT THIS TO REPORT DIFFERENCES TODAY
+# =======================================
+# The Dockerfile runs `apt-get update && apt-get upgrade -y` against the Debian
+# mirrors, so a rebuild picks up whatever packages are current that day. The
+# php, composer, node, bun and symfony-cli base images are pinned by digest and
+# composer.lock, package-lock.json and frontend/bun.lock pin the application's
+# own dependencies, so the difference should be confined to Debian packages
+# under /usr and /var/lib/dpkg.
+#
+# That is the measurement this workflow exists to produce. The job therefore
+# does NOT fail on a difference: it writes the differing paths into the job
+# summary, grouped by top-level directory, so the next step — pinning Debian
+# packages to a snapshot.debian.org timestamp — is decided on data. It fails
+# only when it cannot carry out the comparison.
+#
+# The application's own files are the part a difference would be alarming in:
+# /var/www/html holds the source, the vendor tree and the built frontend, and
+# every input to those is lockfile-pinned. The summary lists that directory
+# first for that reason.
+
+name: Reproducible container image
+
+on:
+  schedule:
+    # Weekly, a day after the archive check, so the two do not compete for runners.
+    - cron: "37 4 * * 2"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to rebuild (e.g. v6.4.0). Empty uses the latest release."
+        required: false
+        type: string
+
+permissions: {}
+
+jobs:
+  rebuild:
+    name: Rebuild and compare contents
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Resolve the tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="$INPUT_TAG"
+          if [ -z "$tag" ]; then
+            tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          fi
+          if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$tag' is not a release tag of the form vX.Y.Z"
+            exit 1
+          fi
+          # The metadata-action strips the leading v: images are :6.4.0, not :v6.4.0.
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout the tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ steps.tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v3.12.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read the published image's build metadata
+        id: published
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+          docker pull -q "$IMAGE"
+          # The rebuild has to pass the same build args, or the difference it
+          # reports is its own doing: these three end up in the image.
+          revision=$(docker image inspect "$IMAGE" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')
+          created=$(docker image inspect "$IMAGE" --format '{{ index .Config.Labels "org.opencontainers.image.created" }}')
+          echo "revision=${revision}" >> "$GITHUB_OUTPUT"
+          echo "created=${created}" >> "$GITHUB_OUTPUT"
+          echo "Published image built from ${revision} at ${created}."
+
+      - name: Rebuild the production target
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          REVISION: ${{ steps.published.outputs.revision }}
+          CREATED: ${{ steps.published.outputs.created }}
+        run: |
+          set -euo pipefail
+          docker buildx bake app \
+            --set "app.tags=local/timetracker-rebuild:${TAG}" \
+            --set "app.args.APP_BUILD_REVISION=${REVISION}" \
+            --set "app.args.APP_BUILD_REF=refs/tags/${TAG}" \
+            --set "app.args.APP_BUILD_DATE=${CREATED}" \
+            --set "app.platform=linux/amd64" \
+            --load
+
+      - name: Compare the two filesystems
+        env:
+          PUBLISHED: ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.image_tag }}
+          REBUILT: local/timetracker-rebuild:${{ steps.tag.outputs.tag }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          # `docker export` flattens a container to its final filesystem, which
+          # is what the application runs on; layer boundaries do not matter here.
+          list_files() {
+            local image="$1" out="$2" cid
+            cid=$(docker create "$image")
+            docker export "$cid" > fs.tar
+            docker rm -f "$cid" > /dev/null
+            rm -rf extract && mkdir extract
+            # Ownership and mtimes are not compared, so they need not survive.
+            tar -xf fs.tar -C extract --no-same-owner --no-same-permissions 2>/dev/null || true
+            rm -f fs.tar
+            ( cd extract && find . -type f -print0 | sort -z | xargs -0 sha256sum ) > "$out"
+            rm -rf extract
+          }
+
+          list_files "$PUBLISHED" published.txt
+          list_files "$REBUILT" rebuilt.txt
+
+          published_count=$(wc -l < published.txt)
+          rebuilt_count=$(wc -l < rebuilt.txt)
+          if [ "$published_count" -eq 0 ] || [ "$rebuilt_count" -eq 0 ]; then
+            echo "::error::one of the images produced no file list (published ${published_count}, rebuilt ${rebuilt_count})"
+            exit 1
+          fi
+
+          # Every path lands in exactly one bucket, and the buckets have to sum
+          # to the union of both file lists -- checked below, so a bug in this
+          # arithmetic fails the job instead of reporting a wrong number.
+          sort published.txt > p.txt
+          sort rebuilt.txt > r.txt
+          comm -12 p.txt r.txt > identical.txt          # same hash AND same path
+          awk '{print $2}' p.txt | sort > p.paths
+          awk '{print $2}' r.txt | sort > r.paths
+          awk '{print $2}' identical.txt | sort > identical.paths
+          comm -23 p.paths r.paths > only_published.txt
+          comm -13 p.paths r.paths > only_rebuilt.txt
+          comm -12 p.paths r.paths > common.paths
+          comm -23 common.paths identical.paths > differing.txt
+
+          identical=$(wc -l < identical.txt)
+          differing=$(wc -l < differing.txt)
+          only_p=$(wc -l < only_published.txt)
+          only_r=$(wc -l < only_rebuilt.txt)
+          union=$(cat p.paths r.paths | sort -u | wc -l)
+          if [ "$(( identical + differing + only_p + only_r ))" -ne "$union" ]; then
+            echo "::error::the buckets do not add up: ${identical}+${differing}+${only_p}+${only_r} != ${union}"
+            exit 1
+          fi
+
+          {
+            echo "### Reproducible container image — ${TAG}"
+            echo
+            echo "| | files |"
+            echo "|---|---|"
+            echo "| identical content | ${identical} |"
+            echo "| differing content | ${differing} |"
+            echo "| only in the published image | ${only_p} |"
+            echo "| only in the rebuilt image | ${only_r} |"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$differing" -eq 0 ] && [ "$only_p" -eq 0 ] && [ "$only_r" -eq 0 ]; then
+            echo "**Identical contents.** The rebuild produced the same files." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Grouped by top-level directory, application tree first: a difference
+          # under /var/www/html is the alarming one, since every input there is
+          # lockfile-pinned.
+          {
+            echo "Differences by directory:"
+            echo
+            echo '```'
+            cat differing.txt only_published.txt only_rebuilt.txt \
+              | sed -E 's#^\./##; s#^([^/]+/[^/]+)/.*#\1#' | sort | uniq -c | sort -rn | head -25
+            echo '```'
+            echo
+            echo "Application tree (\`var/www/html\`):"
+            echo
+            echo '```'
+            { grep -c '^\./var/www/html/' differing.txt || true; } | sed 's/^/differing: /'
+            grep '^\./var/www/html/' differing.txt | head -20 || echo "(none)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::notice::${differing} files differ, ${only_p} only published, ${only_r} only rebuilt — see the job summary."
