@@ -29,8 +29,16 @@
 name: Reproducible source archive
 
 on:
-  release:
-    types: [published]
+  # After each release, as a job of release.yml. Not `release: published`:
+  # the release is created with GITHUB_TOKEN, and a token-created event starts
+  # no workflow. Not `workflow_run` either, which zizmor rates a dangerous
+  # trigger for the privileged context it runs in.
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to verify"
+        required: true
+        type: string
   schedule:
     # Weekly, so a git upgrade on the runner image is caught within days
     # rather than at the next release.
@@ -60,20 +68,24 @@ jobs:
       - name: Resolve the tag
         id: tag
         env:
-          EVENT_TAG: ${{ github.event.release.tag_name }}
           INPUT_TAG: ${{ inputs.tag }}
           # gh needs a token even for a public read, and the weekly schedule
           # sets neither of the two above.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          tag="${EVENT_TAG:-$INPUT_TAG}"
+          tag="$INPUT_TAG"
           if [ -z "$tag" ]; then
             # On the weekly schedule neither is set; take the latest release.
             tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
           fi
           if [ -z "$tag" ]; then
             echo "::error::no tag from the event, the input, or the latest release"
+            exit 1
+          fi
+          # The value becomes a checkout ref and part of a file name.
+          if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$tag' is not a release tag of the form vX.Y.Z"
             exit 1
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
@@ -93,20 +105,28 @@ jobs:
           set -euo pipefail
           name="timetracker-${TAG}-source.tar.gz"
 
-          # Exactly the command slsa-provenance.yml publishes with. If that one
-          # changes, this comparison stops meaning anything, so the two are
-          # kept in step deliberately.
+          # Exactly the command netresearch/.github's release-source-archive.yml
+          # publishes with. If that one changes, this comparison stops meaning
+          # anything, so the two are kept in step deliberately.
           git archive --format=tar --prefix="timetracker-${TAG}/" HEAD \
             | gzip -9 -n > "rebuilt-${name}"
 
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --pattern "${name}.sha256" --clobber
-          if [ ! -s "${name}.sha256" ]; then
-            echo "::error::release ${TAG} publishes no ${name}.sha256 to compare against"
+          # Releases from release-source-archive.yml carry checksums.txt;
+          # v6.4.0 and earlier carry one <archive>.sha256 instead.
+          published=""
+          if gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --pattern checksums.txt --clobber 2>/dev/null; then
+            # sha256sum writes the name bare, with ./, or with a leading * in
+            # binary mode; accept all three.
+            published=$(awk -v f="${name}" '$2 == f || $2 == "./"f || $2 == "*"f || $2 == "*./"f { print $1 }' checksums.txt)
+          elif gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --pattern "${name}.sha256" --clobber 2>/dev/null; then
+            published=$(cut -d' ' -f1 < "${name}.sha256")
+          fi
+          if [ -z "$published" ]; then
+            echo "::error::release ${TAG} publishes no checksum for ${name} to compare against"
             exit 1
           fi
-
-          published=$(cut -d' ' -f1 < "${name}.sha256")
           rebuilt=$(sha256sum "rebuilt-${name}" | cut -d' ' -f1)
 
           echo "git:        $(git --version)"

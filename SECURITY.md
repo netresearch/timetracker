@@ -65,47 +65,60 @@ This project implements several security measures:
 
 ## Verifying a release
 
-Every release carries a source archive, its SHA-256 and a build-provenance attestation; every published image carries a Cosign signature and an SBOM attestation. Check them before you deploy.
+Every release carries a source archive, SPDX and CycloneDX SBOMs, `checksums.txt`, a Cosign signature bundle per file and a build-provenance attestation; every published image carries a Cosign signature and an SBOM attestation. Check them before you deploy.
+
+The release files are built, signed and published by `netresearch/.github`'s `release-source-archive.yml`, a reusable workflow this repository cannot edit. That is what SLSA Build Level 3 asks of the build, and it is why the commands below name that workflow as the signer.
 
 ```bash
-TAG=v6.4.0
+TAG=v6.5.0   # any release from v6.5.0 on; v6.4.0 is covered below
+ARCHIVE="timetracker-$TAG-source.tar.gz"
+SIGNER=netresearch/.github/.github/workflows/release-source-archive.yml
 
-# 1. the source archive matches the checksum published beside it
-gh release download "$TAG" --repo netresearch/timetracker \
-  --pattern "timetracker-$TAG-source.tar.gz*"
-sha256sum -c "timetracker-$TAG-source.tar.gz.sha256"
+gh release download "$TAG" --repo netresearch/timetracker
 
-# 2. the archive is the one our CI built, and GitHub says so
-gh attestation verify "timetracker-$TAG-source.tar.gz" --repo netresearch/timetracker
+# 1. the checksum list was signed by that reusable workflow, and every file it names matches.
+#    Only files named in checksums.txt belong to the release; ignore anything else.
+cosign verify-blob checksums.txt --bundle checksums.txt.sigstore.json \
+  --certificate-identity-regexp '^https://github\.com/netresearch/\.github/\.github/workflows/release-source-archive\.yml@refs/heads/main$' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+sha256sum -c checksums.txt
 
-# 3. the image is ours, signed without a long-lived key
+# 2. the archive was built by that reusable workflow from this repository
+gh attestation verify "$ARCHIVE" --repo netresearch/timetracker --signer-workflow "$SIGNER"
+
+# 3. the SBOM was attested to that same archive
+gh attestation verify "$ARCHIVE" --repo netresearch/timetracker --signer-workflow "$SIGNER" \
+  --predicate-type https://spdx.dev/Document/v2.3
+
+# 4. the image is ours, signed without a long-lived key
 cosign verify "ghcr.io/netresearch/timetracker:${TAG#v}" \
   --certificate-identity-regexp '^https://github\.com/netresearch/\.github/\.github/workflows/build-container-bake\.yml@refs/heads/main$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
-# 4. the image's SBOM is the one that was attested to it
+# 5. the image's SBOM is the one that was attested to it
 cosign verify-attestation --type cyclonedx \
   "ghcr.io/netresearch/timetracker:${TAG#v}" \
   --certificate-identity-regexp '^https://github\.com/netresearch/\.github/\.github/workflows/(build-container-bake|attest-sbom)\.yml@refs/heads/main$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-The identity patterns name the workflows that actually sign — both are reusables in `netresearch/.github`, not workflows in this repository. Do not loosen them to `^https://github.com/netresearch/`: that accepts a certificate from **any** workflow in the organisation, so a signature produced somewhere else entirely would satisfy the check.
+The identity patterns name the workflows that actually sign — all of them reusables in `netresearch/.github`, not workflows in this repository. Do not loosen them to `^https://github.com/netresearch/`: that accepts a certificate from **any** workflow in the organisation, so a signature produced somewhere else entirely would satisfy the check.
+
+These commands check what `checksums.txt` names; they do not reject an extra file on the release. That check runs on every release instead: the `verify` job in `release.yml` calls `netresearch/.github`'s `verify-release.yml`, which fails when the release carries any file that `checksums.txt` does not list, or any file without a valid Cosign bundle from `release-source-archive.yml`.
 
 Each command exits non-zero when the check fails. Read the exit status rather than the output: `gh attestation verify` at the version used here (gh 2.100.0) prints nothing at all on success, and other versions print a summary instead.
 
-**From the first release after v6.4.0, step 2 needs one more flag.** The attestation is then issued by a reusable workflow in `netresearch/.github`, so the signer is that workflow rather than this repository, and `--repo` alone rejects it:
+Without `--signer-workflow`, `gh attestation verify` checks the signer against this repository and rejects the attestation, because the signer is the reusable workflow.
+
+**v6.4.0 has a different layout.** Its archive was built in this repository, so its provenance is SLSA Build Level 2. It carries `timetracker-v6.4.0-source.tar.gz.sha256` instead of `checksums.txt`, no SBOM and no Cosign bundle, and it holds two provenance attestations: one signed by this repository's former `slsa-provenance.yml`, one by `netresearch/.github`'s `attest-release-files.yml`. Either check passes:
 
 ```bash
-NEWER=v6.5.0   # any release after v6.4.0 — not the TAG set above
-
-gh release download "$NEWER" --repo netresearch/timetracker \
-  --pattern "timetracker-$NEWER-source.tar.gz"
-gh attestation verify "timetracker-$NEWER-source.tar.gz" --repo netresearch/timetracker \
+gh release download v6.4.0 --repo netresearch/timetracker --pattern 'timetracker-v6.4.0-source.tar.gz*'
+sha256sum -c timetracker-v6.4.0-source.tar.gz.sha256
+gh attestation verify timetracker-v6.4.0-source.tar.gz --repo netresearch/timetracker
+gh attestation verify timetracker-v6.4.0-source.tar.gz --repo netresearch/timetracker \
   --signer-workflow netresearch/.github/.github/workflows/attest-release-files.yml
 ```
-
-Releases up to and including v6.4.0 were signed by this repository's own workflow and verify with `--repo` alone — running the command above against v6.4.0 fails, because that flag asks for a signer it does not have.
 
 ## Security Updates
 
