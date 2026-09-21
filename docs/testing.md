@@ -170,7 +170,7 @@ CI is authoritative for test results. Workflows in
 - **[codeql.yml](../.github/workflows/codeql.yml)** — CodeQL (JavaScript/TypeScript)
 - **[docker-publish.yml](../.github/workflows/docker-publish.yml)** — image builds/publishing
 - **[release.yml](../.github/workflows/release.yml)** — on a tag push: source archive, SBOMs, signatures, provenance and the GitHub Release, built in `netresearch/.github`'s `release-source-archive.yml`
-- **[scorecard.yml](../.github/workflows/scorecard.yml)**, **[reproducible-archive.yml](../.github/workflows/reproducible-archive.yml)** — supply-chain checks
+- **[scorecard.yml](../.github/workflows/scorecard.yml)**, **[reproducible-archive.yml](../.github/workflows/reproducible-archive.yml)**, **[reproducible-image.yml](../.github/workflows/reproducible-image.yml)** — supply-chain checks. The image one rebuilds a released image and compares its files with the published one; it reports differences rather than failing on them, because `apt-get upgrade` is not pinned
 - **[auto-merge-deps.yml](../.github/workflows/auto-merge-deps.yml)** — dependency PR automation
 
 Coverage reporting is configured in [codecov.yml](../codecov.yml).
