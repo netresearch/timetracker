@@ -84,10 +84,11 @@ final class ResponseFactoryTest extends TestCase
         $error = $this->responseFactory->error('Broken', HttpResponse::HTTP_I_AM_A_TEAPOT, '/login');
 
         self::assertSame(HttpResponse::HTTP_I_AM_A_TEAPOT, $error->getStatusCode());
-        self::assertSame(
-            ['message' => '[Broken]', 'forwardUrl' => '/login'],
-            self::payload($error),
-        );
+        $payload = self::payload($error);
+        // Field by field, not the whole array: Error adds a debug `exception`
+        // key when display_errors is on, which it is in CI and is not here.
+        self::assertSame('[Broken]', $payload['message']);
+        self::assertSame('/login', $payload['forwardUrl']);
     }
 
     public function testNotFound(): void
