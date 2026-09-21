@@ -76,7 +76,8 @@ SIGNER=netresearch/.github/.github/workflows/release-source-archive.yml
 
 gh release download "$TAG" --repo netresearch/timetracker
 
-# 1. the checksum list was signed by that reusable workflow, and every file matches it
+# 1. the checksum list was signed by that reusable workflow, and every file it names matches.
+#    Only files named in checksums.txt belong to the release; ignore anything else.
 cosign verify-blob checksums.txt --bundle checksums.txt.sigstore.json \
   --certificate-identity-regexp '^https://github\.com/netresearch/\.github/\.github/workflows/release-source-archive\.yml@refs/heads/main$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
@@ -101,7 +102,9 @@ cosign verify-attestation --type cyclonedx \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-The identity patterns name the workflows that actually sign — both are reusables in `netresearch/.github`, not workflows in this repository. Do not loosen them to `^https://github.com/netresearch/`: that accepts a certificate from **any** workflow in the organisation, so a signature produced somewhere else entirely would satisfy the check.
+The identity patterns name the workflows that actually sign — all of them reusables in `netresearch/.github`, not workflows in this repository. Do not loosen them to `^https://github.com/netresearch/`: that accepts a certificate from **any** workflow in the organisation, so a signature produced somewhere else entirely would satisfy the check.
+
+These commands check what `checksums.txt` names; they do not reject an extra file on the release. That check runs on every release instead: the `verify` job in `release.yml` calls `netresearch/.github`'s `verify-release.yml`, which fails when the release carries any file that `checksums.txt` does not list, or any file without a valid Cosign bundle from `release-source-archive.yml`.
 
 Each command exits non-zero when the check fails. Read the exit status rather than the output: `gh attestation verify` at the version used here (gh 2.100.0) prints nothing at all on success, and other versions print a summary instead.
 
