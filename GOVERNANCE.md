@@ -14,6 +14,18 @@ TimeTracker is developed and used by [Netresearch DTT GmbH](https://www.netresea
 | Collaborator | users with `push` on the repository | Push branches, open pull requests, review, triage issues |
 | Contributor | anyone | Open issues and pull requests from a fork, take part in discussions |
 
+### Before `push` is granted
+
+A maintainer grants `push` only after checking, and only to someone who has already contributed through forks:
+
+1. **At least three merged pull requests**, each reviewed, from the account in question. Three is the number this project uses; it is low enough to be reachable and high enough that the reviews have shown how the person works.
+2. **Two-factor authentication active on the GitHub account**, verified through the organisation's member list (Settings → People → 2FA column), not by asking.
+3. **Membership of the `netresearch` organisation**, so that removal is one action in one place when it is needed.
+
+Every grant is recorded by GitHub in the organisation's audit log and is therefore reconstructible after the fact without a separate list being kept here. Adding somebody is not the only way to end up with `push`, so the events to read are both the additions and the changes: `org.add_member`, `team.add_member`, `repo.add_member`, and equally `repo.update_member` and `team.update_repository_permission`, which record an existing collaborator or an existing team being raised to `push` without anybody being added to anything.
+
+Revocation follows the same route and needs no ceremony: a maintainer removes the access, then says so in the issue or pull request that prompted it.
+
 The current maintainer count is one. This is stated plainly rather than hidden: it is the single largest risk to the project and it shapes every rule below.
 
 ## How decisions are made

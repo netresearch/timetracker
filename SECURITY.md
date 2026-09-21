@@ -57,6 +57,7 @@ This project implements several security measures:
 |----------|-----------------|
 | [docs/security.md](docs/security.md) | How authentication, authorisation, CSRF and token encryption are implemented |
 | [docs/threat-model.md](docs/threat-model.md) | What is worth attacking, which control answers each threat, and what risk is accepted |
+| [docs/assurance-case.md](docs/assurance-case.md) | Why each security requirement is believed to hold: the control, the test that would fail without it, and what the argument leaves uncovered |
 | [docs/vulnerability-management.md](docs/vulnerability-management.md) | Which scanners run, what blocks a build, and how long a finding may stay open |
 | [docs/dependency-policy.md](docs/dependency-policy.md) | How third-party code enters the project and what the bots may merge |
 | [docs/secrets-management.md](docs/secrets-management.md) | Where secrets live, who can read them, when they are rotated |
