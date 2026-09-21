@@ -16,6 +16,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
+use function array_key_exists;
 use function is_string;
 
 /**
@@ -32,11 +33,21 @@ final class FrozenClockTest extends TestCase
 
     private bool $envWasSet = false;
 
+    private ?string $serverBefore = null;
+
+    private bool $serverWasSet = false;
+
     protected function setUp(): void
     {
         $this->envWasSet = isset($_ENV['APP_FROZEN_TIME']);
         $current = $_ENV['APP_FROZEN_TIME'] ?? null;
         $this->envBefore = is_string($current) ? $current : null;
+
+        // The factory reads $_SERVER as well, so both have to be put back: a
+        // case that leaves $_SERVER cleared hands a later test another clock.
+        $this->serverWasSet = array_key_exists('APP_FROZEN_TIME', $_SERVER);
+        $currentServer = $_SERVER['APP_FROZEN_TIME'] ?? null;
+        $this->serverBefore = is_string($currentServer) ? $currentServer : null;
     }
 
     protected function tearDown(): void
@@ -48,7 +59,11 @@ final class FrozenClockTest extends TestCase
             unset($_ENV['APP_FROZEN_TIME']);
         }
 
-        unset($_SERVER['APP_FROZEN_TIME']);
+        if ($this->serverWasSet) {
+            $_SERVER['APP_FROZEN_TIME'] = $this->serverBefore;
+        } else {
+            unset($_SERVER['APP_FROZEN_TIME']);
+        }
     }
 
     public function testAFullTimestampIsReturnedUnchanged(): void
