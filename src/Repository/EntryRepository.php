@@ -1013,7 +1013,8 @@ class EntryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Gets work by user for period (ported from OptimizedEntryRepository).
+     * Gets work by user for period. Ported in September 2025 from the
+     * since-removed OptimizedEntryRepository.
      *
      * @return array{duration: int, count: int}
      */
@@ -1132,7 +1133,8 @@ class EntryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Converts working days to calendar days (ported from OptimizedEntryRepository).
+     * Converts working days to calendar days. Ported in September 2025 from
+     * the since-removed OptimizedEntryRepository.
      */
     public function getCalendarDaysByWorkDays(int $workingDays): int
     {
@@ -1211,7 +1213,8 @@ class EntryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Finds entries by recent days of user (ported from OptimizedEntryRepository).
+     * Finds entries by recent days of user. Ported in September 2025 from the
+     * since-removed OptimizedEntryRepository.
      *
      * @return list<Entry>
      */
