@@ -131,7 +131,7 @@ public static function getSubscribedEvents(): array
 public function __construct(
     private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
     private readonly ManagerRegistry $managerRegistry,
-    private readonly QueryCacheService $queryCacheService,
+    private readonly WorklogWriteService $worklogWriteService,
     private readonly ?LoggerInterface $logger = null,
 ) {}
 ```
@@ -146,13 +146,12 @@ public function onEntryCreated(EntryEvent $event): void
 ```
 
 1. **Audit Logging**: Records entry creation with user and entry IDs
-2. **Cache Invalidation**: Clears user-specific entry cache using `QueryCacheService`
-3. **Auto-sync Logic**: Checks if automatic JIRA synchronization should occur
+2. **Auto-sync Logic**: Checks if automatic JIRA synchronization should occur
    - Validates project has ticket system configured
    - Confirms ticket system is JIRA with auto-booking enabled
    - Ensures entry has valid ticket reference
-4. **JIRA Integration**: Attempts automatic worklog creation if conditions are met
-5. **Error Handling**: Logs sync failures without breaking entry creation
+3. **JIRA Integration**: Attempts automatic worklog creation if conditions are met
+4. **Error Handling**: Logs sync failures without breaking entry creation
 
 **Entry Updated (`onEntryUpdated`)**
 ```php
@@ -160,9 +159,8 @@ public function onEntryUpdated(EntryEvent $event): void
 ```
 
 1. **Logging**: Records the update
-2. **Cache Refresh**: Invalidates stale cached queries via `QueryCacheService`
-3. **JIRA Sync**: Runs `syncWorklog()` on every update when `shouldAutoSync()` passes (v4 parity). `updateEntryJiraWorkLog` creates a new worklog or updates the existing one based on the worklog id, so entries never synced before are caught up on their next save. If the ticket changed and the previous entry had a worklog id, the old worklog is deleted first (using the `previous` snapshot).
-4. **Graceful Degradation**: Logs warnings on JIRA failures but doesn't block updates
+2. **JIRA Sync**: Runs `syncWorklog()` on every update when `shouldAutoSync()` passes (v4 parity). `updateEntryJiraWorkLog` creates a new worklog or updates the existing one based on the worklog id, so entries never synced before are caught up on their next save. If the ticket changed and the previous entry had a worklog id, the old worklog is deleted first (using the `previous` snapshot).
+3. **Graceful Degradation**: Logs warnings on JIRA failures but doesn't block updates
 
 **Entry Deleted (`onEntryDeleted`)**
 ```php
@@ -170,11 +168,10 @@ public function onEntryDeleted(EntryEvent $event): void
 ```
 
 1. **Cleanup Logging**: Records deletion for audit purposes
-2. **Cache Cleanup**: Removes invalidated cache entries
-3. **JIRA Cleanup**: Deletes corresponding JIRA worklog if exists
+2. **JIRA Cleanup**: Deletes corresponding JIRA worklog if exists
    - Checks both sync flag and worklog ID
    - Prevents orphaned worklogs in external systems
-4. **Error Resilience**: Warns on JIRA deletion failures but completes local deletion
+3. **Error Resilience**: Warns on JIRA deletion failures but completes local deletion
 
 **Entry Synced (`onEntrySynced`)**
 ```php
@@ -182,8 +179,6 @@ public function onEntrySynced(EntryEvent $event): void
 ```
 
 1. **Success Logging**: Records successful sync with worklog ID
-2. **Cache Management**: Clears sync-related cache tags
-3. **Status Tracking**: Updates internal sync status flags
 
 **Entry Sync Failed (`onEntrySyncFailed`)**
 ```php
@@ -542,16 +537,16 @@ use App\EventSubscriber\EntryEventSubscriber;
 
 class EntryEventSubscriberTest extends TestCase
 {
-    public function testEntryCreatedInvalidatesCache(): void
+    public function testEntryCreatedIsLogged(): void
     {
-        $cacheService = $this->createMock(QueryCacheService::class);
-        $cacheService->expects($this->once())
-                    ->method('invalidateEntity')
-                    ->with(Entry::class, 123);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+                    ->method('info')
+                    ->with('Entry created');
 
         $subscriber = new EntryEventSubscriber(
             jiraService: $this->createMock(JiraIntegrationService::class),
-            cacheService: $cacheService,
+            logger: $logger,
         );
 
         $entry = $this->createEntryWithUser(123);
