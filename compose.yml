@@ -210,8 +210,10 @@ services:
       - ./var/cache:/var/www/html/var/cache
       - ./var/log:/var/www/html/var/log
     depends_on:
-      - db-e2e
-      - ldap-dev
+      db-e2e:
+        condition: service_started
+      ldap-dev:
+        condition: service_healthy
     restart: "no"
     profiles:
       - e2e
@@ -252,6 +254,17 @@ services:
     ports:
       - "3389:389"
     restart: "no"
+    healthcheck:
+      # slapd accepts connections on 389 several seconds before the bootstrap
+      # LDIF is imported, so a port probe reports healthy while every seeded
+      # user is still missing. Assert one of those users instead. The image's
+      # ACL denies anonymous search (it answers "No such object"), hence the
+      # read-only account. See #765.
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://127.0.0.1:389 -D \"cn=$$LDAP_READONLY_USER_USERNAME,$$LDAP_BASE_DN\" -w \"$$LDAP_READONLY_USER_PASSWORD\" -b \"$$LDAP_BASE_DN\" '(uid=unittest)' dn | grep -q '^dn: uid=unittest,'"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
     profiles:
       - dev
       - development
