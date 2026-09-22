@@ -413,7 +413,7 @@ final class SaveEntryAction extends BaseTrackingController
         $entityManager->persist($entry);
         $entityManager->flush();
 
-        // Dispatch entry event for Jira sync and cache invalidation
+        // Dispatch entry event for Jira sync
         if ($this->eventDispatcher instanceof EventDispatcherInterface) {
             $eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
             $this->eventDispatcher->dispatch(
