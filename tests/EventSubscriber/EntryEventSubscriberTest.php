@@ -21,7 +21,6 @@ use App\Event\EntryEvent;
 use App\EventSubscriber\EntryEventSubscriber;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Repository\TicketSystemRepository;
-use App\Service\Cache\QueryCacheService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Sync\WorklogWriteService;
@@ -48,7 +47,6 @@ final class EntryEventSubscriberTest extends TestCase
     private JiraOAuthApiService&MockObject $jiraOAuthApiService;
     private ManagerRegistry&MockObject $managerRegistry;
     private ObjectManager&MockObject $objectManager;
-    private QueryCacheService&MockObject $queryCacheService;
     private WorklogWriteService&MockObject $worklogWriteService;
     private LoggerInterface&MockObject $logger;
     private EntryEventSubscriber $subscriber;
@@ -60,14 +58,12 @@ final class EntryEventSubscriberTest extends TestCase
         $this->managerRegistry = $this->createMock(ManagerRegistry::class);
         $this->objectManager = $this->createMock(ObjectManager::class);
         $this->managerRegistry->method('getManager')->willReturn($this->objectManager);
-        $this->queryCacheService = $this->createMock(QueryCacheService::class);
         $this->worklogWriteService = $this->createMock(WorklogWriteService::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->subscriber = new EntryEventSubscriber(
             $this->jiraOAuthApiFactory,
             $this->managerRegistry,
-            $this->queryCacheService,
             $this->worklogWriteService,
             $this->logger,
         );
@@ -140,36 +136,6 @@ final class EntryEventSubscriberTest extends TestCase
         self::assertSame('onEntryDeleted', $events[EntryEvent::DELETED]);
         self::assertSame('onEntrySynced', $events[EntryEvent::SYNCED]);
         self::assertSame('onEntrySyncFailed', $events[EntryEvent::SYNC_FAILED]);
-    }
-
-    public function testOnEntryCreatedInvalidatesCacheForUser(): void
-    {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(42);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getProject')->willReturn(null);
-
-        $this->queryCacheService->expects(self::once())
-            ->method('invalidateEntity')
-            ->with(Entry::class, 42);
-
-        $event = new EntryEvent($entry);
-        $this->subscriber->onEntryCreated($event);
-    }
-
-    public function testOnEntryCreatedDoesNotInvalidateCacheWhenNoUser(): void
-    {
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn(null);
-        $entry->method('getProject')->willReturn(null);
-
-        $this->queryCacheService->expects(self::never())
-            ->method('invalidateEntity');
-
-        $event = new EntryEvent($entry);
-        $this->subscriber->onEntryCreated($event);
     }
 
     public function testOnEntryCreatedAutoSyncsToJiraWhenConditionsMet(): void
@@ -446,23 +412,6 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryCreated($event);
     }
 
-    public function testOnEntryUpdatedInvalidatesCache(): void
-    {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(42);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(false);
-
-        $this->queryCacheService->expects(self::once())
-            ->method('invalidateEntity')
-            ->with(Entry::class, 42);
-
-        $event = new EntryEvent($entry);
-        $this->subscriber->onEntryUpdated($event);
-    }
-
     public function testOnEntryUpdatedSyncsWhenAutoSyncConditionsMet(): void
     {
         [$entry, $user, $ticketSystem] = $this->createSyncableEntry(synced: true, worklogId: 12345);
@@ -538,23 +487,6 @@ final class EntryEventSubscriberTest extends TestCase
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryUpdated($event);
-    }
-
-    public function testOnEntryDeletedInvalidatesCache(): void
-    {
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(42);
-
-        $entry = self::createStub(Entry::class);
-        $entry->method('getUser')->willReturn($user);
-        $entry->method('getSyncedToTicketsystem')->willReturn(false);
-
-        $this->queryCacheService->expects(self::once())
-            ->method('invalidateEntity')
-            ->with(Entry::class, 42);
-
-        $event = new EntryEvent($entry);
-        $this->subscriber->onEntryDeleted($event);
     }
 
     public function testOnEntryDeletedDeletesWorklogFromJira(): void
@@ -823,13 +755,9 @@ final class EntryEventSubscriberTest extends TestCase
         self::assertTrue($entry->getSyncedToTicketsystem());
     }
 
-    public function testOnEntrySyncedInvalidatesJiraSyncCacheTag(): void
+    public function testOnEntrySyncedLogsTheSync(): void
     {
         $entry = self::createStub(Entry::class);
-
-        $this->queryCacheService->expects(self::once())
-            ->method('invalidateTag')
-            ->with('jira_sync');
 
         $this->logger->expects(self::once())
             ->method('info')
@@ -881,7 +809,6 @@ final class EntryEventSubscriberTest extends TestCase
         $subscriber = new EntryEventSubscriber(
             $this->jiraOAuthApiFactory,
             $this->managerRegistry,
-            $this->queryCacheService,
             $this->worklogWriteService,
         );
 

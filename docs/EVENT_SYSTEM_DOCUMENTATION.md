@@ -57,9 +57,9 @@ class EntryEvent extends Event
 
 | Event Constant | Purpose | When Dispatched | Use Cases |
 |---|---|---|---|
-| `CREATED` | New entry created | After entry persistence | Cache invalidation, auto-sync to JIRA, notifications |
-| `UPDATED` | Entry modified | After entry updates | Cache refresh, JIRA worklog updates, change tracking |
-| `DELETED` | Entry removed | After entry deletion | Cache cleanup, JIRA worklog deletion, audit logging |
+| `CREATED` | New entry created | After entry persistence | Auto-sync to JIRA, notifications |
+| `UPDATED` | Entry modified | After entry updates | JIRA worklog updates, change tracking |
+| `DELETED` | Entry removed | After entry deletion | JIRA worklog deletion, audit logging |
 | `SYNCED` | Entry synchronized to external system | After successful JIRA sync | Clear sync flags, update status, logging |
 | `SYNC_FAILED` | External sync failed | After sync attempt failure | Error logging, notification, retry scheduling |
 
@@ -105,7 +105,6 @@ The primary business logic subscriber handling entry-related domain events.
 #### Purpose and Responsibility
 
 Coordinates cross-cutting concerns for entry operations:
-- Query cache management for performance
 - JIRA integration and synchronization
 - Audit logging and monitoring
 - Automatic workflow triggers
@@ -131,7 +130,7 @@ public static function getSubscribedEvents(): array
 public function __construct(
     private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
     private readonly ManagerRegistry $managerRegistry,
-    private readonly QueryCacheService $queryCacheService,
+    private readonly WorklogWriteService $worklogWriteService,
     private readonly ?LoggerInterface $logger = null,
 ) {}
 ```
@@ -146,13 +145,12 @@ public function onEntryCreated(EntryEvent $event): void
 ```
 
 1. **Audit Logging**: Records entry creation with user and entry IDs
-2. **Cache Invalidation**: Clears user-specific entry cache using `QueryCacheService`
-3. **Auto-sync Logic**: Checks if automatic JIRA synchronization should occur
+2. **Auto-sync Logic**: Checks if automatic JIRA synchronization should occur
    - Validates project has ticket system configured
    - Confirms ticket system is JIRA with auto-booking enabled
    - Ensures entry has valid ticket reference
-4. **JIRA Integration**: Attempts automatic worklog creation if conditions are met
-5. **Error Handling**: Logs sync failures without breaking entry creation
+3. **JIRA Integration**: Attempts automatic worklog creation if conditions are met
+4. **Error Handling**: Logs sync failures without breaking entry creation
 
 **Entry Updated (`onEntryUpdated`)**
 ```php
@@ -160,9 +158,8 @@ public function onEntryUpdated(EntryEvent $event): void
 ```
 
 1. **Logging**: Records the update
-2. **Cache Refresh**: Invalidates stale cached queries via `QueryCacheService`
-3. **JIRA Sync**: Runs `syncWorklog()` on every update when `shouldAutoSync()` passes (v4 parity). `updateEntryJiraWorkLog` creates a new worklog or updates the existing one based on the worklog id, so entries never synced before are caught up on their next save. If the ticket changed and the previous entry had a worklog id, the old worklog is deleted first (using the `previous` snapshot).
-4. **Graceful Degradation**: Logs warnings on JIRA failures but doesn't block updates
+2. **JIRA Sync**: Runs `syncWorklog()` on every update when `shouldAutoSync()` passes (v4 parity). `updateEntryJiraWorkLog` creates a new worklog or updates the existing one based on the worklog id, so entries never synced before are caught up on their next save. If the ticket changed and the previous entry had a worklog id, the old worklog is deleted first (using the `previous` snapshot).
+3. **Graceful Degradation**: Logs warnings on JIRA failures but doesn't block updates
 
 **Entry Deleted (`onEntryDeleted`)**
 ```php
@@ -170,11 +167,10 @@ public function onEntryDeleted(EntryEvent $event): void
 ```
 
 1. **Cleanup Logging**: Records deletion for audit purposes
-2. **Cache Cleanup**: Removes invalidated cache entries
-3. **JIRA Cleanup**: Deletes corresponding JIRA worklog if exists
+2. **JIRA Cleanup**: Deletes corresponding JIRA worklog if exists
    - Checks both sync flag and worklog ID
    - Prevents orphaned worklogs in external systems
-4. **Error Resilience**: Warns on JIRA deletion failures but completes local deletion
+3. **Error Resilience**: Warns on JIRA deletion failures but completes local deletion
 
 **Entry Synced (`onEntrySynced`)**
 ```php
@@ -182,8 +178,6 @@ public function onEntrySynced(EntryEvent $event): void
 ```
 
 1. **Success Logging**: Records successful sync with worklog ID
-2. **Cache Management**: Clears sync-related cache tags
-3. **Status Tracking**: Updates internal sync status flags
 
 **Entry Sync Failed (`onEntrySyncFailed`)**
 ```php
@@ -330,11 +324,9 @@ graph TD
     D --> F[Event Creation]
     F --> G[Event Dispatch]
     G --> H[Subscriber Execution]
-    H --> I[Cache Operations]
     H --> J[JIRA Integration]
     H --> K[Audit Logging]
-    I --> L[Response to User]
-    J --> L
+    J --> L[Response to User]
     K --> L
 ```
 
@@ -347,7 +339,7 @@ Entry events **are dispatched** from the tracking controllers, after the entity 
 $entityManager->persist($entry);
 $entityManager->flush();
 
-// Dispatch entry event for Jira sync and cache invalidation
+// Dispatch entry event for Jira sync
 if ($this->eventDispatcher instanceof EventDispatcherInterface) {
     $eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
     $this->eventDispatcher->dispatch(
@@ -367,7 +359,7 @@ $this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::DELETED);
 
 ### SYNCED / SYNC_FAILED events
 
-`EntryEvent::SYNCED` and `EntryEvent::SYNC_FAILED` are defined constants, and `EntryEventSubscriber` subscribes to both (`onEntrySynced` invalidates the `jira_sync` cache tag; `onEntrySyncFailed` logs the `Throwable` in `context['exception']`). **No component currently dispatches them** — the worklog booking runs inline inside `onEntryCreated`/`onEntryUpdated`, so these two hooks are wired but presently dormant. If a dedicated sync service is added, it would dispatch them like:
+`EntryEvent::SYNCED` and `EntryEvent::SYNC_FAILED` are defined constants, and `EntryEventSubscriber` subscribes to both (`onEntrySynced` logs the sync; `onEntrySyncFailed` logs the `Throwable` in `context['exception']`). **No component currently dispatches them** — the worklog booking runs inline inside `onEntryCreated`/`onEntryUpdated`, so these two hooks are wired but presently dormant. If a dedicated sync service is added, it would dispatch them like:
 
 ```php
 // After successful JIRA sync
@@ -393,7 +385,6 @@ Only the two exception subscribers share an event (`KernelEvents::EXCEPTION`), s
 - Events are dispatched **after** database transactions commit
 - Ensures entity persistence before side effects
 - Prevents inconsistent state if subscribers fail
-- Cache invalidation occurs after data changes are durable
 
 ## Custom Events
 
@@ -542,16 +533,18 @@ use App\EventSubscriber\EntryEventSubscriber;
 
 class EntryEventSubscriberTest extends TestCase
 {
-    public function testEntryCreatedInvalidatesCache(): void
+    public function testEntryCreatedIsLogged(): void
     {
-        $cacheService = $this->createMock(QueryCacheService::class);
-        $cacheService->expects($this->once())
-                    ->method('invalidateEntity')
-                    ->with(Entry::class, 123);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+                    ->method('info')
+                    ->with('Entry created');
 
         $subscriber = new EntryEventSubscriber(
-            jiraService: $this->createMock(JiraIntegrationService::class),
-            cacheService: $cacheService,
+            jiraOAuthApiFactory: $this->createMock(JiraOAuthApiFactory::class),
+            managerRegistry: $this->createMock(ManagerRegistry::class),
+            worklogWriteService: $this->createMock(WorklogWriteService::class),
+            logger: $logger,
         );
 
         $entry = $this->createEntryWithUser(123);
@@ -612,7 +605,7 @@ public function testControllerWithMockedEvents(): void
 - Event classes with proper constants and structure
 - `EntryEventSubscriber` registered (auto-wired/auto-configured) and handling `CREATED`/`UPDATED`/`DELETED`
 - Controller dispatching wired in `SaveEntryAction`, `DeleteEntryAction`, `BulkEntryAction` (after `flush()`)
-- Jira worklog sync + user-entry cache invalidation on entry create/update/delete
+- Jira worklog sync on entry create/update/delete
 - Exception handling subscribers (`AccessDeniedSubscriber`, `ExceptionSubscriber`)
 
 **⚠️ Wired but dormant**:

@@ -13,14 +13,12 @@ This document provides comprehensive documentation for all repository classes in
 
 ## Overview
 
-The TimeTracker application uses 11 repository classes that extend Doctrine's `ServiceEntityRepository` to provide data access layer functionality. Each repository manages a specific entity and provides specialized query methods optimized for the application's requirements.
+The TimeTracker application documents 10 repository classes that extend Doctrine's `ServiceEntityRepository` to provide data access layer functionality. Each repository manages a specific entity and provides specialized query methods optimized for the application's requirements.
 
 ### Repository Architecture
 
 - **Base**: All repositories extend `Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository`
 - **Type Safety**: Explicit type-safe methods for mixed type handling
-- **Optimization**: Specialized `OptimizedEntryRepository` for performance-critical operations
-- **Caching**: Cache integration in optimized repositories
 - **Database Agnostic**: Cross-platform SQL generation for MySQL/MariaDB and SQLite
 
 ## Repository Pattern Implementation
@@ -53,12 +51,7 @@ return "YEAR({$field})";
 return "strftime('%Y', {$field})";
 ```
 
-### 3. Caching Strategy
-- Cache key patterns: `{prefix}_{operation}_{params}`
-- TTL: 300 seconds (5 minutes) for general queries
-- 60 seconds for frequently changing work statistics
-
-### 4. Index-Aware Filtering
+### 3. Index-Aware Filtering
 - Primary filters applied first (user_id, date ranges)
 - Secondary filters applied in order of selectivity
 - Proper ordering by indexed columns
@@ -275,62 +268,7 @@ $to = (clone $from)->modify('first day of next month');
 
 ---
 
-### 6. OptimizedEntryRepository
-
-**Purpose**: Performance-optimized version of EntryRepository with caching
-
-**Entity Managed**: `App\Entity\Entry`
-
-**Dependencies**:
-- `ClockInterface` for date operations
-- `CacheItemPoolInterface` for result caching (optional)
-
-**Key Features**:
-- **Caching Strategy**: 5-minute TTL for general queries, 1-minute for work stats
-- **Eager Loading**: Optimized query builder with preloaded relationships
-- **Single Query Aggregation**: Replaces multiple queries with conditional aggregation
-- **Index-Aware Filtering**: Optimized filter ordering
-
-**Key Methods**:
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `findByRecentDaysOfUser` | `(User $user, int $days): array` | Cached recent entries |
-| `findByDate` | `(int $userId, int $year, ?int $month, ?int $projectId, ?int $customerId, ?array $arSort): array` | Optimized date filtering |
-| `getEntrySummaryOptimized` | `(int $entryId, int $userId): array` | Single-query summary data |
-| `getWorkByUserOptimized` | `(int $userId, Period $period): array` | Cached work statistics |
-| `findByFilterArrayOptimized` | `(array $filter): array` | Index-optimized filtering |
-
-**Cache Pattern**:
-```php
-$cacheKey = sprintf('%s_recent_%d_%d', self::CACHE_PREFIX, $user->getId(), $days);
-```
-
-**Optimization Techniques**:
-
-1. **Conditional Aggregation**:
-```sql
-COUNT(CASE WHEN e.customer_id = :customerId THEN 1 END) as customer_entries,
-SUM(CASE WHEN e.customer_id = :customerId THEN e.duration END) as customer_total
-```
-
-2. **Eager Loading Query Builder**:
-```php
-return $this->createQueryBuilder($alias)
-    ->select($alias, 'u', 'c', 'p', 'a')
-    ->leftJoin($alias . '.user', 'u')
-    ->leftJoin($alias . '.customer', 'c')
-    ->leftJoin($alias . '.project', 'p')
-    ->leftJoin($alias . '.activity', 'a');
-```
-
-**Cache Management**: Automatic cache invalidation and type-safe cache retrieval.
-
-**Relationships**: Same as EntryRepository but with performance optimizations.
-
----
-
-### 7. PresetRepository
+### 6. PresetRepository
 
 **Purpose**: Manages Preset entities for quick entry templates
 
@@ -356,7 +294,7 @@ return $this->createQueryBuilder($alias)
 
 ---
 
-### 8. ProjectRepository
+### 7. ProjectRepository
 
 **Purpose**: Manages Project entities with complex team-based access control
 
@@ -399,7 +337,7 @@ return $this->createQueryBuilder($alias)
 
 ---
 
-### 9. TeamRepository
+### 8. TeamRepository
 
 **Purpose**: Manages Team entities for user grouping and access control
 
@@ -432,7 +370,7 @@ return $this->createQueryBuilder($alias)
 
 ---
 
-### 10. TicketSystemRepository
+### 9. TicketSystemRepository
 
 **Purpose**: Manages TicketSystem entities for external integrations
 
@@ -458,7 +396,7 @@ return $this->createQueryBuilder($alias)
 
 ---
 
-### 11. UserRepository
+### 10. UserRepository
 
 **Purpose**: Manages User entities with role-based data access
 
@@ -557,22 +495,17 @@ $this->createQueryBuilder('e')
 - **Batch Operations**: Bulk updates and deletes where possible
 - **Raw SQL**: For complex aggregations and reports
 
-### 2. Caching Implementation
-- **OptimizedEntryRepository**: Implements PSR-6 cache interface
-- **Cache Keys**: Structured with operation and parameter context
-- **TTL Strategy**: Short TTL (60s) for frequently changing data, longer (300s) for stable data
-
-### 3. Memory Management
+### 2. Memory Management
 - **Pagination**: Offset/limit patterns for large datasets
 - **Streaming**: Direct SQL for large result sets
 - **Type Safety**: Explicit type conversion to prevent memory leaks
 
-### 4. Database Portability
+### 3. Database Portability
 - **Platform Detection**: Runtime database platform detection
 - **Function Mapping**: Abstract database-specific functions
 - **SQL Generation**: Platform-appropriate SQL generation
 
-### 5. Relationship Loading
+### 4. Relationship Loading
 - **Selective Eager Loading**: Only load required relationships
 - **Query Planning**: Optimize JOIN order for performance
 - **Lazy Loading Awareness**: Avoid N+1 queries in loops
@@ -587,13 +520,6 @@ $this->createQueryBuilder('e')
 | `findEntriesWithRelations` | Eager loading base | Prevents N+1 queries |
 | `bulkUpdate` | Mass updates | Single query for multiple records |
 | `findOverlappingEntries` | Validation queries | Complex time range logic |
-
-### OptimizedEntryRepository (Performance Methods)
-| Method | Purpose | Performance Notes |
-|--------|---------|-------------------|
-| `getEntrySummaryOptimized` | Single-query summaries | Replaces multiple queries with conditional aggregation |
-| `findByFilterArrayOptimized` | Index-aware filtering | Optimized filter ordering |
-| `getWorkByUserOptimized` | Cached statistics | 60-second cache TTL |
 
 ### ProjectRepository (Access-Control Methods)
 | Method | Purpose | Performance Notes |

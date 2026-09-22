@@ -19,7 +19,6 @@ use App\Enum\TicketSystemType;
 use App\Enum\WriteOutcome;
 use App\Event\EntryEvent;
 use App\Exception\Integration\Jira\JiraApiException;
-use App\Service\Cache\QueryCacheService;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Sync\WorklogWriteService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -56,7 +55,6 @@ class EntryEventSubscriber implements EventSubscriberInterface
     public function __construct(
         private readonly JiraOAuthApiFactory $jiraOAuthApiFactory,
         private readonly ManagerRegistry $managerRegistry,
-        private readonly QueryCacheService $queryCacheService,
         private readonly WorklogWriteService $worklogWriteService,
         private readonly ?LoggerInterface $logger = null,
     ) {
@@ -79,8 +77,6 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $this->logger?->info('Entry created');
 
-        $this->invalidateUserEntryCache($entry);
-
         // Check if automatic JIRA sync is needed
         if ($this->shouldAutoSync($entry)) {
             try {
@@ -98,8 +94,6 @@ class EntryEventSubscriber implements EventSubscriberInterface
         $previousEntry = $this->getPreviousEntry($entryEvent);
 
         $this->logger?->info('Entry updated');
-
-        $this->invalidateUserEntryCache($entry);
 
         // ADR-025 §7: an entry re-attributed to the agent leaves the human labour line.
         // Its worklog would otherwise stay booked in Jira, and since the sync ignores
@@ -140,8 +134,6 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $this->logger?->info('Entry deleted');
 
-        $this->invalidateUserEntryCache($entry);
-
         // Delete from JIRA if synced
         if ($entry->getSyncedToTicketsystem() && null !== $entry->getWorklogId()) {
             try {
@@ -159,9 +151,6 @@ class EntryEventSubscriber implements EventSubscriberInterface
     public function onEntrySynced(EntryEvent $entryEvent): void
     {
         $this->logger?->info('Entry synced to JIRA');
-
-        // Clear sync-related cache
-        $this->queryCacheService->invalidateTag('jira_sync');
     }
 
     public function onEntrySyncFailed(EntryEvent $entryEvent): void
@@ -176,18 +165,6 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         // Could trigger notification or retry logic here
-    }
-
-    private function invalidateUserEntryCache(Entry $entry): void
-    {
-        $user = $entry->getUser();
-        $userId = $user?->getId();
-        if (null !== $userId) {
-            $this->queryCacheService->invalidateEntity(
-                Entry::class,
-                $userId,
-            );
-        }
     }
 
     /**

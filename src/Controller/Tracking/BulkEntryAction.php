@@ -163,7 +163,7 @@ final class BulkEntryAction extends BaseTrackingController
             $em->persist($entry);
             $em->flush();
 
-            // Dispatch entry created event for Jira sync and cache invalidation
+            // Dispatch entry created event for Jira sync
             if ($this->eventDispatcher instanceof EventDispatcherInterface) {
                 $this->eventDispatcher->dispatch(new EntryEvent($entry), EntryEvent::CREATED);
             }

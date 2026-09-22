@@ -118,14 +118,6 @@ services:
     App\Service\ClockInterface:
         factory: ['App\Service\ClockFactory', 'create']
 
-    # Query Cache Service configuration
-    App\Service\Cache\QueryCacheService:
-        arguments:
-            $cacheItemPool: '@cache.app'
-            $logger: '@?logger'
-        tags:
-            - { name: monolog.logger, channel: cache }
-
     # Configure EntryRepository with correct parameters
     App\Repository\EntryRepository:
         arguments:
