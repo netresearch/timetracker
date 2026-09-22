@@ -126,15 +126,6 @@ services:
         tags:
             - { name: monolog.logger, channel: cache }
 
-    # Optimized Entry Repository configuration
-    App\Repository\OptimizedEntryRepository:
-        arguments:
-            $managerRegistry: '@doctrine'
-            $clock: '@App\Service\ClockInterface'
-            $cacheItemPool: '@?cache.app'
-        tags:
-            - { name: 'doctrine.repository_service' }
-
     # Configure EntryRepository with correct parameters
     App\Repository\EntryRepository:
         arguments:
