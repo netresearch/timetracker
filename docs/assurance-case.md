@@ -86,6 +86,20 @@ Every test named below exists in the repository and runs in the `CI Success` gat
 
 **Not covered.** Releases up to and including v6.4.0 were built in this repository, so their provenance is SLSA Build Level 2. The reusable is referenced by `@main`, so the build instructions are whatever that branch holds when the tag is pushed; the provenance records the exact commit, which is what a reviewer checks after the fact.
 
+## Secure design principles, and where they show
+
+The requirements above argue single properties. This section argues the shape of the design that produces them, because a property that holds by accident holds only until the next change.
+
+**Deny by default.** `config/packages/security.yaml` ends on `- { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }`, so a route is protected unless something above that line names it. The public entries are anchored for that reason — `^/\.well-known/` and `^/llms\.txt$` rather than a prefix — so a look-alike path such as `/.well-known-x` or `/llms.txt.bak` cannot inherit public access. API tokens follow the same rule one layer down: `RequireScopeSubscriber` refuses a token request to any controller that has not declared a scope, which makes a newly added endpoint unreachable by tokens until someone opts it in. `tests/Security/RequireScopeCoverageTest.php` guards the opt-in itself: it reads every declared scope by reflection and fails on one outside the `ApiScope` taxonomy — a typo such as `reporting:reed` would otherwise disable an endpoint silently — and a floor count fails if annotations are removed wholesale.
+
+**Least privilege.** A token never exceeds the person who issued it: `ApiTokenAuthenticator` builds the `ApiAccessToken` from the owning user's roles *and* the token's scopes, so the scope can only narrow. The release path is split the same way — `release.yml` declares `permissions: {}` at workflow level and grants each job what it alone needs, and inside `release-source-archive.yml` the job that builds and signs holds `contents: read` while only the job that creates the release holds `contents: write`.
+
+**Complete mediation of half-finished logins.** The states between "anonymous" and "logged in" are named rather than left to fall through the catch-all: `^/2fa` requires `IS_AUTHENTICATED_2FA_IN_PROGRESS`, and passkey registration requires `IS_AUTHENTICATED_FULLY`, so a session resumed from the 30-day remember-me cookie cannot mint a permanent credential from a stolen cookie.
+
+**Defence in depth where one control is known to be insufficient.** R4 assumes the database leaks and still argues the tokens in it are unusable. R7 assumes a token is stolen and argues its blast radius is the issuing user's role.
+
+**Not covered.** These are arguments about the code as it stands, reconstructed from it. No formal design review precedes a change; what enforces the principles between reviews is the tests named above and the `CI Success` gate.
+
 ## What this assurance case does not argue
 
 Three gaps, named so that nobody mistakes silence for coverage:
