@@ -123,6 +123,39 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+// One entry, one customer and project, two activities: the seed the activity-picker
+// Tab cases share.
+function mockTwoActivities(): void {
+  mockTracking({
+    entries: [{ entry: DEFAULT_ENTRY }],
+    customers: [{ customer: { id: 1, name: 'ACME' } }],
+    projects: [{ project: { id: 4, name: 'Site' } }],
+    activities: [{ activity: { id: 5, name: 'Dev' } }, { activity: { id: 6, name: 'QA' } }],
+  })
+  postJson.mockResolvedValue({})
+}
+
+// With a select's picker open, filter it to `name`, wait until that option is the
+// highlighted one, and hand back the search input.
+async function highlightActivity(name: string): Promise<HTMLInputElement> {
+  await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
+  const combo = document.querySelector<HTMLInputElement>('.combobox-input')!
+  fireEvent.input(combo, { target: { value: name } })
+  await waitFor(() => expect(document.querySelector('.combobox-item[data-highlighted]')?.textContent).toContain(name))
+
+  return combo
+}
+
+const saveCalls = (): unknown[][] => postJson.mock.calls.filter((args) => args[0] === '/tracking/save')
+
+// The description editor of the seeded entry's row is open.
+function expectDescriptionEditor(container: HTMLElement): Promise<void> {
+  return waitFor(() => {
+    const descCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')
+    expect(descCell?.querySelector('input')).not.toBeNull()
+  })
+}
+
 // Move the keyboard cursor to the Nth body row (0-based) so the active-row
 // (aria-current) toolbar actions target it. gridNav sets aria-current on focus,
 // then each ArrowDown advances one row.
@@ -1090,33 +1123,21 @@ describe('Tracking (Worklog grid)', () => {
   })
 
   it('Tab in the activity picker confirms the highlighted pick and moves on to description without saving (#588)', async () => {
-    mockTracking({
-      entries: [{ entry: DEFAULT_ENTRY }],
-      customers: [{ customer: { id: 1, name: 'ACME' } }],
-      projects: [{ project: { id: 4, name: 'Site' } }],
-      activities: [{ activity: { id: 5, name: 'Dev' } }, { activity: { id: 6, name: 'QA' } }],
-    })
-    postJson.mockResolvedValue({})
+    mockTwoActivities()
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
     // Open the activity picker and filter-highlight another activity (QA).
     editCell(container, 'activity')
-    await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
-    const combo = document.querySelector<HTMLInputElement>('.combobox-input')!
-    fireEvent.input(combo, { target: { value: 'QA' } })
-    await waitFor(() => expect(document.querySelector('.combobox-item[data-highlighted]')?.textContent).toContain('QA'))
+    const combo = await highlightActivity('QA')
 
     // Tab accepts the highlighted pick (like Enter would) AND walks on into the
     // description editor on the same row — the save is deferred to row-leave, so
     // the user is not stranded outside edit mode (#588 problem 2).
     fireEvent.keyDown(combo, { key: 'Tab' })
-    await waitFor(() => {
-      const descCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')
-      expect(descCell?.querySelector('input')).not.toBeNull()
-    })
+    await expectDescriptionEditor(container)
     expect(container.querySelector('td[data-col-key="activity"]')?.textContent).toContain('QA')
-    expect(postJson.mock.calls.filter((args) => args[0] === '/tracking/save')).toHaveLength(0)
+    expect(saveCalls()).toHaveLength(0)
 
     unmount()
   })
@@ -1125,28 +1146,17 @@ describe('Tracking (Worklog grid)', () => {
   // between, unmounting saves the dirty row once; the check that frame would have
   // run must not save it a second time from the draft it still holds.
   it('leaving the page right after a Tab out of a select saves the row once (#771)', async () => {
-    mockTracking({
-      entries: [{ entry: DEFAULT_ENTRY }],
-      customers: [{ customer: { id: 1, name: 'ACME' } }],
-      projects: [{ project: { id: 4, name: 'Site' } }],
-      activities: [{ activity: { id: 5, name: 'Dev' } }, { activity: { id: 6, name: 'QA' } }],
-    })
-    postJson.mockResolvedValue({})
+    mockTwoActivities()
     const { getByRole, container, unmount } = renderTracking()
     await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
 
     editCell(container, 'activity')
-    await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
-    const combo = document.querySelector<HTMLInputElement>('.combobox-input')!
-    fireEvent.input(combo, { target: { value: 'QA' } })
-    await waitFor(() => expect(document.querySelector('.combobox-item[data-highlighted]')?.textContent).toContain('QA'))
-
-    fireEvent.keyDown(combo, { key: 'Tab' })
+    fireEvent.keyDown(await highlightActivity('QA'), { key: 'Tab' })
     unmount() // before the frame the select commit queued has run
 
     // Let that frame and any check it queues run.
     await new Promise<void>((resolve) => { requestAnimationFrame(() => { setTimeout(resolve, 0) }) })
-    expect(postJson.mock.calls.filter((args) => args[0] === '/tracking/save')).toHaveLength(1)
+    expect(saveCalls()).toHaveLength(1)
   })
 
   // #771: the flat-grid case above pins #588 problem 2 in the layout where the
@@ -1156,13 +1166,7 @@ describe('Tracking (Worklog grid)', () => {
   // ran in that layout, so nothing noticed.
   it('grouped view: Tab in the activity picker confirms the pick and opens the description (#771)', async () => {
     localStorage.setItem('tt-worklog-view', 'grouped')
-    mockTracking({
-      entries: [{ entry: DEFAULT_ENTRY }],
-      customers: [{ customer: { id: 1, name: 'ACME' } }],
-      projects: [{ project: { id: 4, name: 'Site' } }],
-      activities: [{ activity: { id: 5, name: 'Dev' } }, { activity: { id: 6, name: 'QA' } }],
-    })
-    postJson.mockResolvedValue({})
+    mockTwoActivities()
     const { container, unmount } = renderTracking()
     await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
 
@@ -1170,19 +1174,11 @@ describe('Tracking (Worklog grid)', () => {
       .find((part) => part.textContent === 'Dev')
     expect(activityPart).toBeDefined()
     fireEvent.dblClick(activityPart!)
-    await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
-    const combo = document.querySelector<HTMLInputElement>('.combobox-input')!
-    fireEvent.input(combo, { target: { value: 'QA' } })
-    await waitFor(() => expect(document.querySelector('.combobox-item[data-highlighted]')?.textContent).toContain('QA'))
+    fireEvent.keyDown(await highlightActivity('QA'), { key: 'Tab' })
 
-    fireEvent.keyDown(combo, { key: 'Tab' })
-
-    await waitFor(() => {
-      const descCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')
-      expect(descCell?.querySelector('input')).not.toBeNull()
-    })
+    await expectDescriptionEditor(container)
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Description')
-    expect(postJson.mock.calls.filter((args) => args[0] === '/tracking/save')).toHaveLength(0)
+    expect(saveCalls()).toHaveLength(0)
 
     unmount()
   })

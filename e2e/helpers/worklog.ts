@@ -201,7 +201,7 @@ export async function clickRowAction(row: Locator, name: RegExp): Promise<void> 
 export function trackSaves(page: Page): string[] {
   const saves: string[] = [];
   page.on('request', (request) => {
-    if (request.method() === 'POST' && /\/tracking\/save$/.test(request.url())) {
+    if (request.method() === 'POST' && request.url().endsWith('/tracking/save')) {
       saves.push(request.url());
     }
   });
