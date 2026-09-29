@@ -301,6 +301,12 @@ export interface InlineGridEditConfig<R extends object> {
    *  cell that shows nothing on this row (a block continuation) answers with an
    *  empty list and is skipped. */
   cellFields?: (colKey: string, rowId: number) => string[]
+  /** The order Tab and Enter's guided fill walk a row's fields in, when the layout
+   *  is not it. A layout that regroups columns (the worklog's grouped view puts the
+   *  time between the activity and the description) would otherwise dictate the
+   *  keyboard order too; a field not listed keeps its place after the listed ones,
+   *  in layout order. */
+  fieldOrder?: readonly string[]
   /** Seed a fresh draft from a row (the editable form values). */
   seedDraft: (row: R) => FormValues
   /** Persist one row's draft (POST + refetch); rejects to surface a row error.
@@ -351,6 +357,8 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   let moveHandle: GridMoveHandle | null = null
   let tableEl: HTMLElement | undefined
   let lastFocusedRowId: number | null = null
+  // Select commits whose post-commit move has not run yet (see commitCell).
+  let pendingMoves = 0
   // Non-reactive snapshot of the row a draft was seeded from, so a pending edit
   // can still save on unmount even if the parent already cleared the rows list
   // (e.g. route/tab change) — rowById() would then return undefined.
@@ -495,13 +503,26 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
 
   // One flat sequence of (cell, field) pairs in a row's reading order, so a field
   // inside a composite cell takes its turn like any other.
-  const editTargets = (rowId: number): { colKey: string; field: string }[] =>
-    Array.from(tableEl?.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`) ?? [])
+  const editTargets = (rowId: number): { colKey: string; field: string }[] => {
+    const inLayoutOrder = Array.from(tableEl?.querySelectorAll<HTMLElement>(`td[data-row-id="${rowId}"][data-col-key]`) ?? [])
       .flatMap((td) => {
         const colKey = td.dataset.colKey
 
         return colKey === undefined ? [] : fieldsOfCell(colKey, rowId).map((field) => ({ colKey, field }))
       })
+    const order = config.fieldOrder
+    if (order === undefined) {
+      return inLayoutOrder
+    }
+    const rank = (field: string): number => {
+      const at = order.indexOf(field)
+
+      return at === -1 ? order.length : at
+    }
+
+    // Array#sort is stable, so unlisted fields keep their layout order.
+    return inLayoutOrder.sort((a, b) => rank(a.field) - rank(b.field))
+  }
 
   // Step from the open field to the next one in the ROW's own sequence of edit
   // targets rather than walking cells: a composite cell holds several fields, and
@@ -517,8 +538,8 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     }
     const next = at + (direction === 'right' ? 1 : -1)
     // Past the end: a row that has never been saved wraps to the other end of
-    // itself (the worklog opens one on its ticket, which the grouped layout places
-    // last, so everything else lies behind it); any other row stops at the row
+    // itself (the worklog opens one on its ticket, in the middle of the sequence,
+    // so fields lie behind it as well as ahead); any other row stops at the row
     // edge, as it always did.
     const wrapped = next < 0 || next >= targets.length
     if (wrapped) {
@@ -667,11 +688,27 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     // lose the cell. Run the move AFTER that teardown so focus lands where we put it.
     const fromType = config.fieldFor(colKey)?.type
     if (fromType === 'select' || fromType === 'multiselect') {
+      // Until the move has run, focus sits on <body> — the popup has closed and
+      // nothing has taken its place. That is a hand-over, not the user leaving the
+      // table, and reading it as one saves the row mid-walk (#771).
+      pendingMoves += 1
       // Skip if the grid was torn down (route change) before the frame fires, so we
       // never drive focus into a stale/unmounted grid (moveHandle is nulled on dispose).
       requestAnimationFrame(() => {
-        if (moveHandle !== null) {
-          advance()
+        const alive = moveHandle !== null
+        try {
+          if (alive) {
+            advance()
+          }
+        } finally {
+          pendingMoves -= 1
+        }
+        // A move that opened nothing (the row's edge) leaves focus outside the
+        // table for real; the check that was held back runs now. Not after the
+        // grid was torn down: unmounting already saved what it held, and this
+        // would save the same draft a second time.
+        if (alive) {
+          queueMicrotask(flushIfFocusLeftTable)
         }
       })
     } else {
@@ -891,6 +928,9 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   }
 
   function flushIfFocusLeftTable(): void {
+    if (pendingMoves > 0) {
+      return // a select's post-commit move is still to run; focus is in transit
+    }
     const active = document.activeElement
     if (tableEl === undefined || (active !== null && (tableEl.contains(active) || inEditorPopup(active)))) {
       return
