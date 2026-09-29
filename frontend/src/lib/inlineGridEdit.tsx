@@ -357,6 +357,8 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   let moveHandle: GridMoveHandle | null = null
   let tableEl: HTMLElement | undefined
   let lastFocusedRowId: number | null = null
+  // Select commits whose post-commit move has not run yet (see commitCell).
+  let pendingMoves = 0
   // Non-reactive snapshot of the row a draft was seeded from, so a pending edit
   // can still save on unmount even if the parent already cleared the rows list
   // (e.g. route/tab change) — rowById() would then return undefined.
@@ -686,12 +688,23 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     // lose the cell. Run the move AFTER that teardown so focus lands where we put it.
     const fromType = config.fieldFor(colKey)?.type
     if (fromType === 'select' || fromType === 'multiselect') {
+      // Until the move has run, focus sits on <body> — the popup has closed and
+      // nothing has taken its place. That is a hand-over, not the user leaving the
+      // table, and reading it as one saves the row mid-walk (#771).
+      pendingMoves += 1
       // Skip if the grid was torn down (route change) before the frame fires, so we
       // never drive focus into a stale/unmounted grid (moveHandle is nulled on dispose).
       requestAnimationFrame(() => {
-        if (moveHandle !== null) {
-          advance()
+        try {
+          if (moveHandle !== null) {
+            advance()
+          }
+        } finally {
+          pendingMoves -= 1
         }
+        // A move that opened nothing (the row's edge) leaves focus outside the
+        // table for real; the check that was held back runs now.
+        queueMicrotask(flushIfFocusLeftTable)
       })
     } else {
       advance()
@@ -910,6 +923,9 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
   }
 
   function flushIfFocusLeftTable(): void {
+    if (pendingMoves > 0) {
+      return // a select's post-commit move is still to run; focus is in transit
+    }
     const active = document.activeElement
     if (tableEl === undefined || (active !== null && (tableEl.contains(active) || inEditorPopup(active)))) {
       return
