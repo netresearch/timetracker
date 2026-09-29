@@ -1121,6 +1121,44 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  // #771: the flat-grid case above pins #588 problem 2 in the layout where the
+  // description sits right of the activity. The grouped view — the DEFAULT since
+  // the worklog redesign — puts the time cell between them, so Tab out of the
+  // activity landed in "start" and the description was two stops away; no case
+  // ran in that layout, so nothing noticed.
+  it('grouped view: Tab in the activity picker confirms the pick and opens the description (#771)', async () => {
+    localStorage.setItem('tt-worklog-view', 'grouped')
+    mockTracking({
+      entries: [{ entry: DEFAULT_ENTRY }],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }, { activity: { id: 6, name: 'QA' } }],
+    })
+    postJson.mockResolvedValue({})
+    const { container, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('tbody.worklog-day')).not.toBeNull())
+
+    const activityPart = [...container.querySelectorAll<HTMLElement>('td[data-col-key="context"] .worklog-part')]
+      .find((part) => part.textContent === 'Dev')
+    expect(activityPart).toBeDefined()
+    fireEvent.dblClick(activityPart!)
+    await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
+    const combo = document.querySelector<HTMLInputElement>('.combobox-input')!
+    fireEvent.input(combo, { target: { value: 'QA' } })
+    await waitFor(() => expect(document.querySelector('.combobox-item[data-highlighted]')?.textContent).toContain('QA'))
+
+    fireEvent.keyDown(combo, { key: 'Tab' })
+
+    await waitFor(() => {
+      const descCell = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="description"]')
+      expect(descCell?.querySelector('input')).not.toBeNull()
+    })
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Description')
+    expect(postJson.mock.calls.filter((args) => args[0] === '/tracking/save')).toHaveLength(0)
+
+    unmount()
+  })
+
   it('Prolong sets the latest entry end to now and saves it', async () => {
     mockApi()
     postJson.mockResolvedValue({})
