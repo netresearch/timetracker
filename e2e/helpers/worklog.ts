@@ -192,3 +192,65 @@ export async function clickRowAction(row: Locator, name: RegExp): Promise<void> 
   }
   await row.getByRole('button', { name }).click();
 }
+
+/**
+ * Collects the POST /tracking/save REQUESTS issued from now on — every attempt,
+ * whatever the server answers. Counting only successful responses would let a
+ * rejected save pass an "expect no save" assertion.
+ */
+export function trackSaves(page: Page): string[] {
+  const saves: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().endsWith('/tracking/save')) {
+      saves.push(request.url());
+    }
+  });
+
+  return saves;
+}
+
+/**
+ * Fills a NEW row from the keyboard alone, from the ticket editor Add opens it
+ * in: every select is picked with the arrows and left with Tab, and the activity
+ * is the step that completes the row. Ends after the Tab out of the activity.
+ * Layout-agnostic: it names no column, so it serves the flat and the grouped view.
+ */
+export async function tabThroughNewRowToDescription(page: Page, row: Locator): Promise<void> {
+  const pickAndTab = async (filter?: string): Promise<void> => {
+    await page.keyboard.press('Tab');
+    await expect(row.locator('td[data-inline-editing]')).toBeVisible();
+    const input = page.locator('.combobox-input').first();
+    await expect(input).toBeVisible();
+    if (filter !== undefined) {
+      await input.fill(filter);
+      await expect(page.locator('.combobox-content .combobox-item').first()).toContainText(filter, { timeout: 8000 });
+    }
+    await expect(page.locator('.combobox-content .combobox-item').first()).toBeVisible({ timeout: 8000 });
+    await page.keyboard.press('ArrowDown');
+  };
+
+  await pickAndTab(SEEDED_BOOKABLE_CUSTOMER);
+  await pickAndTab();
+  await pickAndTab();
+  await page.keyboard.press('Tab');
+}
+
+/**
+ * The description editor is open, holds focus and takes keystrokes — and stays
+ * that way. A select's popup hands focus to <body> for a frame while it closes;
+ * read as "left the table", that used to save the (by then complete) row, and
+ * the refetch remounted it: the editor vanished a beat after it appeared, so
+ * checking once, immediately, saw a healthy editor (#771).
+ */
+export async function expectTypeableDescription(page: Page, row: Locator, saves: string[]): Promise<void> {
+  const editor = row.locator('td[data-col-key="description"][data-inline-editing] input.inline-editor');
+  await expect(editor).toBeVisible();
+  await expect(editor).toBeFocused();
+  await page.keyboard.type('typed after tab');
+  await expect(editor).toHaveValue(/typed after tab$/);
+  // Settled: a save and its refetch, had the hand-over triggered one, are done.
+  await page.waitForLoadState('networkidle');
+  await expect(editor).toBeFocused();
+  await expect(editor).toHaveValue(/typed after tab$/);
+  expect(saves).toEqual([]);
+}

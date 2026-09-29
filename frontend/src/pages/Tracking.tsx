@@ -958,6 +958,11 @@ export default function Tracking() {
 
       return field !== undefined && INLINE_TYPES.has(field.type)
     },
+    // The keyboard walks the entry in the order the flat grid lays it out — the one
+    // #588 defines (ticket → customer → project → activity → description) — in the
+    // grouped view too, where the time cell sits between activity and description
+    // (#771). There Tab therefore differs from the visual order, on purpose.
+    fieldOrder: FIELDS.map((field) => field.name),
     // In the grouped view a cell holds several fields (the canvas's own layout),
     // and Tab, Enter's guided fill and the activation path have to walk those
     // rather than the column keys — which are not field names at all.
