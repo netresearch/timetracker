@@ -108,7 +108,8 @@ See [`README.md`](README.md) for the full stack description.
   fill walk a row in the order of `config.fieldOrder`, not the layout's — the
   worklog passes the flat grid's field order, so the grouped view's time cell,
   which sits between activity and description, does not decide where Tab goes
-  (#771). A row that has never been saved cycles: it opens on its ticket, which
+  (#771; the grouped view's Tab order thereby differs from its visual order, on
+  purpose, as #588 asked). A row that has never been saved cycles: it opens on its ticket, which
   sits in the middle of that order, so fields lie behind it as well as ahead. Anything that
   addresses the grid's cursor needs the CELL key, not the field name
   (`focusCell(id, cellKeyForField(field))`) — a `focusCell(id, 'ticket')` finds no
