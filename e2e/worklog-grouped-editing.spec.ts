@@ -236,18 +236,20 @@ test.describe('Worklog grouped view — editing in composite cells', () => {
   // #771: in this layout the time cell sits between the activity and the
   // description, so Tab out of the activity landed in "start". The keyboard now
   // walks the entry in the order the flat grid lays it out.
-  test('a new entry walks to the description on Tab alone (#771)', async ({ page }) => {
-    await installFrozenClock(page);
-    await useGroupedView(page);
-    const saves = trackSaves(page);
+  for (const sort of ['time', 'context'] as const) {
+    test(`a new entry walks to the description on Tab alone, ordered by ${sort} (#771)`, async ({ page }) => {
+      await installFrozenClock(page);
+      await useGroupedView(page, sort);
+      const saves = trackSaves(page);
 
-    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
-    const row = page.locator('tr.tracking-row.is-new').first();
-    await expect(row).toBeVisible();
-    await tabThroughNewRowToDescription(page, row);
+      await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+      const row = page.locator('tr.tracking-row.is-new').first();
+      await expect(row).toBeVisible();
+      await tabThroughNewRowToDescription(page, row);
 
-    await expectTypeableDescription(page, row, saves);
-  });
+      await expectTypeableDescription(page, row, saves);
+    });
+  }
 
   test('a new row is not saved before it can be booked', async ({ page }) => {
     await useGroupedView(page);
