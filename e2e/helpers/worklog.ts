@@ -193,12 +193,16 @@ export async function clickRowAction(row: Locator, name: RegExp): Promise<void> 
   await row.getByRole('button', { name }).click();
 }
 
-/** Collects the POST /tracking/save responses seen from now on. */
+/**
+ * Collects the POST /tracking/save REQUESTS issued from now on — every attempt,
+ * whatever the server answers. Counting only successful responses would let a
+ * rejected save pass an "expect no save" assertion.
+ */
 export function trackSaves(page: Page): string[] {
   const saves: string[] = [];
-  page.on('response', (response) => {
-    if (isSaveResponse(response)) {
-      saves.push(response.url());
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && /\/tracking\/save$/.test(request.url())) {
+      saves.push(request.url());
     }
   });
 

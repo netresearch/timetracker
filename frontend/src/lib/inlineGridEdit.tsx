@@ -695,16 +695,21 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
       // Skip if the grid was torn down (route change) before the frame fires, so we
       // never drive focus into a stale/unmounted grid (moveHandle is nulled on dispose).
       requestAnimationFrame(() => {
+        const alive = moveHandle !== null
         try {
-          if (moveHandle !== null) {
+          if (alive) {
             advance()
           }
         } finally {
           pendingMoves -= 1
         }
         // A move that opened nothing (the row's edge) leaves focus outside the
-        // table for real; the check that was held back runs now.
-        queueMicrotask(flushIfFocusLeftTable)
+        // table for real; the check that was held back runs now. Not after the
+        // grid was torn down: unmounting already saved what it held, and this
+        // would save the same draft a second time.
+        if (alive) {
+          queueMicrotask(flushIfFocusLeftTable)
+        }
       })
     } else {
       advance()

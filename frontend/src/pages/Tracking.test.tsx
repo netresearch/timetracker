@@ -1121,6 +1121,34 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  // A select commit queues its move for the next frame. If the page is left in
+  // between, unmounting saves the dirty row once; the check that frame would have
+  // run must not save it a second time from the draft it still holds.
+  it('leaving the page right after a Tab out of a select saves the row once (#771)', async () => {
+    mockTracking({
+      entries: [{ entry: DEFAULT_ENTRY }],
+      customers: [{ customer: { id: 1, name: 'ACME' } }],
+      projects: [{ project: { id: 4, name: 'Site' } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }, { activity: { id: 6, name: 'QA' } }],
+    })
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    editCell(container, 'activity')
+    await waitFor(() => expect(document.querySelectorAll('.combobox-content .combobox-item').length).toBeGreaterThan(0))
+    const combo = document.querySelector<HTMLInputElement>('.combobox-input')!
+    fireEvent.input(combo, { target: { value: 'QA' } })
+    await waitFor(() => expect(document.querySelector('.combobox-item[data-highlighted]')?.textContent).toContain('QA'))
+
+    fireEvent.keyDown(combo, { key: 'Tab' })
+    unmount() // before the frame the select commit queued has run
+
+    // Let that frame and any check it queues run.
+    await new Promise<void>((resolve) => { requestAnimationFrame(() => { setTimeout(resolve, 0) }) })
+    expect(postJson.mock.calls.filter((args) => args[0] === '/tracking/save')).toHaveLength(1)
+  })
+
   // #771: the flat-grid case above pins #588 problem 2 in the layout where the
   // description sits right of the activity. The grouped view — the DEFAULT since
   // the worklog redesign — puts the time cell between them, so Tab out of the
