@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 import { loginIsolated } from './helpers/auth';
 import { installFrozenClock } from './helpers/clock';
 import { goToWorklogPage } from './helpers/navigation';
-import { SEEDED_BOOKABLE_CUSTOMER, cleanupWorklogEntries, createWorklogEntry, isSaveResponse, rowByStamp } from './helpers/worklog';
+import { SEEDED_BOOKABLE_CUSTOMER, cleanupWorklogEntries, createWorklogEntry, expectTypeableDescription, isSaveResponse, rowByStamp, tabThroughNewRowToDescription, trackSaves } from './helpers/worklog';
 
 /**
  * Spreadsheet-style keyboard + clipboard editing on the SolidJS worklog grid:
@@ -77,6 +77,59 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
     await expect(endEditor).toBeFocused();
     await endEditor.fill('00:20');
     await expect(endEditor).toHaveValue('00:20');
+  });
+
+  // #771 (after #588 problem 2): Tab out of the activity select must confirm the
+  // highlighted option and land in the description editor, focused and typeable.
+  // Only a real browser can say so — the select's popup is portalled to <body>
+  // and Ark hands focus back to its trigger as it tears down. The pick is a
+  // DIFFERENT activity than the row holds: an unchanged pick leaves the row clean,
+  // and a clean row has nothing to save, so it proves nothing about the hand-over.
+  test('Tab out of the activity select confirms a changed pick and opens the description (#771)', async ({ page }) => {
+    const stamp = await createWorklogEntry(page);
+    const row = rowByStamp(page, stamp);
+    const saves = trackSaves(page);
+    const activityCell = row.locator('td[data-col-key="activity"]');
+    const before = (await activityCell.textContent())?.trim();
+
+    await activityCell.dblclick();
+    await expect(page.locator('.combobox-content .combobox-item').nth(1)).toBeVisible({ timeout: 8000 });
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Tab');
+
+    await expectTypeableDescription(page, row, saves);
+    await expect(activityCell).not.toHaveText(before ?? '');
+  });
+
+  // Shift+Tab is the mirror walk and goes through the same select hand-over.
+  test('Shift+Tab from the description opens the activity select, focused (#771)', async ({ page }) => {
+    const stamp = await createWorklogEntry(page);
+    const row = rowByStamp(page, stamp);
+
+    await row.locator('td[data-col-key="description"]').dblclick();
+    const editor = row.locator('td[data-col-key="description"][data-inline-editing] input.inline-editor');
+    await expect(editor).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+
+    await expect(row.locator('td[data-col-key="activity"][data-inline-editing]')).toBeVisible();
+    await expect(page.locator('.combobox-input').first()).toBeFocused();
+  });
+
+  // The reporter's own flow (#771): a NEW entry filled from the keyboard alone —
+  // every select is picked with the arrows and left with Tab, and the activity is
+  // the step that completes the row.
+  test('a new entry walks ticket → customer → project → activity → description on Tab alone (#771)', async ({ page }) => {
+    await installFrozenClock(page);
+    const saves = trackSaves(page);
+    await page.getByRole('button', { name: /Add entry|Eintrag hinzufügen/i }).click();
+    const row = page.locator('tr.tracking-row.is-new').first();
+    await expect(row).toBeVisible();
+    await expect(page.locator('td[data-col-key="ticket"][data-inline-editing] input.inline-editor')).toBeFocused();
+
+    await tabThroughNewRowToDescription(page, row);
+
+    await expectTypeableDescription(page, row, saves);
   });
 
   test('Ctrl+C copies the focused cell; Ctrl+V pastes into another, seeding the editor', async ({ page }) => {
