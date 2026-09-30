@@ -820,6 +820,44 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     beginEdit(newId, col)
   }
 
+  // A row that was never persisted and is not bookable yet cannot be saved: the
+  // server rejects it (422) and the user is told a save failed while they are
+  // still filling the row in. Half-filling one is the normal state of a new row —
+  // every focus move into a select's popup used to post it — so mark what is
+  // still missing and keep the draft instead. Returns true when it parked the row.
+  function parkIncompleteNewRow(id: number, row: R, draft: FormValues): boolean {
+    if (config.invalidFields === undefined || config.isNewRow?.(row) !== true) {
+      return false
+    }
+    const missing = config.invalidFields(draft, row)
+    if (missing.length === 0) {
+      return false
+    }
+    setFieldHints(id, missing)
+    resumePending.delete(id)
+
+    return true
+  }
+
+  // What a successful save settles, in order: consume the resume intent, drop the
+  // draft unless it changed since it was sent, tell the owner, and — for a new row
+  // the server re-keyed — resume the edit on the persisted id.
+  function settleSavedRow(id: number, persistedId: number | void, sentJson: string): void {
+    // Consume the resume intent before clearDraftState drops it with the
+    // draft; it may come from THIS call or from an earlier flush this save
+    // superseded (see resumePending) — a successful save always consumes it.
+    const resume = resumePending.delete(id)
+    // Refetch has the saved values now, so dropping the draft shows no flash —
+    // but only when nothing changed since (else the newer edits would be lost).
+    if (drafts[id] !== undefined && JSON.stringify({ ...drafts[id] }) === sentJson) {
+      clearDraftState(id)
+    }
+    config.onSaved?.()
+    if (resume && typeof persistedId === 'number' && persistedId !== id) {
+      resumeEditAfterRekey(id, persistedId)
+    }
+  }
+
   async function flushRow(id: number, resumeEdit = false): Promise<void> {
     const draft = drafts[id]
     const row = rowById(id)
@@ -838,19 +876,8 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
 
       return
     }
-    // A row that was never persisted and is not bookable yet cannot be saved: the
-    // server rejects it (422) and the user is told a save failed while they are
-    // still filling the row in. Half-filling one is the normal state of a new row —
-    // every focus move into a select's popup used to post it — so mark what is
-    // still missing and keep the draft instead.
-    if (config.invalidFields !== undefined && config.isNewRow?.(row) === true) {
-      const missing = config.invalidFields(draft, row)
-      if (missing.length > 0) {
-        setFieldHints(id, missing)
-        resumePending.delete(id)
-
-        return
-      }
+    if (parkIncompleteNewRow(id, row, draft)) {
+      return
     }
     setSavingRows(id, true)
     setRowErrors(id, '')
@@ -860,20 +887,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     const snapshot = { ...draft }
     const sentJson = JSON.stringify(snapshot)
     try {
-      const persistedId = await config.saveRow(snapshot, row)
-      // Consume the resume intent before clearDraftState drops it with the
-      // draft; it may come from THIS call or from an earlier flush this save
-      // superseded (see resumePending) — a successful save always consumes it.
-      const resume = resumePending.delete(id)
-      // Refetch has the saved values now, so dropping the draft shows no flash —
-      // but only when nothing changed since (else the newer edits would be lost).
-      if (drafts[id] !== undefined && JSON.stringify({ ...drafts[id] }) === sentJson) {
-        clearDraftState(id)
-      }
-      config.onSaved?.()
-      if (resume && typeof persistedId === 'number' && persistedId !== id) {
-        resumeEditAfterRekey(id, persistedId)
-      }
+      settleSavedRow(id, await config.saveRow(snapshot, row), sentJson)
     } catch (caught) {
       // Keep the draft so edits aren't lost, and surface the failure. Auto-save
       // fires only once a row is complete (no invalid fields), so a rejection
