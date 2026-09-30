@@ -55,16 +55,7 @@ class EntryPullApplier
 
         // Compute new times before mutating (same setTimestamp idiom as import).
         $newDuration = $pullDuration ? $remote->durationMinutes : $entry->getDuration();
-        if ($pullStarted) {
-            $start = $remote->startedAtUtc();
-        } else {
-            $start = DateTime::createFromInterface($entry->getDay());
-            $start->setTime(
-                (int) $entry->getStart()->format('H'),
-                (int) $entry->getStart()->format('i'),
-                (int) $entry->getStart()->format('s'),
-            );
-        }
+        $start = $pullStarted ? $remote->startedAtUtc() : $this->currentStart($entry);
 
         $end = (clone $start)->modify(sprintf('+%d minutes', $newDuration));
         if (($pullStarted || $pullDuration) && $end->format('Y-m-d') !== $start->format('Y-m-d')) {
@@ -72,12 +63,8 @@ class EntryPullApplier
         }
 
         // Mutate.
-        if ($pullIssueKey && $project instanceof Project) {
-            $entry->setTicket($remote->issueKey)->setProject($project);
-            $customer = $project->getCustomer();
-            if ($customer instanceof Customer) {
-                $entry->setCustomer($customer);
-            }
+        if ($project instanceof Project) {
+            $this->applyProject($entry, $remote->issueKey, $project);
         }
 
         if ($pullStarted || $pullDuration) {
@@ -95,5 +82,29 @@ class EntryPullApplier
         $dayAfter = $entry->getDay()->format('Y-m-d');
 
         return new PullResult(true, '', array_values(array_unique([$dayBefore, $dayAfter])));
+    }
+
+    /**
+     * The entry's own day and start time as a timestamp (same setTimestamp idiom as import).
+     */
+    private function currentStart(Entry $entry): DateTime
+    {
+        $start = DateTime::createFromInterface($entry->getDay());
+        $start->setTime(
+            (int) $entry->getStart()->format('H'),
+            (int) $entry->getStart()->format('i'),
+            (int) $entry->getStart()->format('s'),
+        );
+
+        return $start;
+    }
+
+    private function applyProject(Entry $entry, string $issueKey, Project $project): void
+    {
+        $entry->setTicket($issueKey)->setProject($project);
+        $customer = $project->getCustomer();
+        if ($customer instanceof Customer) {
+            $entry->setCustomer($customer);
+        }
     }
 }

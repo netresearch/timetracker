@@ -30,11 +30,13 @@ use App\Service\Sync\RemoteReadGapClaimer;
 use App\Service\Sync\RemoteWorklogNormalizer;
 use App\Service\Sync\RemoteWorklogReader;
 use App\Service\Sync\VerifyWorklogsService;
+use App\ValueObject\Sync\WorklogSnapshot;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -457,5 +459,79 @@ final class VerifyWorklogsServiceTest extends TestCase
         $kinds = array_map(static fn ($item) => $item->getKind(), $syncRun->getItems()->toArray());
         self::assertContains(SyncItemKind::ERROR, $kinds);
         self::assertContains(SyncItemKind::REMOTE_ONLY, $kinds);
+    }
+
+    /**
+     * @return iterable<string, array{string, int, string, string, SyncItemKind, list<string>}> base comment, remote minutes, remote comment, counter, item kind, reported fields
+     */
+    public static function baseComparisons(): iterable
+    {
+        yield 'only local changed' => ['older', 60, 'older', 'local_dirty', SyncItemKind::LOCAL_DIRTY, ['comment']];
+        yield 'only remote changed' => ['fixed it', 120, 'fixed it', 'remote_dirty', SyncItemKind::REMOTE_DIRTY, ['duration']];
+        yield 'disjoint fields changed' => ['older', 120, 'older', 'mergeable', SyncItemKind::MERGEABLE, ['comment', 'duration']];
+        yield 'same field changed on both sides' => ['older', 60, 'other', 'conflicts', SyncItemKind::CONFLICT, ['comment']];
+    }
+
+    /**
+     * @param list<string> $fields
+     */
+    #[DataProvider('baseComparisons')]
+    public function testLinkedPairWithABaseIsClassifiedAndReported(string $baseComment, int $remoteMinutes, string $remoteComment, string $counter, SyncItemKind $kind, array $fields): void
+    {
+        $entry = $this->linkedEntry();
+        $local = new EntryWorklogProjector()->project($entry);
+        $base = new WorklogSnapshot($local->issueKey, $local->startedTimestamp, $local->durationMinutes, $baseComment);
+        $syncState = new WorklogSyncState()->setBasePayload($base->toArray());
+        $remote = new JiraWorkLog(
+            id: 1001,
+            comment: '#42: Development: ' . $remoteComment,
+            started: new DateTime('2026-06-15 09:00:00')->format('Y-m-d\TH:i:s.000O'),
+            timeSpentSeconds: $remoteMinutes * 60,
+            updated: '2026-06-15T10:00:00.000+0200',
+            authorAccountId: 'me',
+        );
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([$entry]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([42 => $syncState]);
+        $this->stubJira(['ABC-1'], ['ABC-1' => [$remote]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame(1, $syncRun->getCounters()[$counter] ?? 0);
+        $items = $syncRun->getItems()->toArray();
+        self::assertCount(1, $items);
+        self::assertSame($kind, $items[0]->getKind());
+        self::assertSame('ABC-1', $items[0]->getIssueKey());
+        self::assertSame(1001, $items[0]->getRemoteWorklogId());
+        self::assertSame($fields, $items[0]->getPayload()['fields'] ?? null);
+        self::assertSame($local->toArray(), $items[0]->getPayload()['local'] ?? null);
+    }
+
+    public function testRemoteOnlyReasonAdmitsWhenTheRunCouldNotTellAMoveFromAnImport(): void
+    {
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $readable = new JiraWorkLog(id: 2002, comment: 'jira-side work', started: '2026-06-10T14:00:00.000+0200', timeSpentSeconds: 1800, authorAccountId: 'me');
+        $unreadable = new JiraWorkLog(id: 9999, started: null, timeSpentSeconds: 3600, authorAccountId: 'me');
+        $this->stubJira(['ABC-9'], ['ABC-9' => [$readable, $unreadable]]);
+
+        $syncRun = $this->verify();
+
+        $remoteOnly = array_values(array_filter(
+            $syncRun->getItems()->toArray(),
+            static fn ($item): bool => SyncItemKind::REMOTE_ONLY === $item->getKind(),
+        ));
+        self::assertCount(1, $remoteOnly);
+        self::assertSame('Jira worklog has no matching entry; this run could not tell an import candidate from the move of an entry it failed to verify', $remoteOnly[0]->getReason());
+    }
+
+    public function testRemoteOnlyReasonNamesAnImportCandidateOnACompleteRead(): void
+    {
+        $this->entryRepository->method('findJiraSyncCandidates')->willReturn([]);
+        $this->syncStateRepository->method('findByEntryIds')->willReturn([]);
+        $this->stubJira(['ABC-9'], ['ABC-9' => [new JiraWorkLog(id: 2002, comment: 'jira-side work', started: '2026-06-10T14:00:00.000+0200', timeSpentSeconds: 1800, authorAccountId: 'me')]]);
+
+        $syncRun = $this->verify();
+
+        self::assertSame('Jira worklog has no matching entry (import candidate)', $syncRun->getItems()->toArray()[0]->getReason());
     }
 }

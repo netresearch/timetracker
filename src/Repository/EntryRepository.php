@@ -46,6 +46,8 @@ class EntryRepository extends ServiceEntityRepository
 {
     private const string WHERE_USER = 'e.user = :user';
 
+    private const string WHERE_TICKET_SYSTEM = 'p.ticketSystem = :ticketSystem';
+
     private const string WHERE_DAY = 'e.day = :day';
 
     private const string WHERE_ACTIVITY = 'e.activity = :activity';
@@ -1286,7 +1288,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $this->createQueryBuilder('e')
             ->join('e.project', 'p')
             ->where(self::WHERE_USER)
-            ->andWhere('p.ticketSystem = :ticketSystem')
+            ->andWhere(self::WHERE_TICKET_SYSTEM)
             ->andWhere('e.day >= :fromDay')
             ->andWhere('e.day <= :toDay')
             ->andWhere('e.ticket IS NOT NULL')
@@ -1320,7 +1322,7 @@ class EntryRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('e')
             ->join('e.project', 'p')
             ->where('e.worklogId = :worklogId')
-            ->andWhere('p.ticketSystem = :ticketSystem')
+            ->andWhere(self::WHERE_TICKET_SYSTEM)
             ->setParameter('worklogId', $worklogId)
             ->setParameter('ticketSystem', $ticketSystem)
             ->setMaxResults(1)
@@ -1345,7 +1347,7 @@ class EntryRepository extends ServiceEntityRepository
         $result = $this->createQueryBuilder('e')
             ->join('e.project', 'p')
             ->where('e.worklogId IN (:worklogIds)')
-            ->andWhere('p.ticketSystem = :ticketSystem')
+            ->andWhere(self::WHERE_TICKET_SYSTEM)
             ->setParameter('worklogIds', $worklogIds)
             ->setParameter('ticketSystem', $ticketSystem)
             ->getQuery()

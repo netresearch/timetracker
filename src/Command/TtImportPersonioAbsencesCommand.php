@@ -10,21 +10,15 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\User;
-use App\Enum\SyncRunStatus;
 use App\Service\Personio\AbsenceImportService;
 use App\Service\Sync\SyncRunConsoleRenderer;
-use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
-use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-
-use function sprintf;
-use function trim;
 
 /**
  * ADR-024 P2: the cron entry point that imports opted-in users' Personio absences
@@ -37,6 +31,8 @@ use function trim;
 #[AsCommand(name: 'tt:import-personio-absences', description: 'Import opted-in users\' Personio absences as TimeTracker entries (ADR-024 P2)')]
 class TtImportPersonioAbsencesCommand extends Command
 {
+    use SyncWindowCommandTrait;
+
     public function __construct(
         private readonly AbsenceImportService $absenceImportService,
         private readonly ManagerRegistry $managerRegistry,
@@ -57,20 +53,12 @@ class TtImportPersonioAbsencesCommand extends Command
     ): int {
         $symfonyStyle = new SymfonyStyle($input, $output);
 
-        if ((null !== $from && '' === trim($from)) || (null !== $to && '' === trim($to))) {
-            $symfonyStyle->error('Invalid date in --from/--to: must not be blank (expected Y-m-d)');
-
-            return 1;
+        $window = $this->resolveWindow($symfonyStyle, $from, $to, '-30 days', '+90 days');
+        if (null === $window) {
+            return Command::FAILURE;
         }
 
-        try {
-            $fromDate = null !== $from ? new DateTimeImmutable($from) : new DateTimeImmutable('today')->modify('-30 days');
-            $toDate = null !== $to ? new DateTimeImmutable($to) : new DateTimeImmutable('today')->modify('+90 days');
-        } catch (Exception) {
-            $symfonyStyle->error(sprintf('Invalid date in --from/--to (expected Y-m-d): %s / %s', $from ?? '-', $to ?? '-'));
-
-            return 1;
-        }
+        [$fromDate, $toDate] = $window;
 
         if (null !== $user) {
             $account = $this->managerRegistry->getRepository(User::class)->findOneBy(['username' => $user]);
@@ -91,14 +79,6 @@ class TtImportPersonioAbsencesCommand extends Command
             return Command::SUCCESS;
         }
 
-        $failed = false;
-        foreach ($runs as $syncRun) {
-            $this->syncRunConsoleRenderer->render($symfonyStyle, $syncRun, 'Personio import');
-            if (SyncRunStatus::FAILED === $syncRun->getStatus()) {
-                $failed = true;
-            }
-        }
-
-        return $failed ? 1 : Command::SUCCESS;
+        return $this->renderRuns($symfonyStyle, $this->syncRunConsoleRenderer, $runs, 'Personio import');
     }
 }
