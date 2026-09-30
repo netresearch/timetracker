@@ -605,23 +605,18 @@ class SyncWorklogsService extends AbstractSyncRunService
     private function handleWriteOutcome(SyncRunContext $context, Entry $entry, string $issueKey, WriteOutcome $outcome, string $successCounter): void
     {
         $syncRun = $context->syncRun;
-        switch ($outcome) {
-            case WriteOutcome::WRITTEN:
-                $syncRun->incrementCounter($successCounter);
-                break;
-            case WriteOutcome::LEASE_LOST:
-                $syncRun->incrementCounter('conflicts');
-                $this->addItem($syncRun, SyncItemKind::CONFLICT, issueKey: $issueKey, remoteWorklogId: $entry->getWorklogId(), entry: $entry, reason: 'push lease lost: remote changed since base; parked as conflict');
-                break;
-            case WriteOutcome::REMOTE_MISSING:
-                $syncRun->incrementCounter('orphaned');
-                $this->addItem($syncRun, SyncItemKind::LOCAL_ONLY, issueKey: $issueKey, remoteWorklogId: $entry->getWorklogId(), entry: $entry, reason: 'remote worklog missing during push; parked as orphaned');
-                break;
-            case WriteOutcome::SKIPPED:
-                $syncRun->incrementCounter('errors');
-                $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, entry: $entry, reason: 'push skipped: entry has no pushable ticket or is agent walltime');
-                break;
-        }
+        match ($outcome) {
+            WriteOutcome::WRITTEN => $syncRun->incrementCounter($successCounter),
+            WriteOutcome::LEASE_LOST => $this->parkWriteOutcome($syncRun, 'conflicts', SyncItemKind::CONFLICT, $issueKey, $entry, $entry->getWorklogId(), 'push lease lost: remote changed since base; parked as conflict'),
+            WriteOutcome::REMOTE_MISSING => $this->parkWriteOutcome($syncRun, 'orphaned', SyncItemKind::LOCAL_ONLY, $issueKey, $entry, $entry->getWorklogId(), 'remote worklog missing during push; parked as orphaned'),
+            WriteOutcome::SKIPPED => $this->parkWriteOutcome($syncRun, 'errors', SyncItemKind::ERROR, $issueKey, $entry, null, 'push skipped: entry has no pushable ticket or is agent walltime'),
+        };
+    }
+
+    private function parkWriteOutcome(SyncRun $syncRun, string $counter, SyncItemKind $kind, string $issueKey, Entry $entry, ?int $remoteWorklogId, string $reason): void
+    {
+        $syncRun->incrementCounter($counter);
+        $this->addItem($syncRun, $kind, issueKey: $issueKey, remoteWorklogId: $remoteWorklogId, entry: $entry, reason: $reason);
     }
 
     /**
