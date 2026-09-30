@@ -41,6 +41,7 @@ final class AbstractSyncRunServiceTest extends TestCase
         $this->entityManager->expects(self::once())->method('flush');
 
         $syncRun = $this->service->run(new SyncRun(), static function (): void {
+            // a body that does nothing and does not fail
         });
 
         self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
