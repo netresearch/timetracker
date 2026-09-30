@@ -45,25 +45,15 @@ describe('DateField', () => {
     expect(input.placeholder).toBe('DD.MM.YYYY')
   })
 
-  it('parses a value typed in the configured format back to ISO', () => {
-    const { input, onChange } = renderField('2026-06-19')
-    fireEvent.input(input, { target: { value: '25.12.2026' } })
+  it.each([
+    ['parses a value typed in the configured format back to ISO', '2026-06-19', '25.12.2026', '2026-12-25'],
+    ['accepts ISO directly as a fallback', '', '2026-12-25', '2026-12-25'],
+    ['clears to empty when blanked', '2026-06-19', '', ''],
+  ])('%s', (_title, initial, typed, committed) => {
+    const { input, onChange } = renderField(initial)
+    fireEvent.input(input, { target: { value: typed } })
     fireEvent.change(input)
-    expect(onChange).toHaveBeenCalledWith('2026-12-25')
-  })
-
-  it('accepts ISO directly as a fallback', () => {
-    const { input, onChange } = renderField('')
-    fireEvent.input(input, { target: { value: '2026-12-25' } })
-    fireEvent.change(input)
-    expect(onChange).toHaveBeenCalledWith('2026-12-25')
-  })
-
-  it('clears to empty when blanked', () => {
-    const { input, onChange } = renderField('2026-06-19')
-    fireEvent.input(input, { target: { value: '' } })
-    fireEvent.change(input)
-    expect(onChange).toHaveBeenCalledWith('')
+    expect(onChange).toHaveBeenCalledWith(committed)
   })
 
   it('flags an unparseable value (aria-invalid) without committing', () => {

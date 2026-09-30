@@ -168,7 +168,7 @@ function ProjectImportArea(): JSX.Element {
     const out: ConfirmRow[] = []
     for (const proposal of proposals.data?.proposals ?? []) {
       const row = state[proposal.jira_id_prefix]
-      if (!row || !row.confirm || !isResolved(row)) {
+      if (!row?.confirm || !isResolved(row)) {
         continue
       }
       const base = {

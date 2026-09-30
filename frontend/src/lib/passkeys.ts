@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, startAuthentication, startRegistration, WebAuthnAbortService } from '@simplewebauthn/browser'
+import { startAuthentication, startRegistration, WebAuthnAbortService } from '@simplewebauthn/browser'
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
 
 import { getJson, postJson } from '../api/client'
@@ -16,7 +16,7 @@ export interface Passkey {
 }
 
 /** Whether this browser can do WebAuthn at all (hide the passkey UI otherwise). */
-export const passkeysSupported = browserSupportsWebAuthn
+export { browserSupportsWebAuthn as passkeysSupported } from '@simplewebauthn/browser'
 
 /**
  * Register a passkey for the logged-in user: fetch creation options, run the
@@ -33,7 +33,7 @@ export async function registerPasskey(): Promise<void> {
 }
 
 /** Whether the browser can surface passkeys inline via autofill (Conditional UI). */
-export const passkeyAutofillSupported = browserSupportsWebAuthnAutofill
+export { browserSupportsWebAuthnAutofill as passkeyAutofillSupported } from '@simplewebauthn/browser'
 
 function abortedError(): DOMException {
   return new DOMException('Passkey ceremony aborted.', 'AbortError')
