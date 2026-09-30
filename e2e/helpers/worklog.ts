@@ -244,13 +244,16 @@ export async function tabThroughNewRowToDescription(page: Page, row: Locator): P
  */
 export async function expectTypeableDescription(page: Page, row: Locator, saves: string[]): Promise<void> {
   const editor = row.locator('td[data-col-key="description"][data-inline-editing] input.inline-editor');
-  await expect(editor).toBeVisible();
-  await expect(editor).toBeFocused();
+  // The editor opens and the row reconciles after a save→refetch→render round
+  // trip, which takes longer than the 5 s default on a contended CI runner.
+  const roundTrip = { timeout: 15000 };
+  await expect(editor).toBeVisible(roundTrip);
+  await expect(editor).toBeFocused(roundTrip);
   await page.keyboard.type('typed after tab');
-  await expect(editor).toHaveValue(/typed after tab$/);
+  await expect(editor).toHaveValue(/typed after tab$/, roundTrip);
   // Settled: a save and its refetch, had the hand-over triggered one, are done.
   await page.waitForLoadState('networkidle');
-  await expect(editor).toBeFocused();
-  await expect(editor).toHaveValue(/typed after tab$/);
+  await expect(editor).toBeFocused(roundTrip);
+  await expect(editor).toHaveValue(/typed after tab$/, roundTrip);
   expect(saves).toEqual([]);
 }

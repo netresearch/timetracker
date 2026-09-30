@@ -115,6 +115,16 @@ See [`README.md`](README.md) for the full stack description.
   (`focusCell(id, cellKeyForField(field))`) — a `focusCell(id, 'ticket')` finds no
   cell here and silently leaves the cursor behind. The flat grid passes no
   `cellFields` and behaves exactly as before, as do the admin grids.
+- **A select's popup hands focus to `<body>` for a frame while it closes, and
+  jsdom never shows it.** `createInlineGridEdit`'s row-leave check would read
+  that as leaving the table and save the row mid-walk (#771), so `commitCell`
+  counts the select commits whose move has not run (`pendingMoves`) and the
+  check stands down until it has. Test anything that depends on focus after a
+  select commits in a real browser (`e2e/`), asserting again once the network is
+  idle. A step queued for a later frame (`requestAnimationFrame`,
+  `queueMicrotask`) must first ask whether the grid is still alive
+  (`moveHandle !== null`): unmounting has already saved the draft, and a second
+  save of a new row can create the entry twice
 - **A segmented radiogroup is `SegmentedSwitch`, not a hand-rolled one.** The view
   and order switches were two copies and only one had the arrow-key handler, so
   the order could not be changed without a pointer. One component owns the
