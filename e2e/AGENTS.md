@@ -16,6 +16,12 @@ Node 26 (`.nvmrc`); the Playwright tooling is the only npm usage at the repo roo
 - Run against a running stack: `make e2e-run` (or `npm run e2e`)
 - Stop stack: `make e2e-down`
 - Install browsers once: `make e2e-install`
+- A fresh checkout needs three things `make e2e-up` does not do: `var/` writable
+  for `www-data` (`chmod -R a+rwX var`, else every page answers 500 with
+  `Failed to open stream: Permission denied` on `var/log/test.log`), `vendor/`
+  (`composer install`; the repo is bind-mounted) and `public/build-ui`
+  (`cd frontend && bun run build`). `make e2e-up` stops waiting after 60 s
+  without failing, so a 500 from `/login` is one of these, not a slow start
 - Base URL override: `E2E_BASE_URL` (defaults to http://localhost:8766)
 - `db-e2e` is a PERSISTENT volume seeded only once (first start) from
   `sql/full.sql` + `sql/testdata.sql` — after any entity gains a column,
@@ -36,10 +42,15 @@ Node 26 (`.nvmrc`); the Playwright tooling is the only npm usage at the repo roo
   `grep -roh '<string>' public/build-ui/assets/*.js` before screenshotting. Do
   NOT `make e2e-up`/`docker bake --no-cache` for a code change. Review/production
   images copy assets in (no bind mount) and DO need a rebuild
-- Local `/ui` e2e diverges from CI: worklog-grid/admin relation comboboxes
-  render empty locally even after rebuild+reseed, so
-  `worklog-crud`/`worklog-grid-editing`/`session-expiry`/`admin-inline-edit`
-  must be validated in CI — CI is authoritative for those
+- Local runs match CI for the worklog and admin specs: on 2026-09-29, against
+  `COMPOSE_PROFILES=e2e docker compose up -d`, `worklog`, `worklog-crud`,
+  `worklog-grid-editing`, `worklog-grouped-editing`, `admin-inline-edit` and
+  `accessibility` passed 47 of 47, relation comboboxes included — an earlier
+  note here said they render empty locally, which no longer holds. CI stays the
+  authoritative gate, and a shard can still fail on a busy runner
+  (`E2E Tests (3/4)` timed out five specs on `.combobox-input` once and passed
+  on a rerun of the same head): rerun the failed job before reading it as a
+  finding
 
 ## The worklog view a spec starts in
 
@@ -82,6 +93,13 @@ provides the initial value, so your setting survives reloads.
 - A web-first assertion gating on a save→refetch→SolidJS-reconcile→render
   round-trip needs `{ timeout: 15000 }`, not the Playwright default 5s, under
   CI contention
+- Keyboard and focus cases assert twice: when the editor appears, and again
+  after `await page.waitForLoadState('networkidle')`. A save→refetch remount
+  removes the editor a few milliseconds after it appeared, so one immediate
+  check sees a healthy editor (#771: the earlier #588 case passed that way while
+  the bug was live). To assert that no save happened, count `POST
+  /tracking/save` requests (`trackSaves`), not successful responses;
+  `expectTypeableDescription` is the ready-made check for the description flow
 - Local full-suite runs can flake on keyboard-interaction specs on a loaded
   box, while CI shards stay green (~16 tests/runner, `retries: 2`) — re-run the
   single spec with `--workers=2 --retries=2` rather than treating a
