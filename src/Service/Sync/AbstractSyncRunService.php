@@ -15,10 +15,10 @@ use App\Entity\SyncRunItem;
 use App\Enum\EntrySource;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
+use App\Exception\SyncRunAbortedException;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
-use RuntimeException;
 use Throwable;
 
 use function substr;
@@ -64,7 +64,7 @@ abstract class AbstractSyncRunService
             // A persisted row was rejected by the database and closed the manager; the run
             // record cannot be saved through it. Surface the real cause rather than the
             // opaque EntityManagerClosed a retry flush would throw.
-            throw new RuntimeException('Sync run aborted: the entity manager closed mid-run (a persisted row was rejected by the database). Original error: ' . $failure->getMessage(), 0, $failure);
+            throw SyncRunAbortedException::entityManagerClosed($failure);
         }
 
         $this->entityManager->flush();

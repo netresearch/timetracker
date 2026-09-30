@@ -191,4 +191,110 @@ final class EntryPullApplierTest extends TestCase
         self::assertSame('10:00:00', $entry->getEnd()->format('H:i:s'));
         self::assertSame(60, $entry->getDuration());
     }
+
+    public function testDurationPullCrossingMidnightFailsAndLeavesTheEntryUntouched(): void
+    {
+        $entry = $this->entry()->setStart('23:30:00')->setEnd('23:59:00')->setDuration(29);
+
+        $pullResult = $this->entryPullApplier->apply($entry, $this->snapshot(durationMinutes: 120), [WorklogField::DURATION], $this->ticketSystem());
+
+        self::assertFalse($pullResult->applied);
+        self::assertSame('worklog crosses midnight', $pullResult->reason);
+        self::assertSame(29, $entry->getDuration());
+        self::assertSame('23:59:00', $entry->getEnd()->format('H:i:s'));
+    }
+
+    public function testCommentOnlyPullNeverChecksTheMidnightBoundary(): void
+    {
+        $entry = $this->entry()->setStart('23:30:00')->setEnd('23:59:00')->setDuration(120);
+
+        $pullResult = $this->entryPullApplier->apply($entry, $this->snapshot(comment: 'late'), [WorklogField::COMMENT], $this->ticketSystem());
+
+        self::assertTrue($pullResult->applied);
+        self::assertSame('late', $entry->getDescription());
+        self::assertSame(120, $entry->getDuration());
+        self::assertSame('23:59:00', $entry->getEnd()->format('H:i:s'));
+    }
+
+    public function testUnresolvedIssueKeyFailsBeforeAnyOtherFieldIsApplied(): void
+    {
+        $this->ticketProjectResolver->method('resolve')->willReturn(new ProjectResolution(null, 'nope'));
+
+        $entry = $this->entry();
+        $remote = $this->snapshot(issueKey: 'DEF-9', durationMinutes: 90, comment: 'changed');
+
+        $pullResult = $this->entryPullApplier->apply(
+            $entry,
+            $remote,
+            [WorklogField::ISSUE_KEY, WorklogField::DURATION, WorklogField::COMMENT],
+            $this->ticketSystem(),
+        );
+
+        self::assertFalse($pullResult->applied);
+        self::assertSame(60, $entry->getDuration());
+        self::assertSame('old', $entry->getDescription());
+    }
+
+    public function testAllFieldsTogetherAreAppliedAndBothDaysReported(): void
+    {
+        $customer = self::createStub(Customer::class);
+        $project = self::createStub(Project::class);
+        $project->method('getCustomer')->willReturn($customer);
+        $this->ticketProjectResolver->method('resolve')->willReturn(new ProjectResolution($project, 'match'));
+
+        $entry = $this->entry();
+        $remote = $this->snapshot(
+            issueKey: 'DEF-9',
+            startedTimestamp: new DateTime('2026-06-16 13:15:00')->getTimestamp(),
+            durationMinutes: 45,
+            comment: 'all of it',
+        );
+
+        $pullResult = $this->entryPullApplier->apply(
+            $entry,
+            $remote,
+            [WorklogField::ISSUE_KEY, WorklogField::STARTED, WorklogField::DURATION, WorklogField::COMMENT],
+            $this->ticketSystem(),
+        );
+
+        self::assertTrue($pullResult->applied);
+        self::assertSame('DEF-9', $entry->getTicket());
+        self::assertSame($project, $entry->getProject());
+        self::assertSame($customer, $entry->getCustomer());
+        self::assertSame('2026-06-16', $entry->getDay()->format('Y-m-d'));
+        self::assertSame('13:15:00', $entry->getStart()->format('H:i:s'));
+        self::assertSame('14:00:00', $entry->getEnd()->format('H:i:s'));
+        self::assertSame(45, $entry->getDuration());
+        self::assertSame('all of it', $entry->getDescription());
+        self::assertSame(['2026-06-15', '2026-06-16'], $pullResult->affectedDays);
+    }
+
+    public function testResolvedProjectWithoutCustomerKeepsTheEntryCustomer(): void
+    {
+        $customer = self::createStub(Customer::class);
+        $project = self::createStub(Project::class);
+        $project->method('getCustomer')->willReturn(null);
+        $this->ticketProjectResolver->method('resolve')->willReturn(new ProjectResolution($project, 'match'));
+
+        $entry = $this->entry()->setCustomer($customer);
+
+        $pullResult = $this->entryPullApplier->apply($entry, $this->snapshot(issueKey: 'DEF-9'), [WorklogField::ISSUE_KEY], $this->ticketSystem());
+
+        self::assertTrue($pullResult->applied);
+        self::assertSame($project, $entry->getProject());
+        self::assertSame($customer, $entry->getCustomer());
+    }
+
+    public function testNoFieldsChangesNothing(): void
+    {
+        $entry = $this->entry();
+
+        $pullResult = $this->entryPullApplier->apply($entry, $this->snapshot(issueKey: 'XYZ-5', durationMinutes: 5, comment: 'x'), [], $this->ticketSystem());
+
+        self::assertTrue($pullResult->applied);
+        self::assertSame('ABC-1', $entry->getTicket());
+        self::assertSame(60, $entry->getDuration());
+        self::assertSame('old', $entry->getDescription());
+        self::assertSame(['2026-06-15'], $pullResult->affectedDays);
+    }
 }

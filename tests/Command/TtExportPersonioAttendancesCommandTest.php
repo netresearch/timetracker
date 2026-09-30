@@ -174,4 +174,57 @@ final class TtExportPersonioAttendancesCommandTest extends TestCase
 
         self::assertSame(0, $exitCode);
     }
+
+    public function testExplicitWindowIsPassedThrough(): void
+    {
+        $exportService = $this->createMock(AttendanceExportService::class);
+        $exportService->expects(self::once())->method('exportAllOptedIn')
+            ->with(
+                self::callback(static fn (DateTimeImmutable $from): bool => '2026-01-05' === $from->format('Y-m-d')),
+                self::callback(static fn (DateTimeImmutable $to): bool => '2026-01-20' === $to->format('Y-m-d')),
+                true,
+            )
+            ->willReturn([$this->syncRun(SyncRunStatus::COMPLETED)]);
+
+        $tester = $this->commandTester(null, $exportService);
+
+        self::assertSame(0, $tester->execute(['--from' => '2026-01-05', '--to' => '2026-01-20', '--dry-run' => true]));
+    }
+
+    public function testOnlyFromGivenKeepsDefaultEnd(): void
+    {
+        $expectedTo = new DateTimeImmutable('today')->format('Y-m-d');
+
+        $exportService = $this->createMock(AttendanceExportService::class);
+        $exportService->expects(self::once())->method('exportAllOptedIn')
+            ->with(
+                self::callback(static fn (DateTimeImmutable $from): bool => '2026-01-05' === $from->format('Y-m-d')),
+                self::callback(static fn (DateTimeImmutable $to): bool => $to->format('Y-m-d') === $expectedTo),
+                false,
+            )
+            ->willReturn([$this->syncRun(SyncRunStatus::COMPLETED)]);
+
+        $tester = $this->commandTester(null, $exportService);
+
+        self::assertSame(0, $tester->execute(['--from' => '2026-01-05']));
+    }
+
+    public function testNoRunsIsANoteAndSucceeds(): void
+    {
+        $tester = $this->commandTester(null, $this->exportService([]));
+
+        $exitCode = $tester->execute([]);
+
+        self::assertSame(0, $exitCode);
+        self::assertStringContainsString('Nothing to export', $tester->getDisplay());
+    }
+
+    public function testRunsAreLabelledAsPersonioExport(): void
+    {
+        $tester = $this->commandTester(null, $this->exportService([$this->syncRun(SyncRunStatus::COMPLETED)]));
+
+        $tester->execute([]);
+
+        self::assertStringContainsString('Personio export run', $tester->getDisplay());
+    }
 }
