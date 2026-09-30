@@ -42,10 +42,10 @@ export async function installFrozenClock(
  * @param context - Playwright browser context
  * @param frozenDate - Date to freeze to (defaults to E2E_FROZEN_DATE)
  */
-export async function installFrozenClockOnContext(
+export function installFrozenClockOnContext(
   context: BrowserContext,
   frozenDate: Date = E2E_FROZEN_DATE
-): Promise<void> {
+): void {
   // Context-level clock needs to be set via page creation hook
   context.on('page', async (page) => {
     await page.clock.install({ time: frozenDate });

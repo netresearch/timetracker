@@ -160,7 +160,7 @@ test.describe('Worklog grid — keyboard & clipboard editing', () => {
   test('the toolbar refresh button refetches the entries', async ({ page }) => {
     const refetch = page.waitForResponse((r) => /\/getData\/days\/\d+/.test(r.url()) && r.request().method() === 'GET');
     await page.getByRole('button', { name: /^(Refresh|Aktualisieren)$/ }).click();
-    await refetch;
+    expect((await refetch).ok()).toBe(true);
   });
 
   test('a new row shows the unsaved save + reset actions, and reset discards it', async ({ page }) => {

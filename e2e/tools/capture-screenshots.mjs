@@ -210,7 +210,7 @@ try {
     // (e.g. the worklog's future-entry cue) renders deterministically.
     const frozenTime = new Date(args.clock);
     if (Number.isNaN(frozenTime.getTime())) {
-      throw new Error(`Invalid --clock value: "${args.clock}". Expected an ISO date-time, e.g. 2024-01-15T12:00:00.`);
+      throw new TypeError(`Invalid --clock value: "${args.clock}". Expected an ISO date-time, e.g. 2024-01-15T12:00:00.`);
     }
     await page.clock.install({ time: frozenTime });
   }
