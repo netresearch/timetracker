@@ -57,6 +57,8 @@ class JiraCloudApiService extends JiraOAuthApiService
 
     protected const string API_GATEWAY_URL = 'https://api.atlassian.com';
 
+    private const string MEDIA_TYPE_JSON = 'application/json';
+
     /** Classic Jira scopes: read/write work objects + refresh-token issuance. */
     protected const string SCOPES = 'read:jira-work write:jira-work offline_access';
 
@@ -218,7 +220,7 @@ class JiraCloudApiService extends JiraOAuthApiService
                 'base_uri' => $this->getJiraApiUrl(),
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
-                    'Accept' => 'application/json',
+                    'Accept' => self::MEDIA_TYPE_JSON,
                 ],
             ]);
             $this->cloudRestClientToken = $accessToken;
@@ -402,7 +404,7 @@ class JiraCloudApiService extends JiraOAuthApiService
                 'base_uri' => static::API_GATEWAY_URL,
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
-                    'Accept' => 'application/json',
+                    'Accept' => self::MEDIA_TYPE_JSON,
                 ],
             ])->request('GET', '/oauth/token/accessible-resources');
             $resources = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -506,7 +508,7 @@ class JiraCloudApiService extends JiraOAuthApiService
 
         $this->clients['cloud-auth'] = $this->createHttpClient([
             'base_uri' => static::AUTH_BASE_URL,
-            'headers' => ['Accept' => 'application/json'],
+            'headers' => ['Accept' => self::MEDIA_TYPE_JSON],
         ]);
 
         return $this->clients['cloud-auth'];
