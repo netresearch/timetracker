@@ -70,6 +70,17 @@ The app is then reachable on `http://localhost:8765` (or `HTTP_PORT`).
 > [`docker/nginx/default.conf`](../docker/nginx/default.conf) forwards PHP
 > requests to `phpfpm:9000`; `compose.yml` gives the `app` service a matching
 > `phpfpm` network alias, so no override is needed.
+>
+> The configuration looks that name up again every five seconds through
+> Docker's embedded DNS (`resolver 127.0.0.11`, `set $php_upstream`), so
+> replacing the `app` container needs no nginx restart. A literal name in
+> `fastcgi_pass` is resolved only when nginx starts and keeps the old address:
+> after the container is replaced every PHP request answers 502. If you keep
+> your own nginx configuration, copy the `resolver` and `set $php_upstream`
+> lines and change `fastcgi_pass` to `fastcgi_pass $php_upstream;`; only a
+> variable there makes nginx use the resolver. Outside a user-defined Docker
+> network there is no `127.0.0.11`, and a literal name with an nginx restart
+> after each replacement is the alternative.
 
 > **Note — test data:** `compose.yml` mounts both `sql/full.sql` (schema) and
 > `sql/testdata.sql` (deterministic test data for dev/e2e) into the `db`
