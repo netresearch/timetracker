@@ -26,6 +26,10 @@ import sys
 BLOCKING = "error"
 
 
+class GateError(Exception):
+    """The report cannot be read; the message is what the gate prints."""
+
+
 def level_of(result: dict, rules: dict[str, str]) -> str:
     """The effective level of one result.
 
@@ -40,88 +44,100 @@ def level_of(result: dict, rules: dict[str, str]) -> str:
     return rules.get(str(rule_id), "warning")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("sarif", help="SARIF file written by the scan")
-    args = parser.parse_args()
+def resolve_report(arg: str) -> str:
+    """The real path of the SARIF file; raises GateError when it may not be read.
 
-    # The gate reads the SARIF its own scan just wrote, which is always inside
-    # the workspace. Requiring that is a true invariant rather than a
-    # concession to a scanner: a gate pointed outside the tree it is gating is
-    # a gate reading somebody else's findings. The sibling script
-    # branch-coverage.py deliberately does NOT have this restriction — a
-    # coverage report from another worktree is a legitimate thing to inspect.
+    The gate reads the SARIF its own scan just wrote, which is always inside
+    the workspace. Requiring that is a true invariant rather than a
+    concession to a scanner: a gate pointed outside the tree it is gating is
+    a gate reading somebody else's findings. The sibling script
+    branch-coverage.py deliberately does NOT have this restriction — a
+    coverage report from another worktree is a legitimate thing to inspect.
+    """
     try:
-        path = os.path.realpath(args.sarif, strict=True)
+        path = os.path.realpath(arg, strict=True)
     except OSError as error:
-        print(f"error: {args.sarif}: {error}", file=sys.stderr)
-        return 1
+        raise GateError(f"{arg}: {error}") from error
     workspace = os.path.realpath(os.getcwd())
     if os.path.commonpath([path, workspace]) != workspace:
-        print(
-            f"error: {args.sarif} resolves to {path}, outside the workspace "
-            f"{workspace}; the gate reads the report of its own run",
-            file=sys.stderr,
+        raise GateError(
+            f"{arg} resolves to {path}, outside the workspace "
+            f"{workspace}; the gate reads the report of its own run"
         )
-        return 1
+    return path
 
+
+def load_report(arg: str, path: str) -> dict:
+    """The parsed SARIF document; raises GateError when it cannot be parsed."""
     try:
         with open(path, encoding="utf-8") as handle:
-            report = json.load(handle)
+            return json.load(handle)
     except (OSError, json.JSONDecodeError) as error:
-        print(f"error: {args.sarif}: {error}", file=sys.stderr)
-        return 1
+        raise GateError(f"{arg}: {error}") from error
 
+
+def rule_levels(driver: dict) -> dict[str, str]:
+    """Each rule's default level, keyed by rule id."""
+    return {
+        str(rule.get("id")): str(
+            (rule.get("defaultConfiguration") or {}).get("level", "warning")
+        )
+        for rule in driver.get("rules", [])
+    }
+
+
+def blocking_entry(result: dict) -> tuple[str, int | None, str, str]:
+    """(artifact, line, rule id, message) of one blocking result.
+
+    Kept apart rather than as one "path:line" string: the annotation needs the
+    number in its own `line=` field, and a workflow command without it silently
+    annotates line 1 — pointing every finding at the top of the file it is not
+    in.
+    """
+    locations = result.get("locations") or [{}]
+    physical = locations[0].get("physicalLocation") or {}
+    artifact = (physical.get("artifactLocation") or {}).get("uri", "?")
+    line = (physical.get("region") or {}).get("startLine")
+    message = ((result.get("message") or {}).get("text") or "").strip()
+    return artifact, line, str(result.get("ruleId")), message
+
+
+def tally(
+    report: dict,
+) -> tuple[collections.Counter[str], list[tuple[str, int | None, str, str]]]:
+    """Count every result by level and collect the ones at blocking level."""
     counts: collections.Counter[str] = collections.Counter()
-    blocking: list[tuple[str, str, str]] = []
-
+    blocking: list[tuple[str, int | None, str, str]] = []
     for run in report.get("runs", []):
         driver = (run.get("tool") or {}).get("driver") or {}
-        rules = {
-            str(rule.get("id")): str(
-                (rule.get("defaultConfiguration") or {}).get("level", "warning")
-            )
-            for rule in driver.get("rules", [])
-        }
+        rules = rule_levels(driver)
         for result in run.get("results", []):
             level = level_of(result, rules)
             counts[level] += 1
-            if level != BLOCKING:
-                continue
-            locations = result.get("locations") or [{}]
-            physical = locations[0].get("physicalLocation") or {}
-            artifact = (physical.get("artifactLocation") or {}).get("uri", "?")
-            line = (physical.get("region") or {}).get("startLine")
-            message = ((result.get("message") or {}).get("text") or "").strip()
-            # Kept apart rather than as one "path:line" string: the annotation
-            # needs the number in its own `line=` field, and a workflow command
-            # without it silently annotates line 1 — pointing every finding at
-            # the top of the file it is not in.
-            blocking.append((artifact, line, str(result.get("ruleId")), message))
+            if level == BLOCKING:
+                blocking.append(blocking_entry(result))
+    return counts, blocking
 
-    total = sum(counts.values())
-    print(
-        f"semgrep findings: {total} " + (dict(counts).__repr__() if total else "(none)")
-    )
 
-    summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary:
-        with open(summary, "a", encoding="utf-8") as handle:
-            handle.write("### Semgrep\n\n")
-            if not total:
-                handle.write("No findings.\n")
-            else:
-                handle.write("| Level | Count |\n|---|---:|\n")
-                for level, count in sorted(counts.items()):
-                    handle.write(f"| {level} | {count} |\n")
-                handle.write(
-                    "\n`error` blocks the merge; `warning` is triaged within 30 "
-                    "days — see `docs/vulnerability-management.md`.\n"
-                )
+def write_step_summary(summary: str, counts: collections.Counter[str]) -> None:
+    """Append the per-level table to the GitHub step summary."""
+    with open(summary, "a", encoding="utf-8") as handle:
+        handle.write("### Semgrep\n\n")
+        if not sum(counts.values()):
+            handle.write("No findings.\n")
+            return
+        handle.write("| Level | Count |\n|---|---:|\n")
+        handle.writelines(
+            f"| {level} | {count} |\n" for level, count in sorted(counts.items())
+        )
+        handle.write(
+            "\n`error` blocks the merge; `warning` is triaged within 30 "
+            "days — see `docs/vulnerability-management.md`.\n"
+        )
 
-    if not blocking:
-        return 0
 
+def report_blocking(blocking: list[tuple[str, int | None, str, str]]) -> None:
+    """Explain each blocking finding on stderr and annotate it on the diff."""
     print(
         f"\n{len(blocking)} finding(s) at {BLOCKING} severity block this build:",
         file=sys.stderr,
@@ -145,6 +161,34 @@ def main() -> int:
         "can audit.",
         file=sys.stderr,
     )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("sarif", help="SARIF file written by the scan")
+    args = parser.parse_args()
+
+    try:
+        report = load_report(args.sarif, resolve_report(args.sarif))
+    except GateError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 1
+
+    counts, blocking = tally(report)
+
+    total = sum(counts.values())
+    print(
+        f"semgrep findings: {total} " + (dict(counts).__repr__() if total else "(none)")
+    )
+
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        write_step_summary(summary, counts)
+
+    if not blocking:
+        return 0
+
+    report_blocking(blocking)
     return 1
 
 
