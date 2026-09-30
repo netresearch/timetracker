@@ -21,7 +21,9 @@ Node 26 (`.nvmrc`); the Playwright tooling is the only npm usage at the repo roo
   `Failed to open stream: Permission denied` on `var/log/test.log`), `vendor/`
   (`composer install`; the repo is bind-mounted) and `public/build-ui`
   (`cd frontend && bun run build`). `make e2e-up` stops waiting after 60 s
-  without failing, so a 500 from `/login` is one of these, not a slow start
+  without failing; a 500 from `/login` is most often one of these, not a slow
+  start — for any other cause read `docker compose --profile e2e logs app-e2e`
+  and `var/log/test.log`
 - Base URL override: `E2E_BASE_URL` (defaults to http://localhost:8766)
 - `db-e2e` is a PERSISTENT volume seeded only once (first start) from
   `sql/full.sql` + `sql/testdata.sql` — after any entity gains a column,
