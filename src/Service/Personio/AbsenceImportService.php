@@ -24,6 +24,7 @@ use App\Enum\EntryClass;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
+use App\Exception\Personio\PersonioSyncPreconditionException;
 use App\Repository\ActivityRepository;
 use App\Repository\PersonioAbsenceImportRepository;
 use App\Repository\PersonioConfigRepository;
@@ -34,7 +35,6 @@ use App\Service\Util\ContractHoursResolver;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
-use RuntimeException;
 
 use function mb_substr;
 use function round;
@@ -96,17 +96,17 @@ class AbsenceImportService extends AbstractSyncRunService
         return $this->executeRun($syncRun, function () use ($syncRun, $user, $from, $to): void {
             $config = $this->configRepository->findActive();
             if (!$config instanceof PersonioConfig) {
-                throw new RuntimeException('no active Personio configuration');
+                throw PersonioSyncPreconditionException::noActiveConfiguration();
             }
 
             $absenceProject = $config->getAbsenceProject();
             if (!$absenceProject instanceof Project) {
-                throw new RuntimeException('no absence project configured');
+                throw PersonioSyncPreconditionException::noAbsenceProject();
             }
 
             $employeeId = $user->getPersonioEmployeeId();
             if (null === $employeeId) {
-                throw new RuntimeException('no Personio employee id mapped');
+                throw PersonioSyncPreconditionException::noEmployeeIdMapped();
             }
 
             $client = $this->clientFactory->create($config);

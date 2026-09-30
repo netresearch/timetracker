@@ -49,6 +49,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
@@ -325,6 +326,63 @@ final class SyncWorklogsServiceTest extends TestCase
 
         self::assertSame(SyncRunStatus::COMPLETED, $syncRun->getStatus());
         self::assertSame(1, $syncRun->getCounters()['pushed'] ?? 0);
+    }
+
+    /**
+     * @return iterable<string, array{WriteOutcome, string, SyncItemKind, string, ?int}> outcome, counter, item kind, reason, item worklog id
+     */
+    public static function unsuccessfulPushOutcomes(): iterable
+    {
+        yield 'lease lost' => [WriteOutcome::LEASE_LOST, 'conflicts', SyncItemKind::CONFLICT, 'push lease lost: remote changed since base; parked as conflict', 11];
+        yield 'remote missing' => [WriteOutcome::REMOTE_MISSING, 'orphaned', SyncItemKind::LOCAL_ONLY, 'remote worklog missing during push; parked as orphaned', 11];
+        yield 'skipped' => [WriteOutcome::SKIPPED, 'errors', SyncItemKind::ERROR, 'push skipped: entry has no pushable ticket or is agent walltime', null];
+    }
+
+    #[DataProvider('unsuccessfulPushOutcomes')]
+    public function testUnsuccessfulPushOutcomeIsCountedAndReported(WriteOutcome $outcome, string $counter, SyncItemKind $kind, string $reason, ?int $itemWorklogId): void
+    {
+        $entry = $this->linkedEntry(11);
+        $base = $this->projector->project($entry);
+        $entry->setDescription('changed locally');
+        $this->stateFor($entry, $base);
+        $this->remoteWorklog($base, 11, 'U1');
+
+        $this->worklogWriteService->method('push')->willReturn($outcome);
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(1, $syncRun->getCounters()[$counter] ?? 0);
+        self::assertArrayNotHasKey('pushed', $syncRun->getCounters());
+        $items = $syncRun->getItems()->toArray();
+        self::assertCount(1, $items);
+        self::assertSame($kind, $items[0]->getKind());
+        self::assertSame($reason, $items[0]->getReason());
+        self::assertSame('TIM-1', $items[0]->getIssueKey());
+        self::assertSame($itemWorklogId, $items[0]->getRemoteWorklogId());
+        self::assertSame($entry, $items[0]->getEntry());
+    }
+
+    public function testUnsuccessfulPushDuringMergeIsReportedAndNotCountedAsMerged(): void
+    {
+        $entry = $this->linkedEntry(11);
+        $base = $this->projector->project($entry);
+        $entry->setDescription('local comment change');
+        $this->stateFor($entry, $base);
+        $this->remoteWorklog(new WorklogSnapshot(
+            issueKey: $base->issueKey,
+            startedTimestamp: $base->startedTimestamp,
+            durationMinutes: 120,
+            comment: $base->comment,
+        ), 11, 'U2');
+
+        $this->entryPullApplier->method('apply')->willReturn(new PullResult(true, '', ['2026-06-10']));
+        $this->worklogWriteService->method('push')->willReturn(WriteOutcome::LEASE_LOST);
+
+        $syncRun = $this->syncSelf();
+
+        self::assertSame(1, $syncRun->getCounters()['conflicts'] ?? 0);
+        self::assertArrayNotHasKey('merged', $syncRun->getCounters());
+        self::assertContains(SyncItemKind::CONFLICT, $this->itemKinds($syncRun));
     }
 
     public function testRemoteDirtyPullsAndRefreshesBase(): void

@@ -86,11 +86,6 @@ class TokenStub implements TokenInterface
         $this->authenticated = $isAuthenticated;
     }
 
-    public function eraseCredentials(): void
-    {
-        // no-op
-    }
-
     /**
      * @return array<string, mixed>
      */

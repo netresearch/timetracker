@@ -29,6 +29,7 @@ use GuzzleHttp\Psr7\Response;
 use LogicException;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -87,6 +88,8 @@ final class JiraCloudApiServiceTest extends TestCase
     private ?RequestException $authException = null;
 
     private string $gatewayResponseBody = '[]';
+
+    private ?RequestException $gatewayException = null;
 
     private string $restResponseBody = '{}';
 
@@ -340,6 +343,84 @@ final class JiraCloudApiServiceTest extends TestCase
         }
     }
 
+    public function testAccessibleResourcesWithMalformedEntriesAreSkippedUntilTheTenantMatches(): void
+    {
+        $this->gatewayResponseBody = (string) json_encode([
+            'not-an-object',
+            ['url' => 'https://example.atlassian.net'],
+            ['id' => 'no-url'],
+            ['id' => 5, 'url' => 'https://example.atlassian.net'],
+            ['id' => 'cloud-ok', 'url' => 'https://example.atlassian.net/wiki'],
+        ]);
+
+        $this->exchangeAuthorizationCodeWithValidTokens();
+
+        self::assertSame('cloud-ok', $this->ticketSystem->getCloudId());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function unusableAccessibleResources(): iterable
+    {
+        yield 'JSON null' => ['null'];
+        yield 'JSON scalar' => ['"nope"'];
+        yield 'only malformed entries' => ['["x", {"id": "only-id"}, {"url": "https://example.atlassian.net"}]'];
+    }
+
+    #[DataProvider('unusableAccessibleResources')]
+    public function testUnusableAccessibleResourcesFailWithNoMatchingSite(string $body): void
+    {
+        $this->gatewayResponseBody = $body;
+
+        try {
+            $this->exchangeAuthorizationCodeWithValidTokens();
+            self::fail('Expected JiraApiException');
+        } catch (JiraApiException $exception) {
+            self::assertSame(400, $exception->getCode());
+            self::assertStringContainsString('None of the Atlassian sites you authorized matches "https://example.atlassian.net"', $exception->getMessage());
+        }
+
+        self::assertNull($this->ticketSystem->getCloudId());
+    }
+
+    public function testInvalidAccessibleResourcesJsonIsReportedAsBadGateway(): void
+    {
+        $this->gatewayResponseBody = '{not json';
+
+        try {
+            $this->exchangeAuthorizationCodeWithValidTokens();
+            self::fail('Expected JiraApiException');
+        } catch (JiraApiException $exception) {
+            self::assertSame(502, $exception->getCode());
+            self::assertStringContainsString('Atlassian accessible-resources returned invalid JSON.', $exception->getMessage());
+        }
+    }
+
+    public function testFailingAccessibleResourcesRequestIsReported(): void
+    {
+        $this->gatewayException = new RequestException('gateway down', new Request('GET', '/oauth/token/accessible-resources'), new Response(503));
+
+        try {
+            $this->exchangeAuthorizationCodeWithValidTokens();
+            self::fail('Expected JiraApiException');
+        } catch (JiraApiException $exception) {
+            self::assertSame(503, $exception->getCode());
+            self::assertStringContainsString('Could not list accessible Atlassian sites: gateway down', $exception->getMessage());
+        }
+    }
+
+    private function exchangeAuthorizationCodeWithValidTokens(): void
+    {
+        $this->authResponseBody = (string) json_encode([
+            'access_token' => 'access-1',
+            'refresh_token' => 'refresh-1',
+            'expires_in' => 3600,
+        ]);
+
+        $this->createService()->exchangeAuthorizationCode('auth-code-1');
+    }
+
     public function testMalformedTokenResponseIsRejected(): void
     {
         $this->authResponseBody = (string) json_encode(['access_token' => 'only-this']);
@@ -520,7 +601,7 @@ final class JiraCloudApiServiceTest extends TestCase
         }
 
         if ('https://api.atlassian.com' === $base) {
-            return $this->stubClient($this->restRequests, fn (): string => $this->gatewayResponseBody, null);
+            return $this->stubClient($this->restRequests, fn (): string => $this->gatewayResponseBody, $this->gatewayException);
         }
 
         if (str_starts_with($base, 'https://api.atlassian.com/ex/')) {

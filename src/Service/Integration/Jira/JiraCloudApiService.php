@@ -57,6 +57,8 @@ class JiraCloudApiService extends JiraOAuthApiService
 
     protected const string API_GATEWAY_URL = 'https://api.atlassian.com';
 
+    private const string MEDIA_TYPE_JSON = 'application/json';
+
     /** Classic Jira scopes: read/write work objects + refresh-token issuance. */
     protected const string SCOPES = 'read:jira-work write:jira-work offline_access';
 
@@ -218,7 +220,7 @@ class JiraCloudApiService extends JiraOAuthApiService
                 'base_uri' => $this->getJiraApiUrl(),
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
-                    'Accept' => 'application/json',
+                    'Accept' => self::MEDIA_TYPE_JSON,
                 ],
             ]);
             $this->cloudRestClientToken = $accessToken;
@@ -402,7 +404,7 @@ class JiraCloudApiService extends JiraOAuthApiService
                 'base_uri' => static::API_GATEWAY_URL,
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
-                    'Accept' => 'application/json',
+                    'Accept' => self::MEDIA_TYPE_JSON,
                 ],
             ])->request('GET', '/oauth/token/accessible-resources');
             $resources = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -412,31 +414,38 @@ class JiraCloudApiService extends JiraOAuthApiService
             throw new JiraApiException('Atlassian accessible-resources returned invalid JSON.', 502, null, $jsonException);
         }
 
-        $wantedHost = strtolower((string) parse_url($this->ticketSystem->getUrl(), PHP_URL_HOST));
+        $cloudId = $this->findCloudIdForHost($resources, strtolower((string) parse_url($this->ticketSystem->getUrl(), PHP_URL_HOST)));
+        if (null === $cloudId) {
+            throw new JiraApiException(sprintf('None of the Atlassian sites you authorized matches "%s" — check the ticket system URL or re-authorize with the right account.', $this->ticketSystem->getUrl()), 400);
+        }
 
-        if (is_array($resources)) {
-            foreach ($resources as $resource) {
-                if (!is_array($resource)) {
-                    continue;
-                }
-                if (!is_string($resource['id'] ?? null)) {
-                    continue;
-                }
-                if (!is_string($resource['url'] ?? null)) {
-                    continue;
-                }
-                if (strtolower((string) parse_url($resource['url'], PHP_URL_HOST)) === $wantedHost) {
-                    $this->ticketSystem->setCloudId($resource['id']);
-                    $objectManager = $this->managerRegistry->getManager();
-                    $objectManager->persist($this->ticketSystem);
-                    $objectManager->flush();
+        $this->ticketSystem->setCloudId($cloudId);
+        $objectManager = $this->managerRegistry->getManager();
+        $objectManager->persist($this->ticketSystem);
+        $objectManager->flush();
+    }
 
-                    return;
-                }
+    /**
+     * The cloudId of the first accessible-resources entry whose site URL has the wanted host;
+     * entries without a string id or url are ignored.
+     */
+    private function findCloudIdForHost(mixed $resources, string $wantedHost): ?string
+    {
+        if (!is_array($resources)) {
+            return null;
+        }
+
+        foreach ($resources as $resource) {
+            if (is_array($resource)
+                && is_string($resource['id'] ?? null)
+                && is_string($resource['url'] ?? null)
+                && strtolower((string) parse_url($resource['url'], PHP_URL_HOST)) === $wantedHost
+            ) {
+                return $resource['id'];
             }
         }
 
-        throw new JiraApiException(sprintf('None of the Atlassian sites you authorized matches "%s" — check the ticket system URL or re-authorize with the right account.', $this->ticketSystem->getUrl()), 400);
+        return null;
     }
 
     /**
@@ -499,7 +508,7 @@ class JiraCloudApiService extends JiraOAuthApiService
 
         $this->clients['cloud-auth'] = $this->createHttpClient([
             'base_uri' => static::AUTH_BASE_URL,
-            'headers' => ['Accept' => 'application/json'],
+            'headers' => ['Accept' => self::MEDIA_TYPE_JSON],
         ]);
 
         return $this->clients['cloud-auth'];

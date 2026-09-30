@@ -18,6 +18,7 @@ use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
 use App\Enum\SyncRunType;
 use App\Exception\Personio\PersonioApiException;
+use App\Exception\Personio\PersonioSyncPreconditionException;
 use App\Repository\EntryRepository;
 use App\Repository\PersonioAttendanceExportRepository;
 use App\Repository\PersonioConfigRepository;
@@ -30,7 +31,6 @@ use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 use function count;
 use function date_default_timezone_get;
@@ -84,12 +84,12 @@ class AttendanceExportService extends AbstractSyncRunService
         return $this->executeRun($syncRun, function () use ($syncRun, $user, $from, $to, $dryRun): void {
             $config = $this->configRepository->findActive();
             if (!$config instanceof PersonioConfig) {
-                throw new RuntimeException('no active Personio configuration');
+                throw PersonioSyncPreconditionException::noActiveConfiguration();
             }
 
             $employeeId = $user->getPersonioEmployeeId();
             if (null === $employeeId) {
-                throw new RuntimeException('no Personio employee id mapped');
+                throw PersonioSyncPreconditionException::noEmployeeIdMapped();
             }
 
             $client = $this->clientFactory->create($config);

@@ -163,4 +163,65 @@ final class TtImportPersonioAbsencesCommandTest extends TestCase
 
         self::assertSame(0, $exitCode);
     }
+
+    public function testBlankDateFails(): void
+    {
+        $tester = $this->commandTester(null, $this->importService());
+
+        $exitCode = $tester->execute(['--from' => '   ']);
+
+        self::assertSame(1, $exitCode);
+        self::assertStringContainsString('must not be blank', $tester->getDisplay());
+    }
+
+    public function testExplicitWindowIsPassedThrough(): void
+    {
+        $importService = $this->createMock(AbsenceImportService::class);
+        $importService->expects(self::once())->method('importAllOptedIn')
+            ->with(
+                self::callback(static fn (DateTimeImmutable $from): bool => '2026-01-05' === $from->format('Y-m-d')),
+                self::callback(static fn (DateTimeImmutable $to): bool => '2026-01-20' === $to->format('Y-m-d')),
+            )
+            ->willReturn([$this->syncRun(SyncRunStatus::COMPLETED)]);
+
+        $tester = $this->commandTester(null, $importService);
+
+        self::assertSame(0, $tester->execute(['--from' => '2026-01-05', '--to' => '2026-01-20']));
+    }
+
+    public function testOnlyFromGivenKeepsDefaultEnd(): void
+    {
+        $expectedTo = new DateTimeImmutable('today')->modify('+90 days')->format('Y-m-d');
+
+        $importService = $this->createMock(AbsenceImportService::class);
+        $importService->expects(self::once())->method('importAllOptedIn')
+            ->with(
+                self::callback(static fn (DateTimeImmutable $from): bool => '2026-01-05' === $from->format('Y-m-d')),
+                self::callback(static fn (DateTimeImmutable $to): bool => $to->format('Y-m-d') === $expectedTo),
+            )
+            ->willReturn([$this->syncRun(SyncRunStatus::COMPLETED)]);
+
+        $tester = $this->commandTester(null, $importService);
+
+        self::assertSame(0, $tester->execute(['--from' => '2026-01-05']));
+    }
+
+    public function testNoRunsIsANoteAndSucceeds(): void
+    {
+        $tester = $this->commandTester(null, $this->importService([]));
+
+        $exitCode = $tester->execute([]);
+
+        self::assertSame(0, $exitCode);
+        self::assertStringContainsString('Nothing to import', $tester->getDisplay());
+    }
+
+    public function testRunsAreLabelledAsPersonioImport(): void
+    {
+        $tester = $this->commandTester(null, $this->importService([$this->syncRun(SyncRunStatus::COMPLETED)]));
+
+        $tester->execute([]);
+
+        self::assertStringContainsString('Personio import run', $tester->getDisplay());
+    }
 }
