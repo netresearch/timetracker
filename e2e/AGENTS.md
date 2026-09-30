@@ -103,7 +103,8 @@ provides the initial value, so your setting survives reloads.
   /tracking/save` requests (`trackSaves`), not successful responses;
   `expectTypeableDescription` is the ready-made check for the description flow
 - Local full-suite runs can flake on keyboard-interaction specs on a loaded
-  box, while CI shards stay green (~16 tests/runner, `retries: 2`) — re-run the
+  box, while CI shards usually stay green (~16 tests/runner, `retries: 2`; one can
+  still fail on a busy runner, see above) — re-run the
   single spec with `--workers=2 --retries=2` rather than treating a
   full-suite-on-one-machine failure as a CI blocker
 
