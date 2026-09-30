@@ -78,6 +78,11 @@ async function saveSettingsViaForm(
   return (await response.json()) as Record<string, unknown>;
 }
 
+// show_future stays ON (the seeded value) in every write below: `i.myself` is also
+// the worklog specs' second isolation user, and the server clock is frozen at
+// 2024-01-15 while the browser's "today" is real, so an entry a worklog spec
+// creates is dated in the server's future. With show_future off it never comes
+// back from getData, and `createWorklogEntry` times out waiting for its row.
 type BoolSettings = { show_empty_line: boolean; suggest_time: boolean; show_future: boolean };
 
 // Persist a known boolean settings state via the API and return the echoed
@@ -122,40 +127,40 @@ test.describe('Settings Tab', () => {
   // persisted.
   test('should save show_empty_line setting', async ({ page }) => {
     // Establish a known baseline (everything off) so the toggle is deterministic.
-    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: true });
 
     await goToSettingsPage(page);
 
-    // Toggle show_empty_line on via the UI form; leave the others off to match
-    // the baseline (locale stays unchanged → success status, no reload).
+    // Toggle show_empty_line on via the UI form; leave the others as the
+    // baseline has them (locale stays unchanged → success status, no reload).
     await setCheckboxValue(page, 'show_empty_line', true);
     await setCheckboxValue(page, 'suggest_time', false);
-    await setCheckboxValue(page, 'show_future', false);
+    await setCheckboxValue(page, 'show_future', true);
     const persisted = await saveSettingsViaForm(page);
 
     console.log(`Saved show_empty_line value: ${persisted.show_empty_line}`);
     expect(persisted.show_empty_line).toBe(true);
 
     // Restore baseline (off).
-    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: true });
   });
 
   test('should save suggest_time setting', async ({ page }) => {
     // Establish a known baseline (everything off) so the toggle is deterministic.
-    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: true });
 
     await goToSettingsPage(page);
 
     await setCheckboxValue(page, 'suggest_time', true);
     await setCheckboxValue(page, 'show_empty_line', false);
-    await setCheckboxValue(page, 'show_future', false);
+    await setCheckboxValue(page, 'show_future', true);
     const persisted = await saveSettingsViaForm(page);
 
     console.log(`Saved suggest_time value: ${persisted.suggest_time}`);
     expect(persisted.suggest_time).toBe(true);
 
     // Restore baseline (off).
-    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: true });
   });
 });
 
@@ -242,7 +247,7 @@ test.describe('Settings Effectiveness', () => {
 
   test('suggest_time should pre-fill start time when enabled', async ({ page }) => {
     // Enable suggest_time via the API, then exercise the worklog grid
-    await applySettingsApi(page, { show_empty_line: false, suggest_time: true, show_future: false });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: true, show_future: true });
 
     await page.goto('/ui/tracking');
     await waitForTrackingGridReady(page);
@@ -257,7 +262,7 @@ test.describe('Settings Effectiveness', () => {
 
   test('suggest_time disabled should not pre-fill times', async ({ page }) => {
     // Disable suggest_time via the API
-    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: true });
 
     await page.goto('/ui/tracking');
     await waitForTrackingGridReady(page);
@@ -301,7 +306,7 @@ test.describe('Settings API', () => {
     const baseline = await applySettingsApi(page, {
       show_empty_line: false,
       suggest_time: false,
-      show_future: false,
+      show_future: true,
     });
     expect(baseline.show_empty_line).toBe(false);
 
@@ -310,12 +315,12 @@ test.describe('Settings API', () => {
     const updated = await applySettingsApi(page, {
       show_empty_line: true,
       suggest_time: false,
-      show_future: false,
+      show_future: true,
     });
     console.log('Save result settings:', updated);
     expect(updated.show_empty_line).toBe(true);
 
     // Restore baseline (off).
-    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: false });
+    await applySettingsApi(page, { show_empty_line: false, suggest_time: false, show_future: true });
   });
 });
