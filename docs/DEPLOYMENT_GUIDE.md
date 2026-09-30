@@ -77,8 +77,10 @@ The app is then reachable on `http://localhost:8765` (or `HTTP_PORT`).
 > `fastcgi_pass` is resolved only when nginx starts and keeps the old address:
 > after the container is replaced every PHP request answers 502. If you keep
 > your own nginx configuration, copy the `resolver` and `set $php_upstream`
-> lines; outside a user-defined Docker network there is no `127.0.0.11`, and a
-> literal name with an nginx restart after each replacement is the alternative.
+> lines and change `fastcgi_pass` to `fastcgi_pass $php_upstream;`; only a
+> variable there makes nginx use the resolver. Outside a user-defined Docker
+> network there is no `127.0.0.11`, and a literal name with an nginx restart
+> after each replacement is the alternative.
 
 > **Note — test data:** `compose.yml` mounts both `sql/full.sql` (schema) and
 > `sql/testdata.sql` (deterministic test data for dev/e2e) into the `db`
