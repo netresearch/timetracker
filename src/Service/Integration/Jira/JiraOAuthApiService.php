@@ -60,6 +60,10 @@ class JiraOAuthApiService
     /** Defensive cap on issue-search pagination (ADR-023 read path 2) — an API that never advances stops here. */
     protected const int MAX_SEARCH_PAGES = 100;
 
+    private const string MSG_RESOURCE_NOT_AVAILABLE = '404 - Resource is not available: (';
+
+    private const string MSG_UNKNOWN_GUZZLE_EXCEPTION = 'Unknown Guzzle exception: ';
+
     protected string $oAuthCallbackUrl;
 
     protected string $jiraApiUrl = '/rest/api/latest/';
@@ -695,10 +699,10 @@ class JiraOAuthApiService
             }
 
             if (404 === $guzzleException->getCode()) {
-                throw new JiraApiInvalidResourceException('404 - Resource is not available: (' . $absolutePath . ')', 404, null, $guzzleException);
+                throw new JiraApiInvalidResourceException(self::MSG_RESOURCE_NOT_AVAILABLE . $absolutePath . ')', 404, null, $guzzleException);
             }
 
-            throw new JiraApiException('Unknown Guzzle exception: ' . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
+            throw new JiraApiException(self::MSG_UNKNOWN_GUZZLE_EXCEPTION . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
         }
 
         return json_decode((string) $response->getBody(), false, 512, JSON_THROW_ON_ERROR);
@@ -881,10 +885,10 @@ class JiraOAuthApiService
             if (401 === $guzzleException->getCode()) {
                 $this->throwUnauthorizedRedirect();
             } elseif (404 === $guzzleException->getCode()) {
-                $message = '404 - Resource is not available: (' . $url . ')';
+                $message = self::MSG_RESOURCE_NOT_AVAILABLE . $url . ')';
                 throw new JiraApiInvalidResourceException($message, 404, null, $guzzleException);
             } else {
-                throw new JiraApiException('Unknown Guzzle exception: ' . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
+                throw new JiraApiException(self::MSG_UNKNOWN_GUZZLE_EXCEPTION . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
             }
         }
 
@@ -934,10 +938,10 @@ class JiraOAuthApiService
             if (401 === $guzzleException->getCode()) {
                 $this->throwUnauthorizedRedirect();
             } elseif (404 === $guzzleException->getCode()) {
-                $message = '404 - Resource is not available: (' . $url . ')';
+                $message = self::MSG_RESOURCE_NOT_AVAILABLE . $url . ')';
                 throw new JiraApiInvalidResourceException($message, 404, null, $guzzleException);
             } else {
-                throw new JiraApiException('Unknown Guzzle exception: ' . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
+                throw new JiraApiException(self::MSG_UNKNOWN_GUZZLE_EXCEPTION . $guzzleException->getMessage(), $guzzleException->getCode(), null, $guzzleException);
             }
         }
 

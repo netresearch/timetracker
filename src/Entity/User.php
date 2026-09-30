@@ -589,7 +589,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
 
     public function getTotpAuthenticationUsername(): ?string
     {
-        return $this->username;
+        return $this->getUsername();
     }
 
     public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface

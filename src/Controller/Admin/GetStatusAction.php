@@ -118,35 +118,18 @@ final class GetStatusAction extends BaseController
      */
     private function buildInfo(): array
     {
-        $revision = $this->buildEnv('APP_BUILD_REVISION');
-        $ref = $this->buildEnv('APP_BUILD_REF');
+        $revision = $this->env('APP_BUILD_REVISION');
+        $ref = $this->env('APP_BUILD_REF');
 
         return [
             'revision' => $revision,
             'ref' => $ref,
-            'date' => $this->buildEnv('APP_BUILD_DATE'),
+            'date' => $this->env('APP_BUILD_DATE'),
             'repositoryUrl' => self::REPOSITORY_URL,
             'commitUrl' => null !== $revision ? self::REPOSITORY_URL . '/commit/' . $revision : null,
             'refUrl' => null !== $ref ? self::REPOSITORY_URL . '/tree/' . rawurlencode($ref) : null,
             'releasesUrl' => self::REPOSITORY_URL . '/releases',
         ];
-    }
-
-    /**
-     * Read a build-provenance env var (APP_BUILD_*), null when unset.
-     *
-     * getenv() reads the real process environment regardless of PHP's
-     * variables_order (where the APP_BUILD_* Docker env land); fall back to the
-     * superglobals for SAPIs/setups that only populate those.
-     */
-    private function buildEnv(string $key): ?string
-    {
-        $value = getenv($key);
-        if (false === $value || '' === $value) {
-            $value = $_SERVER[$key] ?? $_ENV[$key] ?? null;
-        }
-
-        return is_string($value) && '' !== $value ? $value : null;
     }
 
     /**
@@ -158,7 +141,7 @@ final class GetStatusAction extends BaseController
      */
     private function appVersion(): ?string
     {
-        $ref = $this->buildEnv('APP_BUILD_REF');
+        $ref = $this->env('APP_BUILD_REF');
         if (null !== $ref && 1 === preg_match('/^v?\d+\.\d+\.\d+/', $ref)) {
             return ltrim($ref, 'v');
         }
@@ -397,7 +380,14 @@ final class GetStatusAction extends BaseController
         return is_scalar($value) && '' !== (string) $value ? (string) $value : null;
     }
 
-    /** A non-empty environment value (real env first, then superglobals), or null. */
+    /**
+     * A non-empty environment value, or null when unset — used for the build-provenance
+     * variables (APP_BUILD_*) and the two-factor settings.
+     *
+     * getenv() reads the real process environment regardless of PHP's
+     * variables_order (where the APP_BUILD_* Docker env land); fall back to the
+     * superglobals for SAPIs/setups that only populate those.
+     */
     private function env(string $key): ?string
     {
         $value = getenv($key);

@@ -320,41 +320,83 @@ class SyncWorklogsService extends AbstractSyncRunService
 
         $entries = $this->entryRepository->findJiraSyncCandidates($targetUser, $context->ticketSystem, $from, $to);
         $this->remoteReadGapClaimer->claimOwned($gaps, $entries, $context->ticketSystem);
+
+        $absentWorklogIds = $this->reconcileOwnedEntries($context, $entries, $remoteByWorklogId, $onNotice);
+        $this->poolUnmatchedRemote($context, $remoteByWorklogId);
+
+        $heldLookalikes = [];
+        foreach ($absentWorklogIds as $worklogId) {
+            $this->processDeletedWorklog($context, $worklogId, $gaps, $heldLookalikes);
+        }
+
+        $this->reportHeldLookalikes($context, $heldLookalikes);
+
+        $this->handleUnmatched($context, $targetUser);
+
+        $this->entityManager->flush();
+
+        // Ids exist only after the flush above (same post-flush id rule as import).
+        foreach ($context->affectedDays as $affected) {
+            $this->dayClassService->recalculate((int) $affected['user']->getId(), $affected['day']);
+        }
+    }
+
+    /**
+     * Reconciles every candidate entry that already carries a worklog id (or creates the worklog
+     * for one that never synced). Matched remote worklogs are removed from $remoteByWorklogId;
+     * the ids whose worklog is absent from the read — and still absent on its own issue — are returned.
+     *
+     * @param list<Entry>                                                                                       $entries
+     * @param array<int, array{snapshot: WorklogSnapshot, updated: ?string, author: ?string, issueKey: string}> $remoteByWorklogId
+     * @param callable(string, ?string=, ?Throwable=, ?int=): void                                              $onNotice
+     *
+     * @return list<int>
+     */
+    private function reconcileOwnedEntries(SyncRunContext $context, array $entries, array &$remoteByWorklogId, callable $onNotice): array
+    {
         $absentWorklogIds = [];
 
         foreach ($entries as $entry) {
             $worklogId = $entry->getWorklogId();
-            if (null !== $worklogId && $worklogId > 0 && isset($remoteByWorklogId[$worklogId])) {
-                $record = $remoteByWorklogId[$worklogId];
-                unset($remoteByWorklogId[$worklogId]);
-                $worklog = $this->synthesizeWorklog($worklogId, $record);
-                $this->reconcileAndExecute($context, $entry, $record['snapshot'], $worklog, $record['issueKey']);
+            if (null === $worklogId || $worklogId <= 0) {
+                // Never synced: create the worklog remotely under the token owner.
+                $this->handlePush($context, $entry, (string) $entry->getTicket());
 
                 continue;
             }
 
-            if (null !== $worklogId && $worklogId > 0) {
-                // The window the read covers is TT's, not Jira's: a worklog re-dated outside it
-                // is missing from the read while still sitting on its issue. Read it there once
-                // before its absence is allowed to mean anything.
-                $record = $this->remoteWorklogReader->readOne($context->api, (string) $entry->getTicket(), $worklogId, $onNotice);
-                if (null !== $record) {
-                    $this->reconcileAndExecute($context, $entry, $record['snapshot'], $this->synthesizeWorklog($worklogId, $record), $record['issueKey']);
+            if (isset($remoteByWorklogId[$worklogId])) {
+                $record = $remoteByWorklogId[$worklogId];
+                unset($remoteByWorklogId[$worklogId]);
+                $this->reconcileAndExecute($context, $entry, $record['snapshot'], $this->synthesizeWorklog($worklogId, $record), $record['issueKey']);
 
-                    continue;
-                }
+                continue;
+            }
 
+            // The window the read covers is TT's, not Jira's: a worklog re-dated outside it
+            // is missing from the read while still sitting on its issue. Read it there once
+            // before its absence is allowed to mean anything.
+            $record = $this->remoteWorklogReader->readOne($context->api, (string) $entry->getTicket(), $worklogId, $onNotice);
+            if (null === $record) {
                 $absentWorklogIds[] = $worklogId;
 
                 continue;
             }
 
-            // Never synced: create the worklog remotely under the token owner.
-            $this->handlePush($context, $entry, (string) $entry->getTicket());
+            $this->reconcileAndExecute($context, $entry, $record['snapshot'], $this->synthesizeWorklog($worklogId, $record), $record['issueKey']);
         }
 
-        // Whatever remains on the remote side has no matching entry — pool it for move-detection
-        // (delete-by-absence relink) and unattended import.
+        return $absentWorklogIds;
+    }
+
+    /**
+     * Whatever remains on the remote side has no matching entry — pool it for move-detection
+     * (delete-by-absence relink) and unattended import.
+     *
+     * @param array<int, array{snapshot: WorklogSnapshot, updated: ?string, author: ?string, issueKey: string}> $remoteByWorklogId
+     */
+    private function poolUnmatchedRemote(SyncRunContext $context, array $remoteByWorklogId): void
+    {
         $linkedEntries = $this->entryRepository->findByWorklogIdsAndTicketSystem(array_keys($remoteByWorklogId), $context->ticketSystem);
         foreach ($remoteByWorklogId as $worklogId => $record) {
             // A worklog that already belongs to a local entry outside the candidates (e.g.
@@ -373,15 +415,17 @@ class SyncWorklogsService extends AbstractSyncRunService
                 'issueKey' => $record['issueKey'],
             ];
         }
+    }
 
-        $heldLookalikes = [];
-        foreach ($absentWorklogIds as $worklogId) {
-            $this->processDeletedWorklog($context, $worklogId, $gaps, $heldLookalikes);
-        }
-
-        // Lookalikes are held only under a run-wide gap, where no entry of the run may relink, so
-        // none can have been taken by a relink; applying the hold after the loop keeps that true
-        // even if the rules change. Reported, so a withheld Jira worklog never disappears silently.
+    /**
+     * Lookalikes are held only under a run-wide gap, where no entry of the run may relink, so
+     * none can have been taken by a relink; applying the hold after the loop keeps that true
+     * even if the rules change. Reported, so a withheld Jira worklog never disappears silently.
+     *
+     * @param array<int, list<Entry>> $heldLookalikes by worklog id, the entries it may be the move of
+     */
+    private function reportHeldLookalikes(SyncRunContext $context, array $heldLookalikes): void
+    {
         foreach ($heldLookalikes as $worklogId => $unverifiedEntries) {
             $candidate = $context->unmatchedRemote[$worklogId] ?? null;
             if (null === $candidate) {
@@ -404,15 +448,6 @@ class SyncWorklogsService extends AbstractSyncRunService
                     'entries' => array_map(static fn (Entry $entry): ?int => $entry->getId(), $unverifiedEntries),
                 ],
             );
-        }
-
-        $this->handleUnmatched($context, $targetUser);
-
-        $this->entityManager->flush();
-
-        // Ids exist only after the flush above (same post-flush id rule as import).
-        foreach ($context->affectedDays as $affected) {
-            $this->dayClassService->recalculate((int) $affected['user']->getId(), $affected['day']);
         }
     }
 
@@ -570,23 +605,18 @@ class SyncWorklogsService extends AbstractSyncRunService
     private function handleWriteOutcome(SyncRunContext $context, Entry $entry, string $issueKey, WriteOutcome $outcome, string $successCounter): void
     {
         $syncRun = $context->syncRun;
-        switch ($outcome) {
-            case WriteOutcome::WRITTEN:
-                $syncRun->incrementCounter($successCounter);
-                break;
-            case WriteOutcome::LEASE_LOST:
-                $syncRun->incrementCounter('conflicts');
-                $this->addItem($syncRun, SyncItemKind::CONFLICT, issueKey: $issueKey, remoteWorklogId: $entry->getWorklogId(), entry: $entry, reason: 'push lease lost: remote changed since base; parked as conflict');
-                break;
-            case WriteOutcome::REMOTE_MISSING:
-                $syncRun->incrementCounter('orphaned');
-                $this->addItem($syncRun, SyncItemKind::LOCAL_ONLY, issueKey: $issueKey, remoteWorklogId: $entry->getWorklogId(), entry: $entry, reason: 'remote worklog missing during push; parked as orphaned');
-                break;
-            case WriteOutcome::SKIPPED:
-                $syncRun->incrementCounter('errors');
-                $this->addItem($syncRun, SyncItemKind::ERROR, issueKey: $issueKey, entry: $entry, reason: 'push skipped: entry has no pushable ticket or is agent walltime');
-                break;
-        }
+        match ($outcome) {
+            WriteOutcome::WRITTEN => $syncRun->incrementCounter($successCounter),
+            WriteOutcome::LEASE_LOST => $this->parkWriteOutcome($syncRun, 'conflicts', SyncItemKind::CONFLICT, $issueKey, $entry, $entry->getWorklogId(), 'push lease lost: remote changed since base; parked as conflict'),
+            WriteOutcome::REMOTE_MISSING => $this->parkWriteOutcome($syncRun, 'orphaned', SyncItemKind::LOCAL_ONLY, $issueKey, $entry, $entry->getWorklogId(), 'remote worklog missing during push; parked as orphaned'),
+            WriteOutcome::SKIPPED => $this->parkWriteOutcome($syncRun, 'errors', SyncItemKind::ERROR, $issueKey, $entry, null, 'push skipped: entry has no pushable ticket or is agent walltime'),
+        };
+    }
+
+    private function parkWriteOutcome(SyncRun $syncRun, string $counter, SyncItemKind $kind, string $issueKey, Entry $entry, ?int $remoteWorklogId, string $reason): void
+    {
+        $syncRun->incrementCounter($counter);
+        $this->addItem($syncRun, $kind, issueKey: $issueKey, remoteWorklogId: $remoteWorklogId, entry: $entry, reason: $reason);
     }
 
     /**

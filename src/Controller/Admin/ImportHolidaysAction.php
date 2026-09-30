@@ -47,6 +47,10 @@ final class ImportHolidaysAction extends BaseController
     /** Feeds larger than this are rejected — holiday calendars are tiny. */
     private const int MAX_ICAL_BYTES = 1_048_576;
 
+    private const string MSG_TOO_LARGE = 'The iCal data is too large.';
+
+    private const string MSG_UPLOAD_UNREADABLE = 'The uploaded file could not be read.';
+
     private HttpClientInterface $httpClient;
 
     private IcalHolidayParser $icalHolidayParser;
@@ -131,39 +135,49 @@ final class ImportHolidaysAction extends BaseController
     {
         $file = $request->files->get('file');
         if ($file instanceof UploadedFile) {
-            if (!$file->isValid()) {
-                return new Error($this->translate('The uploaded file could not be read.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
-            }
-
-            // Reject oversized uploads by their reported size BEFORE reading the
-            // whole file into memory.
-            if ($file->getSize() > self::MAX_ICAL_BYTES) {
-                return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
-            }
-
-            $content = file_get_contents($file->getPathname());
-            if (false === $content || '' === $content) {
-                return new Error($this->translate('The uploaded file could not be read.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
-            }
-
-            // Belt-and-braces: a spoofed size can't slip past the read.
-            if (strlen($content) > self::MAX_ICAL_BYTES) {
-                return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
-            }
-
-            return $content;
+            return $this->readUploadedFile($file);
         }
 
         $url = $request->request->get('url');
         if (!is_string($url) || '' === $url) {
-            return new Error($this->translate('Provide an iCal URL or upload an .ics file.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+            return $this->badRequest('Provide an iCal URL or upload an .ics file.');
         }
 
         // Only remote http(s) feeds — no file://, no local schemes.
         if (!in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)) {
-            return new Error($this->translate('Only http(s) iCal URLs are supported.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+            return $this->badRequest('Only http(s) iCal URLs are supported.');
         }
 
+        return $this->fetchFeed($url);
+    }
+
+    private function readUploadedFile(UploadedFile $file): string|Error
+    {
+        if (!$file->isValid()) {
+            return $this->badRequest(self::MSG_UPLOAD_UNREADABLE);
+        }
+
+        // Reject oversized uploads by their reported size BEFORE reading the
+        // whole file into memory.
+        if ($file->getSize() > self::MAX_ICAL_BYTES) {
+            return $this->badRequest(self::MSG_TOO_LARGE);
+        }
+
+        $content = file_get_contents($file->getPathname());
+        if (false === $content || '' === $content) {
+            return $this->badRequest(self::MSG_UPLOAD_UNREADABLE);
+        }
+
+        // Belt-and-braces: a spoofed size can't slip past the read.
+        if (strlen($content) > self::MAX_ICAL_BYTES) {
+            return $this->badRequest(self::MSG_TOO_LARGE);
+        }
+
+        return $content;
+    }
+
+    private function fetchFeed(string $url): string|Error
+    {
         try {
             $response = $this->httpClient->request('GET', $url, [
                 'timeout' => 10,
@@ -175,7 +189,7 @@ final class ImportHolidaysAction extends BaseController
             if (null !== $contentLength && (int) $contentLength > self::MAX_ICAL_BYTES) {
                 $response->cancel();
 
-                return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+                return $this->badRequest(self::MSG_TOO_LARGE);
             }
 
             // Stream the body and abort as soon as it exceeds the cap, so a
@@ -186,7 +200,7 @@ final class ImportHolidaysAction extends BaseController
                 if (strlen($content) > self::MAX_ICAL_BYTES) {
                     $response->cancel();
 
-                    return new Error($this->translate('The iCal data is too large.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+                    return $this->badRequest(self::MSG_TOO_LARGE);
                 }
             }
         } catch (ExceptionInterface $exception) {
@@ -198,9 +212,14 @@ final class ImportHolidaysAction extends BaseController
         }
 
         if ('' === $content) {
-            return new Error($this->translate('The iCal feed is empty.'), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+            return $this->badRequest('The iCal feed is empty.');
         }
 
         return $content;
+    }
+
+    private function badRequest(string $message): Error
+    {
+        return new Error($this->translate($message), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
     }
 }
