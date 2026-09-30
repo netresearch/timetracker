@@ -37,7 +37,7 @@ const THROWAWAY_PREFIXES = [INLINE_EDIT_PREFIX, ADMIN_UI_PREFIX];
  * safe under `fullyParallel` — see sweepStaleThrowawayCustomers. The digit run is
  * bounded (no unbounded quantifier) and the pattern is anchored.
  */
-const THROWAWAY_NAME = new RegExp(`^(?:${THROWAWAY_PREFIXES.join('|')})_(\\d{10,16})_`);
+const THROWAWAY_NAME = new RegExp(String.raw`^(?:${THROWAWAY_PREFIXES.join('|')})_(\d{10,16})_`);
 
 /**
  * A row younger than this may belong to a test running right now in the other

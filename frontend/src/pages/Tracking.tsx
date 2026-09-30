@@ -33,9 +33,6 @@ import { updateWorktime } from '../header'
 import { dmyToIso, parseTime, toIsoDate } from '../lib/timeParse'
 import { m } from '../paraglide/messages.js'
 
-// Register the directive with the JSX namespace (Solid tree-shakes unused imports).
-void gridNav
-
 const DAYS_OPTIONS = [1, 3, 7, 35] as const
 const DEFAULT_DAYS = 3
 // The freetext day-range accepts any whole number, capped at a year so a stray

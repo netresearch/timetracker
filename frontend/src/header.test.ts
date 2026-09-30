@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getJson } from './api/client'
 import type { AppConfig } from './config'
 import { formatDays, formatDuration, formatSignedDuration, handleHelpClick, handleShortcut, hideAccessHints, initHeaderDynamics, initialsFrom, refreshLoginStatus, showAccessHints, updateWorktime, wireWorktimeDetail, worktimeStatus } from './header'
+import { paletteOpen, setPaletteOpen } from './lib/commandPalette'
 import { setShortcutsHelpOpen, shortcutsHelpOpen } from './lib/shortcutsHelp'
 
 // Preserve the module's other exports (SessionExpiredError, postJson, …) and stub
@@ -648,6 +649,128 @@ describe('handleShortcut', () => {
     overview.addEventListener('click', nav)
     press({ altKey: true, code: 'Digit2', key: '2' }) // Alt+2 must not navigate
     expect(nav).not.toHaveBeenCalled()
+  })
+
+  // Characterization of branches the cases above leave implicit (written green
+  // against the pre-extraction handleShortcut, then kept to pin the split steps).
+  describe('chords and guards', () => {
+    const keydown = (init: KeyboardEventInit, target?: HTMLElement): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { cancelable: true, ...init })
+      if (target !== undefined) {
+        Object.defineProperty(event, 'target', { value: target }) // inField reads event.target, not focus
+      }
+      handleShortcut(event)
+
+      return event
+    }
+
+    afterEach(() => setPaletteOpen(false))
+
+    it('Ctrl/Cmd+K opens the command palette, even while typing in a field', () => {
+      setup()
+      const search = document.querySelector<HTMLInputElement>('input[type="search"]')!
+      search.focus()
+      expect(keydown({ ctrlKey: true, key: 'k' }, search).defaultPrevented).toBe(true)
+      expect(paletteOpen()).toBe(true)
+      setPaletteOpen(false)
+      expect(keydown({ metaKey: true, key: 'K' }, search).defaultPrevented).toBe(true)
+      expect(paletteOpen()).toBe(true)
+    })
+
+    it('Ctrl+K needs to be a plain chord: Alt or Shift on top is ignored', () => {
+      setup()
+      keydown({ ctrlKey: true, altKey: true, key: 'k' })
+      keydown({ ctrlKey: true, shiftKey: true, key: 'k' })
+      keydown({ key: 'k' })
+      expect(paletteOpen()).toBe(false)
+    })
+
+    it('Ctrl+K stands down while a modal dialog is open', () => {
+      setup()
+      document.body.insertAdjacentHTML('beforeend', '<div role="dialog" data-state="open"></div>')
+      keydown({ ctrlKey: true, key: 'k' })
+      expect(paletteOpen()).toBe(false)
+    })
+
+    it('Alt+digit beyond the available nav links, or Alt+8/0, does nothing', () => {
+      setup()
+      const clicked = vi.fn()
+      for (const a of document.querySelectorAll('a')) {
+        a.addEventListener('click', clicked)
+      }
+      expect(keydown({ altKey: true, code: 'Digit7', key: '7' }).defaultPrevented).toBe(false)
+      expect(keydown({ altKey: true, code: 'Digit8', key: '8' }).defaultPrevented).toBe(false)
+      expect(keydown({ altKey: true, code: 'Digit0', key: '0' }).defaultPrevented).toBe(false)
+      expect(keydown({ altKey: true, ctrlKey: true, code: 'Digit1', key: '1' }).defaultPrevented).toBe(false)
+      expect(clicked).not.toHaveBeenCalled()
+    })
+
+    it('Alt+digit swallows the key (preventDefault) only when a link exists', () => {
+      setup()
+      expect(keydown({ altKey: true, code: 'Digit1', key: '1' }).defaultPrevented).toBe(true)
+    })
+
+    it('Alt+A does nothing on a page without an add button', () => {
+      setup()
+      document.querySelector('[data-keyboard-add]')!.remove()
+      expect(keydown({ altKey: true, code: 'KeyA', key: 'a' }).defaultPrevented).toBe(false)
+    })
+
+    it('"?" and "/" are ignored with a modifier or while typing in a field', () => {
+      setup()
+      const search = document.querySelector<HTMLInputElement>('input[type="search"]')!
+      search.focus()
+      const inField = keydown({ key: '?' }, search)
+      expect(inField.defaultPrevented).toBe(false)
+      expect(shortcutsHelpOpen()).toBe(false)
+      search.blur()
+      document.body.focus()
+      expect(keydown({ key: '?', ctrlKey: true }).defaultPrevented).toBe(false)
+      expect(keydown({ key: '/', altKey: true }).defaultPrevented).toBe(false)
+      expect(shortcutsHelpOpen()).toBe(false)
+      expect(document.activeElement).not.toBe(search)
+    })
+
+    it('"/" does nothing when the page has no search field', () => {
+      setup()
+      document.querySelector('input[type="search"]')!.remove()
+      expect(keydown({ key: '/' }).defaultPrevented).toBe(false)
+    })
+
+    it('ArrowDown on a collapsed "More" button opens it (clicks) before focusing the first item', () => {
+      setup()
+      foldNavLinks(2)
+      const more = document.querySelector<HTMLButtonElement>('.nav-more-btn')!
+      more.setAttribute('aria-expanded', 'false')
+      const clicked = vi.fn()
+      more.addEventListener('click', clicked)
+      more.focus()
+      keydown({ key: 'ArrowDown' })
+      expect(clicked).toHaveBeenCalledTimes(1)
+      expect(document.activeElement).toBe(document.querySelector('.nav-more-menu .main-nav-link'))
+    })
+
+    it('Tab outside the "More" menu is left alone', () => {
+      setup()
+      document.querySelector<HTMLAnchorElement>('.main-nav-link')!.focus()
+      expect(keydown({ key: 'Tab' }).defaultPrevented).toBe(false)
+    })
+
+    it('ArrowDown inside the menu does nothing when focus is not on a menu item and arrows on a bar link ignore other keys', () => {
+      setup()
+      const links = document.querySelectorAll<HTMLAnchorElement>('.main-nav-link')
+      links[0]!.focus()
+      expect(keydown({ key: 'ArrowUp' }).defaultPrevented).toBe(false)
+      expect(keydown({ key: 'a' }).defaultPrevented).toBe(false)
+      expect(document.activeElement).toBe(links[0])
+    })
+
+    it('Home/End on the nav prevent the page scroll', () => {
+      setup()
+      document.querySelector<HTMLAnchorElement>('.main-nav-link')!.focus()
+      expect(keydown({ key: 'End' }).defaultPrevented).toBe(true)
+      expect(keydown({ key: 'Home' }).defaultPrevented).toBe(true)
+    })
   })
 
   // Integration: the global handler is on document; a real bubbling ArrowDown

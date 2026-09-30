@@ -358,157 +358,194 @@ function setupGridNav(table: HTMLTableElement, options: GridNavOptions): GridCon
       return
     }
 
-    // Widget mode: focus is inside a cell control. Escape returns to the cell;
-    // Tab/Shift+Tab move between a cell's controls (Arrow keys are left to the
-    // control, e.g. an inline editor's caret). Tab past the edge drops back to
-    // the cell so it leaves the grid.
+    // Widget mode: focus is inside a cell control.
     if (document.activeElement !== cell) {
-      // An inline editor owns Escape/Tab (commit/cancel/move) for its cell, so
-      // the grid yields both keys while that cell is being edited.
-      if (cell.hasAttribute('data-inline-editing')) {
-        return
-      }
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        setActive(cell)
+      onControlKeydown(cell, event)
 
-        return
-      }
-      if (event.key === 'Tab') {
-        const controls = Array.from(cell.querySelectorAll<HTMLElement>(INTERACTIVE))
-        const i = controls.indexOf(document.activeElement as HTMLElement)
-        const next = i + (event.shiftKey ? -1 : 1)
-        if (i !== -1 && next >= 0 && next < controls.length) {
-          event.preventDefault()
-          controls[next]!.focus()
-        } else if (i !== -1) {
-          setActive(cell, false)
-        }
-      }
+      return
+    }
 
+    if (onClipboardKey(cell, event)) {
       return
     }
 
     // Use the active cell's live position (see currentPos) so a row inserted/
     // removed without a re-sync can't leave the coords stale and jump the cursor.
     const [r, c] = currentPos()
-    const lastRow = table.rows.length - 1 // live count, no per-keystroke allocation
+    if (onNavigationKey(cell, event, r, c)) {
+      event.preventDefault()
+    }
+  }
 
-    // Clipboard from a focused cell (non-edit mode): Ctrl/Cmd+C copies the cell's
-    // text; Ctrl/Cmd+V opens the editor seeded with the clipboard text.
-    if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) {
-      const lower = event.key.toLowerCase()
-      if (lower === 'c') {
-        // A real text selection copies natively (the browser's own copy of the
-        // selection) — only synthesize a copy for a bare, unselected focused cell.
-        if ((window.getSelection()?.toString() ?? '') !== '') {
-          return
-        }
+  // Widget mode. Escape returns to the cell; Tab/Shift+Tab move between a cell's
+  // controls (Arrow keys are left to the control, e.g. an inline editor's caret).
+  // Tab past the edge drops back to the cell so it leaves the grid.
+  function onControlKeydown(cell: Cell, event: KeyboardEvent): void {
+    // An inline editor owns Escape/Tab (commit/cancel/move) for its cell, so
+    // the grid yields both keys while that cell is being edited.
+    if (cell.hasAttribute('data-inline-editing')) {
+      return
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      setActive(cell)
+    } else if (event.key === 'Tab') {
+      tabAmongControls(cell, event)
+    }
+  }
+
+  function tabAmongControls(cell: Cell, event: KeyboardEvent): void {
+    const controls = Array.from(cell.querySelectorAll<HTMLElement>(INTERACTIVE))
+    const i = controls.indexOf(document.activeElement as HTMLElement)
+    const next = i + (event.shiftKey ? -1 : 1)
+    if (i !== -1 && next >= 0 && next < controls.length) {
+      event.preventDefault()
+      controls[next]!.focus()
+    } else if (i !== -1) {
+      setActive(cell, false)
+    }
+  }
+
+  // Clipboard from a focused cell (non-edit mode): Ctrl/Cmd+C copies the cell's
+  // text; Ctrl/Cmd+V opens the editor seeded with the clipboard text. Returns true
+  // when the key was dealt with here, so the navigation switch is skipped.
+  function onClipboardKey(cell: Cell, event: KeyboardEvent): boolean {
+    if (!((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey)) {
+      return false
+    }
+    const lower = event.key.toLowerCase()
+    if (lower === 'c') {
+      // A real text selection copies natively (the browser's own copy of the
+      // selection) — only synthesize a copy for a bare, unselected focused cell.
+      if ((window.getSelection()?.toString() ?? '') === '') {
         event.preventDefault()
         copyCellText(cell)
-
-        return
       }
-      if (lower === 'v' && options.onActivate !== undefined) {
-        event.preventDefault()
-        void pasteIntoCell(cell)
 
-        return
-      }
+      return true
+    }
+    if (lower === 'v' && options.onActivate !== undefined) {
+      event.preventDefault()
+      void pasteIntoCell(cell)
+
+      return true
     }
 
+    return false
+  }
+
+  // Cell-mode keys. Returns true when the key moved/activated something, so the
+  // caller claims it with preventDefault; false leaves it to the browser.
+  function onNavigationKey(cell: Cell, event: KeyboardEvent, r: number, c: number): boolean {
     switch (event.key) {
       case 'ArrowRight':
         focusAt(r, c + 1)
-        break
+
+        return true
       case 'ArrowLeft':
         focusAt(r, c - 1)
-        break
+
+        return true
       case 'ArrowDown':
         focusAt(verticalStep(r, 1), c)
-        break
+
+        return true
       case 'ArrowUp':
         if (r === 0 && options.onExit) {
           options.onExit('up')
         } else {
           focusAt(verticalStep(r, -1), c)
         }
-        break
-      case 'PageDown': {
-        const rows = dataRows()
-        // On the bottom data row, PageDown crosses to the next page (landing on
-        // its first row); otherwise it moves a viewport of rows within the page.
-        // `cell` is the focused cell (always set here), so its row is reliable —
-        // and never undefined-matches an empty dataRows().
-        if (cell.parentElement === rows.at(-1) && options.onPageEdge?.('next')) {
-          focusPageLanding('first', c)
-        } else {
-          focusAt(r + pageRows(), c)
-        }
-        break
-      }
-      case 'PageUp': {
-        // On the top data row, PageUp crosses to the previous page (landing on
-        // its last row, so you keep moving upward); otherwise within the page.
-        if (cell.parentElement === dataRows()[0] && options.onPageEdge?.('prev')) {
-          focusPageLanding('last', c)
-        } else {
-          focusAt(r - pageRows(), c)
-        }
-        break
-      }
+
+        return true
+      case 'PageDown':
+        pageDown(cell, r, c)
+
+        return true
+      case 'PageUp':
+        pageUp(cell, r, c)
+
+        return true
       case 'Home':
         focusAt(event.ctrlKey ? 0 : r, 0)
-        break
-      case 'End':
-        focusAt(event.ctrlKey ? lastRow : r, Number.MAX_SAFE_INTEGER)
-        break
-      case 'Enter':
-      case 'F2': {
-        // Offer the cell to an inline-edit owner first; if it opens an editor it
-        // returns true and we stop here. Otherwise drop into the cell's first
-        // control (APG grid) so action cells keep working unchanged.
-        if (options.onActivate?.(cell, event.key)) {
-          break
-        }
-        cell.querySelector<HTMLElement>(INTERACTIVE)?.focus()
-        break
-      }
-      case ' ': {
-        // On a selectable grid, Space ticks/unticks the row (single keystroke,
-        // from any cell) — this takes precedence over the default below.
-        if (options.onRowSelectToggle?.(cell)) {
-          break
-        }
-        // Otherwise Space drops into the cell's control (APG) — or, on a display
-        // cell with no control, opens the inline editor on its current value (no
-        // seeded space, which would read as accidental input). Either way it
-        // activates the cell instead of scrolling the page.
-        const control = cell.querySelector<HTMLElement>(INTERACTIVE)
-        if (control) {
-          control.focus()
-        } else {
-          options.onActivate?.(cell, 'type')
-        }
-        break
-      }
-      default: {
-        // A printable character begins editing seeded with that character. If no
-        // editor takes it, fall through unhandled (no preventDefault).
-        if (
-          event.key.length === 1 &&
-          !event.ctrlKey &&
-          !event.metaKey &&
-          !event.altKey &&
-          options.onActivate?.(cell, 'type', event.key)
-        ) {
-          break
-        }
 
-        return
-      }
+        return true
+      case 'End':
+        focusAt(event.ctrlKey ? table.rows.length - 1 : r, Number.MAX_SAFE_INTEGER) // live row count, no per-keystroke allocation
+
+        return true
+      case 'Enter':
+      case 'F2':
+        activateCell(cell, event.key)
+
+        return true
+      case ' ':
+        activateCellWithSpace(cell)
+
+        return true
+      default:
+        return typeIntoCell(cell, event)
     }
-    event.preventDefault()
+  }
+
+  // On the bottom data row, PageDown crosses to the next page (landing on its
+  // first row); otherwise it moves a viewport of rows within the page. `cell` is
+  // the focused cell (always set here), so its row is reliable — and never
+  // undefined-matches an empty dataRows().
+  function pageDown(cell: Cell, r: number, c: number): void {
+    if (cell.parentElement === dataRows().at(-1) && options.onPageEdge?.('next')) {
+      focusPageLanding('first', c)
+    } else {
+      focusAt(r + pageRows(), c)
+    }
+  }
+
+  // On the top data row, PageUp crosses to the previous page (landing on its last
+  // row, so you keep moving upward); otherwise within the page.
+  function pageUp(cell: Cell, r: number, c: number): void {
+    if (cell.parentElement === dataRows()[0] && options.onPageEdge?.('prev')) {
+      focusPageLanding('last', c)
+    } else {
+      focusAt(r - pageRows(), c)
+    }
+  }
+
+  // Offer the cell to an inline-edit owner first; if it opens an editor it returns
+  // true and we stop here. Otherwise drop into the cell's first control (APG grid)
+  // so action cells keep working unchanged.
+  function activateCell(cell: Cell, key: 'Enter' | 'F2'): void {
+    if (options.onActivate?.(cell, key)) {
+      return
+    }
+    cell.querySelector<HTMLElement>(INTERACTIVE)?.focus()
+  }
+
+  // On a selectable grid, Space ticks/unticks the row (single keystroke, from any
+  // cell) — this takes precedence over the default below. Otherwise Space drops
+  // into the cell's control (APG) — or, on a display cell with no control, opens
+  // the inline editor on its current value (no seeded space, which would read as
+  // accidental input). Either way it activates the cell instead of scrolling the
+  // page.
+  function activateCellWithSpace(cell: Cell): void {
+    if (options.onRowSelectToggle?.(cell)) {
+      return
+    }
+    const control = cell.querySelector<HTMLElement>(INTERACTIVE)
+    if (control) {
+      control.focus()
+    } else {
+      options.onActivate?.(cell, 'type')
+    }
+  }
+
+  // A printable character begins editing seeded with that character. If no editor
+  // takes it, the key falls through unhandled (no preventDefault).
+  function typeIntoCell(cell: Cell, event: KeyboardEvent): boolean {
+    return event.key.length === 1
+      && !event.ctrlKey
+      && !event.metaKey
+      && !event.altKey
+      && options.onActivate?.(cell, 'type', event.key) === true
   }
 
   function onFocusin(event: FocusEvent): void {

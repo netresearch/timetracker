@@ -451,3 +451,172 @@ describe('inline-edit hooks', () => {
     expect(handle).toBeNull()
   })
 })
+
+// Characterization of keystroke branches the cases above leave implicit. Written
+// green against the pre-extraction onKeydown and kept to pin its split helpers.
+describe('keystroke branches', () => {
+  function build3x3(options: Parameters<typeof enableGridNavigation>[1] = {}): { table: HTMLTableElement; cleanup: () => void; cells: HTMLElement[][] } {
+    document.body.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>A</th><th>B</th><th>C</th></tr></thead>
+        <tbody>
+          <tr><td>a1</td><td>b1</td><td>c1</td></tr>
+          <tr><td>a2</td><td>b2</td><td>c2</td></tr>
+        </tbody>
+      </table>`
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table, options)
+    const cells = Array.from(table.rows).map((row) => Array.from(row.cells) as HTMLElement[])
+
+    return { table, cleanup, cells }
+  }
+
+  function press(el: Element, k: string, init: KeyboardEventInit = {}): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...init })
+    el.dispatchEvent(event)
+
+    return event
+  }
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('Home/End stay in the row, Ctrl+Home/Ctrl+End jump to the grid corners', () => {
+    grid.cleanup()
+    const g = build3x3()
+    g.cells[2]![1]!.focus() // b2
+    expect(press(document.activeElement!, 'End').defaultPrevented).toBe(true)
+    expect(document.activeElement).toBe(g.cells[2]![2])
+    press(document.activeElement!, 'Home')
+    expect(document.activeElement).toBe(g.cells[2]![0])
+    press(document.activeElement!, 'Home', { ctrlKey: true })
+    expect(document.activeElement).toBe(g.cells[0]![0])
+    press(document.activeElement!, 'End', { ctrlKey: true })
+    expect(document.activeElement).toBe(g.cells[2]![2])
+    g.cleanup()
+  })
+
+  it('leaves unhandled keys alone: bare printable without an editor, modified printable, Escape on a cell', () => {
+    grid.cleanup()
+    const onActivate = vi.fn(() => true)
+    const g = build3x3({ onActivate })
+    const cell = g.cells[1]![0]!
+    cell.focus()
+    expect(press(cell, 'x', { altKey: true }).defaultPrevented).toBe(false)
+    expect(press(cell, 'x', { ctrlKey: true }).defaultPrevented).toBe(false)
+    expect(press(cell, 'x', { metaKey: true }).defaultPrevented).toBe(false)
+    expect(press(cell, 'Escape').defaultPrevented).toBe(false)
+    expect(press(cell, 'F5').defaultPrevented).toBe(false)
+    expect(onActivate).not.toHaveBeenCalled()
+    g.cleanup()
+
+    const bare = build3x3()
+    const c2 = bare.cells[1]![0]!
+    c2.focus()
+    expect(press(c2, 'x').defaultPrevented).toBe(false) // no onActivate → nobody takes the key
+    bare.cleanup()
+  })
+
+  it('Ctrl+V does nothing without an editor owner, and Ctrl+Shift+C / Alt+C are not a copy', () => {
+    grid.cleanup()
+    const g = build3x3()
+    const cell = g.cells[1]![0]!
+    cell.focus()
+    const writeText = vi.fn(() => Promise.resolve())
+    const readText = vi.fn(() => Promise.resolve('x'))
+    const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText, readText }, configurable: true })
+
+    expect(press(cell, 'v', { ctrlKey: true }).defaultPrevented).toBe(false)
+    expect(press(cell, 'c', { ctrlKey: true, shiftKey: true }).defaultPrevented).toBe(false)
+    expect(press(cell, 'c', { ctrlKey: true, altKey: true }).defaultPrevented).toBe(false)
+    expect(readText).not.toHaveBeenCalled()
+    expect(writeText).not.toHaveBeenCalled()
+
+    const copy = press(cell, 'C', { metaKey: true }) // Cmd+C, any case
+    expect(copy.defaultPrevented).toBe(true)
+    expect(writeText).toHaveBeenCalledWith('a1')
+
+    if (original) {
+      Object.defineProperty(navigator, 'clipboard', original)
+    } else {
+      Reflect.deleteProperty(navigator, 'clipboard')
+    }
+    g.cleanup()
+  })
+
+  it('Space on a display cell opens the editor unseeded; without an owner it still suppresses scroll', () => {
+    grid.cleanup()
+    const onActivate = vi.fn(() => true)
+    const g = build3x3({ onActivate })
+    const cell = g.cells[1]![1]!
+    cell.focus()
+    expect(press(cell, ' ').defaultPrevented).toBe(true)
+    expect(onActivate).toHaveBeenCalledWith(cell, 'type')
+    g.cleanup()
+
+    const bare = build3x3()
+    const c2 = bare.cells[1]![1]!
+    c2.focus()
+    expect(press(c2, ' ').defaultPrevented).toBe(true)
+    bare.cleanup()
+  })
+
+  it('Enter on a cell with no control and a declined activation still claims the key', () => {
+    grid.cleanup()
+    const g = build3x3({ onActivate: () => false })
+    const cell = g.cells[1]![1]!
+    cell.focus()
+    expect(press(cell, 'Enter').defaultPrevented).toBe(true)
+    expect(document.activeElement).toBe(cell)
+    g.cleanup()
+  })
+
+  it('Tab/Shift+Tab off either end of a cell with a single control hands the stop back to the cell', () => {
+    grid.cleanup()
+    document.body.innerHTML = '<table class="data-table"><tbody><tr><td><button type="button">Only</button></td></tr></tbody></table>'
+    const table = document.querySelector('table') as HTMLTableElement
+    const cleanup = enableGridNavigation(table)
+    const cell = table.querySelector('td') as HTMLElement
+    const button = cell.querySelector('button') as HTMLElement
+    for (const shiftKey of [false, true]) {
+      button.focus()
+      expect(press(button, 'Tab', { shiftKey }).defaultPrevented).toBe(false)
+      expect(cell.getAttribute('tabindex')).toBe('0')
+    }
+    cleanup()
+  })
+
+  it('Escape from a cell control returns to the cell and is claimed', () => {
+    const cell = grid.table.querySelectorAll('tbody td')[1] as HTMLElement
+    cell.focus()
+    press(cell, 'Enter')
+    const inside = document.activeElement as HTMLElement
+    expect(inside).not.toBe(cell)
+    expect(press(inside, 'Escape').defaultPrevented).toBe(true)
+    expect(document.activeElement).toBe(cell)
+  })
+
+  it('ignores keystrokes that do not come from a cell of this table', () => {
+    const before = document.activeElement
+    expect(press(grid.table, 'ArrowDown').defaultPrevented).toBe(false)
+    expect(document.activeElement).toBe(before)
+  })
+
+  it('PageUp/PageDown ignore a declined edge and ArrowUp off row 0 only exits when onExit is wired', () => {
+    grid.cleanup()
+    const onExit = vi.fn()
+    const g = build3x3({ onExit })
+    const header = g.cells[0]![1]!
+    header.focus()
+    press(header, 'ArrowUp')
+    expect(onExit).toHaveBeenCalledWith('up')
+    const body = g.cells[2]![1]!
+    body.focus()
+    press(body, 'ArrowUp')
+    expect(onExit).toHaveBeenCalledTimes(1)
+    expect(document.activeElement).toBe(g.cells[1]![1])
+    g.cleanup()
+  })
+})

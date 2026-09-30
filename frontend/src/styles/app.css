@@ -707,6 +707,8 @@ main:has(.tracking) {
   flex-direction: column;
   gap: 1.1rem;
   padding: 1.6rem;
+  /* A query container for the responsive-hybrid field layout below. */
+  container-type: inline-size;
 }
 
 .field {
@@ -847,11 +849,8 @@ main:has(.tracking) {
    to stacked on a narrow one. Bare .field (login, filter bars) is untouched, so
    it keeps stacking. Textareas, multi-selects and two-up .field-rows keep the
    full width with the label on top. Scoped via a container query so a narrow
-   admin modal or a mobile viewport degrades gracefully. */
-.stack-form {
-  container-type: inline-size;
-}
-
+   admin modal or a mobile viewport degrades gracefully. The .stack-form itself
+   is declared a query container with the base rule above. */
 @container (min-width: 26em) {
   .stack-form .field {
     display: grid;
@@ -4021,10 +4020,14 @@ th[aria-sort='descending'] .th-sort-glyph {
     padding: 0;
   }
 
+  /* The logo row also carries the collapse toggle at the top of the column, so the
+     two are spread apart and inset by the sidebar gutter. */
   :root[data-nav-layout='side'] .header-logo {
     flex: 0 0 auto;
-    justify-content: center;
-    padding: 0.25rem 0;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 0.25rem var(--sidebar-gutter);
   }
 
   :root[data-nav-layout='side'] .header-spacer {
@@ -4265,14 +4268,6 @@ th[aria-sort='descending'] .th-sort-glyph {
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
-  }
-
-  /* Collapse toggle — sits at the top of the column next to the logo. */
-  :root[data-nav-layout='side'] .header-logo {
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    padding-inline: var(--sidebar-gutter);
   }
 
   /* Same icon button as the footer controls and the worklog tools: no frame, the
