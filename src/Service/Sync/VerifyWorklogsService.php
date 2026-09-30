@@ -14,6 +14,7 @@ use App\Entity\Entry;
 use App\Entity\SyncRun;
 use App\Entity\TicketSystem;
 use App\Entity\User;
+use App\Entity\WorklogSyncState;
 use App\Enum\SyncAction;
 use App\Enum\SyncItemKind;
 use App\Enum\SyncRunStatus;
@@ -22,6 +23,7 @@ use App\Enum\WorklogField;
 use App\Repository\EntryRepository;
 use App\Repository\WorklogSyncStateRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
+use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\ValueObject\Sync\WorklogSnapshot;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -123,64 +125,87 @@ class VerifyWorklogsService extends AbstractSyncRunService
         $syncStates = $this->worklogSyncStateRepository->findByEntryIds($entryIds);
 
         foreach ($entries as $entry) {
-            $worklogId = $entry->getWorklogId();
-            if (null === $worklogId || $worklogId <= 0) {
-                $syncRun->incrementCounter('never_synced');
-                $this->addItem($syncRun, SyncItemKind::NEVER_SYNCED, issueKey: $entry->getTicket(), entry: $entry, reason: 'entry has no linked Jira worklog');
-                continue;
-            }
-
-            $base = null;
-            $syncState = $syncStates[(int) $entry->getId()] ?? null;
-            if (null !== $syncState) {
-                $base = WorklogSnapshot::fromArray($syncState->getBasePayload());
-            }
-
-            $local = $this->entryWorklogProjector->project($entry);
-            $remote = null;
-            if (isset($remoteByWorklogId[$worklogId])) {
-                $remote = $remoteByWorklogId[$worklogId]['snapshot'];
-                unset($remoteByWorklogId[$worklogId]);
-            } else {
-                // The window the read covers is TT's, not Jira's: a worklog re-dated outside it
-                // is missing from the read while still sitting on its issue. Read it there once
-                // before reporting the entry as deleted in Jira.
-                $record = $this->remoteWorklogReader->readOne($api, (string) $entry->getTicket(), $worklogId, $onNotice);
-                $remote = $record['snapshot'] ?? null;
-            }
-
-            $decision = $this->reconciliationService->reconcile($base, $local, $remote);
-
-            // A missing remote is evidence of a deletion only when the remote read was complete.
-            if (SyncAction::REMOTE_MISSING === $decision->action && !$gaps->allowsConclusionAbout($worklogId)) {
-                $syncRun->incrementCounter('absence_unverified');
-
-                continue;
-            }
-
-            $syncRun->incrementCounter(self::ACTION_COUNTERS[$decision->action->value] ?? 'errors');
-
-            $itemKind = self::ACTION_ITEM_KINDS[$decision->action->value] ?? null;
-            if ($itemKind instanceof SyncItemKind) {
-                $this->addItem(
-                    $syncRun,
-                    $itemKind,
-                    issueKey: $entry->getTicket(),
-                    remoteWorklogId: $worklogId,
-                    entry: $entry,
-                    reason: $decision->reason,
-                    payload: [
-                        'fields' => array_map(static fn (WorklogField $field) => $field->value, $decision->fields),
-                        'local' => $local->toArray(),
-                        'remote' => $remote?->toArray(),
-                    ],
-                );
-            }
+            $this->verifyEntry($syncRun, $api, $entry, $remoteByWorklogId, $syncStates, $gaps, $onNotice);
         }
 
-        // --- Whatever remains on the remote side has no matching entry — unless it belongs
-        // to a local entry outside the candidates (e.g. agent walltime synced before
-        // ADR-025 §7 was enforced), which is linked, not an import candidate.
+        $this->reportRemoteOnly($syncRun, $remoteByWorklogId, $ticketSystem, $gaps);
+    }
+
+    /**
+     * Reconciles one local entry against its remote worklog and records the outcome; a matched
+     * remote worklog is removed from $remoteByWorklogId so only unmatched ones remain.
+     *
+     * @param array<int, array{snapshot: WorklogSnapshot, updated: ?string, author: ?string, issueKey: string}> $remoteByWorklogId
+     * @param array<int, WorklogSyncState>                                                                      $syncStates        by entry id
+     * @param callable(string, ?string=, ?Throwable=, ?int=): void                                              $onNotice
+     */
+    private function verifyEntry(SyncRun $syncRun, JiraOAuthApiService $api, Entry $entry, array &$remoteByWorklogId, array $syncStates, RemoteReadGaps $gaps, callable $onNotice): void
+    {
+        $worklogId = $entry->getWorklogId();
+        if (null === $worklogId || $worklogId <= 0) {
+            $syncRun->incrementCounter('never_synced');
+            $this->addItem($syncRun, SyncItemKind::NEVER_SYNCED, issueKey: $entry->getTicket(), entry: $entry, reason: 'entry has no linked Jira worklog');
+
+            return;
+        }
+
+        $base = null;
+        $syncState = $syncStates[(int) $entry->getId()] ?? null;
+        if (null !== $syncState) {
+            $base = WorklogSnapshot::fromArray($syncState->getBasePayload());
+        }
+
+        $local = $this->entryWorklogProjector->project($entry);
+        $remote = null;
+        if (isset($remoteByWorklogId[$worklogId])) {
+            $remote = $remoteByWorklogId[$worklogId]['snapshot'];
+            unset($remoteByWorklogId[$worklogId]);
+        } else {
+            // The window the read covers is TT's, not Jira's: a worklog re-dated outside it
+            // is missing from the read while still sitting on its issue. Read it there once
+            // before reporting the entry as deleted in Jira.
+            $record = $this->remoteWorklogReader->readOne($api, $entry->getTicket(), $worklogId, $onNotice);
+            $remote = $record['snapshot'] ?? null;
+        }
+
+        $decision = $this->reconciliationService->reconcile($base, $local, $remote);
+
+        // A missing remote is evidence of a deletion only when the remote read was complete.
+        if (SyncAction::REMOTE_MISSING === $decision->action && !$gaps->allowsConclusionAbout($worklogId)) {
+            $syncRun->incrementCounter('absence_unverified');
+
+            return;
+        }
+
+        $syncRun->incrementCounter(self::ACTION_COUNTERS[$decision->action->value] ?? 'errors');
+
+        $itemKind = self::ACTION_ITEM_KINDS[$decision->action->value] ?? null;
+        if ($itemKind instanceof SyncItemKind) {
+            $this->addItem(
+                $syncRun,
+                $itemKind,
+                issueKey: $entry->getTicket(),
+                remoteWorklogId: $worklogId,
+                entry: $entry,
+                reason: $decision->reason,
+                payload: [
+                    'fields' => array_map(static fn (WorklogField $field) => $field->value, $decision->fields),
+                    'local' => $local->toArray(),
+                    'remote' => $remote?->toArray(),
+                ],
+            );
+        }
+    }
+
+    /**
+     * Whatever remains on the remote side has no matching entry — unless it belongs to a local
+     * entry outside the candidates (e.g. agent walltime synced before ADR-025 §7 was enforced),
+     * which is linked, not an import candidate.
+     *
+     * @param array<int, array{snapshot: WorklogSnapshot, updated: ?string, author: ?string, issueKey: string}> $remoteByWorklogId
+     */
+    private function reportRemoteOnly(SyncRun $syncRun, array $remoteByWorklogId, TicketSystem $ticketSystem, RemoteReadGaps $gaps): void
+    {
         $linkedEntries = $this->entryRepository->findByWorklogIdsAndTicketSystem(array_keys($remoteByWorklogId), $ticketSystem);
         foreach ($remoteByWorklogId as $worklogId => $remoteData) {
             $linkedEntry = $linkedEntries[$worklogId] ?? null;
