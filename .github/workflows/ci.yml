@@ -299,9 +299,9 @@ jobs:
       # every later step in this job inherits it from the job environment.
       - name: Generate a database password for this run
         run: |
-          PASSWORD="$(openssl rand -hex 24)"
-          echo "::add-mask::$PASSWORD"
-          echo "UNITTEST_DB_ROOT_PASSWORD=$PASSWORD" >> "$GITHUB_ENV"
+          root_secret="$(openssl rand -hex 24)"
+          echo "::add-mask::$root_secret"
+          echo "UNITTEST_DB_ROOT_PASSWORD=$root_secret" >> "$GITHUB_ENV"
 
       - name: Start database
         env:
