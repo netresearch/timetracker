@@ -670,10 +670,10 @@ describe('handleShortcut', () => {
       setup()
       const search = document.querySelector<HTMLInputElement>('input[type="search"]')!
       search.focus()
-      expect(keydown({ ctrlKey: true, key: 'k' }).defaultPrevented).toBe(true)
+      expect(keydown({ ctrlKey: true, key: 'k' }, search).defaultPrevented).toBe(true)
       expect(paletteOpen()).toBe(true)
       setPaletteOpen(false)
-      expect(keydown({ metaKey: true, key: 'K' }).defaultPrevented).toBe(true)
+      expect(keydown({ metaKey: true, key: 'K' }, search).defaultPrevented).toBe(true)
       expect(paletteOpen()).toBe(true)
     })
 
