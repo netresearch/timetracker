@@ -46,8 +46,14 @@ jobs:
       # The frontend dependency tree was unaudited: security.yml covers only the
       # root npm lockfile and this workflow only ran composer audit, so Bun
       # advisories surfaced nowhere in CI.
+      #
+      # GHSA-vfj7-8cjw-p6xm (braces <= 3.0.3, stack exhaustion on deeply nested
+      # patterns) is ignored: GitHub lists no patched version and 3.0.3 is the
+      # latest release. It is reached only through vite-plugin-symfony >
+      # fast-glob > micromatch, which expand repo-controlled build patterns.
+      # Remove the flag once braces publishes a fix.
       - name: Audit dependencies (bun)
-        run: bun audit --audit-level=high
+        run: bun audit --audit-level=high --ignore=GHSA-vfj7-8cjw-p6xm
 
       - name: Lint (ESLint)
         run: bun run lint
