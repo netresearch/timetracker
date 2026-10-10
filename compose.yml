@@ -92,7 +92,7 @@ services:
 
   # Production web server
   httpd:
-    image: nginx:1.31-alpine@sha256:62ff2089abf5a9ed33bd232895bef5e22f7bb4b200675cec49a5ebc48e3d4ac8
+    image: nginx:1.31-alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2
     volumes:
       - app-pub:/var/www/html/public
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -107,7 +107,7 @@ services:
 
   # Development web server
   httpd-dev:
-    image: nginx:1.31-alpine@sha256:62ff2089abf5a9ed33bd232895bef5e22f7bb4b200675cec49a5ebc48e3d4ac8
+    image: nginx:1.31-alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2
     volumes:
       - ./public:/var/www/html/public
       - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf
@@ -220,7 +220,7 @@ services:
 
   # E2E test web server (port 8766 to avoid conflict with dev)
   httpd-e2e:
-    image: nginx:1.31-alpine@sha256:62ff2089abf5a9ed33bd232895bef5e22f7bb4b200675cec49a5ebc48e3d4ac8
+    image: nginx:1.31-alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2
     volumes:
       - ./public:/var/www/html/public
       - ./docker/nginx/e2e.conf:/etc/nginx/conf.d/default.conf
