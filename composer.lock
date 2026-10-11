@@ -1389,27 +1389,27 @@
         },
         {
             "name": "guzzlehttp/oauth-subscriber",
-            "version": "0.9.3",
+            "version": "0.9.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/oauth-subscriber.git",
-                "reference": "edc31108fda1940bc0470a5cb99026823e4f633a"
+                "reference": "0c809019d4238c711de00473cf1d9bdc81de5bd1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/oauth-subscriber/zipball/edc31108fda1940bc0470a5cb99026823e4f633a",
-                "reference": "edc31108fda1940bc0470a5cb99026823e4f633a",
+                "url": "https://api.github.com/repos/guzzle/oauth-subscriber/zipball/0c809019d4238c711de00473cf1d9bdc81de5bd1",
+                "reference": "0c809019d4238c711de00473cf1d9bdc81de5bd1",
                 "shasum": ""
             },
             "require": {
-                "guzzlehttp/guzzle": "^7.12.3",
-                "guzzlehttp/psr7": "^2.12.3",
+                "guzzlehttp/guzzle": "^7.15.5",
+                "guzzlehttp/psr7": "^2.13.1",
                 "php": "^7.2.5 || ^8.0"
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
-                "guzzlehttp/promises": "^2.5",
-                "guzzlehttp/test-server": "^0.5",
+                "guzzlehttp/promises": "^2.5.3",
+                "guzzlehttp/test-server": "^0.7",
                 "phpunit/phpunit": "^8.5.52 || ^9.6.34"
             },
             "suggest": {
@@ -1460,7 +1460,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/oauth-subscriber/issues",
-                "source": "https://github.com/guzzle/oauth-subscriber/tree/0.9.3"
+                "source": "https://github.com/guzzle/oauth-subscriber/tree/0.9.6"
             },
             "funding": [
                 {
@@ -1476,7 +1476,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-06-23T15:35:45+00:00"
+            "time": "2026-08-24T09:26:48+00:00"
         },
         {
             "name": "guzzlehttp/promises",
