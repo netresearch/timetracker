@@ -45,7 +45,7 @@
         "doctrine/orm": "^3.5",
         "doctrine/persistence": "^4.0",
         "guzzlehttp/guzzle": "^7.9",
-        "guzzlehttp/oauth-subscriber": "^0.9.1",
+        "guzzlehttp/oauth-subscriber": "^1.0.0",
         "laminas/laminas-ldap": "^2.19",
         "mcp/sdk": "^0.7.1",
         "pentatrion/vite-bundle": "^8.2",
