@@ -44,7 +44,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.4|^4.0",
         "doctrine/orm": "^3.5",
         "doctrine/persistence": "^4.0",
-        "guzzlehttp/guzzle": "^7.9",
+        "guzzlehttp/guzzle": "^8.0",
         "guzzlehttp/oauth-subscriber": "^0.9.1",
         "laminas/laminas-ldap": "^2.19",
         "mcp/sdk": "^0.7.1",
