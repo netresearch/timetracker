@@ -58,7 +58,7 @@ final class BulkEntrySourceTest extends AbstractWebTestCase
         assert($entryRepository instanceof EntryRepository);
 
         $entries = $entryRepository->findBy(['user' => 1, 'day' => self::DATE]);
-        self::assertNotEmpty($entries, 'bulk entry should have created at least one entry');
+        self::assertNotCount(0, $entries, 'bulk entry should have created at least one entry');
 
         foreach ($entries as $entry) {
             self::assertSame(EntrySource::HUMAN, $entry->getSource());

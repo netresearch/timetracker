@@ -61,7 +61,7 @@ final class ResponseFormatTest extends AbstractWebTestCase
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
         $decoded = $this->getJsonResponse($this->client->getResponse());
-        self::assertNotEmpty($decoded);
+        self::assertNotCount(0, $decoded);
 
         $first = $decoded[0];
         self::assertIsArray($first);
@@ -107,7 +107,7 @@ final class ResponseFormatTest extends AbstractWebTestCase
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
         $decoded = $this->getJsonResponse($this->client->getResponse());
-        self::assertNotEmpty($decoded);
+        self::assertNotCount(0, $decoded);
 
         foreach ($decoded as $item) {
             self::assertIsArray($item);

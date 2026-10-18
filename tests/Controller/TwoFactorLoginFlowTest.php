@@ -143,7 +143,7 @@ final class TwoFactorLoginFlowTest extends AbstractWebTestCase
         $this->assertStatusCode(200);
         $codes = $this->getJsonResponse($this->client->getResponse())['backupCodes'] ?? null;
         self::assertIsArray($codes);
-        self::assertNotEmpty($codes);
+        self::assertNotCount(0, $codes);
         /** @var list<string> $codes */
 
         return ['secret' => $secret, 'backupCodes' => $codes];

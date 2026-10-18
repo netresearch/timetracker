@@ -156,7 +156,6 @@ class VerifyWorklogsService extends AbstractSyncRunService
         }
 
         $local = $this->entryWorklogProjector->project($entry);
-        $remote = null;
         if (isset($remoteByWorklogId[$worklogId])) {
             $remote = $remoteByWorklogId[$worklogId]['snapshot'];
             unset($remoteByWorklogId[$worklogId]);

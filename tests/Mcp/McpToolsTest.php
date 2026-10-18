@@ -93,7 +93,7 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $result = self::getContainer()->get(ListActivitiesTool::class)->listActivities();
 
-        self::assertNotEmpty($result['activities']);
+        self::assertNotCount(0, $result['activities']);
         self::assertArrayHasKey('id', $result['activities'][0]);
         self::assertArrayHasKey('name', $result['activities'][0]);
         self::assertArrayHasKey('needs_ticket', $result['activities'][0]);
@@ -120,7 +120,7 @@ final class McpToolsTest extends AbstractWebTestCase
 
         $result = self::getContainer()->get(ListProjectsTool::class)->listProjects();
 
-        self::assertNotEmpty($result['projects']);
+        self::assertNotCount(0, $result['projects']);
         self::assertContains(1, array_column($result['projects'], 'id'));
     }
 
@@ -502,7 +502,7 @@ final class McpToolsTest extends AbstractWebTestCase
 
         self::assertArrayHasKey('date', $day);
         self::assertIsList($day['entries']);
-        self::assertNotEmpty($day['entries']);
+        self::assertNotCount(0, $day['entries']);
         self::assertGreaterThanOrEqual(30, $day['total_minutes']);
         self::assertSame(count($day['entries']), $day['count']);
     }
@@ -546,7 +546,6 @@ final class McpToolsTest extends AbstractWebTestCase
         self::assertIsInt($entryId);
 
         $results = [
-            'delete_entry' => null, // called last — it removes the entry
             'bulk_log_time' => $container->get(BulkLogTimeTool::class)->bulkLogTime(preset: '1', startDate: '2026-07-06', endDate: '2026-07-06', useContract: false, skipWeekend: false, skipHolidays: false, startTime: '09:00', endTime: '10:00'),
             'get_day' => $container->get(GetDayTool::class)->getDay(),
             'get_sync_run' => $container->get(GetSyncRunTool::class)->getSyncRun((int) $syncRun->getId()),
@@ -578,6 +577,7 @@ final class McpToolsTest extends AbstractWebTestCase
             'update_entry' => $container->get(UpdateEntryTool::class)->updateEntry(entryId: $entryId, description: 'edited via guard'),
             'update_project' => $container->get(UpdateProjectTool::class)->updateProject(project: '1', ticketPrefix: 'GUARD'),
         ];
+        // Called last: it removes the entry the tools above work on.
         $results['delete_entry'] = $container->get(DeleteEntryTool::class)->deleteEntry($entryId);
 
         foreach ($results as $tool => $result) {

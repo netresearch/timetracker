@@ -156,7 +156,7 @@ final class EditBulkAdminToolsTest extends AbstractWebTestCase
 
         $result = self::getContainer()->get(ListCustomersTool::class)->listCustomers();
 
-        self::assertNotEmpty($result['customers']);
+        self::assertNotCount(0, $result['customers']);
         self::assertArrayHasKey('active', $result['customers'][0]);
     }
 

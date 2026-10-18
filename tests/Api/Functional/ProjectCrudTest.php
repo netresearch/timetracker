@@ -87,7 +87,7 @@ final class ProjectCrudTest extends AbstractWebTestCase
 
         $projects = $this->getJsonResponse($this->client->getResponse());
         self::assertIsArray($projects);
-        self::assertNotEmpty($projects);
+        self::assertNotCount(0, $projects);
 
         // Verify structure
         /** @var array<string, mixed> $first */

@@ -38,10 +38,6 @@ class Holiday extends Base
     {
         // For readonly properties, we cannot reassign after construction
         // This method exists for backward compatibility but should not be used
-        if (!$day instanceof DateTime) {
-            $day = new DateTime($day);
-        }
-
         // Cannot modify readonly property after initialization
         throw new BadMethodCallException('Cannot modify readonly property $day after construction. Use constructor instead.');
     }

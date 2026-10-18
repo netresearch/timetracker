@@ -36,7 +36,7 @@ final class HolidayDatabaseTest extends AbstractWebTestCase
 
         $row = $conn->fetchAssociative('SELECT * FROM holidays WHERE day = ?', [$day]);
         self::assertIsArray($row);
-        self::assertNotEmpty($row);
+        self::assertNotCount(0, $row);
         self::assertSame('Christmas', $row['name']);
 
         // Clean up

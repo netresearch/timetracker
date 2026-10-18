@@ -42,7 +42,8 @@ final class CrudControllerNegativeTest extends AbstractWebTestCase
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
-        self::assertNotEmpty($data['message']);
+        self::assertIsString($data['message']);
+        self::assertNotSame('', $data['message']);
     }
 
     /**
@@ -68,7 +69,8 @@ final class CrudControllerNegativeTest extends AbstractWebTestCase
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
-        self::assertNotEmpty($data['message']);
+        self::assertIsString($data['message']);
+        self::assertNotSame('', $data['message']);
         // Depending on data, it might reach prefix check; format check comes first in controller
     }
 
@@ -94,6 +96,7 @@ final class CrudControllerNegativeTest extends AbstractWebTestCase
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);
-        self::assertNotEmpty($data['message']);
+        self::assertIsString($data['message']);
+        self::assertNotSame('', $data['message']);
     }
 }

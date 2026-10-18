@@ -46,7 +46,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
 
         // Verify we got an array response with entry structure
         self::assertIsArray($json, 'Response should be an array');
-        self::assertNotEmpty($json, 'Response should have at least one entry');
+        self::assertNotCount(0, $json, 'Response should have at least one entry');
 
         // Verify first entry has expected structure
         $firstEntry = $json[0];
@@ -352,7 +352,7 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         // Validate data entries have required fields
         $data = $response['data'];
         assert(is_array($data));
-        self::assertNotEmpty($data, 'Data should not be empty');
+        self::assertNotCount(0, $data, 'Data should not be empty');
         $firstEntry = $data[0];
         assert(is_array($firstEntry));
         $requiredFields = ['id', 'date', 'start', 'end', 'description', 'ticket', 'duration', 'durationMinutes', 'user_id', 'project_id', 'customer_id', 'activity_id'];

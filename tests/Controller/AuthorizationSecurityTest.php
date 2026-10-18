@@ -59,7 +59,8 @@ final class AuthorizationSecurityTest extends AbstractWebTestCase
         $this->assertStatusCode(422);
         $responseContent = $this->client->getResponse()->getContent();
         // Should return an error message about why deletion failed
-        self::assertNotEmpty($responseContent);
+        self::assertIsString($responseContent);
+        self::assertNotSame('', $responseContent);
     }
 
     /**
