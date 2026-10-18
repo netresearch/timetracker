@@ -39,11 +39,7 @@ final class CrudControllerNegativeTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(400); // Validation still returns 400 for ticket format errors
-        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        self::assertIsArray($data);
-        self::assertArrayHasKey('message', $data);
-        self::assertIsString($data['message']);
-        self::assertNotSame('', $data['message']);
+        $this->assertResponseHasErrorMessage();
     }
 
     /**
@@ -66,11 +62,7 @@ final class CrudControllerNegativeTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(400); // Validation still returns 400 for ticket prefix errors
-        $data = json_decode((string) $this->client->getResponse()->getContent(), true);
-        self::assertIsArray($data);
-        self::assertArrayHasKey('message', $data);
-        self::assertIsString($data['message']);
-        self::assertNotSame('', $data['message']);
+        $this->assertResponseHasErrorMessage();
         // Depending on data, it might reach prefix check; format check comes first in controller
     }
 
@@ -93,6 +85,11 @@ final class CrudControllerNegativeTest extends AbstractWebTestCase
 
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/tracking/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(400); // Validation still returns 400 for inactive project errors
+        $this->assertResponseHasErrorMessage();
+    }
+
+    private function assertResponseHasErrorMessage(): void
+    {
         $data = json_decode((string) $this->client->getResponse()->getContent(), true);
         self::assertIsArray($data);
         self::assertArrayHasKey('message', $data);

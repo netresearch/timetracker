@@ -34,10 +34,13 @@ class Holiday extends Base
         $this->day = $day instanceof DateTime ? $day : new DateTime($day);
     }
 
-    public function setDay(string|DateTime $day): static
+    /**
+     * Backward-compatibility shim: $day is readonly, so this always throws.
+     *
+     * @throws BadMethodCallException always; pass the day to the constructor instead
+     */
+    public function setDay(): static
     {
-        // For readonly properties, we cannot reassign after construction
-        // This method exists for backward compatibility but should not be used
         // Cannot modify readonly property after initialization
         throw new BadMethodCallException('Cannot modify readonly property $day after construction. Use constructor instead.');
     }
