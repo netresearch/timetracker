@@ -38,10 +38,14 @@ jobs:
         with:
           persist-credentials: false
 
+      # Held at 3.14: semgrep publishes wheels for cp310-cp314 only and pins
+      # ruamel.yaml.clib==0.2.15, which has no cp315 wheel, so with
+      # --only-binary=:all: the install fails on 3.15. renovate.json caps
+      # this dependency below 3.15; lift both once semgrep ships cp315 wheels.
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: '3.15'
+          python-version: '3.14'
 
       # Pinned: an unpinned scanner changes its findings under you, and a
       # scanner release then looks like a code regression. The annotation lets

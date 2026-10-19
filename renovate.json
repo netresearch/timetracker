@@ -2,5 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>netresearch/renovate-config"
+  ],
+  "packageRules": [
+    {
+      "description": "semgrep ships wheels for CPython 3.10-3.14 only; its pinned ruamel.yaml.clib has no cp315 wheel, so the Scan PHP job cannot install on 3.15. Lift once semgrep supports 3.15.",
+      "matchFileNames": [".github/workflows/semgrep.yml"],
+      "matchDepNames": ["python"],
+      "allowedVersions": "<3.15"
+    }
   ]
 }
