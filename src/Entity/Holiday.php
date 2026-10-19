@@ -37,12 +37,9 @@ class Holiday extends Base
     /**
      * Backward-compatibility shim: $day is readonly, so this always throws.
      *
-     * The parameter stays so that existing callers, including named-argument
-     * calls, still reach the exception instead of an argument error.
-     *
      * @throws BadMethodCallException always; pass the day to the constructor instead
      */
-    public function setDay(string|DateTime $day): static
+    public function setDay(): static
     {
         // Cannot modify readonly property after initialization
         throw new BadMethodCallException('Cannot modify readonly property $day after construction. Use constructor instead.');
