@@ -9,6 +9,12 @@
       "matchFileNames": [".github/workflows/semgrep.yml"],
       "matchDepNames": ["python"],
       "allowedVersions": "<3.15"
+    },
+    {
+      "description": "Stay on the MariaDB 12.3 LTS line (supported until 2029-06-12) instead of the rolling 13.x releases. Patch and digest updates of 12.3 still arrive. Raise this when the next LTS line is out.",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["mariadb"],
+      "allowedVersions": "<12.4"
     }
   ]
 }
