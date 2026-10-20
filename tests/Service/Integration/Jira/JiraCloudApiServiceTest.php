@@ -23,7 +23,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use LogicException;
@@ -238,7 +240,7 @@ final class JiraCloudApiServiceTest extends TestCase
     {
         $this->givenStoredTokens('stale-access', 'refresh-1', '-1 minute');
         $this->ticketSystem->setCloudId('cloud-id-9');
-        $this->authException = new RequestException(
+        $this->authException = new ClientException(
             'invalid_grant',
             new Request('POST', '/oauth/token'),
             new Response(403),
@@ -263,7 +265,7 @@ final class JiraCloudApiServiceTest extends TestCase
     {
         $this->givenStoredTokens('stale-access', 'refresh-1', '-1 minute');
         $this->ticketSystem->setCloudId('cloud-id-9');
-        $this->authException = new RequestException(
+        $this->authException = new ServerException(
             'bad gateway',
             new Request('POST', '/oauth/token'),
             new Response(502),
@@ -399,7 +401,7 @@ final class JiraCloudApiServiceTest extends TestCase
 
     public function testFailingAccessibleResourcesRequestIsReported(): void
     {
-        $this->gatewayException = new RequestException('gateway down', new Request('GET', '/oauth/token/accessible-resources'), new Response(503));
+        $this->gatewayException = new ServerException('gateway down', new Request('GET', '/oauth/token/accessible-resources'), new Response(503));
 
         try {
             $this->exchangeAuthorizationCodeWithValidTokens();

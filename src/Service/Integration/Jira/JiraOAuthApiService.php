@@ -141,16 +141,22 @@ class JiraOAuthApiService
         $curlHandler = new CurlHandler();
         $handlerStack = HandlerStack::create($curlHandler);
 
-        $oauth1 = new Oauth1([
+        $oauthConfig = [
             'consumer_key' => $this->getOAuthConsumerKey(),
             'consumer_secret' => $this->getOAuthConsumerSecret(),
             'token_secret' => $oAuthTokenSecret,
-            'token' => $oAuthToken,
             'request_method' => Oauth1::REQUEST_METHOD_QUERY,
             'signature_method' => Oauth1::SIGNATURE_METHOD_RSA,
             'private_key_file' => $this->getPrivateKeyFile(),
             'private_key_passphrase' => '',
-        ]);
+        ];
+        // A null token is left out, as before: Oauth1 omits unset parameters,
+        // while an empty string would sign an empty oauth_token.
+        if (null !== $oAuthToken) {
+            $oauthConfig['token'] = $oAuthToken;
+        }
+
+        $oauth1 = new Oauth1($oauthConfig);
         $handlerStack->push($oauth1);
 
         $this->clients[$key] = new Client([
@@ -875,7 +881,7 @@ class JiraOAuthApiService
                 'headers' => [
                     'Content-Type' => 'application/json',
                 ],
-                'body' => json_encode($data),
+                'body' => json_encode($data, JSON_THROW_ON_ERROR),
             ];
         }
 
@@ -928,7 +934,7 @@ class JiraOAuthApiService
                 'headers' => [
                     'Content-Type' => 'application/json',
                 ],
-                'body' => json_encode($data),
+                'body' => json_encode($data, JSON_THROW_ON_ERROR),
             ];
         }
 

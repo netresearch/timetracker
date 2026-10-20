@@ -17,7 +17,7 @@ use App\Service\Integration\Jira\JiraOAuthApiService;
 use Doctrine\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -93,7 +93,7 @@ final class JiraOAuthApiServiceErrorMappingTest extends TestCase
     {
         $client = self::createStub(Client::class);
         $client->method('request')->willThrowException(
-            new RequestException($message, new Request('GET', '/x'), new Response($status)),
+            new ResponseException($message, new Request('GET', '/x'), new Response($status)),
         );
 
         return new FailingClientJiraOAuthApiService(

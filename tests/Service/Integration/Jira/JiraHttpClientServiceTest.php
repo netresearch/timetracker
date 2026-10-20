@@ -17,8 +17,10 @@ use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\Integration\Jira\JiraAuthenticationService;
 use App\Service\Integration\Jira\JiraHttpClientService;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -400,7 +402,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $clientMock = self::createStub(Client::class);
         $request = new Request('GET', '/test');
         $response = new Response(401, [], '{"message": "Unauthorized"}');
-        $exception = new RequestException('Unauthorized', $request, $response);
+        $exception = new ClientException('Unauthorized', $request, $response);
 
         $clientMock->method('request')->willThrowException($exception);
         $service->method('getClient')->willReturn($clientMock);
@@ -424,7 +426,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $clientMock = self::createStub(Client::class);
         $request = new Request('GET', '/test');
         $response = new Response(404, [], '{"errorMessages": ["Issue Does Not Exist"]}');
-        $exception = new RequestException('Not Found', $request, $response);
+        $exception = new ClientException('Not Found', $request, $response);
 
         $clientMock->method('request')->willThrowException($exception);
         $service->method('getClient')->willReturn($clientMock);
@@ -449,7 +451,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $clientMock = self::createStub(Client::class);
         $request = new Request('POST', '/test');
         $response = new Response(400, [], '{"errorMessages": ["Field required", "Invalid value"]}');
-        $exception = new RequestException('Bad Request', $request, $response);
+        $exception = new ClientException('Bad Request', $request, $response);
 
         $clientMock->method('request')->willThrowException($exception);
         $service->method('getClient')->willReturn($clientMock);
@@ -474,7 +476,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $clientMock = self::createStub(Client::class);
         $request = new Request('POST', '/test');
         $response = new Response(400, [], '{"errors": {"summary": "Summary is required", "priority": "Invalid priority"}}');
-        $exception = new RequestException('Bad Request', $request, $response);
+        $exception = new ClientException('Bad Request', $request, $response);
 
         $clientMock->method('request')->willThrowException($exception);
         $service->method('getClient')->willReturn($clientMock);
@@ -499,7 +501,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $clientMock = self::createStub(Client::class);
         $request = new Request('GET', '/test');
         $response = new Response(500, [], '');
-        $exception = new RequestException('Server Error', $request, $response);
+        $exception = new ServerException('Server Error', $request, $response);
 
         $clientMock->method('request')->willThrowException($exception);
         $service->method('getClient')->willReturn($clientMock);
@@ -548,7 +550,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $clientMock = $this->createMock(Client::class);
         $request = new Request('POST', '/test');
         $response = new Response(400, [], 'not valid json {');
-        $exception = new RequestException('Bad Request', $request, $response);
+        $exception = new ClientException('Bad Request', $request, $response);
 
         $clientMock->method('request')->willThrowException($exception);
         $service->method('getClient')->willReturn($clientMock);
@@ -634,7 +636,7 @@ final class JiraHttpClientServiceTest extends TestCase
         $clientMock = $this->createMock(Client::class);
         $request = new Request('GET', '/test');
         $response = new Response($statusCode, [], '{"errorMessages": ["Error"]}');
-        $exception = new RequestException('Error', $request, $response);
+        $exception = new ResponseException('Error', $request, $response);
 
         $clientMock->method('request')->willThrowException($exception);
         $service->method('getClient')->willReturn($clientMock);

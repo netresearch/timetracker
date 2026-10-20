@@ -15,7 +15,7 @@ use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
@@ -228,9 +228,9 @@ class JiraHttpClientService
      */
     private function handleGuzzleException(GuzzleException $guzzleException, string $url): never
     {
-        // Check if this is a RequestException with a response
+        // Only a ResponseException carries a response (Guzzle 8)
         $response = null;
-        if ($guzzleException instanceof RequestException) {
+        if ($guzzleException instanceof ResponseException) {
             $response = $guzzleException->getResponse();
         }
 

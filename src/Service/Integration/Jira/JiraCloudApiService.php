@@ -517,7 +517,7 @@ class JiraCloudApiService extends JiraOAuthApiService
     /**
      * Test seam: all Guzzle clients of the Cloud flow are created here.
      *
-     * @param array<string, mixed> $config
+     * @param array{base_uri: string, headers?: array<string, string>} $config
      */
     protected function createHttpClient(array $config): Client
     {
