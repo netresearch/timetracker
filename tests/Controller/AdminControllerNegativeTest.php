@@ -32,7 +32,8 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
         $content = $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        self::assertIsString($content);
+        self::assertNotSame('', $content);
     }
 
     public function testSaveProjectDuplicateNameForCustomer(): void
@@ -46,7 +47,8 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
         $content = $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        self::assertIsString($content);
+        self::assertNotSame('', $content);
     }
 
     public function testSaveTeamMissingLeadUser(): void
@@ -59,7 +61,8 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
         $content = $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        self::assertIsString($content);
+        self::assertNotSame('', $content);
     }
 
     public function testSaveActivityDuplicateName(): void
@@ -73,7 +76,8 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/activity/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
         $content = $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        self::assertIsString($content);
+        self::assertNotSame('', $content);
     }
 
     public function testSaveTicketSystemDuplicateName(): void
@@ -171,7 +175,8 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/customer/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
         $content = $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        self::assertIsString($content);
+        self::assertNotSame('', $content);
     }
 
     public function testSaveTeamDuplicateName(): void
@@ -184,7 +189,8 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/team/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
         $content = $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        self::assertIsString($content);
+        self::assertNotSame('', $content);
     }
 
     public function testSaveProjectInvalidJiraPrefix(): void
@@ -198,7 +204,8 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
         $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/project/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
         $this->assertStatusCode(422);
         $content = $this->client->getResponse()->getContent();
-        self::assertNotEmpty($content);
+        self::assertIsString($content);
+        self::assertNotSame('', $content);
     }
 
     public function testSaveTicketSystemShortName(): void
@@ -214,7 +221,8 @@ final class AdminControllerNegativeTest extends AbstractWebTestCase
             $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/ticketsystem/save', $parameter, [], ['HTTP_ACCEPT' => 'application/json']);
             $this->assertStatusCode(422);
             $content = $this->client->getResponse()->getContent();
-            self::assertNotEmpty($content);
+            self::assertIsString($content);
+            self::assertNotSame('', $content);
         } catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $unprocessableEntityHttpException) {
             self::assertSame(422, $unprocessableEntityHttpException->getStatusCode());
         }

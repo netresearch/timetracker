@@ -65,7 +65,7 @@ final class ActivityCrudTest extends AbstractWebTestCase
 
         $activities = $this->getJsonResponse($this->client->getResponse());
         self::assertIsArray($activities);
-        self::assertNotEmpty($activities);
+        self::assertNotCount(0, $activities);
 
         // Verify structure
         /** @var array<string, mixed> $first */

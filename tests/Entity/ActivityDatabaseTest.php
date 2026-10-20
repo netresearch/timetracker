@@ -212,10 +212,6 @@ final class ActivityDatabaseTest extends AbstractWebTestCase
         // Test entry relationship
         self::assertCount(2, $fetchedActivity->getEntries());
         $entries = $fetchedActivity->getEntries();
-        $entryIds = [];
-        foreach ($entries as $entry) {
-            $entryIds[] = $entry->getId();
-        }
 
         // Clean up
         foreach ($entries as $entry) {
@@ -288,10 +284,6 @@ final class ActivityDatabaseTest extends AbstractWebTestCase
         // Test preset relationship
         self::assertCount(2, $fetchedActivity->getPresets());
         $presets = $fetchedActivity->getPresets();
-        $presetIds = [];
-        foreach ($presets as $preset) {
-            $presetIds[] = $preset->getId();
-        }
 
         // Clean up
         foreach ($presets as $preset) {

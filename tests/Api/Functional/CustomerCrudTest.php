@@ -84,7 +84,7 @@ final class CustomerCrudTest extends AbstractWebTestCase
 
         $customers = $this->getJsonResponse($this->client->getResponse());
         self::assertIsArray($customers);
-        self::assertNotEmpty($customers);
+        self::assertNotCount(0, $customers);
 
         // Get first valid customer (skip id=0)
         $validCustomer = null;

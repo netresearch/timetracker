@@ -40,7 +40,7 @@ final class GetDayActionTest extends AbstractWebTestCase
         self::assertIsArray($data);
         self::assertSame('2026-07-06', $data['date']);
         self::assertIsList($data['entries']);
-        self::assertNotEmpty($data['entries']);
+        self::assertNotCount(0, $data['entries']);
         self::assertSame(60, $data['total_minutes']);
         self::assertSame(1, $data['count']);
     }
