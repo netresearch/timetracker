@@ -22,7 +22,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use JsonException;
@@ -560,7 +560,7 @@ final class JiraOAuthApiServiceTest extends TestCase
         // system the caller tries next may still hold the worklog.
         $entry = $this->bookedEntryOnABookableSystem();
         $request = new Request('DELETE', 'https://jira.example.com');
-        $service = $this->createServiceWithMockedClientThrowing(new RequestException('Not found', $request, new Response(404)));
+        $service = $this->createServiceWithMockedClientThrowing(new ClientException('Not found', $request, new Response(404)));
 
         self::assertTrue($service->deleteEntryJiraWorkLog($entry));
         self::assertSame(77, $entry->getWorklogId());
@@ -704,7 +704,7 @@ final class JiraOAuthApiServiceTest extends TestCase
     public function testDoesResourceExistReturnsFalseFor404(): void
     {
         $request = new Request('GET', 'https://jira.example.com');
-        $exception = new RequestException('Not found', $request, new Response(404));
+        $exception = new ClientException('Not found', $request, new Response(404));
 
         $service = $this->createServiceWithMockedClientThrowing($exception);
 
@@ -733,7 +733,7 @@ final class JiraOAuthApiServiceTest extends TestCase
     public function testGetSubticketsReturnsEmptyForNonExistentTicket(): void
     {
         $request = new Request('GET', 'https://jira.example.com');
-        $exception = new RequestException('Not found', $request, new Response(404));
+        $exception = new ClientException('Not found', $request, new Response(404));
 
         $service = $this->createServiceWithMockedClientThrowing($exception);
 

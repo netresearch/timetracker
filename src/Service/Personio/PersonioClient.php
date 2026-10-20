@@ -209,7 +209,7 @@ class PersonioClient
     /**
      * Test seam: every Guzzle client is created here.
      *
-     * @param array<string, mixed> $config
+     * @param array{base_uri: string} $config
      */
     protected function createHttpClient(array $config): Client
     {
@@ -259,7 +259,7 @@ class PersonioClient
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array{json?: array<string, mixed>, query?: array<string, scalar>, form_params?: array<string, string>, headers?: array<string, string>} $options
      *
      * @throws PersonioApiException
      */
@@ -267,9 +267,6 @@ class PersonioClient
     {
         if ($authenticated) {
             $headers = $options['headers'] ?? [];
-            if (!is_array($headers)) {
-                $headers = [];
-            }
             $headers['Authorization'] = 'Bearer ' . $this->getAccessToken();
             $options['headers'] = $headers;
         }

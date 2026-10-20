@@ -17,8 +17,10 @@ use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\Integration\Jira\JiraAuthenticationService;
 use App\Service\Integration\Jira\JiraHttpClientService;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -74,6 +76,23 @@ final class JiraHttpClientServiceTest extends TestCase
             $this->ticketSystem,
             $this->authService,
         );
+    }
+
+    /**
+     * A service whose Guzzle client fails every request with the given response-aware exception.
+     */
+    private function createServiceWithClientThrowing(ResponseException $exception): JiraHttpClientService
+    {
+        $service = $this->getMockBuilder(JiraHttpClientService::class)
+            ->setConstructorArgs([$this->user, $this->ticketSystem, $this->authService])
+            ->onlyMethods(['getClient'])
+            ->getMock();
+
+        $clientMock = self::createStub(Client::class);
+        $clientMock->method('request')->willThrowException($exception);
+        $service->method('getClient')->willReturn($clientMock);
+
+        return $service;
     }
 
     #[Test]
@@ -392,18 +411,9 @@ final class JiraHttpClientServiceTest extends TestCase
         $this->authService->method('throwUnauthorizedRedirect')
             ->willThrowException(new JiraApiUnauthorizedException('Unauthorized'));
 
-        $service = $this->getMockBuilder(JiraHttpClientService::class)
-            ->setConstructorArgs([$this->user, $this->ticketSystem, $this->authService])
-            ->onlyMethods(['getClient'])
-            ->getMock();
-
-        $clientMock = self::createStub(Client::class);
-        $request = new Request('GET', '/test');
-        $response = new Response(401, [], '{"message": "Unauthorized"}');
-        $exception = new RequestException('Unauthorized', $request, $response);
-
-        $clientMock->method('request')->willThrowException($exception);
-        $service->method('getClient')->willReturn($clientMock);
+        $service = $this->createServiceWithClientThrowing(
+            new ClientException('Unauthorized', new Request('GET', '/test'), new Response(401, [], '{"message": "Unauthorized"}')),
+        );
 
         $this->expectException(JiraApiUnauthorizedException::class);
 
@@ -416,18 +426,9 @@ final class JiraHttpClientServiceTest extends TestCase
         $this->authService->method('getTokens')
             ->willReturn(['token' => 'user_token', 'secret' => 'user_secret']);
 
-        $service = $this->getMockBuilder(JiraHttpClientService::class)
-            ->setConstructorArgs([$this->user, $this->ticketSystem, $this->authService])
-            ->onlyMethods(['getClient'])
-            ->getMock();
-
-        $clientMock = self::createStub(Client::class);
-        $request = new Request('GET', '/test');
-        $response = new Response(404, [], '{"errorMessages": ["Issue Does Not Exist"]}');
-        $exception = new RequestException('Not Found', $request, $response);
-
-        $clientMock->method('request')->willThrowException($exception);
-        $service->method('getClient')->willReturn($clientMock);
+        $service = $this->createServiceWithClientThrowing(
+            new ClientException('Not Found', new Request('GET', '/test'), new Response(404, [], '{"errorMessages": ["Issue Does Not Exist"]}')),
+        );
 
         $this->expectException(JiraApiInvalidResourceException::class);
         $this->expectExceptionMessageIsOrContains('Resource not found');
@@ -441,18 +442,9 @@ final class JiraHttpClientServiceTest extends TestCase
         $this->authService->method('getTokens')
             ->willReturn(['token' => 'user_token', 'secret' => 'user_secret']);
 
-        $service = $this->getMockBuilder(JiraHttpClientService::class)
-            ->setConstructorArgs([$this->user, $this->ticketSystem, $this->authService])
-            ->onlyMethods(['getClient'])
-            ->getMock();
-
-        $clientMock = self::createStub(Client::class);
-        $request = new Request('POST', '/test');
-        $response = new Response(400, [], '{"errorMessages": ["Field required", "Invalid value"]}');
-        $exception = new RequestException('Bad Request', $request, $response);
-
-        $clientMock->method('request')->willThrowException($exception);
-        $service->method('getClient')->willReturn($clientMock);
+        $service = $this->createServiceWithClientThrowing(
+            new ClientException('Bad Request', new Request('POST', '/test'), new Response(400, [], '{"errorMessages": ["Field required", "Invalid value"]}')),
+        );
 
         $this->expectException(JiraApiException::class);
         $this->expectExceptionMessageMatches('/Field required.*Invalid value/');
@@ -466,18 +458,9 @@ final class JiraHttpClientServiceTest extends TestCase
         $this->authService->method('getTokens')
             ->willReturn(['token' => 'user_token', 'secret' => 'user_secret']);
 
-        $service = $this->getMockBuilder(JiraHttpClientService::class)
-            ->setConstructorArgs([$this->user, $this->ticketSystem, $this->authService])
-            ->onlyMethods(['getClient'])
-            ->getMock();
-
-        $clientMock = self::createStub(Client::class);
-        $request = new Request('POST', '/test');
-        $response = new Response(400, [], '{"errors": {"summary": "Summary is required", "priority": "Invalid priority"}}');
-        $exception = new RequestException('Bad Request', $request, $response);
-
-        $clientMock->method('request')->willThrowException($exception);
-        $service->method('getClient')->willReturn($clientMock);
+        $service = $this->createServiceWithClientThrowing(
+            new ClientException('Bad Request', new Request('POST', '/test'), new Response(400, [], '{"errors": {"summary": "Summary is required", "priority": "Invalid priority"}}')),
+        );
 
         $this->expectException(JiraApiException::class);
         $this->expectExceptionMessageMatches('/Summary is required.*Invalid priority/');
@@ -491,18 +474,9 @@ final class JiraHttpClientServiceTest extends TestCase
         $this->authService->method('getTokens')
             ->willReturn(['token' => 'user_token', 'secret' => 'user_secret']);
 
-        $service = $this->getMockBuilder(JiraHttpClientService::class)
-            ->setConstructorArgs([$this->user, $this->ticketSystem, $this->authService])
-            ->onlyMethods(['getClient'])
-            ->getMock();
-
-        $clientMock = self::createStub(Client::class);
-        $request = new Request('GET', '/test');
-        $response = new Response(500, [], '');
-        $exception = new RequestException('Server Error', $request, $response);
-
-        $clientMock->method('request')->willThrowException($exception);
-        $service->method('getClient')->willReturn($clientMock);
+        $service = $this->createServiceWithClientThrowing(
+            new ServerException('Server Error', new Request('GET', '/test'), new Response(500, [], '')),
+        );
 
         $this->expectException(JiraApiException::class);
         $this->expectExceptionMessageIsOrContains('Empty response');
@@ -540,18 +514,9 @@ final class JiraHttpClientServiceTest extends TestCase
         $this->authService->method('getTokens')
             ->willReturn(['token' => 'user_token', 'secret' => 'user_secret']);
 
-        $service = $this->getMockBuilder(JiraHttpClientService::class)
-            ->setConstructorArgs([$this->user, $this->ticketSystem, $this->authService])
-            ->onlyMethods(['getClient'])
-            ->getMock();
-
-        $clientMock = $this->createMock(Client::class);
-        $request = new Request('POST', '/test');
-        $response = new Response(400, [], 'not valid json {');
-        $exception = new RequestException('Bad Request', $request, $response);
-
-        $clientMock->method('request')->willThrowException($exception);
-        $service->method('getClient')->willReturn($clientMock);
+        $service = $this->createServiceWithClientThrowing(
+            new ClientException('Bad Request', new Request('POST', '/test'), new Response(400, [], 'not valid json {')),
+        );
 
         $this->expectException(JiraApiException::class);
         $this->expectExceptionMessageIsOrContains('not valid json');
@@ -626,18 +591,9 @@ final class JiraHttpClientServiceTest extends TestCase
                 ->willThrowException(new JiraApiUnauthorizedException('Unauthorized'));
         }
 
-        $service = $this->getMockBuilder(JiraHttpClientService::class)
-            ->setConstructorArgs([$this->user, $this->ticketSystem, $this->authService])
-            ->onlyMethods(['getClient'])
-            ->getMock();
-
-        $clientMock = $this->createMock(Client::class);
-        $request = new Request('GET', '/test');
-        $response = new Response($statusCode, [], '{"errorMessages": ["Error"]}');
-        $exception = new RequestException('Error', $request, $response);
-
-        $clientMock->method('request')->willThrowException($exception);
-        $service->method('getClient')->willReturn($clientMock);
+        $service = $this->createServiceWithClientThrowing(
+            new ResponseException('Error', new Request('GET', '/test'), new Response($statusCode, [], '{"errorMessages": ["Error"]}')),
+        );
 
         $this->expectException($expectedExceptionClass);
 
