@@ -6,16 +6,32 @@
 # App\Mcp\ScopeGuard. The route itself is imported in config/routes/mcp.yaml
 # (the bundle registers the controller but not the route).
 mcp:
-    app: 'Netresearch TimeTracker'
-    version: '1.0.0'
-    description: 'Log and query time entries in TimeTracker. Authenticate with a scoped personal access token (Bearer tt_pat_…) created under Settings.'
-    client_transports:
-        http: true
-    http:
-        path: /mcp
-        # Hostnames the Streamable-HTTP transport's DNS-rebinding guard accepts in
-        # the Host/Origin header (no port; IPv6 bracketed). The SDK default is
-        # localhost-only, which 403s a real domain — so every deployment must list
-        # its public domain in MCP_ALLOWED_HOSTS. Never `false` (that would disable
-        # the guard entirely).
-        allowed_hosts: '%env(csv:MCP_ALLOWED_HOSTS)%'
+    servers:
+        # The key names the route (_mcp_endpoint_timetracker), the controller
+        # service (mcp.server.timetracker.controller) and the session directory
+        # (%kernel.cache_dir%/mcp-sessions/timetracker).
+        timetracker:
+            name: 'Netresearch TimeTracker'
+            version: '1.0.0'
+            description: 'Log and query time entries in TimeTracker. Authenticate with a scoped personal access token (Bearer tt_pat_…) created under Settings.'
+            transports:
+                http: true
+            http:
+                # Kept explicitly: the bundle default would be /mcp/<key>, and the
+                # /mcp URL is what clients and /.well-known/mcp/server.json use.
+                path: /mcp
+                # Hostnames the Streamable-HTTP transport's DNS-rebinding guard accepts in
+                # the Host/Origin header (no port; IPv6 bracketed). The SDK default is
+                # localhost-only, which 403s a real domain — so every deployment must list
+                # its public domain in MCP_ALLOWED_HOSTS. Never `false` (that would disable
+                # the guard entirely).
+                allowed_hosts: '%env(csv:MCP_ALLOWED_HOSTS)%'
+            # protocol_versions is deliberately left unset: the server negotiates every
+            # handshake-era revision (2024-11-05 … 2025-11-25) and also answers the
+            # stateless 2026-07-28 revision on the same endpoint. Refusing 2026-07-28
+            # would require pinning the handshake to a single revision, which would stop
+            # older clients from negotiating. Both eras run behind the same Bearer-PAT
+            # firewall and ScopeGuard (covered by tests/Mcp/McpHttpEndpointTest).
+            # Required since bundle 0.13: without a registry the server exposes nothing.
+            registry:
+                tools: ['App\Mcp\Tool\']
