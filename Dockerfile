@@ -78,9 +78,11 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /usr/share/doc/* /usr/share/man/*
 
-# Install APCu (pinned; backs the Symfony app cache — see config/packages/cache.yaml)
+# Install APCu (pinned; backs the Symfony app cache — see config/packages/cache.yaml).
+# PIE instead of PECL: pecl.php.net is deprecated and its downloads fail.
 ARG APCU_VERSION
-RUN pecl install "apcu-${APCU_VERSION}" \
+RUN --mount=type=bind,from=ghcr.io/php/pie:1.5.2-bin@sha256:a254c78b51ca34daef0541fa1cf0147385c93ba5ca799868392275d947f00fe7,source=/pie,target=/usr/local/bin/pie \
+    pie install --no-interaction "apcu/apcu:${APCU_VERSION}" \
     && docker-php-ext-enable apcu
 
 COPY docker/php/apcu.ini /usr/local/etc/php/conf.d/
@@ -171,7 +173,7 @@ USER app
 # Symfony CLI, Node, Bun, composer, the root Playwright npm deps, and the
 # Chromium browser — sit above the application code copy. A src-only change
 # invalidates `deps` (its trailing `COPY . .`) but leaves this whole stage
-# cached, so the ~68s of apt/pecl/chromium/composer no longer re-runs per commit.
+# cached, so the ~68s of apt/PIE/chromium/composer no longer re-runs per commit.
 #
 # Xdebug and Chromium live ONLY here (→ dev → e2e); production (FROM base),
 # profiling and tools (FROM deps) never inherit from this stage, so they stay
@@ -218,7 +220,8 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Xdebug (debugging and coverage driver; enable coverage via XDEBUG_MODE=coverage)
-RUN pecl install "xdebug-${XDEBUG_VERSION}" \
+RUN --mount=type=bind,from=ghcr.io/php/pie:1.5.2-bin@sha256:a254c78b51ca34daef0541fa1cf0147385c93ba5ca799868392275d947f00fe7,source=/pie,target=/usr/local/bin/pie \
+    pie install --no-interaction "xdebug/xdebug:${XDEBUG_VERSION}" \
     && docker-php-ext-enable xdebug
 
 COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/
@@ -235,7 +238,7 @@ RUN mkdir -p /etc/bash_completion.d \
 # so devtools' copy is transient and must not be committed (image bloat). The
 # chromium browser installs to ~/.cache/ms-playwright (outside node_modules), so
 # it survives the cleanup. Kept LAST of the manifest-independent installs so a
-# package.json bump doesn't invalidate the apt/pecl layers above.
+# package.json bump doesn't invalidate the apt/PIE layers above.
 COPY --chown=app:app package.json package-lock.json ./
 # --ignore-scripts (docker:S6505) skips playwright's implicit browser download;
 # the explicit install below is the one that counts. Calling the binary from
