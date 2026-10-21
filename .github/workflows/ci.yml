@@ -12,6 +12,7 @@ on:
   schedule:
     - cron: "0 3 * * *"
   workflow_dispatch:
+  merge_group:
 
 # Supersede an in-flight run when new commits land on the same ref. Scoped to
 # non-default refs so every main commit still gets a complete run (bisect
