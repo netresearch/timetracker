@@ -37,6 +37,10 @@ jobs:
     with:
       targets: app,app-e2e
       push: ${{ github.event_name != 'pull_request' }}
+      # The daily run exists to pick up OS patches through `apt-get upgrade`.
+      # With the layer cache on, that step is restored from the previous
+      # build and the rebuild publishes the same packages again.
+      cache: ${{ github.event_name != 'schedule' }}
       # Build from the local checkout: the metadata-action tag/label files are
       # local $RUNNER_TEMP paths the default git-remote context cannot see.
       bake-source: .
