@@ -192,7 +192,7 @@ public function list(EntityManagerInterface $em): JsonResponse
   in the persisted volume `timetracker_pub_v5`, so `docker cp build-ui` out of the new image
   into the volume AFTER the container is healthy (rollback-safe). Attach BOTH
   `timetracker` + `mariadb` nets before start (`docker create → network
-  connect → start`). Park the old container as `timetracker_prod_rollback`.
+  connect → start`). Park the old container as `timetracker-pre-<new sha>`.
   Migrating deploys: back up first (`mariadb-dump` via the URL user — root has
   no pw) and pre-flight each pending migration's columns. For local testing use
   the dev compose stack (`COMPOSE_PROFILES=dev`, port 8765, `APP_ENV=dev`)
