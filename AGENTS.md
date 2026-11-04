@@ -12,6 +12,8 @@ This file explains repo-wide conventions and where to find scoped rules.
 - Never commit secrets or sensitive data to the repository
 - PHP: PER-CS + Symfony style (PHP-CS-Fixer), strict types, typed parameters/returns
 - Run commands via Docker Compose (`docker compose --profile dev exec app-dev ...`)
+- Compose derives the project name, and with it the volume names (`timetracker_db-data`, …), from the checkout directory. In a worktree checkout named after its branch that yields fresh, empty volumes and the dev DB looks wiped; pin `name: timetracker` in the git-ignored `compose.override.yml` (or set `COMPOSE_PROJECT_NAME`)
+- A fresh `git worktree add` can print `post-checkout: ./bin/captainhook: not found` (exit 127) from hooks installed by another checkout; the checkout itself succeeded, run `composer install` in the new worktree
 
 ## Minimal pre-commit checks
 
