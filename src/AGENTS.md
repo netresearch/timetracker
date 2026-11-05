@@ -181,11 +181,18 @@ public function list(EntityManagerInterface $em): JsonResponse
   "Hot-deploy the last main merge" = pull the floating
   `ghcr.io/netresearch/timetracker:production` tag (verify
   `org.opencontainers.image.revision` == the merge commit and its
-  `docker-publish.yml` run is success). Frontend assets live in the persisted
-  volume `timetracker_pub_v5`, so `docker cp build-ui` out of the new image
+  `docker-publish.yml` run is success). `:production` floats: the scheduled
+  `docker-publish.yml` run retags it to `main` HEAD every day, so to deploy a
+  known release pull the semver tag (`:6.4.0`) instead. The image ships an
+  empty `.env`, so a "diff the image `.env` against the mounted env file" check
+  returns nothing; find newly required variables by diffing the `%env(...)%`
+  references under `config/` between the running and the new revision, and add
+  them to the managed env file source too, since a hand edit on the host is
+  overwritten by the next configuration-management run. Frontend assets live
+  in the persisted volume `timetracker_pub_v5`, so `docker cp build-ui` out of the new image
   into the volume AFTER the container is healthy (rollback-safe). Attach BOTH
   `timetracker` + `mariadb` nets before start (`docker create → network
-  connect → start`). Park the old container as `timetracker_prod_rollback`.
+  connect → start`). Park the old container as `timetracker-pre-<new sha>`.
   Migrating deploys: back up first (`mariadb-dump` via the URL user — root has
   no pw) and pre-flight each pending migration's columns. For local testing use
   the dev compose stack (`COMPOSE_PROFILES=dev`, port 8765, `APP_ENV=dev`)
