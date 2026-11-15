@@ -89,8 +89,12 @@ After schema changes, rebuild it:
 make reset-test-db   # drop volume + reseed db_unittest from sql/full.sql
 ```
 
-Generate the file before `db_unittest` starts for the first time, for example
-when you run a suite by hand with `docker compose run`. If the file is missing,
+`make test` and `docker compose run` do not start `db_unittest`, because
+`app-dev` depends only on `db`. On a first run, start it with
+`make reset-test-db`: the target generates the schema file, starts
+`db_unittest` and waits until it accepts connections.
+
+Generate the file before `db_unittest` starts for the first time. If it is missing,
 Docker creates `sql/unittest/001_testtables.sql` as an empty directory owned by
 root, the container starts without tables, and the database-backed tests fail
 because their tables do not exist. `make prepare-test-sql` then cannot write
