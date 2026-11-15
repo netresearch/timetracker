@@ -272,8 +272,9 @@ prepare-test-sql:
 
 reset-test-db: prepare-test-sql
 	@echo "Resetting test database (for schema changes)"
-	docker compose down db_unittest
-	docker volume rm timetracker_db-unittest-data || true
+	# -v with the service name removes only db_unittest's volume, under the
+	# active Compose project name (a worktree checkout has its own).
+	docker compose down -v db_unittest
 	@echo "Starting fresh test database..."
 	docker compose up -d db_unittest
 	@echo "Waiting for database to be ready..."

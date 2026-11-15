@@ -5,6 +5,11 @@
   ],
   "packageRules": [
     {
+      "description": "symfony/mcp-bundle pins the mcp/sdk minor (0.14 needs ^0.8.1, 0.15 needs ^0.9), so neither updates alone; separate PRs fail composer resolution (#842, #859, fixed together in #918).",
+      "matchPackageNames": ["mcp/sdk", "symfony/mcp-bundle"],
+      "groupName": "MCP SDK and bundle"
+    },
+    {
       "description": "semgrep ships wheels for CPython 3.10-3.14 only; its pinned ruamel.yaml.clib has no cp315 wheel, so the Scan PHP job cannot install on 3.15. Lift once semgrep supports 3.15.",
       "matchFileNames": [".github/workflows/semgrep.yml"],
       "matchDepNames": ["python"],

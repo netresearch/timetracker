@@ -77,7 +77,7 @@ composer perf:dashboard     # HTML dashboard → var/performance-dashboard.html
 ### Test database
 
 Database-backed suites use the dedicated **`db_unittest`** container
-(MariaDB 12.1, no published host port). The connection is
+(MariaDB 12.3, no published host port). The connection is
 `mysql://unittest:unittest@db_unittest:3306/unittest` ([.env.test](../.env.test)).
 
 Seeding: `make prepare-test-sql` (run automatically by the test targets)
@@ -87,6 +87,23 @@ After schema changes, rebuild it:
 
 ```bash
 make reset-test-db   # drop volume + reseed db_unittest from sql/full.sql
+```
+
+`make test` and `docker compose run` do not start `db_unittest`, because
+`app-dev` depends only on `db`. On a first run, start it with
+`make reset-test-db`: the target generates the schema file, starts
+`db_unittest` and waits until it accepts connections.
+
+Generate the file before `db_unittest` starts for the first time. If it is missing,
+Docker creates `sql/unittest/001_testtables.sql` as an empty directory owned by
+root, the container starts without tables, and the database-backed tests fail
+because their tables do not exist. `make prepare-test-sql` then cannot write
+the file either. To recover, remove the directory as root through a container,
+then reseed:
+
+```bash
+docker run --rm -v "$PWD/sql/unittest:/w" alpine rm -rf /w/001_testtables.sql
+make reset-test-db
 ```
 
 ## Playwright e2e tests
