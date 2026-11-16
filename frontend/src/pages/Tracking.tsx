@@ -1027,7 +1027,12 @@ export default function Tracking() {
         customer: draft.customer,
         project: draft.project,
         activity: draft.activity,
-        extTicket: entry.extTicket, // preserve the mirrored-entry key (not editable inline)
+        // The ext. ticket is the external ticket this entry's internal ticket
+        // mirrors. It holds only while the ticket is unchanged: once the user
+        // types another one, sending the old key makes the backend look the old
+        // mirror up and put its internal key back (#936). Without it the new
+        // ticket is mirrored on its own.
+        extTicket: str(draft.ticket).trim().toUpperCase() === str(entry.ticket).trim().toUpperCase() ? entry.extTicket : null,
       }))
       // Land the saved entry in the cache from the 200 itself, so it's in the grid
       // BEFORE — and independent of — the reconciling refetch below. A new row drops
