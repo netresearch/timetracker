@@ -301,6 +301,25 @@ final class WorklogWriteServiceTest extends TestCase
         }
     }
 
+    public function testAFailedDeleteOnTheOldIssuePropagatesAndKeepsTheId(): void
+    {
+        $entry = $this->entry('ABC-1', 77);
+
+        $this->syncStateRepository->method('findOneBy')->willReturn(new WorklogSyncState()->setBaseUpdatedAt('U1'));
+        $this->api->method('getIssueWorklog')->willReturn(null);
+        $this->api->method('findEntryWorklog')->willReturn($this->movedRemote('U1'));
+        $this->api->method('doesTicketExist')->willReturn(true);
+        $this->api->method('deleteIssueWorklog')->willThrowException(new JiraApiException('boom', 500));
+        $this->api->expects(self::never())->method('updateEntryJiraWorkLog');
+
+        try {
+            $this->service->push($this->api, $entry, $this->ticketSystem);
+            self::fail('A failed delete must propagate');
+        } catch (JiraApiException) {
+            self::assertSame(77, $entry->getWorklogId());
+        }
+    }
+
     private function movedRemote(string $updated): JiraWorkLog
     {
         return new JiraWorkLog(id: 77, timeSpentSeconds: 3600, updated: $updated, issueId: '151932');

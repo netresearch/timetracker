@@ -15,7 +15,6 @@ use App\Entity\User;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\Integration\Jira\JiraOAuthApiService;
-use App\Service\Security\TokenEncryptionService;
 use DateTime;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -32,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use ReflectionProperty;
 use Symfony\Component\Routing\RouterInterface;
+use Tests\Fixtures\FailingClientJiraOAuthApiService;
 use Tests\Traits\TokenEncryptionTestTrait;
 use Throwable;
 
@@ -111,26 +111,37 @@ final class JiraOAuthApiServiceWorklogMoveTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{Response, class-string<Throwable>}>
+     * @return iterable<string, array{list<Response>, class-string<Throwable>, list<string>}>
      */
-    public static function failedLookups(): iterable
+    public static function unfinishedDeletes(): iterable
     {
-        yield 'lookup answers 500' => [new Response(500, [], 'boom'), JiraApiException::class];
-        yield 'lookup answers 401' => [new Response(401, [], 'oauth_problem=token_rejected'), JiraApiUnauthorizedException::class];
-        yield 'lookup answers an object, not a list' => [new Response(200, [], '{"errorMessages":[]}'), JiraApiException::class];
-        yield 'lookup lists another worklog' => [self::listed(self::worklog(id: '43')), JiraApiException::class];
-        yield 'lookup lists the worklog without its issue' => [self::listed(self::worklog(issueId: null)), JiraApiException::class];
-        yield 'lookup answers no JSON' => [new Response(200, [], '<html>gateway</html>'), JsonException::class];
+        $lookedUp = ['DELETE issue/INT-5/worklog/42', 'POST worklog/list'];
+
+        yield 'lookup answers 500' => [[new Response(500, [], 'boom')], JiraApiException::class, $lookedUp];
+        yield 'lookup answers 401' => [[new Response(401, [], 'oauth_problem=token_rejected')], JiraApiUnauthorizedException::class, $lookedUp];
+        yield 'lookup answers an object, not a list' => [[new Response(200, [], '{"errorMessages":[]}')], JiraApiException::class, $lookedUp];
+        yield 'lookup lists another worklog' => [[self::listed(self::worklog(id: '43'))], JiraApiException::class, $lookedUp];
+        yield 'lookup lists the worklog without its issue' => [[self::listed(self::worklog(issueId: null))], JiraApiException::class, $lookedUp];
+        yield 'lookup answers no JSON' => [[new Response(200, [], '<html>gateway</html>')], JsonException::class, $lookedUp];
+        yield 'found, but the DELETE on its issue fails' => [
+            [self::listed(self::worklog()), new Response(200, [], self::ME), new Response(500, [], 'boom')],
+            JiraApiException::class,
+            [...$lookedUp, 'GET myself', 'DELETE issue/151932/worklog/42'],
+        ];
     }
 
     /**
+     * Every path that cannot finish the delete propagates and keeps the worklog id.
+     *
+     * @param list<Response>          $responses         answers after the 404 on the entry's ticket
      * @param class-string<Throwable> $expectedException
+     * @param list<string>            $expectedRequests
      */
-    #[DataProvider('failedLookups')]
-    public function testAnUnsettledLookupPropagatesAndKeepsTheId(Response $lookupResponse, string $expectedException): void
+    #[DataProvider('unfinishedDeletes')]
+    public function testAnUnfinishedDeletePropagatesAndKeepsTheId(array $responses, string $expectedException, array $expectedRequests): void
     {
         $entry = $this->bookedEntry();
-        $service = $this->service([new Response(404, [], '{}'), $lookupResponse]);
+        $service = $this->service([new Response(404, [], '{}'), ...$responses]);
 
         $thrown = null;
         try {
@@ -139,9 +150,9 @@ final class JiraOAuthApiServiceWorklogMoveTest extends TestCase
             $thrown = $throwable;
         }
 
-        self::assertInstanceOf($expectedException, $thrown, 'An unsettled lookup must propagate');
+        self::assertInstanceOf($expectedException, $thrown, 'An unfinished delete must propagate');
         self::assertSame(42, $entry->getWorklogId());
-        self::assertSame(['DELETE issue/INT-5/worklog/42', 'POST worklog/list'], $this->sentRequests());
+        self::assertSame($expectedRequests, $this->sentRequests());
     }
 
     private static function worklog(
@@ -209,22 +220,6 @@ final class JiraOAuthApiServiceWorklogMoveTest extends TestCase
         }));
         $client = new Client(['handler' => $handlerStack]);
 
-        return new class(new User(), $ticketSystem, $managerRegistry, self::createStub(RouterInterface::class), $this->createTokenEncryptionService(), $client) extends JiraOAuthApiService {
-            public function __construct(
-                User $user,
-                TicketSystem $ticketSystem,
-                ManagerRegistry $managerRegistry,
-                RouterInterface $router,
-                TokenEncryptionService $tokenEncryptionService,
-                private readonly Client $mockClient,
-            ) {
-                parent::__construct($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService);
-            }
-
-            protected function getClient(string $tokenMode = 'user', ?string $oAuthToken = null): Client
-            {
-                return $this->mockClient;
-            }
-        };
+        return new FailingClientJiraOAuthApiService(new User(), $ticketSystem, $managerRegistry, self::createStub(RouterInterface::class), $this->createTokenEncryptionService(), $client);
     }
 }
