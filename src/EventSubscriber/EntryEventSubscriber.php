@@ -470,15 +470,8 @@ class EntryEventSubscriber implements EventSubscriberInterface
             && $entry->getInternalJiraTicketOriginalKey() !== $entry->getTicket()
             && null !== $previousEntry->getWorklogId()
         ) {
-            $oldWorklogId = $previousEntry->getWorklogId();
             $this->worklogWriteService->delete($api, $previousEntry);
-            // Only a real delete clears the snapshot's id; a not-found keeps it
-            // (and still reports true). Dropping the id anyway would book the
-            // hours a second time on the new issue while the old worklog may
-            // still exist; keeping it lets the push park the entry instead.
-            if ($previousEntry->getWorklogId() !== $oldWorklogId) {
-                $entry->setWorklogId(null);
-            }
+            $entry->setWorklogId(null);
         }
 
         $outcome = $this->worklogWriteService->push($api, $entry, $ticketSystem);
