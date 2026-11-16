@@ -189,6 +189,7 @@ CI is authoritative for test results. Workflows in
 - **[release.yml](../.github/workflows/release.yml)** — on a tag push: source archive, SBOMs, signatures, provenance and the GitHub Release, built in `netresearch/.github`'s `release-source-archive.yml`
 - **[scorecard.yml](../.github/workflows/scorecard.yml)**, **[reproducible-archive.yml](../.github/workflows/reproducible-archive.yml)**, **[reproducible-image.yml](../.github/workflows/reproducible-image.yml)** — supply-chain checks. The image one rebuilds a released image and compares its files with the published one; it reports differences rather than failing on them, because `apt-get upgrade` is not pinned
 - **[auto-merge-deps.yml](../.github/workflows/auto-merge-deps.yml)** — dependency PR automation
+- **[dependency-submission.yml](../.github/workflows/dependency-submission.yml)** — on a push to `main`: submits the packages in `frontend/bun.lock` to the dependency graph (GitHub does not parse `bun.lock`), so Dependabot alerts cover them
 
 Coverage reporting is configured in [codecov.yml](../codecov.yml).
 
