@@ -7,11 +7,19 @@ on:
   # Dependabot PRs, which pull_request limits to Dependabot secrets (GitHub
   # docs). Check MERGE_APP_CONFIGURED in the first Dependabot run.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
+    types: [opened, synchronize, reopened]
+    branches: [main]
 
 permissions: {}
 
 jobs:
   auto-merge:
+    # The reusable gates on the same condition; checking it here as well keeps
+    # the App secrets from being passed at all for any other PR or actor.
+    if: >-
+      (github.event.pull_request.user.login == 'renovate[bot]' || github.event.pull_request.user.login == 'dependabot[bot]')
+      && github.actor == github.event.pull_request.user.login
+      && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: write
       pull-requests: write
