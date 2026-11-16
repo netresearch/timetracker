@@ -615,6 +615,19 @@ final class ProjectTest extends TestCase
      * Tickets are upper-cased on save, but the internal key is stored as typed;
      * a key configured as "int" must still match the ticket prefix "INT".
      */
+    public function testGetInternalJiraProjectKeysSplitsTrimsUpperCasesAndDeduplicates(): void
+    {
+        $project = new Project();
+        $project->setInternalJiraProjectKey(' ops , int,, OPS ');
+
+        self::assertSame(['OPS', 'INT'], $project->getInternalJiraProjectKeys());
+    }
+
+    public function testGetInternalJiraProjectKeysIsEmptyWithoutAKey(): void
+    {
+        self::assertSame([], new Project()->getInternalJiraProjectKeys());
+    }
+
     public function testMatchesInternalJiraProjectIgnoresCase(): void
     {
         $project = new Project();

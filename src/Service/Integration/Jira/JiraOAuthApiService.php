@@ -453,7 +453,9 @@ class JiraOAuthApiService
             [
                 'fields' => [
                     'project' => [
-                        'key' => $project->getInternalJiraProjectKey() ?? '',
+                        // The setting may list several keys; a new mirror
+                        // issue goes into the first one (#935).
+                        'key' => $project->getInternalJiraProjectKeys()[0] ?? '',
                     ],
                     'summary' => $entry->getTicket(),
                     'description' => $entry->getTicketSystemIssueLink(),

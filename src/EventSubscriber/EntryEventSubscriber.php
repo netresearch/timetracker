@@ -419,11 +419,14 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         $api = $this->jiraOAuthApiFactory->create($user, $internalTicketSystem);
 
+        // The setting may list several internal projects ("A, B"); search all
+        // of them. Both values are user input, so they are quoted as JQL
+        // strings (#935).
         $searchResult = $api->searchTicket(
             sprintf(
-                'project = %s AND summary ~ "%s"',
-                $project->getInternalJiraProjectKey() ?? '',
-                $externalTicket,
+                'project in (%s) AND summary ~ %s',
+                implode(', ', array_map($this->jqlString(...), $project->getInternalJiraProjectKeys())),
+                $this->jqlString($externalTicket),
             ),
             ['key', 'summary'],
             1,
@@ -452,6 +455,15 @@ class EntryEventSubscriber implements EventSubscriberInterface
         $entry->setTicket($issue->key);
 
         $this->managerRegistry->getManager()->flush();
+    }
+
+    /**
+     * A JQL string literal: double-quoted, with backslash and double quote
+     * escaped.
+     */
+    private function jqlString(string $value): string
+    {
+        return '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $value) . '"';
     }
 
     private function bookWorklog(Entry $entry, ?Entry $previousEntry, User $user, TicketSystem $ticketSystem): void

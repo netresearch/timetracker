@@ -702,19 +702,33 @@ class Project extends Base
             return false;
         }
 
-        $internalKey = $this->getInternalJiraProjectKey();
-        if (null === $internalKey) {
-            return false;
+        // Tickets are upper-cased on save while the key is stored as typed, so
+        // compare case-insensitively.
+        return in_array(strtoupper($jiraId), $this->getInternalJiraProjectKeys(), true);
+    }
+
+    /**
+     * The internal Jira project keys, from the comma-separated setting:
+     * trimmed, upper-cased, without empty or duplicate entries, in the order
+     * configured. The first one receives newly created mirror issues.
+     *
+     * @return list<string>
+     */
+    public function getInternalJiraProjectKeys(): array
+    {
+        if (null === $this->internalJiraProjectKey) {
+            return [];
         }
 
-        // Support comma-separated list of project keys. Tickets are upper-cased
-        // on save while the key is stored as typed, so compare case-insensitively.
-        $projectKeys = array_map(
-            static fn (string $key): string => strtoupper(trim($key)),
-            explode(',', $internalKey),
-        );
+        $keys = [];
+        foreach (explode(',', $this->internalJiraProjectKey) as $key) {
+            $key = strtoupper(trim($key));
+            if ('' !== $key && !in_array($key, $keys, true)) {
+                $keys[] = $key;
+            }
+        }
 
-        return in_array(strtoupper($jiraId), $projectKeys, true);
+        return $keys;
     }
 
     /**

@@ -830,17 +830,16 @@ final class EntryEventSubscriberTest extends TestCase
      *
      * @return array{Entry, User&Stub, TicketSystem&Stub}
      */
-    private function createInternalProjectEntry(string $ticket, ?string $originalKey = null): array
+    private function createInternalProjectEntry(string $ticket, ?string $originalKey = null, string $internalKey = 'OPSDHL'): array
     {
         $internalTicketSystem = self::createStub(TicketSystem::class);
         $internalTicketSystem->method('getBookTime')->willReturn(true);
         $internalTicketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
 
-        $project = self::createStub(Project::class);
-        $project->method('hasInternalJiraProjectKey')->willReturn(true);
-        $project->method('getInternalJiraProjectKey')->willReturn('OPSDHL');
-        $project->method('getInternalJiraTicketSystem')->willReturn('9');
-        $project->method('getTicketSystem')->willReturn(null);
+        // A real Project, so the key parsing (getInternalJiraProjectKeys) runs.
+        $project = new Project();
+        $project->setInternalJiraProjectKey($internalKey);
+        $project->setInternalJiraTicketSystem('9');
 
         $user = self::createStub(User::class);
         $user->method('getId')->willReturn(1);
@@ -872,7 +871,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project = OPSDHL AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
+            ->with('project in ("OPSDHL") AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
 
         $this->jiraOAuthApiService->expects(self::never())
@@ -888,6 +887,54 @@ final class EntryEventSubscriberTest extends TestCase
 
         self::assertSame('OPSDHL-75', $entry->getTicket());
         self::assertSame('DHLSUP-123456', $entry->getInternalJiraTicketOriginalKey());
+    }
+
+    /**
+     * #935: the internal key setting may list several projects ("OPSDHL, opsx").
+     * The lookup must search all of them as valid JQL, not "project = OPSDHL, opsx".
+     */
+    public function testInternalTicketSystemSearchesEveryListedInternalProject(): void
+    {
+        [$entry] = $this->createInternalProjectEntry('DHLSUP-1', null, 'OPSDHL, opsx');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->with('project in ("OPSDHL", "OPSX") AND summary ~ "DHLSUP-1"', ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => 'OPSX-3']]]);
+
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+
+        self::assertSame('OPSX-3', $entry->getTicket());
+    }
+
+    /**
+     * #935: the ticket is user input inside a quoted JQL string; a double quote
+     * or backslash in it must not end the string.
+     */
+    public function testInternalTicketSystemEscapesTheTicketInTheLookup(): void
+    {
+        [$entry] = $this->createInternalProjectEntry('DHLSUP-1', 'EXT "1" \\ x');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->with('project in ("OPSDHL") AND summary ~ "EXT \\"1\\" \\\\ x"', ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-8']]]);
+
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry));
+
+        self::assertSame('OPSDHL-8', $entry->getTicket());
     }
 
     public function testInternalTicketSystemCreatesMissingInternalIssue(): void
@@ -928,7 +975,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project = OPSDHL AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
+            ->with('project in ("OPSDHL") AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
 
         $this->worklogWriteService->method('push')
@@ -1119,7 +1166,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project = INT AND summary ~ "EXT-1"', ['key', 'summary'], 1)
+            ->with('project in ("INT") AND summary ~ "EXT-1"', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'INT-10']]]);
 
         $this->worklogWriteService->method('push')
@@ -1145,7 +1192,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project = INT AND summary ~ "INTX-5"', ['key', 'summary'], 1)
+            ->with('project in ("INT") AND summary ~ "INTX-5"', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'INT-11']]]);
 
         $this->worklogWriteService->method('push')
