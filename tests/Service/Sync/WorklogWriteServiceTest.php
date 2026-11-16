@@ -28,6 +28,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\MockClock;
 
 #[CoversClass(WorklogWriteService::class)]
@@ -225,13 +226,24 @@ final class WorklogWriteServiceTest extends TestCase
         $this->syncStateRepository->method('findOneBy')->willReturn($state);
         $this->api->method('getIssueWorklog')->willReturnOnConsecutiveCalls(null, $this->remote('U2'));
         $this->api->expects(self::once())->method('findEntryWorklog')->with($entry)->willReturn($this->movedRemote('U1'));
+        $this->api->method('canWriteWorklogs')->willReturn(true);
         $this->api->expects(self::once())->method('doesTicketExist')->with('ABC-1')->willReturn(true);
-        $this->api->expects(self::once())->method('deleteIssueWorklog')->with('151932', 77);
+        $calls = [];
+        $this->api->expects(self::once())->method('deleteIssueWorklog')->with('151932', 77)
+            ->willReturnCallback(static function () use (&$calls): void {
+                $calls[] = 'delete';
+            });
+        // The cleared id is stored before the new write: if that write fails, the next
+        // save or sync books the entry anew instead of parking the deleted id.
+        $this->entityManager->method('flush')->willReturnCallback(static function () use (&$calls, $entry): void {
+            $calls[] = 'flush id ' . var_export($entry->getWorklogId(), true);
+        });
         $this->api->expects(self::once())
             ->method('updateEntryJiraWorkLog')
-            ->willReturnCallback(static function (Entry $entry): void {
+            ->willReturnCallback(static function (Entry $entry) use (&$calls): void {
                 // The old id must be gone, or the write would PUT to it on the new ticket.
                 self::assertNull($entry->getWorklogId());
+                $calls[] = 'write';
                 $entry->setWorklogId(88);
             });
 
@@ -239,6 +251,7 @@ final class WorklogWriteServiceTest extends TestCase
 
         self::assertSame(WriteOutcome::WRITTEN, $outcome);
         self::assertSame(88, $entry->getWorklogId());
+        self::assertSame(['delete', 'flush id NULL', 'write'], $calls);
     }
 
     /**
@@ -250,6 +263,7 @@ final class WorklogWriteServiceTest extends TestCase
         yield 'lookup fails' => ['lookupFails'];
         yield 'found, but changed since the base (lease lost)' => ['leaseLost'];
         yield 'found, but the entry\'s ticket does not exist' => ['noTicket'];
+        yield 'found, but the user does not write worklogs to this Jira' => ['noWrites'];
     }
 
     /**
@@ -270,6 +284,7 @@ final class WorklogWriteServiceTest extends TestCase
             default => $lookup->willReturn($this->movedRemote('leaseLost' === $case ? 'U9' : 'U1')),
         };
         $this->api->method('doesTicketExist')->willReturn('noTicket' !== $case);
+        $this->api->method('canWriteWorklogs')->willReturn('noWrites' !== $case);
         $this->api->expects(self::never())->method('deleteIssueWorklog');
         $this->api->expects(self::never())->method('updateEntryJiraWorkLog');
 
@@ -290,6 +305,7 @@ final class WorklogWriteServiceTest extends TestCase
 
         $this->syncStateRepository->method('findOneBy')->willReturn(new WorklogSyncState()->setBaseUpdatedAt('U1'));
         $this->api->method('getIssueWorklog')->willReturn(null);
+        $this->api->method('canWriteWorklogs')->willReturn(true);
         $this->api->method('findEntryWorklog')->willThrowException(new JiraApiUnauthorizedException('401', 401, 'https://tt.example.com/jira/connect/7'));
         $this->api->expects(self::never())->method('deleteIssueWorklog');
 
@@ -309,6 +325,7 @@ final class WorklogWriteServiceTest extends TestCase
         $this->api->method('getIssueWorklog')->willReturn(null);
         $this->api->method('findEntryWorklog')->willReturn($this->movedRemote('U1'));
         $this->api->method('doesTicketExist')->willReturn(true);
+        $this->api->method('canWriteWorklogs')->willReturn(true);
         $this->api->method('deleteIssueWorklog')->willThrowException(new JiraApiException('boom', 500));
         $this->api->expects(self::never())->method('updateEntryJiraWorkLog');
 
@@ -318,6 +335,24 @@ final class WorklogWriteServiceTest extends TestCase
         } catch (JiraApiException) {
             self::assertSame(77, $entry->getWorklogId());
         }
+    }
+
+    /**
+     * A failed lookup is logged at error: production's fingers_crossed handler drops
+     * anything below error unless an error follows in the same request.
+     */
+    public function testAFailedLookupIsLoggedAtError(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error');
+        $service = new WorklogWriteService($this->entityManager, $this->syncStateRepository, new RemoteWorklogNormalizer(), new MockClock('2026-07-09 12:00:00'), $logger);
+
+        $this->syncStateRepository->method('findOneBy')->willReturn(new WorklogSyncState()->setBaseUpdatedAt('U1'));
+        $this->api->method('getIssueWorklog')->willReturn(null);
+        $this->api->method('canWriteWorklogs')->willReturn(true);
+        $this->api->method('findEntryWorklog')->willThrowException(new JiraApiException('boom', 500));
+
+        self::assertSame(WriteOutcome::REMOTE_MISSING, $service->push($this->api, $this->entry('ABC-1', 77), $this->ticketSystem));
     }
 
     private function movedRemote(string $updated): JiraWorkLog

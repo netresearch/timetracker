@@ -16,6 +16,7 @@ use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use DateTime;
+use DateTimeZone;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use GuzzleHttp\Client;
@@ -67,6 +68,13 @@ final class JiraOAuthApiServiceWorklogMoveTest extends TestCase
 
         yield 'found on another issue and provably the entry\'s: deleted there' => [
             [$notFound, self::listed(self::worklog()), new Response(200, [], self::ME), new Response(204, [], '')],
+            null,
+            ['DELETE issue/INT-5/worklog/42', 'POST worklog/list', 'GET myself', 'DELETE issue/151932/worklog/42'],
+        ];
+
+        // Jira reports `started` in the user's offset; the instant counts, not the string.
+        yield 'found, start reported in another offset' => [
+            [$notFound, self::listed(self::worklog(timezone: 'Pacific/Chatham')), new Response(200, [], self::ME), new Response(204, [], '')],
             null,
             ['DELETE issue/INT-5/worklog/42', 'POST worklog/list', 'GET myself', 'DELETE issue/151932/worklog/42'],
         ];
@@ -161,13 +169,19 @@ final class JiraOAuthApiServiceWorklogMoveTest extends TestCase
         string $author = 'jdoe',
         int $seconds = 3600,
         string $started = '2026-06-15 09:00',
+        ?string $timezone = null,
     ): object {
+        $start = new DateTime($started);
+        if (null !== $timezone) {
+            $start->setTimezone(new DateTimeZone($timezone));
+        }
+
         return (object) [
             'id' => $id,
             'issueId' => $issueId,
             'author' => (object) ['name' => $author],
             'self' => 'https://jira.example.com/rest/api/2/issue/151932/worklog/' . $id,
-            'started' => new DateTime($started)->format('Y-m-d\TH:i:s.000O'),
+            'started' => $start->format('Y-m-d\TH:i:s.000O'),
             'timeSpentSeconds' => $seconds,
             'updated' => '2026-06-15T12:00:00.000+0200',
         ];

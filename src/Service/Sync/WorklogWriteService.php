@@ -125,12 +125,15 @@ class WorklogWriteService
      * #941: the entry's worklog is not on its ticket. When it still sits on another issue
      * of this Jira (a ticket change whose delete on the old issue never ran), it is
      * deleted there and booked anew on the ticket. Only the entry's own worklog moves
-     * (JiraOAuthApiService::findEntryWorklog), and only while its lease holds: changed
-     * in Jira since the base, it stays parked for a human (ADR-023 §1).
+     * (JiraOAuthApiService::findEntryWorklog), only while its lease holds (changed in
+     * Jira since the base, it stays parked for a human, ADR-023 §1; without a base, as
+     * for a pre-ADR entry, there is no lease to check), and only when this user writes
+     * worklogs to this Jira at all, or the write after the delete would book nothing.
      *
      * Every path that cannot finish before the delete keeps the worklog id. After the
-     * delete the old id names nothing; it is cleared before the write, so a failing write
-     * leaves an entry without id, which the next save or sync books anew.
+     * delete the old id names nothing: it is cleared and flushed before the new write, so
+     * when that write fails the stored entry has no id and the next save or sync books it
+     * anew instead of parking the deleted id as orphaned.
      *
      * @throws JiraApiException                when the delete or the new write fails
      * @throws JiraApiInvalidResourceException
@@ -141,6 +144,9 @@ class WorklogWriteService
     private function moveToTicket(JiraOAuthApiService $api, Entry $entry, ?WorklogSyncState $state): bool
     {
         $worklogId = (int) $entry->getWorklogId();
+        if (!$api->canWriteWorklogs()) {
+            return false;
+        }
 
         try {
             $found = $api->findEntryWorklog($entry);
@@ -148,7 +154,7 @@ class WorklogWriteService
             // A refused token is not a missing worklog: the caller asks for a reconnect.
             throw $jiraApiUnauthorizedException;
         } catch (JiraApiException|JsonException $exception) {
-            $this->logger?->warning('Worklog lookup failed; worklog stays parked as missing', ['entry' => $entry->getId(), 'worklog' => $worklogId, 'exception' => $exception]);
+            $this->logger?->error('Worklog lookup failed; worklog stays parked as missing', ['entry' => $entry->getId(), 'worklog' => $worklogId, 'exception' => $exception]);
 
             return false;
         }
@@ -162,6 +168,7 @@ class WorklogWriteService
 
         $api->deleteIssueWorklog((string) $found->issueId, $worklogId);
         $entry->setWorklogId(null);
+        $this->entityManager->flush();
         $api->updateEntryJiraWorkLog($entry);
         $this->logger?->info('Worklog moved to the entry\'s ticket', ['entry' => $entry->getId(), 'worklog' => $worklogId, 'fromIssueId' => $found->issueId]);
 

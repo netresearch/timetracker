@@ -505,6 +505,16 @@ class JiraOAuthApiService
     }
 
     /**
+     * Whether worklogs are written to this Jira for this user: the ticket system books
+     * time and the user has not opted out of the connection. The write path checks the
+     * same and silently writes nothing when it fails.
+     */
+    public function canWriteWorklogs(): bool
+    {
+        return $this->checkUserTicketSystem();
+    }
+
+    /**
      * Deletes one worklog of one issue.
      *
      * @param string $issueIdOrKey the issue key, or the numeric issue id Jira reports
