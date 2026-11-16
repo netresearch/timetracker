@@ -111,10 +111,7 @@ final class GetTimeSummaryAction extends BaseController
     {
         $today = $this->clock->today();
         $startOfWeek = $this->mondayThisWeek($today);
-        // modify() is well-defined here; the guard only satisfies the analyser
-        // (DateTimeImmutable::modify is typed to allow a false return).
-        $firstOfMonth = $today->modify('first day of this month');
-        $startOfMonth = false !== $firstOfMonth ? $firstOfMonth : $today;
+        $startOfMonth = $today->modify('first day of this month');
 
         $contractRepository = $this->managerRegistry->getRepository(Contract::class);
         assert($contractRepository instanceof ContractRepository);
@@ -135,10 +132,7 @@ final class GetTimeSummaryAction extends BaseController
 
     private function mondayThisWeek(DateTimeImmutable $today): DateTimeImmutable
     {
-        $monday = $today->modify('monday this week');
-
-        // 'monday this week' is well-defined; guard only to satisfy the analyser.
-        return false !== $monday ? $monday : $today;
+        return $today->modify('monday this week');
     }
 
     /**

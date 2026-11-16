@@ -13,6 +13,7 @@ use Rector\Renaming\Rector\MethodCall\RenameMethodRector;
 use Rector\Renaming\Rector\Name\RenameClassRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
+use Rector\Symfony\CodeQuality\Rector\Class_\EventSubscriberToAttributeRector;
 use Rector\Symfony\Set\SymfonySetList;
 
 return RectorConfig::configure()
@@ -63,6 +64,14 @@ return RectorConfig::configure()
         // with the same setter-injected property is silently exempt until
         // someone adds one.
         RemoveDefaultValueFromAssignedPropertyRector::class,
+        // Added to the Symfony attribute set in rector 2.8.5: rewrites every
+        // EventSubscriberInterface into #[AsEventListener] methods (12 classes).
+        // That deletes getSubscribedEvents(), which seven test files call to
+        // pin event names and priorities, and it drops the docblocks that
+        // explain each priority (e.g. ContentSecurityPolicySubscriber). A
+        // conversion is a separate refactor with its own tests, not part of a
+        // tool upgrade.
+        EventSubscriberToAttributeRector::class,
     ])
     // Host-mounted cache (resolves to repo-root var/cache/rector) so the
     // ChangedFilesDetector cache persists across CI runs via actions/cache.
