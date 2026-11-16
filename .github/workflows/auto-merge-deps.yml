@@ -14,11 +14,15 @@ permissions: {}
 
 jobs:
   auto-merge:
-    # Only bot PRs from a branch of this repository get the App secrets. The
-    # reusable checks the actor itself; actor fields are not repeated here,
-    # since SonarCloud (githubactions:S8232) rates them as forgeable.
+    # Only bot PRs from a branch of this repository, run by that bot, get the
+    # App secrets. triggering_actor, not actor: a re-run keeps the original
+    # github.actor but names the person who re-ran it as triggering_actor. The
+    # reusable runs its own author and actor checks on top. SonarCloud
+    # githubactions:S8232 on this condition is reviewed as safe: it narrows
+    # who gets the secrets and is not the only check.
     if: >-
       (github.event.pull_request.user.login == 'renovate[bot]' || github.event.pull_request.user.login == 'dependabot[bot]')
+      && github.triggering_actor == github.event.pull_request.user.login
       && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: write
