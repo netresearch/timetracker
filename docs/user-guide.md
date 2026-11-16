@@ -463,8 +463,10 @@ projects:
   and the Worklog shows a notice with a link to authorize TimeTracker in that
   Jira. Either way you approve on the Jira *authorize* page, Jira sends you
   back to TimeTracker, the token is stored (encrypted), and your most recent
-  entries are synced. Your previous token stays in place until you approve
-  (denying the request removes it and stops the sync for that ticket system).
+  entries are synced. Your previous token stays in place until you approve;
+  denying the request in Jira leaves it as it is. On Jira Server/Data Center,
+  denying without a token stored switches the sync to that ticket system off
+  until you connect.
 - **Ticket links:** ticket numbers in the Worklog link straight into the
   ticket system.
 - Administrators can additionally re-push pending worklogs and sync a

@@ -26,6 +26,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
+use function hash_equals;
 use function is_string;
 use function sprintf;
 
@@ -120,14 +121,18 @@ final class JiraOAuthCallbackAction extends BaseController
             return new Response('Ticket system not found', \Symfony\Component\HttpFoundation\Response::HTTP_NOT_FOUND);
         }
 
+        $oauthToken = $request->query->get('oauth_token');
+        $oauthVerifier = $request->query->get('oauth_verifier');
+        if (!is_string($oauthToken) || '' === $oauthToken || !is_string($oauthVerifier) || '' === $oauthVerifier) {
+            return new Response('Invalid OAuth callback parameters', \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$this->consumePendingRequestToken($request, $ticketSystem, $oauthToken)) {
+            return new Response('This Jira authorization was not started in this session. Start it again from Settings.', \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
+        }
+
         try {
             $jiraOAuthApi = $this->jiraOAuthApiFactory->create($user, $ticketSystem);
-            $oauthToken = $request->query->get('oauth_token');
-            $oauthVerifier = $request->query->get('oauth_verifier');
-            if (!is_string($oauthToken) || '' === $oauthToken || !is_string($oauthVerifier) || '' === $oauthVerifier) {
-                return new Response('Invalid OAuth callback parameters', \Symfony\Component\HttpFoundation\Response::HTTP_BAD_REQUEST);
-            }
-
             $jiraOAuthApi->fetchOAuthAccessToken($oauthToken, $oauthVerifier);
             $jiraOAuthApi->updateEntriesJiraWorkLogsLimited(1);
 
@@ -135,5 +140,27 @@ final class JiraOAuthCallbackAction extends BaseController
         } catch (JiraApiException $jiraApiException) {
             return new Response($jiraApiException->getMessage());
         }
+    }
+
+    /**
+     * Accepts only the request token JiraConnectAction issued to this session
+     * for this ticket system, and only once. Without that, a callback link
+     * carrying a token somebody else authorized would store their access token
+     * on the victim's account. A mismatch leaves the pending token in place, so
+     * a stray link cannot cancel the user's own authorization.
+     */
+    private function consumePendingRequestToken(Request $request, TicketSystem $ticketSystem, string $oauthToken): bool
+    {
+        $session = $request->getSession();
+        $key = JiraConnectAction::PENDING_REQUEST_TOKEN_KEY . $ticketSystem->getId();
+        $pending = $session->get($key);
+
+        if (!is_string($pending) || '' === $pending || !hash_equals($pending, $oauthToken)) {
+            return false;
+        }
+
+        $session->remove($key);
+
+        return true;
     }
 }

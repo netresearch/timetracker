@@ -24,8 +24,9 @@ export class ApiError extends Error {
   }
 }
 
-/** Jira refused the user's token (#911): a 401 whose JSON body carries the Jira
- *  authorize URL (`redirect_url`, App\EventSubscriber\ExceptionSubscriber). The
+/** Jira refused the user's token (#911): a 401 whose JSON body carries a
+ *  `redirect_url` (App\EventSubscriber\ExceptionSubscriber) — the connect route
+ *  for Jira Server/DC, the Atlassian authorize URL for Jira Cloud. The
  *  TimeTracker session is fine, so this must not raise the re-login overlay; the
  *  message points the user at the Settings "connect Jira" action. */
 export class JiraAuthorizationRequiredError extends ApiError {

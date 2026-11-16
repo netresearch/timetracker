@@ -26,8 +26,11 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use Symfony\Component\Routing\RouterInterface;
 use Tests\Traits\TokenEncryptionTestTrait;
+
+use function is_scalar;
 
 /**
  * A 401 from Jira must not replace the stored OAuth access token (#911).
@@ -62,6 +65,7 @@ final class JiraOAuthApiServiceUnauthorizedTest extends TestCase
         $this->ticketSystem = new TicketSystem();
         $this->ticketSystem->setUrl('https://jira.example.com');
         $this->ticketSystem->setBookTime(true);
+        new ReflectionProperty(TicketSystem::class, 'id')->setValue($this->ticketSystem, 7);
 
         $this->user = new User();
 
@@ -85,14 +89,61 @@ final class JiraOAuthApiServiceUnauthorizedTest extends TestCase
             $service->doesTicketExist('TT-1');
             self::fail('A 401 must surface as JiraApiUnauthorizedException');
         } catch (JiraApiUnauthorizedException $jiraApiUnauthorizedException) {
-            self::assertSame(
-                'https://jira.example.com/plugins/servlet/oauth/authorize?oauth_token=unauthorized-request-token',
-                $jiraApiUnauthorizedException->getRedirectUrl(),
-            );
+            self::assertSame('https://tt.example.com/jira/connect/7', $jiraApiUnauthorizedException->getRedirectUrl());
         }
 
         self::assertSame('working-access-token', $this->tokenEncryptionService->decryptToken($this->userTicketSystem->getAccessToken()));
         self::assertSame('working-access-secret', $this->tokenEncryptionService->decryptToken($this->userTicketSystem->getTokenSecret()));
+    }
+
+    /**
+     * The 401 notice must not depend on Jira issuing a request token: the link
+     * points at the connect route, which issues one bound to the session.
+     */
+    public function testA401AsksForAuthorizationEvenWhenJiraIssuesNoRequestToken(): void
+    {
+        $service = $this->createService(
+            apiResponses: [new Response(401, [], 'oauth_problem=token_rejected')],
+            requestTokenResponses: [new Response(500, [], 'request-token endpoint down')],
+        );
+
+        try {
+            $service->doesTicketExist('TT-1');
+            self::fail('A 401 must surface as JiraApiUnauthorizedException');
+        } catch (JiraApiUnauthorizedException $jiraApiUnauthorizedException) {
+            self::assertSame('https://tt.example.com/jira/connect/7', $jiraApiUnauthorizedException->getRedirectUrl());
+        }
+    }
+
+    /**
+     * Denying the authorization in Jira (or a forged `oauth_verifier=denied`)
+     * must not wipe a working access token or switch the sync off.
+     */
+    public function testDenyingTheAuthorizationKeepsTheStoredAccessToken(): void
+    {
+        $service = $this->createService(apiResponses: [], requestTokenResponses: []);
+
+        $service->fetchOAuthAccessToken('request-token', 'denied');
+
+        self::assertSame('working-access-token', $this->tokenEncryptionService->decryptToken($this->userTicketSystem->getAccessToken()));
+        self::assertSame('working-access-secret', $this->tokenEncryptionService->decryptToken($this->userTicketSystem->getTokenSecret()));
+        self::assertFalse($this->userTicketSystem->getAvoidConnection());
+    }
+
+    public function testDenyingWithoutAStoredTokenRecordsTheOptOut(): void
+    {
+        $this->user = new User();
+        $this->storedRow = null;
+
+        $service = $this->createService(apiResponses: [], requestTokenResponses: []);
+
+        $service->fetchOAuthAccessToken('request-token', 'denied');
+
+        $rows = $this->user->getUserTicketsystems();
+        self::assertCount(1, $rows);
+        $row = $rows->first();
+        self::assertInstanceOf(UserTicketsystem::class, $row);
+        self::assertTrue($row->getAvoidConnection());
     }
 
     public function testTheCallbackExchangeReplacesTheStoredAccessToken(): void
@@ -160,7 +211,11 @@ final class JiraOAuthApiServiceUnauthorizedTest extends TestCase
         $managerRegistry->method('getManager')->willReturn(self::createStub(EntityManagerInterface::class));
 
         $router = self::createStub(RouterInterface::class);
-        $router->method('generate')->willReturn('https://tt.example.com/jiraoauthcallback');
+        $router->method('generate')->willReturnCallback(
+            static fn (string $name, array $parameters = []): string => 'jiraConnect' === $name
+                ? 'https://tt.example.com/jira/connect/' . (is_scalar($parameters['ticketSystem'] ?? null) ? (string) $parameters['ticketSystem'] : '')
+                : 'https://tt.example.com/jiraoauthcallback',
+        );
 
         $clients = [
             'user' => self::client($apiResponses),

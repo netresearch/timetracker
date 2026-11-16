@@ -1,4 +1,7 @@
+"%ticketSystem% could not be reached to start the authorization. Please try again later.": "%ticketSystem% war nicht erreichbar, um die Autorisierung zu starten. Bitte später erneut versuchen."
+"Back to Settings": "Zurück zu den Einstellungen"
 "Duration must be greater than 0!": "Die Aktivität muss mindestens eine Minute angedauert haben!"
+"Jira connection": "Jira-Verbindung"
 "You need to login.": "Bitte anmelden."
 "%num% entries have been added": "%num% Einträge wurden angelegt."
 "The configuration has been successfully saved.": "Die Konfiguration wurde erfolgreich gespeichert."

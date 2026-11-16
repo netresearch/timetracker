@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Service\Integration\Jira;
 
+use App\DTO\Jira\JiraAuthorizationRequest;
 use App\DTO\Jira\JiraIssue;
 use App\DTO\Jira\JiraIssueKeySearchResult;
 use App\DTO\Jira\JiraSearchResult;
@@ -81,7 +82,7 @@ class JiraOAuthApiService
         protected User $user,
         protected TicketSystem $ticketSystem,
         protected ManagerRegistry $managerRegistry,
-        RouterInterface $router,
+        protected RouterInterface $router,
         protected TokenEncryptionService $tokenEncryptionService,
     ) {
         $this->oAuthCallbackUrl = $router->generate('jiraOAuthCallback', [], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -223,7 +224,7 @@ class JiraOAuthApiService
     {
         try {
             if ('denied' === $oAuthVerifier) {
-                $this->deleteTokens();
+                $this->recordDeniedAuthorization();
             } else {
                 $response = $this->getFetchAccessTokenClient($oAuthRequestToken)->post(
                     $this->getOAuthAccessUrl() . '?oauth_verifier=' . urlencode($oAuthVerifier),
@@ -236,32 +237,54 @@ class JiraOAuthApiService
     }
 
     /**
-     * Delete stored tokens.
+     * The user declined the authorization in Jira. A stored access token stays
+     * as it is: the user may have clicked "Reconnect" and then "Deny", and
+     * wiping the token here would silently stop a working sync. Only a user
+     * without a token gets the opt-out recorded, which keeps TimeTracker from
+     * asking again on each sync.
      */
-    protected function deleteTokens(): void
+    protected function recordDeniedAuthorization(): void
     {
+        if ('' !== $this->getToken()) {
+            return;
+        }
+
         $this->storeToken('', '', true);
     }
 
     /**
-     * Returns the URL where the user authorizes TimeTracker in Jira (the
-     * "connect Jira" action). Stores nothing: the stored access token is
-     * replaced only by the OAuth callback after the user approved.
+     * Returns the URL where the user authorizes TimeTracker in Jira.
      *
      * @throws JiraApiException
      */
     public function getAuthorizationUrl(): string
     {
-        return $this->fetchOAuthRequestToken();
+        return $this->createAuthorizationRequest()->url;
     }
 
     /**
-     * Fetches a request token and returns the URL where the user authorizes it.
+     * Starts the authorization (the "connect Jira" action): fetches a request
+     * token and returns the authorize URL together with that token, which the
+     * caller binds to the user's session for the callback to check. Stores
+     * nothing: the stored access token is replaced only by the OAuth callback
+     * after the user approved.
      *
-     * The request token is not stored: it is not authorized yet, and storing it
-     * would replace a still-valid access token (#911). The OAuth callback carries
-     * it back as `oauth_token`, and with RSA-SHA1 signing the exchange does not
-     * need its secret, so nothing has to be kept until then.
+     * @throws JiraApiException
+     */
+    public function createAuthorizationRequest(): JiraAuthorizationRequest
+    {
+        $requestToken = $this->fetchOAuthRequestToken();
+
+        return new JiraAuthorizationRequest($this->getOAuthAuthUrl($requestToken), $requestToken);
+    }
+
+    /**
+     * Fetches a request token from Jira and returns it.
+     *
+     * The request token is not written to users_ticket_systems: it is not
+     * authorized yet, and storing it would replace a still-valid access token
+     * (#911). The OAuth callback carries it back as `oauth_token`; with
+     * RSA-SHA1 signing the exchange does not need its secret.
      *
      * @throws JiraApiException
      */
@@ -272,9 +295,7 @@ class JiraOAuthApiService
                 $this->getOAuthRequestUrl() . '?oauth_callback=' . urlencode($this->getOAuthCallbackUrl()),
             );
 
-            $tokenData = $this->parseTokens($response);
-
-            return $this->getOAuthAuthUrl($tokenData['oauth_token']);
+            return $this->parseTokens($response)['oauth_token'];
         } catch (Throwable $throwable) {
             throw new JiraApiException($throwable->getMessage(), (int) $throwable->getCode(), null, $throwable);
         }
@@ -1157,21 +1178,23 @@ class JiraOAuthApiService
     }
 
     /**
-     * Throw an exception that causes the user to jump to Jira to authorize timetracker.
+     * Throws the exception that tells the user to (re)connect Jira.
+     *
+     * The URL is TimeTracker's connect route, not a Jira authorize URL: the
+     * connect route issues the request token and binds it to the session, and
+     * the callback accepts no other. Nothing is fetched here, so the notice
+     * does not depend on Jira answering a request-token call.
      *
      * @throws JiraApiUnauthorizedException
-     *
-     * @return never
      */
-    protected function throwUnauthorizedRedirect(?Throwable $throwable = null)
+    protected function throwUnauthorizedRedirect(?Throwable $throwable = null): never
     {
-        try {
-            $oauthAuthUrl = $this->fetchOAuthRequestToken();
-        } catch (JiraApiException $jiraApiException) {
-            throw new JiraApiException('Failed to fetch OAuth URL: ' . ($jiraApiException->getPrevious()?->getMessage() ?? $jiraApiException->getMessage()), 400, null, $jiraApiException);
-        }
+        $connectUrl = $this->router->generate(
+            'jiraConnect',
+            ['ticketSystem' => $this->ticketSystem->getId()],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
 
-        $message = '401 - Unauthorized. Please authorize: ' . $oauthAuthUrl;
-        throw new JiraApiUnauthorizedException($message, 401, $oauthAuthUrl, $throwable);
+        throw new JiraApiUnauthorizedException('401 - Unauthorized. Please authorize: ' . $connectUrl, 401, $connectUrl, $throwable);
     }
 }

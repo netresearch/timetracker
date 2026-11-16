@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Service\Integration\Jira;
 
+use App\DTO\Jira\JiraAuthorizationRequest;
 use App\DTO\Jira\JiraIssueKeySearchResult;
 use App\Entity\TicketSystem;
 use App\Entity\User;
@@ -274,6 +275,17 @@ class JiraCloudApiService extends JiraOAuthApiService
             'response_type' => 'code',
             'prompt' => 'consent',
         ]);
+    }
+
+    /**
+     * The 3LO flow carries no request token: `state` binds it to the user.
+     *
+     * @throws JiraApiException
+     */
+    #[Override]
+    public function createAuthorizationRequest(): JiraAuthorizationRequest
+    {
+        return new JiraAuthorizationRequest($this->getAuthorizationUrl());
     }
 
     /**

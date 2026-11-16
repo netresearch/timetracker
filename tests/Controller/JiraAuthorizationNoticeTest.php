@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Tests\Controller;
 
+use App\DTO\Jira\JiraAuthorizationRequest;
 use App\Entity\TicketSystem;
 use App\Event\EntryEvent;
 use App\Exception\Integration\Jira\JiraApiException;
@@ -69,8 +70,8 @@ final class JiraAuthorizationNoticeTest extends AbstractWebTestCase
     {
         $this->makeTicketSystemOneABookableJira();
         $api = $this->createMock(JiraOAuthApiService::class);
-        $api->expects(self::once())->method('getAuthorizationUrl')
-            ->willReturn('https://jira.example.com/plugins/servlet/oauth/authorize?oauth_token=fresh');
+        $api->expects(self::once())->method('createAuthorizationRequest')
+            ->willReturn(new JiraAuthorizationRequest('https://jira.example.com/plugins/servlet/oauth/authorize?oauth_token=fresh', 'fresh'));
         $factory = self::createStub(JiraOAuthApiFactory::class);
         $factory->method('create')->willReturn($api);
         self::getContainer()->set(JiraOAuthApiFactory::class, $factory);
@@ -88,7 +89,7 @@ final class JiraAuthorizationNoticeTest extends AbstractWebTestCase
     {
         $this->makeTicketSystemOneABookableJira();
         $api = self::createStub(JiraOAuthApiService::class);
-        $api->method('getAuthorizationUrl')->willThrowException(new JiraApiException('Jira unreachable', 0));
+        $api->method('createAuthorizationRequest')->willThrowException(new JiraApiException('cURL error 7: Failed to connect to jira.internal port 443', 0));
         $factory = self::createStub(JiraOAuthApiFactory::class);
         $factory->method('create')->willReturn($api);
         self::getContainer()->set(JiraOAuthApiFactory::class, $factory);
@@ -96,6 +97,9 @@ final class JiraAuthorizationNoticeTest extends AbstractWebTestCase
         $this->client->request(Request::METHOD_GET, '/jira/connect/1');
 
         $this->assertStatusCode(502);
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringNotContainsString('cURL error', $body, 'The raw exception message must stay in the log');
+        self::assertStringContainsString('href="/ui/settings/sync"', $body);
     }
 
     public function testConnectRefusesATicketSystemThatIsNotJira(): void

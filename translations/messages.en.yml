@@ -2,7 +2,10 @@
 # strings (this app's convention). Without this file every id counts as a
 # 'missing message' for locale en in the profiler / debug:translation,
 # burying genuinely missing translations in noise.
+"%ticketSystem% could not be reached to start the authorization. Please try again later.": "%ticketSystem% could not be reached to start the authorization. Please try again later."
+"Back to Settings": "Back to Settings"
 "Duration must be greater than 0!": "Duration must be greater than 0!"
+"Jira connection": "Jira connection"
 "You need to login.": "You need to login."
 "%num% entries have been added": "%num% entries have been added"
 "The configuration has been successfully saved.": "The configuration has been successfully saved."

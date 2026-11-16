@@ -1,4 +1,7 @@
+"%ticketSystem% could not be reached to start the authorization. Please try again later.": "Не удалось связаться с %ticketSystem%, чтобы начать авторизацию. Повторите попытку позже."
+"Back to Settings": "Назад к настройкам"
 "Duration must be greater than 0!": "Длительность должна быть больше 0."
+"Jira connection": "Подключение к Jira"
 "You need to login.": "Необходимо войти в систему."
 "%num% entries have been added": "Добавлено записей: %num%."
 "The configuration has been successfully saved.": "Конфигурация успешно сохранена."
