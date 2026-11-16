@@ -178,8 +178,22 @@ Jira sync uses per-user OAuth tokens stored (encrypted) in the
 
 - **401 / "Jira authentication required":** the stored token is missing,
   expired, or was revoked in Jira. The API answers with a JSON 401 containing a
-  `redirect_url` ([`src/EventSubscriber/ExceptionSubscriber.php`](../src/EventSubscriber/ExceptionSubscriber.php))
-  — following it re-runs the OAuth flow (callback route: `/jiraoauthcallback`).
+  `redirect_url` ([`src/EventSubscriber/ExceptionSubscriber.php`](../src/EventSubscriber/ExceptionSubscriber.php)).
+  For Jira Server/Data Center (OAuth 1.0a) that URL is the connect route
+  `/jira/connect/{ticketSystem}`, which a user also reaches from
+  *Settings → Synchronization* or the notice after saving an entry. The connect
+  route fetches a request token, keeps it in the user's session and redirects
+  to Jira; the callback (`/jiraoauthcallback`) accepts only that token, once.
+  Any other token gets a page with a link that starts the authorization again
+  and an info log line ("Jira OAuth callback refused"); the usual causes are a
+  session that expired while the user was on Jira's login page, or a second
+  click on Connect.
+  For OAuth 1.0a a 401 does not touch the stored token, and neither does
+  denying the authorization in Jira: only the callback replaces it, after the
+  user approved, so a token Jira refused once keeps working once Jira accepts
+  it again. For Jira Cloud (OAuth 2.0) `redirect_url` is the Atlassian
+  authorize URL, and a refresh that Atlassian rejects clears the stored tokens
+  ([`JiraCloudApiService::refreshAccessToken()`](../src/Service/Integration/Jira/JiraCloudApiService.php)).
 - **Sync silently skipped for a user:** `checkUserTicketSystem()`
   ([`src/Service/Integration/Jira/JiraAuthenticationService.php`](../src/Service/Integration/Jira/JiraAuthenticationService.php))
   returns false when the user has no token row or has set the

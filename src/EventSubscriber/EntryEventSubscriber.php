@@ -19,6 +19,7 @@ use App\Enum\TicketSystemType;
 use App\Enum\WriteOutcome;
 use App\Event\EntryEvent;
 use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Sync\WorklogWriteService;
 use App\Service\Util\TicketService;
@@ -82,7 +83,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // Check if automatic JIRA sync is needed
         if ($this->shouldAutoSync($entry)) {
             try {
-                $this->syncWorklog($entry, $this->getPreviousEntry($entryEvent));
+                $this->syncWorklog($entryEvent, $entry, $this->getPreviousEntry($entryEvent));
                 $this->logger?->info('Entry auto-synced to JIRA');
             } catch (Exception $e) {
                 $this->logger?->error('Auto-sync to JIRA failed', ['exception' => $e]);
@@ -119,7 +120,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // so entries that were never synced are caught up on their next save.
         if ($this->shouldAutoSync($entry)) {
             try {
-                $this->syncWorklog($entry, $previousEntry);
+                $this->syncWorklog($entryEvent, $entry, $previousEntry);
                 $this->logger?->info('JIRA worklog updated');
             } catch (Exception $e) {
                 // Error, not warning: see onEntryDeleted — a warning is swallowed by
@@ -180,7 +181,7 @@ class EntryEventSubscriber implements EventSubscriberInterface
         return $previous instanceof Entry ? $previous : null;
     }
 
-    private function syncWorklog(Entry $entry, ?Entry $previousEntry = null): void
+    private function syncWorklog(EntryEvent $entryEvent, Entry $entry, ?Entry $previousEntry = null): void
     {
         $user = $entry->getUser();
         $project = $entry->getProject();
@@ -193,11 +194,13 @@ class EntryEventSubscriber implements EventSubscriberInterface
         if ($project->hasInternalJiraProjectKey()) {
             $internalTicketSystem = $this->findInternalTicketSystem($project);
             if ($internalTicketSystem instanceof TicketSystem && $this->canBookOn($internalTicketSystem)) {
-                $this->remapEntryToInternalTicket($entry, $project, $user, $internalTicketSystem);
-                // With the previous snapshot, a changed ticket moves the worklog
-                // off the old internal issue instead of pushing its id to the
-                // new one (#936).
-                $this->bookWorklog($entry, $previousEntry, $user, $internalTicketSystem);
+                $this->noticeUnauthorized($entryEvent, $internalTicketSystem, function () use ($entry, $previousEntry, $project, $user, $internalTicketSystem): void {
+                    $this->remapEntryToInternalTicket($entry, $project, $user, $internalTicketSystem);
+                    // With the previous snapshot, a changed ticket moves the worklog
+                    // off the old internal issue instead of pushing its id to the
+                    // new one (#936).
+                    $this->bookWorklog($entry, $previousEntry, $user, $internalTicketSystem);
+                });
             }
         }
 
@@ -206,7 +209,27 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // the own system usually has booking disabled).
         $ownTicketSystem = $project->getTicketSystem();
         if ($ownTicketSystem instanceof TicketSystem && $this->canBookOn($ownTicketSystem)) {
-            $this->bookWorklog($entry, $previousEntry, $user, $ownTicketSystem);
+            $this->noticeUnauthorized($entryEvent, $ownTicketSystem, function () use ($entry, $previousEntry, $user, $ownTicketSystem): void {
+                $this->bookWorklog($entry, $previousEntry, $user, $ownTicketSystem);
+            });
+        }
+    }
+
+    /**
+     * Runs a Jira call and, when Jira refuses the user's token, records the
+     * ticket system on the event so the save response can ask the user to
+     * connect it (#911). The exception still propagates to be logged.
+     *
+     * @param callable(): void $jiraCall
+     */
+    private function noticeUnauthorized(EntryEvent $entryEvent, TicketSystem $ticketSystem, callable $jiraCall): void
+    {
+        try {
+            $jiraCall();
+        } catch (JiraApiUnauthorizedException $jiraApiUnauthorizedException) {
+            $entryEvent->requireJiraAuthorization($ticketSystem);
+
+            throw $jiraApiUnauthorizedException;
         }
     }
 

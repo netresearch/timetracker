@@ -747,5 +747,17 @@
   "worklog_sort_label": "Сортировка",
   "worklog_sort_time": "Время",
   "worklog_sort_context": "Клиент · проект",
-  "worklog_col_day_activity": "День · Деятельность"
+  "worklog_col_day_activity": "День · Деятельность",
+  "jira_auth_notice": "Запись сохранена, но её worklog не попал в {ticketSystem}: TimeTracker не авторизован в Jira для вашей учётной записи.",
+  "jira_auth_connect": "Авторизовать TimeTracker в {ticketSystem}",
+  "jira_auth_dismiss": "Скрыть",
+  "jira_auth_required": "Jira требует вашей авторизации. Подключите Jira в разделе Настройки → Синхронизация.",
+  "jira_connections_title": "Подключение к Jira",
+  "jira_connections_intro": "TimeTracker вносит ваши worklog в Jira от вашего имени. Если Jira перестанет принимать TimeTracker, worklog не будут поступать, пока вы не подключитесь заново.",
+  "jira_connections_connected": "Авторизация Jira сохранена.",
+  "jira_connections_not_connected": "Не подключено.",
+  "jira_connections_connect": "Подключить Jira",
+  "jira_connections_reconnect": "Переподключить Jira",
+  "jira_connections_none": "Ни одна система тикетов Jira не вносит worklog.",
+  "jira_connections_error": "Не удалось загрузить подключения к Jira."
 }

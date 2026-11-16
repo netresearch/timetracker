@@ -319,8 +319,10 @@ export interface InlineGridEditConfig<R extends object> {
   /** Called right after a cell commits, so the host can derive sibling draft
    *  fields (e.g. a ticket → project/customer mapping). */
   onCommit?: (id: number, colKey: string, value: FormValues[string]) => void
-  /** Called after a successful row save (e.g. a toast). */
-  onSaved?: () => void
+  /** Called after a successful row save (e.g. a toast), with the row's id as
+   *  `saveRow` resolved it (the persisted id), else the row's own id. Several
+   *  rows can save at once, so a host that keeps per-save state keys it by id. */
+  onSaved?: (rowId: number) => void
   /** Map a save error to a per-row message. Defaults to the generic load error. */
   saveErrorMessage?: (error: unknown) => string
   /** The column keys whose draft value is missing/invalid (empty array = the row
@@ -852,7 +854,7 @@ export function createInlineGridEdit<R extends object>(config: InlineGridEditCon
     if (drafts[id] !== undefined && JSON.stringify({ ...drafts[id] }) === sentJson) {
       clearDraftState(id)
     }
-    config.onSaved?.()
+    config.onSaved?.(typeof persistedId === 'number' ? persistedId : id)
     if (resume && typeof persistedId === 'number' && persistedId !== id) {
       resumeEditAfterRekey(id, persistedId)
     }

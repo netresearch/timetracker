@@ -457,10 +457,18 @@ projects:
   old ticket is cleaned up. Sync runs in the background: your entry always
   saves in TimeTracker even if Jira is unreachable.
 - **Authorization is per user and per ticket system.** TimeTracker acts on
-  your behalf via OAuth: the first time it needs access it directs you to the
-  Jira *authorize* page ("Please authorize: …" with a link). After you approve
-  there, Jira sends you back to TimeTracker, the token is stored (encrypted),
-  and your most recent entries are synced.
+  your behalf via OAuth. Connect under *Settings → Synchronization → Jira
+  connection* (**Connect Jira**, or **Reconnect Jira** once a token is stored).
+  If Jira refuses your token when you save an entry, the entry is still saved
+  and the Worklog shows a notice with a link to authorize TimeTracker in that
+  Jira. Either way you approve on the Jira *authorize* page, Jira sends you
+  back to TimeTracker, the token is stored (encrypted), and your most recent
+  entries are synced. On Jira Server/Data Center your previous token stays in
+  place until you approve; denying the request in Jira leaves it as it is, and
+  denying without a token stored switches the sync to that ticket system off
+  until you connect. On Jira Cloud, a token refresh that Atlassian rejects
+  (HTTP 400, 401 or 403) removes the stored tokens; reconnect from the
+  settings then.
 - **Ticket links:** ticket numbers in the Worklog link straight into the
   ticket system.
 - Administrators can additionally re-push pending worklogs and sync a

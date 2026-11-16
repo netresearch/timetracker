@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Service\Integration\Jira;
 
+use App\DTO\Jira\JiraAuthorizationRequest;
 use App\DTO\Jira\JiraIssueKeySearchResult;
 use App\Entity\TicketSystem;
 use App\Entity\User;
@@ -258,16 +259,14 @@ class JiraCloudApiService extends JiraOAuthApiService
     }
 
     /**
-     * Builds the 3LO authorize URL and throws the redirect exception the
-     * frontend turns into a "Please authorize" link.
+     * Builds the 3LO authorize URL; the ticket system rides in `state`.
      *
-     * @throws JiraApiUnauthorizedException
      * @throws JiraApiException
      */
     #[Override]
-    protected function throwUnauthorizedRedirect(?Throwable $throwable = null): never
+    public function getAuthorizationUrl(): string
     {
-        $authorizeUrl = static::AUTH_BASE_URL . '/authorize?' . http_build_query([
+        return static::AUTH_BASE_URL . '/authorize?' . http_build_query([
             'audience' => 'api.atlassian.com',
             'client_id' => $this->getOauth2ClientId(),
             'scope' => static::SCOPES,
@@ -276,6 +275,29 @@ class JiraCloudApiService extends JiraOAuthApiService
             'response_type' => 'code',
             'prompt' => 'consent',
         ]);
+    }
+
+    /**
+     * The 3LO flow carries no request token: `state` binds it to the user.
+     *
+     * @throws JiraApiException
+     */
+    #[Override]
+    public function createAuthorizationRequest(): JiraAuthorizationRequest
+    {
+        return new JiraAuthorizationRequest($this->getAuthorizationUrl());
+    }
+
+    /**
+     * Throws the redirect exception carrying the 3LO authorize URL.
+     *
+     * @throws JiraApiUnauthorizedException
+     * @throws JiraApiException
+     */
+    #[Override]
+    protected function throwUnauthorizedRedirect(?Throwable $throwable = null): never
+    {
+        $authorizeUrl = $this->getAuthorizationUrl();
 
         $message = '401 - Unauthorized. Please authorize: ' . $authorizeUrl;
         throw new JiraApiUnauthorizedException($message, 401, $authorizeUrl, $throwable);

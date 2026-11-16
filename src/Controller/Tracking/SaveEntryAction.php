@@ -14,6 +14,7 @@ use App\Entity\Activity;
 use App\Entity\Customer;
 use App\Entity\Entry;
 use App\Entity\Project;
+use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\EntrySource;
 use App\Event\EntryEvent;
@@ -166,14 +167,14 @@ final class SaveEntryAction extends BaseTrackingController
         }
 
         try {
-            $this->persistEntry($entry, $isNewEntry, $previousEntry);
+            $unauthorizedTicketSystems = $this->persistEntry($entry, $isNewEntry, $previousEntry);
 
             // v4 parity: recalculate the day-break/pause/overlap rendering
             // classes of the affected day(s)
             $this->recalculateDayClasses($entry, $previousEntry, $user);
 
             // Return JSON response matching test expectations
-            return $this->buildEntryResponse($entry, $entrySaveDto);
+            return $this->buildEntryResponse($entry, $entrySaveDto, $unauthorizedTicketSystems);
         } catch (Throwable $throwable) {
             // Log the detail server-side; never leak a raw exception message (which
             // can carry SQL, paths or internals) into the user-facing API response.
@@ -407,20 +408,27 @@ final class SaveEntryAction extends BaseTrackingController
         return null;
     }
 
-    private function persistEntry(Entry $entry, bool $isNewEntry, ?Entry $previousEntry): void
+    /**
+     * @return list<TicketSystem> the Jira ticket systems that refused the user's token during the sync
+     */
+    private function persistEntry(Entry $entry, bool $isNewEntry, ?Entry $previousEntry): array
     {
         $entityManager = $this->managerRegistry->getManager();
         $entityManager->persist($entry);
         $entityManager->flush();
 
         // Dispatch entry event for Jira sync
-        if ($this->eventDispatcher instanceof EventDispatcherInterface) {
-            $eventName = $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED;
-            $this->eventDispatcher->dispatch(
-                new EntryEvent($entry, ['previous' => $previousEntry]),
-                $eventName,
-            );
+        if (!$this->eventDispatcher instanceof EventDispatcherInterface) {
+            return [];
         }
+
+        $entryEvent = new EntryEvent($entry, ['previous' => $previousEntry]);
+        $this->eventDispatcher->dispatch(
+            $entryEvent,
+            $isNewEntry ? EntryEvent::CREATED : EntryEvent::UPDATED,
+        );
+
+        return $entryEvent->getTicketSystemsNeedingAuthorization();
     }
 
     private function recalculateDayClasses(Entry $entry, ?Entry $previousEntry, User $user): void
@@ -440,7 +448,10 @@ final class SaveEntryAction extends BaseTrackingController
         }
     }
 
-    private function buildEntryResponse(Entry $entry, EntrySaveDto $entrySaveDto): JsonResponse|Error
+    /**
+     * @param list<TicketSystem> $unauthorizedTicketSystems
+     */
+    private function buildEntryResponse(Entry $entry, EntrySaveDto $entrySaveDto, array $unauthorizedTicketSystems = []): JsonResponse|Error
     {
         $day = $entry->getDay();
         $start = $entry->getStart();
@@ -488,6 +499,20 @@ final class SaveEntryAction extends BaseTrackingController
 
         if ('' !== $entrySaveDto->description && '0' !== $entrySaveDto->description) {
             $data['result']['description'] = $entry->getDescription();
+        }
+
+        // The entry is saved, but its worklog did not reach Jira because Jira
+        // refused the user's token (#911): tell the UI where to (re)connect.
+        // A sibling of `result`, which the UI writes into its cache as-is.
+        if ([] !== $unauthorizedTicketSystems) {
+            $data['jiraAuthorization'] = array_map(
+                fn (TicketSystem $ticketSystem): array => [
+                    'ticketSystemId' => $ticketSystem->getId(),
+                    'ticketSystemName' => $ticketSystem->getName(),
+                    'url' => $this->generateUrl('jiraConnect', ['ticketSystem' => $ticketSystem->getId()]),
+                ],
+                $unauthorizedTicketSystems,
+            );
         }
 
         return new JsonResponse($data);

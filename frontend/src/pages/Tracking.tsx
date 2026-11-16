@@ -8,7 +8,7 @@ import { createEffect, createMemo, createSignal, For, on, onCleanup, onMount, Sh
 import { Portal } from 'solid-js/web'
 
 import { apiErrorMessage, getJson, postForm, postJson, ValidationError } from '../api/client'
-import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, upsertSavedEntry, type EntrySummaryResponse, type NamedOption, type SavedEntryResult, type SummaryScope, type TrackingEntry } from '../api/queries'
+import { activitiesQuery, ENTRIES_KEY, trackingCustomersQuery, trackingEntriesQuery, trackingProjectsQuery, trackingTicketSystemsQuery, upsertSavedEntry, type EntrySummaryResponse, type NamedOption, type JiraAuthorizationNotice as JiraNotice, type SavedEntryResult, type SummaryScope, type TrackingEntry } from '../api/queries'
 import { appConfig, canBulkEnter } from '../config'
 import type { FieldDef, OptionLookup, OptionSource } from '../admin/types'
 import { num, str } from '../lib/coerce'
@@ -27,6 +27,7 @@ import WorklogViewSwitch from '../components/WorklogViewSwitch'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
+import { JiraAuthorizationNotice, jiraNoticeAnnouncement, mergeJiraNotices } from '../components/JiraAuthorizationNotice'
 import { PageDialog } from '../components/PageDialog'
 import { sessionExpired } from '../lib/session'
 import { updateWorktime } from '../header'
@@ -612,6 +613,22 @@ export default function Tracking() {
   }
   // Assertive in-page error for delete/prolong/info failures (replaces window.alert).
   const [pageError, setPageError] = createSignal('')
+  // Saved, but Jira refused the user's token (#911): stays until dismissed.
+  const [jiraNotices, setJiraNotices] = createSignal<JiraNotice[]>([])
+  // The refusal text of each row save, keyed by the saved row's id, until onSaved
+  // confirms that save: announced in place of "Entry saved" (it starts with the
+  // same news) through the one live region above, so the two messages do not
+  // compete. Keyed, because two rows can save at once (leave row A, row B
+  // auto-saves while A's refetch is pending); each save writes its own entry.
+  const saveJiraAnnouncements = new Map<number, string>()
+  // The notice unmounts on dismiss; hand focus to the grid's current cell (as
+  // header.ts does), else the main region, rather than letting it fall to <body>.
+  function dismissJiraNotices(): void {
+    setJiraNotices([])
+    const target = document.querySelector<HTMLElement>('.tracking [role="grid"] [tabindex="0"]')
+      ?? document.getElementById('main-content')
+    target?.focus()
+  }
 
   // Visible, auto-dismissing save confirmation (mirrors AdminCrudShell.flashNotice):
   // the polite live region above tells AT users; sighted users get a brief toast.
@@ -1044,6 +1061,8 @@ export default function Tracking() {
       // issue #408) would leave the entry in neither newRows nor entries.data and the
       // user's just-saved work would vanish.
       upsertSavedEntry(queryClient, saved.result)
+      setJiraNotices((shown) => mergeJiraNotices(shown, saved.jiraAuthorization))
+      saveJiraAnnouncements.set(saved.result.id, jiraNoticeAnnouncement(saved.jiraAuthorization))
       if (isNew) {
         setNewRows((list) => list.filter((row) => num(row.id) !== num(entry.id)))
       }
@@ -1059,7 +1078,12 @@ export default function Tracking() {
     onCommit: handleCommit,
     // Confirm every successful save (auto, force, or row-leave): announce to AT
     // users via the live region AND flash a brief visible toast for sighted users.
-    onSaved: () => { announce(m.tracking_saved()); flashNotice(m.tracking_saved()) },
+    onSaved: (rowId) => {
+      const refused = saveJiraAnnouncements.get(rowId) ?? ''
+      saveJiraAnnouncements.delete(rowId)
+      announce(refused !== '' ? refused : m.tracking_saved())
+      flashNotice(m.tracking_saved())
+    },
     saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
     // Required for a bookable entry — the row auto-saves once all are valid.
     invalidFields: (draft) => {
@@ -1422,9 +1446,11 @@ export default function Tracking() {
         extTicket: extTicketFor(merged.ticket, base),
       }))
       upsertSavedEntry(queryClient, saved.result) // keep the prolonged row if the refetch fails
+      setJiraNotices((shown) => mergeJiraNotices(shown, saved.jiraAuthorization))
       editor.takeDraft(num(base.id)) // the draft is now persisted — clear it
       await refreshWorklog()
-      announce(m.tracking_prolonged())
+      const refused = jiraNoticeAnnouncement(saved.jiraAuthorization)
+      announce(refused !== '' ? `${m.tracking_prolonged()}. ${refused}` : m.tracking_prolonged())
     } catch (caught) {
       setPageError(apiErrorMessage(caught, m.app_load_error()))
     }
@@ -2247,6 +2273,7 @@ export default function Tracking() {
       <Show when={pageError() !== ''}>
         <p class="form-status is-error" role="alert">{pageError()}</p>
       </Show>
+      <JiraAuthorizationNotice notices={jiraNotices()} onDismiss={dismissJiraNotices} />
       {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue).
           Purely visual: aria-hidden so AT users aren't told twice — the polite
           live region above already announces the save. */}

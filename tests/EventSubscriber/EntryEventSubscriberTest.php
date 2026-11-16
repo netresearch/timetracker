@@ -20,6 +20,7 @@ use App\Enum\WriteOutcome;
 use App\Event\EntryEvent;
 use App\EventSubscriber\EntryEventSubscriber;
 use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Repository\TicketSystemRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
@@ -411,6 +412,49 @@ final class EntryEventSubscriberTest extends TestCase
 
         $event = new EntryEvent($entry);
         $this->subscriber->onEntryCreated($event);
+    }
+
+    public function testAJiraThatRefusesTheTokenOnCreateIsReportedOnTheEvent(): void
+    {
+        [$entry, , $ticketSystem] = $this->createSyncableEntry();
+
+        $this->jiraOAuthApiFactory->method('create')->willReturn($this->jiraOAuthApiService);
+        $this->worklogWriteService->method('push')
+            ->willThrowException(new JiraApiUnauthorizedException('401 - Unauthorized', 401, 'https://jira.example.com/authorize'));
+        $this->logger->expects(self::once())->method('error')->with('Auto-sync to JIRA failed');
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryCreated($event);
+
+        self::assertSame([$ticketSystem], $event->getTicketSystemsNeedingAuthorization());
+    }
+
+    public function testAJiraThatRefusesTheTokenOnUpdateIsReportedOnTheEvent(): void
+    {
+        [$entry, , $ticketSystem] = $this->createSyncableEntry(synced: true, worklogId: 12345);
+
+        $this->jiraOAuthApiFactory->method('create')->willReturn($this->jiraOAuthApiService);
+        $this->worklogWriteService->method('push')
+            ->willThrowException(new JiraApiUnauthorizedException('401 - Unauthorized', 401, 'https://jira.example.com/authorize'));
+        $this->logger->expects(self::once())->method('error')->with('JIRA worklog update failed');
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryUpdated($event);
+
+        self::assertSame([$ticketSystem], $event->getTicketSystemsNeedingAuthorization());
+    }
+
+    public function testAnotherJiraFailureAsksForNoAuthorization(): void
+    {
+        [$entry] = $this->createSyncableEntry();
+
+        $this->jiraOAuthApiFactory->method('create')->willReturn($this->jiraOAuthApiService);
+        $this->worklogWriteService->method('push')->willThrowException(new JiraApiException('Jira API error', 500));
+
+        $event = new EntryEvent($entry);
+        $this->subscriber->onEntryCreated($event);
+
+        self::assertSame([], $event->getTicketSystemsNeedingAuthorization());
     }
 
     public function testOnEntryUpdatedSyncsWhenAutoSyncConditionsMet(): void

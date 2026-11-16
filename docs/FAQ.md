@@ -118,11 +118,12 @@ ticket. A failed sync never blocks saving in TimeTracker.
 
 ### How do I connect my Jira account?
 
-There is no manual "connect" page. TimeTracker uses a per-user OAuth token per
-ticket system: the first time it needs to act on your behalf, it hands you a
-link to Jira's *authorize* page ("Please authorize: …"). Approve there and
-Jira returns you to TimeTracker — the token is stored (encrypted) and your
-most recent entries are synced.
+Under *Settings → Synchronization → Jira connection*, click **Connect Jira**
+(or **Reconnect Jira**) for the ticket system. TimeTracker uses a per-user
+OAuth token per ticket system; the link takes you to Jira's *authorize* page.
+Approve there and Jira returns you to TimeTracker — the token is stored
+(encrypted) and your most recent entries are synced. When Jira refuses your
+token while you save an entry, the Worklog shows the same link in a notice.
 
 ### Why isn't my time showing up in Jira?
 

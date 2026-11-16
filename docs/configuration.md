@@ -114,9 +114,10 @@ plaintext tokens with `bin/console tt:encrypt-jira-tokens`
 4. In *Administration → Ticket systems*, set type `JIRA`, deployment type
    `CLOUD`, the site URL (`https://<site>.atlassian.net`), and the app's
    **Client ID** / **Client Secret**.
-5. Each user authorizes once via the "Please authorize" link on their first
-   sync; the Atlassian `cloudId` is resolved and stored automatically, access
-   tokens refresh themselves (rotating refresh tokens).
+5. Each user authorizes once via *Settings → Synchronization → Connect Jira*
+   (or the notice shown when a save could not reach Jira); the Atlassian
+   `cloudId` is resolved and stored automatically, access tokens refresh
+   themselves (rotating refresh tokens).
 
 ### Tracking external tickets in an internal Jira project
 

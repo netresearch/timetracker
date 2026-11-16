@@ -871,6 +871,134 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('keeps a Jira authorization notice with the connect link after a save Jira refused (#911)', async () => {
+    mockApi()
+    postJson.mockResolvedValue({
+      result: {
+        id: 1, date: '2026-06-16', start: '09:00', end: '10:30', user: 1,
+        customer: 1, project: 4, activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'XYZ-9',
+      },
+      jiraAuthorization: [{ ticketSystemId: 3, ticketSystemName: 'Netresearch Jira', url: '/jira/connect/3' }],
+    })
+    const { getByRole, findByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'xyz-9' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+
+    const link = await findByRole('link', { name: 'Authorize TimeTracker in Netresearch Jira' })
+    expect(link.getAttribute('href')).toBe('/jira/connect/3')
+
+    // One message through the page's single polite live region, which stays
+    // mounted: a region inserted already filled is often not read, and a second
+    // region competing with "Entry saved" may be dropped.
+    const liveRegions = container.querySelectorAll('[role="status"], [aria-live]')
+    expect(liveRegions).toHaveLength(1)
+    await waitFor(() => expect(liveRegions[0]?.textContent).toContain('did not reach Netresearch Jira'))
+
+    // Dismissing hands focus to the grid, not to <body>.
+    const dismiss = getByRole('button', { name: 'Dismiss' })
+    dismiss.focus() // a real click focuses the button; fireEvent.click does not
+    expect(document.activeElement).toBe(dismiss)
+    fireEvent.click(dismiss)
+    expect(document.activeElement).not.toBe(document.body)
+    expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull()
+
+    unmount()
+  })
+
+  it('announces the refusal after a prolong Jira refused (#911)', async () => {
+    mockApi()
+    postJson.mockResolvedValue({
+      result: { ...DEFAULT_ENTRY, date: '2026-06-16', end: '12:00' },
+      jiraAuthorization: [{ ticketSystemId: 3, ticketSystemName: 'Netresearch Jira', url: '/jira/connect/3' }],
+    })
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    fireEvent.click(getByRole('button', { name: 'Prolong' }))
+
+    const liveRegion = container.querySelector('[role="status"]')
+    await waitFor(() => expect(liveRegion?.textContent).toBe(
+      'End time set to now. Entry saved, but its worklog did not reach Netresearch Jira: TimeTracker is not authorized in Jira for your account.',
+    ))
+
+    unmount()
+  })
+
+  it('announces each row its own Jira result when two rows save at once (#911)', async () => {
+    const second = { ...DEFAULT_ENTRY, id: 2, start: '11:00', end: '12:00', ticket: 'DEF-2', description: 'Other' }
+    mockApiWith([{ entry: DEFAULT_ENTRY }, { entry: second }])
+    // Row 1's save is refused by Jira, row 2's is not.
+    postJson.mockImplementation((path: string, payload: Record<string, unknown>) => Promise.resolve(payload.id === 1
+      ? { result: { ...DEFAULT_ENTRY, date: '2026-06-16', ticket: 'XYZ-9' }, jiraAuthorization: [{ ticketSystemId: 3, ticketSystemName: 'Netresearch Jira', url: '/jira/connect/3' }] }
+      : { result: { ...second, date: '2026-06-16', ticket: 'XYZ-8' } }))
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'DEF-2' })).toBeInTheDocument())
+
+    // Hold every worklog refetch from here on, so row 1's save is still waiting
+    // for its refetch when row 2 saves.
+    let releaseRefetch: () => void = () => {}
+    const refetchGate = new Promise<void>((resolve) => { releaseRefetch = resolve })
+    const plainGetJson = getJson.getMockImplementation()
+    getJson.mockImplementation(async (path: string) => {
+      if (path.startsWith('/getData/days/')) {
+        await refetchGate
+      }
+
+      return plainGetJson?.(path)
+    })
+
+    // Every text the live region has shown: a MutationObserver runs once per batch,
+    // so collect the replaced values from the records and add the current text.
+    const liveRegion = container.querySelector('[role="status"]')!
+    const replaced: string[] = []
+    const collect = (records: MutationRecord[]): void => {
+      for (const record of records) {
+        if (record.type === 'characterData') {
+          replaced.push(record.oldValue ?? '')
+        }
+        for (const node of record.removedNodes) {
+          replaced.push(node.textContent ?? '')
+        }
+      }
+    }
+    const observer = new MutationObserver(collect)
+    observer.observe(liveRegion, { childList: true, characterData: true, characterDataOldValue: true, subtree: true })
+    const announced = (): string[] => [...replaced, liveRegion.textContent ?? ''].filter((text) => text !== '')
+
+    const first = container.querySelector<HTMLElement>('td[data-row-id="1"][data-col-key="ticket"]')!
+    first.focus()
+    fireEvent.keyDown(first, { key: 'Enter' })
+    const firstEditor = first.querySelector('input')!
+    fireEvent.input(firstEditor, { target: { value: 'xyz-9' } })
+    fireEvent.keyDown(firstEditor, { key: 'Enter' })
+    await waitFor(() => expect(saveCalls()).toHaveLength(1))
+
+    const secondCell = container.querySelector<HTMLElement>('td[data-row-id="2"][data-col-key="ticket"]')!
+    secondCell.focus()
+    fireEvent.keyDown(secondCell, { key: 'Enter' })
+    const secondEditor = secondCell.querySelector('input')!
+    fireEvent.input(secondEditor, { target: { value: 'xyz-8' } })
+    fireEvent.keyDown(secondEditor, { key: 'Enter' })
+    await waitFor(() => expect(saveCalls()).toHaveLength(2))
+
+    releaseRefetch()
+    await waitFor(() => {
+      collect(observer.takeRecords())
+      expect(announced()).toHaveLength(2)
+    })
+    observer.disconnect()
+
+    expect(announced().sort()).toEqual([
+      'Entry saved',
+      'Entry saved, but its worklog did not reach Netresearch Jira: TimeTracker is not authorized in Jira for your account.',
+    ])
+
+    unmount()
+  })
+
   it('deletes an entry via /tracking/delete after confirmation', async () => {
     mockApi()
     postJson.mockResolvedValue({ success: true })
