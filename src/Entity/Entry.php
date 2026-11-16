@@ -759,7 +759,7 @@ class Entry extends Base
         return [
             'fields' => [
                 'project' => [
-                    'key' => (string) $project->getInternalJiraProjectKey(),
+                    'key' => $project->getInternalJiraProjectKeys()[0] ?? '',
                 ],
                 'summary' => $this->getTicket(),
                 'description' => $this->getTicketSystemIssueLink(),

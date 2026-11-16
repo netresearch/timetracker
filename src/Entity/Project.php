@@ -683,13 +683,13 @@ class Project extends Base
      */
     public function hasInternalJiraProjectKey(): bool
     {
-        // A project mirrors to an internal Jira only when it has a non-blank key
-        // AND a real (positive) internal ticket-system id. Trimming guards against
-        // a whitespace-only key, and the > 0 check rejects a "0"/blank system id —
-        // either of which would otherwise divert delete to a null internal system
-        // and orphan the worklog booked on the project's own ticket system.
-        return null !== $this->internalJiraProjectKey
-            && '' !== trim($this->internalJiraProjectKey)
+        // A project mirrors to an internal Jira only when it has at least one
+        // usable key AND a real (positive) internal ticket-system id. A blank or
+        // separator-only key (" , ") yields no key, and the > 0 check rejects a
+        // "0"/blank system id — either of which would otherwise divert delete to
+        // a null internal system and orphan the worklog booked on the project's
+        // own ticket system, or send "project in ()" to Jira.
+        return [] !== $this->getInternalJiraProjectKeys()
             && (int) $this->internalJiraTicketSystem > 0;
     }
 
@@ -702,19 +702,33 @@ class Project extends Base
             return false;
         }
 
-        $internalKey = $this->getInternalJiraProjectKey();
-        if (null === $internalKey) {
-            return false;
+        // Tickets are upper-cased on save while the key is stored as typed, so
+        // compare case-insensitively.
+        return in_array(strtoupper($jiraId), $this->getInternalJiraProjectKeys(), true);
+    }
+
+    /**
+     * The internal Jira project keys, from the comma-separated setting:
+     * trimmed, upper-cased, without empty or duplicate entries, in the order
+     * configured. The first one receives newly created mirror issues.
+     *
+     * @return list<string>
+     */
+    public function getInternalJiraProjectKeys(): array
+    {
+        if (null === $this->internalJiraProjectKey) {
+            return [];
         }
 
-        // Support comma-separated list of project keys. Tickets are upper-cased
-        // on save while the key is stored as typed, so compare case-insensitively.
-        $projectKeys = array_map(
-            static fn (string $key): string => strtoupper(trim($key)),
-            explode(',', $internalKey),
-        );
+        $keys = [];
+        foreach (explode(',', $this->internalJiraProjectKey) as $key) {
+            $key = strtoupper(trim($key));
+            if ('' !== $key && !in_array($key, $keys, true)) {
+                $keys[] = $key;
+            }
+        }
 
-        return in_array(strtoupper($jiraId), $projectKeys, true);
+        return $keys;
     }
 
     /**
