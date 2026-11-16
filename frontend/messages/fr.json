@@ -748,7 +748,7 @@
   "worklog_sort_time": "Heure",
   "worklog_sort_context": "Client · projet",
   "worklog_col_day_activity": "Jour · Activité",
-  "jira_auth_notice": "Saisie enregistrée, mais son worklog n'a pas atteint {ticketSystem} : Jira n'accepte plus TimeTracker pour votre compte.",
+  "jira_auth_notice": "Saisie enregistrée, mais son worklog n'a pas atteint {ticketSystem} : TimeTracker n'est pas autorisé dans Jira pour votre compte.",
   "jira_auth_connect": "Autoriser TimeTracker dans {ticketSystem}",
   "jira_auth_dismiss": "Masquer",
   "jira_auth_required": "Jira a besoin de votre autorisation. Connectez Jira dans Paramètres → Synchronisation.",

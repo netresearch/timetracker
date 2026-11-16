@@ -27,7 +27,7 @@ import WorklogViewSwitch from '../components/WorklogViewSwitch'
 import { CalendarIcon, ContinueIcon, DiskIcon, DownloadIcon, InfoIcon, KebabIcon, PlusIcon, ProlongIcon, RefreshIcon, ResetIcon, ToolsIcon, TrashIcon } from '../lib/icons'
 import { BulkEntryForm } from '../components/BulkEntryForm'
 import { EntrySourceBadge } from '../components/EntrySourceBadge'
-import { JiraAuthorizationNotice, mergeJiraNotices } from '../components/JiraAuthorizationNotice'
+import { JiraAuthorizationNotice, jiraNoticeAnnouncement, mergeJiraNotices } from '../components/JiraAuthorizationNotice'
 import { PageDialog } from '../components/PageDialog'
 import { sessionExpired } from '../lib/session'
 import { updateWorktime } from '../header'
@@ -615,6 +615,18 @@ export default function Tracking() {
   const [pageError, setPageError] = createSignal('')
   // Saved, but Jira refused the user's token (#911): stays until dismissed.
   const [jiraNotices, setJiraNotices] = createSignal<JiraNotice[]>([])
+  // The refusal text of the save that onSaved is about to confirm: announced in
+  // place of "Entry saved" (it starts with the same news) through the one live
+  // region above, so the two messages do not compete.
+  let lastSaveJiraAnnouncement = ''
+  // The notice unmounts on dismiss; hand focus to the grid's current cell (as
+  // header.ts does), else the main region, rather than letting it fall to <body>.
+  function dismissJiraNotices(): void {
+    setJiraNotices([])
+    const target = document.querySelector<HTMLElement>('.tracking [role="grid"] [tabindex="0"]')
+      ?? document.getElementById('main-content')
+    target?.focus()
+  }
 
   // Visible, auto-dismissing save confirmation (mirrors AdminCrudShell.flashNotice):
   // the polite live region above tells AT users; sighted users get a brief toast.
@@ -1048,6 +1060,7 @@ export default function Tracking() {
       // user's just-saved work would vanish.
       upsertSavedEntry(queryClient, saved.result)
       setJiraNotices((shown) => mergeJiraNotices(shown, saved.jiraAuthorization))
+      lastSaveJiraAnnouncement = jiraNoticeAnnouncement(saved.jiraAuthorization)
       if (isNew) {
         setNewRows((list) => list.filter((row) => num(row.id) !== num(entry.id)))
       }
@@ -1063,7 +1076,11 @@ export default function Tracking() {
     onCommit: handleCommit,
     // Confirm every successful save (auto, force, or row-leave): announce to AT
     // users via the live region AND flash a brief visible toast for sighted users.
-    onSaved: () => { announce(m.tracking_saved()); flashNotice(m.tracking_saved()) },
+    onSaved: () => {
+      announce(lastSaveJiraAnnouncement !== '' ? lastSaveJiraAnnouncement : m.tracking_saved())
+      lastSaveJiraAnnouncement = ''
+      flashNotice(m.tracking_saved())
+    },
     saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
     // Required for a bookable entry — the row auto-saves once all are valid.
     invalidFields: (draft) => {
@@ -1429,7 +1446,8 @@ export default function Tracking() {
       setJiraNotices((shown) => mergeJiraNotices(shown, saved.jiraAuthorization))
       editor.takeDraft(num(base.id)) // the draft is now persisted — clear it
       await refreshWorklog()
-      announce(m.tracking_prolonged())
+      const refused = jiraNoticeAnnouncement(saved.jiraAuthorization)
+      announce(refused !== '' ? `${m.tracking_prolonged()}. ${refused}` : m.tracking_prolonged())
     } catch (caught) {
       setPageError(apiErrorMessage(caught, m.app_load_error()))
     }
@@ -2252,7 +2270,7 @@ export default function Tracking() {
       <Show when={pageError() !== ''}>
         <p class="form-status is-error" role="alert">{pageError()}</p>
       </Show>
-      <JiraAuthorizationNotice notices={jiraNotices()} onDismiss={() => setJiraNotices([])} />
+      <JiraAuthorizationNotice notices={jiraNotices()} onDismiss={dismissJiraNotices} />
       {/* Visible, auto-dismissing save confirmation (reuses the admin .is-ok cue).
           Purely visual: aria-hidden so AT users aren't told twice — the polite
           live region above already announces the save. */}

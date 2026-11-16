@@ -748,7 +748,7 @@
   "worklog_sort_time": "Time",
   "worklog_sort_context": "Customer · project",
   "worklog_col_day_activity": "Day · Activity",
-  "jira_auth_notice": "Entry saved, but its worklog did not reach {ticketSystem}: Jira no longer accepts TimeTracker for your account.",
+  "jira_auth_notice": "Entry saved, but its worklog did not reach {ticketSystem}: TimeTracker is not authorized in Jira for your account.",
   "jira_auth_connect": "Authorize TimeTracker in {ticketSystem}",
   "jira_auth_dismiss": "Dismiss",
   "jira_auth_required": "Jira needs your authorization. Connect Jira under Settings → Synchronization.",

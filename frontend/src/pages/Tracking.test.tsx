@@ -890,6 +890,21 @@ describe('Tracking (Worklog grid)', () => {
     const link = await findByRole('link', { name: 'Authorize TimeTracker in Netresearch Jira' })
     expect(link.getAttribute('href')).toBe('/jira/connect/3')
 
+    // One message through the page's single polite live region, which stays
+    // mounted: a region inserted already filled is often not read, and a second
+    // region competing with "Entry saved" may be dropped.
+    const liveRegions = container.querySelectorAll('[role="status"], [aria-live]')
+    expect(liveRegions).toHaveLength(1)
+    await waitFor(() => expect(liveRegions[0]?.textContent).toContain('did not reach Netresearch Jira'))
+
+    // Dismissing hands focus to the grid, not to <body>.
+    const dismiss = getByRole('button', { name: 'Dismiss' })
+    dismiss.focus() // a real click focuses the button; fireEvent.click does not
+    expect(document.activeElement).toBe(dismiss)
+    fireEvent.click(dismiss)
+    expect(document.activeElement).not.toBe(document.body)
+    expect(document.activeElement?.closest('[role="grid"]')).not.toBeNull()
+
     unmount()
   })
 

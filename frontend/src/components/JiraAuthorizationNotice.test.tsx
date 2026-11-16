@@ -8,26 +8,32 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
 import type { JiraAuthorizationNotice as Notice } from '../api/queries'
-import { JiraAuthorizationNotice, mergeJiraNotices } from './JiraAuthorizationNotice'
+import { JiraAuthorizationNotice, jiraNoticeAnnouncement, mergeJiraNotices } from './JiraAuthorizationNotice'
 
 const notice: Notice = { ticketSystemId: 3, ticketSystemName: 'Netresearch Jira', url: '/jira/connect/3' }
 
 afterEach(() => cleanup())
 
 describe('JiraAuthorizationNotice (#911)', () => {
-  it('announces the refusal and links to the connect route', () => {
-    render(() => <JiraAuthorizationNotice notices={[notice]} onDismiss={() => {}} />)
+  it('shows the refusal and links to the connect route', () => {
+    const { container } = render(() => <JiraAuthorizationNotice notices={[notice]} onDismiss={() => {}} />)
 
-    const status = screen.getByRole('status')
-    expect(status.textContent).toContain('did not reach Netresearch Jira')
+    expect(container.textContent).toContain('did not reach Netresearch Jira')
     const link = screen.getByRole('link', { name: 'Authorize TimeTracker in Netresearch Jira' })
     expect(link.getAttribute('href')).toBe('/jira/connect/3')
   })
 
-  it('renders nothing without notices', () => {
-    render(() => <JiraAuthorizationNotice notices={[]} onDismiss={() => {}} />)
+  it('is not a live region of its own (the page announces it)', () => {
+    render(() => <JiraAuthorizationNotice notices={[notice]} onDismiss={() => {}} />)
 
     expect(screen.queryByRole('status')).toBeNull()
+    expect(document.querySelector('[aria-live]')).toBeNull()
+  })
+
+  it('renders nothing without notices', () => {
+    const { container } = render(() => <JiraAuthorizationNotice notices={[]} onDismiss={() => {}} />)
+
+    expect(container.textContent).toBe('')
   })
 
   it('calls onDismiss from its dismiss button', () => {
@@ -43,6 +49,17 @@ describe('JiraAuthorizationNotice (#911)', () => {
     const { container } = render(() => <JiraAuthorizationNotice notices={[notice]} onDismiss={() => {}} />)
 
     expect(await axe(container)).toHaveNoViolations()
+  })
+})
+
+describe('jiraNoticeAnnouncement', () => {
+  it('is empty without notices and names each refusing system otherwise', () => {
+    const other: Notice = { ticketSystemId: 4, ticketSystemName: 'Customer Jira', url: '/jira/connect/4' }
+
+    expect(jiraNoticeAnnouncement([])).toBe('')
+    const text = jiraNoticeAnnouncement([notice, other])
+    expect(text).toContain('did not reach Netresearch Jira')
+    expect(text).toContain('did not reach Customer Jira')
   })
 })
 

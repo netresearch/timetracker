@@ -748,7 +748,7 @@
   "worklog_sort_time": "Время",
   "worklog_sort_context": "Клиент · проект",
   "worklog_col_day_activity": "День · Деятельность",
-  "jira_auth_notice": "Запись сохранена, но её worklog не попал в {ticketSystem}: Jira больше не принимает TimeTracker для вашей учётной записи.",
+  "jira_auth_notice": "Запись сохранена, но её worklog не попал в {ticketSystem}: TimeTracker не авторизован в Jira для вашей учётной записи.",
   "jira_auth_connect": "Авторизовать TimeTracker в {ticketSystem}",
   "jira_auth_dismiss": "Скрыть",
   "jira_auth_required": "Jira требует вашей авторизации. Подключите Jira в разделе Настройки → Синхронизация.",
