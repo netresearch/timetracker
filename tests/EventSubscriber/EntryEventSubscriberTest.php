@@ -941,6 +941,120 @@ final class EntryEventSubscriberTest extends TestCase
         self::assertSame('DHLSUP-123456', $entry->getInternalJiraTicketOriginalKey());
     }
 
+    /**
+     * An entry on a REAL project, so the internal-key match runs through
+     * Project::matchesInternalJiraProject() rather than a stubbed answer.
+     *
+     * @return array{Entry, User&Stub, TicketSystem&Stub}
+     */
+    private function createEntryOnRealInternalProject(string $ticket, string $internalKey): array
+    {
+        $internalTicketSystem = self::createStub(TicketSystem::class);
+        $internalTicketSystem->method('getBookTime')->willReturn(true);
+        $internalTicketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = new Project();
+        $project->setInternalJiraProjectKey($internalKey);
+        $project->setInternalJiraTicketSystem('9');
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $ticketSystemRepository = $this->createMock(TicketSystemRepository::class);
+        $ticketSystemRepository->method('find')->willReturn($internalTicketSystem);
+        $this->managerRegistry->method('getRepository')
+            ->willReturn($ticketSystemRepository);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket($ticket);
+
+        return [$entry, $user, $internalTicketSystem];
+    }
+
+    /**
+     * #898: a ticket that already lives in the internal Jira project (a
+     * continued mirrored entry that lost its ext. ticket, or an internal key
+     * typed by hand) is booked as is. Mirroring it would search for an issue
+     * whose summary is the internal key, find none, and create a second one.
+     */
+    public function testInternalTicketSystemBooksTicketOfInternalProjectWithoutRemap(): void
+    {
+        // comma-separated keys: the ticket's project is the second one
+        [$entry, $user, $internalTicketSystem] = $this->createEntryOnRealInternalProject('INT-10', 'OPSDHL,INT');
+
+        $this->jiraOAuthApiFactory->expects(self::atLeastOnce())
+            ->method('create')
+            ->with($user, $internalTicketSystem)
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::never())->method('searchTicket');
+        $this->jiraOAuthApiService->expects(self::never())->method('createTicket');
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, $internalTicketSystem)
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+
+        self::assertSame('INT-10', $entry->getTicket());
+        self::assertNull($entry->getInternalJiraTicketOriginalKey());
+    }
+
+    /**
+     * The safeguard only covers entries without an original key: a mirrored
+     * entry that keeps its ext. ticket is still resolved through it, as before.
+     */
+    public function testInternalTicketSystemStillResolvesMirroredEntryByOriginalKey(): void
+    {
+        [$entry] = $this->createEntryOnRealInternalProject('INT-10', 'INT');
+        $entry->setInternalJiraTicketOriginalKey('EXT-1');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->with('project = INT AND summary ~ "EXT-1"', ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => 'INT-10']]]);
+
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry));
+
+        self::assertSame('INT-10', $entry->getTicket());
+        self::assertSame('EXT-1', $entry->getInternalJiraTicketOriginalKey());
+    }
+
+    /**
+     * The safeguard compares the whole project key, not a prefix of it: a
+     * ticket of another project whose key merely starts with "INT" is still
+     * an external ticket and is mirrored.
+     */
+    public function testInternalTicketSystemStillRemapsTicketWhoseKeyOnlyStartsWithInternalKey(): void
+    {
+        [$entry] = $this->createEntryOnRealInternalProject('INTX-5', 'INT');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->with('project = INT AND summary ~ "INTX-5"', ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => 'INT-11']]]);
+
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+
+        self::assertSame('INT-11', $entry->getTicket());
+        self::assertSame('INTX-5', $entry->getInternalJiraTicketOriginalKey());
+    }
+
     public function testInternalTicketSystemMalformedJiraResponseIsCaughtAndLogged(): void
     {
         [$entry] = $this->createInternalProjectEntry('DHLSUP-8');

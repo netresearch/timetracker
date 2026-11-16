@@ -21,6 +21,7 @@ use App\Event\EntryEvent;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Sync\WorklogWriteService;
+use App\Service\Util\TicketService;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use JsonException;
@@ -33,6 +34,7 @@ use function in_array;
 use function is_array;
 use function is_object;
 use function is_string;
+use function preg_match;
 use function spl_object_id;
 use function sprintf;
 
@@ -395,6 +397,17 @@ class EntryEventSubscriber implements EventSubscriberInterface
         User $user,
         TicketSystem $internalTicketSystem,
     ): void {
+        // A ticket of the internal project itself (a continued mirrored entry
+        // without its ext. ticket, or an internal key typed by hand) is the
+        // mirror issue already: searching for it by summary finds nothing and
+        // would create a second internal issue named after it (#898).
+        if (!$entry->hasInternalJiraTicketOriginalKey()
+            && 1 === preg_match(TicketService::TICKET_REGEXP, $entry->getTicket(), $matches)
+            && $project->matchesInternalJiraProject($matches[1])
+        ) {
+            return;
+        }
+
         // when an already-mirrored entry is edited, the internal issue must
         // be looked up by the original external key
         $externalTicket = $entry->hasInternalJiraTicketOriginalKey()
