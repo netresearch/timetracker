@@ -210,11 +210,28 @@ class EntryEventSubscriber implements EventSubscriberInterface
         // and the internal worklog id; it belongs to the internal system only
         // (#937).
         $ownTicketSystem = $project->getTicketSystem();
-        if ($ownTicketSystem instanceof TicketSystem && $this->canBookOn($ownTicketSystem)
-            && !$project->isInternalJiraTicket($entry->getTicket())
-        ) {
+        if (!$ownTicketSystem instanceof TicketSystem || !$this->canBookOn($ownTicketSystem)) {
+            return;
+        }
+
+        if (!$project->isInternalJiraTicket($entry->getTicket())) {
             $this->noticeUnauthorized($entryEvent, $ownTicketSystem, function () use ($entry, $previousEntry, $user, $ownTicketSystem): void {
                 $this->bookWorklog($entry, $previousEntry, $user, $ownTicketSystem);
+            });
+
+            return;
+        }
+
+        // The ticket changed from an external one to an internal one: a
+        // worklog the previous ticket left on the own Jira is removed there,
+        // or the time stays booked in both Jiras. The internal step has
+        // already cleared the previous id if that worklog was internal.
+        if ($previousEntry instanceof Entry
+            && null !== $previousEntry->getWorklogId()
+            && !$project->isInternalJiraTicket($previousEntry->getTicket())
+        ) {
+            $this->noticeUnauthorized($entryEvent, $ownTicketSystem, function () use ($previousEntry, $user, $ownTicketSystem): void {
+                $this->worklogWriteService->delete($this->jiraOAuthApiFactory->create($user, $ownTicketSystem), $previousEntry);
             });
         }
     }

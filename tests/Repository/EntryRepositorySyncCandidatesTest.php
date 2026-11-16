@@ -167,6 +167,29 @@ final class EntryRepositorySyncCandidatesTest extends AbstractWebTestCase
         yield 'mirrored entry' => ['INT', 1000, 'INT-11', 'EXT-1', false];
     }
 
+    /**
+     * #937: the exclusion is scoped to the project with the internal key; another
+     * project on the same ticket system that books real INT-* tickets keeps them.
+     */
+    public function testSyncQueriesKeepInternalLookingTicketsOfOtherProjects(): void
+    {
+        $ticketSystemId = $this->ticketSystem->getId();
+        self::assertIsInt($ticketSystemId);
+        $this->project->setInternalJiraProjectKey('INT')->setInternalJiraTicketSystem((string) ($ticketSystemId + 1000));
+        $otherProject = $this->entityManager->getRepository(Project::class)->createQueryBuilder('p')
+            ->where('p.id != :id')->setParameter('id', $this->project->getId())
+            ->setMaxResults(1)->getQuery()->getOneOrNullResult();
+        self::assertInstanceOf(Project::class, $otherProject, 'second fixture project missing');
+        $otherProject->setTicketSystem($this->ticketSystem)->setInternalJiraProjectKey(null);
+
+        $entry = $this->persistEntry('INT-11', '2030-03-05', self::NINE, self::TEN)->setProject($otherProject);
+        $this->entityManager->flush();
+
+        $ids = self::idsOf($this->entryRepository->findJiraSyncCandidates($this->user, $this->ticketSystem, new DateTime('2030-03-01'), new DateTime('2030-03-31')));
+
+        self::assertContains($entry->getId(), $ids);
+    }
+
     public function testFindByWorklogIdsAndTicketSystemKeysLinkedEntriesByWorklogId(): void
     {
         $human = $this->persistEntry('ABC-20', self::IN_RANGE_DAY, self::NINE, self::TEN)->setWorklogId(900001);
