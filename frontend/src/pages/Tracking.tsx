@@ -615,10 +615,12 @@ export default function Tracking() {
   const [pageError, setPageError] = createSignal('')
   // Saved, but Jira refused the user's token (#911): stays until dismissed.
   const [jiraNotices, setJiraNotices] = createSignal<JiraNotice[]>([])
-  // The refusal text of the save that onSaved is about to confirm: announced in
-  // place of "Entry saved" (it starts with the same news) through the one live
-  // region above, so the two messages do not compete.
-  let lastSaveJiraAnnouncement = ''
+  // The refusal text of each row save, keyed by the saved row's id, until onSaved
+  // confirms that save: announced in place of "Entry saved" (it starts with the
+  // same news) through the one live region above, so the two messages do not
+  // compete. Keyed, because two rows can save at once (leave row A, row B
+  // auto-saves while A's refetch is pending); each save writes its own entry.
+  const saveJiraAnnouncements = new Map<number, string>()
   // The notice unmounts on dismiss; hand focus to the grid's current cell (as
   // header.ts does), else the main region, rather than letting it fall to <body>.
   function dismissJiraNotices(): void {
@@ -1060,7 +1062,7 @@ export default function Tracking() {
       // user's just-saved work would vanish.
       upsertSavedEntry(queryClient, saved.result)
       setJiraNotices((shown) => mergeJiraNotices(shown, saved.jiraAuthorization))
-      lastSaveJiraAnnouncement = jiraNoticeAnnouncement(saved.jiraAuthorization)
+      saveJiraAnnouncements.set(saved.result.id, jiraNoticeAnnouncement(saved.jiraAuthorization))
       if (isNew) {
         setNewRows((list) => list.filter((row) => num(row.id) !== num(entry.id)))
       }
@@ -1076,9 +1078,10 @@ export default function Tracking() {
     onCommit: handleCommit,
     // Confirm every successful save (auto, force, or row-leave): announce to AT
     // users via the live region AND flash a brief visible toast for sighted users.
-    onSaved: () => {
-      announce(lastSaveJiraAnnouncement !== '' ? lastSaveJiraAnnouncement : m.tracking_saved())
-      lastSaveJiraAnnouncement = ''
+    onSaved: (rowId) => {
+      const refused = saveJiraAnnouncements.get(rowId) ?? ''
+      saveJiraAnnouncements.delete(rowId)
+      announce(refused !== '' ? refused : m.tracking_saved())
       flashNotice(m.tracking_saved())
     },
     saveErrorMessage: (caught) => apiErrorMessage(caught, m.app_load_error()),
