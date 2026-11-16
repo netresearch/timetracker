@@ -14,11 +14,11 @@ permissions: {}
 
 jobs:
   auto-merge:
-    # The reusable gates on the same condition; checking it here as well keeps
-    # the App secrets from being passed at all for any other PR or actor.
+    # Only bot PRs from a branch of this repository get the App secrets. The
+    # reusable runs its own author and actor checks on top; github.actor is
+    # not repeated here because a re-run keeps the original actor.
     if: >-
       (github.event.pull_request.user.login == 'renovate[bot]' || github.event.pull_request.user.login == 'dependabot[bot]')
-      && github.actor == github.event.pull_request.user.login
       && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: write
