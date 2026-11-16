@@ -1201,6 +1201,28 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  // #936: Prolong saves the row's pending draft too, so it must drop the ext.
+  // ticket of a mirrored entry whose ticket was just changed, like the inline save.
+  it('Prolong drops the ext. ticket of a mirrored entry whose ticket was changed (#936)', async () => {
+    mockApiWith([{ entry: { ...DEFAULT_ENTRY, class: 0, ticket: 'INT-10', extTicket: 'EXT-1' } }])
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'INT-10' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'ext-2' } })
+    fireEvent.keyDown(editor, { key: 'Tab' })
+    fireEvent.click(getByRole('button', { name: 'Prolong' }))
+
+    await waitFor(() => {
+      const prolong = postJson.mock.calls.find((args) => args[0] === '/tracking/save' && (args[1] as Record<string, unknown>).ticket === 'EXT-2')
+      expect(prolong?.[1]).toMatchObject({ ticket: 'EXT-2', extTicket: '' })
+    })
+    expect(postJson).not.toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ ticket: 'EXT-2', extTicket: 'EXT-1' }))
+
+    unmount()
+  })
+
   it('exposes a CSV export link for the current day range', async () => {
     mockApi()
     const { getByRole, unmount } = renderTracking()
@@ -1809,6 +1831,69 @@ describe('Tracking (Worklog grid)', () => {
       window.APP_CONFIG!.suggestTime = false
       window.APP_CONFIG!.minEntryDuration = 5
     }
+  })
+
+  // #898: on a project with an internal Jira key a mirrored entry carries the
+  // internal key as its ticket and the external one as extTicket. A continued
+  // entry that dropped extTicket made the backend treat the internal key as an
+  // external ticket and create a second internal issue for it.
+  it('Continue on a mirrored entry carries its ext. ticket into the save (#898)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0, ticket: 'INT-10', extTicket: 'EXT-1' } }])
+      postJson.mockResolvedValue({})
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'INT-10' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
+
+        return el
+      })
+      fireEvent.keyDown(descInput, { key: 'Enter' })
+
+      await waitFor(() =>
+        expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({
+          ticket: 'INT-10', extTicket: 'EXT-1', start: '10:30', end: '12:00',
+        })),
+      )
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
+  // #936: the ext. ticket names the external ticket the internal one mirrors. Once
+  // the user types another ticket it no longer applies; sending it along made the
+  // backend look the old mirror up and put the old internal key back.
+  describe('saving a mirrored entry (INT-10 mirrors EXT-1) (#936)', () => {
+    async function editMirroredEntry(column: string, value: string): Promise<void> {
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, class: 0, ticket: 'INT-10', extTicket: 'EXT-1' } }])
+      postJson.mockResolvedValue({})
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'INT-10' })).toBeInTheDocument())
+
+      const editor = editCell(container, column)
+      fireEvent.input(editor, { target: { value } })
+      fireEvent.keyDown(editor, { key: 'Enter' })
+      await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.anything()))
+      unmount()
+    }
+
+    it.each([
+      ['a changed ticket drops it', 'ticket', 'ext-2', { extTicket: '' }],
+      ['a re-typed ticket in other case or with spaces keeps it', 'ticket', ' int-10 ', { extTicket: 'EXT-1' }],
+      ['an unchanged ticket keeps it', 'description', 'Changed description', { ticket: 'INT-10', extTicket: 'EXT-1' }],
+    ])('%s', async (_case, column, value, expected) => {
+      await editMirroredEntry(column, value)
+
+      expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining(expected))
+    })
   })
 
   // A save re-keys a new row (temp id → server id): the temp row unmounts and the

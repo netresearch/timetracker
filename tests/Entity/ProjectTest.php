@@ -611,6 +611,21 @@ final class ProjectTest extends TestCase
         self::assertFalse($project->matchesInternalJiraProject('INT4'));
     }
 
+    /**
+     * Tickets are upper-cased on save, but the internal key is stored as typed;
+     * a key configured as "int" must still match the ticket prefix "INT".
+     */
+    public function testMatchesInternalJiraProjectIgnoresCase(): void
+    {
+        $project = new Project();
+        $project->setInternalJiraProjectKey('int, Ops');
+        $project->setInternalJiraTicketSystem('1');
+
+        self::assertTrue($project->matchesInternalJiraProject('INT'));
+        self::assertTrue($project->matchesInternalJiraProject('ops'));
+        self::assertFalse($project->matchesInternalJiraProject('INTX'));
+    }
+
     // ==================== toArray tests ====================
 
     public function testToArrayIncludesEstimationText(): void

@@ -21,6 +21,7 @@ use App\Event\EntryEvent;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Sync\WorklogWriteService;
+use App\Service\Util\TicketService;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use JsonException;
@@ -33,6 +34,7 @@ use function in_array;
 use function is_array;
 use function is_object;
 use function is_string;
+use function preg_match;
 use function spl_object_id;
 use function sprintf;
 
@@ -192,7 +194,10 @@ class EntryEventSubscriber implements EventSubscriberInterface
             $internalTicketSystem = $this->findInternalTicketSystem($project);
             if ($internalTicketSystem instanceof TicketSystem && $this->canBookOn($internalTicketSystem)) {
                 $this->remapEntryToInternalTicket($entry, $project, $user, $internalTicketSystem);
-                $this->bookWorklog($entry, null, $user, $internalTicketSystem);
+                // With the previous snapshot, a changed ticket moves the worklog
+                // off the old internal issue instead of pushing its id to the
+                // new one (#936).
+                $this->bookWorklog($entry, $previousEntry, $user, $internalTicketSystem);
             }
         }
 
@@ -395,6 +400,17 @@ class EntryEventSubscriber implements EventSubscriberInterface
         User $user,
         TicketSystem $internalTicketSystem,
     ): void {
+        // A ticket of the internal project itself (a continued mirrored entry
+        // without its ext. ticket, or an internal key typed by hand) is the
+        // mirror issue already: searching for it by summary finds nothing and
+        // would create a second internal issue named after it (#898).
+        if (!$entry->hasInternalJiraTicketOriginalKey()
+            && 1 === preg_match(TicketService::TICKET_REGEXP, $entry->getTicket(), $matches)
+            && $project->matchesInternalJiraProject($matches[1])
+        ) {
+            return;
+        }
+
         // when an already-mirrored entry is edited, the internal issue must
         // be looked up by the original external key
         $externalTicket = $entry->hasInternalJiraTicketOriginalKey()
@@ -454,8 +470,11 @@ class EntryEventSubscriber implements EventSubscriberInterface
             && $entry->getInternalJiraTicketOriginalKey() !== $entry->getTicket()
             && null !== $previousEntry->getWorklogId()
         ) {
-            $this->worklogWriteService->delete($api, $previousEntry);
-            $entry->setWorklogId(null);
+            // false means nothing was attempted (no connection, booking off):
+            // the old worklog still exists, so its id must stay linked.
+            if ($this->worklogWriteService->delete($api, $previousEntry)) {
+                $entry->setWorklogId(null);
+            }
         }
 
         $outcome = $this->worklogWriteService->push($api, $entry, $ticketSystem);

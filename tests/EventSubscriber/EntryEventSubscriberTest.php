@@ -941,6 +941,222 @@ final class EntryEventSubscriberTest extends TestCase
         self::assertSame('DHLSUP-123456', $entry->getInternalJiraTicketOriginalKey());
     }
 
+    /**
+     * An entry on a REAL project, so the internal-key match runs through
+     * Project::matchesInternalJiraProject() rather than a stubbed answer.
+     *
+     * @return array{Entry, User&Stub, TicketSystem&Stub}
+     */
+    private function createEntryOnRealInternalProject(string $ticket, string $internalKey): array
+    {
+        $internalTicketSystem = self::createStub(TicketSystem::class);
+        $internalTicketSystem->method('getBookTime')->willReturn(true);
+        $internalTicketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = new Project();
+        $project->setInternalJiraProjectKey($internalKey);
+        $project->setInternalJiraTicketSystem('9');
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $ticketSystemRepository = $this->createMock(TicketSystemRepository::class);
+        $ticketSystemRepository->method('find')->willReturn($internalTicketSystem);
+        $this->managerRegistry->method('getRepository')
+            ->willReturn($ticketSystemRepository);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket($ticket);
+
+        return [$entry, $user, $internalTicketSystem];
+    }
+
+    /**
+     * #898: a ticket that already lives in the internal Jira project (a
+     * continued mirrored entry that lost its ext. ticket, or an internal key
+     * typed by hand) is booked as is. Mirroring it would search for an issue
+     * whose summary is the internal key, find none, and create a second one.
+     */
+    public function testInternalTicketSystemBooksTicketOfInternalProjectWithoutRemap(): void
+    {
+        // comma-separated keys: the ticket's project is the second one
+        [$entry, $user, $internalTicketSystem] = $this->createEntryOnRealInternalProject('INT-10', 'OPSDHL,INT');
+
+        $this->jiraOAuthApiFactory->expects(self::atLeastOnce())
+            ->method('create')
+            ->with($user, $internalTicketSystem)
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::never())->method('searchTicket');
+        $this->jiraOAuthApiService->expects(self::never())->method('createTicket');
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->with($this->jiraOAuthApiService, $entry, $internalTicketSystem)
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+
+        self::assertSame('INT-10', $entry->getTicket());
+        self::assertNull($entry->getInternalJiraTicketOriginalKey());
+    }
+
+    /**
+     * #936: once the grid lets a mirrored entry's ticket change, the worklog on
+     * the old internal issue has to go and a new one is booked on the new issue;
+     * pushing the old worklog id to the new issue only finds it missing.
+     */
+    public function testInternalTicketSystemMovesTheWorklogWhenTheTicketChanges(): void
+    {
+        [$entry, $user, $internalTicketSystem] = $this->createEntryOnRealInternalProject('INT-11', 'INT');
+        $entry->setWorklogId(42);
+        $previousEntry = clone $entry;
+        $previousEntry->setTicket('INT-10');
+        $previousEntry->setInternalJiraTicketOriginalKey('EXT-1');
+
+        $this->jiraOAuthApiFactory->expects(self::atLeastOnce())
+            ->method('create')
+            ->with($user, $internalTicketSystem)
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, $previousEntry)
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): bool {
+                $deleted->setWorklogId(null); // what the Jira client does on success
+
+                return true;
+            });
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $pushed): WriteOutcome {
+                self::assertNull($pushed->getWorklogId(), 'the old worklog id must not be pushed to the new issue');
+
+                return WriteOutcome::WRITTEN;
+            });
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame('INT-11', $entry->getTicket());
+    }
+
+    /**
+     * The grid case of #936: a mirrored entry (INT-5 / EXT-1, worklog 42) gets a
+     * new external ticket EXT-2 without ext. ticket; the lookup maps it to INT-6
+     * and the worklog moves from INT-5 to INT-6.
+     */
+    public function testInternalTicketSystemMovesTheWorklogWhenANewExternalTicketIsMirrored(): void
+    {
+        [$entry] = $this->createEntryOnRealInternalProject('EXT-2', 'INT');
+        $entry->setWorklogId(42);
+        $previousEntry = clone $entry;
+        $previousEntry->setTicket('INT-5');
+        $previousEntry->setInternalJiraTicketOriginalKey('EXT-1');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->willReturn((object) ['issues' => [(object) ['key' => 'INT-6']]]);
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, self::callback(
+                static fn (Entry $deleted): bool => 'INT-5' === $deleted->getTicket() && 42 === $deleted->getWorklogId(),
+            ))
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): bool {
+                $deleted->setWorklogId(null);
+
+                return true;
+            });
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $pushed): WriteOutcome {
+                self::assertSame('INT-6', $pushed->getTicket());
+                self::assertNull($pushed->getWorklogId());
+
+                return WriteOutcome::WRITTEN;
+            });
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame('INT-6', $entry->getTicket());
+        self::assertSame('EXT-2', $entry->getInternalJiraTicketOriginalKey());
+    }
+
+    public function testInternalTicketSystemKeepsTheWorklogWhenTheTicketIsUnchanged(): void
+    {
+        [$entry] = $this->createEntryOnRealInternalProject('INT-10', 'INT');
+        $entry->setWorklogId(42);
+        $previousEntry = clone $entry;
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->worklogWriteService->expects(self::never())->method('delete');
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame(42, $entry->getWorklogId());
+    }
+
+    /**
+     * The safeguard only covers entries without an original key: a mirrored
+     * entry that keeps its ext. ticket is still resolved through it, as before.
+     */
+    public function testInternalTicketSystemStillResolvesMirroredEntryByOriginalKey(): void
+    {
+        [$entry] = $this->createEntryOnRealInternalProject('INT-10', 'INT');
+        $entry->setInternalJiraTicketOriginalKey('EXT-1');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->with('project = INT AND summary ~ "EXT-1"', ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => 'INT-10']]]);
+
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry));
+
+        self::assertSame('INT-10', $entry->getTicket());
+        self::assertSame('EXT-1', $entry->getInternalJiraTicketOriginalKey());
+    }
+
+    /**
+     * The safeguard compares the whole project key, not a prefix of it: a
+     * ticket of another project whose key merely starts with "INT" is still
+     * an external ticket and is mirrored.
+     */
+    public function testInternalTicketSystemStillRemapsTicketWhoseKeyOnlyStartsWithInternalKey(): void
+    {
+        [$entry] = $this->createEntryOnRealInternalProject('INTX-5', 'INT');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->with('project = INT AND summary ~ "INTX-5"', ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => 'INT-11']]]);
+
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+
+        self::assertSame('INT-11', $entry->getTicket());
+        self::assertSame('INTX-5', $entry->getInternalJiraTicketOriginalKey());
+    }
+
     public function testInternalTicketSystemMalformedJiraResponseIsCaughtAndLogged(): void
     {
         [$entry] = $this->createInternalProjectEntry('DHLSUP-8');
@@ -998,7 +1214,13 @@ final class EntryEventSubscriberTest extends TestCase
         self::assertSame('DHLSUP-1', $entry->getTicket());
     }
 
-    public function testOnEntryUpdatedDeletesPreviousWorklogWhenTicketChanged(): void
+    /**
+     * An entry on a project that books on its own Jira, whose ticket changed
+     * from ABC-1 to ABC-2 with worklog 555 on the old ticket.
+     *
+     * @return array{Entry, Entry} the entry and its previous snapshot
+     */
+    private function entryWhoseTicketChangedFromAbc1ToAbc2(): array
     {
         $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
@@ -1023,9 +1245,41 @@ final class EntryEventSubscriberTest extends TestCase
         $this->jiraOAuthApiFactory->method('create')
             ->willReturn($this->jiraOAuthApiService);
 
+        return [$entry, $previousEntry];
+    }
+
+    /**
+     * delete() returns false when it did not even try (Jira connection switched
+     * off by the user, booking disabled): the old worklog still exists, so the
+     * entry must stay linked to it instead of losing the id.
+     */
+    public function testOnEntryUpdatedKeepsTheWorklogIdWhenTheDeleteWasNotAttempted(): void
+    {
+        [$entry, $previousEntry] = $this->entryWhoseTicketChangedFromAbc1ToAbc2();
+
         $this->worklogWriteService->expects(self::once())
             ->method('delete')
-            ->with($this->jiraOAuthApiService, $previousEntry);
+            ->willReturn(false);
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame(555, $entry->getWorklogId());
+    }
+
+    public function testOnEntryUpdatedDeletesPreviousWorklogWhenTicketChanged(): void
+    {
+        [$entry, $previousEntry] = $this->entryWhoseTicketChangedFromAbc1ToAbc2();
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, $previousEntry)
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): bool {
+                $deleted->setWorklogId(null); // what the Jira client does on success
+
+                return true;
+            });
 
         $this->worklogWriteService->expects(self::once())
             ->method('push')
