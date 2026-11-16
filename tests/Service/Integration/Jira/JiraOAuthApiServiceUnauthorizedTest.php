@@ -27,6 +27,7 @@ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Tests\Traits\TokenEncryptionTestTrait;
 
@@ -211,10 +212,16 @@ final class JiraOAuthApiServiceUnauthorizedTest extends TestCase
         $managerRegistry->method('getManager')->willReturn(self::createStub(EntityManagerInterface::class));
 
         $router = self::createStub(RouterInterface::class);
+        // Absolute only when asked for: the CLI and the API answer carry this URL
+        // outside a browser page, where a path alone is not a link.
         $router->method('generate')->willReturnCallback(
-            static fn (string $name, array $parameters = []): string => 'jiraConnect' === $name
-                ? 'https://tt.example.com/jira/connect/' . (is_scalar($parameters['ticketSystem'] ?? null) ? (string) $parameters['ticketSystem'] : '')
-                : 'https://tt.example.com/jiraoauthcallback',
+            static function (string $name, array $parameters = [], int $referenceType = UrlGeneratorInterface::ABSOLUTE_PATH): string {
+                $path = 'jiraConnect' === $name
+                    ? '/jira/connect/' . (is_scalar($parameters['ticketSystem'] ?? null) ? (string) $parameters['ticketSystem'] : '')
+                    : '/jiraoauthcallback';
+
+                return UrlGeneratorInterface::ABSOLUTE_URL === $referenceType ? 'https://tt.example.com' . $path : $path;
+            },
         );
 
         $clients = [

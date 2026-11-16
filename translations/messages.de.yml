@@ -2,6 +2,8 @@
 "Back to Settings": "Zurück zu den Einstellungen"
 "Duration must be greater than 0!": "Die Aktivität muss mindestens eine Minute angedauert haben!"
 "Jira connection": "Jira-Verbindung"
+"Start the authorization again": "Autorisierung erneut starten"
+"This Jira authorization was not started in this session, or it was already used. Please start it again.": "Diese Jira-Autorisierung wurde nicht in dieser Sitzung gestartet oder wurde bereits verwendet. Bitte erneut starten."
 "You need to login.": "Bitte anmelden."
 "%num% entries have been added": "%num% Einträge wurden angelegt."
 "The configuration has been successfully saved.": "Die Konfiguration wurde erfolgreich gespeichert."

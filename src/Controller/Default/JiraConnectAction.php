@@ -24,9 +24,6 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Service\Attribute\Required;
 
-use function htmlspecialchars;
-use function sprintf;
-
 /**
  * Starts the Jira authorization for the current user ("connect Jira", #911):
  * fetches a fresh authorize URL and redirects the browser there. Jira sends the
@@ -92,16 +89,9 @@ final class JiraConnectAction extends BaseController
 
     private function connectFailedResponse(TicketSystem $ticketSystem): Response
     {
-        $response = new Response(sprintf(
-            '<!DOCTYPE html><html lang="%s"><head><meta charset="utf-8"><title>%s</title></head><body><p>%s</p><p><a href="%s">%s</a></p></body></html>',
-            htmlspecialchars($this->translator->getLocale()),
-            htmlspecialchars($this->translate('Jira connection')),
-            htmlspecialchars($this->translate('%ticketSystem% could not be reached to start the authorization. Please try again later.', ['%ticketSystem%' => $ticketSystem->getName()])),
-            htmlspecialchars($this->generateUrl('ui_spa', ['path' => 'settings/sync'])),
-            htmlspecialchars($this->translate('Back to Settings')),
-        ), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_GATEWAY);
-        $response->headers->set('Content-Type', 'text/html; charset=UTF-8');
-
-        return $response;
+        return new Response($this->renderView('jira/connect_problem.html.twig', [
+            'message' => $this->translate('%ticketSystem% could not be reached to start the authorization. Please try again later.', ['%ticketSystem%' => $ticketSystem->getName()]),
+            'retry_url' => $this->generateUrl('jiraConnect', ['ticketSystem' => $ticketSystem->getId()]),
+        ]), \Symfony\Component\HttpFoundation\Response::HTTP_BAD_GATEWAY);
     }
 }

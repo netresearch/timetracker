@@ -67,7 +67,7 @@ final class JiraOAuthCallbackSessionBindingTest extends AbstractWebTestCase
 
         $this->returnFromJira('someone-elses-token', 'verifier');
 
-        $this->assertStatusCode(400);
+        $this->assertRefusalPage();
         self::assertSame([], $this->exchanges);
 
         // The refusal leaves the pending authorization in place.
@@ -80,7 +80,7 @@ final class JiraOAuthCallbackSessionBindingTest extends AbstractWebTestCase
     {
         $this->returnFromJira('issued-token', 'denied');
 
-        $this->assertStatusCode(400);
+        $this->assertRefusalPage();
         self::assertSame([], $this->exchanges);
     }
 
@@ -91,8 +91,27 @@ final class JiraOAuthCallbackSessionBindingTest extends AbstractWebTestCase
 
         $this->returnFromJira('issued-token', 'verifier');
 
-        $this->assertStatusCode(400);
+        $this->assertRefusalPage();
         self::assertSame([['issued-token', 'verifier']], $this->exchanges);
+    }
+
+    /**
+     * A refusal is usually harmless — the session expired while the user was on
+     * Jira's login, or they clicked Connect twice — so the page says what
+     * happened and offers to start again, in the user's language.
+     */
+    private function assertRefusalPage(): void
+    {
+        $this->assertStatusCode(400);
+        $response = $this->client->getResponse();
+        self::assertStringStartsWith('text/html', (string) $response->headers->get('Content-Type'));
+        $body = (string) $response->getContent();
+        self::assertStringContainsString('href="/jira/connect/1"', $body);
+        self::assertStringContainsString('href="/ui/settings/sync"', $body);
+        // The test user's locale is German.
+        self::assertStringContainsString('Diese Jira-Autorisierung wurde nicht in dieser Sitzung gestartet', $body);
+        self::assertStringNotContainsString('issued-token', $body);
+        self::assertStringNotContainsString('someone-elses-token', $body);
     }
 
     private function connect(): void

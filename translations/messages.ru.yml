@@ -2,6 +2,8 @@
 "Back to Settings": "Назад к настройкам"
 "Duration must be greater than 0!": "Длительность должна быть больше 0."
 "Jira connection": "Подключение к Jira"
+"Start the authorization again": "Начать авторизацию заново"
+"This Jira authorization was not started in this session, or it was already used. Please start it again.": "Эта авторизация Jira не была начата в этом сеансе или уже использована. Начните её заново."
 "You need to login.": "Необходимо войти в систему."
 "%num% entries have been added": "Добавлено записей: %num%."
 "The configuration has been successfully saved.": "Конфигурация успешно сохранена."

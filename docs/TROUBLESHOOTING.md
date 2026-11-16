@@ -184,6 +184,10 @@ Jira sync uses per-user OAuth tokens stored (encrypted) in the
   *Settings → Synchronization* or the notice after saving an entry. The connect
   route fetches a request token, keeps it in the user's session and redirects
   to Jira; the callback (`/jiraoauthcallback`) accepts only that token, once.
+  Any other token gets a page with a link that starts the authorization again
+  and an info log line ("Jira OAuth callback refused"); the usual causes are a
+  session that expired while the user was on Jira's login page, or a second
+  click on Connect.
   For OAuth 1.0a a 401 does not touch the stored token, and neither does
   denying the authorization in Jira: only the callback replaces it, after the
   user approved, so a token Jira refused once keeps working once Jira accepts

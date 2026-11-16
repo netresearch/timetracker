@@ -1,0 +1,101 @@
+{#
+ # Copyright (c) 2026 Netresearch DTT GmbH
+ # SPDX-License-Identifier: AGPL-3.0-only
+ -#}
+
+{# A Jira authorization that could not start or finish (#911): what happened,
+   and where to go next. Rendered by JiraConnectAction and the OAuth 1.0a
+   callback; self-contained like the error pages (no Vite bundle). #}
+<!DOCTYPE HTML>
+<html lang="{{ app.request ? app.request.locale : 'en' }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ 'Jira connection'|trans }} - TimeTracker</title>
+        <meta name="robots" content="noindex,nofollow" />
+        {% include 'partials/theme-init.html.twig' %}
+        <style nonce="{{ csp_nonce() }}">
+            :root {
+                color-scheme: light dark;
+            }
+            :root[data-theme=light] {
+                color-scheme: light;
+            }
+            :root[data-theme=dark] {
+                color-scheme: dark;
+            }
+            body {
+                background-color: #e4e6e8;
+                background-color: light-dark(#e4e6e8, #171a1f);
+                color: #1f2937;
+                color: light-dark(#1f2937, #f1f2f4);
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                margin: 0;
+                padding: 16px;
+            }
+            main {
+                background: #fff;
+                background: light-dark(#fff, #1d2127);
+                border: 1px solid #c3c8cd;
+                border: 1px solid light-dark(#c3c8cd, #3c434b);
+                border-radius: 10px;
+                margin: 10vh auto 0;
+                max-width: 32rem;
+                padding: 20px;
+            }
+            h1 {
+                color: #00525c;
+                color: light-dark(#00525c, #6fd0dd);
+                font-size: 16px;
+                margin: 0 0 12px;
+            }
+            p {
+                line-height: 1.5;
+            }
+            .actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                min-height: 44px;
+                padding: 0 20px;
+                border: 1px solid #a9adb2;
+                border: 1px solid light-dark(#a9adb2, #3a414a);
+                border-radius: 8px;
+                color: #3a4047;
+                color: light-dark(#3a4047, #c4c9cf);
+                text-decoration: none;
+            }
+            .btn:focus-visible {
+                outline: 2px solid #00889a;
+                outline: 2px solid light-dark(#00889a, #6fd0dd);
+                outline-offset: 1px;
+            }
+            .btn-primary {
+                background: #00889a;
+                background: light-dark(#00889a, #0f3a40);
+                border-color: #00707f;
+                border-color: light-dark(#00707f, #6fd0dd);
+                color: #fff;
+                color: light-dark(#fff, #6fd0dd);
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>{{ 'Jira connection'|trans }}</h1>
+            <p>{{ message }}</p>
+            <div class="actions">
+                {% if retry_url %}
+                    <a href="{{ retry_url }}" class="btn btn-primary">{{ 'Start the authorization again'|trans }}</a>
+                {% endif %}
+                <a href="{{ path('ui_spa', {path: 'settings/sync'}) }}" class="btn{{ retry_url ? '' : ' btn-primary' }}">{{ 'Back to Settings'|trans }}</a>
+            </div>
+        </main>
+    </body>
+</html>
