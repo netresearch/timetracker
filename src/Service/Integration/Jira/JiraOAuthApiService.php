@@ -244,7 +244,12 @@ class JiraOAuthApiService
     }
 
     /**
-     * Fetches request token.
+     * Fetches a request token and returns the URL where the user authorizes it.
+     *
+     * The request token is not stored: it is not authorized yet, and storing it
+     * would replace a still-valid access token (#911). The OAuth callback carries
+     * it back as `oauth_token`, and with RSA-SHA1 signing the exchange does not
+     * need its secret, so nothing has to be kept until then.
      *
      * @throws JiraApiException
      */
@@ -255,7 +260,7 @@ class JiraOAuthApiService
                 $this->getOAuthRequestUrl() . '?oauth_callback=' . urlencode($this->getOAuthCallbackUrl()),
             );
 
-            $tokenData = $this->extractTokens($response);
+            $tokenData = $this->parseTokens($response);
 
             return $this->getOAuthAuthUrl($tokenData['oauth_token']);
         } catch (Throwable $throwable) {
@@ -264,11 +269,27 @@ class JiraOAuthApiService
     }
 
     /**
+     * Parses an access-token response and stores the token as the user's access token.
+     *
      * @throws JiraApiException
      *
      * @return array{oauth_token_secret:string,oauth_token:string}
      */
     protected function extractTokens(ResponseInterface $response): array
+    {
+        $tokenData = $this->parseTokens($response);
+
+        return $this->storeToken($tokenData['oauth_token_secret'], $tokenData['oauth_token']);
+    }
+
+    /**
+     * Parses an OAuth token response without storing anything.
+     *
+     * @throws JiraApiException when the response carries no token
+     *
+     * @return array{oauth_token_secret:string,oauth_token:string}
+     */
+    protected function parseTokens(ResponseInterface $response): array
     {
         $body = (string) $response->getBody();
 
@@ -280,9 +301,18 @@ class JiraOAuthApiService
         }
 
         $secret = is_string($tokenRaw['oauth_token_secret'] ?? null) ? $tokenRaw['oauth_token_secret'] : '';
-        $access = is_string($tokenRaw['oauth_token'] ?? null) ? $tokenRaw['oauth_token'] : '';
+        $token = is_string($tokenRaw['oauth_token'] ?? null) ? $tokenRaw['oauth_token'] : '';
 
-        return $this->storeToken($secret, $access);
+        if ('' === $token) {
+            // A body without a token (e.g. "oauth_problem=…") must not be stored
+            // over a working access token as an empty one.
+            throw new JiraApiException('The OAuth response contained no token.', 1541147717);
+        }
+
+        return [
+            'oauth_token_secret' => $secret,
+            'oauth_token' => $token,
+        ];
     }
 
     /**
@@ -976,6 +1006,10 @@ class JiraOAuthApiService
             $userTicketSystem = new UserTicketsystem();
             $userTicketSystem->setUser($this->user)
                 ->setTicketSystem($this->ticketSystem);
+            // getToken() reads through the user's collection; without this a first
+            // connection would not see its own token within the same request
+            // (the callback books the pending worklogs right after the exchange).
+            $this->user->getUserTicketsystems()->add($userTicketSystem);
         }
 
         // Encrypt at rest (AES-256-GCM); reads decrypt in getToken()/getTokenSecret().
