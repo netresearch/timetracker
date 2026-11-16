@@ -15,6 +15,7 @@ use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Enum\BillingType;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
@@ -451,6 +452,42 @@ final class ProjectTest extends TestCase
         $project->setInternalJiraProjectKey('   ');
 
         self::assertNull($project->getInternalJiraProjectKey());
+    }
+
+    // ==================== isInternalJiraTicket tests (#937) ====================
+
+    /**
+     * A ticket of the internal Jira project is booked on the internal ticket
+     * system, so the project's own ticket system must leave it alone — but only
+     * when that internal system is a different one.
+     */
+    #[DataProvider('internalJiraTicketProvider')]
+    public function testIsInternalJiraTicket(?string $internalKey, ?string $internalSystemId, string $ticket, bool $expected): void
+    {
+        $ownTicketSystem = self::createStub(TicketSystem::class);
+        $ownTicketSystem->method('getId')->willReturn(3);
+
+        $project = new Project();
+        $project->setTicketSystem($ownTicketSystem);
+        $project->setInternalJiraProjectKey($internalKey);
+        $project->setInternalJiraTicketSystem($internalSystemId);
+
+        self::assertSame($expected, $project->isInternalJiraTicket($ticket));
+    }
+
+    /**
+     * @return iterable<string, array{?string, ?string, string, bool}>
+     */
+    public static function internalJiraTicketProvider(): iterable
+    {
+        yield 'ticket of the internal project' => ['INT', '9', 'INT-11', true];
+        yield 'second listed key, any case' => ['INT, ops', '9', 'ops-12', true];
+        yield 'ticket of another project' => ['INT', '9', 'ABC-1', false];
+        yield 'key is only a prefix of the project' => ['INT', '9', 'INTX-1', false];
+        yield 'ticket without a project part' => ['INT', '9', 'INT', false];
+        yield 'internal system is the own system' => ['INT', '3', 'INT-11', false];
+        yield 'no internal system' => ['INT', null, 'INT-11', false];
+        yield 'no internal key' => [null, '9', 'INT-11', false];
     }
 
     // ==================== hasInternalJiraProjectKey tests ====================

@@ -205,10 +205,14 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         // Regular path: the project's own ticket system decides via its
-        // book_time/type flags (v4 ran both paths; for internal-key projects
-        // the own system usually has booking disabled).
+        // book_time/type flags. v4 ran both paths, so a ticket of a separate
+        // internal Jira was also pushed to the own Jira, with an internal key
+        // and the internal worklog id; it belongs to the internal system only
+        // (#937).
         $ownTicketSystem = $project->getTicketSystem();
-        if ($ownTicketSystem instanceof TicketSystem && $this->canBookOn($ownTicketSystem)) {
+        if ($ownTicketSystem instanceof TicketSystem && $this->canBookOn($ownTicketSystem)
+            && !$project->isInternalJiraTicket($entry->getTicket())
+        ) {
             $this->noticeUnauthorized($entryEvent, $ownTicketSystem, function () use ($entry, $previousEntry, $user, $ownTicketSystem): void {
                 $this->bookWorklog($entry, $previousEntry, $user, $ownTicketSystem);
             });

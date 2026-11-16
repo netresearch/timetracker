@@ -708,6 +708,31 @@ class Project extends Base
     }
 
     /**
+     * True when the project books the tickets of its internal Jira project on
+     * a ticket system other than its own one. The own ticket system must then
+     * neither book nor sync those tickets (ADR-023 §7, #937).
+     */
+    public function hasSeparateInternalJiraTicketSystem(): bool
+    {
+        return $this->hasInternalJiraProjectKey()
+            && (int) $this->internalJiraTicketSystem !== $this->ticketSystem?->getId();
+    }
+
+    /**
+     * True when the ticket belongs to the internal Jira project and is booked
+     * on the separate internal ticket system, not on the project's own one.
+     */
+    public function isInternalJiraTicket(string $ticket): bool
+    {
+        $dash = strpos($ticket, '-');
+        if (!$this->hasSeparateInternalJiraTicketSystem() || false === $dash || 0 === $dash) {
+            return false;
+        }
+
+        return $this->matchesInternalJiraProject(substr($ticket, 0, $dash));
+    }
+
+    /**
      * The internal Jira project keys, from the comma-separated setting:
      * trimmed, upper-cased, without empty or duplicate entries, in the order
      * configured. The first one receives newly created mirror issues.

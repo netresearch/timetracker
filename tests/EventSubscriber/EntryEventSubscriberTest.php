@@ -38,6 +38,8 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+use function in_array;
+
 /**
  * @internal
  */
@@ -903,6 +905,50 @@ final class EntryEventSubscriberTest extends TestCase
         }
 
         return [$entry, $user, $internalTicketSystem];
+    }
+
+    /**
+     * #937: on a project whose own ticket system books too, a ticket of the
+     * internal project is booked on the internal system only; pushing it to the
+     * own Jira would book an internal key with an internal worklog id there.
+     * When the internal system IS the own system, the own path still books.
+     */
+    #[DataProvider('ownSystemBookingProvider')]
+    public function testOwnTicketSystemBooksOnlyTicketsThatAreNotInternal(string $internalSystemId, bool $ownBooks): void
+    {
+        [$entry] = $this->createInternalProjectEntry('OPSDHL-5');
+
+        $ownTicketSystem = self::createStub(TicketSystem::class);
+        $ownTicketSystem->method('getId')->willReturn(3);
+        $ownTicketSystem->method('getBookTime')->willReturn(true);
+        $ownTicketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+        $project = $entry->getProject();
+        self::assertInstanceOf(Project::class, $project);
+        $project->setTicketSystem($ownTicketSystem);
+        $project->setInternalJiraTicketSystem($internalSystemId);
+
+        $created = [];
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturnCallback(function (User $u, TicketSystem $ticketSystem) use (&$created): JiraOAuthApiService {
+                $created[] = $ticketSystem;
+
+                return $this->jiraOAuthApiService;
+            });
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+
+        self::assertSame($ownBooks, in_array($ownTicketSystem, $created, true));
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function ownSystemBookingProvider(): iterable
+    {
+        yield 'separate internal system' => ['9', false];
+        yield 'internal system is the own system' => ['3', true];
     }
 
     public function testInternalTicketSystemRemapsToExistingInternalIssue(): void
