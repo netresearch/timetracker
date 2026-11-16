@@ -81,7 +81,7 @@ RUN set -ex \
 # Install APCu (pinned; backs the Symfony app cache — see config/packages/cache.yaml).
 # PIE instead of PECL: pecl.php.net is deprecated and its downloads fail.
 ARG APCU_VERSION
-RUN --mount=type=bind,from=ghcr.io/php/pie:1.5.2-bin@sha256:a254c78b51ca34daef0541fa1cf0147385c93ba5ca799868392275d947f00fe7,source=/pie,target=/usr/local/bin/pie \
+RUN --mount=type=bind,from=ghcr.io/php/pie:1.5.5-bin@sha256:3fca03c16df842d02b654dc382db3756058d9c128064f57cace14f8728779ce9,source=/pie,target=/usr/local/bin/pie \
     pie install --no-interaction "apcu/apcu:${APCU_VERSION}" \
     && docker-php-ext-enable apcu
 
@@ -220,7 +220,7 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Xdebug (debugging and coverage driver; enable coverage via XDEBUG_MODE=coverage)
-RUN --mount=type=bind,from=ghcr.io/php/pie:1.5.2-bin@sha256:a254c78b51ca34daef0541fa1cf0147385c93ba5ca799868392275d947f00fe7,source=/pie,target=/usr/local/bin/pie \
+RUN --mount=type=bind,from=ghcr.io/php/pie:1.5.5-bin@sha256:3fca03c16df842d02b654dc382db3756058d9c128064f57cace14f8728779ce9,source=/pie,target=/usr/local/bin/pie \
     pie install --no-interaction "xdebug/xdebug:${XDEBUG_VERSION}" \
     && docker-php-ext-enable xdebug
 
