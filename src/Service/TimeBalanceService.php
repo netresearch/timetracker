@@ -159,10 +159,6 @@ final readonly class TimeBalanceService
 
     private function modify(DateTimeImmutable $date, string $modifier): DateTimeImmutable
     {
-        $result = $date->modify($modifier);
-
-        // The modifiers used here are all well-defined; the guard only satisfies
-        // the analyser (DateTimeImmutable::modify is typed to allow false).
-        return false !== $result ? $result : $date;
+        return $date->modify($modifier);
     }
 }

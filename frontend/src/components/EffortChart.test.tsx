@@ -122,6 +122,13 @@ describe('EffortChart', () => {
   })
 
   describe('contract Soll (target)', () => {
+    // jsdom 31 serialises a percentage with 4 decimals ('47.0588%'), so
+    // compare the number, not the string the component wrote.
+    const percent = (value: string | undefined): number => {
+      expect(value).toMatch(/%$/)
+      return Number.parseFloat(value ?? '')
+    }
+
     // Mon over Soll (8:30 vs 8:00), Tue under (4:00 vs 8:00).
     const dayRows: EffortRow[] = [
       { label: 'Mon', minutes: 510, quota: '40.00%', target: 480 },
@@ -134,14 +141,14 @@ describe('EffortChart', () => {
 
       // max = max(510, 480, 240, 480) = 510 → Mon fills the track, Tue is 240/510.
       expect(bars[0]?.style.width).toBe('100%')
-      expect(bars[1]?.style.width).toBe(`${(240 / 510) * 100}%`)
+      expect(percent(bars[1]?.style.width)).toBeCloseTo((240 / 510) * 100, 3)
       expect(bars[0]?.classList.contains('is-over')).toBe(true)
       expect(bars[1]?.classList.contains('is-under')).toBe(true)
 
       // A Soll marker per row, positioned at target/max.
       const markers = [...container.querySelectorAll<HTMLElement>('.effort-soll-marker')]
       expect(markers).toHaveLength(2)
-      expect(markers[0]?.style.left).toBe(`${(480 / 510) * 100}%`)
+      expect(percent(markers[0]?.style.left)).toBeCloseTo((480 / 510) * 100, 3)
       unmount()
     })
 
@@ -151,7 +158,7 @@ describe('EffortChart', () => {
 
       // Only Tue (under) gets a ghost, spanning the full Soll extent.
       expect(ghosts).toHaveLength(1)
-      expect(ghosts[0]?.style.width).toBe(`${(480 / 510) * 100}%`)
+      expect(percent(ghosts[0]?.style.width)).toBeCloseTo((480 / 510) * 100, 3)
       unmount()
     })
 
