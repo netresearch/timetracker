@@ -145,6 +145,15 @@ function savePayload(fields: {
   return payload
 }
 
+// The ext. ticket is the external ticket this entry's internal ticket mirrors. It
+// holds only while the ticket is unchanged: once the user types another one,
+// sending the old key makes the backend look the old mirror up and put its
+// internal key back (#936). Without it the new ticket is mirrored on its own.
+// Shared by inline-save and Prolong so both paths decide the same way.
+function extTicketFor(ticket: unknown, entry: { ticket?: unknown; extTicket?: unknown }): unknown {
+  return str(ticket).trim().toUpperCase() === str(entry.ticket).trim().toUpperCase() ? entry.extTicket : null
+}
+
 // Today as d/m/Y (list-row format); the date input draft is derived via toIsoDate.
 function todayDmy(): string {
   const now = new Date()
@@ -1027,12 +1036,7 @@ export default function Tracking() {
         customer: draft.customer,
         project: draft.project,
         activity: draft.activity,
-        // The ext. ticket is the external ticket this entry's internal ticket
-        // mirrors. It holds only while the ticket is unchanged: once the user
-        // types another one, sending the old key makes the backend look the old
-        // mirror up and put its internal key back (#936). Without it the new
-        // ticket is mirrored on its own.
-        extTicket: str(draft.ticket).trim().toUpperCase() === str(entry.ticket).trim().toUpperCase() ? entry.extTicket : null,
+        extTicket: extTicketFor(draft.ticket, entry),
       }))
       // Land the saved entry in the cache from the 200 itself, so it's in the grid
       // BEFORE — and independent of — the reconciling refetch below. A new row drops
@@ -1415,7 +1419,7 @@ export default function Tracking() {
         customer: merged.customer,
         project: merged.project,
         activity: merged.activity,
-        extTicket: base.extTicket,
+        extTicket: extTicketFor(merged.ticket, base),
       }))
       upsertSavedEntry(queryClient, saved.result) // keep the prolonged row if the refetch fails
       editor.takeDraft(num(base.id)) // the draft is now persisted — clear it

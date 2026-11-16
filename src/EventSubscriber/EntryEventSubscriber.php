@@ -470,8 +470,11 @@ class EntryEventSubscriber implements EventSubscriberInterface
             && $entry->getInternalJiraTicketOriginalKey() !== $entry->getTicket()
             && null !== $previousEntry->getWorklogId()
         ) {
-            $this->worklogWriteService->delete($api, $previousEntry);
-            $entry->setWorklogId(null);
+            // false means nothing was attempted (no connection, booking off):
+            // the old worklog still exists, so its id must stay linked.
+            if ($this->worklogWriteService->delete($api, $previousEntry)) {
+                $entry->setWorklogId(null);
+            }
         }
 
         $outcome = $this->worklogWriteService->push($api, $entry, $ticketSystem);

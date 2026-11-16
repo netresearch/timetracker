@@ -1214,6 +1214,47 @@ final class EntryEventSubscriberTest extends TestCase
         self::assertSame('DHLSUP-1', $entry->getTicket());
     }
 
+    /**
+     * delete() returns false when it did not even try (Jira connection switched
+     * off by the user, booking disabled): the old worklog still exists, so the
+     * entry must stay linked to it instead of losing the id.
+     */
+    public function testOnEntryUpdatedKeepsTheWorklogIdWhenTheDeleteWasNotAttempted(): void
+    {
+        $ticketSystem = self::createStub(TicketSystem::class);
+        $ticketSystem->method('getBookTime')->willReturn(true);
+        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('getTicketSystem')->willReturn($ticketSystem);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket('ABC-2');
+        $entry->setWorklogId(555);
+
+        $previousEntry = new Entry();
+        $previousEntry->setTicket('ABC-1');
+        $previousEntry->setWorklogId(555);
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->willReturn(false);
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame(555, $entry->getWorklogId());
+    }
+
     public function testOnEntryUpdatedDeletesPreviousWorklogWhenTicketChanged(): void
     {
         $ticketSystem = self::createStub(TicketSystem::class);

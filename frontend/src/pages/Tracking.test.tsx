@@ -1201,6 +1201,28 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  // #936: Prolong saves the row's pending draft too, so it must drop the ext.
+  // ticket of a mirrored entry whose ticket was just changed, like the inline save.
+  it('Prolong drops the ext. ticket of a mirrored entry whose ticket was changed (#936)', async () => {
+    mockApiWith([{ entry: { ...DEFAULT_ENTRY, class: 0, ticket: 'INT-10', extTicket: 'EXT-1' } }])
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'INT-10' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'ext-2' } })
+    fireEvent.keyDown(editor, { key: 'Tab' })
+    fireEvent.click(getByRole('button', { name: 'Prolong' }))
+
+    await waitFor(() => {
+      const prolong = postJson.mock.calls.find((args) => args[0] === '/tracking/save' && (args[1] as Record<string, unknown>).ticket === 'EXT-2')
+      expect(prolong?.[1]).toMatchObject({ ticket: 'EXT-2', extTicket: '' })
+    })
+    expect(postJson).not.toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ ticket: 'EXT-2', extTicket: 'EXT-1' }))
+
+    unmount()
+  })
+
   it('exposes a CSV export link for the current day range', async () => {
     mockApi()
     const { getByRole, unmount } = renderTracking()
