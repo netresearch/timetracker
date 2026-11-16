@@ -1215,11 +1215,12 @@ final class EntryEventSubscriberTest extends TestCase
     }
 
     /**
-     * delete() returns false when it did not even try (Jira connection switched
-     * off by the user, booking disabled): the old worklog still exists, so the
-     * entry must stay linked to it instead of losing the id.
+     * An entry on a project that books on its own Jira, whose ticket changed
+     * from ABC-1 to ABC-2 with worklog 555 on the old ticket.
+     *
+     * @return array{Entry, Entry} the entry and its previous snapshot
      */
-    public function testOnEntryUpdatedKeepsTheWorklogIdWhenTheDeleteWasNotAttempted(): void
+    private function entryWhoseTicketChangedFromAbc1ToAbc2(): array
     {
         $ticketSystem = self::createStub(TicketSystem::class);
         $ticketSystem->method('getBookTime')->willReturn(true);
@@ -1243,6 +1244,18 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiFactory->method('create')
             ->willReturn($this->jiraOAuthApiService);
+
+        return [$entry, $previousEntry];
+    }
+
+    /**
+     * delete() returns false when it did not even try (Jira connection switched
+     * off by the user, booking disabled): the old worklog still exists, so the
+     * entry must stay linked to it instead of losing the id.
+     */
+    public function testOnEntryUpdatedKeepsTheWorklogIdWhenTheDeleteWasNotAttempted(): void
+    {
+        [$entry, $previousEntry] = $this->entryWhoseTicketChangedFromAbc1ToAbc2();
 
         $this->worklogWriteService->expects(self::once())
             ->method('delete')
@@ -1257,28 +1270,7 @@ final class EntryEventSubscriberTest extends TestCase
 
     public function testOnEntryUpdatedDeletesPreviousWorklogWhenTicketChanged(): void
     {
-        $ticketSystem = self::createStub(TicketSystem::class);
-        $ticketSystem->method('getBookTime')->willReturn(true);
-        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
-
-        $project = self::createStub(Project::class);
-        $project->method('getTicketSystem')->willReturn($ticketSystem);
-
-        $user = self::createStub(User::class);
-        $user->method('getId')->willReturn(1);
-
-        $entry = new Entry();
-        $entry->setUser($user);
-        $entry->setProject($project);
-        $entry->setTicket('ABC-2');
-        $entry->setWorklogId(555);
-
-        $previousEntry = new Entry();
-        $previousEntry->setTicket('ABC-1');
-        $previousEntry->setWorklogId(555);
-
-        $this->jiraOAuthApiFactory->method('create')
-            ->willReturn($this->jiraOAuthApiService);
+        [$entry, $previousEntry] = $this->entryWhoseTicketChangedFromAbc1ToAbc2();
 
         $this->worklogWriteService->expects(self::once())
             ->method('delete')
