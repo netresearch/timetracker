@@ -25,6 +25,7 @@ use App\Repository\TicketSystemRepository;
 use App\Service\Integration\Jira\JiraOAuthApiFactory;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Sync\WorklogWriteService;
+use ArrayObject;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
@@ -37,6 +38,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+
+use function in_array;
 
 /**
  * @internal
@@ -903,6 +906,109 @@ final class EntryEventSubscriberTest extends TestCase
         }
 
         return [$entry, $user, $internalTicketSystem];
+    }
+
+    /**
+     * Gives the entry's project an own Jira ticket system (id 3) that books,
+     * next to the internal one, and records every ticket system an API client
+     * is created for, plus each worklog delete, in call order.
+     *
+     * @return array{TicketSystem, ArrayObject<int, TicketSystem|string>} the own ticket system and the call log
+     */
+    private function withBookingOwnTicketSystem(Entry $entry, string $internalSystemId, bool $deleteClearsId = false): array
+    {
+        $ownTicketSystem = self::createStub(TicketSystem::class);
+        $ownTicketSystem->method('getId')->willReturn(3);
+        $ownTicketSystem->method('getBookTime')->willReturn(true);
+        $ownTicketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+        $project = $entry->getProject();
+        self::assertInstanceOf(Project::class, $project);
+        $project->setTicketSystem($ownTicketSystem);
+        $project->setInternalJiraTicketSystem($internalSystemId);
+
+        /** @var ArrayObject<int, TicketSystem|string> $calls */
+        $calls = new ArrayObject();
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturnCallback(function (User $u, TicketSystem $ticketSystem) use ($calls): JiraOAuthApiService {
+                $calls[] = $ticketSystem;
+
+                return $this->jiraOAuthApiService;
+            });
+        // Confirmed gone on that Jira: a real delete clears the snapshot's id,
+        // a not-found one leaves it set.
+        $this->worklogWriteService->method('delete')
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted) use ($calls, $deleteClearsId): bool {
+                $calls[] = 'delete';
+                if ($deleteClearsId) {
+                    $deleted->setWorklogId(null);
+                }
+
+                return true;
+            });
+        $this->worklogWriteService->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        return [$ownTicketSystem, $calls];
+    }
+
+    /**
+     * #937: on a project whose own ticket system books too, a ticket of the
+     * internal project is booked on the internal system only; pushing it to the
+     * own Jira would book an internal key with an internal worklog id there.
+     * When the internal system IS the own system, the own path still books.
+     */
+    #[DataProvider('ownSystemBookingProvider')]
+    public function testOwnTicketSystemBooksOnlyTicketsThatAreNotInternal(string $internalSystemId, bool $ownBooks): void
+    {
+        [$entry] = $this->createInternalProjectEntry('OPSDHL-5');
+        [$ownTicketSystem, $calls] = $this->withBookingOwnTicketSystem($entry, $internalSystemId);
+
+        $this->subscriber->onEntryCreated(new EntryEvent($entry));
+
+        self::assertSame($ownBooks, in_array($ownTicketSystem, $calls->getArrayCopy(), true));
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function ownSystemBookingProvider(): iterable
+    {
+        yield 'separate internal system' => ['9', false];
+        yield 'internal system is the own system' => ['3', true];
+    }
+
+    /**
+     * #937 review: when the ticket changes from an external one to an internal
+     * one, the worklog the external ticket left on the own Jira is deleted
+     * there, so the time is not booked in both Jiras. A change between two
+     * internal tickets never reaches the own Jira.
+     */
+    #[DataProvider('ownSystemCleanupProvider')]
+    public function testOwnTicketSystemRemovesThePreviousExternalWorklog(string $previousTicket, bool $internalDeleteClearsId, bool $ownDeletes): void
+    {
+        [$entry] = $this->createInternalProjectEntry('OPSDHL-5');
+        $entry->setWorklogId(77);
+        [$ownTicketSystem, $calls] = $this->withBookingOwnTicketSystem($entry, '9', $internalDeleteClearsId);
+
+        $previousEntry = new Entry();
+        $previousEntry->setTicket($previousTicket);
+        $previousEntry->setWorklogId(77);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        $log = $calls->getArrayCopy();
+        $ownIndex = array_search($ownTicketSystem, $log, true);
+        self::assertSame($ownDeletes, false !== $ownIndex && 'delete' === ($log[$ownIndex + 1] ?? null));
+    }
+
+    /**
+     * @return iterable<string, array{string, bool, bool}>
+     */
+    public static function ownSystemCleanupProvider(): iterable
+    {
+        yield 'external to internal ticket' => ['ABC-5', false, true];
+        yield 'internal delete already removed it' => ['ABC-5', true, false];
+        yield 'internal to internal ticket' => ['OPSDHL-4', false, false];
     }
 
     public function testInternalTicketSystemRemapsToExistingInternalIssue(): void

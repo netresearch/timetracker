@@ -205,12 +205,41 @@ class EntryEventSubscriber implements EventSubscriberInterface
         }
 
         // Regular path: the project's own ticket system decides via its
-        // book_time/type flags (v4 ran both paths; for internal-key projects
-        // the own system usually has booking disabled).
+        // book_time/type flags. v4 ran both paths, so a ticket of a separate
+        // internal Jira was also pushed to the own Jira, with an internal key
+        // and the internal worklog id; it belongs to the internal system only
+        // (#937).
         $ownTicketSystem = $project->getTicketSystem();
-        if ($ownTicketSystem instanceof TicketSystem && $this->canBookOn($ownTicketSystem)) {
+        if (!$ownTicketSystem instanceof TicketSystem || !$this->canBookOn($ownTicketSystem)) {
+            return;
+        }
+
+        if (!$project->isInternalJiraTicket($entry->getTicket())) {
             $this->noticeUnauthorized($entryEvent, $ownTicketSystem, function () use ($entry, $previousEntry, $user, $ownTicketSystem): void {
                 $this->bookWorklog($entry, $previousEntry, $user, $ownTicketSystem);
+            });
+
+            return;
+        }
+
+        // The ticket changed from an external one to an internal one: a
+        // worklog the previous ticket left on the own Jira is removed there,
+        // or the time stays booked in both Jiras (the same delete the own step
+        // sent before #937). A successful internal delete has already cleared
+        // the previous id. A previous id can still name an internal worklog
+        // when an earlier remap failed (#941); Jira scopes a worklog id to its
+        // issue, so the delete on the external issue then answers 404.
+        if ($previousEntry instanceof Entry
+            && null !== $previousEntry->getWorklogId()
+            && !$project->isInternalJiraTicket($previousEntry->getTicket())
+        ) {
+            $this->noticeUnauthorized($entryEvent, $ownTicketSystem, function () use ($previousEntry, $user, $ownTicketSystem): void {
+                if (!$this->worklogWriteService->delete($this->jiraOAuthApiFactory->create($user, $ownTicketSystem), $previousEntry)) {
+                    $this->logger?->warning('Worklog on the own ticket system not removed after a change to an internal ticket; it may be booked twice', [
+                        'entry' => $previousEntry->getId(),
+                        'worklog' => $previousEntry->getWorklogId(),
+                    ]);
+                }
             });
         }
     }

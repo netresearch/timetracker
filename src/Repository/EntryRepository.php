@@ -1245,7 +1245,7 @@ class EntryRepository extends ServiceEntityRepository
      */
     public function findByUserAndTicketSystemToSync(int $userId, int $ticketSystemId, int $limit = 50): array
     {
-        $result = $this->createQueryBuilder('e')
+        $queryBuilder = $this->createQueryBuilder('e')
             ->leftJoin('e.user', 'u')
             ->leftJoin('e.customer', 'c')
             ->leftJoin('e.project', 'p')
@@ -1264,9 +1264,9 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('humanSource', EntrySource::HUMAN->value)
             ->orderBy('e.day', 'DESC')
             ->addOrderBy('e.start', 'DESC')
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+            ->setMaxResults($limit);
+        $this->excludeSeparateInternalJiraTickets($queryBuilder, $ticketSystemId);
+        $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
         /** @var list<Entry> $result */
@@ -1277,13 +1277,14 @@ class EntryRepository extends ServiceEntityRepository
     /**
      * Entries eligible for worklog verification/sync (ADR-023): the user's entries in the
      * day range whose project books on the given ticket system, with a ticket set.
-     * Internal-mirror remaps are excluded (interaction deferred by ADR-023).
+     * Entries booked on a separate internal Jira are excluded: internal-mirror
+     * remaps and tickets of the internal project (ADR-023 §7, #937).
      *
      * @return list<Entry>
      */
     public function findJiraSyncCandidates(User $user, TicketSystem $ticketSystem, DateTimeInterface $from, DateTimeInterface $to): array
     {
-        $result = $this->createQueryBuilder('e')
+        $queryBuilder = $this->createQueryBuilder('e')
             ->join('e.project', 'p')
             ->where(self::WHERE_USER)
             ->andWhere(self::WHERE_TICKET_SYSTEM)
@@ -1301,14 +1302,45 @@ class EntryRepository extends ServiceEntityRepository
             ->setParameter('fromDay', $from->format('Y-m-d'))
             ->setParameter('toDay', $to->format('Y-m-d'))
             ->orderBy('e.day', 'ASC')
-            ->addOrderBy('e.start', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->addOrderBy('e.start', 'ASC');
+        $this->excludeSeparateInternalJiraTickets($queryBuilder, (int) $ticketSystem->getId());
+        $result = $queryBuilder->getQuery()->getResult();
 
         assert(is_array($result) && array_is_list($result));
         /** @var list<Entry> $result */
 
         return $result;
+    }
+
+    /**
+     * Excludes, inside the query, the tickets of each project on this ticket
+     * system that books its internal Jira project on a separate ticket system
+     * (#937). The keys and the rule come from Project, so the save path and
+     * the sync queries agree on which tickets are internal; filtering inside
+     * the query keeps a LIMIT window filled with real candidates.
+     */
+    private function excludeSeparateInternalJiraTickets(QueryBuilder $queryBuilder, int $ticketSystemId): void
+    {
+        $projects = $this->getEntityManager()->getRepository(Project::class)->createQueryBuilder('ip')
+            ->where('ip.ticketSystem = :internalCheckTicketSystem')
+            ->andWhere('ip.internalJiraProjectKey IS NOT NULL')
+            ->setParameter('internalCheckTicketSystem', $ticketSystemId)
+            ->getQuery()
+            ->getResult();
+        assert(is_array($projects));
+
+        foreach ($projects as $index => $project) {
+            if (!$project instanceof Project || !$project->hasSeparateInternalJiraTicketSystem()) {
+                continue;
+            }
+
+            // The project part of a ticket is the text before its first "-";
+            // without a "-", SUBSTRING yields '' and matches no key.
+            $queryBuilder
+                ->andWhere(sprintf("e.project != :internalProject%1\$d OR UPPER(SUBSTRING(e.ticket, 1, LOCATE('-', e.ticket) - 1)) NOT IN (:internalKeys%1\$d)", $index))
+                ->setParameter('internalProject' . $index, $project->getId())
+                ->setParameter('internalKeys' . $index, $project->getInternalJiraProjectKeys());
+        }
     }
 
     /**

@@ -17,7 +17,10 @@ use App\Enum\EntrySource;
 use App\Repository\EntryRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\AbstractWebTestCase;
+
+use function in_array;
 
 /**
  * @internal
@@ -120,6 +123,71 @@ final class EntryRepositorySyncCandidatesTest extends AbstractWebTestCase
 
         self::assertContains($human->getId(), $ids);
         self::assertNotContains($agentWalltime->getId(), $ids);
+    }
+
+    /**
+     * #937: a ticket of the internal Jira project is booked on the internal
+     * ticket system, so neither sync query of the project's own ticket system
+     * may return it. A mirror (original key set) stays excluded as before.
+     *
+     * @param int|null $internalSystemOffset added to the own system's id; 0 makes the internal system the own one
+     */
+    #[DataProvider('internalTicketProvider')]
+    public function testSyncQueriesSkipTicketsBookedOnASeparateInternalSystem(string $internalKey, ?int $internalSystemOffset, string $ticket, ?string $originalKey, bool $expectedCandidate): void
+    {
+        $ticketSystemId = $this->ticketSystem->getId();
+        $userId = $this->user->getId();
+        self::assertIsInt($ticketSystemId);
+        self::assertIsInt($userId);
+        $this->project->setInternalJiraProjectKey($internalKey);
+        $this->project->setInternalJiraTicketSystem(null === $internalSystemOffset ? null : (string) ($ticketSystemId + $internalSystemOffset));
+
+        // A far-future day puts the entry first in the newest-first, limited result.
+        $entry = $this->persistEntry($ticket, '2030-03-04', self::NINE, self::TEN)->setInternalJiraTicketOriginalKey($originalKey);
+        $this->entityManager->flush();
+
+        $candidates = self::idsOf($this->entryRepository->findJiraSyncCandidates($this->user, $this->ticketSystem, new DateTime('2030-03-01'), new DateTime('2030-03-31')));
+        $toSync = self::idsOf($this->entryRepository->findByUserAndTicketSystemToSync($userId, $ticketSystemId, 50));
+
+        self::assertSame($expectedCandidate, in_array($entry->getId(), $candidates, true), 'findJiraSyncCandidates');
+        self::assertSame($expectedCandidate, in_array($entry->getId(), $toSync, true), 'findByUserAndTicketSystemToSync');
+    }
+
+    /**
+     * @return iterable<string, array{string, ?int, string, ?string, bool}>
+     */
+    public static function internalTicketProvider(): iterable
+    {
+        yield 'internal ticket without original key' => ['INT, ops', 1000, 'INT-11', null, false];
+        yield 'second listed key' => ['INT, ops', 1000, 'OPS-12', null, false];
+        yield 'ordinary ticket on the same project' => ['INT, ops', 1000, 'ABC-30', null, true];
+        yield 'key is only a prefix of the project' => ['INT', 1000, 'INTX-1', null, true];
+        yield 'internal system is the own system' => ['INT', 0, 'INT-11', null, true];
+        yield 'no internal system' => ['INT', null, 'INT-11', null, true];
+        yield 'mirrored entry' => ['INT', 1000, 'INT-11', 'EXT-1', false];
+    }
+
+    /**
+     * #937: the exclusion is scoped to the project with the internal key; another
+     * project on the same ticket system that books real INT-* tickets keeps them.
+     */
+    public function testSyncQueriesKeepInternalLookingTicketsOfOtherProjects(): void
+    {
+        $ticketSystemId = $this->ticketSystem->getId();
+        self::assertIsInt($ticketSystemId);
+        $this->project->setInternalJiraProjectKey('INT')->setInternalJiraTicketSystem((string) ($ticketSystemId + 1000));
+        $otherProject = $this->entityManager->getRepository(Project::class)->createQueryBuilder('p')
+            ->where('p.id != :id')->setParameter('id', $this->project->getId())
+            ->setMaxResults(1)->getQuery()->getOneOrNullResult();
+        self::assertInstanceOf(Project::class, $otherProject, 'second fixture project missing');
+        $otherProject->setTicketSystem($this->ticketSystem)->setInternalJiraProjectKey(null);
+
+        $entry = $this->persistEntry('INT-11', '2030-03-05', self::NINE, self::TEN)->setProject($otherProject);
+        $this->entityManager->flush();
+
+        $ids = self::idsOf($this->entryRepository->findJiraSyncCandidates($this->user, $this->ticketSystem, new DateTime('2030-03-01'), new DateTime('2030-03-31')));
+
+        self::assertContains($entry->getId(), $ids);
     }
 
     public function testFindByWorklogIdsAndTicketSystemKeysLinkedEntriesByWorklogId(): void
