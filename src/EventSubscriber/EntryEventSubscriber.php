@@ -224,14 +224,22 @@ class EntryEventSubscriber implements EventSubscriberInterface
 
         // The ticket changed from an external one to an internal one: a
         // worklog the previous ticket left on the own Jira is removed there,
-        // or the time stays booked in both Jiras. The internal step has
-        // already cleared the previous id if that worklog was internal.
+        // or the time stays booked in both Jiras (the same delete the own step
+        // sent before #937). A successful internal delete has already cleared
+        // the previous id. A previous id can still name an internal worklog
+        // when an earlier remap failed (#941); Jira scopes a worklog id to its
+        // issue, so the delete on the external issue then answers 404.
         if ($previousEntry instanceof Entry
             && null !== $previousEntry->getWorklogId()
             && !$project->isInternalJiraTicket($previousEntry->getTicket())
         ) {
             $this->noticeUnauthorized($entryEvent, $ownTicketSystem, function () use ($previousEntry, $user, $ownTicketSystem): void {
-                $this->worklogWriteService->delete($this->jiraOAuthApiFactory->create($user, $ownTicketSystem), $previousEntry);
+                if (!$this->worklogWriteService->delete($this->jiraOAuthApiFactory->create($user, $ownTicketSystem), $previousEntry)) {
+                    $this->logger?->warning('Worklog on the own ticket system not removed after a change to an internal ticket; it may be booked twice', [
+                        'entry' => $previousEntry->getId(),
+                        'worklog' => $previousEntry->getWorklogId(),
+                    ]);
+                }
             });
         }
     }

@@ -915,7 +915,7 @@ final class EntryEventSubscriberTest extends TestCase
      *
      * @return array{TicketSystem, ArrayObject<int, TicketSystem|string>} the own ticket system and the call log
      */
-    private function withBookingOwnTicketSystem(Entry $entry, string $internalSystemId): array
+    private function withBookingOwnTicketSystem(Entry $entry, string $internalSystemId, bool $deleteClearsId = false): array
     {
         $ownTicketSystem = self::createStub(TicketSystem::class);
         $ownTicketSystem->method('getId')->willReturn(3);
@@ -934,10 +934,14 @@ final class EntryEventSubscriberTest extends TestCase
 
                 return $this->jiraOAuthApiService;
             });
-        // A not-found delete: confirmed gone on that Jira, the id stays on the snapshot.
+        // Confirmed gone on that Jira: a real delete clears the snapshot's id,
+        // a not-found one leaves it set.
         $this->worklogWriteService->method('delete')
-            ->willReturnCallback(static function () use ($calls): bool {
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted) use ($calls, $deleteClearsId): bool {
                 $calls[] = 'delete';
+                if ($deleteClearsId) {
+                    $deleted->setWorklogId(null);
+                }
 
                 return true;
             });
@@ -980,11 +984,11 @@ final class EntryEventSubscriberTest extends TestCase
      * internal tickets never reaches the own Jira.
      */
     #[DataProvider('ownSystemCleanupProvider')]
-    public function testOwnTicketSystemRemovesThePreviousExternalWorklog(string $previousTicket, bool $ownDeletes): void
+    public function testOwnTicketSystemRemovesThePreviousExternalWorklog(string $previousTicket, bool $internalDeleteClearsId, bool $ownDeletes): void
     {
         [$entry] = $this->createInternalProjectEntry('OPSDHL-5');
         $entry->setWorklogId(77);
-        [$ownTicketSystem, $calls] = $this->withBookingOwnTicketSystem($entry, '9');
+        [$ownTicketSystem, $calls] = $this->withBookingOwnTicketSystem($entry, '9', $internalDeleteClearsId);
 
         $previousEntry = new Entry();
         $previousEntry->setTicket($previousTicket);
@@ -998,12 +1002,13 @@ final class EntryEventSubscriberTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, bool}>
+     * @return iterable<string, array{string, bool, bool}>
      */
     public static function ownSystemCleanupProvider(): iterable
     {
-        yield 'external to internal ticket' => ['ABC-5', true];
-        yield 'internal to internal ticket' => ['OPSDHL-4', false];
+        yield 'external to internal ticket' => ['ABC-5', false, true];
+        yield 'internal delete already removed it' => ['ABC-5', true, false];
+        yield 'internal to internal ticket' => ['OPSDHL-4', false, false];
     }
 
     public function testInternalTicketSystemRemapsToExistingInternalIssue(): void
