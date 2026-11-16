@@ -611,10 +611,6 @@ final class ProjectTest extends TestCase
         self::assertFalse($project->matchesInternalJiraProject('INT4'));
     }
 
-    /**
-     * Tickets are upper-cased on save, but the internal key is stored as typed;
-     * a key configured as "int" must still match the ticket prefix "INT".
-     */
     public function testGetInternalJiraProjectKeysSplitsTrimsUpperCasesAndDeduplicates(): void
     {
         $project = new Project();
@@ -628,6 +624,23 @@ final class ProjectTest extends TestCase
         self::assertSame([], new Project()->getInternalJiraProjectKeys());
     }
 
+    /**
+     * A separator-only key yields no project to search or create in, so it must
+     * not switch the internal mirroring on (it sent "project in ()" to Jira).
+     */
+    public function testHasInternalJiraProjectKeyFalseForSeparatorOnlyKey(): void
+    {
+        $project = new Project();
+        $project->setInternalJiraProjectKey(' , ');
+        $project->setInternalJiraTicketSystem('1');
+
+        self::assertFalse($project->hasInternalJiraProjectKey());
+    }
+
+    /**
+     * Tickets are upper-cased on save, but the internal key is stored as typed;
+     * a key configured as "int" must still match the ticket prefix "INT".
+     */
     public function testMatchesInternalJiraProjectIgnoresCase(): void
     {
         $project = new Project();

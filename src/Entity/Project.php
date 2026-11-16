@@ -683,13 +683,13 @@ class Project extends Base
      */
     public function hasInternalJiraProjectKey(): bool
     {
-        // A project mirrors to an internal Jira only when it has a non-blank key
-        // AND a real (positive) internal ticket-system id. Trimming guards against
-        // a whitespace-only key, and the > 0 check rejects a "0"/blank system id —
-        // either of which would otherwise divert delete to a null internal system
-        // and orphan the worklog booked on the project's own ticket system.
-        return null !== $this->internalJiraProjectKey
-            && '' !== trim($this->internalJiraProjectKey)
+        // A project mirrors to an internal Jira only when it has at least one
+        // usable key AND a real (positive) internal ticket-system id. A blank or
+        // separator-only key (" , ") yields no key, and the > 0 check rejects a
+        // "0"/blank system id — either of which would otherwise divert delete to
+        // a null internal system and orphan the worklog booked on the project's
+        // own ticket system, or send "project in ()" to Jira.
+        return [] !== $this->getInternalJiraProjectKeys()
             && (int) $this->internalJiraTicketSystem > 0;
     }
 

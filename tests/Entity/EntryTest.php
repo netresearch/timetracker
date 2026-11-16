@@ -613,9 +613,10 @@ final class EntryTest extends TestCase
     {
         $entry = new Entry();
         $entry->setTicket('EXT-789');
-        $project = self::createStub(Project::class);
-        $project->method('getInternalJiraProjectKey')->willReturn('INT');
-        $project->method('getTicketSystem')->willReturn(null);
+        // A real project with a key list: the mirror issue goes into the first
+        // listed project, not into the raw setting (#935).
+        $project = new Project();
+        $project->setInternalJiraProjectKey('int, OPS');
         $entry->setProject($project);
 
         $result = $entry->getPostDataForInternalJiraTicketCreation();

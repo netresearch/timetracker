@@ -871,7 +871,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project in ("OPSDHL") AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
+            ->with('project in ("OPSDHL") AND summary ~ "\\"DHLSUP-123456\\"" ORDER BY created ASC', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
 
         $this->jiraOAuthApiService->expects(self::never())
@@ -902,7 +902,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project in ("OPSDHL", "OPSX") AND summary ~ "DHLSUP-1"', ['key', 'summary'], 1)
+            ->with('project in ("OPSDHL", "OPSX") AND summary ~ "\\"DHLSUP-1\\"" ORDER BY created ASC', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSX-3']]]);
 
         $this->worklogWriteService->method('push')
@@ -926,7 +926,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project in ("OPSDHL") AND summary ~ "EXT \\"1\\" \\\\ x"', ['key', 'summary'], 1)
+            ->with('project in ("OPSDHL") AND summary ~ "\\"EXT \\"1\\" \\\\ x\\"" ORDER BY created ASC', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-8']]]);
 
         $this->worklogWriteService->method('push')
@@ -975,7 +975,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project in ("OPSDHL") AND summary ~ "DHLSUP-123456"', ['key', 'summary'], 1)
+            ->with('project in ("OPSDHL") AND summary ~ "\\"DHLSUP-123456\\"" ORDER BY created ASC', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-75']]]);
 
         $this->worklogWriteService->method('push')
@@ -1166,7 +1166,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project in ("INT") AND summary ~ "EXT-1"', ['key', 'summary'], 1)
+            ->with('project in ("INT") AND summary ~ "\\"EXT-1\\"" ORDER BY created ASC', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'INT-10']]]);
 
         $this->worklogWriteService->method('push')
@@ -1192,7 +1192,7 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project in ("INT") AND summary ~ "INTX-5"', ['key', 'summary'], 1)
+            ->with('project in ("INT") AND summary ~ "\\"INTX-5\\"" ORDER BY created ASC', ['key', 'summary'], 1)
             ->willReturn((object) ['issues' => [(object) ['key' => 'INT-11']]]);
 
         $this->worklogWriteService->method('push')
