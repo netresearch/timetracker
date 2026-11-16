@@ -16,6 +16,8 @@ use App\Entity\WorklogSyncState;
 use App\Enum\EntrySource;
 use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
+use App\Exception\Integration\Jira\JiraApiException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Repository\WorklogSyncStateRepository;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use App\Service\Sync\RemoteWorklogNormalizer;
@@ -23,6 +25,7 @@ use App\Service\Sync\WorklogWriteService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
@@ -198,6 +201,109 @@ final class WorklogWriteServiceTest extends TestCase
         self::assertSame(WriteOutcome::REMOTE_MISSING, $outcome);
         self::assertSame(WorklogSyncStatus::ORPHANED, $state->getStatus());
         self::assertSame(77, $entry->getWorklogId());
+    }
+
+    /**
+     * @return iterable<string, array{bool}>
+     */
+    public static function baseStates(): iterable
+    {
+        yield 'with a base whose lease still holds' => [true];
+        yield 'without a base (pre-ADR entry)' => [false];
+    }
+
+    /**
+     * #941: the worklog is missing on the entry's ticket because an earlier move stopped
+     * half-way; it is found on its old issue, deleted there and booked on the ticket.
+     */
+    #[DataProvider('baseStates')]
+    public function testAWorklogFoundOnAnotherIssueIsMovedToTheTicket(bool $withState): void
+    {
+        $entry = $this->entry('ABC-1', 77);
+        $state = $withState ? new WorklogSyncState()->setBaseUpdatedAt('U1') : null;
+
+        $this->syncStateRepository->method('findOneBy')->willReturn($state);
+        $this->api->method('getIssueWorklog')->willReturnOnConsecutiveCalls(null, $this->remote('U2'));
+        $this->api->expects(self::once())->method('findEntryWorklog')->with($entry)->willReturn($this->movedRemote('U1'));
+        $this->api->expects(self::once())->method('doesTicketExist')->with('ABC-1')->willReturn(true);
+        $this->api->expects(self::once())->method('deleteIssueWorklog')->with('151932', 77);
+        $this->api->expects(self::once())
+            ->method('updateEntryJiraWorkLog')
+            ->willReturnCallback(static function (Entry $entry): void {
+                // The old id must be gone, or the write would PUT to it on the new ticket.
+                self::assertNull($entry->getWorklogId());
+                $entry->setWorklogId(88);
+            });
+
+        $outcome = $this->service->push($this->api, $entry, $this->ticketSystem);
+
+        self::assertSame(WriteOutcome::WRITTEN, $outcome);
+        self::assertSame(88, $entry->getWorklogId());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function unmovableWorklogs(): iterable
+    {
+        yield 'not listed by Jira' => ['absent'];
+        yield 'lookup fails' => ['lookupFails'];
+        yield 'found, but changed since the base (lease lost)' => ['leaseLost'];
+        yield 'found, but the entry\'s ticket does not exist' => ['noTicket'];
+    }
+
+    /**
+     * Every path that cannot finish the move parks the entry as before and keeps its id.
+     */
+    #[DataProvider('unmovableWorklogs')]
+    public function testAWorklogThatCannotBeMovedStaysParkedWithItsId(string $case): void
+    {
+        $entry = $this->entry('ABC-1', 77);
+        $state = new WorklogSyncState()->setBaseUpdatedAt('U1');
+
+        $this->syncStateRepository->method('findOneBy')->willReturn($state);
+        $this->api->method('getIssueWorklog')->willReturn(null);
+        $lookup = $this->api->method('findEntryWorklog');
+        match ($case) {
+            'absent' => $lookup->willReturn(null),
+            'lookupFails' => $lookup->willThrowException(new JiraApiException('boom', 500)),
+            default => $lookup->willReturn($this->movedRemote('leaseLost' === $case ? 'U9' : 'U1')),
+        };
+        $this->api->method('doesTicketExist')->willReturn('noTicket' !== $case);
+        $this->api->expects(self::never())->method('deleteIssueWorklog');
+        $this->api->expects(self::never())->method('updateEntryJiraWorkLog');
+
+        $outcome = $this->service->push($this->api, $entry, $this->ticketSystem);
+
+        self::assertSame(WriteOutcome::REMOTE_MISSING, $outcome);
+        self::assertSame(WorklogSyncStatus::ORPHANED, $state->getStatus());
+        self::assertSame(77, $entry->getWorklogId());
+    }
+
+    /**
+     * A refused token is not a missing worklog: the 401 reaches the caller, which asks the
+     * user to connect Jira (#911), and the id stays linked.
+     */
+    public function testARefusedTokenDuringTheLookupPropagates(): void
+    {
+        $entry = $this->entry('ABC-1', 77);
+
+        $this->syncStateRepository->method('findOneBy')->willReturn(new WorklogSyncState()->setBaseUpdatedAt('U1'));
+        $this->api->method('getIssueWorklog')->willReturn(null);
+        $this->api->method('findEntryWorklog')->willThrowException(new JiraApiUnauthorizedException('401', 401, 'https://tt.example.com/jira/connect/7'));
+        $this->api->expects(self::never())->method('deleteIssueWorklog');
+
+        try {
+            $this->service->push($this->api, $entry, $this->ticketSystem);
+            self::fail('A refused token must propagate');
+        } catch (JiraApiUnauthorizedException) {
+            self::assertSame(77, $entry->getWorklogId());
+        }
+    }
+
+    private function movedRemote(string $updated): JiraWorkLog
+    {
+        return new JiraWorkLog(id: 77, timeSpentSeconds: 3600, updated: $updated, issueId: '151932');
     }
 
     public function testForcePushSkipsLeaseAndWrites(): void
