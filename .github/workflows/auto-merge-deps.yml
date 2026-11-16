@@ -1,13 +1,37 @@
 name: Auto-merge dependency PRs
 
 on:
-  pull_request:
+  # The reusable only approves and runs `gh pr merge` with the base-repo
+  # token; it never checks out or runs PR head code. Renovate PRs get the
+  # Actions secrets below under pull_request too; pull_request_target is for
+  # Dependabot PRs, which pull_request limits to Dependabot secrets (GitHub
+  # docs). Check MERGE_APP_CONFIGURED in the first Dependabot run.
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
+    types: [opened, synchronize, reopened]
+    branches: [main]
 
 permissions: {}
 
 jobs:
   auto-merge:
+    # Only bot PRs from a branch of this repository, run by that bot, get the
+    # App secrets. triggering_actor, not actor: a re-run keeps the original
+    # github.actor but names the person who re-ran it as triggering_actor. The
+    # reusable runs its own author and actor checks on top. SonarCloud
+    # githubactions:S8232 on this condition is reviewed as safe: it narrows
+    # who gets the secrets and is not the only check.
+    if: >-
+      (github.event.pull_request.user.login == 'renovate[bot]' || github.event.pull_request.user.login == 'dependabot[bot]')
+      && github.triggering_actor == github.event.pull_request.user.login
+      && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: write
       pull-requests: write
     uses: netresearch/.github/.github/workflows/auto-merge-deps.yml@main
+    # Enqueue with the org App: a merge-queue entry made with GITHUB_TOKEN
+    # starts no merge_group workflow, so "CI Success" never reports and the
+    # queue drops the PR with checks_timed_out. Only these two secrets are
+    # passed, not `secrets: inherit`.
+    secrets:
+      merge-app-id: ${{ secrets.PROJECT_APP_ID }}
+      merge-app-private-key: ${{ secrets.PROJECT_APP_PRIVATE_KEY }}
