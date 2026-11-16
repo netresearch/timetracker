@@ -707,10 +707,14 @@ class Project extends Base
             return false;
         }
 
-        // Support comma-separated list of project keys
-        $projectKeys = array_map(trim(...), explode(',', $internalKey));
+        // Support comma-separated list of project keys. Tickets are upper-cased
+        // on save while the key is stored as typed, so compare case-insensitively.
+        $projectKeys = array_map(
+            static fn (string $key): string => strtoupper(trim($key)),
+            explode(',', $internalKey),
+        );
 
-        return in_array($jiraId, $projectKeys, true);
+        return in_array(strtoupper($jiraId), $projectKeys, true);
     }
 
     /**
