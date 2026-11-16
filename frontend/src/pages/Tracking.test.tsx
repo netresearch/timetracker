@@ -1865,6 +1865,21 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('treats a re-typed ticket in other case or with spaces as unchanged (#936)', async () => {
+    mockApiWith([{ entry: { ...DEFAULT_ENTRY, class: 0, ticket: 'INT-10', extTicket: 'EXT-1' } }])
+    postJson.mockResolvedValue({})
+    const { getByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'INT-10' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: ' int-10 ' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({ extTicket: 'EXT-1' })))
+
+    unmount()
+  })
+
   it('keeps the ext. ticket when a mirrored entry is saved with its ticket unchanged (#936)', async () => {
     mockApiWith([{ entry: { ...DEFAULT_ENTRY, class: 0, ticket: 'INT-10', extTicket: 'EXT-1' } }])
     postJson.mockResolvedValue({})

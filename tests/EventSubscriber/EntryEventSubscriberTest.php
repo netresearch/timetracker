@@ -1004,6 +1004,60 @@ final class EntryEventSubscriberTest extends TestCase
     }
 
     /**
+     * #936: once the grid lets a mirrored entry's ticket change, the worklog on
+     * the old internal issue has to go and a new one is booked on the new issue;
+     * pushing the old worklog id to the new issue only finds it missing.
+     */
+    public function testInternalTicketSystemMovesTheWorklogWhenTheTicketChanges(): void
+    {
+        [$entry, $user, $internalTicketSystem] = $this->createEntryOnRealInternalProject('INT-11', 'INT');
+        $entry->setWorklogId(42);
+        $previousEntry = clone $entry;
+        $previousEntry->setTicket('INT-10');
+        $previousEntry->setInternalJiraTicketOriginalKey('EXT-1');
+
+        $this->jiraOAuthApiFactory->expects(self::atLeastOnce())
+            ->method('create')
+            ->with($user, $internalTicketSystem)
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, $previousEntry)
+            ->willReturn(true);
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $pushed): WriteOutcome {
+                self::assertNull($pushed->getWorklogId(), 'the old worklog id must not be pushed to the new issue');
+
+                return WriteOutcome::WRITTEN;
+            });
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame('INT-11', $entry->getTicket());
+    }
+
+    public function testInternalTicketSystemKeepsTheWorklogWhenTheTicketIsUnchanged(): void
+    {
+        [$entry] = $this->createEntryOnRealInternalProject('INT-10', 'INT');
+        $entry->setWorklogId(42);
+        $previousEntry = clone $entry;
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->worklogWriteService->expects(self::never())->method('delete');
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->willReturn(WriteOutcome::WRITTEN);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame(42, $entry->getWorklogId());
+    }
+
+    /**
      * The safeguard only covers entries without an original key: a mirrored
      * entry that keeps its ext. ticket is still resolved through it, as before.
      */

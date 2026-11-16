@@ -194,7 +194,10 @@ class EntryEventSubscriber implements EventSubscriberInterface
             $internalTicketSystem = $this->findInternalTicketSystem($project);
             if ($internalTicketSystem instanceof TicketSystem && $this->canBookOn($internalTicketSystem)) {
                 $this->remapEntryToInternalTicket($entry, $project, $user, $internalTicketSystem);
-                $this->bookWorklog($entry, null, $user, $internalTicketSystem);
+                // With the previous snapshot, a changed ticket moves the worklog
+                // off the old internal issue instead of pushing its id to the
+                // new one (#936).
+                $this->bookWorklog($entry, $previousEntry, $user, $internalTicketSystem);
             }
         }
 
