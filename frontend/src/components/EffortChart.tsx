@@ -138,7 +138,7 @@ export function EffortChart(props: { title: string; rows: EffortRow[] }) {
                       <Show when={hasTarget()}>
                         <span class="effort-soll-marker" aria-hidden="true" style={{ left: pct(row.target ?? 0) }} />
                       </Show>
-                      <span class="effort-bar-label">{row.label}</span>
+                      <span class="effort-bar-label" title={row.label}>{row.label}</span>
                     </th>
                     <td class="numeric">
                       {formatMinutes(row.minutes)}

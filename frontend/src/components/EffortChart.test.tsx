@@ -45,6 +45,18 @@ describe('EffortChart', () => {
     unmount()
   })
 
+  // #897: a long label is cut off with an ellipsis, so the full name has to be
+  // reachable on hover.
+  it('carries the full label as a hover title on the label', () => {
+    const long = 'A project name long enough to be truncated in the effort table'
+    const { container, unmount } = render(() => <EffortChart title="Effort" rows={[{ label: long, minutes: 60, quota: '100.00%' }]} />)
+    const label = container.querySelector<HTMLElement>('.effort-bar-label')
+
+    expect(label).toHaveTextContent(long)
+    expect(label).toHaveAttribute('title', long)
+    unmount()
+  })
+
   it('clamps the denominator so an all-zero set renders 0% without NaN', () => {
     const { container, unmount } = render(() => <EffortChart title="Effort" rows={[{ label: 'Z', minutes: 0, quota: '0%' }]} />)
     const bar = container.querySelector<HTMLElement>('.effort-bar')
