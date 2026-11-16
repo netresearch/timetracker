@@ -1371,6 +1371,9 @@ export default function Tracking() {
         activity: num(source.activity),
         description: str(source.description),
         ticket: str(source.ticket),
+        // A mirrored entry's ticket is the internal key; without the external
+        // key the backend would mirror that internal key again (#898).
+        extTicket: source.extTicket,
       },
       'description',
     )

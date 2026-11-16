@@ -1811,6 +1811,41 @@ describe('Tracking (Worklog grid)', () => {
     }
   })
 
+  // #898: on a project with an internal Jira key a mirrored entry carries the
+  // internal key as its ticket and the external one as extTicket. A continued
+  // entry that dropped extTicket made the backend treat the internal key as an
+  // external ticket and create a second internal issue for it.
+  it('Continue on a mirrored entry carries its ext. ticket into the save (#898)', async () => {
+    window.APP_CONFIG!.suggestTime = true
+    window.APP_CONFIG!.minEntryDuration = 15
+    try {
+      mockApiWith([{ entry: { ...DEFAULT_ENTRY, date: todayDmy(), end: '10:30', class: 0, ticket: 'INT-10', extTicket: 'EXT-1' } }])
+      postJson.mockResolvedValue({})
+      const { getByRole, container, unmount } = renderTracking()
+      await waitFor(() => expect(getByRole('gridcell', { name: 'INT-10' })).toBeInTheDocument())
+
+      fireEvent.click(getByRole('button', { name: 'Continue' }))
+      const descInput = await waitFor(() => {
+        const el = container.querySelector<HTMLInputElement>('tbody td[data-col-key="description"] input')
+        if (el === null) throw new Error('description editor not open on the Continue row')
+
+        return el
+      })
+      fireEvent.keyDown(descInput, { key: 'Enter' })
+
+      await waitFor(() =>
+        expect(postJson).toHaveBeenCalledWith('/tracking/save', expect.objectContaining({
+          ticket: 'INT-10', extTicket: 'EXT-1', start: '10:30', end: '12:00',
+        })),
+      )
+
+      unmount()
+    } finally {
+      window.APP_CONFIG!.suggestTime = false
+      window.APP_CONFIG!.minEntryDuration = 5
+    }
+  })
+
   // A save re-keys a new row (temp id → server id): the temp row unmounts and the
   // persisted entry renders as a fresh row. Without the resume, that ended the edit
   // session and stranded focus on <body> (#588 — "leaves inline edit mode after
