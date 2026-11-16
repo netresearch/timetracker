@@ -1024,7 +1024,11 @@ final class EntryEventSubscriberTest extends TestCase
         $this->worklogWriteService->expects(self::once())
             ->method('delete')
             ->with($this->jiraOAuthApiService, $previousEntry)
-            ->willReturn(true);
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): bool {
+                $deleted->setWorklogId(null); // what the Jira client does on success
+
+                return true;
+            });
         $this->worklogWriteService->expects(self::once())
             ->method('push')
             ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $pushed): WriteOutcome {
@@ -1036,6 +1040,50 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
 
         self::assertSame('INT-11', $entry->getTicket());
+    }
+
+    /**
+     * The grid case of #936: a mirrored entry (INT-5 / EXT-1, worklog 42) gets a
+     * new external ticket EXT-2 without ext. ticket; the lookup maps it to INT-6
+     * and the worklog moves from INT-5 to INT-6.
+     */
+    public function testInternalTicketSystemMovesTheWorklogWhenANewExternalTicketIsMirrored(): void
+    {
+        [$entry] = $this->createEntryOnRealInternalProject('EXT-2', 'INT');
+        $entry->setWorklogId(42);
+        $previousEntry = clone $entry;
+        $previousEntry->setTicket('INT-5');
+        $previousEntry->setInternalJiraTicketOriginalKey('EXT-1');
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+        $this->jiraOAuthApiService->expects(self::once())
+            ->method('searchTicket')
+            ->willReturn((object) ['issues' => [(object) ['key' => 'INT-6']]]);
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->with($this->jiraOAuthApiService, self::callback(
+                static fn (Entry $deleted): bool => 'INT-5' === $deleted->getTicket() && 42 === $deleted->getWorklogId(),
+            ))
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): bool {
+                $deleted->setWorklogId(null);
+
+                return true;
+            });
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $pushed): WriteOutcome {
+                self::assertSame('INT-6', $pushed->getTicket());
+                self::assertNull($pushed->getWorklogId());
+
+                return WriteOutcome::WRITTEN;
+            });
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame('INT-6', $entry->getTicket());
+        self::assertSame('EXT-2', $entry->getInternalJiraTicketOriginalKey());
     }
 
     public function testInternalTicketSystemKeepsTheWorklogWhenTheTicketIsUnchanged(): void
@@ -1193,7 +1241,12 @@ final class EntryEventSubscriberTest extends TestCase
 
         $this->worklogWriteService->expects(self::once())
             ->method('delete')
-            ->with($this->jiraOAuthApiService, $previousEntry);
+            ->with($this->jiraOAuthApiService, $previousEntry)
+            ->willReturnCallback(static function (JiraOAuthApiService $api, Entry $deleted): bool {
+                $deleted->setWorklogId(null); // what the Jira client does on success
+
+                return true;
+            });
 
         $this->worklogWriteService->expects(self::once())
             ->method('push')
@@ -1204,6 +1257,48 @@ final class EntryEventSubscriberTest extends TestCase
         $this->subscriber->onEntryUpdated($event);
 
         self::assertNull($entry->getWorklogId());
+    }
+
+    /**
+     * A not-found on the old ticket leaves the snapshot's worklog id set (and
+     * still reports true). Dropping the entry's id anyway would book the hours
+     * again on the new ticket while the old worklog may still exist elsewhere.
+     */
+    public function testOnEntryUpdatedKeepsTheWorklogIdWhenTheOldWorklogWasNotFound(): void
+    {
+        $ticketSystem = self::createStub(TicketSystem::class);
+        $ticketSystem->method('getBookTime')->willReturn(true);
+        $ticketSystem->method('getType')->willReturn(TicketSystemType::JIRA);
+
+        $project = self::createStub(Project::class);
+        $project->method('getTicketSystem')->willReturn($ticketSystem);
+
+        $user = self::createStub(User::class);
+        $user->method('getId')->willReturn(1);
+
+        $entry = new Entry();
+        $entry->setUser($user);
+        $entry->setProject($project);
+        $entry->setTicket('ABC-2');
+        $entry->setWorklogId(555);
+
+        $previousEntry = new Entry();
+        $previousEntry->setTicket('ABC-1');
+        $previousEntry->setWorklogId(555);
+
+        $this->jiraOAuthApiFactory->method('create')
+            ->willReturn($this->jiraOAuthApiService);
+
+        $this->worklogWriteService->expects(self::once())
+            ->method('delete')
+            ->willReturn(true); // not found: the client keeps the id
+        $this->worklogWriteService->expects(self::once())
+            ->method('push')
+            ->willReturn(WriteOutcome::REMOTE_MISSING);
+
+        $this->subscriber->onEntryUpdated(new EntryEvent($entry, ['previous' => $previousEntry]));
+
+        self::assertSame(555, $entry->getWorklogId());
     }
 
     public function testLeaseLostLogsParkedConflictAndDoesNotThrow(): void
