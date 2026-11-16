@@ -2008,7 +2008,10 @@ kbd {
   margin-left: 0.25rem;
 }
 
+/* A block box: overflow and text-overflow do nothing on an inline span, so a
+   long name ran across the hours column (#897). The full name is the title. */
 .effort-bar-label {
+  display: block;
   overflow: hidden;
   position: relative;
   text-overflow: ellipsis;
