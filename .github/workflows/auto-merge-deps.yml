@@ -2,9 +2,10 @@ name: Auto-merge dependency PRs
 
 on:
   # The reusable only approves and runs `gh pr merge` with the base-repo
-  # token; it never checks out or runs PR head code. pull_request_target
-  # gives Dependabot PRs the Actions secrets below, which pull_request
-  # withholds from them.
+  # token; it never checks out or runs PR head code. Renovate PRs get the
+  # Actions secrets below under pull_request too; pull_request_target is for
+  # Dependabot PRs, which pull_request limits to Dependabot secrets (GitHub
+  # docs). Check MERGE_APP_CONFIGURED in the first Dependabot run.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
 
 permissions: {}
