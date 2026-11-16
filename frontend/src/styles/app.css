@@ -2044,7 +2044,8 @@ kbd {
    content reduction; the kebab keeps every action one click/hover away at any
    width. (An all-empty Ext.Ticket column needs no rung: Tracking.tsx drops it
    from the DOM entirely, at every width.)
-   Real ellipsis needs an inner box (.cell-trunc / .tag-label / .ticket-link) —
+   Real ellipsis needs an inner box (.cell-trunc / .tag-label / .ticket-link /
+   .ticket-text) —
    a bare <td> in an auto-layout table can't ellipsis. Horizontal scroll is the
    final safety net AND the no-JS fallback. Scoped to .tracking-table so the
    shared admin/summary tables are untouched. */
@@ -2059,7 +2060,8 @@ kbd {
 .tracking-table [data-col-key='project'] .tag-label,
 .tracking-table [data-col-key='customer'] .tag-label,
 .tracking-table [data-col-key='activity'] .tag-label,
-.tracking-table .ticket-link {
+.tracking-table .ticket-link,
+.tracking-table .ticket-text {
   display: inline-block;
   max-width: 100%;
   overflow: hidden;
@@ -2132,7 +2134,8 @@ kbd {
    in Tracking.tsx (MAX_THIN = 8) probes no dead levels. */
 .tracking-table.is-thin-4 [data-col-key='project'] .tag-label { max-width: 18ch; }
 .tracking-table.is-thin-4 [data-col-key='customer'] .tag-label { max-width: 15ch; }
-.tracking-table.is-thin-5 [data-col-key='ticket'] .ticket-link { max-width: 10ch; }
+.tracking-table.is-thin-5 [data-col-key='ticket'] .ticket-link,
+.tracking-table.is-thin-5 [data-col-key='ticket'] .ticket-text { max-width: 10ch; }
 .tracking-table.is-thin-6 [data-col-key='duration'] { display: none; }
 .tracking-table.is-thin-7 [data-col-key='project'] .tag-label { max-width: 10ch; }
 .tracking-table.is-thin-7 [data-col-key='customer'] .tag-label { max-width: 11ch; }

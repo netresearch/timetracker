@@ -1265,6 +1265,32 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  // #896: without a configured ticket URL there is nothing to link to; the
+  // former fallback pointed at a retired host. Covers both a project without a
+  // ticket system and a ticket system whose ticket URL is empty, in both views.
+  it.each([
+    ['flat', 'no ticket system', undefined],
+    ['flat', 'an empty ticket URL', 2],
+    ['grouped', 'no ticket system', undefined],
+    ['grouped', 'an empty ticket URL', 2],
+  ])('renders the ticket as plain text in the %s view for a project with %s', async (view, _case, ticketSystem) => {
+    localStorage.setItem('tt-worklog-view', view)
+    mockTracking({
+      entries: [{ entry: { ...DEFAULT_ENTRY, customer: 7, project: 9, ticket: 'APO-42', class: 0 } }],
+      customers: [{ customer: { id: 7, name: 'ACME' } }],
+      projects: [{ project: { id: 9, name: 'Apollo', customer: 7, jiraId: 'APO', ticket_system: ticketSystem } }],
+      activities: [{ activity: { id: 5, name: 'Dev' } }],
+      ticketSystems: [{ ticketSystem: { id: 2, name: 'Jira', ticketUrl: '' } }],
+    })
+    const { container, queryByRole, unmount } = renderTracking()
+    await waitFor(() => expect(container.querySelector('.ticket-text')).toHaveTextContent('APO-42'))
+
+    expect(queryByRole('link', { name: 'APO-42' })).toBeNull()
+    expect(container.querySelector('a[href*="bugs.nr"]')).toBeNull()
+
+    unmount()
+  })
+
   it('Alt+I without a cursor row summarizes the latest HUMAN entry, not an agent twin sorting first (ADR-025)', async () => {
     mockTracking({
       entries: [
@@ -1412,8 +1438,8 @@ describe('Tracking (Worklog grid)', () => {
 
     // The cloned new row carries the cursor row's customer + ticket (not ABC-1/ACME).
     await waitFor(() => expect(getAllByRole('gridcell', { name: 'BroCorp' })).toHaveLength(2))
-    const xyzLinks = Array.from(container.querySelectorAll('a.ticket-link')).filter((a) => a.textContent === 'XYZ-9')
-    expect(xyzLinks).toHaveLength(2)
+    const xyzTickets = Array.from(container.querySelectorAll('td[data-col-key="ticket"]')).filter((cell) => cell.textContent === 'XYZ-9')
+    expect(xyzTickets).toHaveLength(2)
 
     unmount()
   })
@@ -2031,6 +2057,8 @@ describe('Tracking (Worklog grid)', () => {
   it('gates the ticket link behind Ctrl/Cmd — a plain click is prevented (starts editing)', async () => {
     mockTracking({
       entries: [{ entry: { ...DEFAULT_ENTRY, id: 1, date: '16/06/2026', ticket: 'ABC-1', customer: 1, project: 4 } }],
+      projects: [{ project: { id: 4, name: 'Site', customer: 1, ticket_system: 2 } }],
+      ticketSystems: [{ ticketSystem: { id: 2, name: 'Jira', ticketUrl: 'https://jira/browse/%s' } }],
     })
     const { container, unmount } = renderTracking()
     await waitFor(() => expect(container.querySelector('a.ticket-link')).toBeInTheDocument())

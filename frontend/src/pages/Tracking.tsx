@@ -1106,14 +1106,17 @@ export default function Tracking() {
     }
   }
 
-  // The ticket-system URL for a ticket, resolved via the entry's project
-  // (with the bugs.nr fallback).
-  function ticketUrlFor(ticket: string, projectId: number): string {
+  // The ticket-system URL for a ticket, resolved via the entry's project; null
+  // when the project has no ticket system or its ticket URL is empty — the
+  // ticket is then shown as plain text (#896).
+  function ticketUrlFor(ticket: string, projectId: number): string | null {
     const project = (projects.data ?? []).find((candidate) => candidate.id === projectId)
     const system = project !== undefined ? (ticketSystems.data ?? []).find((candidate) => candidate.id === project.ticketSystem) : undefined
-    const pattern = system !== undefined && system.ticketUrl !== '' ? system.ticketUrl : 'https://bugs.nr/%s'
+    if (system === undefined || system.ticketUrl === '') {
+      return null
+    }
 
-    return pattern.split('%s').join(ticket)
+    return system.ticketUrl.split('%s').join(ticket)
   }
 
   // Cell render: ticket → a link to its ticket system; date → text + a hidden
@@ -1122,13 +1125,17 @@ export default function Tracking() {
     if (colKey === 'ticket') {
       const row = editor.overlayRow(entry)
       const ticket = str(row.ticket)
+      if (ticket === '') {
+        return ''
+      }
+      const url = ticketUrlFor(ticket, num(row.project))
 
-      return ticket === ''
-        ? ''
+      return url === null
+        ? <span class="ticket-text">{ticket}</span>
         : (
           <a
             class="ticket-link"
-            href={ticketUrlFor(ticket, num(row.project))}
+            href={url}
             target="_blank"
             rel="noopener noreferrer"
             title={m.tracking_ticket_link_hint()}
@@ -1745,7 +1752,8 @@ export default function Tracking() {
           {/* Befund 8: a ticket sits under its description rather than in a
               column that stands empty in every row of most ranges. */}
           {/* The ticket is editable here too — it had no target at all before.
-              In read mode it stays a link with the flat view's activation rule:
+              In read mode it stays a link (plain text when the project has no
+              ticket URL, #896) with the flat view's activation rule:
               a plain click belongs to the cell and starts editing, following the
               link takes Ctrl/⌘. An empty ticket still offers a target, otherwise
               one could never be added in this view. */}
@@ -1762,19 +1770,31 @@ export default function Tracking() {
                   >{m.worklog_add_ticket()}</span>
                 }
               >
-                <a
-                  class="worklog-ticket ticket-link"
-                  href={ticketUrlFor(str(row.ticket), num(row.project))}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={m.tracking_ticket_link_hint()}
-                  onClick={(event) => {
-                    if (!event.ctrlKey && !event.metaKey) {
-                      event.preventDefault()
-                    }
-                  }}
-                  onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, 'ticket') }}
-                >{str(row.ticket)}</a>
+                <Show
+                  when={ticketUrlFor(str(row.ticket), num(row.project))}
+                  fallback={
+                    <span
+                      class="worklog-ticket ticket-text"
+                      onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, 'ticket') }}
+                    >{str(row.ticket)}</span>
+                  }
+                >
+                  {(url) => (
+                    <a
+                      class="worklog-ticket ticket-link"
+                      href={url()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={m.tracking_ticket_link_hint()}
+                      onClick={(event) => {
+                        if (!event.ctrlKey && !event.metaKey) {
+                          event.preventDefault()
+                        }
+                      }}
+                      onDblClick={(event) => { event.stopPropagation(); editor.beginEdit(id, 'ticket') }}
+                    >{str(row.ticket)}</a>
+                  )}
+                </Show>
               </Show>
             }
           >
