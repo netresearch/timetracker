@@ -14,7 +14,6 @@ use App\Entity\Project;
 use App\Entity\TicketSystem;
 use App\Entity\User;
 use App\Service\Integration\Jira\JiraOAuthApiService;
-use App\Service\Security\TokenEncryptionService;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -58,11 +57,6 @@ final class JiraOAuthApiServiceCreateTicketTest extends TestCase
         return new class(self::createStub(User::class), self::createStub(TicketSystem::class), self::createStub(ManagerRegistry::class), self::createStub(RouterInterface::class), $this->createTokenEncryptionService()) extends JiraOAuthApiService {
             /** @var array<string, mixed> */
             public array $lastPostData = [];
-
-            public function __construct(User $user, TicketSystem $ticketSystem, ManagerRegistry $managerRegistry, RouterInterface $router, TokenEncryptionService $tokenEncryptionService)
-            {
-                parent::__construct($user, $ticketSystem, $managerRegistry, $router, $tokenEncryptionService);
-            }
 
             /**
              * @param array<string, mixed> $data

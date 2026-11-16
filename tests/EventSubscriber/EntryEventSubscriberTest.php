@@ -31,6 +31,7 @@ use Exception;
 use JsonException;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -890,51 +891,39 @@ final class EntryEventSubscriberTest extends TestCase
     }
 
     /**
-     * #935: the internal key setting may list several projects ("OPSDHL, opsx").
-     * The lookup must search all of them as valid JQL, not "project = OPSDHL, opsx".
+     * #935: the internal key setting may list several projects ("OPSDHL, opsx");
+     * the lookup must search all of them as valid JQL. The ticket is user input
+     * inside a quoted JQL string, so a double quote or backslash in it must not
+     * end the string.
      */
-    public function testInternalTicketSystemSearchesEveryListedInternalProject(): void
+    #[DataProvider('internalLookupProvider')]
+    public function testInternalTicketSystemBuildsTheLookupJql(string $ticket, ?string $originalKey, string $internalKey, string $expectedJql, string $foundKey): void
     {
-        [$entry] = $this->createInternalProjectEntry('DHLSUP-1', null, 'OPSDHL, opsx');
+        [$entry] = $this->createInternalProjectEntry($ticket, $originalKey, $internalKey);
 
         $this->jiraOAuthApiFactory->method('create')
             ->willReturn($this->jiraOAuthApiService);
 
         $this->jiraOAuthApiService->expects(self::once())
             ->method('searchTicket')
-            ->with('project in ("OPSDHL", "OPSX") AND summary ~ "\\"DHLSUP-1\\"" ORDER BY created ASC', ['key', 'summary'], 1)
-            ->willReturn((object) ['issues' => [(object) ['key' => 'OPSX-3']]]);
-
-        $this->worklogWriteService->method('push')
-            ->willReturn(WriteOutcome::WRITTEN);
-
-        $this->subscriber->onEntryCreated(new EntryEvent($entry));
-
-        self::assertSame('OPSX-3', $entry->getTicket());
-    }
-
-    /**
-     * #935: the ticket is user input inside a quoted JQL string; a double quote
-     * or backslash in it must not end the string.
-     */
-    public function testInternalTicketSystemEscapesTheTicketInTheLookup(): void
-    {
-        [$entry] = $this->createInternalProjectEntry('DHLSUP-1', 'EXT "1" \\ x');
-
-        $this->jiraOAuthApiFactory->method('create')
-            ->willReturn($this->jiraOAuthApiService);
-
-        $this->jiraOAuthApiService->expects(self::once())
-            ->method('searchTicket')
-            ->with('project in ("OPSDHL") AND summary ~ "\\"EXT \\"1\\" \\\\ x\\"" ORDER BY created ASC', ['key', 'summary'], 1)
-            ->willReturn((object) ['issues' => [(object) ['key' => 'OPSDHL-8']]]);
+            ->with($expectedJql, ['key', 'summary'], 1)
+            ->willReturn((object) ['issues' => [(object) ['key' => $foundKey]]]);
 
         $this->worklogWriteService->method('push')
             ->willReturn(WriteOutcome::WRITTEN);
 
         $this->subscriber->onEntryUpdated(new EntryEvent($entry));
 
-        self::assertSame('OPSDHL-8', $entry->getTicket());
+        self::assertSame($foundKey, $entry->getTicket());
+    }
+
+    /**
+     * @return iterable<string, array{string, ?string, string, string, string}>
+     */
+    public static function internalLookupProvider(): iterable
+    {
+        yield 'every listed project' => ['DHLSUP-1', null, 'OPSDHL, opsx', 'project in ("OPSDHL", "OPSX") AND summary ~ "\\"DHLSUP-1\\"" ORDER BY created ASC', 'OPSX-3'];
+        yield 'escaped ticket' => ['DHLSUP-1', 'EXT "1" \\ x', 'OPSDHL', 'project in ("OPSDHL") AND summary ~ "\\"EXT \\"1\\" \\\\ x\\"" ORDER BY created ASC', 'OPSDHL-8'];
     }
 
     public function testInternalTicketSystemCreatesMissingInternalIssue(): void
