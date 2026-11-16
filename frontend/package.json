@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@inlang/paraglide-js": "^2.29.3",
+    "@inlang/paraglide-js": "^3.2.2",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.3.5",
     "@testing-library/jest-dom": "^7.0.1",
