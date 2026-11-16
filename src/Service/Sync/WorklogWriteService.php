@@ -130,8 +130,9 @@ class WorklogWriteService
      * for a pre-ADR entry, there is no lease to check), and only when this user writes
      * worklogs to this Jira at all, or the write after the delete would book nothing.
      *
-     * Every path that cannot finish before the delete keeps the worklog id. After the
-     * delete the old id names nothing: it is cleared and flushed before the new write, so
+     * Every path that cannot finish before the delete keeps the worklog id. Pending changes
+     * are flushed before the delete, so a failing flush surfaces while the old id still
+     * holds. After the delete the old id names nothing: it is cleared and flushed before the new write, so
      * when that write fails the stored entry has no id and the next save or sync books it
      * anew instead of parking the deleted id as orphaned.
      *
@@ -166,6 +167,9 @@ class WorklogWriteService
             return false;
         }
 
+        // Store what is pending first: a failing flush must surface while the old id
+        // still names a worklog, not between the delete and the new write.
+        $this->entityManager->flush();
         $api->deleteIssueWorklog((string) $found->issueId, $worklogId);
         $entry->setWorklogId(null);
         $this->entityManager->flush();

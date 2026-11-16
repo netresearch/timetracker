@@ -251,7 +251,8 @@ final class WorklogWriteServiceTest extends TestCase
 
         self::assertSame(WriteOutcome::WRITTEN, $outcome);
         self::assertSame(88, $entry->getWorklogId());
-        self::assertSame(['delete', 'flush id NULL', 'write'], $calls);
+        // Pending changes are stored before the delete, while the old id still holds.
+        self::assertSame(['flush id 77', 'delete', 'flush id NULL', 'write'], $calls);
     }
 
     /**
@@ -277,7 +278,8 @@ final class WorklogWriteServiceTest extends TestCase
 
         $this->syncStateRepository->method('findOneBy')->willReturn($state);
         $this->api->method('getIssueWorklog')->willReturn(null);
-        $lookup = $this->api->method('findEntryWorklog');
+        // The write gate comes before the lookup: no worklog/list request then.
+        $lookup = $this->api->expects('noWrites' === $case ? self::never() : self::once())->method('findEntryWorklog');
         match ($case) {
             'absent' => $lookup->willReturn(null),
             'lookupFails' => $lookup->willThrowException(new JiraApiException('boom', 500)),
