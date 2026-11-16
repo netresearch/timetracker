@@ -244,6 +244,18 @@ class JiraOAuthApiService
     }
 
     /**
+     * Returns the URL where the user authorizes TimeTracker in Jira (the
+     * "connect Jira" action). Stores nothing: the stored access token is
+     * replaced only by the OAuth callback after the user approved.
+     *
+     * @throws JiraApiException
+     */
+    public function getAuthorizationUrl(): string
+    {
+        return $this->fetchOAuthRequestToken();
+    }
+
+    /**
      * Fetches a request token and returns the URL where the user authorizes it.
      *
      * The request token is not stored: it is not authorized yet, and storing it

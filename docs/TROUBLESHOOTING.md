@@ -180,6 +180,11 @@ Jira sync uses per-user OAuth tokens stored (encrypted) in the
   expired, or was revoked in Jira. The API answers with a JSON 401 containing a
   `redirect_url` ([`src/EventSubscriber/ExceptionSubscriber.php`](../src/EventSubscriber/ExceptionSubscriber.php))
   — following it re-runs the OAuth flow (callback route: `/jiraoauthcallback`).
+  A user starts the same flow from *Settings → Synchronization* or the notice
+  after saving an entry (route `/jira/connect/{ticketSystem}`). A 401 does not
+  touch the stored token: only the callback replaces it, after the user
+  approved, so a token Jira refused once keeps working once Jira accepts it
+  again.
 - **Sync silently skipped for a user:** `checkUserTicketSystem()`
   ([`src/Service/Integration/Jira/JiraAuthenticationService.php`](../src/Service/Integration/Jira/JiraAuthenticationService.php))
   returns false when the user has no token row or has set the

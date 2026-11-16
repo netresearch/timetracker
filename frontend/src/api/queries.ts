@@ -211,6 +211,16 @@ export interface SavedEntryResult {
     description?: string
     extTicket?: string
   }
+  // Present when the entry was saved but its worklog did not reach Jira because
+  // Jira refused the user's token (#911): where to (re)connect each system.
+  jiraAuthorization?: JiraAuthorizationNotice[]
+}
+
+export interface JiraAuthorizationNotice {
+  ticketSystemId: number
+  ticketSystemName: string
+  // Same-origin route that starts the authorization and redirects to Jira.
+  url: string
 }
 
 // Build a cache row from a save response. A created entry must land in entries.data

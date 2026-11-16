@@ -871,6 +871,28 @@ describe('Tracking (Worklog grid)', () => {
     unmount()
   })
 
+  it('keeps a Jira authorization notice with the connect link after a save Jira refused (#911)', async () => {
+    mockApi()
+    postJson.mockResolvedValue({
+      result: {
+        id: 1, date: '2026-06-16', start: '09:00', end: '10:30', user: 1,
+        customer: 1, project: 4, activity: 5, duration: '1:30', durationMinutes: 90, class: 0, ticket: 'XYZ-9',
+      },
+      jiraAuthorization: [{ ticketSystemId: 3, ticketSystemName: 'Netresearch Jira', url: '/jira/connect/3' }],
+    })
+    const { getByRole, findByRole, container, unmount } = renderTracking()
+    await waitFor(() => expect(getByRole('gridcell', { name: 'ABC-1' })).toBeInTheDocument())
+
+    const editor = editCell(container, 'ticket')
+    fireEvent.input(editor, { target: { value: 'xyz-9' } })
+    fireEvent.keyDown(editor, { key: 'Enter' })
+
+    const link = await findByRole('link', { name: 'Authorize TimeTracker in Netresearch Jira' })
+    expect(link.getAttribute('href')).toBe('/jira/connect/3')
+
+    unmount()
+  })
+
   it('deletes an entry via /tracking/delete after confirmation', async () => {
     mockApi()
     postJson.mockResolvedValue({ success: true })

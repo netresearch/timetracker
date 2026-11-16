@@ -747,5 +747,17 @@
   "worklog_sort_label": "Sortierung",
   "worklog_sort_time": "Zeit",
   "worklog_sort_context": "Kunde · Projekt",
-  "worklog_col_day_activity": "Tag · Tätigkeit"
+  "worklog_col_day_activity": "Tag · Tätigkeit",
+  "jira_auth_notice": "Eintrag gespeichert, aber der Worklog hat {ticketSystem} nicht erreicht: Jira akzeptiert TimeTracker für Ihr Konto nicht mehr.",
+  "jira_auth_connect": "TimeTracker in {ticketSystem} autorisieren",
+  "jira_auth_dismiss": "Ausblenden",
+  "jira_auth_required": "Jira benötigt Ihre Autorisierung. Verbinden Sie Jira unter Einstellungen → Synchronisation.",
+  "jira_connections_title": "Jira-Verbindung",
+  "jira_connections_intro": "TimeTracker bucht Ihre Worklogs in Jira in Ihrem Namen. Akzeptiert Jira TimeTracker nicht mehr, kommen keine Worklogs an, bis Sie erneut verbinden.",
+  "jira_connections_connected": "Eine Jira-Autorisierung ist gespeichert.",
+  "jira_connections_not_connected": "Nicht verbunden.",
+  "jira_connections_connect": "Jira verbinden",
+  "jira_connections_reconnect": "Jira erneut verbinden",
+  "jira_connections_none": "Kein Jira-Ticketsystem bucht Worklogs.",
+  "jira_connections_error": "Die Jira-Verbindungen konnten nicht geladen werden."
 }

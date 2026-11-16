@@ -747,5 +747,17 @@
   "worklog_sort_label": "Tri",
   "worklog_sort_time": "Heure",
   "worklog_sort_context": "Client · projet",
-  "worklog_col_day_activity": "Jour · Activité"
+  "worklog_col_day_activity": "Jour · Activité",
+  "jira_auth_notice": "Saisie enregistrée, mais son worklog n'a pas atteint {ticketSystem} : Jira n'accepte plus TimeTracker pour votre compte.",
+  "jira_auth_connect": "Autoriser TimeTracker dans {ticketSystem}",
+  "jira_auth_dismiss": "Masquer",
+  "jira_auth_required": "Jira a besoin de votre autorisation. Connectez Jira dans Paramètres → Synchronisation.",
+  "jira_connections_title": "Connexion à Jira",
+  "jira_connections_intro": "TimeTracker enregistre vos worklogs dans Jira en votre nom. Si Jira n'accepte plus TimeTracker, les worklogs n'arrivent plus jusqu'à ce que vous vous reconnectiez.",
+  "jira_connections_connected": "Une autorisation Jira est enregistrée.",
+  "jira_connections_not_connected": "Non connecté.",
+  "jira_connections_connect": "Connecter Jira",
+  "jira_connections_reconnect": "Reconnecter Jira",
+  "jira_connections_none": "Aucun système de tickets Jira n'enregistre de worklogs.",
+  "jira_connections_error": "Les connexions Jira n'ont pas pu être chargées."
 }

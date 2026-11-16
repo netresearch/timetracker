@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { sessionExpired, setSessionExpired } from '../lib/session'
-import { ApiError, apiErrorMessage, getJson, postForm, postJson, SessionExpiredError, ValidationError } from './client'
+import { ApiError, apiErrorMessage, getJson, JiraAuthorizationRequiredError, postForm, postJson, SessionExpiredError, ValidationError } from './client'
 
 interface FakeResponse {
   ok?: boolean
@@ -19,7 +19,7 @@ interface FakeResponse {
 
 function mockFetch(fake: FakeResponse) {
   const status = fake.status ?? 200
-  const response = {
+  const response: Record<string, unknown> = {
     ok: fake.ok ?? (status >= 200 && status < 300),
     status,
     redirected: fake.redirected ?? false,
@@ -28,6 +28,7 @@ function mockFetch(fake: FakeResponse) {
     json: async () => JSON.parse(fake.body ?? 'null'),
     text: async () => fake.body ?? '',
   }
+  response.clone = () => response
   const fetchMock = vi.fn().mockResolvedValue(response)
   vi.stubGlobal('fetch', fetchMock)
 
@@ -146,6 +147,44 @@ describe('api/client', () => {
       mockFetch({ status: 200, redirected: true, url: 'http://localhost/ui/tracking', contentType: 'text/html', body: '<!doctype html>' })
       await expect(postJson('/s', {})).rejects.toBeInstanceOf(SessionExpiredError)
       expect(sessionExpired()).toBe(true)
+    })
+  })
+
+  describe('a Jira 401 (#911)', () => {
+    const jiraBody = JSON.stringify({
+      error: 'Jira authentication required',
+      message: '401 - Unauthorized. Please authorize: https://jira.example.com/authorize?oauth_token=t',
+      redirect_url: 'https://jira.example.com/authorize?oauth_token=t',
+    })
+
+    it('is a JiraAuthorizationRequiredError, not a lost session (postJson)', async () => {
+      mockFetch({ ok: false, status: 401, body: jiraBody })
+      const error = await postJson('/s', {}).catch((caught: unknown) => caught)
+      expect(error).toBeInstanceOf(JiraAuthorizationRequiredError)
+      expect((error as JiraAuthorizationRequiredError).authorizeUrl).toBe('https://jira.example.com/authorize?oauth_token=t')
+      expect(sessionExpired()).toBe(false)
+    })
+
+    it('is a JiraAuthorizationRequiredError, not a lost session (getJson)', async () => {
+      mockFetch({ ok: false, status: 401, body: jiraBody })
+      await expect(getJson('/x')).rejects.toBeInstanceOf(JiraAuthorizationRequiredError)
+      expect(sessionExpired()).toBe(false)
+    })
+
+    it('is a JiraAuthorizationRequiredError, not a lost session (postForm)', async () => {
+      mockFetch({ ok: false, status: 401, body: jiraBody })
+      await expect(postForm('/p', {})).rejects.toBeInstanceOf(JiraAuthorizationRequiredError)
+      expect(sessionExpired()).toBe(false)
+    })
+
+    it('keeps a JSON 401 without redirect_url a lost session', async () => {
+      mockFetch({ ok: false, status: 401, body: '{"message":"Authentication required"}' })
+      await expect(postJson('/s', {})).rejects.toBeInstanceOf(SessionExpiredError)
+      expect(sessionExpired()).toBe(true)
+    })
+
+    it('shows a user-facing message through apiErrorMessage', () => {
+      expect(apiErrorMessage(new JiraAuthorizationRequiredError('https://x'), 'fb')).not.toBe('fb')
     })
   })
 

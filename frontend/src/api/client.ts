@@ -4,6 +4,7 @@
  */
 
 import { setSessionExpired } from '../lib/session'
+import { m } from '../paraglide/messages.js'
 
 export class SessionExpiredError extends Error {
   constructor() {
@@ -20,6 +21,17 @@ export class ApiError extends Error {
   ) {
     super(message)
     this.name = 'ApiError'
+  }
+}
+
+/** Jira refused the user's token (#911): a 401 whose JSON body carries the Jira
+ *  authorize URL (`redirect_url`, App\EventSubscriber\ExceptionSubscriber). The
+ *  TimeTracker session is fine, so this must not raise the re-login overlay; the
+ *  message points the user at the Settings "connect Jira" action. */
+export class JiraAuthorizationRequiredError extends ApiError {
+  constructor(public readonly authorizeUrl: string) {
+    super(401, m.jira_auth_required())
+    this.name = 'JiraAuthorizationRequiredError'
   }
 }
 
@@ -61,6 +73,24 @@ function sessionLost(response: Response): boolean {
   return landedOnLogin(response) || response.status === 401
 }
 
+// Runs before sessionLost(): a Jira 401 carries `redirect_url` in its JSON body,
+// TimeTracker's own "You need to login" 401 does not.
+async function rejectJiraAuthorization(response: Response): Promise<void> {
+  if (response.status !== 401 || !(response.headers.get('content-type') ?? '').includes('json')) {
+    return
+  }
+  let body: unknown
+  try {
+    body = JSON.parse(await response.clone().text())
+  } catch {
+    return
+  }
+  if (typeof body === 'object' && body !== null && 'redirect_url' in body
+    && typeof body.redirect_url === 'string' && body.redirect_url !== '') {
+    throw new JiraAuthorizationRequiredError(body.redirect_url)
+  }
+}
+
 export async function getJson<T>(
   path: string,
   params: Record<string, string | number> = {},
@@ -75,6 +105,7 @@ export async function getJson<T>(
     credentials: 'same-origin',
   })
 
+  await rejectJiraAuthorization(response)
   const contentType = response.headers.get('content-type') ?? ''
   if (sessionLost(response) || (response.ok && !contentType.includes('json'))) {
     raiseSessionExpired()
@@ -109,6 +140,7 @@ export async function postForm(
     body,
   })
 
+  await rejectJiraAuthorization(response)
   if (sessionLost(response)) {
     raiseSessionExpired()
   }
@@ -175,6 +207,7 @@ async function sendJson<T>(
   // HTML page other than /login (every JSON endpoint answers JSON), and
   // feeding that into JSON.parse below would bury the step-up behind a
   // SyntaxError instead of raising the re-login overlay (#587).
+  await rejectJiraAuthorization(response)
   const contentType = response.headers.get('content-type') ?? ''
   if (sessionLost(response) || (response.ok && !contentType.includes('json'))) {
     raiseSessionExpired()
@@ -211,6 +244,7 @@ export async function postMultipart(path: string, form: FormData): Promise<strin
     body: form,
   })
 
+  await rejectJiraAuthorization(response)
   if (sessionLost(response)) {
     raiseSessionExpired()
   }

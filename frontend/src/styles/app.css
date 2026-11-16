@@ -1202,6 +1202,37 @@ main:has(.tracking) {
   color: var(--color-danger-text);
 }
 
+/* Saved, but Jira refused the user's token (#911): a persistent caution box with
+   the connect link, not the transient save toast. Text and links use the warning
+   text colour, which carries the contrast on the warning background in both
+   schemes (the link colour is not tuned for it). */
+.jira-auth-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--color-warning-text);
+  border-radius: 8px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+.jira-auth-notice p {
+  flex: 1 1 30ch;
+  margin: 0;
+}
+.jira-auth-notice a,
+.jira-auth-notice .link-button {
+  color: inherit;
+  font-weight: 600;
+}
+.jira-auth-notice a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 /* ---- Settings: Security section ---- */
 
 /* Password change and two-factor each sit in their own block within the card,

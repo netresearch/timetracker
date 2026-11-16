@@ -258,16 +258,14 @@ class JiraCloudApiService extends JiraOAuthApiService
     }
 
     /**
-     * Builds the 3LO authorize URL and throws the redirect exception the
-     * frontend turns into a "Please authorize" link.
+     * Builds the 3LO authorize URL; the ticket system rides in `state`.
      *
-     * @throws JiraApiUnauthorizedException
      * @throws JiraApiException
      */
     #[Override]
-    protected function throwUnauthorizedRedirect(?Throwable $throwable = null): never
+    public function getAuthorizationUrl(): string
     {
-        $authorizeUrl = static::AUTH_BASE_URL . '/authorize?' . http_build_query([
+        return static::AUTH_BASE_URL . '/authorize?' . http_build_query([
             'audience' => 'api.atlassian.com',
             'client_id' => $this->getOauth2ClientId(),
             'scope' => static::SCOPES,
@@ -276,6 +274,18 @@ class JiraCloudApiService extends JiraOAuthApiService
             'response_type' => 'code',
             'prompt' => 'consent',
         ]);
+    }
+
+    /**
+     * Throws the redirect exception carrying the 3LO authorize URL.
+     *
+     * @throws JiraApiUnauthorizedException
+     * @throws JiraApiException
+     */
+    #[Override]
+    protected function throwUnauthorizedRedirect(?Throwable $throwable = null): never
+    {
+        $authorizeUrl = $this->getAuthorizationUrl();
 
         $message = '401 - Unauthorized. Please authorize: ' . $authorizeUrl;
         throw new JiraApiUnauthorizedException($message, 401, $authorizeUrl, $throwable);
