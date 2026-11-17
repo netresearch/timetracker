@@ -158,7 +158,7 @@ public function onEntryUpdated(EntryEvent $event): void
 ```
 
 1. **Logging**: Records the update
-2. **JIRA Sync**: Runs `syncWorklog()` on every update when `shouldAutoSync()` passes (v4 parity). `updateEntryJiraWorkLog` creates a new worklog or updates the existing one based on the worklog id, so entries never synced before are caught up on their next save. If the ticket changed and the previous entry had a worklog id, the old worklog is deleted first (using the `previous` snapshot).
+2. **JIRA Sync**: Runs `syncWorklog()` on every update when `shouldAutoSync()` passes (v4 parity). `updateEntryJiraWorkLog` creates a new worklog or updates the existing one based on the worklog id, so entries never synced before are caught up on their next save. If the ticket changed and the previous entry had a worklog id, the old worklog is deleted first (using the `previous` snapshot). When Jira answers that delete with 404, the worklog is looked up by id (`POST worklog/list`): if it sits on another issue of that Jira and is provably the entry's (the token owner is its author, start and duration match the previous snapshot), it is deleted there; if Jira does not list it, or it belongs to someone else, it counts as gone; if the lookup fails, the error propagates and the worklog id stays linked. The push that follows does the same when the worklog is missing on the entry's ticket: a worklog found on another issue is deleted there and booked on the ticket (only for a user who writes worklogs to that Jira, and only while the worklog is unchanged since the last sync), otherwise the entry is parked as orphaned as before (#941).
 3. **Graceful Degradation**: Logs warnings on JIRA failures but doesn't block updates
 
 **Entry Deleted (`onEntryDeleted`)**

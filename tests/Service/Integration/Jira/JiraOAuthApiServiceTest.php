@@ -556,11 +556,20 @@ final class JiraOAuthApiServiceTest extends TestCase
 
     public function testDeleteEntryJiraWorkLogConfirmsAWorklogJiraNoLongerHasButKeepsTheId(): void
     {
-        // A 404 means the worklog is gone on this Jira. The id stays set: another ticket
-        // system the caller tries next may still hold the worklog.
+        // A 404 on the ticket and no such worklog anywhere on this Jira (#941) means the
+        // worklog is gone here. The id stays set: another ticket system the caller tries
+        // next may still hold the worklog.
         $entry = $this->bookedEntryOnABookableSystem();
         $request = new Request('DELETE', 'https://jira.example.com');
-        $service = $this->createServiceWithMockedClientThrowing(new ClientException('Not found', $request, new Response(404)));
+        $client = self::createStub(Client::class);
+        $client->method('request')->willReturnCallback(static function (string $method) use ($request): ResponseInterface {
+            if ('DELETE' === $method) {
+                throw new ClientException('Not found', $request, new Response(404));
+            }
+
+            return new Response(200, [], '[]');
+        });
+        $service = $this->createServiceWithClient($client);
 
         self::assertTrue($service->deleteEntryJiraWorkLog($entry));
         self::assertSame(77, $entry->getWorklogId());

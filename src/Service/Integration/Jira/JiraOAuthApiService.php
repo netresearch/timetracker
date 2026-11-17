@@ -27,6 +27,7 @@ use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Repository\EntryRepository;
 use App\Service\Security\TokenEncryptionService;
 use DateTime;
+use DateTimeImmutable;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 use GuzzleHttp\Client;
@@ -458,9 +459,10 @@ class JiraOAuthApiService
     }
 
     /**
-     * Removes Jira workLog entry.
+     * Removes Jira workLog entry. When the entry's ticket does not hold it, the worklog is
+     * looked up on this Jira (findEntryWorklog) and deleted where it is.
      *
-     * @throws JiraApiException
+     * @throws JiraApiException when the delete or the lookup fails; the id stays set
      * @throws JsonException    when a response body is not JSON
      *
      * @return bool whether this Jira confirmed the worklog is gone (deleted, or not found);
@@ -483,20 +485,110 @@ class JiraOAuthApiService
         }
 
         try {
-            $workLogId = $entry->getWorklogId() ?? 0;
-            $this->delete(sprintf(
-                JiraWorkLogService::WORKLOG_ITEM_URL_TEMPLATE,
-                $sTicket,
-                $workLogId,
-            ));
-
-            $entry->setWorklogId(null);
+            $this->deleteIssueWorklog($sTicket, $worklogId);
         } catch (JiraApiInvalidResourceException) {
-            // The worklog is already gone on this Jira. The id stays set: the worklog may
-            // live on another ticket system the caller still tries.
+            // Not on this ticket. It may sit on another issue of this Jira, left there
+            // by a move that stopped half-way (#941): delete it there.
+            $found = $this->findEntryWorklog($entry);
+            if (!$found instanceof JiraWorkLog) {
+                // Not this entry's worklog on this Jira. The id stays set: the worklog
+                // may live on another ticket system the caller still tries.
+                return true;
+            }
+
+            $this->deleteIssueWorklog((string) $found->issueId, $worklogId);
         }
 
+        $entry->setWorklogId(null);
+
         return true;
+    }
+
+    /**
+     * Whether worklogs are written to this Jira for this user: the ticket system books
+     * time and the user has not opted out of the connection. The write path checks the
+     * same and silently writes nothing when it fails.
+     */
+    public function canWriteWorklogs(): bool
+    {
+        return $this->checkUserTicketSystem();
+    }
+
+    /**
+     * Deletes one worklog of one issue.
+     *
+     * @param string $issueIdOrKey the issue key, or the numeric issue id Jira reports
+     *
+     * @throws JiraApiException
+     * @throws JiraApiInvalidResourceException when the issue holds no such worklog
+     * @throws JsonException                   when a response body is not JSON
+     */
+    public function deleteIssueWorklog(string $issueIdOrKey, int $worklogId): void
+    {
+        $this->delete(sprintf(JiraWorkLogService::WORKLOG_ITEM_URL_TEMPLATE, $issueIdOrKey, $worklogId));
+    }
+
+    /**
+     * Finds the entry's worklog on this Jira by its id, on whichever issue it sits
+     * (POST worklog/list). Only a worklog that is provably the entry's counts: the token
+     * owner is its author, and its start and duration are the ones the write path books
+     * for this entry. Worklog ids are unique per Jira instance only, so the same number
+     * on another instance (a project booking on an internal and an external Jira) is an
+     * unrelated worklog, and a caller must never delete it.
+     *
+     * Null means "absent": Jira does not list the id, or the listed worklog is not
+     * provably the entry's. Jira also leaves out worklogs the user may not see, so
+     * absent can mean "not visible to this user". Treating that as absent is no worse
+     * than before this lookup existed, when every 404 counted as gone.
+     *
+     * @throws JiraApiException when the lookup fails or its answer settles nothing (not a
+     *                          list, another worklog, no issue id): the location is unknown
+     * @throws JsonException    when a response body is not JSON
+     */
+    public function findEntryWorklog(Entry $entry): ?JiraWorkLog
+    {
+        $worklogId = $entry->getWorklogId();
+        if (null === $worklogId || $worklogId <= 0) {
+            return null;
+        }
+
+        $listed = $this->getResponseArray('worklog/list', ['ids' => [$worklogId]]);
+        if ([] === $listed) {
+            return null;
+        }
+
+        $workLog = JiraWorkLog::fromApiResponse($listed[0]);
+        if (1 !== count($listed) || $workLog->id !== $worklogId || null === $workLog->issueId || '' === $workLog->issueId) {
+            throw new JiraApiException('Unexpected response from Jira when looking up worklog ' . $worklogId, 500);
+        }
+
+        return $this->isEntryWorklog($entry, $workLog) ? $workLog : null;
+    }
+
+    /**
+     * Whether a worklog is the one the write path booked for this entry.
+     *
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
+     */
+    private function isEntryWorklog(Entry $entry, JiraWorkLog $workLog): bool
+    {
+        if ($workLog->timeSpentSeconds !== $entry->getDuration() * 60 || null === $workLog->started) {
+            return false;
+        }
+
+        try {
+            $started = new DateTimeImmutable($workLog->started);
+        } catch (Exception) {
+            return false;
+        }
+
+        $booked = new DateTimeImmutable($this->getTicketSystemWorkLogStartDate($entry));
+        if ($started->getTimestamp() !== $booked->getTimestamp()) {
+            return false;
+        }
+
+        return $this->getMyself()->matchesWorklogAuthor($workLog);
     }
 
     /**
@@ -1017,8 +1109,12 @@ class JiraOAuthApiService
         }
 
         $decoded = json_decode((string) $response->getBody(), false, 512, JSON_THROW_ON_ERROR);
+        if (!is_array($decoded)) {
+            // Read as "no rows", an error object would tell a caller that nothing exists.
+            throw new JiraApiException('Unexpected non-list response from Jira API', 500);
+        }
 
-        return is_array($decoded) ? array_values(array_filter($decoded, is_object(...))) : [];
+        return array_values(array_filter($decoded, is_object(...)));
     }
 
     /**

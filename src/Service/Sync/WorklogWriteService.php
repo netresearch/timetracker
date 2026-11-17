@@ -18,12 +18,14 @@ use App\Enum\WorklogSyncStatus;
 use App\Enum\WriteOutcome;
 use App\Exception\Integration\Jira\JiraApiException;
 use App\Exception\Integration\Jira\JiraApiInvalidResourceException;
+use App\Exception\Integration\Jira\JiraApiUnauthorizedException;
 use App\Repository\WorklogSyncStateRepository;
 use App\Service\Integration\Jira\JiraOAuthApiService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use JsonException;
 use Psr\Clock\ClockInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Lease-checked (read-compare-write) Jira worklog writes (ADR-023 §1). Wraps the legacy
@@ -37,6 +39,7 @@ class WorklogWriteService
         private readonly WorklogSyncStateRepository $worklogSyncStateRepository,
         private readonly RemoteWorklogNormalizer $remoteWorklogNormalizer,
         private readonly ClockInterface $clock,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -54,7 +57,7 @@ class WorklogWriteService
 
         $worklogId = $entry->getWorklogId();
         if (null === $worklogId || $worklogId <= 0) {
-            $api->updateEntryJiraWorkLog($entry);
+            $this->writeAndStoreId($api, $entry);
             $this->refreshBase($api, $entry, $ticketSystem);
 
             return WriteOutcome::WRITTEN;
@@ -64,6 +67,12 @@ class WorklogWriteService
         $remote = $api->getIssueWorklog($ticket, $worklogId);
 
         if (!$remote instanceof JiraWorkLog) {
+            if ($this->moveToTicket($api, $entry, $state)) {
+                $this->refreshBase($api, $entry, $ticketSystem);
+
+                return WriteOutcome::WRITTEN;
+            }
+
             if ($state instanceof WorklogSyncState) {
                 $state->setStatus(WorklogSyncStatus::ORPHANED);
             }
@@ -106,10 +115,82 @@ class WorklogWriteService
             return WriteOutcome::SKIPPED;
         }
 
-        $api->updateEntryJiraWorkLog($entry);
+        $this->writeAndStoreId($api, $entry);
         $this->refreshBase($api, $entry, $ticketSystem);
 
         return WriteOutcome::WRITTEN;
+    }
+
+    /**
+     * #941: the entry's worklog is not on its ticket. When it still sits on another issue
+     * of this Jira (a ticket change whose delete on the old issue never ran), it is
+     * deleted there and booked anew on the ticket. Only the entry's own worklog moves
+     * (JiraOAuthApiService::findEntryWorklog), only while its lease holds (changed in
+     * Jira since the base, it stays parked for a human, ADR-023 §1; without a base, as
+     * for a pre-ADR entry, there is no lease to check), and only when this user writes
+     * worklogs to this Jira at all, or the write after the delete would book nothing.
+     *
+     * Every path that cannot finish before the delete keeps the worklog id. Pending changes
+     * are flushed before the delete, so a failing flush surfaces while the old id still
+     * holds. After the delete the old id names nothing: it is cleared and flushed before the new write, so
+     * when that write fails the stored entry has no id and the next save or sync books it
+     * anew instead of parking the deleted id as orphaned.
+     *
+     * @throws JiraApiException                when the delete or the new write fails
+     * @throws JiraApiInvalidResourceException
+     * @throws JsonException                   when a response body is not JSON
+     *
+     * @return bool whether the worklog was moved
+     */
+    private function moveToTicket(JiraOAuthApiService $api, Entry $entry, ?WorklogSyncState $state): bool
+    {
+        $worklogId = (int) $entry->getWorklogId();
+        if (!$api->canWriteWorklogs()) {
+            return false;
+        }
+
+        try {
+            $found = $api->findEntryWorklog($entry);
+        } catch (JiraApiUnauthorizedException $jiraApiUnauthorizedException) {
+            // A refused token is not a missing worklog: the caller asks for a reconnect.
+            throw $jiraApiUnauthorizedException;
+        } catch (JiraApiException|JsonException $exception) {
+            $this->logger?->error('Worklog lookup failed; worklog stays parked as missing', ['entry' => $entry->getId(), 'worklog' => $worklogId, 'exception' => $exception]);
+
+            return false;
+        }
+
+        if (!$found instanceof JiraWorkLog
+            || ($state instanceof WorklogSyncState && ($found->updated ?? '') !== $state->getBaseUpdatedAt())
+            || !$api->doesTicketExist($entry->getTicket())
+        ) {
+            return false;
+        }
+
+        // Store what is pending first: a failing flush must surface while the old id
+        // still names a worklog, not between the delete and the new write.
+        $this->entityManager->flush();
+        $api->deleteIssueWorklog((string) $found->issueId, $worklogId);
+        $entry->setWorklogId(null);
+        $this->entityManager->flush();
+        $this->writeAndStoreId($api, $entry);
+        $this->logger?->info('Worklog moved to the entry\'s ticket', ['entry' => $entry->getId(), 'worklog' => $worklogId, 'fromIssueId' => $found->issueId]);
+
+        return true;
+    }
+
+    /**
+     * Writes the worklog and stores the id Jira returned at once. The base read that
+     * follows can fail; without this flush the save path never reaches its own flush,
+     * the new id is lost, and the next save creates a second worklog.
+     *
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
+     */
+    private function writeAndStoreId(JiraOAuthApiService $api, Entry $entry): void
+    {
+        $api->updateEntryJiraWorkLog($entry);
+        $this->entityManager->flush();
     }
 
     /**
