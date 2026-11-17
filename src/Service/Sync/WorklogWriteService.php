@@ -57,7 +57,7 @@ class WorklogWriteService
 
         $worklogId = $entry->getWorklogId();
         if (null === $worklogId || $worklogId <= 0) {
-            $api->updateEntryJiraWorkLog($entry);
+            $this->writeAndStoreId($api, $entry);
             $this->refreshBase($api, $entry, $ticketSystem);
 
             return WriteOutcome::WRITTEN;
@@ -115,7 +115,7 @@ class WorklogWriteService
             return WriteOutcome::SKIPPED;
         }
 
-        $api->updateEntryJiraWorkLog($entry);
+        $this->writeAndStoreId($api, $entry);
         $this->refreshBase($api, $entry, $ticketSystem);
 
         return WriteOutcome::WRITTEN;
@@ -173,10 +173,24 @@ class WorklogWriteService
         $api->deleteIssueWorklog((string) $found->issueId, $worklogId);
         $entry->setWorklogId(null);
         $this->entityManager->flush();
-        $api->updateEntryJiraWorkLog($entry);
+        $this->writeAndStoreId($api, $entry);
         $this->logger?->info('Worklog moved to the entry\'s ticket', ['entry' => $entry->getId(), 'worklog' => $worklogId, 'fromIssueId' => $found->issueId]);
 
         return true;
+    }
+
+    /**
+     * Writes the worklog and stores the id Jira returned at once. The base read that
+     * follows can fail; without this flush the save path never reaches its own flush,
+     * the new id is lost, and the next save creates a second worklog.
+     *
+     * @throws JiraApiException
+     * @throws JsonException    when a response body is not JSON
+     */
+    private function writeAndStoreId(JiraOAuthApiService $api, Entry $entry): void
+    {
+        $api->updateEntryJiraWorkLog($entry);
+        $this->entityManager->flush();
     }
 
     /**

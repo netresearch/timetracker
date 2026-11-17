@@ -252,7 +252,58 @@ final class WorklogWriteServiceTest extends TestCase
         self::assertSame(WriteOutcome::WRITTEN, $outcome);
         self::assertSame(88, $entry->getWorklogId());
         // Pending changes are stored before the delete, while the old id still holds.
-        self::assertSame(['flush id 77', 'delete', 'flush id NULL', 'write'], $calls);
+        self::assertSame(['flush id 77', 'delete', 'flush id NULL', 'write', 'flush id 88'], $calls);
+    }
+
+    /**
+     * A write that creates a worklog stores its new id before the base read: when
+     * that read fails, the save path never reaches its own flush, and without this
+     * one the next save would create a second worklog.
+     */
+    #[DataProvider('writesThatCreateAWorklog')]
+    public function testANewWorklogIdIsStoredBeforeTheBaseReadThatFails(string $path): void
+    {
+        $entry = $this->entry('ABC-1', 'create' === $path ? null : 77);
+        $this->syncStateRepository->method('findOneBy')->willReturn(null);
+        $reads = 0;
+        $this->api->method('getIssueWorklog')->willReturnCallback(static function () use (&$reads, $path): ?JiraWorkLog {
+            // The move path first finds the worklog missing on the ticket; every later read is the base read.
+            if ('move' === $path && 0 === $reads++) {
+                return null;
+            }
+
+            throw new JiraApiException('base read failed', 500);
+        });
+        $this->api->method('findEntryWorklog')->willReturn($this->movedRemote('U1'));
+        $this->api->method('canWriteWorklogs')->willReturn(true);
+        $this->api->method('doesTicketExist')->willReturn(true);
+        $this->api->method('updateEntryJiraWorkLog')->willReturnCallback(static function (Entry $written): void {
+            $written->setWorklogId(88);
+        });
+        $flushedIds = [];
+        $this->entityManager->method('flush')->willReturnCallback(static function () use (&$flushedIds, $entry): void {
+            $flushedIds[] = $entry->getWorklogId();
+        });
+
+        try {
+            'force' === $path
+                ? $this->service->forcePush($this->api, $entry, $this->ticketSystem)
+                : $this->service->push($this->api, $entry, $this->ticketSystem);
+            self::fail('the failing base read must reach the caller');
+        } catch (JiraApiException) {
+        }
+
+        self::assertContains(88, $flushedIds);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function writesThatCreateAWorklog(): iterable
+    {
+        yield 'first write of an entry' => ['create'];
+        yield 'conflict resolved with local wins' => ['force'];
+        yield 'worklog moved to the entry\'s ticket' => ['move'];
     }
 
     /**
