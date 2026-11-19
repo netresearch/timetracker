@@ -24,7 +24,7 @@
 # build time while a digest sits still.
 
 variable "PHP_BASE_IMAGE" {
-  default = "php:8.5-fpm@sha256:8b4b4a764f7985137b13e4cb49dd59e967d9daa7946a731f9d06e31e748e39bb"
+  default = "php:8.6-fpm@sha256:cf1219d285d49cc07f37b94babecd02db21947dbd14c1d60d13860e051209790"
 }
 
 # Node is copied out of the official image rather than installed from

@@ -4,7 +4,7 @@ This document provides an overview of the technologies, frameworks, and tools us
 
 ## Backend
 
-*   **PHP:** Version `8.5`.
+*   **PHP:** Version `8.6`.
 *   **Symfony:** Version `8.1`.
 *   **Doctrine:**
     *   **ORM 3:** (`doctrine/orm`, `doctrine/doctrine-bundle`) with PHP 8 attributes for metadata.

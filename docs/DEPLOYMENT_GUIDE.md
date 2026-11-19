@@ -14,7 +14,7 @@ The production stack (Compose profile `prod`) consists of three containers:
 | Service | Image | Role |
 |---------|-------|------|
 | `httpd` | `nginx:1.31-alpine` | Web server; serves static assets, forwards PHP to `app` via FastCGI. Publishes port `${HTTP_PORT:-8765}`. |
-| `app`   | `ghcr.io/netresearch/timetracker:production` | PHP-FPM 8.5 running the Symfony application (non-root user, listens on 9000 inside the network). |
+| `app`   | `ghcr.io/netresearch/timetracker:production` | PHP-FPM 8.6 running the Symfony application (non-root user, listens on 9000 inside the network). |
 | `db`    | `mariadb:12.3` | Database; schema seeded from [`sql/full.sql`](../sql/full.sql) on first start. |
 
 Named volumes: `app-pub` (built assets, shared between `app` and `httpd`),
@@ -26,7 +26,7 @@ proxy in front of the stack (see [Reverse proxy and TLS](#reverse-proxy-and-tls)
 ## Container images
 
 Images are built with `docker bake` ([`docker-bake.hcl`](../docker-bake.hcl) is
-the single source of truth for base images and versions: `php:8.5-fpm`,
+the single source of truth for base images and versions: `php:8.6-fpm`,
 Node 26, `composer:2.10`, pinned Xdebug) and published to GHCR by
 [`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml):
 

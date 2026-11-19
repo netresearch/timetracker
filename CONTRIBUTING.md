@@ -42,7 +42,7 @@ Before contributing, ensure you have:
 
 - **Development Environment**: Follow the [Development Guide](docs/development.md)
 - **Understanding of the Codebase**: Read the [Technology Stack](docs/techstack.md)
-- **Familiarity with our Stack**: PHP 8.5, Symfony 8, MariaDB, SolidJS + TypeScript frontend
+- **Familiarity with our Stack**: PHP 8.6, Symfony 8, MariaDB, SolidJS + TypeScript frontend
 - **Git Knowledge**: Basic understanding of Git workflows
 
 ### First Contribution

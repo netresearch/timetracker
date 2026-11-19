@@ -1,6 +1,6 @@
 # Netresearch TimeTracker
 
-[![PHP Version](https://img.shields.io/badge/php-8.5-blue.svg)](https://www.php.net)
+[![PHP Version](https://img.shields.io/badge/php-8.6-blue.svg)](https://www.php.net)
 [![Symfony](https://img.shields.io/badge/symfony-8-green.svg)](https://symfony.com)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-red.svg)](LICENSE)
 [![CI Status](https://github.com/netresearch/timetracker/workflows/CI/badge.svg)](https://github.com/netresearch/timetracker/actions)
@@ -137,7 +137,7 @@ symfony server:start
 
 ## Requirements
 
-- **PHP**: 8.5 with extensions: `ldap`, `pdo_mysql`, `intl`, `mbstring`
+- **PHP**: 8.6 with extensions: `ldap`, `pdo_mysql`, `intl`, `mbstring`
 - **Database**: MariaDB 12+. **Not MySQL** — the migrations use MariaDB's
   `IF [NOT] EXISTS` clauses on `ADD COLUMN`, `DROP COLUMN`, `CREATE INDEX` and
   `ADD … FOREIGN KEY`, which MySQL 8 rejects, so they cannot even parse there
@@ -173,13 +173,13 @@ Full reference: [docs/configuration.md](docs/configuration.md)
 ```mermaid
 flowchart LR
     Browser["Browser<br/>SolidJS SPA + Twig login"] -->|HTTP :8765| Nginx
-    Nginx -->|FastCGI :9000| App["PHP-FPM 8.5<br/>Symfony 8"]
+    Nginx -->|FastCGI :9000| App["PHP-FPM 8.6<br/>Symfony 8"]
     App --> DB[("MariaDB 12")]
     App -->|bind / search| LDAP["LDAP / Active Directory"]
     App -->|"REST (OAuth)"| Jira["Jira Server/DC · Cloud"]
 ```
 
-- **Backend**: PHP 8.5, Symfony 8, Doctrine ORM 3 — controllers are
+- **Backend**: PHP 8.6, Symfony 8, Doctrine ORM 3 — controllers are
   single-action classes; business logic lives in services
 - **Frontend**: SolidJS 1.9 + TypeScript SPA under `/ui/`, built with
   Vite 8 and bun, styled with Tailwind CSS 4 and design tokens

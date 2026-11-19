@@ -10,7 +10,7 @@ Uses Doctrine ORM 3, Twig templating, and PER-CS + Symfony coding style.
 ## Setup & environment
 
 - Install: `composer install`
-- PHP version: 8.5
+- PHP version: 8.6
 - Framework: Symfony 8
 - Required extensions: `ldap`, `pdo_mysql`, `mbstring`, `json`, `intl`
 - Environment: Copy `.env` to `.env.local` and configure `DATABASE_URL`, `LDAP_*`
