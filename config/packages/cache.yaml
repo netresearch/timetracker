@@ -3,6 +3,9 @@ framework:
         # Unique name of your app: used to compute stable namespaces for cache keys.
         prefix_seed: timetracker
 
-        # Use APCu for in-memory caching of the app cache
-        # APCu is ideal for frequently accessed, relatively stable data
-        app: cache.adapter.apcu
+        # The app cache lives in the database (table cache_items, created by
+        # migrations/Version20261119_AppCacheTable.php), see ADR-028. Its live
+        # consumer is the login-throttling limiter of the main firewall, whose
+        # counters therefore survive FPM reloads and deploys.
+        app: cache.adapter.doctrine_dbal
+        default_doctrine_dbal_provider: doctrine.dbal.default_connection

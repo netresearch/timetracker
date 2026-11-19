@@ -787,7 +787,7 @@ describe('Admin status page', () => {
             subsystems: [
               { id: 'database', backend: 'MariaDBPlatform 11.4.2-MariaDB', status: 'ok', config: { driver: 'mysql', host: 'db', port: '3306', name: 'tt' }, adr: null },
               { id: 'sessions', backend: 'PHP native file handler (filesystem)', status: 'ok', config: { handler: 'files', write_lock: 'released early on read-only requests' }, adr: 'ADR-019' },
-              { id: 'cache', backend: 'APCu (in-memory, per process)', status: 'degraded', config: { adapter: 'APCu', enabled: false }, adr: null },
+              { id: 'cache', backend: 'Database (Doctrine DBAL, table cache_items)', status: 'degraded', config: { adapter: 'doctrine_dbal', items: null }, adr: null },
             ],
             config: { ldap_host: 'ldap.example', ldap_ssl: true },
           })

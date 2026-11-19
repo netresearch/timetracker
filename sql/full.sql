@@ -485,6 +485,18 @@ CREATE TABLE `contracts` (
 
 
 --
+-- Tabellenstruktur für Tabelle `cache_items`
+-- (Symfony app cache via Doctrine DBAL, ADR-028)
+--
+CREATE TABLE `cache_items` (
+  `item_id` varbinary(255) NOT NULL,
+  `item_data` mediumblob NOT NULL,
+  `item_lifetime` int(10) unsigned DEFAULT NULL,
+  `item_time` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+--
 -- Tabellenstruktur für Tabelle `doctrine_migration_versions`
 --
 CREATE TABLE `doctrine_migration_versions` (
@@ -523,7 +535,8 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20260712_AutoImportProjectsFlag',  '2026-07-12 00:00:00', 0),
 ('DoctrineMigrations\\Version20260712_CustomerTempoKey',        '2026-07-12 00:00:01', 0),
 ('DoctrineMigrations\\Version20260712_PersonioAbsenceImport',   '2026-07-12 00:00:02', 0),
-('DoctrineMigrations\\Version20260914_EntryPairLink',           '2026-09-14 00:00:00', 0);
+('DoctrineMigrations\\Version20260914_EntryPairLink',           '2026-09-14 00:00:00', 0),
+('DoctrineMigrations\\Version20261119_AppCacheTable',           '2026-11-19 00:00:00', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------

@@ -231,7 +231,6 @@ final class GetStatusAction extends BaseController
         }
 
         $sessionHandler = $this->iniOrNull('session.save_handler') ?? 'files';
-        $apcuEnabled = extension_loaded('apcu') && '0' !== ini_get('apc.enabled');
         $taxonomy = $this->apiTokenService->scopeTaxonomy();
         $scopeCount = count($taxonomy['resources']) * count($taxonomy['actions']) + 1;
 
@@ -243,6 +242,7 @@ final class GetStatusAction extends BaseController
         $totpUsers = $this->countRows('SELECT COUNT(*) FROM users WHERE totp_secret IS NOT NULL');
         $ticketSystems = $this->countRows('SELECT COUNT(*) FROM ticket_systems');
         $bookableTicketSystems = $this->countRows('SELECT COUNT(*) FROM ticket_systems WHERE book_time = 1');
+        $cacheItems = $this->countRows('SELECT COUNT(*) FROM cache_items');
 
         return [
             [
@@ -271,13 +271,13 @@ final class GetStatusAction extends BaseController
             ],
             [
                 'id' => 'cache',
-                'backend' => 'APCu (in-memory, per process)',
-                'status' => $apcuEnabled ? 'ok' : 'degraded',
+                'backend' => 'Database (Doctrine DBAL, table cache_items)',
+                'status' => null !== $cacheItems ? 'ok' : 'error',
                 'config' => [
-                    'adapter' => 'APCu',
-                    'enabled' => $apcuEnabled,
+                    'adapter' => 'doctrine_dbal',
+                    'items' => $cacheItems,
                 ],
-                'adr' => null,
+                'adr' => 'ADR-028',
             ],
             [
                 'id' => 'api_tokens',

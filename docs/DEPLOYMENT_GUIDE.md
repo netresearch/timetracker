@@ -27,7 +27,7 @@ proxy in front of the stack (see [Reverse proxy and TLS](#reverse-proxy-and-tls)
 
 Images are built with `docker bake` ([`docker-bake.hcl`](../docker-bake.hcl) is
 the single source of truth for base images and versions: `php:8.5-fpm`,
-Node 26, `composer:2.10`, pinned APCu/Xdebug) and published to GHCR by
+Node 26, `composer:2.10`, pinned Xdebug) and published to GHCR by
 [`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml):
 
 | Tag | Built from | Purpose |
@@ -288,6 +288,6 @@ profiles live in the container cache and vanish when it is swapped back.
 
 - [Tech stack](techstack.md) — versions and frameworks
 - [Configuration](configuration.md) — application settings
-- [APCu setup](apcu-setup.md) — the app cache backend
+- [ADR-028](adr/ADR-028-app-cache-on-doctrine-dbal.md) — the app cache backend (database table `cache_items`)
 - [Security](security.md) — authentication and authorization details
 - [Troubleshooting](TROUBLESHOOTING.md) — common failure modes
