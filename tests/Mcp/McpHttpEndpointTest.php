@@ -124,6 +124,11 @@ final class McpHttpEndpointTest extends AbstractWebTestCase
             self::assertFalse($byName[$writer]['readOnlyHint'] ?? null, sprintf('%s writes', $writer));
         }
 
+        // Without an id the save_* tools create a record, so a retry is not harmless.
+        foreach (['save_contract', 'save_team', 'save_ticketsystem'] as $creator) {
+            self::assertFalse($byName[$creator]['idempotentHint'] ?? null, sprintf('%s is not idempotent', $creator));
+        }
+
         self::assertTrue($byName['delete_entry']['destructiveHint'] ?? null);
         self::assertFalse($byName['log_time']['destructiveHint'] ?? null);
         // Saving an entry books or removes its Jira worklog in the same request.
