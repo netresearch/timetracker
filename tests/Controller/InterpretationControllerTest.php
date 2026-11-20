@@ -105,6 +105,25 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         self::assertNotContains('unittest', $names);
     }
 
+    public function testDevAccountSeesOnlyItsOwnEntries(): void
+    {
+        // A DEV account is scoped to its own entries in every interpretation view
+        // (BaseInterpretationController::getEntries passes visibility_user). Team 1
+        // holds user 1 (unittest), so a DEV filtering by it must not see unittest.
+        $this->logInSession('developer');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/user', ['team' => 1]);
+        $this->assertStatusCode(200);
+        $json = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($json);
+        self::assertNotContains('unittest', array_column($json, 'name'));
+
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', ['user' => 1]);
+        $this->assertStatusCode(200);
+        $entries = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($entries);
+        self::assertSame([], $entries);
+    }
+
     public function testActivityTeamDescriptionAreAcceptedAsStandaloneFilters(): void
     {
         // Each used to trip the "specify at least …" guard; now each is a valid
