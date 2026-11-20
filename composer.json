@@ -6,7 +6,7 @@
     "config": {
         "bin-dir": "bin",
         "platform": {
-            "php": "8.5"
+            "php": "8.6"
         },
         "sort-packages": true,
         "allow-plugins": {

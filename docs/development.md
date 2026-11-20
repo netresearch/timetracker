@@ -12,7 +12,7 @@ technology overview.
 | GNU make | any | Task runner ([Makefile](../Makefile)) |
 | Node.js | 26 ([.nvmrc](../.nvmrc)) | Only for running the Playwright e2e suite from the host |
 
-The application requires PHP 8.5 ([composer.json](../composer.json)) — provided
+The application requires PHP 8.5 or newer ([composer.json](../composer.json)) and runs on PHP 8.6 — provided
 by the Docker images, so you do not need it on the host. The frontend uses
 [bun](https://bun.sh/); `make npm-build` runs it inside the container, so a host
 install is optional.
@@ -156,9 +156,9 @@ All variables are described in [configuration.md](configuration.md).
 
 ## Troubleshooting
 
-- **Composer platform error (PHP 8.5)**: `make composer-install` passes
-  `--ignore-platform-req=php` until `laminas/laminas-ldap` declares PHP 8.5
-  support ([laminas-ldap#62](https://github.com/laminas/laminas-ldap/issues/62)).
+- **Composer platform error (PHP 8.6)**: `make composer-install` passes
+  `--ignore-platform-req=php` until `laminas/laminas-ldap` and `scheb/2fa-*`
+  declare PHP 8.6 support ([laminas-ldap#62](https://github.com/laminas/laminas-ldap/issues/62)).
 - **Schema changed, tests fail**: `make reset-test-db` recreates the
   `db_unittest` container and volume from `sql/full.sql`.
 - **Out-of-memory in tests**: the dev container mounts

@@ -7,7 +7,7 @@ This file provides custom instructions for GitHub Copilot coding agent when work
 TimeTracker is a Symfony-based PHP application for project/customer-centric time tracking with Jira integration, LDAP authentication, reports, and exports.
 
 **Technology Stack:**
-- Backend: PHP 8.5, Symfony 8, Doctrine ORM 3, Twig, Monolog
+- Backend: PHP 8.6, Symfony 8, Doctrine ORM 3, Twig, Monolog
 - Frontend: SolidJS, TypeScript, Vite, Tailwind CSS (in `frontend/`, bun)
 - Infrastructure: Docker Compose (Nginx, PHP-FPM, MariaDB)
 - Tests: PHPUnit 13, Playwright (e2e), Vitest (frontend)

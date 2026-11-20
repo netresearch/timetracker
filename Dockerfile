@@ -61,6 +61,7 @@ RUN set -ex \
         libicu-dev \
         libjpeg62-turbo-dev \
         libldap2-dev \
+        libonig-dev \
         libpng-dev \
         libzip-dev \
         procps \
@@ -74,6 +75,7 @@ RUN set -ex \
         zip \
         gd \
         intl \
+        mbstring \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /usr/share/doc/* /usr/share/man/*
@@ -125,7 +127,7 @@ RUN bun install --cwd frontend --frozen-lockfile --ignore-scripts
 
 COPY --chown=app:app composer.json composer.lock symfony.lock ./
 
-# --ignore-platform-req=php needed until laminas-ldap adds PHP 8.5 support
+# --ignore-platform-req=php needed until laminas-ldap and scheb/2fa-* declare PHP 8.6 support
 # See: https://github.com/laminas/laminas-ldap/issues/62
 RUN composer install --no-dev --no-scripts --no-autoloader --ignore-platform-req=php
 

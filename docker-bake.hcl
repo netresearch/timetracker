@@ -24,7 +24,7 @@
 # build time while a digest sits still.
 
 variable "PHP_BASE_IMAGE" {
-  default = "php:8.5-fpm@sha256:8b4b4a764f7985137b13e4cb49dd59e967d9daa7946a731f9d06e31e748e39bb"
+  default = "php:8.6-fpm@sha256:cf1219d285d49cc07f37b94babecd02db21947dbd14c1d60d13860e051209790"
 }
 
 # Node is copied out of the official image rather than installed from
@@ -45,8 +45,10 @@ variable "COMPOSER_IMAGE" {
   default = "composer:2.10@sha256:a5f59b9fd2faf31218632be4809dc6491761085e8064c31dc3b84378c48c248b"
 }
 
+# 3.6.0alpha1 is the first Xdebug release that allows PHP 8.6 (3.5.3 requires
+# PHP < 8.6). Dev/e2e image only; move to 3.6.0 once it is released.
 variable "XDEBUG_VERSION" {
-  default = "3.5.3"
+  default = "3.6.0alpha1"
 }
 
 

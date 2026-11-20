@@ -27,6 +27,11 @@ $finder = PhpCsFixer\Finder::create()
     ]);
 
 return (new PhpCsFixer\Config())
+    // The app runs on PHP 8.6, and PHP-CS-Fixer (3.95.32, 2026-11-17) supports
+    // syntax only up to PHP 8.5, so it refuses to start on the CI image.
+    // The code base uses no PHP 8.6-only syntax. Remove this line once a
+    // PHP-CS-Fixer release supports PHP 8.6.
+    ->setUnsupportedPhpVersionAllowed(true)
     ->setRiskyAllowed(true)
     ->setRules([
         // Presets
