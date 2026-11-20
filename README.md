@@ -121,7 +121,7 @@ Sign in with one of the seeded development LDAP users, e.g. `i.myself` /
 ### Manual Installation
 
 ```bash
-# Prerequisites: PHP 8.5+, MariaDB 12+, Composer, bun (frontend), Node.js 26+ (e2e)
+# Prerequisites: PHP 8.6, MariaDB 12+, Composer, bun (frontend), Node.js 26+ (e2e)
 composer install
 cd frontend && bun install && bun run build && cd ..
 

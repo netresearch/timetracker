@@ -9,7 +9,7 @@ Uses Doctrine ORM 3, Twig templating, and PER-CS + Symfony coding style.
 
 ## Setup & environment
 
-- Install: `composer install`
+- Install: `composer install --ignore-platform-req=php` (needed until `laminas/laminas-ldap` and `scheb/2fa-*` declare PHP 8.6 support)
 - PHP version: 8.6
 - Framework: Symfony 8
 - Required extensions: `ldap`, `pdo_mysql`, `mbstring`, `json`, `intl`
