@@ -12,6 +12,7 @@ namespace App\Mcp\Tool;
 use App\Mcp\ScopeGuard;
 use App\Repository\ActivityRepository;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -39,6 +40,7 @@ final readonly class ListActivitiesTool
     #[McpTool(
         name: 'list_activities',
         description: 'List the activities a time entry can be booked against.',
+        annotations: new ToolAnnotations(title: 'List activities', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false),
         outputSchema: [
             'type' => 'object',
             'required' => ['activities'],

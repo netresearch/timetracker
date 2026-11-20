@@ -15,6 +15,7 @@ use InvalidArgumentException;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 /**
  * MCP tool: the caller's own bookings for one day (ADR-022 Phase 2).
@@ -36,7 +37,7 @@ final readonly class GetDayTool
      *
      * @return array<string, mixed>
      */
-    #[McpTool(name: 'get_day', description: "The authenticated user's own time entries and booked total for one day (default: today).")]
+    #[McpTool(name: 'get_day', description: "The authenticated user's own time entries and booked total for one day (default: today).", annotations: new ToolAnnotations(title: 'Bookings of one day', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function getDay(
         #[Schema(description: 'The day as YYYY-MM-DD. Defaults to today.')]
         ?string $date = null,

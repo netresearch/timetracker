@@ -13,6 +13,7 @@ use App\Entity\TicketSystem;
 use App\Mcp\ScopeGuard;
 use App\Repository\TicketSystemRepository;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -36,7 +37,7 @@ final readonly class ListTicketSystemsTool
      *
      * @return array{ticketsystems: list<array{id: int, name: string, type: string, url: string, book_time: bool}>}
      */
-    #[McpTool(name: 'list_ticketsystems', description: 'List ticket systems without credentials (admin only).')]
+    #[McpTool(name: 'list_ticketsystems', description: 'List ticket systems without credentials (admin only).', annotations: new ToolAnnotations(title: 'List ticket systems', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function listTicketSystems(): array
     {
         $this->scopeGuard->requireAdminScope('ticketsystems:read');

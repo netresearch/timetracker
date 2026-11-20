@@ -21,6 +21,7 @@ use Exception;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 use function count;
@@ -59,7 +60,7 @@ final readonly class SyncJiraWorklogsTool
      *
      * @return array<string, mixed> the finished run with counters and findings
      */
-    #[McpTool(name: 'sync_jira_worklogs', description: 'Start a worklog run against a Jira ticket system: "verify" (read-only comparison), "import" (Jira → timetracker; dryRun previews), or "sync" (bidirectional, single target under your own token; yourself by default, a named target needs PL/admin). Parked items land in list_sync_conflicts.')]
+    #[McpTool(name: 'sync_jira_worklogs', description: 'Start a worklog run against a Jira ticket system: "verify" (read-only comparison), "import" (Jira → timetracker; dryRun previews), or "sync" (bidirectional, single target under your own token; yourself by default, a named target needs PL/admin). Parked items land in list_sync_conflicts.', annotations: new ToolAnnotations(title: 'Run a Jira worklog sync', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true))]
     public function syncJiraWorklogs(
         #[Schema(description: 'Run type: "verify", "import", or "sync".')]
         string $type,

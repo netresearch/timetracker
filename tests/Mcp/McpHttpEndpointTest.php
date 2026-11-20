@@ -76,6 +76,65 @@ final class McpHttpEndpointTest extends AbstractWebTestCase
         self::assertContains('log_time', $names);
     }
 
+    public function testInitializeSendsAgentInstructions(): void
+    {
+        $this->client->request('POST', '/mcp', server: $this->mcpServer('localhost'), content: self::INITIALIZE);
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+
+        /** @var array{result: array{instructions?: string}} $payload */
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+
+        self::assertStringContainsString('get_day', $payload['result']['instructions'] ?? '');
+    }
+
+    public function testEveryListedToolCarriesConsistentAnnotations(): void
+    {
+        $server = $this->mcpServer('localhost');
+        $this->client->request('POST', '/mcp', server: $server, content: self::INITIALIZE);
+        $sessionId = $this->client->getResponse()->headers->get('Mcp-Session-Id');
+        self::assertNotNull($sessionId, 'the handshake did not open a session');
+
+        $server['HTTP_MCP_SESSION_ID'] = $sessionId;
+        $this->client->request('POST', '/mcp', server: $server, content: '{"jsonrpc":"2.0","id":2,"method":"tools/list"}');
+
+        /** @var array{result: array{tools: list<array{name: string, annotations?: array<string, mixed>}>}} $payload */
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $tools = $payload['result']['tools'];
+        self::assertNotSame([], $tools);
+
+        foreach ($tools as $tool) {
+            $name = $tool['name'];
+            $annotations = $tool['annotations'] ?? [];
+            self::assertIsString($annotations['title'] ?? null, sprintf('%s has no title', $name));
+
+            // Clients run read-only tools without asking, so every list_* and
+            // get_* tool must claim it and every other tool must state it.
+            self::assertIsBool($annotations['readOnlyHint'] ?? null, sprintf('%s has no readOnlyHint', $name));
+            if (str_starts_with($name, 'list_') || str_starts_with($name, 'get_')) {
+                self::assertTrue($annotations['readOnlyHint'], sprintf('%s must be read-only', $name));
+            }
+
+            if (false === $annotations['readOnlyHint']) {
+                self::assertIsBool($annotations['destructiveHint'] ?? null, sprintf('%s has no destructiveHint', $name));
+            }
+        }
+
+        $byName = array_column($tools, 'annotations', 'name');
+        foreach (['log_time', 'update_entry', 'delete_entry', 'set_user_active'] as $writer) {
+            self::assertFalse($byName[$writer]['readOnlyHint'] ?? null, sprintf('%s writes', $writer));
+        }
+
+        // Without an id the save_* tools create a record, so a retry is not harmless.
+        foreach (['save_contract', 'save_team', 'save_ticketsystem'] as $creator) {
+            self::assertFalse($byName[$creator]['idempotentHint'] ?? null, sprintf('%s is not idempotent', $creator));
+        }
+
+        self::assertTrue($byName['delete_entry']['destructiveHint'] ?? null);
+        self::assertFalse($byName['log_time']['destructiveHint'] ?? null);
+        // Saving an entry books or removes its Jira worklog in the same request.
+        self::assertTrue($byName['log_time']['openWorldHint'] ?? null);
+    }
+
     public function testBogusTokenIsUnauthorized(): void
     {
         // A tt_pat_ Bearer is claimed by the stateless api firewall; an invalid one

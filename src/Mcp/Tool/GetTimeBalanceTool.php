@@ -12,6 +12,7 @@ namespace App\Mcp\Tool;
 use App\Mcp\ScopeGuard;
 use App\Service\TimeBalanceService;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Schema\ToolAnnotations;
 
 /**
  * MCP tool: the authenticated user's worked-vs-target balance (ADR-021 Phase 5).
@@ -31,7 +32,7 @@ final readonly class GetTimeBalanceTool
      *
      * @return array<string, mixed>
      */
-    #[McpTool(name: 'get_time_balance', description: "The authenticated user's worked-vs-target time balance for today, this week and this month.")]
+    #[McpTool(name: 'get_time_balance', description: "The authenticated user's worked-vs-target time balance for today, this week and this month.", annotations: new ToolAnnotations(title: 'Time balance', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function getTimeBalance(): array
     {
         $user = $this->scopeGuard->requireScope('reporting:read');

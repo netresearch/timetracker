@@ -16,6 +16,7 @@ use InvalidArgumentException;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -43,7 +44,7 @@ final readonly class OnboardUserTool
      *
      * @return array<string, mixed> the created user
      */
-    #[McpTool(name: 'onboard_user', description: 'Onboard a new user account (admin only).')]
+    #[McpTool(name: 'onboard_user', description: 'Onboard a new user account (admin only).', annotations: new ToolAnnotations(title: 'Onboard a user', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false))]
     public function onboardUser(
         #[Schema(description: 'Login name (at least 3 characters), e.g. "jane.doe".')]
         string $username,

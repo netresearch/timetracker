@@ -13,6 +13,7 @@ use App\Entity\Team;
 use App\Mcp\ScopeGuard;
 use App\Repository\TeamRepository;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -34,7 +35,7 @@ final readonly class ListTeamsTool
      *
      * @return array{teams: list<array{id: int, name: string, lead_user_id: int|null}>}
      */
-    #[McpTool(name: 'list_teams', description: 'List teams (id, name, lead user).')]
+    #[McpTool(name: 'list_teams', description: 'List teams (id, name, lead user).', annotations: new ToolAnnotations(title: 'List teams', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function listTeams(): array
     {
         $this->scopeGuard->requireScope('teams:read');

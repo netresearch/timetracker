@@ -14,6 +14,19 @@ mcp:
             name: 'Netresearch TimeTracker'
             version: '1.0.0'
             description: 'Log and query time entries in TimeTracker. Authenticate with a scoped personal access token (Bearer tt_pat_…) created under Settings.'
+            # Sent once in the initialize answer; clients such as Claude Code add it to
+            # the agent's context, so it carries the rules an agent cannot read from a
+            # single tool description.
+            instructions: |
+                TimeTracker records working time. Book for the person behind the token; never guess project or activity ids.
+
+                Before booking a day, call get_day for it: it shows what is already booked, so you neither overlap nor double-book.
+                Prefer explicit start and end (HH:MM, 24h). A duration without start begins at 09:00, which often collides with existing entries.
+                Resolve project and activity names with list_projects and list_activities, or copy them from list_recent_entries.
+                Descriptions are limited to 255 characters.
+                For an agent session, pass agentWalltimeMinutes and humanMinutes to log_time: it writes the agent entry and the delegated human entry together, and delete_entry removes both halves.
+                log_time returns the booked day, the ticket totals and the time balance. Tell the user about any balance warnings it contains.
+                Tools marked "admin only" need an administrator account and a token with the matching scope; a missing scope is reported by name.
             transports:
                 http: true
             http:

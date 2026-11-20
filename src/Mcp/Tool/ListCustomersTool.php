@@ -13,6 +13,7 @@ use App\Entity\Customer;
 use App\Mcp\ScopeGuard;
 use App\Repository\CustomerRepository;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -34,7 +35,7 @@ final readonly class ListCustomersTool
      *
      * @return array{customers: list<array{id: int, name: string, active: bool, global: bool}>}
      */
-    #[McpTool(name: 'list_customers', description: 'List customers (id, name, active, global).')]
+    #[McpTool(name: 'list_customers', description: 'List customers (id, name, active, global).', annotations: new ToolAnnotations(title: 'List customers', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function listCustomers(): array
     {
         $this->scopeGuard->requireScope('customers:read');

@@ -13,6 +13,7 @@ use App\Mcp\ScopeGuard;
 use App\Repository\ProjectRepository;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
+use Mcp\Schema\ToolAnnotations;
 
 /**
  * MCP tool: list the (bookable) projects, for picking one to log time against
@@ -39,6 +40,7 @@ final readonly class ListProjectsTool
     #[McpTool(
         name: 'list_projects',
         description: 'List bookable projects (active or global) to log time against.',
+        annotations: new ToolAnnotations(title: 'List bookable projects', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false),
         outputSchema: [
             'type' => 'object',
             'required' => ['projects'],

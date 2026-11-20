@@ -14,6 +14,7 @@ use App\Mcp\ScopeGuard;
 use App\Repository\EntryRepository;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -44,6 +45,7 @@ final readonly class ListRecentEntriesTool
     #[McpTool(
         name: 'list_recent_entries',
         description: "List the authenticated user's own recent time entries.",
+        annotations: new ToolAnnotations(title: 'List recent time entries', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false),
         // The entry item shape (Entry::toArray()) is wide and evolves — keep the
         // item schema permissive so shape drift never becomes a client-side
         // validation failure.

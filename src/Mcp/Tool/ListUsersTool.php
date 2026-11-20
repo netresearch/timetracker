@@ -13,6 +13,7 @@ use App\Entity\User;
 use App\Mcp\ScopeGuard;
 use App\Repository\UserRepository;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -34,7 +35,7 @@ final readonly class ListUsersTool
      *
      * @return array{users: list<array{id: int, username: string, abbr: string, type: string, active: bool}>}
      */
-    #[McpTool(name: 'list_users', description: 'List user accounts (admin only).')]
+    #[McpTool(name: 'list_users', description: 'List user accounts (admin only).', annotations: new ToolAnnotations(title: 'List users', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function listUsers(): array
     {
         $this->scopeGuard->requireAdminScope('users:read');

@@ -16,6 +16,7 @@ use InvalidArgumentException;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -42,7 +43,7 @@ final readonly class OnboardCustomerTool
      *
      * @return array<string, mixed> the created customer
      */
-    #[McpTool(name: 'onboard_customer', description: 'Onboard a new customer (admin only).')]
+    #[McpTool(name: 'onboard_customer', description: 'Onboard a new customer (admin only).', annotations: new ToolAnnotations(title: 'Onboard a customer', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false))]
     public function onboardCustomer(
         #[Schema(description: 'Customer name (at least 3 characters).')]
         string $name,
