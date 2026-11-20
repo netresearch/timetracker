@@ -48,7 +48,7 @@ final readonly class SaveTeamTool
      *
      * @return array<array-key, mixed> the saved team
      */
-    #[McpTool(name: 'save_team', description: 'Create or update a team (admin only).', annotations: new ToolAnnotations(title: 'Create or update a team', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
+    #[McpTool(name: 'save_team', description: 'Create or update a team (admin only).', annotations: new ToolAnnotations(title: 'Create or update a team', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false))]
     public function saveTeam(
         #[Schema(description: 'Team name.')]
         string $name,

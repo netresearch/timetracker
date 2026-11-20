@@ -48,7 +48,7 @@ final readonly class SaveTicketSystemTool
      *
      * @return array<array-key, mixed> the saved ticket system (no credentials)
      */
-    #[McpTool(name: 'save_ticketsystem', description: 'Create or update a ticket system (admin only).', annotations: new ToolAnnotations(title: 'Create or update a ticket system', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
+    #[McpTool(name: 'save_ticketsystem', description: 'Create or update a ticket system (admin only).', annotations: new ToolAnnotations(title: 'Create or update a ticket system', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false))]
     public function saveTicketSystem(
         #[Schema(description: 'Ticket-system name.')]
         string $name,

@@ -49,7 +49,7 @@ final readonly class SaveContractTool
      *
      * @return array<array-key, mixed> the saved contract id
      */
-    #[McpTool(name: 'save_contract', description: 'Create or update an employment contract (admin only).', annotations: new ToolAnnotations(title: 'Create or update a contract', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
+    #[McpTool(name: 'save_contract', description: 'Create or update an employment contract (admin only).', annotations: new ToolAnnotations(title: 'Create or update a contract', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false))]
     public function saveContract(
         #[Schema(description: 'User: username or numeric id.')]
         string $user,
