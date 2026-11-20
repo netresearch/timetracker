@@ -37,23 +37,28 @@ final readonly class ListActivitiesTool
      *
      * @return array{activities: list<array{id: int, name: string, needs_ticket: bool}>}
      */
-    #[McpTool(name: 'list_activities', description: 'List the activities a time entry can be booked against.', annotations: new ToolAnnotations(title: 'List activities', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false), outputSchema: [
-        'type' => 'object',
-        'required' => ['activities'],
-        'properties' => [
-            'activities' => [
-                'type' => 'array',
-                'items' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'id' => ['type' => 'integer'],
-                        'name' => ['type' => 'string'],
-                        'needs_ticket' => ['type' => 'boolean'],
+    #[McpTool(
+        name: 'list_activities',
+        description: 'List the activities a time entry can be booked against.',
+        annotations: new ToolAnnotations(title: 'List activities', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false),
+        outputSchema: [
+            'type' => 'object',
+            'required' => ['activities'],
+            'properties' => [
+                'activities' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'id' => ['type' => 'integer'],
+                            'name' => ['type' => 'string'],
+                            'needs_ticket' => ['type' => 'boolean'],
+                        ],
                     ],
                 ],
             ],
         ],
-    ])]
+    )]
     public function listActivities(): array
     {
         $this->scopeGuard->requireScope('activities:read');

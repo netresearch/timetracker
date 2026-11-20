@@ -107,18 +107,27 @@ final class McpHttpEndpointTest extends AbstractWebTestCase
             $annotations = $tool['annotations'] ?? [];
             self::assertIsString($annotations['title'] ?? null, sprintf('%s has no title', $name));
 
-            // Clients run read-only tools without asking; only list_* and get_*
-            // may claim it, and every one of them must.
-            $readsOnly = str_starts_with($name, 'list_') || str_starts_with($name, 'get_');
-            self::assertSame($readsOnly, $annotations['readOnlyHint'] ?? null, sprintf('%s readOnlyHint', $name));
-            if (!$readsOnly) {
+            // Clients run read-only tools without asking, so every list_* and
+            // get_* tool must claim it and every other tool must state it.
+            self::assertIsBool($annotations['readOnlyHint'] ?? null, sprintf('%s has no readOnlyHint', $name));
+            if (str_starts_with($name, 'list_') || str_starts_with($name, 'get_')) {
+                self::assertTrue($annotations['readOnlyHint'], sprintf('%s must be read-only', $name));
+            }
+
+            if (false === $annotations['readOnlyHint']) {
                 self::assertIsBool($annotations['destructiveHint'] ?? null, sprintf('%s has no destructiveHint', $name));
             }
         }
 
         $byName = array_column($tools, 'annotations', 'name');
+        foreach (['log_time', 'update_entry', 'delete_entry', 'set_user_active'] as $writer) {
+            self::assertFalse($byName[$writer]['readOnlyHint'] ?? null, sprintf('%s writes', $writer));
+        }
+
         self::assertTrue($byName['delete_entry']['destructiveHint'] ?? null);
         self::assertFalse($byName['log_time']['destructiveHint'] ?? null);
+        // Saving an entry books or removes its Jira worklog in the same request.
+        self::assertTrue($byName['log_time']['openWorldHint'] ?? null);
     }
 
     public function testBogusTokenIsUnauthorized(): void

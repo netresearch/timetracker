@@ -45,7 +45,7 @@ final readonly class BulkLogTimeTool
      *
      * @return array<string, mixed> a summary message of what was booked
      */
-    #[McpTool(name: 'bulk_log_time', description: 'Bulk-fill a date range from a preset (the UI\'s "Massen-Eintragung").', annotations: new ToolAnnotations(title: 'Bulk-fill days from a preset', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false))]
+    #[McpTool(name: 'bulk_log_time', description: 'Bulk-fill a date range from a preset (the UI\'s "Massen-Eintragung").', annotations: new ToolAnnotations(title: 'Bulk-fill days from a preset', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true))]
     public function bulkLogTime(
         #[Schema(description: 'Preset name or numeric id. See list_presets.')]
         string $preset,

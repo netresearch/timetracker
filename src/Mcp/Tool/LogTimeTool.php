@@ -89,7 +89,7 @@ final readonly class LogTimeTool
      *
      * @return array<array-key, mixed> the created entry
      */
-    #[McpTool(name: 'log_time', description: 'Log a time entry (worklog) for the authenticated user.', annotations: new ToolAnnotations(title: 'Log time', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false))]
+    #[McpTool(name: 'log_time', description: 'Log a time entry (worklog) for the authenticated user.', annotations: new ToolAnnotations(title: 'Log time', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true))]
     public function logTime(
         #[Schema(description: 'Project name or numeric id (required). See list_projects.')]
         string $project,

@@ -37,25 +37,30 @@ final readonly class ListProjectsTool
      *
      * @return array{projects: list<array{id: int|null, name: string, customer: string|null, customer_id: int|null, ticket_prefixes: string|null}>}
      */
-    #[McpTool(name: 'list_projects', description: 'List bookable projects (active or global) to log time against.', annotations: new ToolAnnotations(title: 'List bookable projects', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false), outputSchema: [
-        'type' => 'object',
-        'required' => ['projects'],
-        'properties' => [
-            'projects' => [
-                'type' => 'array',
-                'items' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'id' => ['type' => ['integer', 'null']],
-                        'name' => ['type' => 'string'],
-                        'customer' => ['type' => ['string', 'null']],
-                        'customer_id' => ['type' => ['integer', 'null']],
-                        'ticket_prefixes' => ['type' => ['string', 'null']],
+    #[McpTool(
+        name: 'list_projects',
+        description: 'List bookable projects (active or global) to log time against.',
+        annotations: new ToolAnnotations(title: 'List bookable projects', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false),
+        outputSchema: [
+            'type' => 'object',
+            'required' => ['projects'],
+            'properties' => [
+                'projects' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'id' => ['type' => ['integer', 'null']],
+                            'name' => ['type' => 'string'],
+                            'customer' => ['type' => ['string', 'null']],
+                            'customer_id' => ['type' => ['integer', 'null']],
+                            'ticket_prefixes' => ['type' => ['string', 'null']],
+                        ],
                     ],
                 ],
             ],
         ],
-    ])]
+    )]
     public function listProjects(
         #[Schema(description: 'Only projects for this customer id; omit for all customers.')]
         ?int $customerId = null,

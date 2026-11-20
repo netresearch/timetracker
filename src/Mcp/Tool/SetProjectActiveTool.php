@@ -40,7 +40,7 @@ final readonly class SetProjectActiveTool
      *
      * @return array<string, mixed> the updated project
      */
-    #[McpTool(name: 'set_project_active', description: 'Activate or deactivate (offboard) a project (admin only).', annotations: new ToolAnnotations(title: 'Activate or deactivate a project', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
+    #[McpTool(name: 'set_project_active', description: 'Activate or deactivate (offboard) a project (admin only).', annotations: new ToolAnnotations(title: 'Activate or deactivate a project', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
     public function setProjectActive(
         #[Schema(description: 'Project name or numeric id.')]
         string $project,

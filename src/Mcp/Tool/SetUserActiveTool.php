@@ -39,7 +39,7 @@ final readonly class SetUserActiveTool
      *
      * @return array<string, mixed> the updated user
      */
-    #[McpTool(name: 'set_user_active', description: 'Activate or deactivate (offboard) a user account (admin only).', annotations: new ToolAnnotations(title: 'Activate or deactivate a user', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
+    #[McpTool(name: 'set_user_active', description: 'Activate or deactivate (offboard) a user account (admin only).', annotations: new ToolAnnotations(title: 'Activate or deactivate a user', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
     public function setUserActive(
         #[Schema(description: 'Username or numeric id.')]
         string $user,

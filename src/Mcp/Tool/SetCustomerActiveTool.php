@@ -40,7 +40,7 @@ final readonly class SetCustomerActiveTool
      *
      * @return array<string, mixed> the updated customer
      */
-    #[McpTool(name: 'set_customer_active', description: 'Activate or deactivate (offboard) a customer (admin only).', annotations: new ToolAnnotations(title: 'Activate or deactivate a customer', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
+    #[McpTool(name: 'set_customer_active', description: 'Activate or deactivate (offboard) a customer (admin only).', annotations: new ToolAnnotations(title: 'Activate or deactivate a customer', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
     public function setCustomerActive(
         #[Schema(description: 'Customer name or numeric id.')]
         string $customer,
