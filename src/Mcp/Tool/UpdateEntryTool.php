@@ -21,6 +21,7 @@ use InvalidArgumentException;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 use Symfony\Component\HttpFoundation\Response;
 
 use function sprintf;
@@ -59,7 +60,7 @@ final readonly class UpdateEntryTool
      *
      * @return array<array-key, mixed> the updated entry, plus ticket_info + balance
      */
-    #[McpTool(name: 'update_entry', description: "Edit fields of one of the authenticated user's own time entries (partial update).")]
+    #[McpTool(name: 'update_entry', description: "Edit fields of one of the authenticated user's own time entries (partial update).", annotations: new ToolAnnotations(title: 'Edit a time entry', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
     public function updateEntry(
         #[Schema(description: 'The id of the entry to edit.', minimum: 1)]
         int $entryId,

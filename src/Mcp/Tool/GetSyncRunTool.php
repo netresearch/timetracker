@@ -17,6 +17,7 @@ use App\Service\Sync\SyncRunAuthorization;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 /**
  * MCP tool: one worklog sync run with its per-worklog findings (ADR-023 §6).
@@ -41,7 +42,7 @@ final readonly class GetSyncRunTool
      *
      * @return array<string, mixed>
      */
-    #[McpTool(name: 'get_sync_run', description: 'One worklog sync run with its counters and per-worklog findings. Non-admins see only their own runs.')]
+    #[McpTool(name: 'get_sync_run', description: 'One worklog sync run with its counters and per-worklog findings. Non-admins see only their own runs.', annotations: new ToolAnnotations(title: 'Worklog sync run details', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function getSyncRun(
         #[Schema(description: 'The run id, as returned by sync_jira_worklogs.', minimum: 1)]
         int $runId,

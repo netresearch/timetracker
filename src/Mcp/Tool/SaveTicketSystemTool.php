@@ -16,6 +16,7 @@ use App\Mcp\ScopeGuard;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -47,7 +48,7 @@ final readonly class SaveTicketSystemTool
      *
      * @return array<array-key, mixed> the saved ticket system (no credentials)
      */
-    #[McpTool(name: 'save_ticketsystem', description: 'Create or update a ticket system (admin only).')]
+    #[McpTool(name: 'save_ticketsystem', description: 'Create or update a ticket system (admin only).', annotations: new ToolAnnotations(title: 'Create or update a ticket system', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
     public function saveTicketSystem(
         #[Schema(description: 'Ticket-system name.')]
         string $name,

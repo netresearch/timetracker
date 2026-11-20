@@ -13,6 +13,7 @@ use App\Entity\Contract;
 use App\Mcp\ScopeGuard;
 use App\Repository\ContractRepository;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -35,7 +36,7 @@ final readonly class ListContractsTool
      *
      * @return array{contracts: list<array{id: int, user_id: int, start: string, end: string|null}>}
      */
-    #[McpTool(name: 'list_contracts', description: 'List employment contracts (admin only).')]
+    #[McpTool(name: 'list_contracts', description: 'List employment contracts (admin only).', annotations: new ToolAnnotations(title: 'List contracts', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function listContracts(): array
     {
         $this->scopeGuard->requireAdminScope('contracts:read');

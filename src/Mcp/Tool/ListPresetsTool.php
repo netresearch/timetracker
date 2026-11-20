@@ -13,6 +13,7 @@ use App\Entity\Preset;
 use App\Mcp\ScopeGuard;
 use App\Repository\PresetRepository;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function array_values;
@@ -34,7 +35,7 @@ final readonly class ListPresetsTool
      *
      * @return array{presets: list<array{id: int, name: string, customer_id: int|null, project_id: int, activity_id: int|null, description: string}>}
      */
-    #[McpTool(name: 'list_presets', description: 'List booking presets (templates for bulk_log_time).')]
+    #[McpTool(name: 'list_presets', description: 'List booking presets (templates for bulk_log_time).', annotations: new ToolAnnotations(title: 'List booking presets', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function listPresets(): array
     {
         $this->scopeGuard->requireScope('presets:read');

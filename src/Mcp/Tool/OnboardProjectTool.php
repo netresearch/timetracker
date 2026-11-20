@@ -17,6 +17,7 @@ use InvalidArgumentException;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 use function trim;
 
@@ -40,7 +41,7 @@ final readonly class OnboardProjectTool
      *
      * @return array<string, mixed> the created project
      */
-    #[McpTool(name: 'onboard_project', description: 'Onboard a new project for a customer (admin only).')]
+    #[McpTool(name: 'onboard_project', description: 'Onboard a new project for a customer (admin only).', annotations: new ToolAnnotations(title: 'Onboard a project', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false))]
     public function onboardProject(
         #[Schema(description: 'Project name (at least 3 characters).')]
         string $name,

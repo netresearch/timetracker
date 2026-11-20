@@ -17,6 +17,7 @@ use Exception;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 
@@ -45,7 +46,7 @@ final readonly class RunPersonioSyncTool
      *
      * @return array{runs: list<array<string, mixed>>}
      */
-    #[McpTool(name: 'run_personio_sync', description: 'Run the Personio sync: direction "export" (TimeTracker → Personio attendances; dryRun previews) or "import" (Personio absences → TimeTracker). Runs for you by default; allUsers runs for everyone opted-in (admin only).')]
+    #[McpTool(name: 'run_personio_sync', description: 'Run the Personio sync: direction "export" (TimeTracker → Personio attendances; dryRun previews) or "import" (Personio absences → TimeTracker). Runs for you by default; allUsers runs for everyone opted-in (admin only).', annotations: new ToolAnnotations(title: 'Run the Personio sync', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true))]
     public function runPersonioSync(
         #[Schema(description: 'Run direction: "export" (attendances) or "import" (absences).')]
         string $direction,

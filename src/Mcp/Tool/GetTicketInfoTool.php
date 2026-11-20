@@ -15,6 +15,7 @@ use App\Service\EntrySummaryService;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 use function sprintf;
 
@@ -40,7 +41,7 @@ final readonly class GetTicketInfoTool
      *
      * @return array<string, mixed>
      */
-    #[McpTool(name: 'get_ticket_info', description: 'Per-scope booking totals (customer/project/activity/ticket) and estimate status for an entry.')]
+    #[McpTool(name: 'get_ticket_info', description: 'Per-scope booking totals (customer/project/activity/ticket) and estimate status for an entry.', annotations: new ToolAnnotations(title: 'Booking totals for an entry', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function getTicketInfo(
         #[Schema(description: 'The id of a time entry to report on.', minimum: 1)]
         int $entryId,

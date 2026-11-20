@@ -16,6 +16,7 @@ use App\Service\AdminOnboardingService;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 /**
  * MCP admin tool: activate or offboard (deactivate) a user (ADR-022 Phase 3).
@@ -38,7 +39,7 @@ final readonly class SetUserActiveTool
      *
      * @return array<string, mixed> the updated user
      */
-    #[McpTool(name: 'set_user_active', description: 'Activate or deactivate (offboard) a user account (admin only).')]
+    #[McpTool(name: 'set_user_active', description: 'Activate or deactivate (offboard) a user account (admin only).', annotations: new ToolAnnotations(title: 'Activate or deactivate a user', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function setUserActive(
         #[Schema(description: 'Username or numeric id.')]
         string $user,

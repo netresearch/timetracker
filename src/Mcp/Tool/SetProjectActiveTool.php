@@ -16,6 +16,7 @@ use App\Service\AdminOnboardingService;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 /**
  * MCP admin tool: activate or offboard (deactivate) a project (ADR-022
@@ -39,7 +40,7 @@ final readonly class SetProjectActiveTool
      *
      * @return array<string, mixed> the updated project
      */
-    #[McpTool(name: 'set_project_active', description: 'Activate or deactivate (offboard) a project (admin only).')]
+    #[McpTool(name: 'set_project_active', description: 'Activate or deactivate (offboard) a project (admin only).', annotations: new ToolAnnotations(title: 'Activate or deactivate a project', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function setProjectActive(
         #[Schema(description: 'Project name or numeric id.')]
         string $project,

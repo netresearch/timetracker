@@ -18,6 +18,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 use function array_map;
 use function count;
@@ -46,7 +47,7 @@ final readonly class ListSyncConflictsTool
      *
      * @return array<string, mixed>
      */
-    #[McpTool(name: 'list_sync_conflicts', description: 'Parked worklog sync conflicts/orphans awaiting resolution. Non-admins see their own entries; admins may filter by username.')]
+    #[McpTool(name: 'list_sync_conflicts', description: 'Parked worklog sync conflicts/orphans awaiting resolution. Non-admins see their own entries; admins may filter by username.', annotations: new ToolAnnotations(title: 'List worklog sync conflicts', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function listSyncConflicts(
         #[Schema(description: 'Filter by username (admin only; ignored for non-admins).')]
         ?string $user = null,

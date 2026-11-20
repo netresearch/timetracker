@@ -28,6 +28,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 use Symfony\Component\HttpFoundation\Response;
 
 use function ctype_digit;
@@ -88,7 +89,7 @@ final readonly class LogTimeTool
      *
      * @return array<array-key, mixed> the created entry
      */
-    #[McpTool(name: 'log_time', description: 'Log a time entry (worklog) for the authenticated user.')]
+    #[McpTool(name: 'log_time', description: 'Log a time entry (worklog) for the authenticated user.', annotations: new ToolAnnotations(title: 'Log time', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false))]
     public function logTime(
         #[Schema(description: 'Project name or numeric id (required). See list_projects.')]
         string $project,

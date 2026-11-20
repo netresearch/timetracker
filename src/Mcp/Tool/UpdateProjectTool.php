@@ -17,6 +17,7 @@ use InvalidArgumentException;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 use function trim;
 
@@ -45,7 +46,7 @@ final readonly class UpdateProjectTool
      *
      * @return array<string, mixed> the project as it now stands
      */
-    #[McpTool(name: 'update_project', description: 'Change an existing project — name, customer, ticket prefix, ticket system, active/global (admin only).')]
+    #[McpTool(name: 'update_project', description: 'Change an existing project — name, customer, ticket prefix, ticket system, active/global (admin only).', annotations: new ToolAnnotations(title: 'Edit a project', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
     public function updateProject(
         #[Schema(description: 'Project name or numeric id to change.')]
         string $project,

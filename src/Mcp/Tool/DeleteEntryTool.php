@@ -15,6 +15,7 @@ use App\Mcp\ScopeGuard;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -50,7 +51,7 @@ final readonly class DeleteEntryTool
      *
      * @return array{success: bool, deleted: list<int>}
      */
-    #[McpTool(name: 'delete_entry', description: 'Delete one of your own time entries by id. If it is half of an agent/human pair written by log_time, its partner is deleted too; the result lists all deleted ids.')]
+    #[McpTool(name: 'delete_entry', description: 'Delete one of your own time entries by id. If it is half of an agent/human pair written by log_time, its partner is deleted too; the result lists all deleted ids.', annotations: new ToolAnnotations(title: 'Delete a time entry', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false))]
     public function deleteEntry(
         #[Schema(description: 'The id of the entry to delete.', minimum: 1)]
         int $id,

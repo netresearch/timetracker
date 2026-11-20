@@ -17,6 +17,7 @@ use App\Service\Sync\SyncRunAuthorization;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use Mcp\Schema\ToolAnnotations;
 
 /**
  * MCP tool: resolve a parked worklog sync state by picking a winner
@@ -48,7 +49,7 @@ final readonly class ResolveSyncConflictTool
      *
      * @return array<string, mixed>
      */
-    #[McpTool(name: 'resolve_sync_conflict', description: 'Resolve a parked worklog sync conflict: winner=local force-pushes the entry to Jira, winner=remote pulls the live worklog (or accepts its deletion).')]
+    #[McpTool(name: 'resolve_sync_conflict', description: 'Resolve a parked worklog sync conflict: winner=local force-pushes the entry to Jira, winner=remote pulls the live worklog (or accepts its deletion).', annotations: new ToolAnnotations(title: 'Resolve a worklog sync conflict', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true))]
     public function resolveSyncConflict(
         #[Schema(description: 'The conflict id, as returned by list_sync_conflicts.', minimum: 1)]
         int $conflictId,
