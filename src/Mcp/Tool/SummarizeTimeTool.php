@@ -80,7 +80,7 @@ final readonly class SummarizeTimeTool
         ?int $activity = null,
         #[Schema(description: 'Only members of this team id.', minimum: 1)]
         ?int $team = null,
-        #[Schema(description: 'Only this user id instead of yourself. DEV accounts always see only their own entries.', minimum: 1)]
+        #[Schema(description: 'Only this user id instead of yourself. DEV accounts may only pass their own id.', minimum: 1)]
         ?int $user = null,
         #[Schema(description: 'Include every user the filters select instead of only yourself, e.g. a whole project or team. DEV accounts still see only their own entries.')]
         bool $allUsers = false,
