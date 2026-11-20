@@ -108,6 +108,11 @@ final readonly class SummarizeTimeTool
 
         $ticket = null !== $ticket && '' !== trim($ticket) ? trim($ticket) : null;
         $description = null !== $description && '' !== trim($description) ? trim($description) : null;
+        $isDev = UserType::DEV === $caller->getType();
+        if ($isDev && null !== $user && $user !== $caller->getId()) {
+            throw new ToolCallException('A DEV account can only summarize its own time; omit user.');
+        }
+
         $scopeUser = $user ?? ($allUsers ? null : $caller->getId());
 
         $entries = $this->entryRepository->findByFilterArray([
@@ -120,7 +125,7 @@ final readonly class SummarizeTimeTool
             'description' => $description,
             'datestart' => $fromDay->format('Y-m-d'),
             'dateend' => $toDay->format('Y-m-d'),
-            'visibility_user' => UserType::DEV === $caller->getType() ? $caller->getId() : null,
+            'visibility_user' => $isDev ? $caller->getId() : null,
             'maxResults' => null,
             'page' => null,
             'start' => null,
@@ -136,7 +141,7 @@ final readonly class SummarizeTimeTool
         }
 
         $result = $this->aggregate($entries, $groupBy, $fromDay, $toDay);
-        $result['scope'] = ['user' => UserType::DEV === $caller->getType() ? $caller->getId() : $scopeUser];
+        $result['scope'] = ['user' => $isDev ? $caller->getId() : $scopeUser];
 
         return $result;
     }

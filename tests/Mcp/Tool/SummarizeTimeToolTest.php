@@ -70,12 +70,17 @@ final class SummarizeTimeToolTest extends AbstractWebTestCase
         self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', start: '10:00', end: '10:20', date: self::DAY);
 
         $tool = self::getContainer()->get(SummarizeTimeTool::class);
-        $forUserOne = $tool->summarizeTime(from: self::DAY, to: self::DAY, user: 1);
         $everyone = $tool->summarizeTime(from: self::DAY, to: self::DAY, allUsers: true);
 
-        self::assertSame(['humanMinutes' => 0, 'agentMinutes' => 0, 'entries' => 0], $forUserOne['totals']);
         self::assertSame(['humanMinutes' => 20, 'agentMinutes' => 0, 'entries' => 1], $everyone['totals']);
         self::assertSame(['user' => 2], $everyone['scope']);
+    }
+
+    public function testDevAccountCannotAskForAnotherUser(): void
+    {
+        $this->useToken(['reporting:read'], 'developer');
+
+        $this->assertToolError('only summarize its own time', static fn () => self::getContainer()->get(SummarizeTimeTool::class)->summarizeTime(user: 1));
     }
 
     public function testAFilterKeepsTheOwnTimeDefaultUnlessAllUsersIsAsked(): void
