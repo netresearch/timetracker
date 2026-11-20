@@ -14,6 +14,8 @@ use App\Repository\UserRepository;
 use App\Service\ApiToken\ApiTokenService;
 use Tests\AbstractWebTestCase;
 
+use function basename;
+use function glob;
 use function sprintf;
 use function str_starts_with;
 use function time;
@@ -166,8 +168,17 @@ final class McpHttpEndpointTest extends AbstractWebTestCase
         // hours, past the bundle's one-hour default.
         $cacheDir = self::getContainer()->getParameter('kernel.cache_dir');
         self::assertIsString($cacheDir);
-        $sessionFile = sprintf('%s/mcp-sessions/timetracker/%s', $cacheDir, $sessionId);
-        self::assertFileExists($sessionFile);
+        // Pick the session file from the store's directory listing rather than
+        // building a path from the response header.
+        $sessionFile = null;
+        $candidates = glob($cacheDir . '/mcp-sessions/timetracker/*');
+        foreach (false === $candidates ? [] : $candidates as $candidate) {
+            if (basename($candidate) === $sessionId) {
+                $sessionFile = $candidate;
+            }
+        }
+
+        self::assertNotNull($sessionFile, 'the session store holds no file for the session');
         self::assertTrue(touch($sessionFile, time() - 7200));
 
         $server['HTTP_MCP_SESSION_ID'] = $sessionId;
