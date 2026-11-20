@@ -16,6 +16,8 @@ use Tests\AbstractWebTestCase;
 
 use function sprintf;
 use function str_starts_with;
+use function time;
+use function touch;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -133,6 +135,48 @@ final class McpHttpEndpointTest extends AbstractWebTestCase
         self::assertFalse($byName['log_time']['destructiveHint'] ?? null);
         // Saving an entry books or removes its Jira worklog in the same request.
         self::assertTrue($byName['log_time']['openWorldHint'] ?? null);
+    }
+
+    public function testInitializeDoesNotAnnouncePromptsOrResources(): void
+    {
+        // The server has neither. mcp/sdk 0.8.1 announced both (as listChanged),
+        // so clients listed them in parallel with the tools on every (re)connect,
+        // and Claude Code lost its tool list in that race. Guards the next
+        // SDK/bundle upgrade against bringing them back.
+        $this->client->request('POST', '/mcp', server: $this->mcpServer('localhost'), content: self::INITIALIZE);
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+
+        /** @var array{result: array{capabilities: array<string, mixed>}} $payload */
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $capabilities = $payload['result']['capabilities'];
+
+        self::assertArrayHasKey('tools', $capabilities);
+        self::assertArrayNotHasKey('prompts', $capabilities);
+        self::assertArrayNotHasKey('resources', $capabilities);
+    }
+
+    public function testSessionSurvivesTwoIdleHours(): void
+    {
+        $server = $this->mcpServer('localhost');
+        $this->client->request('POST', '/mcp', server: $server, content: self::INITIALIZE);
+        $sessionId = $this->client->getResponse()->headers->get('Mcp-Session-Id');
+        self::assertNotNull($sessionId, 'the handshake did not open a session');
+
+        // The file store expires a session by the mtime of its file; age it by two
+        // hours, past the bundle's one-hour default.
+        $cacheDir = self::getContainer()->getParameter('kernel.cache_dir');
+        self::assertIsString($cacheDir);
+        $sessionFile = sprintf('%s/mcp-sessions/timetracker/%s', $cacheDir, $sessionId);
+        self::assertFileExists($sessionFile);
+        self::assertTrue(touch($sessionFile, time() - 7200));
+
+        $server['HTTP_MCP_SESSION_ID'] = $sessionId;
+        $this->client->request('POST', '/mcp', server: $server, content: '{"jsonrpc":"2.0","id":2,"method":"tools/list"}');
+
+        $response = $this->client->getResponse();
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringNotContainsString('Session not found', (string) $response->getContent());
+        self::assertStringContainsString('"get_day"', (string) $response->getContent());
     }
 
     public function testBogusTokenIsUnauthorized(): void
