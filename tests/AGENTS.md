@@ -13,6 +13,18 @@ Uses the Symfony test framework.
 - Test database: `db_unittest` container (MariaDB) with `unittest` credentials
 - Environment: `APP_ENV=test` is set automatically by test scripts
 - Database setup: Test data loaded from `sql/unittest/` SQL files
+- `app-dev` image: `ghcr.io/netresearch/timetracker:dev` is not published
+  (`manifest unknown`); build it from the repository root with
+  `make bake-dev` (`docker bake app-dev`) before the first container run
+- Host install in a git worktree: `composer install` aborts in the CaptainHook
+  plugin (`git directory not found`), and the abort also skips
+  `phpstan/extension-installer`, so PHPStan later rejects the `symfony`
+  parameter of its config (`Unexpected item`). Where the host PHP also lacks
+  extensions the container has, install with
+  `CAPTAINHOOK_DISABLE=true composer install --ignore-platform-req=ext-ldap --ignore-platform-req=ext-pdo_mysql`
+  (one `--ignore-platform-req=ext-<name>` per extension composer reports
+  missing). The static tools then run on the host; PHPUnit still runs in the
+  container
 
 ## Build & tests (prefer file-scoped)
 
@@ -152,4 +164,4 @@ docker compose --profile dev exec -T -e APP_ENV=test \
   app-dev bin/phpunit tests/...
 ```
 
-`db_unittest` seeds `sql/unittest/00{1,2}_*.sql` only on FIRST volume init; `001_testtables.sql` is a gitignored artifact regenerated from `sql/full.sql`. A stale schema means: recreate the volume.
+`db_unittest` seeds `sql/unittest/00{1,2}_*.sql` only on FIRST volume init; `001_testtables.sql` is a gitignored artifact regenerated from `sql/full.sql`. A stale schema means: recreate the volume — `make reset-test-db` regenerates `001_testtables.sql`, removes the volume and starts `db_unittest` again. The typical symptom, with `DATABASE_URL` already pointing at `db_unittest`, is a full run with about 200 errors `Unknown column …` right after rebasing onto a `main` that added a migration: a stale test schema, not a regression.
