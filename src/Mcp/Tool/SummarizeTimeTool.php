@@ -21,10 +21,13 @@ use Mcp\Exception\ToolCallException;
 use Mcp\Schema\ToolAnnotations;
 use Psr\Clock\ClockInterface;
 
+use function array_filter;
+use function array_values;
 use function count;
 use function in_array;
 use function round;
 use function sprintf;
+use function strcasecmp;
 use function trim;
 use function usort;
 
@@ -32,9 +35,10 @@ use function usort;
  * MCP tool: booked time over a date range, grouped by project, customer,
  * activity, ticket, user or day — the interpretation view of the UI for agents.
  *
- * Visibility follows the interpretation endpoints (BaseInterpretationController):
- * a DEV account only ever sees its own entries; other account types see what the
- * filters select. Without any filter the summary covers the caller's own time.
+ * By default it covers the caller's own time, whatever the other filters
+ * select; `user` or `allUsers` widen it. Visibility then follows the
+ * interpretation endpoints (BaseInterpretationController): a DEV account only
+ * ever sees its own entries. The result names the user scope it covers.
  * Human and agent minutes stay separate (ADR-025 §7); the share is of the human
  * total.
  */
@@ -60,7 +64,7 @@ final readonly class SummarizeTimeTool
      *
      * @return array<string, mixed>
      */
-    #[McpTool(name: 'summarize_time', description: 'Booked time over a date range grouped by project, customer, activity, ticket, user or day, with human and agent minutes kept apart. Without filters it covers your own time.', annotations: new ToolAnnotations(title: 'Summarize booked time', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
+    #[McpTool(name: 'summarize_time', description: 'Booked time over a date range grouped by project, customer, activity, ticket, user or day, with human and agent minutes kept apart. Covers your own time unless user or allUsers is given.', annotations: new ToolAnnotations(title: 'Summarize booked time', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
     public function summarizeTime(
         #[Schema(description: 'First day, YYYY-MM-DD. Defaults to the first day of the current month.')]
         ?string $from = null,
@@ -76,9 +80,11 @@ final readonly class SummarizeTimeTool
         ?int $activity = null,
         #[Schema(description: 'Only members of this team id.', minimum: 1)]
         ?int $team = null,
-        #[Schema(description: 'Only this user id. DEV accounts always see only their own entries.', minimum: 1)]
+        #[Schema(description: 'Only this user id instead of yourself. DEV accounts always see only their own entries.', minimum: 1)]
         ?int $user = null,
-        #[Schema(description: 'Only entries whose ticket matches, e.g. "NRS-4188".')]
+        #[Schema(description: 'Include every user the filters select instead of only yourself, e.g. a whole project or team. DEV accounts still see only their own entries.')]
+        bool $allUsers = false,
+        #[Schema(description: 'Only this ticket, exact match ignoring case, e.g. "NRS-4188".')]
         ?string $ticket = null,
         #[Schema(description: 'Only entries whose description contains this text.')]
         ?string $description = null,
@@ -102,15 +108,14 @@ final readonly class SummarizeTimeTool
 
         $ticket = null !== $ticket && '' !== trim($ticket) ? trim($ticket) : null;
         $description = null !== $description && '' !== trim($description) ? trim($description) : null;
-        $hasFilter = null !== $customer || null !== $project || null !== $activity || null !== $team
-            || null !== $user || null !== $ticket || null !== $description;
+        $scopeUser = $user ?? ($allUsers ? null : $caller->getId());
 
         $entries = $this->entryRepository->findByFilterArray([
             'customer' => $customer,
             'project' => $project,
             'activity' => $activity,
             'team' => $team,
-            'user' => $hasFilter ? $user : $caller->getId(),
+            'user' => $scopeUser,
             'ticket' => $ticket,
             'description' => $description,
             'datestart' => $fromDay->format('Y-m-d'),
@@ -121,7 +126,19 @@ final readonly class SummarizeTimeTool
             'start' => null,
         ]);
 
-        return $this->aggregate($entries, $groupBy, $fromDay, $toDay);
+        // The repository matches the ticket as a substring (the UI's search);
+        // a summary for "NRS-12" must not add NRS-120 … NRS-129.
+        if (null !== $ticket) {
+            $entries = array_values(array_filter(
+                $entries,
+                static fn (Entry $entry): bool => 0 === strcasecmp($entry->getTicket(), $ticket),
+            ));
+        }
+
+        $result = $this->aggregate($entries, $groupBy, $fromDay, $toDay);
+        $result['scope'] = ['user' => UserType::DEV === $caller->getType() ? $caller->getId() : $scopeUser];
+
+        return $result;
     }
 
     /**

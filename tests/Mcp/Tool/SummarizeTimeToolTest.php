@@ -63,14 +63,51 @@ final class SummarizeTimeToolTest extends AbstractWebTestCase
 
     public function testDevAccountSeesOnlyItsOwnEntries(): void
     {
-        // user 1 (unittest, ADMIN) books; user 2 (developer, DEV) asks for user 1.
+        // user 1 (unittest, ADMIN) and user 2 (developer, DEV) both book.
         $this->useToken(['entries:write', 'reporting:read']);
         self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', start: '08:00', end: '09:00', date: self::DAY);
+        $this->useToken(['entries:write', 'reporting:read'], 'developer');
+        self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', start: '10:00', end: '10:20', date: self::DAY);
 
-        $this->useToken(['reporting:read'], 'developer');
-        $result = self::getContainer()->get(SummarizeTimeTool::class)->summarizeTime(from: self::DAY, to: self::DAY, user: 1);
+        $tool = self::getContainer()->get(SummarizeTimeTool::class);
+        $forUserOne = $tool->summarizeTime(from: self::DAY, to: self::DAY, user: 1);
+        $everyone = $tool->summarizeTime(from: self::DAY, to: self::DAY, allUsers: true);
 
-        self::assertSame(['humanMinutes' => 0, 'agentMinutes' => 0, 'entries' => 0], $result['totals']);
+        self::assertSame(['humanMinutes' => 0, 'agentMinutes' => 0, 'entries' => 0], $forUserOne['totals']);
+        self::assertSame(['humanMinutes' => 20, 'agentMinutes' => 0, 'entries' => 1], $everyone['totals']);
+        self::assertSame(['user' => 2], $everyone['scope']);
+    }
+
+    public function testAFilterKeepsTheOwnTimeDefaultUnlessAllUsersIsAsked(): void
+    {
+        $this->useToken(['entries:write', 'reporting:read'], 'i.myself');
+        self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', start: '08:00', end: '09:00', date: self::DAY);
+        $this->useToken(['entries:write', 'reporting:read']);
+        self::getContainer()->get(LogTimeTool::class)->logTime(project: '1', activity: '1', start: '10:00', end: '10:30', date: self::DAY);
+
+        $tool = self::getContainer()->get(SummarizeTimeTool::class);
+        $mine = $tool->summarizeTime(from: self::DAY, to: self::DAY, project: 1);
+        $all = $tool->summarizeTime(from: self::DAY, to: self::DAY, project: 1, allUsers: true);
+
+        self::assertIsArray($mine['totals']);
+        self::assertSame(30, $mine['totals']['humanMinutes']);
+        self::assertSame(['user' => 1], $mine['scope']);
+        self::assertIsArray($all['totals']);
+        self::assertSame(90, $all['totals']['humanMinutes']);
+        self::assertSame(['user' => null], $all['scope']);
+    }
+
+    public function testTicketFilterMatchesExactly(): void
+    {
+        $this->useToken(['entries:write', 'reporting:read']);
+        $logTime = self::getContainer()->get(LogTimeTool::class);
+        $logTime->logTime(project: '1', activity: '1', ticket: 'SA-12', start: '08:00', end: '09:00', date: self::DAY);
+        $logTime->logTime(project: '1', activity: '1', ticket: 'SA-123', start: '09:00', end: '09:30', date: self::DAY);
+
+        $result = self::getContainer()->get(SummarizeTimeTool::class)->summarizeTime(from: self::DAY, to: self::DAY, ticket: 'sa-12');
+
+        self::assertIsArray($result['totals']);
+        self::assertSame(60, $result['totals']['humanMinutes']);
     }
 
     public function testWithoutFiltersCoversOnlyTheCallersOwnTime(): void
