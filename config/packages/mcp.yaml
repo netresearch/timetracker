@@ -45,6 +45,15 @@ mcp:
             # would require pinning the handshake to a single revision, which would stop
             # older clients from negotiating. Both eras run behind the same Bearer-PAT
             # firewall and ScopeGuard (covered by tests/Mcp/McpHttpEndpointTest).
+            # Sessions expire after this many idle seconds (the file store compares the
+            # session file's mtime, which every request renews). The bundle default of
+            # one hour expired the session of every agent that paused over lunch or a
+            # long task, and each expiry forces a reconnect, during which Claude Code
+            # can lose its tool list. A day covers lunch, meetings and overnight
+            # pauses; every request is still authenticated by its own Bearer PAT, so
+            # a longer-lived session id grants nothing on its own.
+            session:
+                ttl: 86400
             # Required since bundle 0.13: without a registry the server exposes nothing.
             registry:
                 tools: ['App\Mcp\Tool\']
