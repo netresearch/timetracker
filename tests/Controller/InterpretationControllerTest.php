@@ -122,6 +122,28 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         $entries = $this->getJsonResponse($this->client->getResponse());
         self::assertIsArray($entries);
         self::assertSame([], $entries);
+
+        // The DEV account's own entries stay visible (fixture entry 8 and the one
+        // inserted here), and they are all a customer filter returns although
+        // user 1 books on the same customer.
+        self::assertNotNull($this->connection);
+        $this->connection->executeStatement(
+            "INSERT INTO entries (day, start, end, customer_id, project_id, activity_id, description, ticket, duration, user_id, class, synced_to_ticketsystem, internal_jira_ticket_original_key)
+             VALUES (CURDATE(), '08:00:00', '08:30:00', 1, 1, 1, 'own entry', 'DEV-OWN', 30, 2, 1, 0, '')",
+        );
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', ['customer' => 1]);
+        $this->assertStatusCode(200);
+        $own = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($own);
+        $tickets = [];
+        foreach ($own as $row) {
+            self::assertIsArray($row);
+            self::assertIsArray($row['entry']);
+            $tickets[] = $row['entry']['ticket'];
+        }
+
+        sort($tickets);
+        self::assertSame(['DEV-OWN', 'testGetDataActionForParameter'], $tickets);
     }
 
     public function testActivityTeamDescriptionAreAcceptedAsStandaloneFilters(): void
