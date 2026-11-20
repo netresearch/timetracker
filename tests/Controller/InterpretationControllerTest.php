@@ -105,6 +105,47 @@ final class InterpretationControllerTest extends AbstractWebTestCase
         self::assertNotContains('unittest', $names);
     }
 
+    public function testDevAccountSeesOnlyItsOwnEntries(): void
+    {
+        // A DEV account is scoped to its own entries in every interpretation view
+        // (BaseInterpretationController::getEntries passes visibility_user). Team 1
+        // holds user 1 (unittest), so a DEV filtering by it must not see unittest.
+        $this->logInSession('developer');
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/user', ['team' => 1]);
+        $this->assertStatusCode(200);
+        $json = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($json);
+        self::assertNotContains('unittest', array_column($json, 'name'));
+
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', ['user' => 1]);
+        $this->assertStatusCode(200);
+        $entries = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($entries);
+        self::assertSame([], $entries);
+
+        // The DEV account's own entries stay visible (fixture entry 8 and the one
+        // inserted here), and they are all a customer filter returns although
+        // user 1 books on the same customer.
+        self::assertNotNull($this->connection);
+        $this->connection->executeStatement(
+            "INSERT INTO entries (day, start, end, customer_id, project_id, activity_id, description, ticket, duration, user_id, class, synced_to_ticketsystem, internal_jira_ticket_original_key)
+             VALUES (CURDATE(), '08:00:00', '08:30:00', 1, 1, 1, 'own entry', 'DEV-OWN', 30, 2, 1, 0, '')",
+        );
+        $this->client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/interpretation/entries', ['customer' => 1]);
+        $this->assertStatusCode(200);
+        $own = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($own);
+        $tickets = [];
+        foreach ($own as $row) {
+            self::assertIsArray($row);
+            self::assertIsArray($row['entry']);
+            $tickets[] = $row['entry']['ticket'];
+        }
+
+        sort($tickets);
+        self::assertSame(['DEV-OWN', 'testGetDataActionForParameter'], $tickets);
+    }
+
     public function testActivityTeamDescriptionAreAcceptedAsStandaloneFilters(): void
     {
         // Each used to trip the "specify at least …" guard; now each is a valid

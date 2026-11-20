@@ -35,6 +35,7 @@ use function assert;
 use function in_array;
 use function is_array;
 use function is_bool;
+use function is_int;
 use function is_object;
 use function is_string;
 use function sprintf;
@@ -721,6 +722,21 @@ class EntryRepository extends ServiceEntityRepository
         if (isset($arFilter['dateend']) && '' !== $arFilter['dateend']) {
             $queryBuilder->andWhere('e.day <= :dateend')
                 ->setParameter('dateend', $arFilter['dateend']);
+        }
+    }
+
+    /**
+     * A DEV account sees only its own entries, whatever the other filters
+     * select: BaseInterpretationController::getEntries sets visibility_user.
+     *
+     * @param array<string, mixed> $arFilter
+     */
+    private function applyVisibilityFilter(QueryBuilder $queryBuilder, array $arFilter): void
+    {
+        $visibilityUser = $arFilter['visibility_user'] ?? null;
+        if (is_int($visibilityUser) && $visibilityUser > 0) {
+            $queryBuilder->andWhere('IDENTITY(e.user) = :visibility_user')
+                ->setParameter('visibility_user', $visibilityUser);
         }
     }
 
@@ -1616,6 +1632,7 @@ class EntryRepository extends ServiceEntityRepository
         $this->applyRelationFilters($queryBuilder, $arFilter);
         $this->applyDateWindowFilters($queryBuilder, $arFilter);
         $this->applyInterpretationExtraFilters($queryBuilder, $arFilter);
+        $this->applyVisibilityFilter($queryBuilder, $arFilter);
 
         // Apply limit if specified with safe casting
         if (isset($arFilter['maxResults']) && is_numeric($arFilter['maxResults'])) {
