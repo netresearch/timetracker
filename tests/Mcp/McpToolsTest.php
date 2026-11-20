@@ -47,6 +47,7 @@ use App\Mcp\Tool\SaveTicketSystemTool;
 use App\Mcp\Tool\SetCustomerActiveTool;
 use App\Mcp\Tool\SetProjectActiveTool;
 use App\Mcp\Tool\SetUserActiveTool;
+use App\Mcp\Tool\SummarizeTimeTool;
 use App\Mcp\Tool\SyncJiraWorklogsTool;
 use App\Mcp\Tool\UpdateEntryTool;
 use App\Mcp\Tool\UpdateProjectTool;
@@ -573,6 +574,7 @@ final class McpToolsTest extends AbstractWebTestCase
             'set_customer_active' => $container->get(SetCustomerActiveTool::class)->setCustomerActive('1', true),
             'set_project_active' => $container->get(SetProjectActiveTool::class)->setProjectActive('1', true),
             'set_user_active' => $container->get(SetUserActiveTool::class)->setUserActive('developer', true),
+            'summarize_time' => $container->get(SummarizeTimeTool::class)->summarizeTime(),
             'sync_jira_worklogs' => $container->get(SyncJiraWorklogsTool::class)->syncJiraWorklogs(type: 'verify', ticketSystemId: 1),
             'update_entry' => $container->get(UpdateEntryTool::class)->updateEntry(entryId: $entryId, description: 'edited via guard'),
             'update_project' => $container->get(UpdateProjectTool::class)->updateProject(project: '1', ticketPrefix: 'GUARD'),
