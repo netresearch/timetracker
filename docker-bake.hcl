@@ -49,9 +49,6 @@ variable "XDEBUG_VERSION" {
   default = "3.5.3"
 }
 
-variable "APCU_VERSION" {
-  default = "5.1.28"
-}
 
 
 # =============================================================================
@@ -101,7 +98,6 @@ target "_common" {
     BUN_IMAGE         = BUN_IMAGE
     COMPOSER_IMAGE    = COMPOSER_IMAGE
     XDEBUG_VERSION    = XDEBUG_VERSION
-    APCU_VERSION      = APCU_VERSION
   }
 }
 

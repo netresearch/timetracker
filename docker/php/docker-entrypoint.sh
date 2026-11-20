@@ -73,6 +73,13 @@ auto_migrate() {
     # Apply the remaining pending migrations. Fails loudly (set -e) so a bad
     # migration aborts the deploy instead of serving a half-migrated schema.
     console doctrine:migrations:migrate --no-interaction --allow-no-migration
+
+    # The app cache lives in the cache_items table (ADR-028). Expired rows are
+    # only removed by a prune; without one, sprayed login attempts would leave
+    # one throttling row per username behind. A failed prune must not stop
+    # the container, so it only warns.
+    console cache:pool:prune --no-interaction >/dev/null \
+        || echo "[entrypoint] WARNING: cache:pool:prune failed" >&2
     echo "[entrypoint] database schema up to date"
 }
 

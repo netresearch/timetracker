@@ -78,15 +78,6 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /usr/share/doc/* /usr/share/man/*
 
-# Install APCu (pinned; backs the Symfony app cache — see config/packages/cache.yaml).
-# PIE instead of PECL: pecl.php.net is deprecated and its downloads fail.
-ARG APCU_VERSION
-RUN --mount=type=bind,from=ghcr.io/php/pie:1.5.5-bin@sha256:3fca03c16df842d02b654dc382db3756058d9c128064f57cace14f8728779ce9,source=/pie,target=/usr/local/bin/pie \
-    pie install --no-interaction "apcu/apcu:${APCU_VERSION}" \
-    && docker-php-ext-enable apcu
-
-COPY docker/php/apcu.ini /usr/local/etc/php/conf.d/
-
 # Worker pool sizing for the parallel page-load burst (see the file's comment).
 COPY docker/php/fpm-pool.conf /usr/local/etc/php-fpm.d/zz-pool.conf
 
@@ -349,7 +340,7 @@ ENV APP_DEBUG=0
 
 # Add dev dependencies (web-profiler-bundle, debug-bundle, stopwatch) on top of
 # the prod vendor tree, keep an optimized authoritative autoloader, and warm the
-# profiling cache (APCu is built into the base image).
+# profiling cache.
 RUN composer install --ignore-platform-req=php --no-scripts \
     && composer dump-autoload --optimize --classmap-authoritative \
     && php bin/console cache:clear --no-debug \

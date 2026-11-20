@@ -12,7 +12,7 @@ ADRs are historical records: bodies are not rewritten when reality moves on. Whe
 | [ADR-002](ADR-002-doctrine-orm-vs-raw-sql.md) | Doctrine ORM vs Raw SQL Strategy | Accepted | 2024-09-15 |
 | [ADR-003](ADR-003-jira-integration-architecture.md) | JIRA Integration Architecture | Amended by ADR-017 | 2024-09-15 |
 | [ADR-004](ADR-004-authentication-strategy-ldap-local.md) | Authentication Strategy (LDAP + Local) | Accepted (reality note) | 2024-09-15 |
-| [ADR-005](ADR-005-caching-strategy.md) | Caching Strategy | Accepted (reality note) | 2024-09-15 |
+| [ADR-005](ADR-005-caching-strategy.md) | Caching Strategy | Accepted (reality note); app cache backend superseded by ADR-028 | 2024-09-15 |
 | [ADR-006](ADR-006-testing-philosophy.md) | Testing Philosophy | Superseded by ADR-013 | 2024-09-15 |
 | [ADR-007](ADR-007-api-design-patterns.md) | API Design Patterns | Accepted (reality note) | 2024-09-15 |
 | [ADR-008](ADR-008-database-performance-optimization.md) | Database Performance Optimization | Accepted (reality note) | 2024-09-15 |
@@ -35,6 +35,7 @@ ADRs are historical records: bodies are not rewritten when reality moves on. Whe
 | [ADR-025](ADR-025-agent-vs-human-time.md) | Agent vs. Human Time Attribution | Accepted (paired entries live; walltime never summed into attendance) | 2026-07-11 |
 | [ADR-026](ADR-026-jira-project-import.md) | Jira/Tempo Project Import with Derived Customers | Accepted | 2026-07-12 |
 | [ADR-027](ADR-027-worklog-grouped-presentation.md) | Worklog Grouped Presentation with Composite Cells | Accepted | 2026-09-17 |
+| [ADR-028](ADR-028-app-cache-on-doctrine-dbal.md) | App Cache on Doctrine DBAL instead of APCu | Accepted | 2026-11-19 |
 
 ## ADR Format
 
@@ -51,7 +52,7 @@ Each ADR follows this standard structure:
 ### Platform
 - **PHP 8.5 / Symfony 8.1** ([ADR-015](ADR-015-php-8-5-symfony-8-upgrade.md)) with Doctrine ORM ([ADR-002](ADR-002-doctrine-orm-vs-raw-sql.md))
 - **MariaDB 12.1** as the database ([compose.yml](../../compose.yml))
-- **APCu** application caching — single-layer, no Redis ([docs/apcu-setup.md](../apcu-setup.md))
+- **App cache in the database** (Doctrine DBAL adapter, table `cache_items`) — single-layer, no Redis ([ADR-028](ADR-028-app-cache-on-doctrine-dbal.md))
 
 ### Frontend
 - **SolidJS SPA** under `/ui` with Vite 8, Tailwind CSS 4 and bun ([ADR-016](ADR-016-solidjs-frontend-rewrite.md))

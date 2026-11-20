@@ -272,4 +272,4 @@ bin/console cache:clear
 
 Related docs: [development.md](development.md) ·
 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) · [testing.md](testing.md) ·
-[apcu-setup.md](apcu-setup.md) · [xdebug-setup.md](xdebug-setup.md)
+[xdebug-setup.md](xdebug-setup.md)

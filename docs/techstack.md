@@ -15,7 +15,7 @@ This document provides an overview of the technologies, frameworks, and tools us
 *   **Laminas LDAP:** (`laminas/laminas-ldap`) LDAP/Active Directory authentication.
 *   **PHPSpreadsheet:** (`phpoffice/phpspreadsheet`) XLSX export for controlling.
 *   **Sentry:** (`sentry/sentry-symfony`) Real-time error tracking and monitoring.
-*   **APCu:** In-memory backend of the Symfony app cache (see `docs/apcu-setup.md`).
+*   **App cache:** Symfony app cache in the database table `cache_items` via the Doctrine DBAL adapter (see [ADR-028](adr/ADR-028-app-cache-on-doctrine-dbal.md)).
 
 ## Frontend
 
