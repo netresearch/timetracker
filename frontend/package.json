@@ -15,7 +15,7 @@
   "dependencies": {
     "@ark-ui/solid": "^5.40.0",
     "@simplewebauthn/browser": "^14.0.0",
-    "@solidjs/router": "~1.0.3",
+    "@solidjs/router": "~2.0.0",
     "@tanstack/solid-query": "^5.107.1",
     "solid-js": "~1.9.19"
   },
