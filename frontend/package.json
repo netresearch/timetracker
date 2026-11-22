@@ -24,7 +24,7 @@
     "@inlang/paraglide-js": "^3.2.2",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.3.5",
-    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/jest-dom": "^8.0.0",
     "eslint": "^10.15.0",
     "eslint-plugin-solid": "^0.20.0",
     "jsdom": "^31.0.1",
