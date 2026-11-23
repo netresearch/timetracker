@@ -183,8 +183,14 @@ public function list(EntityManagerInterface $em): JsonResponse
   `org.opencontainers.image.revision` == the merge commit and its
   `docker-publish.yml` run is success). `:production` floats: the scheduled
   `docker-publish.yml` run retags it to `main` HEAD every day, so to deploy a
-  known release pull the semver tag (`:6.4.0`) instead. The image ships an
-  empty `.env`, so a "diff the image `.env` against the mounted env file" check
+  known release pull the semver tag (`:6.4.0`) instead. Measured 2026-11-23,
+  production runs the major release tag `ghcr.io/netresearch/timetracker:6`
+  (version 6.4.3), not `:production`, so a fix merged to
+  `main` is live only after a release and a deploy. Before reasoning from
+  production behaviour, read the running revision
+  (`docker inspect timetracker --format '{{index .Config.Labels "org.opencontainers.image.revision"}}'`)
+  and check a fix against it with `git merge-base --is-ancestor <fix> <revision>`.
+  The image ships an empty `.env`, so a "diff the image `.env` against the mounted env file" check
   returns nothing; find newly required variables by diffing the `%env(...)%`
   references under `config/` between the running and the new revision, and add
   them to the managed env file source too, since a hand edit on the host is

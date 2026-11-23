@@ -153,6 +153,15 @@ public function testSyncWithJiraHandlesApiError(): void
   so a validator's `find($loggedInUserId)` returns the CACHED entity — a raw
   `UPDATE users …` is invisible to it. Unit-test such validators (mock `find`)
   or operate on a non-logged-in entity
+- The test env has two clocks. `config/services_test.yaml` aliases
+  `App\Service\ClockInterface` to `Tests\Service\TestClock`, frozen at
+  2023-10-24 12:00; `Psr\Clock\ClockInterface` is not aliased and returns
+  the real date. `EntryRepository`, `TimeBalanceService`,
+  `DaySummaryService` and the Jira services read the App clock; the Sync,
+  Personio and 2FA services and `SummarizeTimeTool` read the PSR clock (grep
+  `ClockInterface` under `src/` for the current split). A test takes its
+  dates from the clock the code under test reads — a date range built from the
+  PSR clock misses the entries `EntryRepository` sees around 2023-10-24
 
 ## `.env.test.local` hijacks PHPUnit's database
 
