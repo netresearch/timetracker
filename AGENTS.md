@@ -14,6 +14,7 @@ This file explains repo-wide conventions and where to find scoped rules.
 - Run commands via Docker Compose (`docker compose --profile dev exec app-dev ...`)
 - Compose derives the project name, and with it the volume names (`timetracker_db-data`, …), from the checkout directory. In a worktree checkout named after its branch that yields fresh, empty volumes and the dev DB looks wiped; pin `name: timetracker` in the git-ignored `compose.override.yml` (or set `COMPOSE_PROJECT_NAME`). The pinned name also shares the containers: `exec app-dev` runs in whichever checkout last started it (`app-dev` bind-mounts `.`), so run `docker compose --profile dev up -d app-dev` in the worktree first
 - A fresh `git worktree add` can print `post-checkout: ./bin/captainhook: not found` from hooks installed by another checkout and then exits 127, although the worktree and its files are in place; run `make composer-install` in the new worktree
+- `git worktree remove` fails with `Permission denied` after container runs: the containers write root-owned files into the bind-mounted checkout. Delete the directory through a container, then prune: `docker run --rm -v <parent dir>:/w alpine rm -rf /w/<worktree dir>` and `git worktree prune`
 
 ## Minimal pre-commit checks
 
