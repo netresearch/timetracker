@@ -202,8 +202,9 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             // Don't expose LDAP-specific errors to the user
             throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.', [], $ldapException->getCode(), $ldapException);
         } catch (LdapAuthenticationException $authenticationException) {
-            // Unknown username or refused password. Same answer for both, so the
-            // response does not tell which of the two was wrong.
+            // Usually an unknown username or a refused password; LdapClientService
+            // reports any other failed user bind the same way. One answer for all,
+            // so the response does not tell which of them it was.
             $this->logger->warning('LDAP authentication refused', [
                 'username' => substr($userIdentifier, 0, 3) . '***',
                 'error_type' => $authenticationException::class,
