@@ -10,9 +10,8 @@ monolog:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: debug
-        # Refused logins are warnings, and main drops those unless the request
-        # also logs an error. They are the only application record of failed
-        # logins (ADR-011), so this channel is written directly.
+        # Refused LDAP logins are warnings, and main drops those unless the
+        # request also logs an error. This handler keeps them on record.
         ldap:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"

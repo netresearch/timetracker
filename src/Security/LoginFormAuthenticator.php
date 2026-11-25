@@ -214,7 +214,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.', [], $authenticationException->getCode(), $authenticationException);
         } catch (UserNotFoundException $userException) {
             // User not found and creation disabled
-            $this->logger->info('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
+            $this->logger->warning('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
             throw $userException;
         } catch (Throwable $throwable) {
             // Log class + message only — never the trace. A trace serializes

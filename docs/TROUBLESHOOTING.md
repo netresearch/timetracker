@@ -129,9 +129,12 @@ Login always goes through [`src/Security/LoginFormAuthenticator.php`](../src/Sec
    user (type `DEV`, locale `de`); team assignment additionally requires the
    optional `config/ldap_ou_team_mapping.yml` (not shipped — team mapping
    is skipped when absent, logged at info level).
-6. Refused logins and LDAP errors are logged in `var/log/dev.log` /
-   `var/log/prod.log` (channel `ldap`). In production a refused login is written as
-   warning lines without debug context; an LDAP error is written with the debug context of the request.
+6. Refused LDAP logins and LDAP errors are logged on the channel `ldap`: in
+   `var/log/dev.ldap-<date>.log` in development and `var/log/prod.log` in
+   production. There an unknown username, a refused password, an invalid username
+   format and the case in step 5 are warning lines without debug context. A wrong
+   password of a local account and a deactivated account (step 4) are not written.
+   An LDAP error is written with the debug context of the request.
 
 ## Frontend build issues (blank UI, 404 on /build-ui assets)
 

@@ -151,8 +151,9 @@ class LdapClientService
         );
 
         if (!is_object($collection) || (0 === $collection->count())) {
+            // Without the filter: it carries whatever was typed into the username
+            // field, and this line is written in production.
             $this->logger->warning('LDAP: User search failed or returned no results.', [
-                'filter' => $searchFilter,
                 'baseDn' => $this->baseDn,
             ]);
 
@@ -434,7 +435,7 @@ class LdapClientService
     {
         $dn = $ldapRespsonse['distinguishedname'][0] ?? ($ldapRespsonse['dn'][0] ?? null);
         if (null === $dn || '' === $dn) {
-            $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
+            $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['responseKeys' => array_keys($ldapRespsonse)]);
 
             return;
         }
