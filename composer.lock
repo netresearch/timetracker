@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "add24bf42273c964c6936439b5e3a67b",
+    "content-hash": "412c2b9a2b473902d66399b6037d8a04",
     "packages": [
         {
             "name": "brick/math",
@@ -9980,37 +9980,33 @@
             "time": "2026-11-12T19:51:56+00:00"
         },
         {
-            "name": "captainhook/plugin-composer",
-            "version": "5.3.3",
+            "name": "captainhook/hook-installer",
+            "version": "1.0.5",
             "source": {
                 "type": "git",
-                "url": "https://github.com/captainhookphp/plugin-composer.git",
-                "reference": "0a802aaf7742ef22b5cbccd586d99e16d9d23a39"
+                "url": "https://github.com/captainhook-git/hook-installer.git",
+                "reference": "b184bebf8a76e78adb98c1953a82eed14232f0ae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/captainhookphp/plugin-composer/zipball/0a802aaf7742ef22b5cbccd586d99e16d9d23a39",
-                "reference": "0a802aaf7742ef22b5cbccd586d99e16d9d23a39",
+                "url": "https://api.github.com/repos/captainhook-git/hook-installer/zipball/b184bebf8a76e78adb98c1953a82eed14232f0ae",
+                "reference": "b184bebf8a76e78adb98c1953a82eed14232f0ae",
                 "shasum": ""
             },
             "require": {
-                "captainhook/captainhook": "^5.0",
                 "composer-plugin-api": "^1.1|^2.0",
-                "php": ">=7.1"
+                "php": ">=8.0"
             },
             "require-dev": {
                 "composer/composer": "*"
             },
             "type": "composer-plugin",
             "extra": {
-                "class": "CaptainHook\\Plugin\\Composer\\ComposerPlugin",
-                "branch-alias": {
-                    "dev-fluffy_hedgehog": "5.0.x-dev"
-                }
+                "class": "CaptainHook\\HookInstaller\\ComposerPlugin"
             },
             "autoload": {
                 "psr-4": {
-                    "CaptainHook\\Plugin\\Composer\\": "src"
+                    "CaptainHook\\HookInstaller\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -10019,20 +10015,17 @@
             ],
             "authors": [
                 {
-                    "name": "Andreas Heigl",
-                    "email": "andreas@heigl.org"
-                },
-                {
                     "name": "Sebastian Feldmann",
                     "email": "sf@sebastian-feldmann.info"
                 }
             ],
-            "description": "Composer-Plugin handling your git-hooks",
+            "description": "Composer Plugin that makes everyone activate the CaptainHook git hooks locally",
             "support": {
-                "issues": "https://github.com/captainhookphp/plugin-composer/issues",
-                "source": "https://github.com/captainhookphp/plugin-composer/tree/5.3.3"
+                "issues": "https://github.com/captainhook-git/hook-installer/issues",
+                "source": "https://github.com/captainhook-git/hook-installer/tree/1.0.5"
             },
-            "time": "2022-01-28T04:35:22+00:00"
+            "time": "2026-08-02T20:10:37+00:00",
+            "published-time": "2026-08-02T20:11:53+00:00"
         },
         {
             "name": "captainhook/secrets",

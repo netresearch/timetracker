@@ -124,8 +124,9 @@ app container.
 ## Git hooks (CaptainHook)
 
 Git hooks are managed by [CaptainHook](https://github.com/captainhookphp/captainhook)
-and installed automatically by the `captainhook/plugin-composer` plugin during
-`composer install`. [captainhook.json](../captainhook.json) configures:
+and installed automatically by the `captainhook/hook-installer` plugin during
+`composer install`; only the hooks enabled in `captainhook.json` are installed,
+and nothing is installed from a linked git worktree. [captainhook.json](../captainhook.json) configures:
 
 - **pre-commit** (conditional on staged file types):
   - `composer validate` + `composer audit` when `composer.json`/`composer.lock` are staged

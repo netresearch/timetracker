@@ -16,12 +16,9 @@ Uses the Symfony test framework.
 - `app-dev` image: `ghcr.io/netresearch/timetracker:dev` is not published
   (`manifest unknown`); build it from the repository root with
   `make bake-dev` (`docker bake app-dev`) before the first container run
-- Host install in a git worktree: `composer install` aborts in the CaptainHook
-  plugin (`git directory not found`), and the abort also skips
-  `phpstan/extension-installer`, so PHPStan later rejects the `symfony`
-  parameter of its config (`Unexpected item`). Where the host PHP also lacks
-  extensions the container has, install with
-  `CAPTAINHOOK_DISABLE=true composer install --ignore-platform-req=ext-ldap --ignore-platform-req=ext-pdo_mysql`
+- Host install in a git worktree: where the host PHP lacks extensions the
+  container has, install with
+  `composer install --ignore-platform-req=ext-ldap --ignore-platform-req=ext-pdo_mysql`
   (one `--ignore-platform-req=ext-<name>` per extension composer reports
   missing). The static tools then run on the host; PHPUnit still runs in the
   container
