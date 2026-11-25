@@ -127,7 +127,7 @@ RUN bun install --cwd frontend --frozen-lockfile --ignore-scripts
 
 COPY --chown=app:app composer.json composer.lock symfony.lock ./
 
-# --ignore-platform-req=php needed until laminas-ldap and scheb/2fa-* declare PHP 8.6 support
+# --ignore-platform-req=php needed until laminas-ldap declares PHP 8.6 support
 # See: https://github.com/laminas/laminas-ldap/issues/62
 RUN composer install --no-dev --no-scripts --no-autoloader --ignore-platform-req=php
 

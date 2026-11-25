@@ -100,7 +100,7 @@ sh:
 install: composer-install npm-install
 
 composer-install:
-	# --ignore-platform-req=php needed until laminas-ldap and scheb/2fa-* declare PHP 8.6 support
+	# --ignore-platform-req=php needed until laminas-ldap declares PHP 8.6 support
 	# See: https://github.com/laminas/laminas-ldap/issues/62
 	docker compose run --rm app-dev composer install --ignore-platform-req=php
 

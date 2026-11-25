@@ -158,8 +158,8 @@ All variables are described in [configuration.md](configuration.md).
 ## Troubleshooting
 
 - **Composer platform error (PHP 8.6)**: `make composer-install` passes
-  `--ignore-platform-req=php` until `laminas/laminas-ldap` and `scheb/2fa-*`
-  declare PHP 8.6 support ([laminas-ldap#62](https://github.com/laminas/laminas-ldap/issues/62)).
+  `--ignore-platform-req=php` until `laminas/laminas-ldap`
+  declares PHP 8.6 support ([laminas-ldap#62](https://github.com/laminas/laminas-ldap/issues/62)).
 - **Schema changed, tests fail**: `make reset-test-db` recreates the
   `db_unittest` container and volume from `sql/full.sql`.
 - **Out-of-memory in tests**: the dev container mounts

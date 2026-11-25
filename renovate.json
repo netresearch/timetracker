@@ -3,7 +3,7 @@
   "extends": [
     "github>netresearch/renovate-config"
   ],
-  "composerIgnorePlatformReqs": ["ext-*", "lib-*", "php"],
+  "composerIgnorePlatformReqs": ["ext-*", "lib-*", "php+"],
   "packageRules": [
     {
       "description": "symfony/mcp-bundle pins the mcp/sdk minor (0.14 needs ^0.8.1, 0.15 needs ^0.9), so neither updates alone; separate PRs fail composer resolution (#842, #859, fixed together in #918).",
