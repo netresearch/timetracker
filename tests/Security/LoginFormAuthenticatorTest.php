@@ -12,6 +12,7 @@ namespace Tests\Security;
 use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\UserType;
+use App\Exception\Ldap\LdapAuthenticationException;
 use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
 use App\Security\LoginFormAuthenticator;
@@ -378,6 +379,36 @@ final class LoginFormAuthenticatorTest extends TestCase
 
         self::assertNotNull($userBadge);
         $userBadge->getUser();
+    }
+
+    #[DataProvider('refusedLdapLoginProvider')]
+    public function testAuthenticateReportsARefusedLdapLoginAsFailedCredentials(string $reason): void
+    {
+        $this->configureDefaultLdapParams();
+
+        $this->configureLdapClientChaining();
+        $this->ldapClient->method('login')->willThrowException(new LdapAuthenticationException($reason));
+
+        $authenticator = $this->makeSubject();
+        $request = new Request([], ['_username' => 'testuser', '_password' => 'wrongpass', '_csrf_token' => 'token']);
+
+        $passport = $authenticator->authenticate($request);
+        $userBadge = $passport->getBadge(\Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge::class);
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessageIsOrContains('Authentication failed. Please check your credentials.');
+
+        self::assertNotNull($userBadge);
+        $userBadge->getUser();
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function refusedLdapLoginProvider(): iterable
+    {
+        yield 'unknown username' => ['Username unknown.'];
+        yield 'refused password' => ['Login data could not be validated: 0x31 (Invalid credentials)'];
     }
 
     public function testAuthenticateHandlesUnexpectedException(): void
