@@ -24,7 +24,6 @@ return RectorConfig::configure()
         LevelSetList::UP_TO_PHP_85,
         SetList::CODE_QUALITY,
         SetList::DEAD_CODE,
-        SetList::EARLY_RETURN,
         SetList::TYPE_DECLARATION,
         SymfonySetList::SYMFONY_CODE_QUALITY,
     ])
