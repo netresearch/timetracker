@@ -10,6 +10,14 @@ monolog:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: debug
+        # Refused LDAP logins are warnings, and main drops those unless the
+        # request also logs an error. This handler keeps them on record;
+        # an LDAP error is written twice, here and in the flushed buffer.
+        ldap:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            level: warning
+            channels: ["ldap"]
         console:
             type: console
             process_psr_3_messages: false

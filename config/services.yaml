@@ -108,6 +108,12 @@ services:
         autowire: true
         bind:
             $projectDir: '%kernel.project_dir%'
+        tags:
+            - { name: monolog.logger, channel: ldap }
+
+    App\Security\LoginFormAuthenticator:
+        tags:
+            - { name: monolog.logger, channel: ldap }
 
     # Access denied subscriber to keep legacy 403 message
     App\EventSubscriber\AccessDeniedSubscriber:

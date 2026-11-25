@@ -16,6 +16,7 @@ use Exception;
 use Laminas\Ldap\Exception\LdapException;
 use Laminas\Ldap\Ldap;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
 use SensitiveParameter;
 use Symfony\Component\Yaml\Yaml;
@@ -150,8 +151,9 @@ class LdapClientService
         );
 
         if (!is_object($collection) || (0 === $collection->count())) {
+            // Without the filter: it carries whatever was typed into the username
+            // field, and this line is written in production.
             $this->logger->warning('LDAP: User search failed or returned no results.', [
-                'filter' => $searchFilter,
                 'baseDn' => $this->baseDn,
             ]);
 
@@ -160,7 +162,6 @@ class LdapClientService
 
         if ($collection->count() > 1) {
             $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
-                'filter' => $searchFilter,
                 'baseDn' => $this->baseDn,
                 'count' => $collection->count(),
             ]);
@@ -243,7 +244,11 @@ class LdapClientService
             $ldap->bind();
             $this->logger->info('LDAP: User bind successful.', ['bindDn' => $userDn]);
         } catch (LdapException $ldapException) {
-            $this->logger->error('LDAP: User bind failed.', [
+            // A refused password is the user's input, not a fault of the service. At
+            // error level it would make the production log handler flush its debug
+            // buffer for every mistyped password.
+            $level = LdapException::LDAP_INVALID_CREDENTIALS === $ldapException->getCode() ? LogLevel::WARNING : LogLevel::ERROR;
+            $this->logger->log($level, 'LDAP: User bind failed.', [
                 'error' => $ldapException->getMessage(),
                 'code' => $ldapException->getCode(),
                 'host' => $this->host,
@@ -429,7 +434,7 @@ class LdapClientService
     {
         $dn = $ldapRespsonse['distinguishedname'][0] ?? ($ldapRespsonse['dn'][0] ?? null);
         if (null === $dn || '' === $dn) {
-            $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['response' => $ldapRespsonse]);
+            $this->logger->warning('LDAP: Cannot map teams, DN is missing from LDAP response.', ['responseKeys' => array_keys($ldapRespsonse)]);
 
             return;
         }
@@ -438,7 +443,7 @@ class LdapClientService
 
         $this->teams = [];
         if (!file_exists($mappingFile)) {
-            $this->logger->warning('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
+            $this->logger->info('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
 
             return;
         }

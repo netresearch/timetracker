@@ -14,3 +14,9 @@ monolog:
             type: stream
             path: "php://stderr"
             level: debug
+        # Refused LDAP logins, as in prod/monolog.yaml.
+        ldap:
+            type: stream
+            path: "php://stderr"
+            level: warning
+            channels: ["ldap"]
