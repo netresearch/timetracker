@@ -5,9 +5,10 @@ webauthn:
     credential_repository: App\Repository\WebauthnCredentialRepository
     user_repository: App\Repository\WebauthnUserEntityRepository
 
-    # The full origin the ceremony accepts (env, as a single list item — a
-    # per-item env scalar is allowed where the whole array node is not). RP id
-    # below is the registrable domain (no scheme/port).
+    # The full origins the ceremony accepts. The array node takes no env
+    # placeholder as a whole, so the variable is a single item here;
+    # WebauthnAllowedOriginsPass replaces it with the comma-separated list.
+    # RP id below is the registrable domain (no scheme/port).
     allowed_origins:
         - '%env(WEBAUTHN_ALLOWED_ORIGINS)%'
 

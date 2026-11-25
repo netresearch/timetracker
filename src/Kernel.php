@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace App;
 
 use App\DependencyInjection\Compiler\RemoveSensitiveCollectorsPass;
+use App\DependencyInjection\Compiler\WebauthnAllowedOriginsPass;
 use Override;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
@@ -58,6 +59,14 @@ class Kernel extends BaseKernel
     #[Override]
     protected function build(ContainerBuilder $container): void
     {
+        // Priority -1 runs this after the webauthn bundle's pass (priority 0),
+        // which creates what it changes.
+        $container->addCompilerPass(
+            new WebauthnAllowedOriginsPass(),
+            PassConfig::TYPE_BEFORE_OPTIMIZATION,
+            -1,
+        );
+
         // The profiling image enables the web profiler; strip the data
         // collectors that could surface env/secret data (dump, config). Priority
         // 1000 runs this before Symfony's ProfilerPass (priority 0) reads the

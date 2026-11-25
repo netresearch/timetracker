@@ -11,6 +11,7 @@ app, so the stance is: help *authenticated* agents discover the API, and tell
 |------|----------|---------|
 | `/.well-known/security.txt` | [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116) | Security contact; `Expires` is stamped one year out on each request so it never goes stale. |
 | `/.well-known/change-password` | [W3C](https://w3c.github.io/webappsec-change-password-url/) | 302 → `/ui/settings` (the self-service password change, ADR-018). |
+| `/.well-known/webauthn` | [WebAuthn](https://www.w3.org/TR/webauthn-3/#sctn-related-origins) | The origins that may use this installation's passkeys (`WEBAUTHN_ALLOWED_ORIGINS`). Served by the WebAuthn bundle. |
 | `/.well-known/api-catalog` | [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727) | `application/linkset+json` pointing at the OpenAPI (`service-desc`) and the help page (`service-doc`). |
 | `/llms.txt` | [llmstxt.org](https://llmstxt.org/) | A concise, agent-oriented map of the app and its API. |
 | `/robots.txt` | robots + [Content Signals](https://content-signals.org/) | `Content-Signal: search=no, ai-input=no, ai-train=no` on `*`, plus explicit `disallow: /` groups for GPTBot/ClaudeBot/CCBot/Google-Extended/PerplexityBot/Bytespider. |
@@ -18,7 +19,7 @@ app, so the stance is: help *authenticated* agents discover the API, and tell
 | JSON-LD in the SPA shell | [schema.org](https://schema.org/WebApplication) | `WebApplication` structured data, hex-escaped like `APP_CONFIG`. |
 
 All well-known routes are public (`config/packages/security.yaml` `access_control`)
-and served by `App\Controller\WellKnown\WellKnownController`; the `Link` headers
+and, unless noted, served by `App\Controller\WellKnown\WellKnownController`; the `Link` headers
 come from `App\EventSubscriber\DiscoveryLinkHeaderSubscriber`. Covered by
 `tests/Controller/WellKnownControllerTest.php`.
 
