@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Tests\Controller;
 
 use App\Entity\User;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
 
@@ -49,6 +50,38 @@ final class PasskeyCeremonyTest extends AbstractWebTestCase
 
         // The handle is now assigned, so a later ceremony reuses the same identity.
         self::assertNotNull($this->storedUserHandle(1));
+    }
+
+    /**
+     * A client override must not drop the profile's user verification (GHSA-2989-5cjp-qc2p).
+     */
+    #[DataProvider('creationOptionsRequestProvider')]
+    public function testRegistrationKeepsUserVerificationRequired(string $requestBody): void
+    {
+        $this->client->request(
+            Request::METHOD_POST,
+            '/settings/security/passkeys/options',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            $requestBody,
+        );
+
+        $this->assertStatusCode(200);
+        $body = $this->getJsonResponse($this->client->getResponse());
+        self::assertIsArray($body['authenticatorSelection'] ?? null);
+        self::assertSame('required', $body['authenticatorSelection']['userVerification'] ?? null);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function creationOptionsRequestProvider(): iterable
+    {
+        yield 'no override' => ['{}'];
+        yield 'user verification' => ['{"userVerification":"discouraged"}'];
+        yield 'authenticator attachment' => ['{"authenticatorAttachment":"cross-platform"}'];
+        yield 'resident key' => ['{"residentKey":"discouraged"}'];
     }
 
     public function testLoginCeremonyReturnsRequestOptions(): void

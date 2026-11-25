@@ -9466,16 +9466,16 @@
         },
         {
             "name": "twig/twig",
-            "version": "v3.30.0",
+            "version": "v3.31.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twigphp/Twig.git",
-                "reference": "8c737079b726af72ff8ef3c595be9f6a810ea1ef"
+                "reference": "6f6ec372231b53d1d564567a78beb8844cafa132"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twigphp/Twig/zipball/8c737079b726af72ff8ef3c595be9f6a810ea1ef",
-                "reference": "8c737079b726af72ff8ef3c595be9f6a810ea1ef",
+                "url": "https://api.github.com/repos/twigphp/Twig/zipball/6f6ec372231b53d1d564567a78beb8844cafa132",
+                "reference": "6f6ec372231b53d1d564567a78beb8844cafa132",
                 "shasum": ""
             },
             "require": {
@@ -9530,7 +9530,7 @@
             ],
             "support": {
                 "issues": "https://github.com/twigphp/Twig/issues",
-                "source": "https://github.com/twigphp/Twig/tree/v3.30.0"
+                "source": "https://github.com/twigphp/Twig/tree/v3.31.1"
             },
             "funding": [
                 {
@@ -9542,7 +9542,8 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-25T13:20:01+00:00"
+            "time": "2026-11-24T12:48:40+00:00",
+            "published-time": "2026-11-24T12:48:53+00:00"
         },
         {
             "name": "web-auth/cose-lib",
@@ -9622,16 +9623,16 @@
         },
         {
             "name": "web-auth/webauthn-lib",
-            "version": "5.3.13",
+            "version": "5.3.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/web-auth/webauthn-lib.git",
-                "reference": "19eb8e4107467052e5b24c023832ef8164062e89"
+                "reference": "7f38dbcf07cd22ec104fa6eb720df22eb4196b47"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/web-auth/webauthn-lib/zipball/19eb8e4107467052e5b24c023832ef8164062e89",
-                "reference": "19eb8e4107467052e5b24c023832ef8164062e89",
+                "url": "https://api.github.com/repos/web-auth/webauthn-lib/zipball/7f38dbcf07cd22ec104fa6eb720df22eb4196b47",
+                "reference": "7f38dbcf07cd22ec104fa6eb720df22eb4196b47",
                 "shasum": ""
             },
             "require": {
@@ -9692,7 +9693,7 @@
                 "webauthn"
             ],
             "support": {
-                "source": "https://github.com/web-auth/webauthn-lib/tree/5.3.13"
+                "source": "https://github.com/web-auth/webauthn-lib/tree/5.3.17"
             },
             "funding": [
                 {
@@ -9704,21 +9705,21 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2026-11-17T19:20:46+00:00",
-            "published-time": "2026-11-17T20:10:27+00:00"
+            "time": "2026-11-23T18:46:47+00:00",
+            "published-time": "2026-11-24T07:58:53+00:00"
         },
         {
             "name": "web-auth/webauthn-symfony-bundle",
-            "version": "5.3.13",
+            "version": "5.3.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/web-auth/webauthn-symfony-bundle.git",
-                "reference": "a21e5fedd3e35809aeaf19e2b1d84b8202b3bec5"
+                "reference": "5209ee1e3e5301b704de55c340d44256a0351bbf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/web-auth/webauthn-symfony-bundle/zipball/a21e5fedd3e35809aeaf19e2b1d84b8202b3bec5",
-                "reference": "a21e5fedd3e35809aeaf19e2b1d84b8202b3bec5",
+                "url": "https://api.github.com/repos/web-auth/webauthn-symfony-bundle/zipball/5209ee1e3e5301b704de55c340d44256a0351bbf",
+                "reference": "5209ee1e3e5301b704de55c340d44256a0351bbf",
                 "shasum": ""
             },
             "require": {
@@ -9776,7 +9777,7 @@
                 "webauthn"
             ],
             "support": {
-                "source": "https://github.com/web-auth/webauthn-symfony-bundle/tree/5.3.13"
+                "source": "https://github.com/web-auth/webauthn-symfony-bundle/tree/5.3.17"
             },
             "funding": [
                 {
@@ -9788,8 +9789,8 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2026-11-17T19:20:46+00:00",
-            "published-time": "2026-11-17T20:10:05+00:00"
+            "time": "2026-11-19T10:15:40+00:00",
+            "published-time": "2026-11-24T08:02:53+00:00"
         },
         {
             "name": "webmozart/assert",
