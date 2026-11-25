@@ -172,6 +172,13 @@ controller attributes or the explicit rules above: a session resumed from
 the cookie is redirected to the login form for re-authentication before
 they proceed.
 
+### Passkey Origins
+
+A passkey ceremony is accepted only from an origin listed in
+`WEBAUTHN_ALLOWED_ORIGINS`. Every listed origin can use every passkey of the RP
+ID, so list only origins you control. `/.well-known/webauthn` publishes the list
+without login; see [configuration.md](configuration.md#passkeys-webauthn).
+
 ### User Switching (Impersonation)
 
 The firewall configures user switching via the `simulateUserId` parameter:

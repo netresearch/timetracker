@@ -35,6 +35,47 @@ defaults in [.env](../.env):
 | `APP_SHOW_BILLABLE_FIELD_IN_EXPORT` | `false` | Include the billable column in exports |
 | `REQUIRE_TWO_FACTOR` | `false` | Org-wide mandatory 2FA: every user must enrol a second factor (authenticator app or passkey) before they can use the app |
 
+## Passkeys (WebAuthn)
+
+| Variable | Default ([.env](../.env)) | Purpose |
+|----------|---------------------------|---------|
+| `WEBAUTHN_RP_ID` | `localhost` | Relying party ID: a domain without scheme and port. Every passkey is bound to it, so changing it makes the registered passkeys unusable |
+| `WEBAUTHN_ALLOWED_ORIGINS` | `http://localhost` | Comma-separated list of the full origins (scheme, host and, if not the default, port; no path) a passkey may be registered or used on. Whitespace around entries and empty entries are ignored. Subdomains and wildcards are not matched; an empty list rejects every passkey |
+
+Both are read at container runtime. Recreate the container after a change
+(`docker compose --profile prod up -d --force-recreate app`); a restart keeps the
+old environment. The
+bundled `compose.yml` does not forward them; set them on the `app` service in an
+override file (`environment:` or `env_file:`). An entry that is not a valid URL,
+such as `https://` without a host, fails every request, not only passkeys.
+
+When upgrading from a release that took a single origin, remove a persisted
+`var/cache` (the `app-cache` volume) before adding a second one. The compiled
+container in it treats the whole value as one origin, which matches none:
+
+```bash
+docker compose --profile prod down
+docker volume rm <project>_app-cache   # e.g. timetracker_app-cache
+docker compose --profile prod up -d
+```
+
+### Several origins with one RP ID
+
+To use the same passkeys on a second domain, for example while moving an
+installation, keep `WEBAUTHN_RP_ID` and add the new origin:
+
+```bash
+WEBAUTHN_RP_ID=tt.example.com
+WEBAUTHN_ALLOWED_ORIGINS=https://tt.example.com,https://tt.example.org
+```
+
+TimeTracker publishes the list at `/.well-known/webauthn`
+([Related Origin Requests](https://www.w3.org/TR/webauthn-3/#sctn-related-origins)).
+A browser on `https://tt.example.org` fetches it from the RP ID's host, so
+`https://tt.example.com/.well-known/webauthn` must keep answering with status
+200, without a redirect and without a login, for as long as those passkeys are
+used. The browser has to support Related Origin Requests.
+
 ## Database
 
 | Variable | Default ([.env](../.env)) | Purpose |
