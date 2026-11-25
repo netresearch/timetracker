@@ -11,6 +11,11 @@
       "groupName": "MCP SDK and bundle"
     },
     {
+      "description": "scheb/2fa-totp and scheb/2fa-backup-code require exactly the scheb/2fa-bundle version they were released with, so none of the three updates alone: every single-package branch fails composer resolution (measured with 8.8.0).",
+      "matchPackageNames": ["scheb/2fa-**"],
+      "groupName": "scheb 2fa"
+    },
+    {
       "description": "semgrep ships wheels for CPython 3.10-3.14 only; its pinned ruamel.yaml.clib has no cp315 wheel, so the Scan PHP job cannot install on 3.15. Lift once semgrep supports 3.15.",
       "matchFileNames": [".github/workflows/semgrep.yml"],
       "matchDepNames": ["python"],
