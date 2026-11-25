@@ -11,6 +11,7 @@ namespace App\Security;
 
 use App\Entity\Team;
 use App\Entity\User;
+use App\Exception\Ldap\LdapAuthenticationException;
 use App\Service\Ldap\LdapClientService;
 use BackedEnum;
 use Doctrine\ORM\EntityManagerInterface;
@@ -200,6 +201,17 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
             // Don't expose LDAP-specific errors to the user
             throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.', [], $ldapException->getCode(), $ldapException);
+        } catch (LdapAuthenticationException $authenticationException) {
+            // Usually an unknown username or a refused password; LdapClientService
+            // reports any other failed user bind the same way. One answer for all,
+            // so the response does not tell which of them it was.
+            $this->logger->warning('LDAP authentication refused', [
+                'username' => substr($userIdentifier, 0, 3) . '***',
+                'error_type' => $authenticationException::class,
+                'error' => $authenticationException->getMessage(),
+            ]);
+
+            throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.', [], $authenticationException->getCode(), $authenticationException);
         } catch (UserNotFoundException $userException) {
             // User not found and creation disabled
             $this->logger->info('User not found in local database', ['username' => substr($userIdentifier, 0, 3) . '***']);
