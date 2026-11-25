@@ -207,6 +207,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             $this->logger->warning('LDAP authentication refused', [
                 'username' => substr($userIdentifier, 0, 3) . '***',
                 'error_type' => $authenticationException::class,
+                'error' => $authenticationException->getMessage(),
             ]);
 
             throw new CustomUserMessageAuthenticationException('Authentication failed. Please check your credentials.', [], $authenticationException->getCode(), $authenticationException);
