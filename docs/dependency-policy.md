@@ -32,7 +32,7 @@ An `overrides` or `resolutions` entry that exists to force a vulnerable transiti
 Two bots run against this repository:
 
 - **Dependabot** ([`.github/dependabot.yml`](../.github/dependabot.yml)) — weekly, for `github-actions`, `bun`, `npm`, `composer` and `docker-compose`, with updates grouped per ecosystem so one pull request carries the whole week.
-- **Renovate** ([`renovate.json`](../renovate.json)), extending the shared `netresearch/renovate-config`, which keeps the dependency dashboard issue.
+- **Renovate** ([`renovate.json`](../renovate.json)), extending the shared `netresearch/renovate-config`, which keeps the dependency dashboard issue. `composerIgnorePlatformReqs` lists `php` because `config.platform.php` is 8.6 while `laminas/laminas-ldap` and `scheb/2fa-*` do not declare PHP 8.6; without it no `composer.lock` update resolves. Remove it together with `--ignore-platform-req=php` in the `Dockerfile`. `ext-*` and `lib-*` repeat Renovate's default, which the list replaces.
 - **Dependabot security updates** are enabled on the repository, so an advisory against a locked dependency produces a pull request without waiting for the weekly run.
 
 Dependency pull requests pass exactly the same required checks as a human's. There is no fast lane.
