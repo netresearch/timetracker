@@ -120,6 +120,24 @@ final class LdapClientServiceIntegrationTest extends TestCase
 
     public function testLoginWithInvalidPasswordIsLoggedAsWarning(): void
     {
+        $levels = array_column($this->logsOfRefusedLogin('unittest', 'wrong_password'), 0, 1);
+
+        self::assertSame(LogLevel::WARNING, $levels['LDAP: User bind failed.'] ?? null);
+        self::assertNotContains(LogLevel::ERROR, $levels);
+    }
+
+    public function testUnknownUsernameIsNotWrittenToTheWarning(): void
+    {
+        $contexts = array_column($this->logsOfRefusedLogin('nonexistent', 'anypassword'), 2, 1);
+
+        self::assertSame(['baseDn' => 'dc=dev,dc=local'], $contexts['LDAP: User search failed or returned no results.'] ?? null);
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private function logsOfRefusedLogin(string $userName, string $password): array
+    {
         $logger = new BufferingLogger();
         $service = new LdapClientService($logger, '/var/www/html');
         $service
@@ -130,18 +148,16 @@ final class LdapClientServiceIntegrationTest extends TestCase
             ->setReadPass('admin123')
             ->setUserNameField('uid')
             ->setUseSSL(false)
-            ->setUserName('unittest')
-            ->setUserPass('wrong_password');
+            ->setUserName($userName)
+            ->setUserPass($password);
 
         try {
             $service->login();
-            self::fail('The login must be refused.');
         } catch (LdapAuthenticationException) {
-            $levels = array_column($logger->cleanLogs(), 0, 1);
+            return $logger->cleanLogs();
         }
 
-        self::assertSame(LogLevel::WARNING, $levels['LDAP: User bind failed.'] ?? null);
-        self::assertNotContains(LogLevel::ERROR, $levels);
+        self::fail('The login must be refused.');
     }
 
     public function testLoginWithNonExistentUserThrowsException(): void

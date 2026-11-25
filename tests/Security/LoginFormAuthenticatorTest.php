@@ -28,6 +28,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use RuntimeException;
+use Stringable;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -349,15 +350,24 @@ final class LoginFormAuthenticatorTest extends TestCase
         $this->configureLdapClientChaining();
         $this->ldapClient->method('login')->willReturn(true);
 
+        $warnings = [];
+        $this->logger->method('warning')->willReturnCallback(static function (string|Stringable $message) use (&$warnings): void {
+            $warnings[] = (string) $message;
+        });
+
         $authenticator = $this->makeSubject();
         $request = new Request([], ['_username' => 'newuser', '_password' => 'pass123', '_csrf_token' => 'token']);
 
         $passport = $authenticator->authenticate($request);
         $userBadge = $passport->getBadge(\Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge::class);
-
-        $this->expectException(UserNotFoundException::class);
         self::assertNotNull($userBadge);
-        $userBadge->getUser();
+
+        try {
+            $userBadge->getUser();
+            self::fail('A user without a local account must be refused.');
+        } catch (UserNotFoundException) {
+            self::assertSame(['User not found in local database'], $warnings);
+        }
     }
 
     public function testAuthenticateHandlesLdapException(): void
