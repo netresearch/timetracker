@@ -79,28 +79,30 @@ final class PasskeyRelatedOriginsTest extends AbstractWebTestCase
     }
 
     #[DataProvider('acceptedOriginProvider')]
-    public function testAcceptsAListedOriginForRegistrationAndLogin(string $allowed, string $origin): void
+    public function testAcceptsListedOriginsForRegistrationAndLogin(string $allowed, string $registrationOrigin, string $loginOrigin): void
     {
         $_ENV['WEBAUTHN_ALLOWED_ORIGINS'] = $allowed;
         $key = $this->newKey();
 
-        $userHandle = $this->register($key, $origin);
+        $userHandle = $this->register($key, $registrationOrigin);
         $this->assertStatusCode(201);
         self::assertTrue($this->getJsonResponse($this->client->getResponse())['success'] ?? null);
 
-        $this->login($key, $origin, $userHandle);
+        $this->login($key, $loginOrigin, $userHandle);
         $this->assertStatusCode(200);
         self::assertTrue($this->getJsonResponse($this->client->getResponse())['ok'] ?? null);
     }
 
     /**
-     * @return Iterator<string, array{string, string}>
+     * @return Iterator<string, array{string, string, string}>
      */
     public static function acceptedOriginProvider(): Iterator
     {
-        yield 'first of two' => [self::BOTH, 'https://tt.example.com'];
-        yield 'second of two' => [self::BOTH, 'https://tt.example.org'];
-        yield 'single value' => ['https://tt.example.com', 'https://tt.example.com'];
+        yield 'first of two' => [self::BOTH, 'https://tt.example.com', 'https://tt.example.com'];
+        yield 'second of two' => [self::BOTH, 'https://tt.example.org', 'https://tt.example.org'];
+        yield 'registered on the first, used on the second' => [self::BOTH, 'https://tt.example.com', 'https://tt.example.org'];
+        yield 'registered on the second, used on the first' => [self::BOTH, 'https://tt.example.org', 'https://tt.example.com'];
+        yield 'single value' => ['https://tt.example.com', 'https://tt.example.com', 'https://tt.example.com'];
     }
 
     #[DataProvider('rejectedOriginProvider')]

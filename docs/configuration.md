@@ -42,7 +42,9 @@ defaults in [.env](../.env):
 | `WEBAUTHN_RP_ID` | `localhost` | Relying party ID: a domain without scheme and port. Every passkey is bound to it, so changing it makes the registered passkeys unusable |
 | `WEBAUTHN_ALLOWED_ORIGINS` | `http://localhost` | Comma-separated list of the full origins (scheme, host and, if not the default, port; no path) a passkey may be registered or used on. Whitespace around entries and empty entries are ignored. Subdomains and wildcards are not matched; an empty list rejects every passkey |
 
-Both are read at container runtime; restart the container after a change. The
+Both are read at container runtime. Recreate the container after a change
+(`docker compose --profile prod up -d --force-recreate app`); a restart keeps the
+old environment. The
 bundled `compose.yml` does not forward them; set them on the `app` service in an
 override file (`environment:` or `env_file:`). An entry that is not a valid URL,
 such as `https://` without a host, fails every request, not only passkeys.
