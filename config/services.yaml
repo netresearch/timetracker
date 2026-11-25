@@ -3,6 +3,14 @@
 
 # Put parameters here that don't need to change on each machine where the app is deployed
 parameters:
+    # Values for variables that are missing from the environment. The production
+    # image has an empty .env and compose.yml does not forward these, because an
+    # environment entry there would override an operator's env_file. An empty
+    # origin list rejects every passkey; the MCP hosts are the SDK's own default.
+    env(REQUIRE_TWO_FACTOR): 'false'
+    env(WEBAUTHN_RP_ID): 'localhost'
+    env(WEBAUTHN_ALLOWED_ORIGINS): ''
+    env(MCP_ALLOWED_HOSTS): 'localhost,127.0.0.1,[::1]'
     locale: 'en'
     secret: '%env(APP_SECRET)%'
     # APP_ENCRYPTION_KEY with fallback to APP_SECRET (via the secret parameter)

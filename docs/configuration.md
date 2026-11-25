@@ -33,11 +33,38 @@ defaults in [.env](../.env):
 | `APP_LOGO_URL` | `/images/logo-netresearch.svg` | Logo shown in the UI |
 | `APP_HEADER_URL` | empty | Optional link target for the header/logo |
 | `APP_SHOW_BILLABLE_FIELD_IN_EXPORT` | `false` | Include the billable column in exports |
-| `REQUIRE_TWO_FACTOR` | `false` | Org-wide mandatory 2FA: every user must enrol a second factor (authenticator app or passkey) before they can use the app |
+| `REQUIRE_TWO_FACTOR` | `false` | Org-wide mandatory 2FA: every user must enrol a second factor (authenticator app or passkey) before they can use the app. See [Variables compose.yml does not forward](#variables-composeyml-does-not-forward) |
+| `MCP_ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]` when missing | Comma-separated host names (no port, no spaces) the MCP endpoint `/mcp` accepts; list the public domain to use MCP there. See [Variables compose.yml does not forward](#variables-composeyml-does-not-forward) |
+
+### Variables compose.yml does not forward
+
+The bundled `compose.yml` does not forward `REQUIRE_TWO_FACTOR`,
+`WEBAUTHN_RP_ID`, `WEBAUTHN_ALLOWED_ORIGINS` and `MCP_ALLOWED_HOSTS` to the
+production `app` service. Setting one of them in the Compose `.env` or in the
+shell has no effect there. When they are missing from the container, the
+defaults in [config/services.yaml](../config/services.yaml) apply: no mandatory
+2FA, RP ID `localhost`, no passkey origin (every passkey is rejected), and MCP on
+local host names only.
+
+Set them on the `app` service in `compose.override.yml`:
+
+```yaml
+services:
+  app:
+    environment:
+      REQUIRE_TWO_FACTOR: "true"
+      WEBAUTHN_RP_ID: tt.example.com
+      WEBAUTHN_ALLOWED_ORIGINS: https://tt.example.com
+      MCP_ALLOWED_HOSTS: tt.example.com
+```
+
+`env_file:` works too. An `environment:` entry overrides the same variable from
+`env_file:`, and an entry without a value (`- WEBAUTHN_RP_ID`) removes it when
+Compose has no value for it.
 
 ## Passkeys (WebAuthn)
 
-| Variable | Default ([.env](../.env)) | Purpose |
+| Variable | Default ([.env](../.env); production image: see below) | Purpose |
 |----------|---------------------------|---------|
 | `WEBAUTHN_RP_ID` | `localhost` | Relying party ID: a domain without scheme and port. Every passkey is bound to it, so changing it makes the registered passkeys unusable |
 | `WEBAUTHN_ALLOWED_ORIGINS` | `http://localhost` | Comma-separated list of the full origins (scheme, host and, if not the default, port; no path) a passkey may be registered or used on. Whitespace around entries and empty entries are ignored. Subdomains and wildcards are not matched; an empty list rejects every passkey |
@@ -45,8 +72,10 @@ defaults in [.env](../.env):
 Both are read at container runtime. Recreate the container after a change
 (`docker compose --profile prod up -d --force-recreate app`); a restart keeps the
 old environment. The
-bundled `compose.yml` does not forward them; set them on the `app` service in an
-override file (`environment:` or `env_file:`). An entry that is not a valid URL,
+bundled `compose.yml` does not forward them; see
+[Variables compose.yml does not forward](#variables-composeyml-does-not-forward).
+Without them the production image uses the RP ID `localhost` and no origin, so
+every passkey is rejected. An entry that is not a valid URL,
 such as `https://` without a host, fails every request, not only passkeys.
 
 When upgrading from a release that took a single origin, remove a persisted
