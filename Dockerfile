@@ -213,7 +213,7 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Xdebug (debugging and coverage driver; enable coverage via XDEBUG_MODE=coverage)
-RUN --mount=type=bind,from=ghcr.io/php/pie:1.5.5-bin@sha256:3fca03c16df842d02b654dc382db3756058d9c128064f57cace14f8728779ce9,source=/pie,target=/usr/local/bin/pie \
+RUN --mount=type=bind,from=ghcr.io/php/pie:1.6.0-bin@sha256:f49c15dbb88a7aec373fdb15ab9004bf08958772db3b476c42364e10a8ea416f,source=/pie,target=/usr/local/bin/pie \
     pie install --no-interaction "xdebug/xdebug:${XDEBUG_VERSION}" \
     && docker-php-ext-enable xdebug
 
