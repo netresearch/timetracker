@@ -102,7 +102,7 @@ When `ldap_create_user` is enabled:
 
 Team assignment uses an **optional** YAML file, `config/ldap_ou_team_mapping.yml`.
 It is **not shipped with the repository** — [`src/Service/Ldap/LdapClientService.php`](../src/Service/Ldap/LdapClientService.php)
-probes for it at runtime and, when absent, logs a warning and skips team
+probes for it at runtime and, when absent, logs at info level and skips team
 assignment. To enable OU→team mapping, create the file yourself:
 
 ```yaml
