@@ -127,10 +127,11 @@ Login always goes through [`src/Security/LoginFormAuthenticator.php`](../src/Sec
 5. **User exists in LDAP but not in TimeTracker:** with `LDAP_CREATE_USER=false`
    only pre-created users can log in. With `true`, first login auto-creates the
    user (type `DEV`, locale `de`); team assignment additionally requires the
-   optional `config/ldap_ou_team_mapping.yml` (not shipped — a warning is
-   logged and team mapping skipped when absent).
-6. Authentication errors are logged with context in `var/log/dev.log` /
-   `var/log/prod.log` (channel: security/LDAP messages from the authenticator).
+   optional `config/ldap_ou_team_mapping.yml` (not shipped — team mapping
+   is skipped when absent, logged at info level).
+6. Refused logins and LDAP errors are logged in `var/log/dev.log` /
+   `var/log/prod.log` (channel `ldap`). In production a refused login is written as
+   warning lines without debug context; an LDAP error is written with the debug context of the request.
 
 ## Frontend build issues (blank UI, 404 on /build-ui assets)
 

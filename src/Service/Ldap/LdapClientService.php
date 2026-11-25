@@ -443,7 +443,7 @@ class LdapClientService
 
         $this->teams = [];
         if (!file_exists($mappingFile)) {
-            $this->logger->warning('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
+            $this->logger->info('LDAP: Team mapping file not found, skipping team assignment.', ['mappingFile' => $mappingFile]);
 
             return;
         }
