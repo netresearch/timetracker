@@ -20,6 +20,7 @@ use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\RemovesEnvironmentVariablesTrait;
 
 use function assert;
 use function base64_encode;
@@ -54,6 +55,8 @@ use const STR_PAD_LEFT;
  */
 final class PasskeyRelatedOriginsTest extends AbstractWebTestCase
 {
+    use RemovesEnvironmentVariablesTrait;
+
     private const string RP_ID = 'tt.example.com';
 
     private const string CREDENTIAL_ID = 'related-origins-credential-id-01';
@@ -74,6 +77,7 @@ final class PasskeyRelatedOriginsTest extends AbstractWebTestCase
     #[Override]
     protected function tearDown(): void
     {
+        $this->restoreEnvironmentVariables();
         $_ENV = $this->envBackup;
         parent::tearDown();
     }
@@ -119,6 +123,15 @@ final class PasskeyRelatedOriginsTest extends AbstractWebTestCase
     public function testRejectsTheRpIdHostWhenTheVariableIsEmpty(): void
     {
         $_ENV['WEBAUTHN_ALLOWED_ORIGINS'] = '';
+
+        $this->register($this->newKey(), 'https://tt.example.com');
+
+        $this->assertStatusCode(422);
+    }
+
+    public function testRejectsTheRpIdHostWhenTheVariableIsMissing(): void
+    {
+        $this->removeEnvironmentVariables(['WEBAUTHN_ALLOWED_ORIGINS']);
 
         $this->register($this->newKey(), 'https://tt.example.com');
 

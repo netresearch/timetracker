@@ -59,7 +59,8 @@ git clone https://github.com/netresearch/timetracker.git
 cd timetracker
 cp .env.example .env
 # Edit .env: set COMPOSE_PROFILES=prod, APP_ENV=prod, APP_DEBUG=0,
-# a strong APP_SECRET, DB passwords and your LDAP_* settings (see below)
+# a strong APP_SECRET, DB passwords, the matching DATABASE_URL and your LDAP_*
+# settings (see below)
 
 docker compose --profile prod up -d
 ```
@@ -109,6 +110,12 @@ or set them in a compose override. The relevant ones:
 | `APP_LOCALE` | `en` | Instance default locale (users pick their own in Settings) |
 | `APP_TITLE`, `APP_LOGO_URL`, `APP_HEADER_URL` | see `.env` | Branding |
 | `APP_SHOW_BILLABLE_FIELD_IN_EXPORT` | `false` | Adds the billable column to exports |
+
+`REQUIRE_TWO_FACTOR`, `WEBAUTHN_RP_ID`, `WEBAUTHN_ALLOWED_ORIGINS` and
+`MCP_ALLOWED_HOSTS` are **not** passed through; set them on the `app` service in
+an override file. Without them the app starts with 2FA optional, every passkey
+rejected and MCP limited to local host names. See
+[configuration.md](configuration.md#variables-composeyml-does-not-forward).
 
 ### LDAP authentication
 
@@ -215,15 +222,16 @@ docker compose up -d
 
 The new container applies any pending migrations on start (see above).
 
-> **Note — stale assets:** Docker seeds a named volume from the image only when
+> **Note — stale assets and compiled container:** Docker seeds a named volume from the image only when
 > the volume is empty. Because `app-pub` persists `public/` (incl. the built
 > SPA in `public/build-ui`) across restarts, a **new image version does not
-> refresh it**. After pulling a new image, recreate the volume so it is
-> re-seeded:
+> refresh it**. `app-cache` likewise keeps the Symfony container compiled by the
+> old image, including its configuration defaults. After pulling a new image,
+> recreate both volumes:
 >
 > ```bash
 > docker compose --profile prod down
-> docker volume rm <project>_app-pub   # e.g. timetracker_app-pub
+> docker volume rm <project>_app-pub <project>_app-cache   # e.g. timetracker_app-pub
 > docker compose --profile prod up -d
 > ```
 

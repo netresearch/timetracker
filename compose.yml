@@ -5,6 +5,8 @@ services:
     image: ghcr.io/netresearch/timetracker:production
     # APP_ENV=prod / APP_DEBUG=0 come from the image; the image ships an empty
     # .env, so ALL runtime configuration must be passed as real env vars here.
+    # Variables with a default in config/services.yaml (REQUIRE_TWO_FACTOR,
+    # WEBAUTHN_*, MCP_ALLOWED_HOSTS) stay out: an entry would override env_file.
     environment:
       - TRUSTED_PROXY_ALL
       - TRUSTED_PROXY_LIST

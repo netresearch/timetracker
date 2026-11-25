@@ -13,6 +13,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\ApiToken\ApiTokenService;
 use Tests\AbstractWebTestCase;
+use Tests\Traits\RemovesEnvironmentVariablesTrait;
 
 use function basename;
 use function glob;
@@ -32,6 +33,8 @@ use const JSON_THROW_ON_ERROR;
  */
 final class McpHttpEndpointTest extends AbstractWebTestCase
 {
+    use RemovesEnvironmentVariablesTrait;
+
     /** The stateless revision the SDK serves next to the handshake era since mcp/sdk 0.8. */
     private const string MODERN_REVISION = '2026-07-28';
 
@@ -54,6 +57,21 @@ final class McpHttpEndpointTest extends AbstractWebTestCase
         $this->client->request('POST', '/mcp', server: $this->mcpServer('evil.example.com'), content: self::INITIALIZE);
 
         self::assertSame(403, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testOnlyLocalHostsAreAllowedWhenTheVariableIsMissing(): void
+    {
+        $this->removeEnvironmentVariables(['MCP_ALLOWED_HOSTS']);
+
+        try {
+            $this->client->request('POST', '/mcp', server: $this->mcpServer('localhost'), content: self::INITIALIZE);
+            self::assertSame(200, $this->client->getResponse()->getStatusCode());
+
+            $this->client->request('POST', '/mcp', server: $this->mcpServer('evil.example.com'), content: self::INITIALIZE);
+            self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        } finally {
+            $this->restoreEnvironmentVariables();
+        }
     }
 
     public function testToolsListExposesTheRegisteredTools(): void
