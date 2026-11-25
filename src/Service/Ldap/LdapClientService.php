@@ -162,7 +162,6 @@ class LdapClientService
 
         if ($collection->count() > 1) {
             $this->logger->warning('LDAP: User search returned multiple results. Using the first one.', [
-                'filter' => $searchFilter,
                 'baseDn' => $this->baseDn,
                 'count' => $collection->count(),
             ]);

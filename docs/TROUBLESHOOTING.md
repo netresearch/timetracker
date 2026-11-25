@@ -133,7 +133,8 @@ Login always goes through [`src/Security/LoginFormAuthenticator.php`](../src/Sec
    `var/log/dev.ldap-<date>.log` in development and `var/log/prod.log` in
    production. There an unknown username, a refused password, an invalid username
    format and the case in step 5 are warning lines without debug context. A wrong
-   password of a local account and a deactivated account (step 4) are not written.
+   password of a local account, a deactivated account (step 4) and, with
+   `LDAP_HOST` empty, a login to a non-local account are not written.
    An LDAP error is written with the debug context of the request.
 
 ## Frontend build issues (blank UI, 404 on /build-ui assets)
