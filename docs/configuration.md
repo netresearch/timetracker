@@ -43,7 +43,19 @@ defaults in [.env](../.env):
 | `WEBAUTHN_ALLOWED_ORIGINS` | `http://localhost` | Comma-separated list of the full origins (scheme, host and, if not the default, port; no path) a passkey may be registered or used on. Whitespace around entries and empty entries are ignored. Subdomains and wildcards are not matched; an empty list rejects every passkey |
 
 Both are read at container runtime; restart the container after a change. The
-bundled `compose.yml` forwards them to the `app` service.
+bundled `compose.yml` does not forward them; set them on the `app` service in an
+override file (`environment:` or `env_file:`). An entry that is not a valid URL,
+such as `https://` without a host, fails every request, not only passkeys.
+
+When upgrading from a release that took a single origin, remove a persisted
+`var/cache` (the `app-cache` volume) before adding a second one. The compiled
+container in it treats the whole value as one origin, which matches none:
+
+```bash
+docker compose --profile prod down
+docker volume rm <project>_app-cache   # e.g. timetracker_app-cache
+docker compose --profile prod up -d
+```
 
 ### Several origins with one RP ID
 
