@@ -16,6 +16,7 @@ use Exception;
 use Laminas\Ldap\Exception\LdapException;
 use Laminas\Ldap\Ldap;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
 use SensitiveParameter;
 use Symfony\Component\Yaml\Yaml;
@@ -243,7 +244,11 @@ class LdapClientService
             $ldap->bind();
             $this->logger->info('LDAP: User bind successful.', ['bindDn' => $userDn]);
         } catch (LdapException $ldapException) {
-            $this->logger->error('LDAP: User bind failed.', [
+            // A refused password is the user's input, not a fault of the service. At
+            // error level it would make the production log handler flush its debug
+            // buffer for every mistyped password.
+            $level = LdapException::LDAP_INVALID_CREDENTIALS === $ldapException->getCode() ? LogLevel::WARNING : LogLevel::ERROR;
+            $this->logger->log($level, 'LDAP: User bind failed.', [
                 'error' => $ldapException->getMessage(),
                 'code' => $ldapException->getCode(),
                 'host' => $this->host,

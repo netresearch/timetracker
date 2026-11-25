@@ -9,12 +9,17 @@ declare(strict_types=1);
 
 namespace Tests\Service\Ldap;
 
+use App\Exception\Ldap\LdapAuthenticationException;
 use App\Service\Ldap\LdapClientService;
 use Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
+use Symfony\Component\ErrorHandler\BufferingLogger;
+
+use function array_column;
 
 /**
  * Integration tests for LdapClientService using ldap-dev container.
@@ -111,6 +116,32 @@ final class LdapClientServiceIntegrationTest extends TestCase
         $this->expectExceptionMessageMatches('/Login data could not be validated/');
 
         $this->service->login();
+    }
+
+    public function testLoginWithInvalidPasswordIsLoggedAsWarning(): void
+    {
+        $logger = new BufferingLogger();
+        $service = new LdapClientService($logger, '/var/www/html');
+        $service
+            ->setHost('ldap-dev')
+            ->setPort(389)
+            ->setBaseDn('dc=dev,dc=local')
+            ->setReadUser('cn=admin,dc=dev,dc=local')
+            ->setReadPass('admin123')
+            ->setUserNameField('uid')
+            ->setUseSSL(false)
+            ->setUserName('unittest')
+            ->setUserPass('wrong_password');
+
+        try {
+            $service->login();
+            self::fail('The login must be refused.');
+        } catch (LdapAuthenticationException) {
+            $levels = array_column($logger->cleanLogs(), 0, 1);
+        }
+
+        self::assertSame(LogLevel::WARNING, $levels['LDAP: User bind failed.'] ?? null);
+        self::assertNotContains(LogLevel::ERROR, $levels);
     }
 
     public function testLoginWithNonExistentUserThrowsException(): void
