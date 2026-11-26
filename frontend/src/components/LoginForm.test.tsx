@@ -253,6 +253,19 @@ describe('LoginForm', () => {
     unmount()
   })
 
+  it('tells the user to sign in with the passkey when the server signals passkeyRequired', async () => {
+    mockFetchOnce(401, { ok: false, error: 'Sign in with your passkey.', passkeyRequired: true })
+    const { container, getByRole, findByRole, unmount } = render(() => <LoginForm config={config} />)
+
+    fireEvent.input(container.querySelector('input[name="_username"]')!, { target: { value: 'developer' } })
+    fireEvent.input(container.querySelector('input[name="_password"]')!, { target: { value: 'secret' } })
+    fireEvent.click(getByRole('button', { name: 'Sign in' }))
+
+    expect(await findByRole('alert')).toHaveTextContent('This account signs in with its passkey')
+
+    unmount()
+  })
+
   it('swaps to the code step when the server signals twoFactorRequired', async () => {
     // 1st fetch: password accepted but 2FA outstanding; 2nd: the code check.
     const fetchMock = vi.fn()

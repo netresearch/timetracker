@@ -541,6 +541,7 @@
   "settings_passkey_error": "Der Passkey-Vorgang konnte nicht abgeschlossen werden.",
   "login_passkey": "Mit Passkey anmelden",
   "login_passkey_error": "Die Passkey-Anmeldung wurde nicht abgeschlossen. Versuche es erneut oder nutze dein Passwort.",
+  "login_passkey_required": "Dieses Konto meldet sich mit seinem Passkey an. Nutze „Mit Passkey anmelden“.",
   "settings_apitoken_heading": "API-Token",
   "settings_apitoken_hint": "Erstellen Sie Token, damit Skripte, CI und Agenten die API in Ihrem Namen nutzen können.",
   "settings_apitoken_name_label": "Token-Name",

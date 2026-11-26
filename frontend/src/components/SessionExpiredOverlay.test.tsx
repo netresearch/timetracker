@@ -104,6 +104,22 @@ describe('SessionExpiredOverlay', () => {
     expect(onSuccess).not.toHaveBeenCalled()
   })
 
+  it('tells the user to sign in with the passkey on {passkeyRequired:true}', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ ok: false, error: 'Sign in with your passkey.', passkeyRequired: true }),
+    }))
+    const onSuccess = vi.fn()
+    render(() => <SessionExpiredOverlay onSuccess={onSuccess} />)
+
+    fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'secret' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('This account signs in with its passkey'))
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
   it('offers a full-page login fallback link', () => {
     mockLoginFetch(true)
     render(() => <SessionExpiredOverlay onSuccess={vi.fn()} />)

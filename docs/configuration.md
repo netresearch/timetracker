@@ -33,7 +33,7 @@ defaults in [.env](../.env):
 | `APP_LOGO_URL` | `/images/logo-netresearch.svg` | Logo shown in the UI |
 | `APP_HEADER_URL` | empty | Optional link target for the header/logo |
 | `APP_SHOW_BILLABLE_FIELD_IN_EXPORT` | `false` | Include the billable column in exports |
-| `REQUIRE_TWO_FACTOR` | `false` | Org-wide mandatory 2FA: every user must enrol a second factor (authenticator app or passkey) before they can use the app. See [Variables compose.yml does not forward](#variables-composeyml-does-not-forward) |
+| `REQUIRE_TWO_FACTOR` | `false` | Org-wide mandatory 2FA: every user must enrol a second factor (authenticator app or passkey) before they can use the app. A user whose only factor is a passkey must sign in with it; the password login is refused. See [Variables compose.yml does not forward](#variables-composeyml-does-not-forward) |
 | `MCP_ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]` when missing | Comma-separated host names (no port, no spaces) the MCP endpoint `/mcp` accepts; list the public domain to use MCP there. See [Variables compose.yml does not forward](#variables-composeyml-does-not-forward) |
 
 ### Variables compose.yml does not forward

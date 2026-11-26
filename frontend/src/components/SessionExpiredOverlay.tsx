@@ -78,7 +78,7 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
         _password: password(),
         _csrf_token: cfg.csrfToken,
       })
-      const data = (await response.json().catch(() => null)) as { ok?: boolean; twoFactorRequired?: boolean } | null
+      const data = (await response.json().catch(() => null)) as { ok?: boolean; twoFactorRequired?: boolean; passkeyRequired?: boolean } | null
       if (response.ok && data?.ok === true) {
         props.onSuccess()
 
@@ -92,7 +92,8 @@ export function SessionExpiredOverlay(props: { onSuccess: () => void }) {
 
         return
       }
-      setError(m.login_error())
+      // Mandatory 2FA and the account's only second factor is a passkey.
+      setError(data?.passkeyRequired === true ? m.login_passkey_required() : m.login_error())
       setPassword('')
       passwordEl?.focus()
     } catch {

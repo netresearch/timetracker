@@ -272,6 +272,10 @@ phishing-resistant, works during LDAP outages). Two consequences, made explicit:
 - `UserChecker` still runs, so `users.active = 0` blocks passkey logins.
   **Disabling a user in LDAP alone does not block their passkeys** — offboarding
   must set `users.active = 0` (already the documented deactivation switch).
+- Under mandatory 2FA (`REQUIRE_TWO_FACTOR`), a user whose only second factor is a
+  passkey must use it: `LoginFormAuthenticator` refuses that user's password login
+  after verifying the credentials. Otherwise the password alone would open a full
+  session, because scheb challenges only TOTP users.
 - A passkey with user verification (UV required) is inherently two-factor, so
   passkey logins skip the TOTP challenge (the scheb bundle only intercepts the
   token types it is configured for; the WebAuthn token is not among them).
