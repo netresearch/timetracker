@@ -1,0 +1,19 @@
+name: Commit message
+
+# Conventional Commits gate via the shared reusable: the subject of every
+# non-merge commit must match what captainhook.json's commit-msg hook enforces
+# locally, so commits made without the hooks are checked too.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  merge_group:
+
+permissions: {}
+
+jobs:
+  commit-message:
+    uses: netresearch/.github/.github/workflows/commit-message.yml@main # NOSONAR — own-org reusable deliberately tracks main
+    permissions:
+      contents: read
+      pull-requests: read
