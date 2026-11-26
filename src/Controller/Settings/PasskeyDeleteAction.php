@@ -46,8 +46,13 @@ final class PasskeyDeleteAction extends BaseController
             return $response;
         }
 
+        // A removed passkey changes the user's factors: invalidate their
+        // remember-me cookies in the same flush (ADR-018 D4).
+        $user->bumpTwoFactorVersion();
+
         $manager = $this->doctrineRegistry->getManager();
         $manager->remove($credential);
+        $manager->persist($user);
         $manager->flush();
 
         return new JsonResponse(['success' => true]);

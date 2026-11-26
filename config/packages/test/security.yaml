@@ -19,7 +19,8 @@ security:
                 default_target_path: /
             # Set form_login as the entry point for redirects
             entry_point: form_login
-            # Note: remember_me disabled by omission in test environment
+            # remember_me is not repeated here: the block in ../security.yaml still
+            # applies (RememberMeFlowTest and RememberMeFactorChangeTest rely on it)
             logout:
                 path: _logout
                 target: _login

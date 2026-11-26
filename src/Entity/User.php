@@ -112,6 +112,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
     protected ?string $webauthnUserHandle = null;
 
     /**
+     * Counts changes to the user's set of second factors: TOTP enrolled or
+     * turned off, a passkey added or removed, the admin reset (ADR-018 D4). It is
+     * a remember-me signature property next to `password` (security.yaml), so
+     * each such change invalidates the user's outstanding remember-me cookies. A
+     * cookie from a password-only login must not outlive the account becoming
+     * passkey-only or TOTP-protected.
+     */
+    #[ORM\Column(name: 'two_factor_version', type: 'integer', nullable: false, options: ['default' => 0])]
+    protected int $twoFactorVersion = 0;
+
+    /**
      * The DECRYPTED TOTP secret — a transient, non-persisted field. Populated
      * from {@see $totpSecret} by UserTwoFactorSubscriber::postLoad and on
      * enrolment. scheb reads it via getTotpAuthenticationConfiguration().
@@ -496,7 +507,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
 
     /**
      * The password hash used both for credential verification (local accounts)
-     * and as the remember-me signature property (`signature_properties: ['password']`).
+     * and as a remember-me signature property (`signature_properties` in security.yaml).
      *
      * - Local account: the stored `auto` hash. It changes when the password is
      *   reset, which correctly invalidates any outstanding remember-me cookie.
@@ -529,6 +540,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwo
     public function setWebauthnUserHandle(?string $webauthnUserHandle): self
     {
         $this->webauthnUserHandle = $webauthnUserHandle;
+
+        return $this;
+    }
+
+    /** The remember-me signature property for factor changes ({@see $twoFactorVersion}). */
+    public function getTwoFactorVersion(): int
+    {
+        return $this->twoFactorVersion;
+    }
+
+    /**
+     * Record a change to the user's set of second factors. The caller flushes, in
+     * the same flush as the factor change itself.
+     */
+    public function bumpTwoFactorVersion(): self
+    {
+        ++$this->twoFactorVersion;
 
         return $this;
     }

@@ -300,6 +300,14 @@ last-used, rename, revoke. Registration requires a fully authenticated session.
   one time. Acceptable; called out in the PR-1 release notes.
 - After that, a password change invalidates exactly that user's remember-me
   cookies — desired behaviour we get for free.
+- The signature also covers `twoFactorVersion` (`users.two_factor_version`), a
+  counter bumped in the same flush as every change of the user's second factors:
+  TOTP confirmed or disabled, a passkey registered or removed, the admin reset.
+  A cookie issued before the change no longer verifies, so a cookie from a
+  password-only login cannot outlive the user becoming passkey-only (it would
+  otherwise slide forward on every use and pass the mandatory-2FA gate). Adding
+  the property invalidated every outstanding cookie once. The passkey login's
+  counter update is not a factor change and does not bump it.
 - With 2FA pending, the scheb bundle defers remember-me until the challenge is
   completed; passkey and LDAP/password logins keep attaching `RememberMeBadge`.
 - Session lifecycle, `switch_user`, logout CSRF: unchanged.
