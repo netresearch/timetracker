@@ -14,10 +14,10 @@ use Override;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\LocalPasswordTestTrait;
+use Tests\Traits\SpaLoginTestTrait;
 
 use function getenv;
 use function password_hash;
-use function preg_match;
 use function putenv;
 
 use const PASSWORD_DEFAULT;
@@ -36,8 +36,7 @@ use const PASSWORD_DEFAULT;
 final class PasskeyOnlyPasswordLoginTest extends AbstractWebTestCase
 {
     use LocalPasswordTestTrait;
-
-    private const string JSON_MIME = 'application/json';
+    use SpaLoginTestTrait;
 
     private const string PROBE_PATH = '/getUsers';
 
@@ -115,7 +114,7 @@ final class PasskeyOnlyPasswordLoginTest extends AbstractWebTestCase
     {
         $this->givePasskey();
         $this->giveLocalPassword();
-        $secret = $this->enrolInTotp();
+        $secret = $this->confirmTotpThroughSettings()['secret'];
 
         $this->client->getCookieJar()->clear();
         $this->postLogin(self::VALID_LOGIN);
@@ -166,54 +165,6 @@ final class PasskeyOnlyPasswordLoginTest extends AbstractWebTestCase
         // The setUp session carries the old password hash; log in again so the
         // ContextListener refresh does not treat the change as a user change.
         $this->logInSession('unittest');
-    }
-
-    /**
-     * Enrol TOTP for the logged-in user 1 through the settings endpoints.
-     *
-     * @return non-empty-string
-     */
-    private function enrolInTotp(): string
-    {
-        $this->client->request(Request::METHOD_POST, '/settings/2fa/totp/start', [], [], ['HTTP_ACCEPT' => self::JSON_MIME]);
-        $this->assertStatusCode(200);
-        $secret = $this->getJsonResponse($this->client->getResponse())['secret'] ?? null;
-        self::assertIsString($secret);
-        self::assertNotSame('', $secret);
-
-        $this->client->request(Request::METHOD_POST, '/settings/2fa/totp/confirm', ['code' => TOTP::createFromSecret($secret)->now()], [], ['HTTP_ACCEPT' => self::JSON_MIME]);
-        $this->assertStatusCode(200);
-
-        return $secret;
-    }
-
-    /** POST the password step the way the SPA does, with the login page's CSRF token. */
-    private function postLogin(string $password): void
-    {
-        $this->client->request(Request::METHOD_GET, '/login');
-        $html = $this->client->getResponse()->getContent();
-        self::assertIsString($html);
-        self::assertSame(1, preg_match('/name="_csrf_token" value="([^"]+)"/', $html, $matches), 'login page must render the CSRF token');
-
-        $this->client->request(Request::METHOD_POST, '/login', [
-            '_username' => 'unittest',
-            '_password' => $password,
-            '_csrf_token' => $matches[1],
-        ], [], [
-            'HTTP_ACCEPT' => self::JSON_MIME,
-            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-        ]);
-    }
-
-    /**
-     * @param array<string, string> $body
-     */
-    private function requestJson(string $method, string $uri, array $body = []): void
-    {
-        $this->client->request($method, $uri, $body, [], [
-            'HTTP_ACCEPT' => self::JSON_MIME,
-            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-        ]);
     }
 
     private function setRequireTwoFactor(string $value): void

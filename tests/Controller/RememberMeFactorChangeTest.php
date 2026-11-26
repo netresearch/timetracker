@@ -19,12 +19,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Uid\Uuid;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\LocalPasswordTestTrait;
+use Tests\Traits\SpaLoginTestTrait;
 use Webauthn\CredentialRecord;
 use Webauthn\TrustPath\EmptyTrustPath;
 
 use function json_encode;
 use function password_hash;
-use function preg_match;
 
 use const JSON_THROW_ON_ERROR;
 use const PASSWORD_DEFAULT;
@@ -45,6 +45,7 @@ use const PASSWORD_DEFAULT;
 final class RememberMeFactorChangeTest extends AbstractWebTestCase
 {
     use LocalPasswordTestTrait;
+    use SpaLoginTestTrait;
 
     private const string COOKIE_NAME = 'REMEMBERME';
 
@@ -60,13 +61,13 @@ final class RememberMeFactorChangeTest extends AbstractWebTestCase
     public function testEnrollingTotpInvalidatesTheOldCookie(): void
     {
         $old = $this->loginWithRememberMe('unittest', 1);
-        $secret = $this->enrolInTotp();
+        $secret = $this->confirmTotpThroughSettings()['secret'];
 
         $this->assertCookieRejected($old);
 
         // A login after the change, completed with the TOTP code, gets a working cookie.
         $this->client->getCookieJar()->clear();
-        $this->postLogin('unittest');
+        $this->postLogin(self::VALID_LOGIN, 'unittest', true);
         $this->assertStatusCode(401);
         self::assertTrue($this->getJsonResponse($this->client->getResponse())['twoFactorRequired'] ?? false);
         $this->requestJson(Request::METHOD_POST, '/2fa_check', ['_auth_code' => TOTP::createFromSecret($secret)->now()]);
@@ -145,7 +146,7 @@ final class RememberMeFactorChangeTest extends AbstractWebTestCase
     {
         $this->setStoredPassword($userId, password_hash(self::VALID_LOGIN, PASSWORD_DEFAULT));
         $this->client->getCookieJar()->clear();
-        $this->postLogin($username);
+        $this->postLogin(self::VALID_LOGIN, $username, true);
         $this->assertStatusCode(200);
 
         return $this->issuedCookie();
@@ -222,51 +223,5 @@ final class RememberMeFactorChangeTest extends AbstractWebTestCase
             self::HANDLE,
             0,
         );
-    }
-
-    /**
-     * Enrol TOTP for the logged-in user through the settings endpoints.
-     *
-     * @return non-empty-string
-     */
-    private function enrolInTotp(): string
-    {
-        $this->client->request(Request::METHOD_POST, '/settings/2fa/totp/start', [], [], ['HTTP_ACCEPT' => self::JSON_MIME]);
-        $this->assertStatusCode(200);
-        $secret = $this->getJsonResponse($this->client->getResponse())['secret'] ?? null;
-        self::assertIsString($secret);
-        self::assertNotSame('', $secret);
-
-        $this->client->request(Request::METHOD_POST, '/settings/2fa/totp/confirm', ['code' => TOTP::createFromSecret($secret)->now()], [], ['HTTP_ACCEPT' => self::JSON_MIME]);
-        $this->assertStatusCode(200);
-
-        return $secret;
-    }
-
-    /** POST the password step the way the SPA does, with "Stay logged in" ticked. */
-    private function postLogin(string $username): void
-    {
-        $this->client->request(Request::METHOD_GET, '/login');
-        $html = $this->client->getResponse()->getContent();
-        self::assertIsString($html);
-        self::assertSame(1, preg_match('/name="_csrf_token" value="([^"]+)"/', $html, $matches), 'login page must render the CSRF token');
-
-        $this->requestJson(Request::METHOD_POST, '/login', [
-            '_username' => $username,
-            '_password' => self::VALID_LOGIN,
-            '_csrf_token' => $matches[1],
-            '_remember_me' => 'on',
-        ]);
-    }
-
-    /**
-     * @param array<string, string> $body
-     */
-    private function requestJson(string $method, string $uri, array $body = []): void
-    {
-        $this->client->request($method, $uri, $body, [], [
-            'HTTP_ACCEPT' => self::JSON_MIME,
-            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-        ]);
     }
 }
