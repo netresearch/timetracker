@@ -4,7 +4,17 @@
     "github>netresearch/renovate-config"
   ],
   "composerIgnorePlatformReqs": ["ext-*", "lib-*", "php+"],
+  "lockFileMaintenance": {
+    "description": "The org preset enables lock-file maintenance only for uv.lock. Without it, transitive composer and bun pins (for example the Symfony components that symfony/dependency-injection 8.1.12 needed) stay behind until someone re-locks by hand (#996).",
+    "enabled": true
+  },
   "packageRules": [
+    {
+      "description": "Lock-file maintenance carries no release timestamp, so with stabilityDays from the org preset renovate/stability-days would stay pending and the PR would never automerge. The org preset exempts pep621 the same way.",
+      "matchManagers": ["composer", "bun"],
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "minimumReleaseAge": null
+    },
     {
       "description": "symfony/mcp-bundle pins the mcp/sdk minor (0.14 needs ^0.8.1, 0.15 needs ^0.9), so neither updates alone; separate PRs fail composer resolution (#842, #859, fixed together in #918).",
       "matchPackageNames": ["mcp/sdk", "symfony/mcp-bundle"],
