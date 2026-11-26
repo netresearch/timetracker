@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\User;
 use App\Entity\WebauthnCredential;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -52,6 +53,7 @@ class WebauthnCredentialRepository extends ServiceEntityRepository implements Pu
         // subclass, or Doctrine cannot persist it ("entity has no identity").
         // Login counter-updates pass back the managed entity from
         // findOneByCredentialId and are persisted as-is.
+        $manager = $this->getEntityManager();
         if (!$credentialRecord instanceof WebauthnCredential) {
             $credentialRecord = new WebauthnCredential(
                 $credentialRecord->publicKeyCredentialId,
@@ -68,9 +70,17 @@ class WebauthnCredentialRepository extends ServiceEntityRepository implements Pu
                 $credentialRecord->backupStatus,
                 $credentialRecord->uvInitialized,
             );
+
+            // A new passkey changes the user's factors: invalidate their
+            // remember-me cookies in the same flush (ADR-018 D4). Only here, not
+            // on the counter update of every passkey login, which would void the
+            // cookie that login just issued.
+            $user = $manager->getRepository(User::class)->findOneBy(['webauthnUserHandle' => $credentialRecord->userHandle]);
+            if ($user instanceof User) {
+                $user->bumpTwoFactorVersion();
+            }
         }
 
-        $manager = $this->getEntityManager();
         $manager->persist($credentialRecord);
         $manager->flush();
     }

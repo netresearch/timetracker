@@ -86,6 +86,12 @@ security:
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 2592000 # 30 days in seconds
+                # The cookie is signed over these user properties; a change to any
+                # of them invalidates the user's outstanding cookies. password: a
+                # password change. twoFactorVersion: any change of the second
+                # factors (ADR-018 D4), so a cookie from a password-only login
+                # does not outlive the user enrolling a passkey or TOTP.
+                signature_properties: ['password', 'twoFactorVersion']
                 path: /
                 secure: auto  # Auto-detect: secure over HTTPS, non-secure over HTTP
 

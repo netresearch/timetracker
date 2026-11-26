@@ -50,6 +50,7 @@ CREATE TABLE `users` (
   `totp_secret` varchar(255) DEFAULT NULL,
   `backup_codes` json DEFAULT NULL,
   `webauthn_user_handle` varchar(36) DEFAULT NULL,
+  `two_factor_version` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `UNIQ_users_webauthn_user_handle` (`webauthn_user_handle`)
@@ -536,7 +537,8 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20260712_CustomerTempoKey',        '2026-07-12 00:00:01', 0),
 ('DoctrineMigrations\\Version20260712_PersonioAbsenceImport',   '2026-07-12 00:00:02', 0),
 ('DoctrineMigrations\\Version20260914_EntryPairLink',           '2026-09-14 00:00:00', 0),
-('DoctrineMigrations\\Version20261119_AppCacheTable',           '2026-11-19 00:00:00', 0);
+('DoctrineMigrations\\Version20261119_AppCacheTable',           '2026-11-19 00:00:00', 0),
+('DoctrineMigrations\\Version20261126_AddUserTwoFactorVersion', '2026-11-26 00:00:00', 0);
 
 
 -- EXPORT-VIEWS ---------------------------------------------------------------------------

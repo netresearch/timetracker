@@ -65,7 +65,7 @@ export function LoginForm(props: { config: LoginConfig }) {
         _csrf_token: props.config.csrfToken,
         ...(remember() ? { _remember_me: 'on' } : {}),
       })
-      const data = (await response.json().catch(() => null)) as { ok?: boolean; redirect?: string; twoFactorRequired?: boolean } | null
+      const data = (await response.json().catch(() => null)) as { ok?: boolean; redirect?: string; twoFactorRequired?: boolean; passkeyRequired?: boolean } | null
       if (response.ok && data?.ok === true) {
         globalThis.location.assign(data.redirect ?? '/')
 
@@ -77,7 +77,8 @@ export function LoginForm(props: { config: LoginConfig }) {
 
         return
       }
-      setError(m.login_error())
+      // Mandatory 2FA and the account's only second factor is a passkey.
+      setError(data?.passkeyRequired === true ? m.login_passkey_required() : m.login_error())
     } catch {
       setError(m.login_error())
     } finally {

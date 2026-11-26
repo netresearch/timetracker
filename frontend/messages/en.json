@@ -541,6 +541,7 @@
   "settings_passkey_error": "The passkey operation could not be completed.",
   "login_passkey": "Sign in with a passkey",
   "login_passkey_error": "Passkey sign-in didn't complete. Try again, or use your password.",
+  "login_passkey_required": "This account signs in with its passkey. Use “Sign in with a passkey”.",
   "settings_apitoken_heading": "API tokens",
   "settings_apitoken_hint": "Create tokens to let scripts, CI, and agents use the API on your behalf.",
   "settings_apitoken_name_label": "Token name",

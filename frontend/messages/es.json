@@ -541,6 +541,7 @@
   "settings_passkey_error": "No se pudo completar la operación con la clave de acceso.",
   "login_passkey": "Iniciar sesión con una clave de acceso",
   "login_passkey_error": "El inicio de sesión con clave de acceso no se completó. Inténtalo de nuevo o usa tu contraseña.",
+  "login_passkey_required": "Esta cuenta inicia sesión con su clave de acceso. Usa «Iniciar sesión con una clave de acceso».",
   "settings_apitoken_heading": "Tokens de API",
   "settings_apitoken_hint": "Crea tokens para que scripts, CI y agentes usen la API en tu nombre.",
   "settings_apitoken_name_label": "Nombre del token",

@@ -541,6 +541,7 @@
   "settings_passkey_error": "L'opération de clé d'accès n'a pas pu être effectuée.",
   "login_passkey": "Se connecter avec une clé d'accès",
   "login_passkey_error": "La connexion par clé d'accès n'a pas abouti. Réessayez ou utilisez votre mot de passe.",
+  "login_passkey_required": "Ce compte se connecte avec sa clé d'accès. Utilisez « Se connecter avec une clé d'accès ».",
   "settings_apitoken_heading": "Jetons d'API",
   "settings_apitoken_hint": "Créez des jetons pour que des scripts, la CI et des agents utilisent l'API en votre nom.",
   "settings_apitoken_name_label": "Nom du jeton",

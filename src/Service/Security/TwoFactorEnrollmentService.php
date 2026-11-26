@@ -111,6 +111,7 @@ final readonly class TwoFactorEnrollmentService
         }
 
         $user->setTotpSecret($this->tokenEncryptionService->encryptToken($secret), $secret);
+        $user->bumpTwoFactorVersion();
 
         $plainCodes = $this->generateBackupCodes();
         $user->setBackupCodes(array_map(
@@ -121,11 +122,16 @@ final readonly class TwoFactorEnrollmentService
         return $plainCodes;
     }
 
-    /** Turn 2FA off: drop the secret and any outstanding backup codes. */
+    /**
+     * Turn 2FA off: drop the secret and any outstanding backup codes. Always counts
+     * as a factor change, also when nothing was enrolled: the admin reset relies
+     * on it to invalidate the remember-me cookies of a passkey-only user.
+     */
     public function disable(User $user): void
     {
         $user->setTotpSecret(null, null);
         $user->setBackupCodes([]);
+        $user->bumpTwoFactorVersion();
     }
 
     /** Build a TOTP for a non-empty secret (otphp requires a non-empty string). */

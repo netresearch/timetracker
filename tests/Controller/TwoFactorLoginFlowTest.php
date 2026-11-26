@@ -14,6 +14,7 @@ use OTPHP\TOTP;
 use Symfony\Component\HttpFoundation\Request;
 use Tests\AbstractWebTestCase;
 use Tests\Traits\LocalPasswordTestTrait;
+use Tests\Traits\SpaLoginTestTrait;
 
 use function password_hash;
 
@@ -36,12 +37,11 @@ use const PASSWORD_DEFAULT;
 final class TwoFactorLoginFlowTest extends AbstractWebTestCase
 {
     use LocalPasswordTestTrait;
+    use SpaLoginTestTrait;
 
     private const string PROBE_PATH = '/getUsers';
 
     private const string CHECK_PATH = '/2fa_check';
-
-    private const string JSON_MIME = 'application/json';
 
     /** Throwaway fixture value for the seeded test user's local login. */
     private const string VALID_LOGIN = 'Str0ng-Horse-Battery-42';
@@ -133,52 +133,6 @@ final class TwoFactorLoginFlowTest extends AbstractWebTestCase
         // deauthenticate (hasUserChanged compares the stored password).
         $this->logInSession('unittest');
 
-        $this->client->request(Request::METHOD_POST, '/settings/2fa/totp/start', [], [], ['HTTP_ACCEPT' => self::JSON_MIME]);
-        $this->assertStatusCode(200);
-        $secret = $this->getJsonResponse($this->client->getResponse())['secret'] ?? null;
-        self::assertIsString($secret);
-        self::assertNotSame('', $secret);
-
-        $this->client->request(Request::METHOD_POST, '/settings/2fa/totp/confirm', ['code' => TOTP::createFromSecret($secret)->now()], [], ['HTTP_ACCEPT' => self::JSON_MIME]);
-        $this->assertStatusCode(200);
-        $codes = $this->getJsonResponse($this->client->getResponse())['backupCodes'] ?? null;
-        self::assertIsArray($codes);
-        self::assertNotCount(0, $codes);
-        /** @var list<string> $codes */
-
-        return ['secret' => $secret, 'backupCodes' => $codes];
-    }
-
-    /**
-     * POST the password step the way the SPA does (fetch/XHR): render the login
-     * page first to obtain the 'authenticate' CSRF token (and its double-submit
-     * cookie), then submit credentials with it.
-     */
-    private function postLogin(string $password): void
-    {
-        $this->client->request(Request::METHOD_GET, '/login');
-        $html = $this->client->getResponse()->getContent();
-        self::assertIsString($html);
-        self::assertSame(1, preg_match('/name="_csrf_token" value="([^"]+)"/', $html, $matches), 'login page must render the CSRF token');
-
-        $this->client->request(Request::METHOD_POST, '/login', [
-            '_username' => 'unittest',
-            '_password' => $password,
-            '_csrf_token' => $matches[1],
-        ], [], [
-            'HTTP_ACCEPT' => self::JSON_MIME,
-            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-        ]);
-    }
-
-    /**
-     * @param array<string, string> $body
-     */
-    private function requestJson(string $method, string $uri, array $body = []): void
-    {
-        $this->client->request($method, $uri, $body, [], [
-            'HTTP_ACCEPT' => self::JSON_MIME,
-            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-        ]);
+        return $this->confirmTotpThroughSettings();
     }
 }

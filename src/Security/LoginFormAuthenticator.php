@@ -13,6 +13,7 @@ use App\Entity\Team;
 use App\Entity\User;
 use App\Exception\Ldap\LdapAuthenticationException;
 use App\Service\Ldap\LdapClientService;
+use App\Service\Security\TwoFactorStatusService;
 use BackedEnum;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -60,10 +61,13 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 {
     use TargetPathTrait;
 
+    /** Refusal for a password login that must use the account's passkey (mandatory 2FA). */
+    private const string PASSKEY_REQUIRED = 'Sign in with your passkey.';
+
     /** Lazily hashed dummy, reused to burn constant time on the no-such-account path. */
     private static ?string $dummyHash = null;
 
-    public function __construct(private EntityManagerInterface $entityManager, private RouterInterface $router, private ParameterBagInterface $parameterBag, private LoggerInterface $logger, private LdapClientService $ldapClientService, private PasswordHasherFactoryInterface $passwordHasherFactory)
+    public function __construct(private EntityManagerInterface $entityManager, private RouterInterface $router, private ParameterBagInterface $parameterBag, private LoggerInterface $logger, private LdapClientService $ldapClientService, private PasswordHasherFactoryInterface $passwordHasherFactory, private TwoFactorStatusService $twoFactorStatus)
     {
     }
 
@@ -274,6 +278,33 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         return $newUser;
     }
 
+    /**
+     * Runs after the credentials were verified (password hash or LDAP bind), so
+     * the refusal below is answered only to someone who knows the password.
+     *
+     * With mandatory 2FA, a user whose only second factor is a passkey must sign
+     * in with it: a passkey is a login of its own (ADR-018 D3), and scheb only
+     * challenges TOTP users, so a password login would otherwise open a full
+     * session on one factor.
+     */
+    #[Override]
+    public function createToken(Passport $passport, string $firewallName): TokenInterface
+    {
+        $user = $passport->getUser();
+        if ($user instanceof User && $this->mustSignInWithPasskey($user)) {
+            throw new CustomUserMessageAuthenticationException(self::PASSKEY_REQUIRED);
+        }
+
+        return parent::createToken($passport, $firewallName);
+    }
+
+    private function mustSignInWithPasskey(User $user): bool
+    {
+        return (bool) $this->parameterBag->get('app_require_two_factor')
+            && !$user->isTotpAuthenticationEnabled()
+            && $this->twoFactorStatus->hasTwoFactor($user);
+    }
+
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): Response
     {
         // Password accepted but a second factor is outstanding: scheb swapped the
@@ -318,7 +349,13 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response
     {
         if ($request->isXmlHttpRequest()) {
-            return new JsonResponse(['ok' => false, 'error' => $exception->getMessageKey()], Response::HTTP_UNAUTHORIZED);
+            $body = ['ok' => false, 'error' => $exception->getMessageKey()];
+            if (self::PASSKEY_REQUIRED === $exception->getMessageKey()) {
+                // The SPA shows its own translated hint for this case.
+                $body['passkeyRequired'] = true;
+            }
+
+            return new JsonResponse($body, Response::HTTP_UNAUTHORIZED);
         }
 
         return parent::onAuthenticationFailure($request, $exception);

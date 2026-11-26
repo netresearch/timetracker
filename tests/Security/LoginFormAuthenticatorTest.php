@@ -15,8 +15,10 @@ use App\Enum\UserType;
 use App\Exception\Ldap\LdapAuthenticationException;
 use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
+use App\Repository\WebauthnCredentialRepository;
 use App\Security\LoginFormAuthenticator;
 use App\Service\Ldap\LdapClientService;
+use App\Service\Security\TwoFactorStatusService;
 use Doctrine\ORM\EntityManagerInterface;
 use Laminas\Ldap\Exception\LdapException;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -85,6 +87,7 @@ final class LoginFormAuthenticatorTest extends TestCase
             $this->logger,
             $this->ldapClient,
             $this->passwordHasherFactory,
+            new TwoFactorStatusService(self::createStub(WebauthnCredentialRepository::class)),
         );
     }
 

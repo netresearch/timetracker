@@ -382,6 +382,9 @@ security:
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 2592000  # 30 days
+                # A change of either property invalidates the user's cookies
+                # (password change; second factors changed, ADR-018 D4).
+                signature_properties: ['password', 'twoFactorVersion']
                 path: /
                 secure: auto  # Secure over HTTPS, non-secure over HTTP
 
@@ -396,7 +399,9 @@ security:
 
 The test environment uses simplified authentication:
 - Form login instead of LDAP authenticator
-- Remember-me functionality disabled
+- Remember-me inherited from `config/packages/security.yaml` (the main
+  firewall's `remember_me` block applies; `tests/Security/RememberMeFlowTest.php`
+  exercises it)
 - Simplified firewall configuration
 
 ### Environment Variables
