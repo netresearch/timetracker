@@ -32,6 +32,7 @@
             <directory>tests/Docker</directory>
             <directory>tests/Dto</directory>
             <directory>tests/DTO/Jira</directory>
+            <directory>tests/DTO/Personio</directory>
             <directory>tests/DependencyInjection</directory>
             <directory>tests/Event</directory>
             <directory>tests/EventSubscriber</directory>
@@ -74,6 +75,7 @@
             <file>tests/Entity/TicketTest.php</file>
             <file>tests/Entity/UserTest.php</file>
             <file>tests/Entity/UserTicketsystemTest.php</file>
+            <file>tests/Entity/EntrySourceFieldsTest.php</file>
             <file>tests/Entity/TicketSystemTest.php</file>
             <!-- Enum unit tests -->
             <directory>tests/Enum</directory>
@@ -85,6 +87,8 @@
             <!-- Security unit tests (not RememberMeRedirectTest) -->
             <file>tests/Security/LoginFormAuthenticatorTest.php</file>
             <file>tests/Security/UserCheckerTest.php</file>
+            <file>tests/Security/PasskeyRememberMeTest.php</file>
+            <file>tests/Security/RequireScopeCoverageTest.php</file>
             <!-- Command unit tests -->
             <file>tests/Command/CreateUserCommandTest.php</file>
         </testsuite>
@@ -102,6 +106,7 @@
             <file>tests/Entity/TeamDatabaseTest.php</file>
             <file>tests/Entity/UserDatabaseTest.php</file>
             <file>tests/Security/RememberMeRedirectTest.php</file>
+            <file>tests/Security/RememberMeFlowTest.php</file>
             <file>tests/Service/Ldap/LdapClientServiceIntegrationTest.php</file>
             <directory>tests/Repository</directory>
             <directory>tests/Command</directory>
