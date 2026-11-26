@@ -235,24 +235,31 @@ services:
       - e2e
 
   # Development LDAP server
+  # osixia/openldap v2 is a rewrite of v1: other variables, paths and an
+  # internal listener on 3890. The service keeps the v1 contract the app,
+  # docs and tests rely on: port 389, suffix dc=dev,dc=local, root DN
+  # cn=admin,dc=dev,dc=local and read-only DN cn=readuser,dc=dev,dc=local.
   ldap-dev:
-    image: osixia/openldap:1.5.0@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28
+    image: osixia/openldap:2.6.15@sha256:b804ae8b3f3e50be7315916e929ad7b21897a2f7eb3a482096967f509c61d264
     environment:
-      - LDAP_ORGANISATION=Development Company
-      - LDAP_DOMAIN=dev.local
-      - LDAP_BASE_DN=dc=dev,dc=local
-      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD:-admin123}
-      - LDAP_READONLY_USER=true
-      - LDAP_READONLY_USER_USERNAME=${LDAP_READONLY_USER_USERNAME:-readuser}
-      - LDAP_READONLY_USER_PASSWORD=${LDAP_READONLY_USER_PASSWORD:-readuser}
-      # Keep bootstrap files instead of deleting them after processing
-      - LDAP_REMOVE_CONFIG_AFTER_SETUP=false
+      - OPENLDAP_BOOTSTRAP_ORGANIZATION=Development Company
+      - OPENLDAP_BOOTSTRAP_SUFFIX=dc=dev,dc=local
+      # The *_PASSWORD_HASHED variables take any userPassword value. A value
+      # without a {SCHEME} prefix is stored and compared as cleartext, which
+      # keeps the plain dev passwords and their overrides working.
+      - OPENLDAP_BOOTSTRAP_DATA_ROOT_PASSWORD_HASHED=${LDAP_ADMIN_PASSWORD:-admin123}
+      - OPENLDAP_BOOTSTRAP_DATA_READONLY=true
+      - OPENLDAP_BOOTSTRAP_DATA_READONLY_DN=cn=${LDAP_READONLY_USER_USERNAME:-readuser},dc=dev,dc=local
+      - OPENLDAP_BOOTSTRAP_DATA_READONLY_PASSWORD_HASHED=${LDAP_READONLY_USER_PASSWORD:-readuser}
+      # Listen on 389 like v1 (the image default is ldap://:3890).
+      - OPENLDAP_URLS=ldap://:389 ldapi:///
     volumes:
-      - ldap-dev-data:/var/lib/ldap
-      - ldap-dev-config:/etc/ldap/slapd.d
-      # Copy LDIF to a directory that allows modification (use entrypoint to copy)
-      - ./docker/ldap/users-only.ldif:/ldif-source/users.ldif:ro
-    entrypoint: ["/bin/bash", "-c", "cp /ldif-source/users.ldif /container/service/slapd/assets/config/bootstrap/ldif/custom/users.ldif 2>/dev/null || true && exec /container/tool/run"]
+      # v2 skips its bootstrap when either directory holds data and does not
+      # migrate v1 data, so it gets new volumes instead of the v1 ones.
+      - ldap-dev-v2-data:/var/lib/openldap/openldap-data
+      - ldap-dev-v2-config:/etc/openldap/slapd.d
+      # Imported on the first bootstrap; the image reads the directory as is.
+      - ./docker/ldap/users-only.ldif:/container/services/openldap-bootstrap/assets/ldif/data/custom/users.ldif:ro
     ports:
       - "3389:389"
     restart: "no"
@@ -262,7 +269,7 @@ services:
       # user is still missing. Assert one of those users instead. The image's
       # ACL denies anonymous search (it answers "No such object"), hence the
       # read-only account. See #765.
-      test: ["CMD-SHELL", "ldapsearch -x -H ldap://127.0.0.1:389 -D \"cn=$$LDAP_READONLY_USER_USERNAME,$$LDAP_BASE_DN\" -w \"$$LDAP_READONLY_USER_PASSWORD\" -b \"$$LDAP_BASE_DN\" '(uid=unittest)' dn | grep -q '^dn: uid=unittest,'"]
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://127.0.0.1:389 -D \"$$OPENLDAP_BOOTSTRAP_DATA_READONLY_DN\" -w \"$$OPENLDAP_BOOTSTRAP_DATA_READONLY_PASSWORD_HASHED\" -b \"$$OPENLDAP_BOOTSTRAP_SUFFIX\" '(uid=unittest)' dn | grep -q '^dn: uid=unittest,'"]
       interval: 2s
       timeout: 5s
       retries: 30
@@ -296,8 +303,8 @@ volumes:
   db-e2e-data:
     driver: local
 
-  # Development LDAP volumes
-  ldap-dev-data:
+  # Development LDAP volumes (osixia/openldap v2 layout)
+  ldap-dev-v2-data:
     driver: local
-  ldap-dev-config:
+  ldap-dev-v2-config:
     driver: local
